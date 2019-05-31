@@ -1,0 +1,80 @@
+from mcod.settings.base import *  # noqa: F403
+
+DEBUG = True
+
+ALLOWED_HOSTS = ['*']
+
+env = environ.Env()  # noqa: F405
+
+env_file = str(ROOT_DIR.path('.env'))  # noqa: F405
+env.read_env(env_file)
+
+DATABASES = {
+    'default': env.db('POSTGRES_DATABASE_URL', default='postgres:///mcod'),  # noqa: F405
+}
+DATABASES['default']['ATOMIC_REQUESTS'] = True
+
+TEMPLATES[0]['OPTIONS']['debug'] = DEBUG  # noqa: F405
+
+EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
+EMAIL_FILE_PATH = '/tmp/app-messages' # change this to a proper location
+
+NO_REPLY_EMAIL = 'no-reply@mcod.local'
+
+TEST_RUNNER = 'django.test.runner.DiscoverRunner'
+
+REDIS_URL = env('REDIS_URL', default='redis://localhost:6379')
+
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "%s/1" % REDIS_URL,
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    },
+    "sessions": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "%s/2" % REDIS_URL,
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    }
+
+}
+
+SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+SESSION_CACHE_ALIAS = "sessions"
+
+# Frontend urls
+BASE_URL = 'http://mcod.local'
+PASSWORD_RESET_URL = 'http://mcod.local/user/reset-password/%s/'
+EMAIL_VALIDATION_URL = 'http://mcod.local/user/verify-email/%s/'
+
+PREVIEW_LINK_BASE = "http://mcod.local/"
+
+ELASTICSEARCH_HOSTS = env('ELASTICSEARCH_HOSTS', default='localhost:9200')
+
+ELASTICSEARCH_DSL = {
+    'default': {
+        'hosts': ELASTICSEARCH_HOSTS.split(','),
+        'http_auth': "user:changeme",
+        'timeout': 100
+    },
+}
+
+ELASTICSEARCH_DEFAULT_INDEX_SETTINGS = {
+    'number_of_shards': 1,
+    'number_of_replicas': 0
+}
+
+CELERY_BROKER_URL = 'amqp://%s' % str(env('RABBITMQ_HOST', default='127.0.0.1:5672'))
+CELERY_TASK_ALWAYS_EAGER = False
+
+FIXTURE_DIRS = [
+    str(ROOT_DIR('test-data/fixtures')),
+]
+
+MEDIA_ROOT = str(ROOT_DIR('test-data/media'))
+IMAGES_MEDIA_ROOT = str(ROOT_DIR.path(MEDIA_ROOT, 'images'))
+RESOURCES_MEDIA_ROOT = str(ROOT_DIR.path(MEDIA_ROOT, 'resources'))

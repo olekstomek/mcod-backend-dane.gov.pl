@@ -1,0 +1,33 @@
+server {
+  listen 80;
+  listen [::]:80;
+  server_name admin.mcod.local;
+  charset utf-8;
+  client_max_body_size 500M;
+  access_log /var/log/nginx/admin_access.log;
+  error_log /var/log/nginx/admin_errors.log;
+  root /usr/share/nginx/html;
+
+  location /static {
+    alias /vagrant/statics;
+  }
+
+  location /media {
+    alias /vagrant/test-data/media;
+  }
+
+  location / {
+    proxy_pass http://admin;
+    proxy_pass_header Server;
+    proxy_set_header Host $host;
+    proxy_set_header X-Scheme $scheme;
+    proxy_set_header X-Url-Scheme $scheme;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $remote_addr;
+    proxy_set_header X-Forwarded-Proto $scheme;
+  }
+}
+
+upstream admin {
+    server localhost:8080;
+}

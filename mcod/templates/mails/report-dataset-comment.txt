@@ -1,0 +1,2 @@
+Do zbioru {{ title }} (wersja {{ version }}) [{{ url }}] została zgłoszona uwaga:
+{{ comment }}

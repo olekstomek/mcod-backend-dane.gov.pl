@@ -1,0 +1,14 @@
+---
+- name: install java
+  dnf: name=java-1.8.0-openjdk.x86_64 state=installed
+  become: true
+
+- name: install apm-server 6.6.1
+  become: yes
+  dnf:
+    name: https://artifacts.elastic.co/downloads/apm-server/apm-server-6.6.1-x86_64.rpm
+    state: installed
+
+- name: enable and restart apm-server
+  service: name=apm-server enabled=yes state=restarted
+  become: true

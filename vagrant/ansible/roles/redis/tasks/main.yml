@@ -1,0 +1,7 @@
+- name: install redis server
+  dnf: name=redis state=installed
+  become: yes
+
+- name: enable and start redis server
+  service: name=redis enabled=yes state=started
+  become: yes

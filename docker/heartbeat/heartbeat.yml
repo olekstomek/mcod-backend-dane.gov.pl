@@ -1,0 +1,20 @@
+heartbeat.config.monitors:
+  # Directory + glob pattern to search for configuration files
+  path: /usr/share/heartbeat/monitors.d/*.yml
+  # If enabled, heartbeat will periodically check the config.monitors path for changes
+  reload.enabled: false
+  # How often to check for changes
+  reload.period: 5s
+
+processors:
+- add_cloud_metadata: ~
+- add_host_metadata: ~
+
+output.elasticsearch:
+  hosts: 'mcod-monitoring:9200'
+
+setup.template.settings:
+  index.number_of_shards: 1
+
+setup.kibana:
+  host: "mcod-kibana:5601"

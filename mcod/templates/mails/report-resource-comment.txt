@@ -1,0 +1,2 @@
+Do zasobu {{ title }} została zgłoszona uwaga:
+{{ comment }}

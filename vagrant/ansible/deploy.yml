@@ -1,0 +1,51 @@
+---
+- hosts: all
+  vars:
+    - project_home: /vagrant
+    - requirements_file: /vagrant/requirements-devel.txt
+    - ssh_key: "{{lookup('file','/vagrant/vagrant/keys/public')}}"
+
+  pre_tasks:
+    - name: installign libselinux python bindings
+      dnf:
+        name: libselinux-python
+        state: latest
+      become: yes
+
+    - name: clean up
+      file:
+        path: /tmp/env.yml
+        state: absent
+
+    - name: adding ssh key
+      lineinfile:
+        dest: ~/.ssh/authorized_keys
+        line: '{{ssh_key}}'
+      become: no
+
+    - name: reading docker env file
+      shell: grep -v '^$\|^\s*\#' /vagrant/.env
+      register: env_lines
+
+    - name: generating ansible env file
+      shell: "echo {{item.split('=', 1)[0]}}: {{item.split('=', 1)[1]}} >> /tmp/env.yml"
+      with_items: "{{env_lines.stdout_lines}}"
+
+    - include_vars:
+        file: '/tmp/env.yml'
+
+  roles:
+    - { role: redis }
+    - { role: rabbitmq }
+    - { role: elasticsearch }
+    - { role: logstash }
+    - { role: apm }
+    - { role: kibana }
+    - { role: nodejs }
+    - { role: postgresql}
+    - { role: python }
+    - { role: backend }
+    - { role: frontend }
+    - { role: supervisor }
+    - { role: nginx }
+

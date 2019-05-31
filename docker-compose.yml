@@ -1,0 +1,362 @@
+version: '3'
+services:
+  mcod-db:
+    container_name: mcod-db
+    image: postgresql:10-mcod
+    build:
+      context: .
+      dockerfile: docker/postgres/Dockerfile
+    restart: "no"
+    volumes:
+      - postgres_vol:/var/lib/postgresql/data
+      - ./test-data/database:/dumps
+    networks:
+      backend:
+        ipv4_address: 172.18.18.18
+    environment:
+      - POSTGRES_USER=mcod
+      - POSTGRES_PASSWORD=mcod
+      - POSTGRES_DB=mcod
+
+  mcod-rabbitmq:
+    image: rabbitmq:3.7-management-mcod
+    container_name: mcod-rabbitmq
+    build:
+      context: .
+      dockerfile: docker/rabbitmq/Dockerfile
+    restart: "no"
+    networks:
+      - backend
+    volumes:
+      - rabbitmq_vol:/var/lib/rabbitmq
+
+  mcod-redis:
+    container_name: mcod-redis
+    image: redis:3.2-mcod
+    restart: "no"
+    build:
+      context: .
+      dockerfile: docker/redis/Dockerfile
+    networks:
+      - backend
+    volumes:
+      - redis_vol:/data
+
+  mcod-elasticsearch-1:
+    image: elasticsearch:6.7.0-mcod
+    container_name: mcod-elasticsearch-1
+    build:
+      context: .
+      dockerfile: docker/elasticsearch/Dockerfile
+    restart: "no"
+    environment:
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms1024m -Xmx1024m
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - elastic_vol:/usr/share/elasticsearch/data
+    networks:
+      backend:
+        aliases:
+          - mcod-elasticsearch-1
+          - mcod-monitoring
+
+  mcod-nginx:
+    container_name: mcod-nginx
+    image: nginx:1.14-mcod
+    build:
+      context: .
+      dockerfile: docker/nginx/Dockerfile
+    restart: "no"
+    volumes:
+      - ./statics:/usr/share/nginx/html/statics:ro
+      - ./test-data/media:/usr/share/nginx/html/media
+    ports:
+      - 80:80
+    networks:
+      backend:
+        ipv4_address: 172.18.18.100
+
+  mcod-api:
+    container_name: mcod-api
+    image: backend:devel
+    user: ${_UID:-1000}:${_GID:-1000}
+    build:
+      context: .
+      dockerfile: docker/app/Dockerfile
+      args:
+        - REQ_FILE=requirements-devel.txt
+        - GID=${_GID:-1000}
+        - UID=${_UID:-1000}
+    command: start-api
+    restart: "no"
+    volumes:
+      - .:/usr/src/mcod_backend
+    links:
+      - mcod-db
+      - mcod-nginx
+      - mcod-redis
+      - mcod-elasticsearch-1
+    env_file:
+      - .env
+    ports:
+      - 8000:8000
+    networks:
+      backend:
+        ipv4_address: 172.18.18.101
+
+  mcod-admin:
+    container_name: mcod-admin
+    image: backend:devel
+    user: ${_UID:-1000}:${_GID:-1000}
+    build:
+      context: .
+      dockerfile: docker/app/Dockerfile
+      args:
+        - REQ_FILE=requirements-devel.txt
+        - GID=${_GID:-1000}
+        - UID=${_UID:-1000}
+    command: start-admin
+    restart: "no"
+    volumes:
+      - .:/usr/src/mcod_backend
+    ports:
+      - 8001:8001
+    links:
+      - mcod-db
+      - mcod-nginx
+      - mcod-redis
+      - mcod-elasticsearch-1
+    env_file:
+      - .env
+    networks:
+      backend:
+        ipv4_address: 172.18.18.102
+
+  mcod-celery:
+    container_name: mcod-celery
+    image: backend:devel
+    user: ${_UID:-1000}:${_GID:-1000}
+    build:
+      context: .
+      dockerfile: docker/app/Dockerfile
+      args:
+        - REQ_FILE=requirements-devel.txt
+        - GID=${_GID:-1000}
+        - UID=${_UID:-1000}
+    command: start-celery
+    restart: "no"
+    volumes:
+      - .:/usr/src/mcod_backend
+    links:
+      - mcod-db
+      - mcod-rabbitmq
+      - mcod-redis
+      - mcod-elasticsearch-1
+    env_file:
+      - .env
+    networks:
+      - backend
+
+  mcod-frontend:
+    container_name: mcod-frontend
+    image: frontend:devel
+    build:
+      context: frontend/
+      dockerfile: ./docker/frontend/local/Dockerfile
+      args:
+        - GID=${_GID:-1000}
+        - UID=${_UID:-1000}
+    restart: "no"
+    networks:
+      backend:
+        ipv4_address: 172.18.18.103
+    links:
+      - mcod-nginx
+
+  mcod-tox:
+    container_name: mcod-tox
+    image: backend:devel
+    user: ${_UID:-1000}:${_GID:-1000}
+    build:
+      context: .
+      dockerfile: docker/app/Dockerfile
+      args:
+        - REQ_FILE=requirements-devel.txt
+        - GID=${_GID:-1000}
+        - UID=${_UID:-1000}
+    command: run-tests
+    restart: "no"
+    volumes:
+      - .:/usr/src/mcod_backend
+    links:
+      - mcod-db
+      - mcod-nginx
+      - mcod-redis
+      - mcod-elasticsearch-1
+    env_file:
+      - .env
+    networks:
+      - backend
+
+  mcod-logstash:
+    image: logstash:6.7.0-mcod
+    container_name: mcod-logstash
+    build:
+      context: .
+      dockerfile: docker/logstash/Dockerfile
+    restart: "no"
+    networks:
+      backend:
+        ipv4_address: 172.18.18.200
+    links:
+      - mcod-elasticsearch-1:mcod-monitoring
+    environment:
+      - LS_JAVA_OPTS=-Xms256m -Xmx256m
+
+  mcod-apm:
+    image: apm-server:6.7.0-mcod
+    container_name: mcod-apm
+    build:
+      context: .
+      dockerfile: docker/apm-server/Dockerfile
+    restart: "no"
+    links:
+      - mcod-elasticsearch-1:mcod-monitoring
+    networks:
+      backend:
+        ipv4_address: 172.18.18.250
+
+  mcod-filebeat:
+    image: filebeat:6.7.0-mcod
+    container_name: mcod-filebeat
+    build:
+      context: .
+      dockerfile: docker/filebeat/Dockerfile
+    restart: "no"
+    networks:
+      - backend
+    links:
+      - mcod-elasticsearch-1:mcod-monitoring
+    volumes:
+      - filebeat_vol:/usr/share/filebeat/data:rw
+      - /var/lib/docker/containers:/usr/share/filebeat/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+
+#  mcod-metricbeat:
+#    image: metricbeat:6.7.0-mcod
+#    container_name: mcod-metricbeat
+#    build:
+#      context: .
+#      dockerfile: docker/metricbeat/Dockerfile
+#    restart: "no"
+#    networks:
+#      - backend
+#    links:
+#      - mcod-elasticsearch-1:mcod-monitoring
+#      - mcod-logstash
+#    volumes:
+#      - /:/hostfs:ro
+#      - /sys/fs/cgroup:/hostfs/sys/fs/cgroup:ro
+#      - /proc:/hostfs/proc:ro
+#    environment:
+#      - system.hostfs=/hostfs
+#
+#  mcod-heartbeat:
+#    image: heartbeat:6.7.0-mcod
+#    container_name: mcod-heartbeat
+#    build:
+#      context: .
+#      dockerfile: docker/heartbeat/Dockerfile
+#    restart: "no"
+#    user: 0:0
+#    extra_hosts:
+#      - "mcod.local:172.18.18.100"
+#      - "api.mcod.local:172.18.18.100"
+#    networks:
+#      - backend
+#    links:
+#      - mcod-elasticsearch-1:mcod-monitoring
+#    environment:
+#      API_URL: http://api.mcod.local
+#      FRONTEND_URL: http://mcod.local
+#      ADMIN_URL: http://admin.mcod.local
+
+  mcod-kibana:
+    image: kibana:6.7.0
+    restart: "no"
+    container_name: mcod-kibana
+    environment:
+      SERVER_NAME: kibana.mcod.local
+      ELASTICSEARCH_HOSTS: http://mcod-monitoring:9200
+    networks:
+      backend:
+        ipv4_address: 172.18.18.110
+    ports:
+      - 5601:5601
+    links:
+      - mcod-elasticsearch-1:mcod-monitoring
+      - mcod-nginx
+      - mcod-filebeat
+      - mcod-apm
+
+  mcod-smtp:
+    container_name: mcod-smtp
+    image: mailhog/mailhog
+    user: root
+    ports:
+      - 8025:8025
+      - 1025:1025
+    healthcheck:
+      test: echo | telnet 127.0.0.1 1025
+    networks:
+      backend:
+        ipv4_address: 172.18.18.111
+
+#  mcod-vault:
+#    container_name: mcod-vault
+#    image: vault:1.1.0-mcod
+#    build:
+#      context: .
+#      dockerfile: docker/vault/Dockerfile
+#    restart: "no"
+#    environment:
+#      - VAULT_ADDR=http://127.0.0.1:8200
+#      - VAULT_API_ADDR=http://127.0.0.1:8200
+#    command: server
+#    volumes:
+#      - vault_vol:/vault/file
+#      - vault_secrets:/vault/secrets
+#    cap_add:
+#      - IPC_LOCK
+#    external_links:
+#      - mcod-db
+#    networks:
+#      - backend
+
+networks:
+  backend:
+    driver: bridge
+    driver_opts:
+      com.docker.network.enable_ipv6: "false"
+    ipam:
+      driver: default
+      config:
+      - subnet: 172.18.18.0/24
+
+volumes:
+  frontend_vol:
+  filebeat_vol:
+  esmon_vol:
+  postgres_vol:
+  rabbitmq_vol:
+  elastic_vol:
+  redis_vol:
+  vault_vol:
+  vault_secrets:
+

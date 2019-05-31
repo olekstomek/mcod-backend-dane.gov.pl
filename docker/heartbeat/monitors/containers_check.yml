@@ -1,0 +1,10 @@
+- type: icmp
+  schedule: '@every 5s'
+  hosts:
+    - mcod-db
+    - mcod-elasticsearch-1
+    - mcod-redis
+    - mcod-rabbitmq
+    - mcod-api
+    - mcod-admin
+    - mcod-celery

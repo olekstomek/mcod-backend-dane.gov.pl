@@ -1,0 +1,2912 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2019-05-10 14:44+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: mcod/alerts/admin.py:16 mcod/alerts/admin.py:124
+msgid "Display"
+msgstr ""
+
+#: mcod/alerts/admin.py:58
+msgid "Start date cannot be greater than finish date."
+msgstr ""
+
+#: mcod/alerts/admin.py:66
+msgid "Finish date cannot be in the past."
+msgstr ""
+
+#: mcod/alerts/admin.py:111 mcod/applications/admin.py:80
+#: mcod/articles/admin.py:65 mcod/categories/admin.py:42
+#: mcod/datasets/admin.py:345 mcod/organizations/admin.py:167
+#: mcod/resources/admin.py:96 mcod/resources/admin.py:104
+#: mcod/users/admin.py:120 mcod/users/admin.py:133
+msgid "General"
+msgstr ""
+
+#: mcod/alerts/apps.py:7 mcod/alerts/models.py:64 mcod/settings/base.py:302
+msgid "Alerts"
+msgstr ""
+
+#: mcod/alerts/models.py:14 mcod/settings/base.py:262
+#: mcod/watchers/models.py:31
+msgid "Active"
+msgstr ""
+
+#: mcod/alerts/models.py:15 mcod/core/db/models.py:21
+#: mcod/resources/models.py:62 mcod/tags/models.py:21
+msgid "Draft"
+msgstr ""
+
+#: mcod/alerts/models.py:19
+msgid "Ongoing"
+msgstr ""
+
+#: mcod/alerts/models.py:20 mcod/datasets/models.py:27
+msgid "Not applicable"
+msgstr ""
+
+#: mcod/alerts/models.py:21
+msgid "Finished"
+msgstr ""
+
+#: mcod/alerts/models.py:22
+msgid "Waiting"
+msgstr ""
+
+#: mcod/alerts/models.py:28 mcod/applications/forms.py:14
+#: mcod/applications/models.py:35 mcod/articles/forms.py:11
+#: mcod/articles/models.py:97 mcod/categories/models.py:32
+#: mcod/datasets/forms.py:18 mcod/datasets/models.py:50
+#: mcod/datasets/models.py:106 mcod/licenses/models.py:28
+#: mcod/organizations/models.py:36 mcod/organizations/models.py:90
+#: mcod/resources/forms.py:39 mcod/resources/forms.py:77
+#: mcod/templates/docs/tables/description.html:9
+msgid "Title"
+msgstr ""
+
+#: mcod/alerts/models.py:29
+msgid "Title of the alert (300 characters max.)"
+msgstr ""
+
+#: mcod/alerts/models.py:31 mcod/articles/models.py:33
+#: mcod/categories/models.py:33 mcod/organizations/forms.py:20
+#: mcod/organizations/forms.py:29 mcod/organizations/models.py:37
+#: mcod/organizations/models.py:190 mcod/resources/forms.py:41
+#: mcod/resources/forms.py:42 mcod/resources/forms.py:79
+#: mcod/resources/forms.py:80 mcod/resources/models.py:448
+#: mcod/templates/mails/data-suggestion.html:30
+#: mcod/templates/mails/data-suggestion.txt:5
+msgid "Description"
+msgstr ""
+
+#: mcod/alerts/models.py:32
+msgid "Description of the alert"
+msgstr ""
+
+#: mcod/alerts/models.py:34
+msgid "Start date"
+msgstr ""
+
+#: mcod/alerts/models.py:35
+msgid "Date and time from which the message should be displayed"
+msgstr ""
+
+#: mcod/alerts/models.py:37
+msgid "Finish date"
+msgstr ""
+
+#: mcod/alerts/models.py:38
+msgid "Date and time until which the message should be displayed"
+msgstr ""
+
+#: mcod/alerts/models.py:46 mcod/applications/models.py:66
+#: mcod/articles/models.py:41 mcod/articles/models.py:127
+#: mcod/categories/models.py:45 mcod/datasets/models.py:84
+#: mcod/datasets/models.py:107 mcod/organizations/models.py:72
+#: mcod/resources/models.py:467 mcod/tags/models.py:55
+msgid "Created by"
+msgstr ""
+
+#: mcod/alerts/models.py:56 mcod/applications/models.py:76
+#: mcod/articles/models.py:50 mcod/articles/models.py:136
+#: mcod/categories/models.py:54 mcod/datasets/models.py:93
+#: mcod/datasets/models.py:108 mcod/organizations/models.py:81
+#: mcod/resources/models.py:476 mcod/tags/models.py:64
+msgid "Modified by"
+msgstr ""
+
+#: mcod/alerts/models.py:63
+msgid "Alert"
+msgstr ""
+
+#: mcod/applications/admin.py:55 mcod/applications/admin.py:83
+#: mcod/applications/models.py:50 mcod/articles/models.py:117
+#: mcod/datasets/apps.py:9 mcod/datasets/models.py:196
+#: mcod/organizations/admin.py:173 mcod/settings/base.py:280
+#: mcod/settings/base.py:294
+#, fuzzy
+#| msgid "acc: Resource"
+msgid "Datasets"
+msgstr "resource"
+
+#: mcod/applications/admin.py:82 mcod/articles/admin.py:53
+#: mcod/articles/admin.py:67 mcod/articles/models.py:112
+#: mcod/datasets/admin.py:348 mcod/tags/apps.py:9 mcod/tags/models.py:85
+#: mcod/templates/docs/tables/description.html:17
+msgid "Tags"
+msgstr ""
+
+#: mcod/applications/admin.py:110 mcod/organizations/admin.py:157
+msgid "Logo"
+msgstr ""
+
+#: mcod/applications/apps.py:9 mcod/applications/models.py:121
+#: mcod/settings/base.py:283
+#, fuzzy
+#| msgid "acc: Application"
+msgid "Applications"
+msgstr "application"
+
+#: mcod/applications/forms.py:19 mcod/applications/forms.py:20
+#: mcod/applications/models.py:36 mcod/articles/forms.py:15
+#: mcod/articles/forms.py:16 mcod/articles/models.py:98
+#: mcod/datasets/forms.py:31 mcod/datasets/forms.py:42
+#: mcod/datasets/models.py:53 mcod/datasets/models.py:106
+msgid "Notes"
+msgstr ""
+
+#: mcod/applications/forms.py:24
+msgid "datasets"
+msgstr ""
+
+#: mcod/applications/forms.py:25 mcod/datasets/models.py:195
+#: mcod/resources/models.py:451 mcod/templates/docs/tables/description.html:10
+#, fuzzy
+#| msgid "acc: Resource"
+msgid "Dataset"
+msgstr "resource"
+
+#: mcod/applications/models.py:37 mcod/articles/models.py:105
+msgid "Author"
+msgstr ""
+
+#: mcod/applications/models.py:38
+msgid "App URL"
+msgstr ""
+
+#: mcod/applications/models.py:41 mcod/categories/models.py:37
+#: mcod/organizations/models.py:40
+msgid "Image URL"
+msgstr ""
+
+#: mcod/applications/models.py:56 mcod/datasets/models.py:74
+#: mcod/tags/models.py:84
+msgid "Tag"
+msgstr ""
+
+#: mcod/applications/models.py:107
+msgid "acc: Application"
+msgstr "application"
+
+#: mcod/applications/models.py:120
+msgid "Application"
+msgstr ""
+
+#: mcod/applications/models.py:148 mcod/applications/models.py:149
+#: mcod/articles/models.py:173 mcod/articles/models.py:174
+#: mcod/categories/models.py:123 mcod/categories/models.py:124
+#: mcod/datasets/models.py:239 mcod/datasets/models.py:240
+#: mcod/organizations/models.py:225 mcod/organizations/models.py:226
+#: mcod/resources/models.py:697 mcod/resources/models.py:698
+msgid "Trash"
+msgstr ""
+
+#: mcod/articles/admin.py:92
+msgid "Preview"
+msgstr ""
+
+#: mcod/articles/admin.py:95
+msgid "Preview link"
+msgstr ""
+
+#: mcod/articles/apps.py:9 mcod/articles/models.py:164
+#: mcod/settings/base.py:285
+msgid "Articles"
+msgstr ""
+
+#: mcod/articles/models.py:32 mcod/tags/models.py:47
+msgid "name"
+msgstr ""
+
+#: mcod/articles/models.py:66
+#, fuzzy
+#| msgid "acc: Category"
+msgid "Article Category"
+msgstr "category"
+
+#: mcod/articles/models.py:67
+msgid "Article Categories"
+msgstr ""
+
+#: mcod/articles/models.py:99 mcod/articles/models.py:101
+#: mcod/datasets/models.py:55 mcod/datasets/models.py:57
+#, fuzzy
+#| msgid "acc: License"
+msgid "License ID"
+msgstr "license"
+
+#: mcod/articles/models.py:108 mcod/categories/models.py:82
+#: mcod/datasets/models.py:70 mcod/datasets/models.py:107
+#: mcod/templates/docs/tables/description.html:11
+#, fuzzy
+#| msgid "acc: Category"
+msgid "Category"
+msgstr "category"
+
+#: mcod/articles/models.py:142
+#, fuzzy
+#| msgid "acc: License"
+msgid "acc: Article"
+msgstr "license"
+
+#: mcod/articles/models.py:163
+msgid "Article"
+msgstr ""
+
+#: mcod/categories/apps.py:9 mcod/categories/models.py:83
+#, fuzzy
+#| msgid "acc: Category"
+msgid "Categories"
+msgstr "category"
+
+#: mcod/categories/models.py:34
+msgid "Color"
+msgstr ""
+
+#: mcod/categories/models.py:60
+msgid "acc: Category"
+msgstr "category"
+
+#: mcod/core/api/fields.py:22
+msgid "Missing data for required field."
+msgstr ""
+
+#: mcod/core/api/fields.py:23
+msgid "Field may not be null."
+msgstr ""
+
+#: mcod/core/api/fields.py:24
+msgid "Invalid value."
+msgstr ""
+
+#: mcod/core/api/fields.py:388
+msgid "Invalid type."
+msgstr ""
+
+#: mcod/core/api/fields.py:423
+msgid "Not a valid list."
+msgstr ""
+
+#: mcod/core/api/fields.py:436
+msgid "Not a valid mapping type."
+msgstr ""
+
+#: mcod/core/api/fields.py:451
+msgid "Not a valid string."
+msgstr ""
+
+#: mcod/core/api/fields.py:452
+msgid "Not a valid utf-8 string."
+msgstr ""
+
+#: mcod/core/api/fields.py:453
+msgid "Multiple values are not allowed."
+msgstr ""
+
+#: mcod/core/api/fields.py:465
+msgid "Cannot format string with given data."
+msgstr ""
+
+#: mcod/core/api/fields.py:471
+msgid "Not a valid UUID."
+msgstr ""
+
+#: mcod/core/api/fields.py:483
+msgid "Not a valid URL."
+msgstr ""
+
+#: mcod/core/api/fields.py:494
+msgid "Not a valid email address."
+msgstr ""
+
+#: mcod/core/api/fields.py:506
+msgid "Not a valid integer."
+msgstr ""
+
+#: mcod/core/api/fields.py:527 mcod/core/api/fields.py:539
+msgid "Special numeric values (nan or infinity) are not permitted."
+msgstr ""
+
+#: mcod/core/api/fields.py:552
+msgid "Not a valid boolean."
+msgstr ""
+
+#: mcod/core/api/fields.py:564
+msgid "Not a valid time."
+msgstr ""
+
+#: mcod/core/api/fields.py:565
+#, python-brace-format
+msgid "\"{input}\" cannot be formatted as a time."
+msgstr ""
+
+#: mcod/core/api/fields.py:571
+msgid "Not a valid date."
+msgstr ""
+
+#: mcod/core/api/fields.py:572
+#, python-brace-format
+msgid "\"{input}\" cannot be formatted as a date."
+msgstr ""
+
+#: mcod/core/api/fields.py:603
+#, python-brace-format
+msgid "Not a valid {obj_type}."
+msgstr ""
+
+#: mcod/core/api/fields.py:604
+#, python-brace-format
+msgid "\"{input}\" cannot be formatted as a {obj_type}."
+msgstr ""
+
+#: mcod/core/api/fields.py:617
+msgid "Not a valid period of time."
+msgstr ""
+
+#: mcod/core/api/fields.py:618
+msgid "{input!r} cannot be formatted as a timedelta."
+msgstr ""
+
+#: mcod/core/api/hooks.py:21 mcod/lib/triggers.py:64
+msgid "Missing authorization header"
+msgstr ""
+
+#: mcod/core/api/hooks.py:28 mcod/lib/triggers.py:71
+msgid "Invalid authorization header"
+msgstr ""
+
+#: mcod/core/api/hooks.py:36 mcod/core/api/hooks.py:42 mcod/lib/triggers.py:79
+#: mcod/lib/triggers.py:85
+msgid "Incorrect login data"
+msgstr ""
+
+#: mcod/core/api/hooks.py:49 mcod/lib/triggers.py:92
+msgid "Cannot login"
+msgstr ""
+
+#: mcod/core/api/hooks.py:56 mcod/lib/triggers.py:99 mcod/users/api/views.py:75
+msgid "Account is blocked"
+msgstr ""
+
+#: mcod/core/api/hooks.py:63 mcod/lib/triggers.py:106
+#: mcod/users/api/views.py:82
+msgid "Email address not confirmed"
+msgstr ""
+
+#: mcod/core/api/schemas.py:142
+msgid "Invalid page number"
+msgstr ""
+
+#: mcod/core/api/schemas.py:150
+msgid "Invalid page size"
+msgstr ""
+
+#: mcod/core/db/models.py:20 mcod/resources/models.py:61 mcod/tags/models.py:20
+msgid "Published"
+msgstr ""
+
+#: mcod/datasets/admin.py:259
+msgid "Filter by institution name"
+msgstr ""
+
+#: mcod/datasets/admin.py:347
+msgid "Conditions"
+msgstr ""
+
+#: mcod/datasets/admin.py:349 mcod/resources/apps.py:9
+#: mcod/resources/models.py:688 mcod/settings/base.py:281
+#: mcod/settings/base.py:293
+#, fuzzy
+#| msgid "acc: Resource"
+msgid "Resources"
+msgstr "resource"
+
+#: mcod/datasets/depricated/schemas.py:133
+msgid "Comment must be at least 3 characters long"
+msgstr ""
+
+#: mcod/datasets/forms.py:16
+msgid "e.g. the name of the data set"
+msgstr ""
+
+#: mcod/datasets/forms.py:25 mcod/datasets/forms.py:36
+msgid "Some information about the data being added"
+msgstr ""
+
+#: mcod/datasets/forms.py:46 mcod/datasets/models.py:68
+#: mcod/datasets/models.py:106
+msgid "Update frequency"
+msgstr ""
+
+#: mcod/datasets/forms.py:54
+msgid "Source"
+msgstr ""
+
+#: mcod/datasets/forms.py:58 mcod/datasets/models.py:67
+#: mcod/resources/models.py:494
+msgid "Customfields"
+msgstr ""
+
+#: mcod/datasets/forms.py:67
+msgid ""
+"The recipient should inform about the date, time of completion and obtaining "
+"information from the obliged entity"
+msgstr ""
+
+#: mcod/datasets/forms.py:74
+msgid ""
+"The recipient should inform about the processing of the information when it "
+"modifies it"
+msgstr ""
+
+#: mcod/datasets/forms.py:79
+msgid "The scope of the provider's responsibility for the information provided"
+msgstr ""
+
+#: mcod/datasets/forms.py:85
+msgid ""
+"Conditions for using public information that meets the characteristics of "
+"the work or constitute a database (Article 13 paragraph 2 of the Act on the "
+"re-use of public sector information)"
+msgstr ""
+
+#: mcod/datasets/forms.py:94
+msgid ""
+"If you select a draft, the status of all published resources belonging to "
+"that set will be changed to a draft"
+msgstr ""
+
+#: mcod/datasets/forms.py:119 mcod/resources/forms.py:64
+msgid "Availability date"
+msgstr ""
+
+#: mcod/datasets/forms.py:120 mcod/resources/forms.py:65
+#, fuzzy
+#| msgid "Modified at"
+msgid "Modification date"
+msgstr "Modified at"
+
+#: mcod/datasets/forms.py:121 mcod/datasets/models.py:98
+#: mcod/resources/forms.py:66 mcod/resources/models.py:502
+#, fuzzy
+#| msgid "Data provider"
+msgid "Update date"
+msgstr "Data provider"
+
+#: mcod/datasets/forms.py:137
+msgid ""
+"You can't publish this dataset, because his organization has the status of a "
+"draft Please set status to draft or set status to publish for organization: "
+msgstr ""
+
+#: mcod/datasets/forms.py:167
+msgid ""
+"You can't restore this dataset, because it's organization is still removed. "
+"Please first restore organization: "
+msgstr ""
+
+#: mcod/datasets/models.py:28
+msgid "yearly"
+msgstr ""
+
+#: mcod/datasets/models.py:29
+msgid "every half year"
+msgstr ""
+
+#: mcod/datasets/models.py:30
+msgid "quarterly"
+msgstr ""
+
+#: mcod/datasets/models.py:31
+msgid "monthly"
+msgstr ""
+
+#: mcod/datasets/models.py:32
+msgid "weekly"
+msgstr ""
+
+#: mcod/datasets/models.py:33
+msgid "daily"
+msgstr ""
+
+#: mcod/datasets/models.py:37
+#, fuzzy
+#| msgid "acc: Application"
+msgid "application"
+msgstr "application"
+
+#: mcod/datasets/models.py:38 mcod/resources/models.py:520
+msgid "dataset"
+msgstr ""
+
+#: mcod/datasets/models.py:39
+msgid "article"
+msgstr ""
+
+#: mcod/datasets/models.py:51
+msgid "Version"
+msgstr ""
+
+#: mcod/datasets/models.py:52 mcod/datasets/models.py:106
+msgid "Url"
+msgstr ""
+
+#: mcod/datasets/models.py:66 mcod/datasets/models.py:106
+#: mcod/organizations/models.py:194 mcod/users/models.py:192
+#, fuzzy
+#| msgid "acc: Organization"
+msgid "Institution"
+msgstr "organization"
+
+#: mcod/datasets/models.py:106 mcod/organizations/models.py:90
+#: mcod/resources/models.py:511
+msgid "id"
+msgstr ""
+
+#: mcod/datasets/models.py:107
+msgid "Status"
+msgstr ""
+
+#: mcod/datasets/models.py:107
+msgid "Conditions for re-use"
+msgstr ""
+
+#: mcod/datasets/models.py:107 mcod/resources/models.py:523
+msgid "created"
+msgstr ""
+
+#: mcod/datasets/models.py:108 mcod/datasets/models.py:166
+#: mcod/datasets/models.py:192 mcod/resources/models.py:525
+msgid "modified"
+msgstr ""
+
+#: mcod/datasets/models.py:108
+msgid "The number of followers"
+msgstr ""
+
+#: mcod/datasets/models.py:184
+#, fuzzy
+#| msgid "acc: User"
+msgid "acc: Dataset"
+msgstr "user"
+
+#: mcod/following/handlers.py:83
+msgid "resource already followed"
+msgstr ""
+
+#: mcod/following/handlers.py:117
+msgid "resource is not followed"
+msgstr ""
+
+#: mcod/histories/apps.py:7 mcod/histories/models.py:31
+#, fuzzy
+#| msgid "acc: History"
+msgid "Histories"
+msgstr "history"
+
+#: mcod/histories/models.py:19
+msgid "table name"
+msgstr ""
+
+#: mcod/histories/models.py:20
+msgid "row id"
+msgstr ""
+
+#: mcod/histories/models.py:21
+msgid "action"
+msgstr ""
+
+#: mcod/histories/models.py:22
+msgid "old value"
+msgstr ""
+
+#: mcod/histories/models.py:23
+msgid "new value"
+msgstr ""
+
+#: mcod/histories/models.py:24 mcod/templates/admin/object_history.html:24
+#: mcod/users/models.py:99 mcod/users/models.py:201 mcod/users/models.py:229
+#, fuzzy
+#| msgid "acc: User"
+msgid "User"
+msgstr "user"
+
+#: mcod/histories/models.py:25
+msgid "Change timestamp"
+msgstr ""
+
+#: mcod/histories/models.py:26
+#: mcod/templates/admin/resources/task-inline-list.html:13
+msgid "message"
+msgstr ""
+
+#: mcod/histories/models.py:30 mcod/lib/admin_mixins.py:78
+#: mcod/lib/admin_mixins.py:83 mcod/templates/admin/change_form.html:107
+#: mcod/templates/admin/object_history.html:10
+#: mcod/templates/admin/resources/change_form.html:135
+#, fuzzy
+#| msgid "acc: History"
+msgid "History"
+msgstr "history"
+
+#: mcod/histories/models.py:76
+msgid "Differences"
+msgstr ""
+
+#: mcod/histories/models.py:84
+msgid "acc: History"
+msgstr "history"
+
+#: mcod/lib/admin_mixins.py:50
+#, python-format
+msgid "Change history: %s"
+msgstr ""
+
+#: mcod/lib/admin_mixins.py:117
+msgid "Translation ({lang_code.upper()})"
+msgstr ""
+
+#: mcod/lib/errors.py:49
+msgid "Field value error"
+msgstr ""
+
+#: mcod/lib/forms/fields.py:137
+msgid "Internal number cannot be given without the main number"
+msgstr ""
+
+#: mcod/lib/hacks/goodtables/spec.py:5
+#, python-brace-format
+msgid ""
+"A column in the header row is should be provided.\n"
+"\n"
+" How it could be resolved:\n"
+" - Add the missing column name to the first row of the data source.\n"
+" - If the first row starts with, or ends with a comma, remove it.\n"
+" - If this error should be ignored disable `blank-header` check in "
+"{validator}."
+msgstr ""
+
+#: mcod/lib/hacks/goodtables/spec.py:16
+#, python-brace-format
+msgid "Header in column {column_number} is blank"
+msgstr ""
+
+#: mcod/lib/hacks/goodtables/spec.py:17
+msgid "Blank Header"
+msgstr ""
+
+#: mcod/lib/hacks/goodtables/spec.py:21
+#, python-brace-format
+msgid ""
+"This row is empty. A row should contain at least one value.\n"
+"\n"
+" How it could be resolved:\n"
+" - Delete the row.\n"
+" - If this error should be ignored disable `blank-row` check in {validator}."
+msgstr ""
+
+#: mcod/lib/hacks/goodtables/spec.py:29
+#, python-brace-format
+msgid "Row {row_number} is completely blank"
+msgstr ""
+
+#: mcod/lib/hacks/goodtables/spec.py:30
+msgid "Blank Row"
+msgstr ""
+
+#: mcod/lib/hacks/goodtables/spec.py:34
+#, python-brace-format
+msgid ""
+"Two columns in the header row have the same value. Column names should be "
+"unique.\n"
+"\n"
+" How it could be resolved:\n"
+" - Add the missing column name to the first row of the data.\n"
+" - If the first row starts with, or ends with a comma, remove it.\n"
+" - If this error should be ignored disable `duplicate-header` check in "
+"{validator}."
+msgstr ""
+
+#: mcod/lib/hacks/goodtables/spec.py:49
+#, python-brace-format
+msgid ""
+"Header in column {column_number} is duplicated to header in column(s) "
+"{column_numbers}"
+msgstr ""
+
+#: mcod/lib/hacks/goodtables/spec.py:52
+msgid "Duplicate Header"
+msgstr ""
+
+#: mcod/lib/hacks/goodtables/spec.py:56
+#, python-brace-format
+msgid ""
+"The exact same data has been seen in another row.\n"
+"\n"
+" How it could be resolved:\n"
+" - If some of the data is incorrect, correct it.\n"
+" - If the whole row is an incorrect duplicate, remove it.\n"
+" - If this error should be ignored disable `duplicate-row` check in "
+"{validator}."
+msgstr ""
+
+#: mcod/lib/hacks/goodtables/spec.py:67
+#, python-brace-format
+msgid "Row {row_number} is duplicated to row(s) {row_numbers}"
+msgstr ""
+
+#: mcod/lib/hacks/goodtables/spec.py:69
+msgid "Duplicate Row"
+msgstr ""
+
+#: mcod/lib/hacks/goodtables/spec.py:73
+#, python-brace-format
+msgid ""
+"Data reading error because of an encoding problem.\n"
+"\n"
+" How it could be resolved:\n"
+" - Fix data source if it's broken.\n"
+" - Set correct encoding in {validator}."
+msgstr ""
+
+#: mcod/lib/hacks/goodtables/spec.py:81
+#, python-brace-format
+msgid ""
+"The data source could not be successfully decoded with {encoding} encoding"
+msgstr ""
+
+#: mcod/lib/hacks/goodtables/spec.py:84
+msgid "Encoding Error"
+msgstr ""
+
+#: mcod/lib/hacks/goodtables/spec.py:88
+#, python-brace-format
+msgid ""
+"This field value should be equal to one of the values in the enumeration "
+"constraint.\n"
+"\n"
+" How it could be resolved:\n"
+" - If this value is not correct, update the value.\n"
+" - If value is correct, then remove or refine the `enum` constraint in the "
+"schema.\n"
+" - If this error should be ignored disable `enumerable-constraint` check in "
+"{validator}."
+msgstr ""
+
+#: mcod/lib/hacks/goodtables/spec.py:106
+#, python-brace-format
+msgid ""
+"The value {value} in row {row_number} and column {column_number} does not "
+"conform to the given enumeration: {constraint}"
+msgstr ""
+
+#: mcod/lib/hacks/goodtables/spec.py:111
+msgid "Enumerable Constraint"
+msgstr ""
+
+#: mcod/lib/hacks/goodtables/spec.py:115
+#, python-brace-format
+msgid ""
+"The first row of the data source contains header that doesn't exist in the "
+"schema.\n"
+"\n"
+" How it could be resolved:\n"
+" - Remove the extra column from the data source or add the missing field to "
+"the schema\n"
+" - If this error should be ignored disable `extra-header` check in "
+"{validator}."
+msgstr ""
+
+#: mcod/lib/hacks/goodtables/spec.py:126
+#, python-brace-format
+msgid "There is an extra header in column {column_number}"
+msgstr ""
+
+#: mcod/lib/hacks/goodtables/spec.py:128
+msgid "Extra Header"
+msgstr ""
+
+#: mcod/lib/hacks/goodtables/spec.py:132
+#, python-brace-format
+msgid ""
+"This row has more values compared to the header row (the first row in the "
+"data source). A key concept is that all the rows in tabular data must have "
+"the same number of columns.\n"
+"\n"
+" How it could be resolved:\n"
+" - Check data has an extra comma between the values in this row.\n"
+" - If this error should be ignored disable `extra-value` check in "
+"{validator}."
+msgstr ""
+
+#: mcod/lib/hacks/goodtables/spec.py:145
+#, python-brace-format
+msgid "Row {row_number} has an extra value in column {column_number}"
+msgstr ""
+
+#: mcod/lib/hacks/goodtables/spec.py:147
+msgid "Extra Value"
+msgstr ""
+
+#: mcod/lib/hacks/goodtables/spec.py:151
+#, python-brace-format
+msgid ""
+"Data reading error because of incorrect format.\n"
+"\n"
+" How it could be resolved:\n"
+" - Fix data format (e.g. change file extension from `txt` to `csv`).\n"
+" - Set correct format in {validator}."
+msgstr ""
+
+#: mcod/lib/hacks/goodtables/spec.py:160
+msgid ""
+"The data source is in an unknown format; no tabular data can be extracted"
+msgstr ""
+
+#: mcod/lib/hacks/goodtables/spec.py:163
+msgid "Format Error"
+msgstr ""
+
+#: mcod/lib/hacks/goodtables/spec.py:167
+msgid ""
+"Data reading error because of HTTP error.\n"
+"\n"
+" How it could be resolved:\n"
+" - Fix url link if it's not correct."
+msgstr ""
+
+#: mcod/lib/hacks/goodtables/spec.py:173
+#, python-brace-format
+msgid ""
+"The data source returned an HTTP error with a status code of {status_code}"
+msgstr ""
+
+#: mcod/lib/hacks/goodtables/spec.py:175
+msgid "HTTP Error"
+msgstr ""
+
+#: mcod/lib/hacks/goodtables/spec.py:179
+msgid ""
+"Data reading error because of IO error.\n"
+"\n"
+" How it could be resolved:\n"
+" - Fix path if it's not correct."
+msgstr ""
+
+#: mcod/lib/hacks/goodtables/spec.py:184
+#, python-brace-format
+msgid "The data source returned an IO Error of type {error_type}"
+msgstr ""
+
+#: mcod/lib/hacks/goodtables/spec.py:186
+msgid "IO Error"
+msgstr ""
+
+#: mcod/lib/hacks/goodtables/spec.py:190
+#, python-brace-format
+msgid ""
+"This field value should be less or equal than constraint value.\n"
+"\n"
+" How it could be resolved:\n"
+" - If this value is not correct, update the value.\n"
+" - If value is correct, then remove or refine the `maximum` constraint in "
+"the schema.\n"
+" - If this error should be ignored disable `maximum-constraint` check in "
+"{validator}."
+msgstr ""
+
+#: mcod/lib/hacks/goodtables/spec.py:205
+#, python-brace-format
+msgid ""
+"The value {value} in row {row_number} and column {column_number} does not "
+"conform to the maximum constraint of {constraint}"
+msgstr ""
+
+#: mcod/lib/hacks/goodtables/spec.py:210
+msgid "Maximum Constraint"
+msgstr ""
+
+#: mcod/lib/hacks/goodtables/spec.py:214
+#, python-brace-format
+msgid ""
+"A length of this field value should be less or equal than schema constraint "
+"value.\n"
+"\n"
+" How it could be resolved:\n"
+" - If this value is not correct, update the value.\n"
+" - If value is correct, then remove or refine the `maximumLength` constraint "
+"in the schema.\n"
+" - If this error should be ignored disable `maximum-length-constraint` check "
+"in {validator}."
+msgstr ""
+
+#: mcod/lib/hacks/goodtables/spec.py:237
+#, python-brace-format
+msgid ""
+"The value {value} in row {row_number} and column {column_number} does not "
+"conform to the maximum length constraint of {constraint}"
+msgstr ""
+
+#: mcod/lib/hacks/goodtables/spec.py:243
+msgid "Maximum Length Constraint"
+msgstr ""
+
+#: mcod/lib/hacks/goodtables/spec.py:247
+#, python-brace-format
+msgid ""
+"This field value should be greater or equal than constraint value.\n"
+"\n"
+" How it could be resolved:\n"
+" - If this value is not correct, update the value.\n"
+" - If value is correct, then remove or refine the `minimum` constraint in "
+"the schema.\n"
+" - If this error should be ignored disable `minimum-constraint` check in "
+"{validator}."
+msgstr ""
+
+#: mcod/lib/hacks/goodtables/spec.py:262
+#, python-brace-format
+msgid ""
+"The value {value} in row {row_number} and column {column_number} does not "
+"conform to the minimum constraint of {constraint}"
+msgstr ""
+
+#: mcod/lib/hacks/goodtables/spec.py:267
+msgid "Minimum Constraint"
+msgstr ""
+
+#: mcod/lib/hacks/goodtables/spec.py:271
+#, python-brace-format
+msgid ""
+"A length of this field value should be greater or equal than schema "
+"constraint value.\n"
+"\n"
+" How it could be resolved:\n"
+" - If this value is not correct, update the value.\n"
+" - If value is correct, then remove or refine the `minimumLength` constraint "
+"in the schema.\n"
+" - If this error should be ignored disable `minimum-length-constraint` check "
+"in {validator}."
+msgstr ""
+
+#: mcod/lib/hacks/goodtables/spec.py:294
+#, python-brace-format
+msgid ""
+"The value {value} in row {row_number} and column {column_number} does not "
+"conform to the minimum length constraint of {constraint}"
+msgstr ""
+
+#: mcod/lib/hacks/goodtables/spec.py:300
+msgid "Minimum Length Constraint"
+msgstr ""
+
+#: mcod/lib/hacks/goodtables/spec.py:304
+#, python-brace-format
+msgid ""
+"Based on the schema there should be a header that is missing in the first "
+"row of the data source.\n"
+"\n"
+" How it could be resolved:\n"
+" - Add the missing column to the data source or remove the extra field from "
+"the schema\n"
+" - If this error should be ignored disable `missing-header` check in "
+"{validator}."
+msgstr ""
+
+#: mcod/lib/hacks/goodtables/spec.py:317
+#, python-brace-format
+msgid "There is a missing header in column {column_number}"
+msgstr ""
+
+#: mcod/lib/hacks/goodtables/spec.py:319
+msgid "Missing Header"
+msgstr ""
+
+#: mcod/lib/hacks/goodtables/spec.py:323
+#, python-brace-format
+msgid ""
+"This row has less values compared to the header row (the first row in the "
+"data source). A key concept is that all the rows in tabular data must have "
+"the same number of columns.\n"
+"\n"
+" How it could be resolved:\n"
+" - Check data is not missing a comma between the values in this row.\n"
+" - If this error should be ignored disable `missing-value` check in "
+"{validator}."
+msgstr ""
+
+#: mcod/lib/hacks/goodtables/spec.py:337
+#, python-brace-format
+msgid "Row {row_number} has a missing value in column {column_number}"
+msgstr ""
+
+#: mcod/lib/hacks/goodtables/spec.py:339
+msgid "Missing Value"
+msgstr ""
+
+#: mcod/lib/hacks/goodtables/spec.py:343
+#, python-brace-format
+msgid ""
+"One of the data source headers doesn't match the field name defined in the "
+"schema.\n"
+"\n"
+" How it could be resolved:\n"
+" - Rename header in the data source or field in the schema\n"
+" - If this error should be ignored disable `non-matching-header` check in "
+"{validator}."
+msgstr ""
+
+#: mcod/lib/hacks/goodtables/spec.py:357
+#, python-brace-format
+msgid ""
+"Header in column {column_number} doesn't match field name {field_name} in "
+"the schema"
+msgstr ""
+
+#: mcod/lib/hacks/goodtables/spec.py:361
+msgid "Non-Matching Header"
+msgstr ""
+
+#: mcod/lib/hacks/goodtables/spec.py:365
+#, python-brace-format
+msgid ""
+"This field value should conform to constraint pattern.\n"
+"\n"
+" How it could be resolved:\n"
+" - If this value is not correct, update the value.\n"
+" - If value is correct, then remove or refine the `pattern` constraint in "
+"the schema.\n"
+" - If this error should be ignored disable `pattern-constraint` check in "
+"{validator}."
+msgstr ""
+
+#: mcod/lib/hacks/goodtables/spec.py:380
+#, python-brace-format
+msgid ""
+"The value {value} in row {row_number} and column {column_number} does not "
+"conform to the pattern constraint of {constraint}"
+msgstr ""
+
+#: mcod/lib/hacks/goodtables/spec.py:385
+msgid "Pattern Constraint"
+msgstr ""
+
+#: mcod/lib/hacks/goodtables/spec.py:389
+#, python-brace-format
+msgid ""
+"This field is a required field, but it contains no value.\n"
+"\n"
+" How it could be resolved:\n"
+" - If this value is not correct, update the value.\n"
+" - If value is correct, then remove the `required` constraint from the "
+"schema.\n"
+" - If this error should be ignored disable `required-constraint` check in "
+"{validator}."
+msgstr ""
+
+#: mcod/lib/hacks/goodtables/spec.py:406
+#, python-brace-format
+msgid ""
+"Column {column_number} is a required field, but row {row_number} has no value"
+msgstr ""
+
+#: mcod/lib/hacks/goodtables/spec.py:409
+msgid "Required Constraint"
+msgstr ""
+
+#: mcod/lib/hacks/goodtables/spec.py:413
+#, python-brace-format
+msgid ""
+"Provided schema is not valid.\n"
+"\n"
+" How it could be resolved:\n"
+" - Update schema descriptor to be a valid descriptor\n"
+" - If this error should be ignored disable schema checks in {validator}."
+msgstr ""
+
+#: mcod/lib/hacks/goodtables/spec.py:421
+#, python-brace-format
+msgid "Table Schema error: {error_message}"
+msgstr ""
+
+#: mcod/lib/hacks/goodtables/spec.py:422
+msgid "Table Schema Error"
+msgstr ""
+
+#: mcod/lib/hacks/goodtables/spec.py:426
+#, python-brace-format
+msgid ""
+"Data reading error because of incorrect scheme.\n"
+"\n"
+" How it could be resolved:\n"
+" - Fix data scheme (e.g. change scheme from `ftp` to `http`).\n"
+" - Set correct scheme in {validator}."
+msgstr ""
+
+#: mcod/lib/hacks/goodtables/spec.py:434
+msgid ""
+"The data source is in an unknown scheme; no tabular data can be extracted"
+msgstr ""
+
+#: mcod/lib/hacks/goodtables/spec.py:437
+msgid "Scheme Error"
+msgstr ""
+
+#: mcod/lib/hacks/goodtables/spec.py:441
+#, python-brace-format
+msgid ""
+"Data reading error because of not supported or inconsistent contents.\n"
+"\n"
+" How it could be resolved:\n"
+" - Fix data contents (e.g. change JSON data to array or arrays/objects).\n"
+" - Set correct source settings in {validator}."
+msgstr ""
+
+#: mcod/lib/hacks/goodtables/spec.py:451
+msgid ""
+"The data source has not supported or has inconsistent contents; no tabular "
+"data can be extracted"
+msgstr ""
+
+#: mcod/lib/hacks/goodtables/spec.py:454
+msgid "Source Error"
+msgstr ""
+
+#: mcod/lib/hacks/goodtables/spec.py:458
+#, python-brace-format
+msgid ""
+"The value does not match the schema type and format for this field.\n"
+"\n"
+" How it could be resolved:\n"
+" - If this value is not correct, update the value.\n"
+" - If this value is correct, adjust the type and/or format.\n"
+" - To ignore the error, disable the `type-or-format-error` check in "
+"{validator}. In this case all schema checks for row values will be ignored."
+msgstr ""
+
+#: mcod/lib/hacks/goodtables/spec.py:477
+#, python-brace-format
+msgid ""
+"The value {value} in row {row_number} and column {column_number} is not type "
+"{field_type} and format {field_format}"
+msgstr ""
+
+#: mcod/lib/hacks/goodtables/spec.py:482
+msgid "Type or Format Error"
+msgstr ""
+
+#: mcod/lib/hacks/goodtables/spec.py:486
+#, python-brace-format
+msgid ""
+"This field is a unique field but it contains a value that has been used in "
+"another row.\n"
+"\n"
+" How it could be resolved:\n"
+" - If this value is not correct, update the value.\n"
+" - If value is correct, then the values in this column are not unique. "
+"Remove the `unique` constraint from the schema.\n"
+" - If this error should be ignored disable `unique-constraint` check in "
+"{validator}."
+msgstr ""
+
+#: mcod/lib/hacks/goodtables/spec.py:503
+#, python-brace-format
+msgid ""
+"Rows {row_numbers} has unique constraint violation in column {column_number}"
+msgstr ""
+
+#: mcod/lib/hacks/goodtables/spec.py:506
+msgid "Unique Constraint"
+msgstr ""
+
+#: mcod/lib/hashers.py:66
+msgid "algorithm"
+msgstr ""
+
+#: mcod/lib/hashers.py:67
+msgid "iterations"
+msgstr ""
+
+#: mcod/lib/hashers.py:68
+msgid "salt"
+msgstr ""
+
+#: mcod/lib/hashers.py:69
+msgid "hash"
+msgstr ""
+
+#: mcod/lib/jwt.py:16
+msgid "Missing Authorization Header"
+msgstr ""
+
+#: mcod/lib/jwt.py:25
+msgid "Invalid Authorization Header"
+msgstr ""
+
+#: mcod/lib/jwt.py:31
+msgid "Invalid Authorization Header: Token Missing"
+msgstr ""
+
+#: mcod/lib/jwt.py:37
+msgid "Invalid Authorization Header: Contains extra content"
+msgstr ""
+
+#: mcod/lib/middleware.py:81
+msgid ""
+"Your account data is incomplete. Full name and phone number must be given"
+msgstr ""
+
+#: mcod/lib/password_validators.py:11
+msgid "Password must contain at least one digit."
+msgstr ""
+
+#: mcod/lib/password_validators.py:15
+msgid "Password must contain at least one upper and one lower letter."
+msgstr ""
+
+#: mcod/lib/password_validators.py:18
+msgid "Password must contain at least one special character."
+msgstr ""
+
+#: mcod/lib/password_validators.py:22
+msgid ""
+"Your password must contain at least: one digit, one special char, one upper "
+"and one lower letter"
+msgstr ""
+
+#: mcod/lib/schemas.py:23
+msgid "Page number must be greater then 0"
+msgstr ""
+
+#: mcod/lib/schemas.py:28
+msgid "Page size must be greater then 0"
+msgstr ""
+
+#: mcod/lib/schemas.py:30 mcod/lib/schemas.py:59
+msgid "Max page size is 100"
+msgstr ""
+
+#: mcod/lib/schemas.py:52
+msgid "Page must be greater then 1"
+msgstr ""
+
+#: mcod/lib/schemas.py:57
+msgid "Page size mus be greater then 0"
+msgstr ""
+
+#: mcod/licenses/apps.py:9 mcod/licenses/models.py:47
+msgid "Licenses"
+msgstr ""
+
+#: mcod/licenses/models.py:27
+msgid "Name"
+msgstr ""
+
+#: mcod/licenses/models.py:29
+msgid "URL"
+msgstr ""
+
+#: mcod/licenses/models.py:43
+msgid "acc: License"
+msgstr "license"
+
+#: mcod/licenses/models.py:46
+#, fuzzy
+#| msgid "acc: License"
+msgid "License"
+msgstr "license"
+
+#: mcod/organizations/admin.py:169 mcod/templates/admin/base_site.html:21
+msgid "Contact"
+msgstr ""
+
+#: mcod/organizations/admin.py:172 mcod/organizations/admin.py:226
+#: mcod/organizations/admin.py:282 mcod/organizations/forms.py:42
+#: mcod/organizations/forms.py:45 mcod/settings/base.py:287
+#: mcod/users/apps.py:6 mcod/users/models.py:100
+msgid "Users"
+msgstr ""
+
+#: mcod/organizations/admin.py:209 mcod/organizations/admin.py:265
+msgid "Contact details"
+msgstr ""
+
+#: mcod/organizations/apps.py:9 mcod/organizations/models.py:195
+#: mcod/settings/base.py:282 mcod/settings/base.py:295 mcod/users/admin.py:121
+#: mcod/users/admin.py:136
+msgid "Institutions"
+msgstr ""
+
+#: mcod/organizations/forms.py:17 mcod/organizations/forms.py:26
+msgid "Some information about the institution"
+msgstr ""
+
+#: mcod/organizations/forms.py:32 mcod/users/forms.py:17
+#: mcod/users/models.py:63
+msgid "Phone number"
+msgstr ""
+
+#: mcod/organizations/forms.py:33
+msgid "Fax number"
+msgstr ""
+
+#: mcod/organizations/forms.py:34 mcod/organizations/forms.py:35
+#: mcod/organizations/models.py:51 mcod/organizations/models.py:61
+#: mcod/users/forms.py:18 mcod/users/models.py:65
+msgid "int."
+msgstr ""
+
+#: mcod/organizations/forms.py:48 mcod/organizations/models.py:41
+msgid "Postal code"
+msgstr ""
+
+#: mcod/organizations/forms.py:50 mcod/organizations/models.py:62
+#: mcod/templates/docs/tables/description.html:70
+msgid "Website"
+msgstr ""
+
+#: mcod/organizations/forms.py:55
+msgid ""
+"If you select a draft, the status of all published datasets belonging to "
+"this institution will be changed to a draft.Also all resources of those "
+"datasets will be change to a draft"
+msgstr ""
+
+#: mcod/organizations/forms.py:73
+msgid "That value is already taken"
+msgstr ""
+
+#: mcod/organizations/models.py:24
+msgid "Local goverment"
+msgstr ""
+
+#: mcod/organizations/models.py:25
+msgid "Public goverment"
+msgstr ""
+
+#: mcod/organizations/models.py:26
+msgid "Other"
+msgstr ""
+
+#: mcod/organizations/models.py:42
+msgid "City"
+msgstr ""
+
+#: mcod/organizations/models.py:43
+msgid "Street type"
+msgstr ""
+
+#: mcod/organizations/models.py:44
+msgid "Street"
+msgstr ""
+
+#: mcod/organizations/models.py:45
+msgid "Street number"
+msgstr ""
+
+#: mcod/organizations/models.py:46
+msgid "Flat number"
+msgstr ""
+
+#: mcod/organizations/models.py:48
+#: mcod/templates/docs/tables/description.html:75 mcod/users/models.py:60
+#: mcod/users/models.py:192
+msgid "Email"
+msgstr ""
+
+#: mcod/organizations/models.py:49
+msgid "EPUAP"
+msgstr ""
+
+#: mcod/organizations/models.py:50
+#: mcod/templates/docs/tables/description.html:83
+msgid "Fax"
+msgstr ""
+
+#: mcod/organizations/models.py:57 mcod/organizations/models.py:90
+msgid "Institution type"
+msgstr ""
+
+#: mcod/organizations/models.py:59
+msgid "REGON"
+msgstr ""
+
+#: mcod/organizations/models.py:60
+#: mcod/templates/docs/tables/description.html:81
+msgid "Phone"
+msgstr ""
+
+#: mcod/organizations/models.py:90
+msgid "The number of datasets"
+msgstr ""
+
+#: mcod/organizations/models.py:142
+#, fuzzy
+#| msgid "acc: Organization"
+msgid "acc: Institution"
+msgstr "organization"
+
+#: mcod/organizations/models.py:170 mcod/organizations/models.py:181
+msgid " int. "
+msgstr ""
+
+#: mcod/reports/admin.py:23 mcod/reports/models.py:18 mcod/reports/models.py:74
+msgid "Ordered by"
+msgstr ""
+
+#: mcod/reports/admin.py:52 mcod/reports/admin.py:117
+msgid "Generated report file"
+msgstr ""
+
+#: mcod/reports/admin.py:60 mcod/reports/admin.py:125
+#: mcod/templates/docs/tables/description.html:30
+msgid "File size"
+msgstr ""
+
+#: mcod/reports/admin.py:147
+msgid ""
+"The task of generating the report has been commissioned. The report may "
+"appear with a delay ..."
+msgstr ""
+
+#: mcod/reports/admin.py:161
+msgid "Task for CSV generation queued"
+msgstr ""
+
+#: mcod/reports/admin.py:164 mcod/reports/admin.py:172
+msgid "Export selected to CSV"
+msgstr ""
+
+#: mcod/reports/apps.py:7 mcod/reports/models.py:35
+msgid "Reports"
+msgstr ""
+
+#: mcod/reports/models.py:27
+msgid "Task"
+msgstr ""
+
+#: mcod/reports/models.py:31 mcod/reports/models.py:67
+msgid "File path"
+msgstr ""
+
+#: mcod/reports/models.py:34
+msgid "Report"
+msgstr ""
+
+#: mcod/reports/models.py:41
+msgid "User report"
+msgstr ""
+
+#: mcod/reports/models.py:42
+msgid "User reports"
+msgstr ""
+
+#: mcod/reports/models.py:48
+msgid "Reource report"
+msgstr ""
+
+#: mcod/reports/models.py:49
+msgid "Resource reports"
+msgstr ""
+
+#: mcod/reports/models.py:55
+msgid "Dataset report"
+msgstr ""
+
+#: mcod/reports/models.py:56
+msgid "Dataset reports"
+msgstr ""
+
+#: mcod/reports/models.py:62
+#, fuzzy
+#| msgid "acc: Organization"
+msgid "Institution report"
+msgstr "organization"
+
+#: mcod/reports/models.py:63
+#, fuzzy
+#| msgid "acc: Organization"
+msgid "Institution reports"
+msgstr "organization"
+
+#: mcod/reports/models.py:81
+msgid "Summary daily report"
+msgstr ""
+
+#: mcod/reports/models.py:82
+msgid "Summary daily reports"
+msgstr ""
+
+#: mcod/resources/admin.py:31
+msgid "Filter by dataset name"
+msgstr ""
+
+#: mcod/resources/admin.py:53
+msgid "Link status"
+msgstr ""
+
+#: mcod/resources/admin.py:59
+msgid "File status"
+msgstr ""
+
+#: mcod/resources/admin.py:65
+msgid "TabularView"
+msgstr ""
+
+#: mcod/resources/admin.py:98
+msgid "File validation"
+msgstr ""
+
+#: mcod/resources/admin.py:99
+msgid "Link validation"
+msgstr ""
+
+#: mcod/resources/admin.py:100
+msgid "Data validation"
+msgstr ""
+
+#: mcod/resources/admin.py:308
+msgid "Actualization date"
+msgstr ""
+
+#: mcod/resources/admin.py:355
+msgid "Resource with this id does not exists"
+msgstr ""
+
+#: mcod/resources/admin.py:358
+msgid "Task for resource revalidation queued"
+msgstr ""
+
+#: mcod/resources/forms.py:49
+msgid ""
+"You can't set status of this resource to published, because it's dataset is "
+"still a draft. You should first published that dataset: "
+msgstr ""
+
+#: mcod/resources/forms.py:71
+#, fuzzy
+#| msgid "acc: Resource"
+msgid "Data source"
+msgstr "resource"
+
+#: mcod/resources/forms.py:72 mcod/resources/models.py:161
+#: mcod/resources/models.py:437 mcod/resources/models.py:490
+msgid "File"
+msgstr ""
+
+#: mcod/resources/forms.py:106
+msgid ""
+"You can't set status of this resource to published, because it's dataset is "
+"still a draft. Set status of this resource to draft or set stauts to "
+"published for that dataset: "
+msgstr ""
+
+#: mcod/resources/forms.py:143
+msgid ""
+"You can't restore this resource, because it's dataset is still removed. "
+"Please first restore dataset: "
+msgstr ""
+
+#: mcod/resources/models.py:130 mcod/resources/utils.py:21
+#, python-format
+msgid "File %s does not exist, please upload it again"
+msgstr ""
+
+#: mcod/resources/models.py:162
+msgid "Web Site"
+msgstr ""
+
+#: mcod/resources/models.py:163
+msgid "API"
+msgstr ""
+
+#: mcod/resources/models.py:309
+msgid "File does not exist"
+msgstr ""
+
+#: mcod/resources/models.py:312
+msgid "Invalid file type"
+msgstr ""
+
+#: mcod/resources/models.py:440
+msgid "Packed file"
+msgstr ""
+
+#: mcod/resources/models.py:443 mcod/templates/docs/tables/description.html:27
+msgid "File info"
+msgstr ""
+
+#: mcod/resources/models.py:445 mcod/templates/docs/tables/description.html:31
+msgid "File encoding"
+msgstr ""
+
+#: mcod/resources/models.py:446 mcod/resources/models.py:495
+msgid "Resource Link"
+msgstr ""
+
+#: mcod/resources/models.py:447 mcod/resources/models.py:513
+msgid "title"
+msgstr ""
+
+#: mcod/resources/models.py:449
+msgid "Position"
+msgstr ""
+
+#: mcod/resources/models.py:453 mcod/resources/models.py:493
+msgid "Format"
+msgstr ""
+
+#: mcod/resources/models.py:456
+msgid "Type"
+msgstr ""
+
+#: mcod/resources/models.py:458
+msgid "Openness score"
+msgstr ""
+
+#: mcod/resources/models.py:479 mcod/resources/models.py:483
+#: mcod/resources/models.py:486
+msgid "Download Tasks"
+msgstr ""
+
+#: mcod/resources/models.py:492
+msgid "Data type"
+msgstr ""
+
+#: mcod/resources/models.py:498
+#, fuzzy
+#| msgid "Table view"
+msgid "Tabular view"
+msgstr "Table view on"
+
+#: mcod/resources/models.py:500
+#, fuzzy
+#| msgid "Data provider"
+msgid "Data date"
+msgstr "Data provider"
+
+#: mcod/resources/models.py:512
+msgid "uuid"
+msgstr ""
+
+#: mcod/resources/models.py:514
+msgid "description"
+msgstr ""
+
+#: mcod/resources/models.py:515
+msgid "link"
+msgstr ""
+
+#: mcod/resources/models.py:516
+msgid "link_is_valid"
+msgstr ""
+
+#: mcod/resources/models.py:517
+msgid "file_is_valid"
+msgstr ""
+
+#: mcod/resources/models.py:518
+msgid "data_is_valid"
+msgstr ""
+
+#: mcod/resources/models.py:519
+msgid "format"
+msgstr ""
+
+#: mcod/resources/models.py:521
+msgid "status"
+msgstr ""
+
+#: mcod/resources/models.py:522
+msgid "created_by"
+msgstr ""
+
+#: mcod/resources/models.py:524
+msgid "modified_by"
+msgstr ""
+
+#: mcod/resources/models.py:526
+msgid "type"
+msgstr ""
+
+#: mcod/resources/models.py:527
+msgid "openness_score"
+msgstr ""
+
+#: mcod/resources/models.py:528
+msgid "views_count"
+msgstr ""
+
+#: mcod/resources/models.py:529
+msgid "downloads_count"
+msgstr ""
+
+#: mcod/resources/models.py:642
+msgid "acc: Resource"
+msgstr "resource"
+
+#: mcod/resources/models.py:687
+msgid "Resource"
+msgstr ""
+
+#: mcod/resources/utils.py:13
+#, python-format
+msgid "Resource with id %s does not exist"
+msgstr ""
+
+#: mcod/resources/utils.py:16
+#, python-format
+msgid "No file attached to resource with id %s"
+msgstr ""
+
+#: mcod/searchhistories/apps.py:7 mcod/searchhistories/models.py:18
+#, fuzzy
+#| msgid "acc: History"
+msgid "Search Histories"
+msgstr "history"
+
+#: mcod/searchhistories/models.py:17
+#, fuzzy
+#| msgid "acc: History"
+msgid "Search history"
+msgstr "history"
+
+#: mcod/settings/base.py:228
+msgid "Polish"
+msgstr ""
+
+#: mcod/settings/base.py:229
+msgid "English"
+msgstr ""
+
+#: mcod/settings/base.py:263
+msgid "Pending"
+msgstr ""
+
+#: mcod/settings/base.py:264
+msgid "Blocked"
+msgstr ""
+
+#: mcod/settings/base.py:270
+msgid "Open Data - Administration Panel"
+msgstr ""
+
+#: mcod/settings/base.py:289
+msgid "CSV Reports"
+msgstr ""
+
+#: mcod/settings/base.py:292
+msgid "Users reports"
+msgstr ""
+
+#: mcod/settings/base.py:296
+msgid "Daily Reports"
+msgstr ""
+
+#: mcod/settings/base.py:308
+msgid "Config"
+msgstr ""
+
+#: mcod/suggestions/tasks.py:26 mcod/suggestions/tests/test_models.py:27
+#: mcod/templates/mails/data-suggestion.html:7
+#: mcod/templates/mails/data-suggestion.html:17
+#: mcod/templates/mails/data-suggestion.txt:3
+msgid "Resource demand reported"
+msgstr ""
+
+#: mcod/tags/models.py:73
+msgid "acc: Tag"
+msgstr "tag"
+
+#: mcod/templates/admin/app_index.html:8 mcod/templates/admin/base.html:109
+#: mcod/templates/admin/change_form.html:63
+#: mcod/templates/admin/constance/change_list.html:44
+#: mcod/templates/admin/menu.html:10 mcod/templates/admin/object_history.html:6
+#: mcod/templates/admin/resources/change_form.html:73
+msgid "Home"
+msgstr ""
+
+#: mcod/templates/admin/app_index.html:11
+#: mcod/templates/admin/change_list.html:19
+#: mcod/templates/admin/reports/package_summary_change_list.html:10
+#, python-format
+msgid "%(name)s"
+msgstr ""
+
+#: mcod/templates/admin/base.html:75
+msgid "Welcome,"
+msgstr ""
+
+#: mcod/templates/admin/base.html:84
+msgid "Documentation"
+msgstr ""
+
+#: mcod/templates/admin/base.html:87
+msgid "Change password"
+msgstr ""
+
+#: mcod/templates/admin/base.html:89
+msgid "Log out"
+msgstr ""
+
+#: mcod/templates/admin/base_site.html:10
+msgid "Django site admin"
+msgstr ""
+
+#: mcod/templates/admin/base_site.html:13
+msgid "Django administration"
+msgstr ""
+
+#: mcod/templates/admin/base_site.html:20
+msgid "Home page"
+msgstr ""
+
+#: mcod/templates/admin/base_site.html:22
+msgid "Guide for data providers"
+msgstr ""
+
+#: mcod/templates/admin/base_site.html:26
+msgid "Maintened by"
+msgstr ""
+
+#: mcod/templates/admin/base_site.html:26
+msgid "Ministry of Diginal Affairs"
+msgstr ""
+
+#: mcod/templates/admin/change_form.html:23
+#: mcod/templates/admin/constance/change_list.html:22
+#: mcod/templates/admin/resources/change_form.html:23
+msgid "You have unsaved changes"
+msgstr ""
+
+#: mcod/templates/admin/change_form.html:52
+#: mcod/templates/admin/change_form.html:78
+#: mcod/templates/admin/change_form.html:120 mcod/templates/admin/index.html:51
+#: mcod/templates/admin/resources/change_form.html:62
+#: mcod/templates/admin/resources/change_form.html:88
+msgid "Add"
+msgstr ""
+
+#: mcod/templates/admin/change_form.html:101
+#: mcod/templates/admin/resources/change_form.html:129
+msgid "tools"
+msgstr ""
+
+#: mcod/templates/admin/change_form.html:112
+#: mcod/templates/admin/datasets/inline-new.html:13
+#: mcod/templates/admin/edit_inline/tabular.html:36
+#: mcod/templates/admin/resources/change_form.html:140
+#: mcod/templates/admin/resources/inline-new.html:13
+#: mcod/templates/nesting/admin/inlines/stacked.html:35
+msgid "View on site"
+msgstr ""
+
+#: mcod/templates/admin/change_form.html:121
+#, python-format
+msgid ""
+"\n"
+"                                                %(name)s\n"
+"                                            "
+msgstr ""
+
+#: mcod/templates/admin/change_form.html:153
+#: mcod/templates/admin/constance/change_list.html:78
+#: mcod/templates/admin/resources/change_form.html:179
+msgid "Please correct the error below."
+msgid_plural " Please correct the errors below."
+msgstr[0] ""
+msgstr[1] ""
+
+#: mcod/templates/admin/change_form.html:154
+#: mcod/templates/admin/resources/change_form.html:180
+msgid "Please correct the errors below."
+msgstr ""
+
+#: mcod/templates/admin/change_list.html:8
+msgid "Search"
+msgstr ""
+
+#: mcod/templates/admin/change_list.html:37
+msgid "Nothing found"
+msgstr ""
+
+#: mcod/templates/admin/change_list.html:39
+msgid "Reset search and filters"
+msgstr ""
+
+#: mcod/templates/admin/change_list.html:41
+#, python-format
+msgid ""
+"%(name_plural)s are not\n"
+"                    created yet"
+msgstr ""
+
+#: mcod/templates/admin/change_list.html:45
+#, python-format
+msgid "Add %(name)s"
+msgstr ""
+
+#: mcod/templates/admin/constance/change_list.html:62
+#: mcod/templates/admin/submit_line.html:5
+msgid "Save"
+msgstr ""
+
+#: mcod/templates/admin/datasets/inline-list.html:6
+msgid "Datasets list"
+msgstr ""
+
+#: mcod/templates/admin/datasets/inline-list.html:67
+#: mcod/templates/admin/resources/inline-list.html:91
+msgid "Edit"
+msgstr ""
+
+#: mcod/templates/admin/datasets/inline-list.html:127
+#: mcod/templates/admin/datasets/inline-new.html:72
+#: mcod/templates/admin/resources/inline-list.html:152
+#: mcod/templates/admin/resources/inline-new.html:72
+#: mcod/templates/nesting/admin/inlines/stacked.html:70
+#, python-format
+msgid "Add another %(verbose_name)s"
+msgstr ""
+
+#: mcod/templates/admin/datasets/inline-list.html:130
+#: mcod/templates/admin/datasets/inline-new.html:75
+#: mcod/templates/admin/resources/inline-list.html:155
+#: mcod/templates/admin/resources/inline-new.html:75
+msgid "Remove"
+msgstr ""
+
+#: mcod/templates/admin/datasets/licences/custom_include.html:3
+msgid "Conditions for reusing information in this set"
+msgstr ""
+
+#: mcod/templates/admin/datasets/licences/custom_include.html:5
+msgid ""
+"Public information is made available for re-use without conditions. There "
+"are exceptions listed\n"
+"        below, but we encourage you not to use them. If you have a valid "
+"reason and you need to specify the terms, then\n"
+"        they can be:"
+msgstr ""
+
+#: mcod/templates/admin/delete_confirmation.html:7
+#, python-format
+msgid ""
+"Deleting the %(object_name)s '%(escaped_object)s' would result\n"
+"            in deleting related objects, but your account doesn't have "
+"permission to delete the following types of\n"
+"            objects:"
+msgstr ""
+
+#: mcod/templates/admin/delete_confirmation.html:16
+#, python-format
+msgid ""
+"Deleting the %(object_name)s '%(escaped_object)s' would\n"
+"            require deleting the following protected related objects:"
+msgstr ""
+
+#: mcod/templates/admin/delete_confirmation.html:24
+#, python-format
+msgid "Are you sure you want to delete the \"%(escaped_object)s\"? "
+msgstr ""
+
+#: mcod/templates/admin/delete_confirmation.html:33
+#: mcod/templates/admin/delete_selected_confirmation.html:32
+msgid "Yes, I'm sure"
+msgstr ""
+
+#: mcod/templates/admin/delete_confirmation.html:34
+#: mcod/templates/admin/delete_selected_confirmation.html:33
+msgid "No, take me back"
+msgstr ""
+
+#: mcod/templates/admin/delete_selected_confirmation.html:7
+#, python-format
+msgid ""
+"Deleting the selected %(objects_name)s would result in deleting related "
+"objects, but your account doesn't have permission to delete the following "
+"types of objects:"
+msgstr ""
+
+#: mcod/templates/admin/delete_selected_confirmation.html:14
+#, python-format
+msgid ""
+"Deleting the selected %(objects_name)s would require deleting the following "
+"protected related objects:"
+msgstr ""
+
+#: mcod/templates/admin/delete_selected_confirmation.html:21
+msgid "Are you sure you want to delete the objects?: "
+msgstr ""
+
+#: mcod/templates/admin/edit_inline/tabular.html:20
+msgid "Delete?"
+msgstr ""
+
+#: mcod/templates/admin/edit_inline/tabular.html:34
+#: mcod/templates/admin/index.html:43
+#: mcod/templates/admin/object_history.html:23
+#: mcod/templates/nesting/admin/inlines/stacked.html:33
+msgid "Change"
+msgstr ""
+
+#: mcod/templates/admin/edit_inline/tabular.html:34
+msgid "View"
+msgstr ""
+
+#: mcod/templates/admin/forms/widgets/resources/switcher.html:7
+msgid "File from disk"
+msgstr ""
+
+#: mcod/templates/admin/forms/widgets/resources/switcher.html:11
+msgid "URL address"
+msgstr ""
+
+#: mcod/templates/admin/index.html:18
+msgid "Active alerts"
+msgstr ""
+
+#: mcod/templates/admin/index.html:34
+#, python-format
+msgid "Models available in the %(name)s application."
+msgstr ""
+
+#: mcod/templates/admin/index.html:63
+msgid "You don't have permission to edit anything."
+msgstr ""
+
+#: mcod/templates/admin/index.html:72
+#, fuzzy
+#| msgid "acc: Application"
+msgid "My Actions"
+msgstr "application"
+
+#: mcod/templates/admin/index.html:77
+msgid "None available"
+msgstr ""
+
+#: mcod/templates/admin/index.html:86
+msgid "added"
+msgstr ""
+
+#: mcod/templates/admin/index.html:87
+msgid "changed"
+msgstr ""
+
+#: mcod/templates/admin/index.html:88
+msgid "deleted"
+msgstr ""
+
+#: mcod/templates/admin/index.html:94
+msgid "Unknown content"
+msgstr ""
+
+#: mcod/templates/admin/object_history.html:22
+msgid "Action"
+msgstr ""
+
+#: mcod/templates/admin/object_history.html:25
+msgid "Date/time"
+msgstr ""
+
+#: mcod/templates/admin/object_history.html:40
+msgid ""
+"This object doesn't have a change history. It probably wasn't added via this "
+"admin site."
+msgstr ""
+
+#: mcod/templates/admin/reports/change_list.html:6
+msgid "Generate report"
+msgstr ""
+
+#: mcod/templates/admin/resources/change_form.html:110
+msgid "Copy to new <br>resource"
+msgstr ""
+
+#: mcod/templates/admin/resources/change_form.html:118
+msgid "Revalidate"
+msgstr ""
+
+#: mcod/templates/admin/resources/change_form.html:148
+#, python-format
+msgid ""
+"Add\n"
+"                                                %(name)s"
+msgstr ""
+
+#: mcod/templates/admin/resources/inline-list.html:9
+msgid "Resources list"
+msgstr ""
+
+#: mcod/templates/admin/resources/task-inline-list.html:6
+msgid "Tasks list"
+msgstr ""
+
+#: mcod/templates/admin/resources/task-inline-list.html:11
+msgid "status "
+msgstr ""
+
+#: mcod/templates/admin/resources/task-inline-list.html:12
+msgid "date done"
+msgstr ""
+
+#: mcod/templates/admin/resources/task-inline-list.html:14
+msgid "recommendation"
+msgstr ""
+
+#: mcod/templates/admin/submit_line.html:9
+msgid "Save and continue editing"
+msgstr ""
+
+#: mcod/templates/admin/submit_line.html:13
+msgid "Save and add another"
+msgstr ""
+
+#: mcod/templates/admin/submit_line.html:17
+msgid "Save as new"
+msgstr ""
+
+#: mcod/templates/admin/submit_line.html:20
+msgid "Close"
+msgstr ""
+
+#: mcod/templates/admin/submit_line.html:26
+msgid "Delete"
+msgstr ""
+
+#: mcod/templates/admin/submit_line.html:32
+msgid "Cancel"
+msgstr ""
+
+#: mcod/templates/dal_admin_filters/autocomplete-filter.html:3
+#: mcod/templates/rangefilter/date_filter.html:2
+#, python-format
+msgid " By %(filter_title)s "
+msgstr ""
+
+#: mcod/templates/docs/generic/fields/number_term_field.html:5
+#: mcod/templates/docs/generic/fields/string_term_field.html:5
+msgid "Filter instances by"
+msgstr ""
+
+#: mcod/templates/docs/generic/fields/number_term_field.html:8
+#: mcod/templates/docs/generic/fields/string_term_field.html:8
+#: mcod/templates/docs/resources/fields/openness_score.html:8
+msgid "This field provides following filters:"
+msgstr ""
+
+#: mcod/templates/docs/generic/fields/number_term_field.html:20
+#: mcod/templates/docs/generic/fields/number_term_field.html:29
+#: mcod/templates/docs/generic/fields/number_term_field.html:37
+#: mcod/templates/docs/generic/fields/number_term_field.html:44
+#: mcod/templates/docs/generic/fields/number_term_field.html:51
+#: mcod/templates/docs/generic/fields/string_term_field.html:20
+#: mcod/templates/docs/generic/fields/string_term_field.html:29
+#: mcod/templates/docs/generic/fields/string_term_field.html:37
+#: mcod/templates/docs/generic/fields/string_term_field.html:44
+#: mcod/templates/docs/generic/fields/string_term_field.html:51
+#: mcod/templates/docs/resources/fields/openness_score.html:20
+#: mcod/templates/docs/resources/fields/openness_score.html:29
+#: mcod/templates/docs/resources/fields/openness_score.html:37
+#: mcod/templates/docs/resources/fields/openness_score.html:44
+#: mcod/templates/docs/resources/fields/openness_score.html:51
+msgid "filters instances in which "
+msgstr ""
+
+#: mcod/templates/docs/generic/fields/number_term_field.html:20
+#: mcod/templates/docs/generic/fields/string_term_field.html:20
+#: mcod/templates/docs/resources/fields/openness_score.html:20
+msgid "matches to the provided value."
+msgstr ""
+
+#: mcod/templates/docs/generic/fields/number_term_field.html:21
+#: mcod/templates/docs/generic/fields/string_match_field.html:21
+#: mcod/templates/docs/generic/fields/string_term_field.html:21
+#: mcod/templates/docs/resources/fields/dataset.html:18
+#: mcod/templates/docs/resources/fields/dataset.html:76
+#: mcod/templates/docs/resources/fields/openness_score.html:21
+msgid "Note, that this is default filter for this field."
+msgstr ""
+
+#: mcod/templates/docs/generic/fields/number_term_field.html:29
+#: mcod/templates/docs/generic/fields/string_term_field.html:29
+#: mcod/templates/docs/resources/fields/openness_score.html:29
+msgid "matches to any of the provided values."
+msgstr ""
+
+#: mcod/templates/docs/generic/fields/number_term_field.html:37
+#: mcod/templates/docs/resources/fields/openness_score.html:37
+msgid "is is greater than the provided value."
+msgstr ""
+
+#: mcod/templates/docs/generic/fields/number_term_field.html:44
+#: mcod/templates/docs/resources/fields/openness_score.html:44
+msgid "is greater than or equal to the provided value."
+msgstr ""
+
+#: mcod/templates/docs/generic/fields/number_term_field.html:51
+#: mcod/templates/docs/resources/fields/openness_score.html:51
+msgid "is lower than the provided value."
+msgstr ""
+
+#: mcod/templates/docs/generic/fields/number_term_field.html:58
+#: mcod/templates/docs/resources/fields/openness_score.html:58
+msgid "filters instances that have "
+msgstr ""
+
+#: mcod/templates/docs/generic/fields/number_term_field.html:58
+#: mcod/templates/docs/resources/fields/openness_score.html:58
+msgid "that is lower than or equal to the provided value."
+msgstr ""
+
+#: mcod/templates/docs/generic/fields/query_field.html:4
+msgid "Allows searching for the provided value in multiple fields."
+msgstr ""
+
+#: mcod/templates/docs/generic/fields/sort_field.html:5
+msgid "Sort instances by following fields in ascending or descending direction"
+msgstr ""
+
+#: mcod/templates/docs/generic/fields/string_match_field.html:5
+#: mcod/templates/docs/resources/fields/openness_score.html:5
+#, fuzzy
+#| msgid "acc: History"
+msgid "Search instances by"
+msgstr "history"
+
+#: mcod/templates/docs/generic/fields/string_match_field.html:8
+msgid "This field provides the following queries:"
+msgstr ""
+
+#: mcod/templates/docs/generic/fields/string_match_field.html:20
+msgid "searches for instances in which"
+msgstr ""
+
+#: mcod/templates/docs/generic/fields/string_match_field.html:20
+msgid "matches the provided value."
+msgstr ""
+
+#: mcod/templates/docs/generic/fields/string_match_field.html:31
+#: mcod/templates/docs/generic/fields/string_match_field.html:38
+msgid "searches for instances in which "
+msgstr ""
+
+#: mcod/templates/docs/generic/fields/string_match_field.html:31
+msgid "matches the provided phrase."
+msgstr ""
+
+#: mcod/templates/docs/generic/fields/string_match_field.html:38
+msgid "starts with the  provided phrase."
+msgstr ""
+
+#: mcod/templates/docs/generic/fields/string_match_field.html:45
+#: mcod/templates/docs/resources/fields/dataset.html:98
+msgid "searches for instances that matches the provided query string."
+msgstr ""
+
+#: mcod/templates/docs/generic/fields/string_term_field.html:37
+msgid "starts with the provided value."
+msgstr ""
+
+#: mcod/templates/docs/generic/fields/string_term_field.html:44
+msgid "endswith the provided value."
+msgstr ""
+
+#: mcod/templates/docs/generic/fields/string_term_field.html:51
+msgid "contains the provided value."
+msgstr ""
+
+#: mcod/templates/docs/resources/fields/dataset.html:4
+msgid ""
+"Search resources by dataset's ID (dataset[id]) or title (dataset[title])"
+msgstr ""
+
+#: mcod/templates/docs/resources/fields/dataset.html:5
+msgid "The dataset[id] field provides the following filters:"
+msgstr ""
+
+#: mcod/templates/docs/resources/fields/dataset.html:17
+msgid ""
+"filters instances in which ID of the dataset matches to the provided value."
+msgstr ""
+
+#: mcod/templates/docs/resources/fields/dataset.html:26
+msgid ""
+"filters instances in which ID of the dataset matches to any of the provided "
+"values."
+msgstr ""
+
+#: mcod/templates/docs/resources/fields/dataset.html:34
+msgid ""
+"filters instances in which ID of the dataset is is greater than the provided "
+"value."
+msgstr ""
+
+#: mcod/templates/docs/resources/fields/dataset.html:41
+msgid ""
+"filters instances in which ID of the dataset is greater than or equal to the "
+"provided value."
+msgstr ""
+
+#: mcod/templates/docs/resources/fields/dataset.html:48
+msgid ""
+"filters instances in which ID of the dataset is lower than the provided "
+"value."
+msgstr ""
+
+#: mcod/templates/docs/resources/fields/dataset.html:55
+msgid ""
+"filters instances that have ID of the dataset that is lower than or equal to "
+"the provided value."
+msgstr ""
+
+#: mcod/templates/docs/resources/fields/dataset.html:63
+msgid "The dataset[title] field provides the following queries:"
+msgstr ""
+
+#: mcod/templates/docs/resources/fields/dataset.html:75
+msgid ""
+"searches for instances in which title of the dataset matches the provided "
+"value."
+msgstr ""
+
+#: mcod/templates/docs/resources/fields/dataset.html:84
+msgid ""
+"searches for instances in which title of the dataset matches the provided "
+"phrase."
+msgstr ""
+
+#: mcod/templates/docs/resources/fields/dataset.html:91
+msgid ""
+"searches for instances in which title of the dataset starts with the  "
+"provided phrase."
+msgstr ""
+
+#: mcod/templates/docs/tables/description.html:6
+msgid "Specification"
+msgstr "Specification"
+
+#: mcod/templates/docs/tables/description.html:7
+msgid "General info"
+msgstr "General info"
+
+#: mcod/templates/docs/tables/description.html:13
+msgid "Dataset URL"
+msgstr "Dataset URL"
+
+#: mcod/templates/docs/tables/description.html:20
+msgid "Original resource URL"
+msgstr "Original file URL"
+
+#: mcod/templates/docs/tables/description.html:23
+msgid "Created at"
+msgstr "Created at"
+
+#: mcod/templates/docs/tables/description.html:24
+msgid "Modified at"
+msgstr "Modified at"
+
+#: mcod/templates/docs/tables/description.html:29
+msgid "File format"
+msgstr "File format"
+
+#: mcod/templates/docs/tables/description.html:32
+msgid "Download URL"
+msgstr "Download URL"
+
+#: mcod/templates/docs/tables/description.html:36
+msgid "Columns mapping"
+msgstr "Columns mapping"
+
+#: mcod/templates/docs/tables/description.html:41
+msgid "Column name"
+msgstr "Column name"
+
+#: mcod/templates/docs/tables/description.html:42
+msgid "Header (in file)"
+msgstr "Header (in file)"
+
+#: mcod/templates/docs/tables/description.html:56
+msgid "Dataset description"
+msgstr "Dataset description"
+
+#: mcod/templates/docs/tables/description.html:59
+msgid "For more more informations go"
+msgstr "For more more informations go"
+
+#: mcod/templates/docs/tables/description.html:60
+msgid "here"
+msgstr "here"
+
+#: mcod/templates/docs/tables/description.html:64
+msgid "Data provider"
+msgstr "Data provider"
+
+#: mcod/templates/docs/tables/description.html:65
+msgid "This data was provided by the"
+msgstr "This data was provided by the"
+
+#: mcod/templates/docs/tables/description.html:79
+msgid "Address"
+msgstr "Address"
+
+#: mcod/templates/docs/tables/description.html:85
+msgid "Regon"
+msgstr "Regon"
+
+#: mcod/templates/docs/tables/fields/query_string.html:4
+msgid ""
+"The \"q\" param is for search. For a better understanding of how it works, "
+"see the examples below."
+msgstr ""
+
+#: mcod/templates/docs/tables/fields/query_string.html:6
+msgid "Searching in specific fields"
+msgstr ""
+
+#: mcod/templates/docs/tables/fields/query_string.html:7
+msgid "The query can run against one or multiple fields."
+msgstr ""
+
+#: mcod/templates/docs/tables/fields/query_string.html:8
+#: mcod/templates/docs/tables/fields/query_string.html:15
+#: mcod/templates/docs/tables/fields/query_string.html:24
+#: mcod/templates/docs/tables/fields/query_string.html:32
+#: mcod/templates/docs/tables/fields/query_string.html:39
+#: mcod/templates/docs/tables/fields/query_string.html:66
+msgid "Example:"
+msgstr ""
+
+#: mcod/templates/docs/tables/fields/query_string.html:13
+msgid "Searching in all fields"
+msgstr ""
+
+#: mcod/templates/docs/tables/fields/query_string.html:20
+msgid "Wildcards"
+msgstr ""
+
+#: mcod/templates/docs/tables/fields/query_string.html:30
+msgid "Regular expressions"
+msgstr ""
+
+#: mcod/templates/docs/tables/fields/query_string.html:36
+msgid "Fuzziness"
+msgstr ""
+
+#: mcod/templates/docs/tables/fields/query_string.html:54
+msgid "Proximity searches"
+msgstr ""
+
+#: mcod/templates/docs/tables/fields/query_string.html:62
+msgid "Ranges"
+msgstr ""
+
+#: mcod/templates/docs/tables/fields/query_string.html:68
+msgid "Boosting"
+msgstr ""
+
+#: mcod/templates/docs/tables/fields/query_string.html:70
+msgid "Boolean operators"
+msgstr ""
+
+#: mcod/templates/docs/tables/fields/query_string.html:72
+msgid "Grouping"
+msgstr ""
+
+#: mcod/templates/docs/tables/fields/query_string.html:74
+msgid "Reserved characters"
+msgstr ""
+
+#: mcod/templates/mails/confirm-registration.html:7
+msgid "Registration confirmation"
+msgstr ""
+
+#: mcod/templates/mails/confirm-registration.html:24
+#: mcod/templates/mails/confirm-registration.txt:2
+#: mcod/templates/mails/password-reset.html:39
+#: mcod/templates/mails/password-reset.txt:3
+msgid "Dear user of the open data portal (dane.gov.pl)"
+msgstr ""
+
+#: mcod/templates/mails/confirm-registration.html:39
+#: mcod/templates/mails/confirm-registration.txt:4
+msgid "Thank you for creating an account."
+msgstr ""
+
+#: mcod/templates/mails/confirm-registration.html:40
+#: mcod/templates/mails/confirm-registration.txt:5
+msgid "If you did not create an account, please ignore this message. "
+msgstr ""
+
+#: mcod/templates/mails/confirm-registration.html:41
+#: mcod/templates/mails/confirm-registration.txt:6
+msgid ""
+"In order to complete the registration process, click (or copy and paste in "
+"the address field of the web browser) into the link below."
+msgstr ""
+
+#: mcod/templates/mails/confirm-registration.html:56
+#: mcod/templates/mails/confirm-registration.txt:10
+#: mcod/templates/mails/data-suggestion.html:43
+#: mcod/templates/mails/password-reset.html:62
+#: mcod/templates/mails/password-reset.txt:12
+#: mcod/templates/mails/propose-application.html:123
+#: mcod/templates/mails/report-dataset-comment-test.html:55
+#: mcod/templates/mails/report-dataset-comment.html:52
+#: mcod/templates/mails/report-resource-comment-test.html:55
+#: mcod/templates/mails/report-resource-comment.html:52
+msgid "Sincerely,"
+msgstr ""
+
+#: mcod/templates/mails/confirm-registration.html:57
+#: mcod/templates/mails/confirm-registration.txt:11
+#: mcod/templates/mails/data-suggestion.html:44
+#: mcod/templates/mails/password-reset.html:63
+#: mcod/templates/mails/password-reset.txt:13
+#: mcod/templates/mails/propose-application.html:124
+#: mcod/templates/mails/report-dataset-comment-test.html:56
+#: mcod/templates/mails/report-dataset-comment.html:53
+#: mcod/templates/mails/report-resource-comment-test.html:56
+#: mcod/templates/mails/report-resource-comment.html:53
+msgid "The Open Data Data Administrators team"
+msgstr ""
+
+#: mcod/templates/mails/confirm-registration.html:75
+#: mcod/templates/mails/confirm-registration.txt:13
+#: mcod/templates/mails/data-suggestion.html:54
+#: mcod/templates/mails/password-reset.html:72
+#: mcod/templates/mails/password-reset.txt:15
+#: mcod/templates/mails/propose-application.html:134
+#: mcod/templates/mails/report-dataset-comment-test.html:65
+#: mcod/templates/mails/report-dataset-comment.html:62
+#: mcod/templates/mails/report-resource-comment-test.html:65
+#: mcod/templates/mails/report-resource-comment.html:62
+msgid "The message was generated automatically, please do not reply to it."
+msgstr ""
+
+#: mcod/templates/mails/password-reset.html:8
+msgid "Password reset"
+msgstr ""
+
+#: mcod/templates/mails/password-reset.html:25
+msgid "PASSWORD RESET TO THE SERVICE OPEN DATA"
+msgstr ""
+
+#: mcod/templates/mails/password-reset.html:40
+#: mcod/templates/mails/password-reset.txt:4
+msgid ""
+"We have received a request to reset the password for your Account "
+"established on the Portal."
+msgstr ""
+
+#: mcod/templates/mails/password-reset.html:41
+#: mcod/templates/mails/password-reset.txt:5
+msgid ""
+"Click (or copy and paste in the web browser's address field) the link below "
+"to change yours password."
+msgstr ""
+
+#: mcod/templates/mails/password-reset.html:52
+#: mcod/templates/mails/password-reset.txt:9
+msgid ""
+"If you do not want to reset your password, simply ignore this message - "
+"probably by accident someone has entered your email address."
+msgstr ""
+
+#: mcod/templates/mails/password-reset.html:53
+#: mcod/templates/mails/password-reset.txt:10
+msgid ""
+"The link will expire in 48 hours. The password can be reset at any time. "
+"Just go to the site login on the portal and request a new password reset "
+"link."
+msgstr ""
+
+#: mcod/templates/mails/report-dataset-comment-test.html:8
+#: mcod/templates/mails/report-dataset-comment.html:8
+msgid "A comment was posted on the data set"
+msgstr ""
+
+#: mcod/templates/mails/report-dataset-comment-test.html:25
+#: mcod/templates/mails/report-dataset-comment.html:25
+msgid "A COMMENT WAS POSTED ON THE DATA SET"
+msgstr ""
+
+#: mcod/templates/mails/report-dataset-comment-test.html:39
+#: mcod/templates/mails/report-resource-comment-test.html:39
+#, fuzzy
+#| msgid "Address"
+msgid "addressees:"
+msgstr "Address"
+
+#: mcod/templates/mails/report-dataset-comment-test.html:42
+#: mcod/templates/mails/report-dataset-comment.html:39
+#, python-format
+msgid ""
+"On the data set %(title)s (version %(version)s) [%(url)s] was posted a "
+"comment:"
+msgstr ""
+
+#: mcod/templates/mails/report-resource-comment-test.html:8
+#: mcod/templates/mails/report-resource-comment.html:8
+msgid "A comment was posted on the resource"
+msgstr ""
+
+#: mcod/templates/mails/report-resource-comment-test.html:25
+#: mcod/templates/mails/report-resource-comment.html:25
+msgid "A COMMENT WAS POSTED ON THE RESOURCE"
+msgstr ""
+
+#: mcod/templates/mails/report-resource-comment-test.html:42
+#: mcod/templates/mails/report-resource-comment.html:39
+#, python-format
+msgid ""
+"One the resource %(title)s from data set %(dataset_title)s [%(url)s] was "
+"posted a comment:"
+msgstr ""
+
+#: mcod/tools/apps.py:7
+msgid "Tools"
+msgstr ""
+
+#: mcod/users/admin.py:33 mcod/users/admin.py:79
+msgid "Personal info"
+msgstr ""
+
+#: mcod/users/admin.py:44 mcod/users/admin.py:90
+msgid "Permisions"
+msgstr ""
+
+#: mcod/users/admin.py:56 mcod/users/admin.py:102 mcod/users/forms.py:15
+#: mcod/users/models.py:75
+msgid "Organizations"
+msgstr ""
+
+#: mcod/users/api/views.py:60 mcod/users/api/views.py:91
+msgid "Invalid email or password"
+msgstr ""
+
+#: mcod/users/api/views.py:68
+msgid "Account is not available"
+msgstr ""
+
+#: mcod/users/api/views.py:117
+msgid "This e-mail is already used"
+msgstr ""
+
+#: mcod/users/api/views.py:148 mcod/users/api/views.py:220
+#: mcod/users/api/views.py:352
+msgid "Email cannot be send"
+msgstr ""
+
+#: mcod/users/api/views.py:196 mcod/users/api/views.py:333
+msgid "Account not found"
+msgstr ""
+
+#: mcod/users/api/views.py:243 mcod/users/api/views.py:305
+msgid "Expired token"
+msgstr ""
+
+#: mcod/users/api/views.py:270
+msgid "Wrong password"
+msgstr ""
+
+#: mcod/users/api/views.py:280 mcod/users/depricated/schemas.py:64
+#: mcod/users/depricated/schemas.py:137
+msgid "Passwords not match"
+msgstr ""
+
+#: mcod/users/depricated/schemas.py:79 mcod/users/forms.py:50
+msgid "Account for this email already exist"
+msgstr ""
+
+#: mcod/users/depricated/serializers.py:28
+msgid "Invalid user state."
+msgstr ""
+
+#: mcod/users/forms.py:14
+msgid "organizations"
+msgstr ""
+
+#: mcod/users/forms.py:36
+msgid "The two password fields didn't match."
+msgstr ""
+
+#: mcod/users/forms.py:38 mcod/users/forms.py:74 mcod/users/models.py:61
+msgid "Password"
+msgstr ""
+
+#: mcod/users/forms.py:39
+msgid "Password confirmation"
+msgstr ""
+
+#: mcod/users/forms.py:40
+msgid "Enter the same password as above, for verification."
+msgstr ""
+
+#: mcod/users/forms.py:76
+msgid ""
+"Raw passwords are not stored, so there is no way to see this user's "
+"password, but you can change the password using <a href=\"../password/"
+"\">this form</a>."
+msgstr ""
+
+#: mcod/users/models.py:22
+msgid "Email validation token"
+msgstr ""
+
+#: mcod/users/models.py:23
+msgid "Password reset token"
+msgstr ""
+
+#: mcod/users/models.py:62
+msgid "Full name"
+msgstr ""
+
+#: mcod/users/models.py:66 mcod/users/models.py:199
+msgid "Editor"
+msgstr ""
+
+#: mcod/users/models.py:67
+msgid "Admin status"
+msgstr ""
+
+#: mcod/users/models.py:68
+msgid ""
+"Designates that this user has all permissions without explicitly assigning "
+"them."
+msgstr ""
+
+#: mcod/users/models.py:71 mcod/users/models.py:192
+msgid "State"
+msgstr ""
+
+#: mcod/users/models.py:73
+msgid "Email confirmation date"
+msgstr ""
+
+#: mcod/users/models.py:78
+msgid "Followed applications"
+msgstr ""
+
+#: mcod/users/models.py:83
+msgid "Followed articles"
+msgstr ""
+
+#: mcod/users/models.py:88
+msgid "Followed datasets"
+msgstr ""
+
+#: mcod/users/models.py:185
+msgid "acc: User"
+msgstr "user"
+
+#: mcod/users/models.py:192
+msgid "ID"
+msgstr ""
+
+#: mcod/users/models.py:192
+msgid "Full Name"
+msgstr ""
+
+#: mcod/users/models.py:192
+#, fuzzy
+#| msgid "official_phone"
+msgid "Official phone"
+msgstr "Official phone"
+
+#: mcod/users/models.py:192
+msgid "Role"
+msgstr ""
+
+#: mcod/users/models.py:197
+msgid "Admin"
+msgstr ""
+
+#: mcod/users/models.py:231 mcod/users/models.py:237
+msgid "Token"
+msgstr ""
+
+#: mcod/users/models.py:232
+msgid "Token type"
+msgstr ""
+
+#: mcod/users/models.py:234
+msgid "Expiration date"
+msgstr ""
+
+#: mcod/users/models.py:238
+msgid "Tokens"
+msgstr ""
+
+#: mcod/watchers/api/deserializers.py:41
+msgid "Unsupported object name"
+msgstr ""
+
+#: mcod/watchers/api/deserializers.py:94
+#: mcod/watchers/api/schemas/request.py:43
+#, fuzzy
+#| msgid "Modified at"
+msgid "Invalid notification type"
+msgstr "Modified at"
+
+#: mcod/watchers/api/deserializers.py:97
+#: mcod/watchers/api/schemas/request.py:46
+msgid "Invalid notification status"
+msgstr ""
+
+#: mcod/watchers/models.py:32
+msgid "Canceled"
+msgstr ""
+
+#, fuzzy
+#~| msgid "Dataset description"
+#~ msgid " Description "
+#~ msgstr "Dataset description"
+
+#, fuzzy
+#~| msgid "Specification"
+#~ msgid "Date of modification"
+#~ msgstr "Specification"
+
+#, fuzzy
+#~| msgid "Dataset description"
+#~ msgid "Date of addition"
+#~ msgstr "Dataset description"
+
+#~ msgid "official_phone"
+#~ msgstr "Official phone"
+
+#~ msgid "official_position"
+#~ msgstr "Official position"
+
+#, fuzzy
+#~| msgid "official_position"
+#~ msgid "Official position"
+#~ msgstr "Official position"
+
+#~ msgid "API works!"
+#~ msgstr "API works!"
+
+#~ msgid "acc: Counter"
+#~ msgstr "counter"
+
+#~ msgid "Polski"
+#~ msgstr "Polish"
+
+#~ msgid "Angielski"
+#~ msgstr "English"

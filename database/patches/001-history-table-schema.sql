@@ -1,0 +1,9 @@
+BEGIN;
+
+ALTER TABLE "history"
+    ADD table_schema VARCHAR(255) NOT NULL;
+
+ALTER TABLE "history"
+    ALTER COLUMN change_timestamp SET DEFAULT CURRENT_TIMESTAMP;
+
+COMMIT;

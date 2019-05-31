@@ -1,0 +1,54 @@
+[program:frontend]
+user=vagrant
+autostart=false
+autorestart=true
+directory=/vagrant/frontend
+command=/vagrant/frontend/node_modules/.bin/ng serve --host 0.0.0.0 --port 8081 --target production --vendor-chunk --aot=false
+stdout_logfile=/vagrant/logs/supervisor-%(program_name)s.log
+stdout_logfile_maxbytes=50MB
+stdout_logfile_backups=3
+stderr_logfile=/vagrant/logs/supervisor-%(program_name)s-err.log
+stderr_logfile_maxbytes=50MB
+stderr_logfile_backups=3
+
+[program:api]
+user=vagrant
+autostart=false
+autorestart=true
+directory=/vagrant/mcod
+command=/home/vagrant/.virtualenvs/mcod/bin/python api.py
+environment=PATH="/home/vagrant/.virtualenvs/mcod/bin",PYTHONPATH="/vagrant:$PYTHONPATH"
+stdout_logfile=/vagrant/logs/supervisor-%(program_name)s.log
+stdout_logfile_maxbytes=50MB
+stdout_logfile_backups=3
+stderr_logfile=/vagrant/logs/supervisor-%(program_name)s-err.log
+stderr_logfile_maxbytes=50MB
+stderr_logfile_backups=3
+
+[program:admin]
+user=vagrant
+autostart=false
+autorestart=true
+directory=/vagrant
+command=/home/vagrant/.virtualenvs/mcod/bin/python manage.py runserver 0.0.0.0:8080
+environment=PATH="/home/vagrant/.virtualenvs/mcod/bin",PYTHONPATH="/vagrant:$PYTHONPATH"
+stdout_logfile=/vagrant/logs/supervisor-%(program_name)s.log
+stdout_logfile_maxbytes=50MB
+stdout_logfile_backups=3
+stderr_logfile=/vagrant/logs/supervisor-%(program_name)s-err.log
+stderr_logfile_maxbytes=50MB
+stderr_logfile_backups=3
+
+[program:celery]
+user=vagrant
+autostart=false
+autorestart=true
+directory=/vagrant
+command=/home/vagrant/.virtualenvs/mcod/bin/celery --app=mcod.celeryapp:app worker -B -l info
+environment=PATH="/home/vagrant/.virtualenvs/mcod/bin",PYTHONPATH="/vagrant:$PYTHONPATH"
+stdout_logfile=/vagrant/logs/supervisor-%(program_name)s.log
+stdout_logfile_maxbytes=50MB
+stdout_logfile_backups=3
+stderr_logfile=/vagrant/logs/supervisor-%(program_name)s-err.log
+stderr_logfile_maxbytes=50MB
+stderr_logfile_backups=3

@@ -1,0 +1,7 @@
+- module: elasticsearch
+  metricsets:
+    - node
+    - node_stats
+  period: 10s
+  hosts:
+    - http://mcod-elasticsearch-1:9200

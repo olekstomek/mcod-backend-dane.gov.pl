@@ -1,0 +1,13 @@
+metricbeat.config.modules:
+  path: /usr/share/metricbeat/modules.d/*.yml
+  reload.enabled: false
+
+processors:
+- add_cloud_metadata: ~
+
+output.elasticsearch:
+  hosts:
+    - mcod-monitoring:9200
+
+setup.kibana:
+  host: "mcod-kibana:5601"

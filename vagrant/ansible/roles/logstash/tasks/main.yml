@@ -1,0 +1,25 @@
+---
+- name: install java
+  dnf: name=java-1.8.0-openjdk.x86_64 state=installed
+  become: true
+
+- name: install logstash 6.2.4
+  become: yes
+  dnf:
+    name: https://artifacts.elastic.co/downloads/logstash/logstash-6.2.4.rpm
+    state: installed
+
+- name: enable and reload logstash server
+  service: name=logstash enabled=yes state=restarted
+  become: true
+
+- name: copy config
+  template:
+    src: templates/logstash/django.conf.j2
+    dest: /etc/logstash/conf.d/40-django.conf
+    mode: 0644
+  become: true
+
+- name: restart logstash server
+  service: name=logstash enabled=yes state=restarted
+  become: true

@@ -1,0 +1,133 @@
+- name: add host names
+  lineinfile:
+    dest: /etc/hosts
+    line: '{{item}}'
+  become: yes
+  with_items:
+  - 127.0.0.1 mcod-api
+  - 127.0.0.1 mcod-admin
+  - 127.0.0.1 mcod-db
+  - 127.0.0.1 mcod-redis
+  - 127.0.0.1 mcod-rabbitmq
+  - 127.0.0.1 mcod-elasticsearch-1
+
+- name: create virtualenv
+  become: no
+  pip:
+    virtualenv: ~/.virtualenvs/mcod
+    virtualenv_python: /usr/bin/python3
+    requirements: "{{requirements_file}}"
+
+- name: set project
+  shell: "echo {{project_home}} > ~/.virtualenvs/mcod/.project"
+  become: no
+
+- name: creating path extension file
+  file:
+    path: ~/.virtualenvs/mcod/lib/python3.6/site-packages/_virtualenv_path_extensions.pth
+    state: touch
+
+- name: add app code to virtualenv
+  lineinfile:
+    dest: ~/.virtualenvs/mcod/lib/python3.6/site-packages/_virtualenv_path_extensions.pth
+    line: "{{item}}"
+  become: no
+  with_items:
+  - "import sys; sys.__plen = len(sys.path)"
+  - "{{project_home}}"
+  - "import sys; new=sys.path[sys.__plen:]; del sys.path[sys.__plen:]; p=getattr(sys,'__egginsert',0); sys.path[p:p]=new; sys.__egginsert = p+len(new)"
+
+- name: set manage.py as executable
+  file:
+    path: /vagrant/manage.py
+    mode: 755
+
+- name: generate local.py
+  template:
+    src: templates/mcod/local.py.j2
+    dest: /vagrant/mcod/settings/local.py
+    owner: vagrant
+    group: vagrant
+    mode: 0644
+    force: no
+
+- name: apply db migrations
+  become: no
+  django_manage:
+    command: migrate
+    app_path: "{{project_home}}"
+    settings: "{{DJANGO_SETTINGS_MODULE}}"
+    virtualenv: ~/.virtualenvs/mcod
+  environment:
+    PGDATABASE: "{{POSTGRES_DB}}"
+    PGUSER: "{{POSTGRES_USER}}"
+    PGPASSWORD: "{{POSTGRES_PASSWORD}}"
+    PGHOST: "localhost"
+
+- name: load fixtures
+  become: no
+  when: db_created.changed
+  django_manage:
+    command: loaddata
+    app_path: "{{project_home}}"
+    settings: "{{DJANGO_SETTINGS_MODULE}}"
+    virtualenv: ~/.virtualenvs/mcod
+    fixtures: "{{item}}"
+  environment:
+    PGDATABASE: "{{POSTGRES_DB}}"
+    PGUSER: "{{POSTGRES_USER}}"
+    PGPASSWORD: "{{POSTGRES_PASSWORD}}"
+    PGHOST: "localhost"
+  with_items:
+  - "01-users"
+  - "02-tags"
+  - "03-licenses"
+  - "04-categories"
+  - "05-organizations"
+  - "06-datasets"
+  - "07-resources"
+  - "08-applications"
+  - "09-articles"
+
+- name: create admin user
+  when: db_created.changed
+  become: no
+  command: "~/.virtualenvs/mcod/bin/python3 -c \"import django; django.setup(); from mcod.users.models import User; User.objects.create_superuser(None, 'admin@mcod.local', 'Otwarte.1');\""
+  environment:
+    PYTHONPATH: "{{project_home}}"
+    DJANGO_SETTINGS_MODULE: "{{DJANGO_SETTINGS_MODULE}}"
+    PGDATABASE: "{{POSTGRES_DB}}"
+    PGUSER: "{{POSTGRES_USER}}"
+    PGPASSWORD: "{{POSTGRES_PASSWORD}}"
+    PGHOST: "localhost"
+
+- name: (re)build search indexes
+  become: no
+  django_manage:
+    command: search_index --rebuild -f
+    app_path: "{{project_home}}"
+    settings: "{{DJANGO_SETTINGS_MODULE}}"
+    virtualenv: ~/.virtualenvs/mcod
+  environment:
+    PGDATABASE: "{{POSTGRES_DB}}"
+    PGUSER: "{{POSTGRES_USER}}"
+    PGPASSWORD: "{{POSTGRES_PASSWORD}}"
+    PGHOST: "localhost"
+
+- name: (re)validate resources
+  become: no
+  when: db_created.changed
+  django_manage:
+    command: validate_resources
+    app_path: "{{project_home}}"
+    settings: "{{DJANGO_SETTINGS_MODULE}}"
+    virtualenv: ~/.virtualenvs/mcod
+  environment:
+    PGDATABASE: "{{POSTGRES_DB}}"
+    PGUSER: "{{POSTGRES_USER}}"
+    PGPASSWORD: "{{POSTGRES_PASSWORD}}"
+    PGHOST: "localhost"
+
+
+
+

@@ -1,0 +1,4 @@
+[run]
+branch = True
+source = mcod
+omit = *migrations*, *tests*, *templates*, *test-data*, *frontend*

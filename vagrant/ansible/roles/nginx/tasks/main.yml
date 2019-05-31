@@ -1,0 +1,33 @@
+- name: install nginx server
+  dnf:
+    name: [
+      "nginx",
+      "nginx-all-modules"
+    ]
+  become: true
+
+- name: enable nginx server
+  service: name=nginx enabled=yes masked=no
+  become: true
+
+- name: stop nginx server
+  service: name=nginx enabled=yes state=stopped
+  become: true
+
+- name: copy nginx configs
+  template: src=templates/nginx/{{item}}.j2 dest=/etc/nginx/conf.d/{{item}} owner=root group=root mode=0644
+  become: true
+  with_items:
+    - "001-frontend.conf"
+    - "002-api.conf"
+    - "003-admin.conf"
+    - "004-supervisor.conf"
+    - "005-kibana.conf"
+
+- name: set SELinux for http traffic
+  command: "setsebool httpd_can_network_connect on -P"
+  become: true
+
+- name: stop nginx server
+  service: name=nginx enabled=yes state=started
+  become: true

@@ -1,0 +1,48 @@
+server {
+  listen 80;
+  listen [::]:80;
+  server_name api.mcod.local;
+  charset utf-8;
+  client_max_body_size 500M;
+  access_log /var/log/nginx/api_access.log;
+  error_log /var/log/nginx/api_errors.log;
+  root /usr/share/nginx/html;
+
+  location /static {
+    alias /vagrant/statics;
+  }
+
+  location /media {
+    alias /vagrant/test-data/media;
+  }
+
+  location / {
+    add_header 'Access-Control-Allow-Origin' '*' always;
+    add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, DELETE, OPTIONS' always;
+    add_header 'Access-Control-Allow-Headers' 'DNT,Authorization,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range' always;
+    add_header 'Access-Control-Expose-Headers' 'Content-Length,Content-Range' always;
+
+    if ($request_method = 'OPTIONS') {
+      add_header 'Access-Control-Allow-Origin' '*' always;
+      add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, DELETE, OPTIONS' always;
+      add_header 'Access-Control-Allow-Headers' 'DNT,Authorization,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range' always;
+      add_header 'Access-Control-Max-Age' 1728000;
+      add_header 'Content-Type' 'text/plain; charset=utf-8';
+      add_header 'Content-Length' 0;
+      return 204;
+    }
+
+    proxy_pass http://api;
+    proxy_pass_header Server;
+    proxy_set_header Host $host;
+    proxy_set_header X-Scheme $scheme;
+    proxy_set_header X-Url-Scheme $scheme;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $remote_addr;
+    proxy_set_header X-Forwarded-Proto $scheme;
+  }
+}
+
+upstream api {
+    server localhost:8000;
+}

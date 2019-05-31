@@ -1,0 +1,61 @@
+- name: install required packages
+  dnf:
+    name: [
+      '@Development Tools',
+      'sudo',
+      'vim',
+      'mc',
+      'htop',
+      'python3',
+      'libarchive'
+    ]
+  become: true
+
+- name: check if pip is already installed
+  command: pip --version
+  ignore_errors: true
+  changed_when: false
+  check_mode: no
+  register: pip_installed
+  become: true
+
+- name: download get_pip.py script
+  when: pip_installed.rc != 0
+  get_url:
+    url: https://bootstrap.pypa.io/get-pip.py
+    dest: /tmp/get-pip.py
+  become: true
+
+- name: install pip
+  when: pip_installed.rc != 0
+  command: python /tmp/get-pip.py
+  become: true
+
+- name: delete get-pip.py
+  file: state=absent path=/tmp/get-pip.py
+  when: pip_installed.rc != 0
+  become: true
+
+- name: install virtualenv
+  pip:
+    name: [
+      'virtualenv',
+      'virtualenvwrapper'
+    ]
+  become: true
+
+- name: add virtualenvwrapper.sh to .bashrc
+  lineinfile:
+    dest: ~/.bashrc
+    line: 'source /usr/bin/virtualenvwrapper.sh'
+  become: no
+
+- name: launch virtualenvwrapper.sh
+  shell: '/usr/bin/virtualenvwrapper.sh'
+  become: no
+
+- name: create ~/.virtualenvs
+  file:
+    dest: ~/.virtualenvs
+    state: directory
+  become: no

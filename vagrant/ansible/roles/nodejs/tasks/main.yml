@@ -1,0 +1,35 @@
+- name: check if nodejs 8 is already installed
+  command: node --version
+  ignore_errors: true
+  changed_when: false
+  check_mode: no
+  register: nodejs_installed
+  become: true
+
+- name: download nodejs setup script
+  when: nodejs_installed.rc != 0
+  get_url:
+    url: https://rpm.nodesource.com/setup_8.x
+    dest: /tmp/setup_nodejs.sh
+  become: true
+
+- name: run setup script
+  when: nodejs_installed.rc != 0
+  command: bash /tmp/setup_nodejs.sh
+  become: true
+
+- name: delete setup_nodejs.sh
+  file: state=absent path=/tmp/setup_nodejs.sh
+  when: nodejs_installed.rc != 0
+  become: true
+
+- name: install nodejs 8
+  dnf:
+    name: nodejs
+    state: present
+  become: yes
+
+- name: install angilar-cli
+  command: npm install -g @angular/cli
+  when: nodejs_installed.rc != 0
+  become: yes

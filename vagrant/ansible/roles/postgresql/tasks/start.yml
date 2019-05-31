@@ -1,0 +1,3 @@
+- name: start postgresql server
+  service: name=postgresql-10 state=started
+  become: true

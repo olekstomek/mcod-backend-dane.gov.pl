@@ -1,0 +1,21 @@
+server {
+  listen 80;
+  listen [::]:80;
+  server_name svr.mcod.local;
+  charset utf-8;
+
+  client_max_body_size 500M;
+  access_log /var/log/nginx/supervisor_access.log;
+  error_log /var/log/nginx/supervisor_errors.log;
+  root /usr/share/nginx/html;
+
+  location / {
+    proxy_pass http://supervisor;
+    proxy_pass_header Server;
+    proxy_set_header Host $host;
+  }
+}
+
+upstream supervisor {
+    server localhost:9999;
+}

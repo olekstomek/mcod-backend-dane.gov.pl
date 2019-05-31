@@ -1,0 +1,7 @@
+- name: install rabbitmq server
+  dnf: name=rabbitmq-server state=installed
+  become: true
+
+- name: enable and start rabbitmq server
+  service: name=rabbitmq-server enabled=yes state=started
+  become: true
