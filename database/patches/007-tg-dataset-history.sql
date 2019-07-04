@@ -11,7 +11,7 @@ AS $function$
 /*
 <><><><><><><><><><><><><><><><><><><><><><><><><>
 Version:					1.0
-Author:						Agnieszka Rutka
+Author:						ar
 Create date:				2018-03-07
 Description:				procedura pod trigger - insert do public.History
 Last modify by:				
