@@ -1,4 +1,3 @@
-
 /* 1. CREATE TRIGGER */
 BEGIN;
 CREATE OR REPLACE FUNCTION public.fn_insert_article_category_history()
