@@ -1,9 +1,4 @@
 
-
-
-
-
-
 /* 1. CREATE TRIGGER */
 BEGIN;
 CREATE OR REPLACE FUNCTION public.fn_insert_article_category_history()
@@ -14,7 +9,7 @@ AS $function$
 /*
 <><><><><><><><><><><><><><><><><><><><><><><><><>
 Version:					1.0
-Author:						Agnieszka Rutka
+Author:						ar
 Create date:				2019-02-05
 Description:				procedura pod trigger - insert do public.History
 Last modify by:
