@@ -6,20 +6,17 @@
         {% if confirm_change %}<input type="hidden" name="_confirm_change" />{% endif %}
         {% if confirm_add %}<input type="hidden" name="_confirm_add" />{% endif %}
 
-        {% is_unleash_enabled "S21_admin_ui_changes.be" as ui_changes_flag %}
-        {% with ui_changes=ui_changes_flag %}
         {% if show_save %}
-            <button type="submit" class="btn btn-high  btn-{% if ui_changes %}success{% else %}info{% endif %}" name="_save">{% trans 'Save' %}</button>
+            <button type="submit" class="btn btn-high  btn-success" name="_save">{% trans 'Save' %}</button>
         {% endif %}
         {% if show_save_and_continue %}
-            <button type="submit" name="_continue" class="btn btn-high{% if ui_changes %} btn-link{% endif %}">
+            <button type="submit" name="_continue" class="btn btn-high btn-link">
                 {% if can_change %}{% trans 'Save and continue editing' %}{% else %}{% trans 'Save and continue editing' %}{% endif %}
             </button>
         {% endif %}
         {% if show_save_and_add_another %}
-            <button type="submit" name="_addanother" class="btn{% if ui_changes %} btn-link{% endif %}">{% trans 'Save and add another' %}</button>
+            <button type="submit" name="_addanother" class="btn btn-link">{% trans 'Save and add another' %}</button>
         {% endif %}
-        {% endwith %}
 
         {% if show_save_as_new %}
             <button type="submit" name="_saveasnew" class="btn">{% trans 'Save as new' %}</button>

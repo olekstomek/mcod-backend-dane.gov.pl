@@ -114,3 +114,7 @@ msgstr "numer domu"
 
 msgid "Redefine the map by selecting only once the required element of the map set."
 msgstr "Ponów definiowanie mapy wybierając tylko raz wymagany element zestawu mapowego."
+
+#, python-format
+msgid "Delete selected %(verbose_name_plural)s"
+msgstr "Usuń wybrane %(verbose_name_plural)s"

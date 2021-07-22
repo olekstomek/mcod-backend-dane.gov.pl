@@ -5,6 +5,7 @@ import shapefile
 from mcod import settings
 from pyproj import CRS, Transformer
 from requests.auth import HTTPBasicAuth
+from tifffile import TiffFile
 
 
 class ExtractUAddressError(Exception):
@@ -28,6 +29,19 @@ def are_shapefiles(files):
         else:
             other_files.add(file)
     return len(extensions.intersection({'shp', 'shx', 'dbf'})) == 3 and len(shp_files) > len(other_files)
+
+
+def is_geotiff(path):
+    return path is not None and '.tif' in path and TiffFile(path).is_geotiff
+
+
+def has_geotiff_files(files):
+    base_tiff_files = {_cut_extension(f)[-1]: f for f in files if _cut_extension(f)[-1] in ['tiff', 'tif', 'tfw']}
+    try:
+        tif_file = base_tiff_files['tif']
+    except KeyError:
+        tif_file = base_tiff_files.get('tiff')
+    return ('tfw' in base_tiff_files and tif_file is not None) or is_geotiff(tif_file)
 
 
 def analyze_shapefile(files):

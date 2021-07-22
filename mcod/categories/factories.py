@@ -26,4 +26,4 @@ class CategoryFactory(factory.django.DjangoModelFactory):
                 self.datasets.add(dataset)
 
 
-factories_registry.register('category factory', CategoryFactory)
+factories_registry.register('category', CategoryFactory)

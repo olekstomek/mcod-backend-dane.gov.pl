@@ -1,35 +1,35 @@
 /* LICENSES TAB & DATASET FORM STACKED IN ORGANIZATION FORM */
 .suit-tab-licenses .control-group.field-license_chosen li,
-div#datasets-2-0 .control-group.field-license_chosen li {
+div#datasets-2-group .control-group.field-license_chosen li {
     display: inline;
 }
 
 .suit-tab-licenses .control-group.field-license_chosen li > label,
-div#datasets-2-0 .control-group.field-license_chosen li > label {
+div#datasets-2-group .control-group.field-license_chosen li > label {
     display: inline-block;
     width: 140px;
     font-weight: bold;
 }
 
 .suit-tab-licenses .control-group.field-license_chosen ul:not(.errorlist) li:first-child,
-div#datasets-2-0 .control-group.field-license_chosen ul:not(.errorlist) li:first-child {
+div#datasets-2-group .control-group.field-license_chosen ul:not(.errorlist) li:first-child {
     display: none;
 }
 
 .suit-tab-licenses .control-group.field-license_condition_responsibilities .controls,
 .suit-tab-licenses .control-group.field-license_chosen .controls,
-div#datasets-2-0 .control-group.field-license_condition_responsibilities .controls,
-div#datasets-2-0 .control-group.field-license_chosen .controls {
+div#datasets-2-group .control-group.field-license_condition_responsibilities .controls,
+div#datasets-2-group .control-group.field-license_chosen .controls {
     padding-bottom: 30px;
 }
 
 .suit-tab-licenses .control-group.field-license_chosen ul,
-div#datasets-2-0 .control-group.field-license_chosen ul {
+div#datasets-2-group .control-group.field-license_chosen ul {
     margin: 0;
 }
 
 .suit-tab-licenses .control-group.field-license_chosen .controls input[type=radio],
-div#datasets-2-0 .control-group.field-license_chosen .controls input[type=radio] {
+div#datasets-2-group .control-group.field-license_chosen .controls input[type=radio] {
     margin: 0;
 }
 
@@ -87,4 +87,17 @@ a.accordion-expander::before {
 
 a.accordion-expander.collapsed::before {
     content: "Rozwiń opis";
+}
+
+/* UPDATE FREQUENCY NOTIFICATION FIELDS */
+input#id_update_notification_frequency {
+    width: 30px;
+}
+
+div.control-group.form-row.field-is_update_notification_enabled,
+div.control-group.form-row.field-update_notification_frequency,
+div.control-group.form-row.field-update_notification_recipient_email,
+div.control-group.form-row.field-update_notification_recipient_email span.help-inline
+{
+    display: none
 }

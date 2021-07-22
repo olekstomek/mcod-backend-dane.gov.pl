@@ -1,6 +1,5 @@
-from model_utils.managers import SoftDeletableQuerySet, SoftDeletableManager
-
-from mcod.core.db.managers import DeletedManager
+from mcod.core.db.managers import TrashManager
+from mcod.core.managers import SoftDeletableQuerySet, SoftDeletableManager
 
 
 class SpecialSignQuerySet(SoftDeletableQuerySet):
@@ -20,5 +19,5 @@ class SpecialSignManager(SpecialSignManagerMixin, SoftDeletableManager):
     pass
 
 
-class SpecialSignDeletedManager(SpecialSignManagerMixin, DeletedManager):
+class SpecialSignTrashManager(SpecialSignManagerMixin, TrashManager):
     pass

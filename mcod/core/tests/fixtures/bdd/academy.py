@@ -1,17 +1,8 @@
-import datetime
-import json
-
 from dateutil.relativedelta import relativedelta
 from django.utils import timezone
-from pytest_bdd import given, parsers, then
+from pytest_bdd import given, parsers
 
 from mcod.academy.factories import CourseFactory, CourseModuleFactory
-from mcod.academy.models import Course
-
-
-@given(parsers.parse('course with id {course_id:d}'))
-def course_with_id(course_id):
-    return CourseFactory.create(id=course_id, title='Course with id: %s' % course_id)
 
 
 @given(parsers.parse('finished course with id {course_id:d}'))
@@ -48,17 +39,6 @@ def current_course_with_id(course_id):
     CourseModuleFactory.create(**data)
     _course.save()
     return _course
-
-
-@then(parsers.parse('course with title {course_title} contains data {data_str}'))
-def course_with_title_attribute_is(course_title, data_str):
-    course = Course.objects.get(title=course_title)
-    data = json.loads(data_str)
-    for attr_name, attr_value in data.items():
-        course_attr = getattr(course, attr_name)
-        if isinstance(course_attr, datetime.date):
-            course_attr = str(course_attr)
-        assert course_attr == attr_value, f'Course attribute {course_attr} should be {attr_value}'
 
 
 @given('<planned> planned academy courses')

@@ -27,7 +27,53 @@ class ExtendedList(list):
     pass
 
 
+class CKANImportError:
+    INVALID_LICENSE_ID = 1
+    ORGANIZATION_IN_TRASH = 2
+    DATASET_IN_TRASH = 3
+
+    def __init__(self, rejected_items):
+        self.rejected_items = rejected_items
+
+
+class CKANImportInvalidLicenseError(CKANImportError):
+    def __str__(self):
+        error_desc = 'Wartość w polu license_id spoza słownika CC'
+        item_error_descs = []
+        for item in self.rejected_items:
+            item_error_descs.append(f"<p><strong>id zbioru danych:</strong> {item.get('ext_ident')}</p>"
+                                    f"<p><strong>license_id:</strong> {item.get('license_id')}</p>")
+
+        inner_error_desc = '<br>'.join(item_error_descs)
+        error_desc += f'<div class="expandable">{inner_error_desc}</div>'
+        return error_desc
+
+
+class CKANImportOrganizationInTrashError(CKANImportError):
+    def __str__(self):
+        error_desc = '<p>Instytucja znajduje się w koszu</p>'
+        item_error_descs = []
+        for item in self.rejected_items:
+            item_error_descs.append(f"<p><strong>id zbioru danych:</strong> {item.get('ext_ident')}</p>"
+                                    f"<p><strong>organization.title:</strong> {item.get('organization', {}).get('title')}</p>")
+
+        inner_error_desc = '<br>'.join(item_error_descs)
+        error_desc += f'<div class="expandable">{inner_error_desc}</div>'
+        return error_desc
+
+
+class CKANImportDatasetInTrashError(CKANImportError):
+    def __str__(self):
+        error_desc = '<p>Zbiór danych znajduje się w koszu</p>'
+        item_error_descs = []
+        for item in self.rejected_items:
+            item_error_descs.append(f"<p><strong>id zbioru danych:</strong> {item.get('ext_ident')}</p>")
+        inner_error_desc = '<br>'.join(item_error_descs)
+        error_desc += f'<div class="expandable">{inner_error_desc}</div>'
+        return error_desc
+
 # https://stackoverflow.com/questions/27835619/urllib-and-ssl-certificate-verify-failed-error/55320961#55320961
+
 
 try:
     _create_unverified_https_context = ssl._create_unverified_context

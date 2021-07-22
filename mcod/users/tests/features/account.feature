@@ -32,7 +32,7 @@ Feature: User Account API
     Given logged active user
     When api request method is PUT
     And api request path is <request_path>
-    And api request posted data is <req_post_data>
+    And api request register data has {"fullname": "AAAA BBBB", "rodo_privacy_policy_opt_in": true, "subscriptions_report_opt_in": true}
     And send api request and fetch the response
     Then api's response status code is 200
     And api request method is GET
@@ -42,6 +42,6 @@ Feature: User Account API
     And api's response body field /data/attributes/subscriptions_report_opt_in is True
 
     Examples:
-    | request_path   | req_post_data                                                                                                                                |
-    | /1.0/auth/user | {"fullname": "AAAA BBBB", "rodo_privacy_policy_opt_in": true, "subscriptions_report_opt_in": true}                                           |
-    | /1.4/auth/user | {"data": {"type": "user", "attributes": {"fullname": "AAAA BBBB", "rodo_privacy_policy_opt_in": true, "subscriptions_report_opt_in": true}}} |
+    | request_path   |
+    | /1.0/auth/user |
+    | /1.4/auth/user |

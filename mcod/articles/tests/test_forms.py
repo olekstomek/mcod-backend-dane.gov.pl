@@ -2,7 +2,6 @@ import pytest
 
 from mcod.articles.forms import ArticleForm
 from mcod.articles.models import Article
-from mcod.unleash import is_enabled
 
 
 class TestArticleFormValidity:
@@ -13,21 +12,13 @@ class TestArticleFormValidity:
             'app_url': "http://test.pl",
             'notes': 'tresc',
             'status': 'published',
-            'category': article_category.id
+            'category': article_category.id,
+            'tags_pl': [tag_pl.id],
         }
-        if is_enabled('S18_new_tags.be'):
-            data['tags_pl'] = [tag_pl.id]
-        else:
-            data['tags'] = [tag]
-
         form = ArticleForm(data=data)
         assert form.is_valid() is True
         form.save()
-
-        if is_enabled('S18_new_tags.be'):
-            assert tag_pl in Article.objects.last().tags.all()
-        else:
-            assert tag in Article.objects.last().tags.all()
+        assert tag_pl in Article.objects.last().tags.all()
 
     @pytest.mark.parametrize(
         'title, slug, notes, author, license_id, status, category, validity',

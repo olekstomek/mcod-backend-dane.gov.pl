@@ -70,14 +70,15 @@ class Counter:
                 for k in self.con.scan_iter(data_key):
                     obj_id = int(k.decode().split(':')[-1])
                     try:
-                        obj = model.objects.get(pk=obj_id)
+                        obj = model.objects.get(pk=obj_id, status='published')
                     except model.DoesNotExist:
                         self.con.delete(k)
                         continue
 
                     incr_val = int(self.con.get(k))
                     counter = getattr(obj, oper) + incr_val
-                    model.objects.filter(pk=obj_id).update(**{oper: counter})  # w/o sending any `save` signals.
+                    model.objects.filter(
+                        pk=obj_id, status='published').update(**{oper: counter})  # w/o sending any `save` signals.
                     self.add_es_action(view, obj, oper, counter, incr_val, datasets_updates)
                     self.con.delete(k)
 
@@ -91,19 +92,22 @@ class Counter:
             resources_to_update[obj_id] = count_value
             self.con.delete(k)
         existing_resources_to_update = \
-            list(model.objects.filter(pk__in=list(resources_to_update.keys())).values_list('pk', flat=True))
+            list(model.objects.filter(pk__in=list(resources_to_update.keys()),
+                                      status='published').values_list('pk', flat=True))
+        pub_resources_to_update = {published_res: resources_to_update[published_res] for
+                                   published_res in existing_resources_to_update}
         existing_counters = \
             counter_model.objects.filter(
-                resource_id__in=existing_resources_to_update, timestamp=today)
+                resource_id__in=existing_resources_to_update, timestamp=today, resource__status='published')
         existing_counters_ids = set(list(existing_counters.values_list('resource_id', flat=True)))
-        all_to_update = set(resources_to_update.keys())
+        all_to_update = set(pub_resources_to_update.keys())
         no_count_resources = all_to_update.difference(existing_counters_ids)
         to_create_counters = []
         for resource_id in no_count_resources:
             to_create_counters.append(
-                counter_model(count=resources_to_update[resource_id], resource_id=resource_id))
+                counter_model(count=pub_resources_to_update[resource_id], resource_id=resource_id))
         for current_counter in existing_counters:
-            current_counter.count += resources_to_update[current_counter.resource_id]
+            current_counter.count += pub_resources_to_update[current_counter.resource_id]
         counter_model.objects.bulk_create(to_create_counters)
         counter_model.objects.bulk_update(existing_counters, ['count'])
         annotation_label = 'tmp_' + oper

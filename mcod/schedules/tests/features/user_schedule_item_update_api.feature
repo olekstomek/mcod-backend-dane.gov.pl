@@ -20,6 +20,15 @@ Feature: User schedule item update API
     Then api's response status code is 403
     And api's response body field errors/[0]/title is You have no permission to update the resource!
 
+  Scenario: Update user schedule item returns 404 for invalid user schedule item id (9999)
+    Given logged agent user created with {"id": 999}
+    And schedule data created with {"schedule_id": 999, "user_id": 999, "user_schedule_id": 999, "user_schedule_item_id": 999}
+    When api request method is PATCH
+    And api request user_schedule_item data has {"format": "pdf", "is_new": true}
+    And api request path is /auth/user_schedule_items/9999
+    And send api request and fetch the response
+    Then api's response status code is 404
+
   Scenario: User schedule item is available for update by agent related to the user schedule item
     Given logged agent user created with {"id": 999}
     And schedule data created with {"schedule_id": 999, "user_id": 999, "user_schedule_id": 999, "user_schedule_item_id": 999}

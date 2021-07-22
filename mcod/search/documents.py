@@ -3,12 +3,13 @@ from django_elasticsearch_dsl import fields
 from mcod.watchers.models import ModelWatcher
 from mcod.core.api.search.analyzers import lang_synonyms_analyzers, lang_exact_analyzers
 from mcod.core.db.elastic import Document, NonIndexableValue
-from mcod.lib.search.fields import TranslatedTextField, TranslatedKeywordsList, TranslatedSuggestField
-from mcod import settings as mcs, settings
+from mcod.lib.search.fields import TranslatedTextField, TranslatedSuggestField
+from mcod import settings
 
 
 class ExtendedDocument(Document):
     NOTES_FIELD_NAME = 'notes'
+    id = fields.IntegerField()
     model = fields.KeywordField()
     slug = TranslatedTextField('slug')
     title = TranslatedSuggestField('title')
@@ -17,7 +18,6 @@ class ExtendedDocument(Document):
     notes = TranslatedTextField(NOTES_FIELD_NAME)
     notes_synonyms = TranslatedTextField(NOTES_FIELD_NAME, analyzers=lang_synonyms_analyzers)
     notes_exact = TranslatedTextField(NOTES_FIELD_NAME, analyzers=lang_exact_analyzers)
-    tags = TranslatedKeywordsList()
     keywords = fields.NestedField(
         properties={
             'name': fields.KeywordField(),
@@ -54,9 +54,6 @@ class ExtendedDocument(Document):
     def prepare_search_date(self, instance):
         return instance.created
 
-    def prepare_tags(self, instance):
-        return getattr(instance, 'tags_list', NonIndexableValue)
-
     def prepare_keywords(self, instance):
         return getattr(instance, 'keywords_list', NonIndexableValue)
 
@@ -84,83 +81,3 @@ class ExtendedDocument(Document):
 
     def get_queryset(self):
         return super().get_queryset().filter(status='published')
-
-
-class SearchDoc(Document):
-    model = fields.KeywordField()
-    slug = TranslatedTextField('slug')
-    title = TranslatedTextField('title')
-    notes = TranslatedTextField('notes', raw_field_cls=fields.Text)
-
-    title_synonyms = TranslatedTextField('title_synonyms',
-                                         attr='title',
-                                         analyzers=lang_synonyms_analyzers,
-                                         properties=dict())
-    notes_synonyms = TranslatedTextField('notes_synonyms',
-                                         attr='notes',
-                                         analyzers=lang_synonyms_analyzers,
-                                         properties=dict())
-
-    title_exact = TranslatedTextField('title_exact',
-                                      attr='title',
-                                      properties=dict(),
-                                      analyzers=lang_exact_analyzers)
-    notes_exact = TranslatedTextField('notes_exact',
-                                      attr='notes',
-                                      properties=dict(),
-                                      analyzers=lang_exact_analyzers)
-
-    modified = fields.DateField()
-    created = fields.DateField()
-    views_count = fields.IntegerField()
-    search_date = fields.DateField()
-    status = fields.KeywordField()
-    visualization_types = fields.KeywordField(multi=True)
-
-    subscriptions = fields.NestedField(
-        properties={
-            'user_id': fields.IntegerField(),
-            'subscription_id': fields.IntegerField()
-        }
-    )
-
-    def prepare_model(self, instance):
-        return instance._meta.model_name
-
-    def prepare_search_date(self, instance):
-        return instance.created
-
-    def prepare_subscriptions(self, instance):
-        try:
-            watcher = ModelWatcher.objects.get_from_instance(instance)
-            return [
-                {'user_id': subscription.user_id, 'subscription_id': subscription.id} for subscription in
-                watcher.subscriptions.all()
-            ]
-        except ModelWatcher.DoesNotExist:
-            return []
-
-    def prepare_id(self, instance):
-        return '{}-{}'.format(instance._meta.model_name, instance.pk)
-
-    def prepare_visualization_types(self, instance):
-        return ['none', ]
-
-    def _prepare_action(self, object_instance, action):
-        return {
-            '_op_type': action,
-            '_index': self._index._name,
-            '_type': self._doc_type.name,
-            '_id': self.prepare_id(object_instance),
-            '_source': (
-                self.prepare(object_instance) if action != 'delete' else None
-            ),
-        }
-
-    class Index:
-        name = mcs.ELASTICSEARCH_INDEX_NAMES['common']
-        settings = {
-            'number_of_shards': 1,
-            'number_of_replicas': 1,
-            'max_result_window': 25000
-        }

@@ -5,7 +5,6 @@ from django.utils.translation import gettext_lazy as _
 
 from mcod.tags.models import Tag
 from mcod.tags.widgets import TagAutocompleteSelectMultiple, TagRelatedFieldWidgetWrapper
-from mcod.unleash import is_enabled
 
 
 class ModelFormWithKeywords(forms.ModelForm):
@@ -23,24 +22,7 @@ class ModelFormWithKeywords(forms.ModelForm):
 
     def __init__(self, *args, instance=None, **kwargs):
         super().__init__(*args, instance=instance, **kwargs)
-
-        if is_enabled('S18_new_tags.be'):
-            self._init_tags_fields(instance)
-        else:
-            self._remove_tags_fields()
-
-        # TODO remove below condition on S18_new_tags.be removal
-        if 'tags' in self.fields:
-            self.fields['tags'].queryset = Tag.objects.filter(language='')
-
-    def clean(self):
-        data = super().clean()
-        if not is_enabled('S18_new_tags.be') and self.instance and self.instance.id and 'tags' in data:
-            # make it so saving tags without flag, won't remove new keywords (with language field filled)
-            selected = data['tags'].values_list('id', flat=True)
-            keywords = self.instance.tags.exclude(language='').values_list('id', flat=True)
-            data['tags'] = Tag.objects.filter(id__in=itertools.chain(selected, keywords))
-        return data
+        self._init_tags_fields(instance)
 
     @classmethod
     def recreate_tags_widgets(cls, request, db_field, admin_site):
@@ -81,12 +63,8 @@ class ModelFormWithKeywords(forms.ModelForm):
 
     def _save_m2m(self):
         super()._save_m2m()
-        if not is_enabled('S18_new_tags.be'):
-            return
-        # saving new keywords (with language field filled) shouldn't remove old tags (with language field unfilled)
         instance = self.instance
-        # TODO remove exclude(language='') on S18_new_tags.be removal
-        old_tags_ids = set(instance.tags.exclude(language='').values_list('id', flat=True))
+        old_tags_ids = set(instance.tags.values_list('id', flat=True))
         new_tags = []
         for tag in itertools.chain(self.cleaned_data.get('tags_pl', []), self.cleaned_data.get('tags_en', [])):
             if tag.id in old_tags_ids:
@@ -100,11 +78,6 @@ class ModelFormWithKeywords(forms.ModelForm):
 class TagForm(forms.ModelForm):
     lang_code = None
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        if not is_enabled('S18_new_tags.be') and 'language' in self.fields:
-            self.fields['language'].required = False
-
     def has_field_changed(self, *names):
         return not all(self.cleaned_data.get(name) == self.initial.get(name) for name in names)
 
@@ -114,11 +87,7 @@ class TagForm(forms.ModelForm):
             cleaned_data['language'] = self.lang_code
         if self.has_field_changed('name', 'language') and Tag.objects.filter(
                 name__iexact=cleaned_data.get('name'), language__iexact=cleaned_data.get('language')).exists():
-
-            if is_enabled('S18_new_tags.be'):
-                self.add_error('name', _("Tag already exists for specified language."))
-            else:
-                self.add_error('name', "Tag istnieje")
+            self.add_error('name', _("Tag already exists for specified language."))
         return cleaned_data
 
     class Meta:

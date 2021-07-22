@@ -1,16 +1,16 @@
 import datetime
 
-from django.utils.translation import gettext_lazy as _
+from django.conf import settings
+from django.utils.translation import gettext_lazy as _, override
 from django.utils.timezone import is_naive, make_aware
 from marshmallow import Schema as BaseSchema, EXCLUDE, pre_load, post_load, validate
 from marshmallow import ValidationError, validates_schema
-from marshmallow.fields import Bool, Date, DateTime, Int, List, Nested, Str, URL, UUID
+from marshmallow.fields import Bool, Date, DateTime, Int, List, Nested, Str, URL, UUID, Method
 
 from mcod.core.api.rdf.profiles.dcat_ap import DCATDatasetDeserializer
 from mcod.datasets.models import Dataset
 from mcod.resources.models import Resource, supported_formats_choices
 from mcod.resources.archives import ARCHIVE_EXTENSIONS
-from mcod.unleash import is_enabled
 
 
 SUPPORTED_RESOURCE_FORMATS = [i[0] for i in supported_formats_choices()]
@@ -300,9 +300,6 @@ class XMLDatasetSchema(Schema):
 
     @validates_schema
     def validate_license_condition_personal_data(self, data, **kwargs):
-        if not is_enabled('S21_licenses.be'):
-            return
-
         field_name = 'license_condition_personal_data'
         if data.get(field_name):
             raise ValidationError(
@@ -313,9 +310,6 @@ class XMLDatasetSchema(Schema):
 
     @validates_schema
     def validate_license_condition_db_or_copyrighted(self, data, **kwargs):
-        if not is_enabled('S21_licenses.be'):
-            return
-
         field_name = 'license_condition_db_or_copyrighted'
         if data.get(field_name) and not data.get('license_chosen'):
             raise ValidationError(
@@ -325,9 +319,6 @@ class XMLDatasetSchema(Schema):
 
     @validates_schema
     def validate_license_chosen(self, data, **kwargs):
-        if not is_enabled('S21_licenses.be'):
-            return
-
         field_name = 'license_chosen'
         if data.get(field_name) and not data.get('license_condition_db_or_copyrighted'):
             raise ValidationError(
@@ -410,3 +401,18 @@ class DatasetDCATSchema(Schema):
             if dataset['modified'] is None:
                 dataset.pop('modified')
         return data
+
+
+class DataSourceSerializer(Schema):
+    source_type = Str()
+    url = URL()
+    title = Str()
+    last_import_timestamp = DateTime()
+    update_frequency = Method('get_update_frequency')
+
+    def get_update_frequency(self, obj):
+        translations = {}
+        for lang in settings.MODELTRANS_AVAILABLE_LANGUAGES:
+            with override(lang):
+                translations[lang] = str(obj.get_frequency_in_days_display())
+        return translations

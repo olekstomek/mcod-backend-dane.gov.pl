@@ -59,7 +59,7 @@ class TestArticleModel(object):
         assert article.is_removed is True
         with pytest.raises(ObjectDoesNotExist):
             Article.objects.get(id=article.id)
-        assert Article.deleted.get(id=article.id)
+        assert Article.trash.get(id=article.id)
 
     def test_unsafe_delete(self, article):
         assert article.status == 'published'

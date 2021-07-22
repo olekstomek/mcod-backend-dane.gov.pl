@@ -16,6 +16,11 @@ body.od2021 {
 	text-shadow: none;
 }
 
+p.irreversible-deletion-warning {
+	margin-top: 50px;
+	margin-bottom: 20px;
+}
+
 .col-2 {
 	width: 16.666667%;
 }
@@ -54,9 +59,9 @@ body.od2021 {
 .od2021 .alert.alert-error {
 	color: #a33;
 }
-.od2021 .breadcrumb + .alert {
-	margin: 1rem 0 0.5rem 0;
-	padding: 1rem;
+.od2021 .breadcrumb ~ .alert {
+    margin: 0 0 0.75rem 0;
+    padding: 0.75rem 2rem 0.75em 1rem;
 }
 .od2021 .alert .errorlist {
 	color: inherit;
@@ -94,8 +99,8 @@ body.od2021 {
 .od2021 .header #branding {
 	border: 0;
 }
-.od2021 .header .header-content {
-	display: none; /* REMOVE */
+.header .header-content .header-column i.icon-time{
+    margin-top:2px;
 }
 /*/ PAGE HEADER */
 
@@ -264,8 +269,8 @@ body.od2021 {
 
 /* BREADCRUMBS */
 .od2021 .breadcrumb {
-	background-color: inherit;
-	padding: 0;
+    background-color: inherit;
+    padding: 0 0 1rem 0;
 }
 /*/ BREADCRUMBS */
 
@@ -288,6 +293,9 @@ body.od2021 {
 }
 .od2021 .admindatefilter p {
 	margin-right: 30px;
+}
+.od2021 .admindatefilter .datetimeshortcuts {
+    margin-left: 5px;
 }
 .od2021 .search-container input,
 .od2021 .search-filter {

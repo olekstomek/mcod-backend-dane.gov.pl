@@ -41,6 +41,13 @@ class UserScheduleItemCommentFactory(factory.django.DjangoModelFactory):
         model = models.Comment
 
 
+class NotificationFactory(factory.django.DjangoModelFactory):
+
+    class Meta:
+        model = models.Notification
+
+
+factories_registry.register('schedule_notification', NotificationFactory)
 factories_registry.register('schedule', ScheduleFactory)
 factories_registry.register('user_schedule', UserScheduleFactory)
 factories_registry.register('user_schedule_item', UserScheduleItemFactory)

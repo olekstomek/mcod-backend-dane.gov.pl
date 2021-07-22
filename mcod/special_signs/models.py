@@ -3,7 +3,7 @@ from django.utils.translation import gettext_lazy as _
 from modeltrans.fields import TranslationField
 from model_utils import FieldTracker
 
-from mcod.special_signs.managers import SpecialSignManager, SpecialSignDeletedManager
+from mcod.special_signs.managers import SpecialSignManager, SpecialSignTrashManager
 from mcod.core.db.models import ExtendedModel
 
 
@@ -20,9 +20,8 @@ class SpecialSign(ExtendedModel):
         related_name='special_signs_modified',
     )
 
-    raw = models.Manager()
     objects = SpecialSignManager()
-    deleted = SpecialSignDeletedManager()
+    trash = SpecialSignTrashManager()
     i18n = TranslationField(fields=('name', 'description'), required_languages=('pl',))
     tracker = FieldTracker()
     slugify_field = 'name'

@@ -48,6 +48,7 @@ class ResourceFactory(factory.django.DjangoModelFactory):
     link = factory.LazyAttribute(lambda obj: 'http://test.mcod/media/resources/{}'.format(obj.file.name))
     dataset = factory.SubFactory(DatasetFactory)
     forced_api_type = False
+    forced_file_type = False
 
     @factory.post_generation
     def link_tasks(self, create, extracted, **kwargs):
@@ -110,16 +111,13 @@ def json_sequence(number):
 
 
 class ChartFactory(factory.django.DjangoModelFactory):
+    name = factory.Faker('text', max_nb_chars=200, locale='pl_PL')
     chart = factory.Sequence(json_sequence)
     resource = factory.SubFactory(ResourceFactory)
+    is_default = True
 
     class Meta:
         model = models.Chart
-
-    @classmethod
-    def _create(cls, model, *args, **kwargs):
-        kwargs.setdefault('is_default', True)
-        return super()._create(model, *args, **kwargs)
 
 
 class TaskResultFactory(factory.django.DjangoModelFactory):

@@ -27,7 +27,7 @@ from mcod.search.serializers import (
     SparqlResponseSchema,
 )
 from mcod import settings
-from mcod.search.utils import search_index_name
+from mcod.search.utils import get_sparql_limiter_key
 
 logger = logging.getLogger('mcod')
 
@@ -81,7 +81,7 @@ class SuggestView(JsonAPIView):
 
         @property
         def _search_document(self):
-            return Search(index=search_index_name())
+            return Search(index=settings.ELASTICSEARCH_COMMON_ALIAS_NAME)
 
         def clean(self, *args, validators=None, locations=None, **kwargs):
             cleaned = super().clean(*args, validators, locations, **kwargs)
@@ -96,8 +96,8 @@ class SuggestView(JsonAPIView):
                 for md in multi_data:
                     data.extend(self.remove_nones(md))
                 data = sorted(data, key=lambda hit: hit.meta['score'], reverse=True)
-                if 'max' in cleaned:
-                    data = data[:cleaned['max']]
+                if 'max_length' in cleaned:
+                    data = data[:cleaned['max_length']]
 
             return data
 
@@ -131,7 +131,7 @@ class SearchView(JsonAPIView):
 
         @property
         def _search_document(self):
-            return Search(index=search_index_name())
+            return Search(index=settings.ELASTICSEARCH_COMMON_ALIAS_NAME)
 
         def _queryset_extra(self, queryset, *args, **kwargs):
             queryset = super()._queryset_extra(queryset, *args, **kwargs)
@@ -171,7 +171,7 @@ class SparqlView(BaseView):
 
     @falcon.before(login_optional)
     @versioned
-    @limiter.limit(limits=settings.FALCON_LIMITER_SPARQL_LIMITS)
+    @limiter.limit(limits=settings.FALCON_LIMITER_SPARQL_LIMITS, key_func=get_sparql_limiter_key)
     def on_post(self, request, response, *args, **kwargs):
         """
         ---
@@ -237,7 +237,8 @@ class SparqlView(BaseView):
             sparql_format = data['format']
             return_format = SPARQL_FORMATS[sparql_format]
             try:
-                store = get_sparql_store(readonly=True, return_format=return_format)
+                store = get_sparql_store(readonly=True, return_format=return_format,
+                                         external_sparql_endpoint=data.get('external_sparql_endpoint'))
                 response = store.query(query, initNs=NAMESPACES)
                 _format = 'xml' if return_format == 'application/rdf+xml' else return_format
                 _format = sparql_format if response.graph else _format

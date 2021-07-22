@@ -25,7 +25,7 @@ def fake_session():
     return namedtuple('Session', 'session_key')
 
 
-class TestLogout(object):
+class TestLogout:
 
     def test_logout_by_not_logged_in(self, client):
         resp = client.simulate_post(path='/auth/logout')
@@ -43,12 +43,12 @@ class TestLogout(object):
                 }
             }
         })
-        assert resp.status == falcon.HTTP_200
+        assert resp.status == falcon.HTTP_201
 
         active_usr_token = resp.json['data']['attributes']['token']
-        auth_header = '%s %s' % (settings.JWT_HEADER_PREFIX, active_usr_token)
-        session_valid = active_user.check_session_valid(auth_header)
-        assert session_valid is True
+        prefix = getattr(settings, 'JWT_HEADER_PREFIX')
+
+        assert active_user.check_session_valid(f'{prefix} {active_usr_token}') is True
 
         active_user2 = User.objects.create_user('test-active2@example.com', '12345.Abcde')
         active_user2.state = 'active'
@@ -64,36 +64,30 @@ class TestLogout(object):
             }
         })
 
-        assert resp.status == falcon.HTTP_200
+        assert resp.status == falcon.HTTP_201
 
         active_usr2_token = resp.json['data']['attributes']['token']
-        session_valid = active_user.check_session_valid('%s %s' % (settings.JWT_HEADER_PREFIX, active_usr_token))
-        assert session_valid is True
-        session_valid = active_user2.check_session_valid('%s %s' % (settings.JWT_HEADER_PREFIX, active_usr2_token))
-        assert session_valid is True
+        assert active_user.check_session_valid(f'{prefix} {active_usr_token}') is True
+        assert active_user2.check_session_valid(f'{prefix} {active_usr2_token}') is True
 
         resp = client.simulate_post(path='/auth/logout', headers={
             "Authorization": "Bearer %s" % active_usr_token
         })
 
         assert resp.status == falcon.HTTP_200
-        session_valid = active_user.check_session_valid('%s %s' % (settings.JWT_HEADER_PREFIX, active_usr_token))
-        assert session_valid is False
-        session_valid = active_user2.check_session_valid('%s %s' % (settings.JWT_HEADER_PREFIX, active_usr2_token))
-        assert session_valid is True
+        assert active_user.check_session_valid(f'{prefix} {active_usr_token}') is False
+        assert active_user2.check_session_valid(f'{prefix} {active_usr2_token}') is True
 
         resp = client.simulate_post(path='/auth/logout', headers={
             "Authorization": "Bearer %s" % active_usr2_token
         })
 
         assert resp.status == falcon.HTTP_200
-        session_valid = active_user.check_session_valid('%s %s' % (settings.JWT_HEADER_PREFIX, active_usr_token))
-        assert session_valid is False
-        session_valid = active_user2.check_session_valid('%s %s' % (settings.JWT_HEADER_PREFIX, active_usr2_token))
-        assert session_valid is False
+        assert active_user.check_session_valid(f'{prefix} {active_usr_token}') is False
+        assert active_user2.check_session_valid(f'{prefix} {active_usr2_token}') is False
 
 
-class TestProfile(object):
+class TestProfile:
 
     def test_get_profile_after_logout(self, client, active_user):
         resp = client.simulate_post(path='/auth/login', json={
@@ -106,7 +100,7 @@ class TestProfile(object):
             }
         })
 
-        assert resp.status == falcon.HTTP_200
+        assert resp.status == falcon.HTTP_201
         token = resp.json['data']['attributes']['token']
 
         resp = client.simulate_post(path='/auth/logout', headers={
@@ -122,46 +116,68 @@ class TestProfile(object):
         assert resp.json['code'] == 'authentication_error'
 
 
-class TestResetPasswordConfirm(object):
+class TestResetPasswordConfirm:
 
     def test_password_change(self, client, active_user):
         data = {
-            'new_password1': '123.4.bce',
-            'new_password2': '123.4.bce'
+            'data': {
+                'type': 'user',
+                'attributes': {
+                    'new_password1': '123.4.bce',
+                    'new_password2': '123.4.bce',
+                }
+            }
         }
         token = active_user.password_reset_token
-        url = '/auth/password/reset/%s' % token
+        url = f'/auth/password/reset/{token}'
 
         resp = client.simulate_post(url, json=data)
         assert resp.status == falcon.HTTP_422
-        assert 'new_password1' in resp.json['errors']
+        assert resp.json['errors']['data']['attributes']['new_password1'] == [
+            'Hasło musi zawierać przynajmniej jedną dużą i jedną mała literę.']
 
         data = {
-            'new_password1': '123.4.bCe',
-            'new_password2': '123.4.bCe!'
+            'data': {
+                'type': 'user',
+                'attributes': {
+                    'new_password1': '123.4.bCe',
+                    'new_password2': '123.4.bCe!',
+                }
+            }
         }
 
         resp = client.simulate_post(url, json=data)
         assert resp.status == falcon.HTTP_422
-        assert 'new_password1' in resp.json['errors']
+        assert resp.json['errors']['data']['attributes']['new_password1'] == ['Hasła nie pasują']
 
-        valid_data = {
-            'new_password1': '123.4.bCe',
-            'new_password2': '123.4.bCe'
+        valid_password = '123.4.bCe'
+        data = {
+            'data': {
+                'type': 'user',
+                'attributes': {
+                    'new_password1': valid_password,
+                    'new_password2': valid_password,
+                }
+            }
         }
 
-        resp = client.simulate_post(url, json=valid_data)
-        assert resp.status == falcon.HTTP_200
-        usr = User.objects.get(pk=active_user.id)
-        assert usr.check_password(valid_data['new_password1']) is True
-        t = usr.tokens.filter(token=token).first()
-        assert t is not None
-        assert t.is_valid is False
+        resp = client.simulate_post(url, json=data)
+        assert resp.status == falcon.HTTP_201
+        user = User.objects.get(pk=active_user.id)
+        assert user.check_password(valid_password) is True
+        token_obj = user.tokens.filter(token=token).first()
+        assert token_obj is not None
+        assert token_obj.is_valid is False
 
     def test_invalid_expired_token(self, client, active_user):
         data = {
-            'new_password1': '123.4.bcE',
-            'new_password2': '123.4.bcE'
+            'data': {
+                'type': 'user',
+                'attributes': {
+                    'new_password1': '123.4.bcE',
+                    'new_password2': '123.4.bcE',
+                }
+            }
         }
 
         token = active_user.password_reset_token
@@ -173,15 +189,12 @@ class TestResetPasswordConfirm(object):
         token_obj.invalidate()
 
         assert token_obj.is_valid is False
-
-        url = '/auth/password/reset/%s' % token
-
-        resp = client.simulate_post(url, json=data)
+        resp = client.simulate_post(f'/auth/password/reset/{token}', json=data)
         assert resp.status == falcon.HTTP_400
         assert resp.json['code'] == 'expired_token'
 
 
-class TestVerifyEmail(object):
+class TestVerifyEmail:
 
     def test_pending_user(self, client, inactive_user):
         token = inactive_user.email_validation_token
@@ -206,23 +219,21 @@ class TestVerifyEmail(object):
         assert usr.email_confirmed.date() == timezone.now().date()
 
     def test_errors(self, client, inactive_user):
-        resp = client.simulate_get(path='/auth/registration/verify-email/abcdef')
-        assert resp.status == falcon.HTTP_404
+        for token in ['abcdef', '8c37fd0c-5600-4277-a13a-67ced4a61e66']:
+            resp = client.simulate_get(path=f'/auth/registration/verify-email/{token}')
+            assert resp.status == falcon.HTTP_404
 
-        resp = client.simulate_get(path='/auth/registration/verify-email/8c37fd0c-5600-4277-a13a-67ced4a61e66')
-        assert resp.status == falcon.HTTP_404
+        token = inactive_user.email_validation_token
+        token_obj = inactive_user.tokens.filter(token=token).first()
+        assert token_obj.is_valid is True
 
-        v = inactive_user.email_validation_token
-        token = inactive_user.tokens.filter(token=v).first()
-        assert token.is_valid is True
+        token_obj.invalidate()
 
-        token.invalidate()
-
-        resp = client.simulate_get(path='/auth/registration/verify-email/%s' % v)
+        resp = client.simulate_get(path=f'/auth/registration/verify-email/{token}')
         assert resp.status == falcon.HTTP_400
 
 
-class TestAdminPanelAccess(object):
+class TestAdminPanelAccess:
 
     def test_extended_permissions(self, active_user):
         header = get_auth_header(
@@ -255,7 +266,7 @@ class TestAdminPanelAccess(object):
         assert payload['user']['roles'] == ['admin']
 
 
-def test_admin_autocomplete_view_for_superuser(admin, active_editor):
+def test_admin_autocomplete_view_for_superuser(admin):
     client = Client()
     client.force_login(admin)
 
@@ -266,7 +277,7 @@ def test_admin_autocomplete_view_for_superuser(admin, active_editor):
     assert response.json()['results'][0]['text'] == admin.email
 
 
-def test_admin_autocomplete_view_for_not_superuser(admin, active_editor):
+def test_admin_autocomplete_view_for_not_superuser(active_editor):
     client = Client()
     client.force_login(active_editor)
 

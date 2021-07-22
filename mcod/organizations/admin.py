@@ -6,7 +6,7 @@ from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 from rules.contrib.admin import ObjectPermissionsModelAdmin, ObjectPermissionsStackedInline
 
-from mcod.datasets.forms import AddDatasetForm, DatasetListForm
+from mcod.datasets.forms import AddDatasetForm, DatasetStackedNoSaveForm
 from mcod.datasets.models import Dataset
 from mcod.lib.admin_mixins import (
     AdminListMixin, TrashMixin, HistoryMixin, LangFieldsOnlyMixin, SoftDeleteMixin, StatusLabelAdminMixin,
@@ -14,8 +14,8 @@ from mcod.lib.admin_mixins import (
 )
 from mcod.organizations.forms import OrganizationForm
 from mcod.organizations.models import Organization, OrganizationTrash
+from mcod.organizations.views import OrganizationAutocompleteJsonView
 from mcod.reports.admin import ExportCsvMixin
-from mcod.unleash import is_enabled
 from mcod.users.forms import FilteredSelectMultipleCustom
 from mcod.users.models import User
 
@@ -28,11 +28,8 @@ class ChangeDatasetStacked(AdminListMixin, nested_admin.NestedStackedInline, Obj
         "title",
         "modified",
         'organization',
+        'categories_list',
     ]
-    if is_enabled('S19_DCAT_categories.be'):
-        fields += ['categories_list']
-    else:
-        fields += ['category']
 
     sortable = 'modified'
 
@@ -40,11 +37,8 @@ class ChangeDatasetStacked(AdminListMixin, nested_admin.NestedStackedInline, Obj
         "title",
         "modified",
         'organization',
+        'categories_list',
     ]
-    if is_enabled('S19_DCAT_categories.be'):
-        readonly_fields += ['categories_list']
-    else:
-        readonly_fields += ['category']
 
     max_num = 0
     min_num = 0
@@ -52,7 +46,7 @@ class ChangeDatasetStacked(AdminListMixin, nested_admin.NestedStackedInline, Obj
     suit_classes = 'suit-tab suit-tab-datasets'
 
     model = Dataset
-    form = DatasetListForm
+    form = DatasetStackedNoSaveForm
 
     def categories_list(self, instance):
         if instance.pk:
@@ -78,10 +72,6 @@ class ChangeDatasetStacked(AdminListMixin, nested_admin.NestedStackedInline, Obj
     data_status.admin_order_field = '_data_status'
     data_status.short_description = format_html('<i class="fas fa-table"></i>')
 
-    def get_queryset(self, request):
-        qs = super().get_queryset(request)
-        return qs.exclude(is_removed=True)
-
     def has_add_permission(self, request):
         return False
 
@@ -103,47 +93,29 @@ class AddDatasetStacked(AdminListMixin, nested_admin.NestedStackedInline, Object
     extra = 0
     form = AddDatasetForm
     suit_classes = 'suit-tab suit-tab-datasets'
-
-    if is_enabled('S19_DCAT_categories.be'):
-        categories_field = 'categories'
-    else:
-        categories_field = 'category'
-
-    # TODO uncomment once new tags are used without flag S18_new_tags.be
-    # fields = ('title', 'notes', 'url', 'image', 'customfields', 'update_frequency', categories_field, 'status',
-    #           "tags_pl", "tags_en",
-    #           *license_fields,
-    #           )
+    fields = (
+        'title',
+        'notes',
+        'url',
+        'image',
+        'customfields',
+        'update_frequency',
+        'categories',
+        'status',
+        'tags_pl',
+        'tags_en',
+        'license_condition_source',
+        'license_condition_modification',
+        'license_condition_responsibilities',
+        'license_condition_db_or_copyrighted',
+        'license_chosen',
+        'license_condition_personal_data',
+    )
     autocomplete_fields = ['tags', ]
-
-    def get_fieldsets(self, request, obj=None):  # TODO remove method once new tags are used without flag S18_new_tags.be
-        if is_enabled('S18_new_tags.be'):
-            tags_fields = ['tags_pl', 'tags_en']
-        else:
-            tags_fields = ['tags']
-
-        license_fields = [
-            "license_condition_source",
-            "license_condition_modification",
-            "license_condition_responsibilities",
-            "license_condition_db_or_copyrighted",
-        ]
-        if is_enabled('S21_licenses.be'):
-            license_fields += ['license_chosen']
-        license_fields += ['license_condition_personal_data']
-
-        return [(None, {
-            'fields': [
-                'title', 'notes', 'url', 'image', 'customfields', 'update_frequency', self.categories_field, 'status',
-                *tags_fields,
-                *license_fields,
-            ]
-        })]
 
     def get_formset(self, request, obj=None, **kwargs):
         formset = super().get_formset(request, obj, **kwargs)
-        if is_enabled('S18_new_tags.be'):
-            formset.form.recreate_tags_widgets(request=request, db_field=Dataset.tags.field, admin_site=self.admin_site)
+        formset.form.recreate_tags_widgets(request=request, db_field=Dataset.tags.field, admin_site=self.admin_site)
         return formset
 
     def get_queryset(self, request):
@@ -191,6 +163,9 @@ class OrganizationAdmin(DynamicAdminListDisplayMixin, StatusLabelAdminMixin, Sof
 
     form = OrganizationForm
     suit_form_tabs = tuple()
+
+    def autocomplete_view(self, request):
+        return OrganizationAutocompleteJsonView.as_view(model_admin=self)(request)
 
     def get_photo(self, obj):
         if obj.image:
@@ -242,7 +217,7 @@ class OrganizationAdmin(DynamicAdminListDisplayMixin, StatusLabelAdminMixin, Sof
 
     def get_queryset(self, request):
         self.request = request
-        qs = super(OrganizationAdmin, self).get_queryset(request)
+        qs = super().get_queryset(request)
         if request.user.is_superuser:
             return qs
         return qs.filter(user__id__in=[request.user.id])
@@ -361,7 +336,7 @@ class OrganizationAdmin(DynamicAdminListDisplayMixin, StatusLabelAdminMixin, Sof
 
 
 @admin.register(OrganizationTrash)
-class OrganizationTrashAdmin(TrashMixin):
+class OrganizationTrashAdmin(HistoryMixin, TrashMixin):
     search_fields = ['title', "city"]
     list_display = ['title', 'city']
     fields = [

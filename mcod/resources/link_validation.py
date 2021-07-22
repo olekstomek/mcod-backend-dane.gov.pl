@@ -14,6 +14,7 @@ from mcod import settings
 from mcod.resources.archives import ARCHIVE_CONTENT_TYPES
 from mcod.resources import guess
 from mcod.resources.file_validation import file_format_from_content_type
+from mcod.unleash import is_enabled
 
 
 logger = logging.getLogger('mcod')
@@ -21,6 +22,9 @@ logger = logging.getLogger('mcod')
 mime = MimeTypes()
 
 session = requests.Session()
+
+
+old_merge_environment_settings = requests.Session.merge_environment_settings
 
 
 class EmptyDocument(Exception):
@@ -49,18 +53,18 @@ class UnsupportedContentType(Exception):
 
 def _get_resource_type(response):
     _, content_type, _ = parse_mime_type(response.headers.get('Content-Type'))
+    content_disposition = response.headers.get('Content-Disposition', None)
 
     if content_type == 'html' and guess.web_format(response, None):
         return 'website'
-
-    if content_type in (
+    elif not (content_disposition and 'attachment' in content_disposition) and content_type in (
         'vnd.api+json',
         'json',
         'xml'
     ) and guess.api_format(response, None):
         return 'api'
-
-    return 'file'
+    else:
+        return 'file'
 
 
 def filename_from_url(url, content_type=None):
@@ -89,7 +93,7 @@ def simplified_url(url):
     return url.replace('http://', '').replace('https://', '').replace('www.', '').rstrip('/')
 
 
-def download_file(url, allowed_content_types=None):  # noqa: C901
+def download_file(url, force_file_type, allowed_content_types=None):  # noqa: C901
     logger.debug(f"download_file({url}, {allowed_content_types})")
     try:
         URLValidator()(url)
@@ -118,6 +122,9 @@ def download_file(url, allowed_content_types=None):  # noqa: C901
 
     try:
         resource_type = _get_resource_type(response)
+        if is_enabled('S27_forced_file_type.be') and resource_type == 'api' and force_file_type:
+            logger.debug('Forcing file type')
+            resource_type = 'file'
     except Exception as exc:
         if str(exc) == 'Document is empty':
             raise EmptyDocument('Document is empty')

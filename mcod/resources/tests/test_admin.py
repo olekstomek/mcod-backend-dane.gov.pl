@@ -1,12 +1,21 @@
+import datetime
+import re
+import pytest
+import logging
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.template.defaultfilters import linebreaksbr
 from django.test import Client
 from django.urls import reverse
 from django.utils.encoding import smart_text
 from pytest_bdd import given, parsers, scenarios
+from mcod.core.tests.fixtures.bdd.resources import get_html_file
 import mcod.unleash
 import requests_mock
+from django.utils.translation import gettext as _
 
 from mcod.datasets.documents import Resource
+
+logger = logging.getLogger('mcod')
 
 
 @given(parsers.parse('resource is created for link {link} with {media_type} content'))
@@ -61,131 +70,141 @@ scenarios(
 )
 
 
-def test_editor_shouldnt_see_deleted_resources(resource, admin, active_editor):
-    resource.delete()
-    assert resource.is_removed is True
-    resource_title_on_page = linebreaksbr(resource.title)
-    client = Client()
-    active_editor.organizations.set([resource.dataset.organization])
-    active_editor.save()
-    client.force_login(active_editor)
-    response = client.get("/resources/resource/", follow=True)
-    assert resource_title_on_page not in smart_text(response.content)
+class TestEditorAccess(object):
+
+    def test_editor_shouldnt_see_deleted_resources(self, removed_resource, admin, active_editor):
+        resource_title_on_page = linebreaksbr(removed_resource.title)
+        client = Client()
+        active_editor.organizations.set([removed_resource.dataset.organization])
+        active_editor.save()
+        client.force_login(active_editor)
+        response = client.get("/resources/resource/", follow=True)
+        assert resource_title_on_page not in smart_text(response.content)
+
+    def test_editor_not_in_organization_cant_see_resource_from_organizaton(self, active_editor, resource):
+        client = Client()
+        client.force_login(active_editor)
+        response = client.get(f"/resources/resource/{resource.id}", follow=False)
+        assert response.status_code == 301
+
+    def test_trash_for_editor(self, db, active_editor, resources):
+        editor_resources = Resource.objects.filter(dataset__organization_id=active_editor.organizations.all()[0].pk)
+        editor_res_ids = list(editor_resources.values_list('pk', flat=True))
+        editor_resources.delete()
+        for res in resources:
+            res.delete()
+        client = Client()
+        client.force_login(active_editor)
+        response = client.get(reverse("admin:resources_resourcetrash_changelist"))
+        pattern = re.compile(r"/resources/resourcetrash/\d+/change")
+        result = pattern.findall(smart_text(response.content))
+        assert all([f'/resources/resourcetrash/{res_id}/change' in result for res_id in editor_res_ids])
 
 
-def test_admin_can_add_resource_based_on_other_resource(admin, dataset_with_resources):
-    dataset = dataset_with_resources
-    resource = dataset.resources.last()
-    id_ = resource.id
-    client = Client()
-    client.force_login(admin)
-    response = client.get(f"/resources/resource/{id_}", follow=True)
-    assert response.status_code == 200
-    assert '<a href="/resources/resource/add/?from_id={}" class="btn btn-high"'.format(
-        id_) in smart_text(
-        response.content)
-    response = client.get(f"/resources/resource/add/?from_id={id_}")
-    assert response.status_code == 200
-    content = response.content.decode()
+class TestDuplicateResource(object):
 
-    # is form filled with proper data
-    assert resource.title in content
-    assert resource.description in content
-    assert resource.status in content
-    assert dataset.title in content
-    assert f'value="{id_}"' in content
+    def test_new_resource_cant_be_duplicated(self, resource, active_editor):
+        id_ = resource.id
+        client = Client()
+        client.force_login(active_editor)
+        response = client.get("/resources/resource/add/", follow=True)
+        assert response.status_code == 200
+        assert '<a href="/resources/resource/add/?from_id={}" class="btn btn-high"'.format(
+            id_) not in smart_text(
+            response.content)
 
+    def test_editor_can_add_resource_based_on_other_resource(self, active_editor):
+        resource = Resource.objects.filter(dataset__organization_id=active_editor.organizations.all()[0].pk)[0]
+        id_ = resource.id
+        client = Client()
+        client.force_login(active_editor)
+        response = client.get(f"/resources/resource/{id_}", follow=True)
+        assert response.status_code == 200
+        assert '<a href="/resources/resource/add/?from_id={}" class="btn btn-high"'.format(
+            id_) in smart_text(
+            response.content)
+        response = client.get(f"/resources/resource/add/?from_id={id_}")
+        assert response.status_code == 200
+        content = response.content.decode()
+        assert resource.title in content
+        assert resource.description in content
+        assert resource.status in content
+        assert resource.dataset.title in content
 
-# TODO: fix - not working
-#
-# def test_editor_can_add_resource_based_on_other_resource( resource, active_editor,
-#                                                          dataset):
-#     id_ = resource.id
-#     client = Client()
-#     client.force_login(active_editor)
-#     response = client.get(f"/resources/resource/{id_}", follow=True)
-#     assert response.status_code == 200
-#     assert '<a href="/resources/resource/add/?from_id={}" class="btn btn-high" id="duplicate_button">'.format(
-#         id_) in smart_text(
-#         response.content)
-#     response = client.get(f"/resources/resource/add/?from_id={id_}")
-#     assert response.status_code == 200
-#     content = response.content.decode()
-#
-#     # is form filled with proper data
-#     assert resource.title in content
-#     assert resource.description in content
-#     assert resource.status in content
-#     assert dataset.title in content
+    def test_admin_can_add_resource_based_on_other_resource(self, admin, dataset_with_resources):
+        dataset = dataset_with_resources
+        resource = dataset.resources.last()
+        id_ = resource.id
+        client = Client()
+        client.force_login(admin)
+        response = client.get(f"/resources/resource/{id_}", follow=True)
+        assert response.status_code == 200
+        assert '<a href="/resources/resource/add/?from_id={}" class="btn btn-high"'.format(
+            id_) in smart_text(
+            response.content)
+        response = client.get(f"/resources/resource/add/?from_id={id_}")
+        assert response.status_code == 200
+        content = response.content.decode()
 
+        # is form filled with proper data
+        assert resource.title in content
+        assert resource.description in content
+        assert resource.status in content
+        assert dataset.title in content
+        assert f'value="{id_}"' in content
 
-def test_editor_not_in_organization_cant_see_resource_from_organizaton(active_editor, resource):
-    client = Client()
-    client.force_login(active_editor)
-    response = client.get(f"/resources/resource/{resource.id}", follow=False)
-    assert response.status_code == 301
+    def test_cant_duplicate_deleted_resource(self, admin, removed_resource):
+        client = Client()
+        client.force_login(admin)
+        response = client.get(f"/resources/resource/add/?from_id={removed_resource.pk}")
+        content = response.content.decode()
+        assert removed_resource.title not in content
+        assert removed_resource.description not in content
+        assert removed_resource.title not in content
+        assert f'value="{removed_resource.pk}"' not in content
 
-
-def test_new_resource_cant_be_duplicated(resource, active_editor):
-    id_ = resource.id
-    client = Client()
-    client.force_login(active_editor)
-    response = client.get("/resources/resource/add/", follow=True)
-    assert response.status_code == 200
-    assert '<a href="/resources/resource/add/?from_id={}" class="btn" id="duplicate_button">'.format(
-        id_) not in smart_text(
-        response.content)
-
-
-# TODO: fix - not working
-#
-# def test_trash_for_editor( db, resources, active_editor):
-#     resources[0].delete()
-#     resources[2].delete()
-#
-#     client = Client()
-#     client.force_login(active_editor)
-#     response = client.get(reverse("admin:resources_resourcetrash_changelist"))
-#     pattern = re.compile(r"/resources/resourcetrash/\d+/change")
-#     result = pattern.findall(smart_text(response.content))
-#     assert result == [f'/resources/resourcetrash/{resources[0].id}/change']
-#
-#     resources[1].delete()
-#     resources[3].delete()
-#     response = client.get(reverse("admin:resources_resourcetrash_changelist"))
-#     result = pattern.findall(smart_text(response.content))
-#     resources = set(f'/resources/resourcetrash/{res.id}/change'
-#                     for res in resources
-#                     if res.dataset.organization in active_editor.organizations.all())
-#     assert set(result) == resources
+    def test_cant_duplicate_imported_resource(self, admin, imported_ckan_resource):
+        client = Client()
+        client.force_login(admin)
+        response = client.get(f"/resources/resource/add/?from_id={imported_ckan_resource.pk}")
+        content = response.content.decode()
+        if f'value="{imported_ckan_resource.pk}"' in content:
+            logger.error("CKAN RESOURCE ID:", imported_ckan_resource.pk)
+        assert imported_ckan_resource.title not in content
+        assert imported_ckan_resource.description not in content
+        assert imported_ckan_resource.title not in content
+        assert f'value="{imported_ckan_resource.pk}"' not in content
 
 
 class TestRevalidationAction(object):
-    # TODO: fix - not working
-    # def test_valid_action(self, resource, admin, mocker):
-    #     mocker.patch(
-    #         'mcod.resources.tasks.download_file', return_value=('file', {})
-    #     )
-    #     counts = (resource.file_tasks.count(), resource.link_tasks.count(), resource.data_tasks.count())
-    #
-    #     client = Client()
-    #     client.force_login(admin)
-    #     _view = reverse("admin:resource-revalidate", args=[resource.id], )
-    #     response = client.get(_view)
-    #
-    #     assert response.status_code == 302
-    #     assert response.url == f"/resources/resource/{resource.id}/change/"
-    #
-    #     resource.refresh_from_db()
-    #     counts2 = (resource.file_tasks.count(), resource.link_tasks.count(), resource.data_tasks.count())
-    #     for c1, c2 in zip(counts, counts2):
-    #         assert c2 == 2
+
+    def test_revalidate_resource_started(self, buzzfeed_fakenews_resource, admin):
+        client = Client()
+        client.force_login(admin)
+        response = client.get(
+            reverse("admin:resource-revalidate", kwargs={'resource_id': buzzfeed_fakenews_resource.pk}),
+            follow=True
+        )
+        content = response.content.decode()
+        assert response.status_code == 200
+        assert _('Task for resource revalidation queued') in content
 
     def test_no_user_action(self, resource_with_file):
         client = Client()
-        response = client.get(reverse("admin:resource-revalidate", args=[resource_with_file.id], ))
+        response = client.get(reverse("admin:resource-revalidate", args=[resource_with_file.pk], ))
 
         assert response.status_code == 403
+
+    def test_revalidate_error_for_resource_from_trash(self, removed_resource, admin):
+        client = Client()
+        client.force_login(admin)
+        response = client.get(
+            reverse("admin:resource-revalidate", kwargs={'resource_id': removed_resource.pk}),
+            follow=True
+        )
+        content = response.content.decode()
+        assert response.status_code == 200
+        assert _('Resource with this id does not exists') in content
 
 
 class TestResourceAndDataset(object):
@@ -199,14 +218,14 @@ class TestResourceAndDataset(object):
 
         assert resource.dataset.is_removed is True
 
-        r = Resource.deleted.first()
+        r = Resource.trash.first()
         assert r.dataset == resource.dataset
         assert r.is_removed is True
 
         client = Client()
         client.force_login(admin)
         client.post(f'/resources/resourcetrash/{r.id}/change/', data={'is_removed': False})
-        r = Resource.deleted.get(id=r.id)
+        r = Resource.trash.get(id=r.id)
         assert r.dataset.is_removed is True
 
         r.dataset.is_removed = False
@@ -244,6 +263,92 @@ class TestResourceTabularDataRules(object):
         assert '#rules' in content
         assert 'class="disabled disabledTab"' not in content
 
+    def test_verification_rules_validates_if_selected_properly(self, geo_tabular_data_resource, admin):
+        geo_tabular_data_resource.revalidate()
+        geo_tabular_data_resource.refresh_from_db()
+        client = Client()
+        client.force_login(admin)
+        data = {
+            'title': ['test geo csv'], 'description': ['<p>cecece</p>'],
+            'dataset': [geo_tabular_data_resource.dataset_id],
+            'data_date': [datetime.date(2021, 5, 4)], 'status': ['published'], 'show_tabular_view': ['on'],
+            'rule_type_2': ['numeric'], 'rule_type_3': ['numeric'], 'schema_type_0': ['string'],
+            'schema_type_1': ['string'], 'schema_type_2': ['integer'], 'schema_type_3': ['integer'],
+            'geo_0': [''], 'geo_1': [''], 'geo_2': [''], 'geo_3': [''], 'title_en': [''], 'description_en': [''],
+            'slug_en': [''], 'Resource_file_tasks-TOTAL_FORMS': ['4'], 'Resource_file_tasks-INITIAL_FORMS': ['1'],
+            'Resource_file_tasks-MIN_NUM_FORMS': ['0'], 'Resource_file_tasks-MAX_NUM_FORMS': ['1000'],
+            'Resource_data_tasks-TOTAL_FORMS': ['4'], 'Resource_data_tasks-INITIAL_FORMS': ['1'],
+            'Resource_data_tasks-MIN_NUM_FORMS': ['0'], 'Resource_data_tasks-MAX_NUM_FORMS': ['1000'],
+            'Resource_link_tasks-TOTAL_FORMS': ['4'], 'Resource_link_tasks-INITIAL_FORMS': ['1'],
+            'Resource_link_tasks-MIN_NUM_FORMS': ['0'], 'Resource_link_tasks-MAX_NUM_FORMS': ['1000'],
+            '_verify_rules': ['']}
+        resp = client.post(
+            reverse('admin:resources_resource_change', kwargs={'object_id': geo_tabular_data_resource.id}), data=data,
+            follow=True
+        )
+        content = resp.content.decode()
+        assert _('During the verification of column "{colname}" with the "{rule}" rule no errors detected'
+                 ).format(colname='x', rule=_('Numeric')) in content
+        assert _('During the verification of column "{colname}" with the "{rule}" rule no errors detected'
+                 ).format(colname='y', rule=_('Numeric')) in content
+
+    def test_verification_rules_shows_validation_error(self, geo_tabular_data_resource, admin):
+        geo_tabular_data_resource.revalidate()
+        geo_tabular_data_resource.refresh_from_db()
+        client = Client()
+        client.force_login(admin)
+        data = {
+            'title': ['test geo csv'], 'description': ['<p>cecece</p>'],
+            'dataset': [geo_tabular_data_resource.dataset_id],
+            'data_date': [datetime.date(2021, 5, 4)], 'status': ['published'], 'show_tabular_view': ['on'],
+            'rule_type_2': ['address_feature'], 'rule_type_3': ['nip'], 'schema_type_0': ['string'],
+            'schema_type_1': ['string'], 'schema_type_2': ['integer'], 'schema_type_3': ['integer'],
+            'geo_0': [''], 'geo_1': [''], 'geo_2': [''], 'geo_3': [''], 'title_en': [''], 'description_en': [''],
+            'slug_en': [''], 'Resource_file_tasks-TOTAL_FORMS': ['4'], 'Resource_file_tasks-INITIAL_FORMS': ['1'],
+            'Resource_file_tasks-MIN_NUM_FORMS': ['0'], 'Resource_file_tasks-MAX_NUM_FORMS': ['1000'],
+            'Resource_data_tasks-TOTAL_FORMS': ['4'], 'Resource_data_tasks-INITIAL_FORMS': ['1'],
+            'Resource_data_tasks-MIN_NUM_FORMS': ['0'], 'Resource_data_tasks-MAX_NUM_FORMS': ['1000'],
+            'Resource_link_tasks-TOTAL_FORMS': ['4'], 'Resource_link_tasks-INITIAL_FORMS': ['1'],
+            'Resource_link_tasks-MIN_NUM_FORMS': ['0'], 'Resource_link_tasks-MAX_NUM_FORMS': ['1000'],
+            '_verify_rules': ['']}
+        resp = client.post(
+            reverse('admin:resources_resource_change', kwargs={'object_id': geo_tabular_data_resource.id}), data=data,
+            follow=True
+        )
+        content = resp.content.decode()
+        assert _('During the verification of column "%(colname)s"'
+                 ' with the rule "%(rule)s" detected errors (max 5)') % {'colname': 'x',
+                                                                         'rule': _('Address feature')} in content
+        assert _('During the verification of column "%(colname)s"'
+                 ' with the rule "%(rule)s" detected errors (max 5)') % {'colname': 'y', 'rule': 'NIP'} in content
+
+    def test_verification_rules_shows_validation_error_for_unknown_rule(self, resource_with_date_and_datetime, admin):
+        resource_with_date_and_datetime.revalidate()
+        resource_with_date_and_datetime.refresh_from_db()
+        client = Client()
+        client.force_login(admin)
+        data = {
+            'title': ['test geo csv'], 'description': ['<p>cecece</p>'],
+            'dataset': [resource_with_date_and_datetime.dataset_id],
+            'data_date': [datetime.date(2021, 5, 4)], 'status': ['published'], 'show_tabular_view': ['on'],
+            'rule_type_1': ['unknown_rule'], 'schema_type_0': ['string'],
+            'schema_type_1': ['string'],
+            'geo_0': [''], 'geo_1': [''], 'title_en': [''], 'description_en': [''],
+            'slug_en': [''], 'Resource_file_tasks-TOTAL_FORMS': ['4'], 'Resource_file_tasks-INITIAL_FORMS': ['1'],
+            'Resource_file_tasks-MIN_NUM_FORMS': ['0'], 'Resource_file_tasks-MAX_NUM_FORMS': ['1000'],
+            'Resource_data_tasks-TOTAL_FORMS': ['4'], 'Resource_data_tasks-INITIAL_FORMS': ['1'],
+            'Resource_data_tasks-MIN_NUM_FORMS': ['0'], 'Resource_data_tasks-MAX_NUM_FORMS': ['1000'],
+            'Resource_link_tasks-TOTAL_FORMS': ['4'], 'Resource_link_tasks-INITIAL_FORMS': ['1'],
+            'Resource_link_tasks-MIN_NUM_FORMS': ['0'], 'Resource_link_tasks-MAX_NUM_FORMS': ['1000'],
+            '_verify_rules': ['']}
+        resp = client.post(
+            reverse('admin:resources_resource_change', kwargs={'object_id': resource_with_date_and_datetime.id}), data=data,
+            follow=True
+        )
+        content = resp.content.decode()
+        assert _('Verification of column "{colname}" by the rule "{rule}" failed').format(
+            colname='datetime', rule='unknown_rule') in content
+
 
 class TestResourceChangeType(object):
 
@@ -274,3 +379,229 @@ class TestResourceChangeType(object):
             resp = client.get(reverse('admin:resources_resource_change', kwargs={'object_id': tabular_resource.id}))
             assert resp.status_code == 200
             assert '#types' in resp.content.decode()
+
+    def test_change_type_is_run_successfully(self, geo_tabular_data_resource, admin):
+        client = Client()
+        client.force_login(admin)
+        data = {
+            'title': ['test geo csv'], 'description': ['<p>more than 20 characters</p>'],
+            'dataset': [geo_tabular_data_resource.dataset_id],
+            'data_date': [datetime.date(2021, 5, 4)], 'status': ['published'], 'show_tabular_view': ['on'],
+            'schema_type_0': ['string'],
+            'schema_type_1': ['string'], 'schema_type_2': ['number'], 'schema_type_3': ['integer'],
+            'geo_0': [''], 'geo_1': [''], 'geo_2': [''], 'geo_3': [''], 'title_en': [''], 'description_en': [''],
+            'slug_en': [''], 'Resource_file_tasks-TOTAL_FORMS': ['4'], 'Resource_file_tasks-INITIAL_FORMS': ['1'],
+            'Resource_file_tasks-MIN_NUM_FORMS': ['0'], 'Resource_file_tasks-MAX_NUM_FORMS': ['1000'],
+            'Resource_data_tasks-TOTAL_FORMS': ['4'], 'Resource_data_tasks-INITIAL_FORMS': ['1'],
+            'Resource_data_tasks-MIN_NUM_FORMS': ['0'], 'Resource_data_tasks-MAX_NUM_FORMS': ['1000'],
+            'Resource_link_tasks-TOTAL_FORMS': ['4'], 'Resource_link_tasks-INITIAL_FORMS': ['1'],
+            'Resource_link_tasks-MIN_NUM_FORMS': ['0'], 'Resource_link_tasks-MAX_NUM_FORMS': ['1000'],
+            '_change_type': ''}
+        resp = client.post(
+            reverse('admin:resources_resource_change', kwargs={'object_id': geo_tabular_data_resource.id}), data=data,
+            follow=True
+        )
+        content = resp.content.decode()
+        assert _('Data type changed') in content
+
+
+class TestResourceMapSave(object):
+
+    def test_map_save_is_run_successfully(self, geo_tabular_data_resource, admin):
+        geo_tabular_data_resource.revalidate()
+        geo_tabular_data_resource.refresh_from_db()
+        client = Client()
+        client.force_login(admin)
+        data = {
+            'title': ['test geo csv'], 'description': ['<p>more than 20 characters</p>'],
+            'dataset': [geo_tabular_data_resource.dataset_id],
+            'data_date': [datetime.date(2021, 5, 4)], 'status': ['published'], 'show_tabular_view': ['on'],
+            'schema_type_0': ['string'],
+            'schema_type_1': ['string'], 'schema_type_2': ['integer'], 'schema_type_3': ['integer'],
+            'geo_0': [''], 'geo_1': ['label'], 'geo_2': ['l'], 'geo_3': ['b'], 'title_en': [''], 'description_en': [''],
+            'slug_en': [''], 'Resource_file_tasks-TOTAL_FORMS': ['4'], 'Resource_file_tasks-INITIAL_FORMS': ['1'],
+            'Resource_file_tasks-MIN_NUM_FORMS': ['0'], 'Resource_file_tasks-MAX_NUM_FORMS': ['1000'],
+            'Resource_data_tasks-TOTAL_FORMS': ['4'], 'Resource_data_tasks-INITIAL_FORMS': ['1'],
+            'Resource_data_tasks-MIN_NUM_FORMS': ['0'], 'Resource_data_tasks-MAX_NUM_FORMS': ['1000'],
+            'Resource_link_tasks-TOTAL_FORMS': ['4'], 'Resource_link_tasks-INITIAL_FORMS': ['1'],
+            'Resource_link_tasks-MIN_NUM_FORMS': ['0'], 'Resource_link_tasks-MAX_NUM_FORMS': ['1000'],
+            '_map_save': ['']}
+        resp = client.post(
+            reverse('admin:resources_resource_change', kwargs={'object_id': geo_tabular_data_resource.id}), data=data,
+            follow=True
+        )
+        content = resp.content.decode()
+        assert _('Map definition saved') in content
+
+
+class TestResourceChangeList(object):
+
+    def get_filter_result_response(self, set_attrs, resource, admin, filter_name, filter_value):
+        client = Client()
+        if set_attrs:
+            setattr(resource, set_attrs[0], set_attrs[1])
+            resource.save()
+        client.force_login(admin)
+        url = reverse(
+            'admin:resources_resource_changelist',
+        )
+        full_url = f'{url}?{filter_name}={filter_value}'
+        resp = client.get(full_url)
+        content = resp.content.decode()
+        return content
+
+    @pytest.mark.parametrize(
+        'filter_name, filter_value, set_attrs',
+        [('type', 'api', None), ('type', 'api-change', ('forced_api_type', True))]
+    )
+    def test_list_type_api_filter(
+            self, resource_of_type_api, local_file_resource, admin, filter_name, filter_value, set_attrs
+    ):
+        content = self.get_filter_result_response(set_attrs, resource_of_type_api, admin, filter_name, filter_value)
+        assert resource_of_type_api.title in content
+        assert local_file_resource.title not in content
+
+    @pytest.mark.parametrize(
+        'filter_name, filter_value, set_attrs',
+        [('type', 'file', None), ('type', 'file-change', ('forced_file_type', True))]
+    )
+    def test_list_type_file_filter(
+            self, resource_of_type_api, local_file_resource, admin, filter_name, filter_value, set_attrs
+    ):
+        content = self.get_filter_result_response(set_attrs, local_file_resource, admin, filter_name, filter_value)
+        assert resource_of_type_api.title not in content
+        assert local_file_resource.title in content
+
+    def test_list_link_status_filter(self, buzzfeed_fakenews_resource, resource_with_success_tasks_statuses, admin):
+        buzzfeed_fakenews_resource.revalidate()
+        client = Client()
+        client.force_login(admin)
+        url = reverse(
+            'admin:resources_resource_changelist',
+        )
+        first_resp = client.get(url)
+        first_content = first_resp .content.decode()
+        assert buzzfeed_fakenews_resource.title in first_content
+        assert resource_with_success_tasks_statuses.title in first_content
+        full_url = f'{url}?link_status=FAILURE'
+        resp = client.get(full_url)
+        content = resp.content.decode()
+        assert buzzfeed_fakenews_resource.title in content
+        assert resource_with_success_tasks_statuses.title not in content
+
+    def test_list_link_status_na_filter(self, buzzfeed_fakenews_resource, resource, admin):
+        buzzfeed_fakenews_resource.revalidate()
+        resource.link_tasks.clear()
+        client = Client()
+        client.force_login(admin)
+        url = reverse(
+            'admin:resources_resource_changelist',
+        )
+        first_resp = client.get(url)
+        first_content = first_resp .content.decode()
+        assert buzzfeed_fakenews_resource.title in first_content
+        assert resource.title in first_content
+        full_url = f'{url}?link_status=N/A'
+        resp = client.get(full_url)
+        content = resp.content.decode()
+        assert buzzfeed_fakenews_resource.title not in content
+        assert resource.title in content
+
+
+class TestResourceForm(object):
+
+    def test_add_new_resource(self, admin, dataset):
+        client = Client()
+        client.force_login(admin)
+        _file = SimpleUploadedFile('test.html', get_html_file().read(), content_type='text/html')
+        data = {
+            'title': ['test resource title'], 'description': ['<p>more than 20 characters</p>'],
+            'file': _file,
+            'switcher': ['file'],
+            'dataset': [dataset.pk],
+            'data_date': [datetime.date(2021, 5, 4)], 'status': ['published'], 'title_en': [''], 'description_en': [''],
+            'slug_en': [''], 'Resource_file_tasks-TOTAL_FORMS': ['4'], 'Resource_file_tasks-INITIAL_FORMS': ['1'],
+            'Resource_file_tasks-MIN_NUM_FORMS': ['0'], 'Resource_file_tasks-MAX_NUM_FORMS': ['1000'],
+            'Resource_data_tasks-TOTAL_FORMS': ['1'], 'Resource_data_tasks-INITIAL_FORMS': ['1'],
+            'Resource_data_tasks-MIN_NUM_FORMS': ['0'], 'Resource_data_tasks-MAX_NUM_FORMS': ['1000'],
+            'Resource_link_tasks-TOTAL_FORMS': ['1'], 'Resource_link_tasks-INITIAL_FORMS': ['1'],
+            'Resource_link_tasks-MIN_NUM_FORMS': ['0'], 'Resource_link_tasks-MAX_NUM_FORMS': ['1000'],
+            '_save': ['']}
+        resp = client.post(
+            reverse('admin:resources_resource_add'), data=data,
+            follow=True
+        )
+        content = resp.content.decode()
+        assert Resource.objects.all().count() == 1
+        assert 'test resource title' in content
+
+    def test_change_resource(self, admin, resource):
+        client = Client()
+        client.force_login(admin)
+        data = {
+            'title': ['title changed in form'], 'description': ['<p>more than 20 characters</p>'],
+            'data_date': [datetime.date(2021, 5, 4)], 'status': ['published'], 'title_en': [''], 'description_en': [''],
+            'slug_en': [''], 'Resource_file_tasks-TOTAL_FORMS': ['4'], 'Resource_file_tasks-INITIAL_FORMS': ['1'],
+            'dataset': [resource.dataset_id],
+            'Resource_file_tasks-MIN_NUM_FORMS': ['0'], 'Resource_file_tasks-MAX_NUM_FORMS': ['1000'],
+            'Resource_data_tasks-TOTAL_FORMS': ['1'], 'Resource_data_tasks-INITIAL_FORMS': ['1'],
+            'Resource_data_tasks-MIN_NUM_FORMS': ['0'], 'Resource_data_tasks-MAX_NUM_FORMS': ['1000'],
+            'Resource_link_tasks-TOTAL_FORMS': ['1'], 'Resource_link_tasks-INITIAL_FORMS': ['1'],
+            'Resource_link_tasks-MIN_NUM_FORMS': ['0'], 'Resource_link_tasks-MAX_NUM_FORMS': ['1000'],
+            '_save': ['']}
+        resp = client.post(
+            reverse('admin:resources_resource_change', kwargs={'object_id': resource.id}), data=data,
+            follow=True
+        )
+        content = resp.content.decode()
+        assert resp.resolver_match.url_name == 'resources_resource_changelist'
+        assert 'title changed in form' in content
+
+    def test_non_csv_resource_doesnt_display_csv_file_data(self, admin, resource_of_type_website):
+        client = Client()
+        client.force_login(admin)
+        resp = client.get(
+            reverse('admin:resources_resource_change', kwargs={'object_id': resource_of_type_website.id})
+        )
+        content = resp.content.decode()
+        assert 'csv_file' not in content
+
+    def test_xls_resource_display_csv_file_data(self, admin, resource_with_xls_file):
+        client = Client()
+        client.force_login(admin)
+        resp = client.get(
+            reverse('admin:resources_resource_change', kwargs={'object_id': resource_with_xls_file.id})
+        )
+        content = resp.content.decode()
+        assert 'csv_file' in content
+
+    def test_forced_file_type_checkbox_visible_for_api_resource(self, admin, remote_file_resource_of_api_type):
+        client = Client()
+        client.force_login(admin)
+        resp = client.get(
+            reverse('admin:resources_resource_change', kwargs={'object_id': remote_file_resource_of_api_type.id})
+        )
+        content = resp.content.decode()
+        assert 'forced_file_type' in content
+
+    def test_forced_file_type_checkbox_visible_for_forced_file_resource(
+            self, admin, remote_file_resource_with_forced_file_type):
+        client = Client()
+        client.force_login(admin)
+        resp = client.get(
+            reverse('admin:resources_resource_change',
+                    kwargs={'object_id': remote_file_resource_with_forced_file_type.id})
+        )
+        content = resp.content.decode()
+        assert 'forced_file_type' in content
+
+    def test_forced_file_type_checkbox_not_visible_for_forced_api_resource(self, admin, resource_of_type_api):
+        resource_of_type_api.forced_api_type = True
+        resource_of_type_api.save()
+        client = Client()
+        client.force_login(admin)
+        resp = client.get(
+            reverse('admin:resources_resource_change', kwargs={'object_id': resource_of_type_api.id})
+        )
+        content = resp.content.decode()
+        assert 'forced_file_type' not in content

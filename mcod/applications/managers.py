@@ -1,10 +1,8 @@
-from model_utils.managers import SoftDeletableQuerySet, SoftDeletableManager
+from mcod.core.db.managers import TrashManager
+from mcod.core.managers import SoftDeletableQuerySet, SoftDeletableManager, TrashQuerySet
 
-from mcod.core.db.managers import DeletedManager
 
-
-class ApplicationProposalQuerySet(SoftDeletableQuerySet):
-
+class ApplicationProposalQuerySetMixin:
     def with_decision(self):
         return self.exclude(decision='')
 
@@ -12,8 +10,15 @@ class ApplicationProposalQuerySet(SoftDeletableQuerySet):
         return self.filter(decision='')
 
 
-class ApplicationProposalMixin(object):
+class ApplicationProposalQuerySet(ApplicationProposalQuerySetMixin, SoftDeletableQuerySet):
+    pass
 
+
+class ApplicationProposalTrashQuerySet(ApplicationProposalQuerySetMixin, TrashQuerySet):
+    pass
+
+
+class ApplicationProposalManagerMixin:
     def with_decision(self):
         return super().get_queryset().with_decision()
 
@@ -21,9 +26,9 @@ class ApplicationProposalMixin(object):
         return super().get_queryset().without_decision()
 
 
-class ApplicationProposalManager(ApplicationProposalMixin, SoftDeletableManager):
+class ApplicationProposalManager(ApplicationProposalManagerMixin, SoftDeletableManager):
     _queryset_class = ApplicationProposalQuerySet
 
 
-class ApplicationProposalDeletedManager(ApplicationProposalMixin, DeletedManager):
-    _queryset_class = ApplicationProposalQuerySet
+class ApplicationProposalTrashManager(ApplicationProposalManagerMixin, TrashManager):
+    _queryset_class = ApplicationProposalTrashQuerySet

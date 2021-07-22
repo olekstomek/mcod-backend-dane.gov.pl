@@ -72,7 +72,7 @@ Feature: Tabular data API
     And api's response body field /data/*/attributes/col6/repr is not None
 
   Scenario Outline: Escaping functionality
-    Given I have buzzfeed resourcebush with tabular data
+    Given I have buzzfeed resource with tabular data
     When api request method is GET
     And api request has params <req_params>
     And resource api tabular data endpoint is requested

@@ -1,7 +1,14 @@
 from django import forms
 from django.utils.translation import ugettext_lazy as _
 
-from mcod.suggestions.models import AcceptedDatasetSubmission, DatasetComment, DatasetSubmission, ResourceComment
+from mcod.core.db.models import STATUS_CHOICES
+from mcod.suggestions.models import (
+    AcceptedDatasetSubmission,
+    DatasetComment,
+    DatasetSubmission,
+    ResourceComment,
+    ACCEPTED_DATASET_SUBMISSION_STATUS_CHOICES_NO_PUBLISHED,
+)
 from mcod.unleash import is_enabled
 
 
@@ -63,17 +70,29 @@ class DatasetSubmissionForm(forms.ModelForm):
 
 class AcceptedDatasetSubmissionForm(DatasetSubmissionForm):
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        if is_enabled('S21_admin_ui_changes.be'):
+    def __init__(self, data=None, *args, instance=None, **kwargs):
+        super().__init__(data, *args, instance=instance, **kwargs)
+        if 'title' in self.fields:
             self.fields['title'].widget.attrs['rows'] = 2
 
+        if 'publication_finished_comment' in self.fields:
+            if data is None or data.get('status') == AcceptedDatasetSubmission.STATUS.publication_finished:
+                self.fields['publication_finished_comment'].required = True
+
+        if is_enabled('S29_publication_finished.be') and 'status' in self.fields:
+            if instance and instance.status == 'publication_finished':
+                if not instance.tracker.has_changed('status'):
+                    self.fields['status'].choices = ACCEPTED_DATASET_SUBMISSION_STATUS_CHOICES_NO_PUBLISHED
+        elif 'status' in self.fields:
+            self.fields['status'].choices = STATUS_CHOICES
+
     def clean(self):
-        cleaned_data = super(AcceptedDatasetSubmissionForm, self).clean()
+        cleaned_data = super().clean()
         if 'is_published_for_all' in cleaned_data and 'status' in cleaned_data:
             if cleaned_data['is_published_for_all'] and cleaned_data['status'] == 'draft':
-                raise forms.ValidationError(_('If you wish to publish accepted dataset submission for all user,'
-                                              ' this submission must have "published" status'))
+                raise forms.ValidationError(
+                    _('If you wish to publish accepted dataset submission for all user,'
+                      ' this submission must have "published" status'))
         return cleaned_data
 
     class Meta(DatasetSubmissionForm.Meta):
@@ -88,6 +107,7 @@ class AcceptedDatasetSubmissionForm(DatasetSubmissionForm):
             'decision',
             'decision_date',
             'status',
+            'publication_finished_comment',
             'is_published_for_all'
         ]
         widgets = {
@@ -96,4 +116,5 @@ class AcceptedDatasetSubmissionForm(DatasetSubmissionForm):
             'organization_name': forms.Textarea(attrs={'rows': '1', 'class': 'input-block-level'}),
             'data_link': forms.Textarea(attrs={'rows': '1', 'class': 'input-block-level'}),
             'potential_possibilities': forms.Textarea(attrs={'rows': '1', 'class': 'input-block-level'}),
+            'publication_finished_comment': forms.Textarea(attrs={'rows': '5', 'class': 'input-block-level'}),
         }

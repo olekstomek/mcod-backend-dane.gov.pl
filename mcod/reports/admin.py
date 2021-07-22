@@ -1,19 +1,19 @@
-import os
-
 from dal_admin_filters import AutocompleteFilter
-from django.conf import settings
 from django.contrib import admin, messages
 from django.http.response import HttpResponseRedirect
 from django.urls import path, reverse
-from django.utils.safestring import mark_safe
 from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from rangefilter.filter import DateRangeFilter
 
-from mcod.core.utils import sizeof_fmt
-from mcod.lib.admin_mixins import OrderedByDisplayAdminMixin, TaskStatusLabelAdminMixin,\
-    DynamicAdminListDisplayMixin, MCODAdminMixin
+from mcod.lib.admin_mixins import (
+    DynamicAdminListDisplayMixin,
+    MCODAdminMixin,
+    OrderedByDisplayAdminMixin,
+    TaskStatusLabelAdminMixin,
+)
 from mcod.reports.models import (
     DatasetReport,
     MonitoringReport,
@@ -35,45 +35,35 @@ class UserFilter(AutocompleteFilter):
     }
 
 
-class ReportsAdmin(DynamicAdminListDisplayMixin, OrderedByDisplayAdminMixin, TaskStatusLabelAdminMixin,
-                   MCODAdminMixin, admin.ModelAdmin):
+class ReportsAdmin(DynamicAdminListDisplayMixin, OrderedByDisplayAdminMixin,
+                   TaskStatusLabelAdminMixin, MCODAdminMixin, admin.ModelAdmin):
     model = Report
     list_display = ('file_name', 'file_size', 'ordered_by', 'created', 'status')
+    list_display_links = None
     list_filter = (('created', DateRangeFilter), UserFilter)
     ordering = ('-created',)
 
-    def get_list_display_links(self, request, list_display):
-        return tuple()
+    app_models = []
 
     def get_queryset(self, request):
-        qs = super().get_queryset(request)
-        return qs.filter(model__in=self.app_models) if hasattr(self, 'app_models') else qs
+        queryset = super().get_queryset(request)
+        return queryset.filter(model__in=self.app_models) if self.app_models else queryset
 
     def has_add_permission(self, request, obj=None):
         return False
 
-    def status(self, obj):
-        return obj.task.status if obj.task else 'PENDING'
-
     def file_name(self, obj):
-        if obj.file:
-            file_name = obj.file.split('/')[-1]
-            return mark_safe('<a href="%s">%s</a>' % (obj.file, file_name))
-        else:
-            return f"({_('No file generated')})"
+        if obj.file_url_path and obj.file_name:
+            return mark_safe(f'<a href="{obj.file_url_path}">{obj.file_name}</a>')
+        return f"({_('No file generated')})"
 
     file_name.short_description = _('Generated report file')
 
     def file_size(self, obj):
-        try:
-            if not obj.file:
-                return "-"
-            file_path = os.path.join(settings.ROOT_DIR, obj.file.strip('/'))
-            return sizeof_fmt(os.path.getsize(file_path))
-        except Exception:
-            return format_html(f'<span class="unknown">({_("unknown")})</span>')
+        size = obj.file_size
+        return size if size is not None else format_html(f'<span class="unknown">({_("unknown")})</span>')
 
-    file_size.short_description = _("File size")
+    file_size.short_description = _('File size')
 
     def status_label(self, obj):
         return super().status_label(obj)
@@ -127,37 +117,7 @@ class OrganizationReportsAdmin(ReportsAdmin):
 
 
 @admin.register(SummaryDailyReport)
-class DailyResourceReportsAdmin(DynamicAdminListDisplayMixin, OrderedByDisplayAdminMixin,
-                                TaskStatusLabelAdminMixin, MCODAdminMixin, admin.ModelAdmin):
-    model = Report
-    list_display = ('file_name', 'file_size', 'ordered_by', 'created', 'status')
-    list_filter = (('created', DateRangeFilter), UserFilter)
-    ordering = ('-created',)
-
-    def get_list_display_links(self, request, list_display):
-        return tuple()
-
-    def has_add_permission(self, request, obj=None):
-        return False
-
-    def status(self, obj):
-        return obj.task.status if obj.task else 'PENDING'
-
-    def file_name(self, obj):
-        if obj.file:
-            return mark_safe('<a href="/%s">%s</a>' % (obj.file, obj.file.split('/')[-1]))
-        else:
-            return f"({_('No file generated')})"
-
-    file_name.short_description = _('Generated report file')
-
-    def file_size(self, obj):
-        try:
-            return sizeof_fmt(os.path.getsize(os.path.join(settings.MEDIA_ROOT, obj.file))) if obj.file else "-"
-        except FileNotFoundError:
-            return format_html(f'<span class="unknown">({_("unknown")})</span>')
-
-    file_size.short_description = _("File size")
+class DailyResourceReportsAdmin(ReportsAdmin):
 
     class Media:
         pass
@@ -177,9 +137,8 @@ class DailyResourceReportsAdmin(DynamicAdminListDisplayMixin, OrderedByDisplayAd
             'admin:reports_summarydailyreport_changelist',
             current_app=self.admin_site.name,
         )
-
-        messages.info(request, _(
-            'The task of generating the report has been commissioned. The report may appear with a delay ...'))
+        msg = _('The task of generating the report has been commissioned. The report may appear with a delay ...')
+        messages.info(request, msg)
         return HttpResponseRedirect(url)
 
 
@@ -195,7 +154,7 @@ def export_to_csv(self, request, queryset):
 export_to_csv.short_description = _("Export selected to CSV")
 
 
-class ExportCsvMixin(object):
+class ExportCsvMixin:
     def get_actions(self, request):
         actions = super().get_actions(request)
         if request.user.is_superuser:

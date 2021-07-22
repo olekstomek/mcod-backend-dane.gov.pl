@@ -262,3 +262,15 @@ def register_external_link(features):
             'entity_decorators': {'TITLED_LINK': titled_link_entity}
         }
     })
+
+
+@hooks.register('insert_editor_js')
+def editor_js():
+    return format_html(
+        """
+        <script>
+            window.chooserUrls.pageChooser = '{}';
+        </script>
+        """,
+        reverse('wagtailadmin_choose_page_titled_external_link')
+    )

@@ -93,6 +93,7 @@ class LabEventTrashAdmin(HistoryMixin, TrashMixin):
         'status',
     )
     fields = [field for field in readonly_fields] + ['is_removed']
+    is_history_other = True
 
 
 admin.site.register(LabEvent, LabEventAdmin)

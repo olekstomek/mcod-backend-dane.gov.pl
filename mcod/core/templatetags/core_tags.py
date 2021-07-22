@@ -1,6 +1,7 @@
 from django import template
 from django.apps import apps
 from django.conf import settings
+from django.contrib import admin
 from django.http import HttpRequest
 from django.urls import reverse
 from django.utils.encoding import force_text
@@ -9,7 +10,6 @@ from suit.templatetags.suit_list import result_list_with_context
 from django.utils.html import format_html
 from suit.templatetags.suit_menu import get_admin_site, Menu as SuitMenu
 
-from mcod.core.db.models import TrashModelBase
 from mcod.unleash import is_enabled
 
 
@@ -38,11 +38,6 @@ class Menu(SuitMenu):
 
     def get_native_model_url(self, model):
         return model.get('admin_url') or model.get('add_url') or ''
-
-    def init_config(self):
-        super().init_config()
-        if not is_enabled('S15_guides.be'):
-            self.conf_menu = [x for x in self.conf_menu if '/guides/guide' not in x.get('url', '')]
 
 
 @register.filter()
@@ -75,9 +70,9 @@ def is_unleash_enabled(name):
 @register.inclusion_tag('admin/change_list_results.html', takes_context=True)
 def mcod_result_list_with_context(context, cl):
     res = result_list_with_context(context, cl)
-    if is_enabled('S21_admin_ui_changes.be'):
-        for sub_list in res['results']:
-            sub_list[1] = mark_safe(sub_list[1].replace('<th', '<td').replace('/th>', '/td>'))
+    for sub_list in res['results']:
+        for i, element in enumerate(sub_list):
+            sub_list[i] = mark_safe(element.replace('<th', '<td').replace('/th>', '/td>'))
     return res
 
 
@@ -103,14 +98,21 @@ def add_required_span_tag(label_tag):
 def get_model_extra_data(app_label, object_name):
     model = apps.get_model(app_label, object_name)
 
-    is_trash = isinstance(model, TrashModelBase)
+    is_trash = getattr(model, 'is_trash', False)
     has_trash = hasattr(model, 'trash_class') and is_trash is False
     trash_url = None
     if has_trash:
-        trash_url = reverse('admin:%s_%s_changelist' % (app_label, model.trash_class._meta.model_name), current_app='admin')
+        trash_model_admin = admin.site._registry.get(model.trash_class)
+        default_trash_url = reverse(f'admin:{app_label}_{model.trash_class._meta.model_name}_changelist', current_app='admin')
+        trash_url = getattr(trash_model_admin, 'admin_url', default_trash_url)
+
+    model_admin = admin.site._registry.get(model)
+    default_admin_url = reverse(f'admin:{app_label}_{model._meta.model_name}_changelist', current_app='admin')
+    admin_url = getattr(model_admin, 'admin_url', default_admin_url)
 
     extra_data = {
         'is_trash': is_trash,
         'trash_url': trash_url,
+        'admin_url': admin_url,
     }
     return extra_data

@@ -1,5 +1,4 @@
 from django.contrib import admin, messages
-from django.http import HttpResponseRedirect
 from django.utils.translation import gettext_lazy as _
 
 from mcod.lib.admin_mixins import (
@@ -33,10 +32,12 @@ from mcod.suggestions.models import (
     ResourceCommentTrash,
 )
 from mcod.suggestions.tasks import create_accepted_dataset_suggestion_task
+from mcod.unleash import is_enabled
 
 
-class CommentAdminMixin(DynamicAdminListDisplayMixin, DecisionStatusLabelAdminMixin, ActionsMixin, CRUDMessageMixin,
-                        HistoryMixin, ExportCsvMixin, SoftDeleteMixin, MCODAdminMixin, admin.ModelAdmin):
+class CommentAdminMixin(DynamicAdminListDisplayMixin, DecisionStatusLabelAdminMixin, ActionsMixin,
+                        CRUDMessageMixin, HistoryMixin, ExportCsvMixin, SoftDeleteMixin,
+                        MCODAdminMixin, admin.ModelAdmin):
     is_history_other = True
     is_history_with_unknown_user_rows = True
     list_filter = [
@@ -69,16 +70,24 @@ class CommentAdminMixin(DynamicAdminListDisplayMixin, DecisionStatusLabelAdminMi
     _truncated_comment.short_description = _('notes')
     _truncated_comment.admin_order_field = 'comment'
 
-    def changelist_view(self, request, extra_context=None):
-        query_string = request.META.get('QUERY_STRING', '')
-        if 'decision' not in query_string:
-            return HttpResponseRedirect(request.path + '?decision=not_taken')
-        return super().changelist_view(request, extra_context=extra_context)
+    @property
+    def admin_url(self):
+        return super().admin_url + '?decision=not_taken'
 
     def get_list_display(self, request):
-        if request.method == 'GET' and request.GET.get('decision') == 'taken':
-            return self.replace_attributes(['_title', '_truncated_comment', 'report_date', '_decision', 'decision_date'])
-        return self.replace_attributes(['_title', '_truncated_comment', 'report_date', '_decision'])
+        attrs = [
+            '_title',
+            '_truncated_comment',
+            'report_date',
+            '_decision',
+            'decision_date',
+        ] if request.method == 'GET' and request.GET.get('decision') == 'taken' else [
+            '_title',
+            '_truncated_comment',
+            'report_date',
+            '_decision',
+        ]
+        return self.replace_attributes(attrs)
 
     def has_add_permission(self, request, obj=None):
         return False
@@ -152,13 +161,6 @@ class CommentAdminTrashMixin(TrashMixin):
     ]
     fields = [x for x in readonly_fields] + ['is_removed']
 
-    def delete_model(self, request, obj):
-        obj.delete(soft=False)
-
-    def delete_queryset(self, request, queryset):
-        for obj in queryset:
-            obj.delete(soft=False)
-
 
 class DatasetSubmissionAdminMixin(CRUDMessageMixin, SoftDeleteMixin, HistoryMixin,
                                   MCODAdminMixin, admin.ModelAdmin):
@@ -210,40 +212,40 @@ class DatasetSubmissionAdmin(DynamicAdminListDisplayMixin, DecisionStatusLabelAd
     _notes.short_description = _('Data description')
     _notes.admin_order_field = 'notes'
 
-    def changelist_view(self, request, extra_context=None):
-        query_string = request.META.get('QUERY_STRING', '')
-        if 'decision' not in query_string:
-            return HttpResponseRedirect(request.path + '?decision=not_taken')
-        return super(DatasetSubmissionAdmin, self).changelist_view(request, extra_context=extra_context)
+    @property
+    def admin_url(self):
+        return super().admin_url + '?decision=not_taken'
 
     def get_list_display(self, request):
-        if request.method == 'GET' and request.GET.get('decision') == 'taken':
-            return self.replace_attributes(['title', '_notes', 'submission_date', '_decision', 'decision_date'])
-        return self.replace_attributes(['title', '_notes', 'submission_date', '_decision'])
+        attrs = [
+            'title',
+            '_notes',
+            'submission_date',
+            '_decision',
+            'decision_date',
+        ] if request.method == 'GET' and request.GET.get('decision') == 'taken' else [
+            'title',
+            '_notes',
+            'submission_date',
+            '_decision',
+        ]
+        return self.replace_attributes(attrs)
 
     def save_model(self, request, obj, form, change):
         obj.modified_by = request.user
-        create_needed = obj.tracker.has_changed('decision') and obj.is_accepted and not obj.accepted_dataset_submission
+        create_needed = obj.tracker.has_changed('decision') and \
+            obj.is_accepted and not obj.accepted_dataset_submission
         super().save_model(request, obj, form, change)
         if create_needed:
             create_accepted_dataset_suggestion_task.s(obj.id).apply_async(countdown=1)
             self.message_user(
-                request, _('Create accepted dataset suggestion task was launched!'), level=messages.SUCCESS)
+                request,
+                _('Create accepted dataset suggestion task was launched!'),
+                level=messages.SUCCESS)
 
 
 class AcceptedDatasetSubmissionAdmin(DynamicAdminListDisplayMixin, LangFieldsOnlyMixin,
                                      StatusLabelAdminMixin, DatasetSubmissionAdminMixin):
-    fields = (
-        'title',
-        'notes',
-        'organization_name',
-        'data_link',
-        'potential_possibilities',
-        'comment',
-        'decision_date',
-        'status',
-        'is_active',
-    )
     form = AcceptedDatasetSubmissionForm
     list_display = [
         '_title',
@@ -252,14 +254,66 @@ class AcceptedDatasetSubmissionAdmin(DynamicAdminListDisplayMixin, LangFieldsOnl
         'decision_date',
         'status',
     ]
-    readonly_fields = ['comment', 'decision_date']
 
     def __init__(self, model, admin_site):
-        super(AcceptedDatasetSubmissionAdmin, self).__init__(model, admin_site)
+        super().__init__(model, admin_site)
         self.suit_form_tabs = (
             ('general', _('General')),
             *LangFieldsOnlyMixin.get_translations_tabs()
         )
+
+    @staticmethod
+    def get_readonly_fields(request, obj=None):
+        if (is_enabled('S29_publication_finished.be') and obj and obj.status == 'publication_finished'
+                and not obj.tracker.has_changed('status')):
+            return [
+                'title',
+                'notes',
+                'organization_name',
+                'data_link',
+                'potential_possibilities',
+                'comment',
+                'decision_date',
+                'publication_finished_at',
+                'publication_finished_comment',
+            ]
+
+        return ['comment', 'decision_date']
+
+    @staticmethod
+    def get_fields(request, obj=None):
+        fields = [
+            'title',
+            'notes',
+            'organization_name',
+            'data_link',
+            'potential_possibilities',
+            'comment',
+            'decision_date',
+            'status',
+        ]
+
+        if is_enabled('S29_publication_finished.be'):
+            fields.append('publication_finished_comment')
+            if obj and obj.status == 'publication_finished' and not obj.tracker.has_changed('status'):
+                fields.insert(-1, 'publication_finished_at')
+                return fields
+
+        fields += [
+            'is_published_for_all',
+            'is_active',
+        ]
+        return fields
+
+    def save_model(self, request, obj, form, change):
+        if obj.tracker.has_changed('status'):
+            if obj.tracker.previous('status') == 'publication_finished' and obj.status == 'draft':
+                obj.is_active = True
+                obj.publication_finished_comment = ''
+            if obj.status == 'publication_finished':
+                obj.is_published_for_all = False
+                obj.is_active = False
+        super().save_model(request, obj, form, change)
 
     def _title(self, obj):
         return obj.title
@@ -271,20 +325,8 @@ class AcceptedDatasetSubmissionAdmin(DynamicAdminListDisplayMixin, LangFieldsOnl
     _notes.short_description = _('Notes')
     _notes.admin_order_field = 'notes'
 
-    def get_fields(self, request, obj=None):
-        """
-        Hook for specifying fields.
-        """
-        if self.fields:
-            fields_list = list(self.fields)
-            fields = tuple(fields_list[:8] + ['is_published_for_all'] + fields_list[8:])
-            return fields
-        # _get_form_for_get_fields() is implemented in subclasses.
-        form = self._get_form_for_get_fields(request, obj)
-        return [*form.base_fields, *self.get_readonly_fields(request, obj)]
-
     def get_fieldsets(self, request, obj=None):
-        fieldsets = super(AcceptedDatasetSubmissionAdmin, self).get_fieldsets(request, obj)
+        fieldsets = super().get_fieldsets(request, obj)
         fieldsets = [
             (
                 None,
@@ -299,7 +341,8 @@ class AcceptedDatasetSubmissionAdmin(DynamicAdminListDisplayMixin, LangFieldsOnl
         return fieldsets
 
 
-class DatasetSubmissionTrashAdmin(TrashMixin, DatasetSubmissionAdmin):
+class DatasetSubmissionTrashAdmin(DynamicAdminListDisplayMixin, DecisionStatusLabelAdminMixin,
+                                  TrashMixin):
     readonly_fields = [
         'title',
         'notes',
@@ -311,26 +354,45 @@ class DatasetSubmissionTrashAdmin(TrashMixin, DatasetSubmissionAdmin):
         'decision',
         'decision_date',
     ]
-    fields = [x for x in readonly_fields] + ['is_removed']
+    fields = readonly_fields + ['is_removed']
+    list_display = ['title', '_notes', 'submission_date', '_decision']
 
-    def delete_model(self, request, obj):
-        obj.delete(soft=False)
+    def _decision(self, obj):
+        return obj.get_decision_display() or _('Decision not taken')
+    _decision.short_description = _('decision')
+    _decision.admin_order_field = 'decision'
 
-    def delete_queryset(self, request, queryset):
-        for obj in queryset:
-            obj.delete(soft=False)
+    def _notes(self, obj):
+        return obj.truncated_notes or '-'
+    _notes.short_description = _('Data description')
+    _notes.admin_order_field = 'notes'
 
 
-class AcceptedDatasetSubmissionTrashAdmin(TrashMixin, AcceptedDatasetSubmissionAdmin):
-    readonly_fields = AcceptedDatasetSubmissionAdmin.fields
-    fields = [x for x in readonly_fields] + ['is_removed']
+class AcceptedDatasetSubmissionTrashAdmin(DynamicAdminListDisplayMixin, StatusLabelAdminMixin,
+                                          TrashMixin):
+    list_display = [
+        '_title',
+        '_notes',
+        'submission_date',
+        'decision_date',
+        'status',
+    ]
 
-    def delete_model(self, request, obj):
-        obj.delete(soft=False)
+    def get_fields(self, request, obj=None):
+        return AcceptedDatasetSubmissionAdmin.get_fields(request, obj=obj) + ['is_removed']
 
-    def delete_queryset(self, request, queryset):
-        for obj in queryset:
-            obj.delete(soft=False)
+    def get_readonly_fields(self, request, obj=None):
+        return AcceptedDatasetSubmissionAdmin.get_fields(request, obj=obj)
+
+    def _notes(self, obj):
+        return obj.truncated_notes or '-'
+    _notes.short_description = _('Notes')
+    _notes.admin_order_field = 'notes'
+
+    def _title(self, obj):
+        return obj.title
+    _title.short_description = _('Title')
+    _title.admin_order_field = 'title'
 
 
 class ResourceCommentAdmin(CommentAdminMixin):

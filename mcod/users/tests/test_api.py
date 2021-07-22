@@ -1,7 +1,5 @@
 from pytest_bdd import scenarios
 
-from mcod.unleash import is_enabled
-
 
 scenarios(
     'features/account.feature',
@@ -13,10 +11,6 @@ scenarios(
     'features/reset_password.feature',
     'features/reset_password_confirm.feature',
     'features/dashboard.feature',
+    'features/meetings_api.feature',
+    'features/dashboard_schedules.feature',
 )
-
-if is_enabled('hod.be'):
-    scenarios('features/dashboard_schedules.feature')
-
-
-scenarios('features/meetings_api.feature')

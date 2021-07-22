@@ -83,3 +83,14 @@ def another_admin():
         password='12345.Abcde',
         phone='0048123456789'
     )
+
+
+@pytest.fixture
+def inactive_admin():
+    usr = AdminFactory.create(
+        email='admin@dane.gov.pl',
+        password='12345.Abcde',
+        phone='0048123456789',
+        is_active=False
+    )
+    return usr

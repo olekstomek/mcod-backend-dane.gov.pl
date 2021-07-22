@@ -1,7 +1,6 @@
 import pytest
 from django.contrib.auth import get_user_model
 
-from mcod.users.depricated.schemas import Registration  # , RegistrationRequest
 
 User = get_user_model()
 
@@ -61,66 +60,3 @@ class Common(object):
 #         with pytest.raises(marshmallow.exceptions.ValidationError) as e:
 #             AccountSchema().validate(user_dict)
 #         assert 'state' in e.value.messages
-
-
-class TestRegistrationRequest():
-    def test_invalid_password(self, invalid_passwords):
-        for password in invalid_passwords:
-            data = {
-                'email': 'test@mc.gov.pl',
-                'password1': password,
-                'password2': password
-            }
-            res = Registration().validate(data)
-            assert 'password1' in res
-
-    def test_password_not_match(self):
-        data = {
-            'email': 'admin@mc.gov.pl',
-            'password1': 'e3!dEpc@7!',
-            'password2': 'e3!dEpc@7'
-        }
-        res = Registration().validate(data)
-
-        assert 'password1' in res
-        assert 'password2' not in res
-
-    def test_field_missing(self):
-        data = {
-            'email': 'admin@mc.gov.pl',
-            'password1': 'e3!dEpc@7!',
-        }
-        res = Registration().validate(data)
-        assert 'password2' in res
-
-        data = {
-            'email': 'admin@mc.gov.pl',
-            'password2': 'e3!dEpc@7!',
-        }
-        res = Registration().validate(data)
-        assert 'password1' in res
-
-        data = {
-            'password1': 'e3!dEpc@7!',
-            'password2': 'e3!dEpc@7!',
-        }
-        res = Registration().validate(data)
-        assert 'email' in res
-
-    def test_invalid_email(self):
-        data = {
-            'email': 'notanemailaddress@',
-            'password1': 'e3!dEpc@7!',
-            'password2': 'e3!dEpc@7!'
-        }
-        res = Registration().validate(data)
-        assert 'email' in res
-
-    def test_valid_data(self):
-        data = {
-            'email': 'admin@mc.gov.pl',
-            'password1': 'e3!dEpc@7!',
-            'password2': 'e3!dEpc@7!'
-        }
-        result = Registration().validate(data)
-        assert result == {}

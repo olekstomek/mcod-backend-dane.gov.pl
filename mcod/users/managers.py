@@ -1,15 +1,17 @@
-from model_utils.managers import SoftDeletableQuerySet, SoftDeletableManager
+from mcod.core.db.managers import TrashManager
+from mcod.core.managers import SoftDeletableQuerySet, SoftDeletableManager, TrashQuerySet
 
-from mcod.core.db.managers import DeletedManager
 
-
-class MeetingQuerySet(SoftDeletableQuerySet):
-
+class MeetingQuerySetMixin:
     def published(self):
         return self.filter(status='published')
 
 
-class MeetingFileQuerySet(SoftDeletableQuerySet):
+class MeetingQuerySet(MeetingQuerySetMixin, SoftDeletableQuerySet):
+    pass
+
+
+class MeetingTrashQuerySet(MeetingQuerySetMixin, TrashQuerySet):
     pass
 
 
@@ -20,13 +22,13 @@ class MeetingManager(SoftDeletableManager):
         return super().get_queryset().published()
 
 
-class MeetingDeletedManager(DeletedManager):
-    _queryset_class = MeetingQuerySet
+class MeetingTrashManager(TrashManager):
+    _queryset_class = MeetingTrashQuerySet
 
 
 class MeetingFileManager(SoftDeletableManager):
-    _queryset_class = MeetingFileQuerySet
+    _queryset_class = SoftDeletableQuerySet
 
 
-class MeetingFileDeletedManager(DeletedManager):
-    _queryset_class = MeetingFileQuerySet
+class MeetingFileTrashManager(TrashManager):
+    _queryset_class = TrashQuerySet

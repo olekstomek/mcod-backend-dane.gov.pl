@@ -12,7 +12,7 @@ from mcod.core.api.jsonapi.serializers import (
 )
 from mcod.core.api.schemas import ExtSchema
 from mcod.core.serializers import CSVSerializer
-from mcod.lib.serializers import TranslatedStr, TranslatedTagsList, KeywordsList
+from mcod.lib.serializers import TranslatedStr, KeywordsList
 from mcod.watchers.serializers import SubscriptionMixin
 
 
@@ -68,7 +68,6 @@ class ApplicationApiAttrs(ObjectAttrs, HighlightObjectMixin):
     illustrative_graphics_url = fields.Str()
     illustrative_graphics_alt = TranslatedStr()
     followed = fields.Boolean(faker_type='boolean')
-    tags = TranslatedTagsList(TranslatedStr(), faker_type='tagslist')
     keywords = KeywordsList(TranslatedStr(), faker_type='tagslist')
     views_count = fields.Integer(faker_type='integer')
     modified = fields.Str(faker_type='datetime')

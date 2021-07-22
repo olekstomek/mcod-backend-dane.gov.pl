@@ -2,6 +2,7 @@ import json
 from urllib import parse
 
 import dpath.util
+import requests_mock
 from falcon.testing import TestClient, Cookie
 from falcon.util.misc import get_http_status
 from pytest_bdd import parsers
@@ -53,6 +54,7 @@ def api_request_method_p(http_method, context):
 
 @when('resource api tabular data endpoint is requested')
 def api_request_endpoint(buzzfeed_fakenews_resource, context):
+    buzzfeed_fakenews_resource.revalidate()
     context.api.path = f'/resources/{buzzfeed_fakenews_resource.id}/data'
 
 
@@ -67,6 +69,17 @@ def api_request_path(path, context):
     context.api.path = path
 
 
+@then(parsers.parse('api request path from response is {field}'))
+def api_request_path_from_response(field, context):
+    path = dpath.util.get(context.response.json, field)
+    context.api.path = path.replace(settings.API_URL, '')
+
+
+@then(parsers.parse('api request path substring {from_string} is replaced by {to_string}'))
+def api_request_path_substring_replaced(from_string, to_string, context):
+    context.api.path = context.api.path.replace(from_string, to_string)
+
+
 @when('api request posted data is <req_post_data>')
 @when(parsers.parse('api request posted data is {req_post_data}'))
 def api_request_post_data(context, req_post_data):
@@ -78,9 +91,15 @@ def api_request_post_data(context, req_post_data):
 def api_request_data(context, object_type, req_data):
     extra = json.loads(req_data)
     default_data = {
+        'chart': {
+            'is_default': False,
+        },
         'comment': {
             'text': 'Test comment',
         },
+        'notification': {
+        },
+        'register': {},
         'resource_comment': {},
         'schedule': {
             'end_date': '2021-01-01',
@@ -116,21 +135,8 @@ def api_request_data(context, object_type, req_data):
     object_type = 'schedule' if object_type == 'schedule_state' else object_type
     object_type = 'user_schedule_item' if object_type in [
         'user_schedule_item_admin', 'user_schedule_item_agent'] else object_type
+    object_type = 'user' if object_type == 'register' else object_type
     context.obj = {"data": {"type": object_type, "attributes": data}}
-
-
-@when(parsers.parse('posted {is_default} chart data is {chart}'))
-def api_request_chart_data(context, is_default, chart):
-    chart_data = {
-        'data': {
-            'attributes': {
-                'is_default': True if is_default == 'default' else False,
-            },
-            'type': 'chart'
-        }
-    }
-    chart_data['data']['attributes']['chart'] = json.loads(chart) if chart != 'None' else None
-    context.obj = chart_data
 
 
 @then('api request path is <request_path>')
@@ -260,6 +266,62 @@ def api_send_request(context, mocker):
     mocker.stopall()
 
 
+@when('send api request and fetch the response with mocked_url <mocked_url> and mocked_rdf_data <mocked_data>')
+@when(parsers.parse('send api request and fetch the response with mocked_url {mocked_url} and mocked_rdf_data {mocked_data}'))
+@requests_mock.Mocker(kw='mock_request')
+def api_send_request_with_mocked_url(context, mocker, mocked_url, mocked_data, **mock_kwargs):
+    if context.user:
+        token = get_auth_token(
+            context.user,
+            session_key=str(context.user.id)
+        )
+        mocker.patch('mcod.core.api.hooks.get_user', return_value=context.user)
+        context.api.headers['Authorization'] = "Bearer %s" % token
+
+    # cookies have to be sent in Cookie header: https://github.com/falconry/falcon/issues/1640
+    if context.api.cookies:
+        cookies = ''
+        for cookie_name, cookie_value in context.api.cookies.items():
+            cookies += '%s=%s; ' % (cookie_name, cookie_value)
+
+        if cookies:
+            if context.api.headers.get('Cookie'):
+                context.api.headers['Cookie'] += '; ' + cookies
+            else:
+                context.api.headers['Cookie'] = cookies
+
+    o = parse.urlparse(settings.API_URL)
+    kwargs = {
+        'method': context.api.method,
+        'path': context.api.path,
+        'headers': context.api.headers,
+        'params': context.api.params,
+        'protocol': o.scheme,
+        'host': o.netloc,
+    }
+    if context.api.method in ('POST', 'PUT', 'PATCH', 'DELETE'):
+        kwargs['json'] = context.obj
+
+    mock_request = mock_kwargs['mock_request']
+    mock_request.post(
+        mocked_url, headers={'content-type': 'application/rdf+xml'}, content=mocked_data.encode('utf-8'))
+    resp = TestClient(app).simulate_request(**kwargs)
+    skip_validation = False
+    api_version = resp.headers['x-api-version']
+    if api_version == '1.0':
+        skip_validation = True
+    if resp.status_code in (202, 204):
+        skip_validation = True
+    if not skip_validation:
+        valid, validated, errors = jsonapi_validator(resp.json)
+        assert valid is True
+    # TODO: this does not work on gitlab...
+    # Counter().save_counters()
+    # TODO: check pagination
+    context.response = resp
+    mocker.stopall()
+
+
 @then(parsers.parse('api\'s response status code is {status_code:d}'))
 @then('api\'s response status code is <status_code>')
 def api_response_status_code(status_code, context):
@@ -274,7 +336,8 @@ def api_response_status_code(status_code, context):
 
 @then(parsers.parse('size of api\'s response body field {field} is {num:d}'))
 def api_response_body_field_size(field, num, context):
-    assert len(dpath.util.get(context.response.json, field)) == int(num)
+    size = len(dpath.util.get(context.response.json, field))
+    assert size == int(num), f'{size} is not a {num}'
 
 
 @then(parsers.parse('api\'s response body field {field} is sorted by {key}'))
@@ -324,12 +387,6 @@ def api_response_body_field_not_p(resp_body_field, resp_body_value, context):
     assert set(values) != {resp_body_value}
 
 
-@then('api\'s response body field <resp_body_field> is <resp_body_value>')
-def api_response_body_field_p(resp_body_field, resp_body_value, context):
-    values = [str(value) for value in dpath.util.values(context.response.json, resp_body_field)]
-    assert set(values) == {resp_body_value}
-
-
 @then(parsers.parse('api\'s response body field {field} contains {value}'))
 @then('api\'s response body field <field> contains <value>')
 def api_response_body_field_in(field, value, context):
@@ -350,10 +407,13 @@ def api_response_body_field_startswith(field, value, context):
     assert values
 
 
-@then(parsers.parse('api\'s response body field {field} endswith {value}'))
-def api_response_body_field_endswith(field, value, context):
-    values = [str(v) for v in dpath.util.values(context.response.json, field) if str(v).endswith(value)]
-    assert values, f'API response field "{field}" should end with "{value}"'
+@then(parsers.parse('api\'s response body field {resp_body_field} endswith {resp_body_value}'))
+@then('api\'s response body field <resp_body_field> endswith <resp_body_value>')
+def api_response_body_field_endswith(resp_body_field, resp_body_value, context):
+    values = [
+        str(v) for v in dpath.util.values(context.response.json, resp_body_field) if str(v).endswith(resp_body_value)]
+    assert values, f'API response field "{resp_body_field}" should end with "{resp_body_value}' \
+                   f' but response has values {context.response.json}"'
 
 
 @then(parsers.parse('api\'s response body field {field} does not contain {value}'))
@@ -362,10 +422,12 @@ def api_response_body_field_not_in(field, value, context):
     assert not values
 
 
-@then(parsers.parse('api\'s response body field {field} is {value}'))
-def api_response_body_field(field, value, context):
-    values = [str(value) for value in dpath.util.values(context.response.json, field)]
-    assert set(values) == {value}, 'value should be {}, but is {}'.format({value}, set(values))
+@then(parsers.parse('api\'s response body field {resp_body_field} is {resp_body_value}'))
+@then('api\'s response body field <resp_body_field> is <resp_body_value>')
+def api_response_body_field(resp_body_field, resp_body_value, context):
+    values = [str(value) for value in dpath.util.values(context.response.json, resp_body_field)]
+    assert set(values) == {resp_body_value}, 'value should be {}, but is {}. Full response: {}'.format(
+        {resp_body_value}, set(values), context.response.json)
 
 
 @then(parsers.parse('api\'s response body list {field_name} contains {field_value:d}'))
@@ -455,6 +517,14 @@ def api_response_data_contains_document_type_objects(document_type, context):
 def api_response_header_value_is(context, resp_header_name, resp_header_value):
     value = dpath.util.get(context.response.headers, resp_header_name)
     assert value == resp_header_value, 'value should be {}, but is {}'.format(resp_header_value, value)
+
+
+@then(parsers.parse('api\'s response header {resp_header_name} contains {resp_header_value}'))
+@then('api\'s response header <resp_header_name> contains <resp_header_value>')
+def api_response_header_value_contains(context, resp_header_name, resp_header_value):
+    value = dpath.util.get(context.response.headers, resp_header_name)
+    assert resp_header_value in value, 'Substring {} was not found in value of header {}: {}'.format(
+        resp_header_value, resp_header_name, value)
 
 
 @then(parsers.parse('api\'s json-ld response body with rdf type {rdf_type} has field {field_name} with attribute {identifier}'

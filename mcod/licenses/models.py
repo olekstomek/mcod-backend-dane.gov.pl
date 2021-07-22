@@ -5,14 +5,14 @@ from django.db import models
 from django.dispatch import receiver
 from django.utils.translation import gettext_lazy as _
 from model_utils import FieldTracker
-from model_utils.managers import SoftDeletableManager
 from modeltrans.fields import TranslationField
 
 from mcod.core.api.search import signals as search_signals
 from mcod.core.api.rdf import signals as rdf_signals
 from mcod.core.api.search.tasks import null_field_in_related_task
-from mcod.core.db.managers import DeletedManager
+from mcod.core.db.managers import TrashManager
 from mcod.core.db.models import ExtendedModel
+from mcod.core.managers import SoftDeletableManager
 from mcod.licenses.signals import update_related_datasets, null_in_related_datasets
 
 signal_logger = logging.getLogger('signals')
@@ -33,9 +33,8 @@ class License(ExtendedModel):
         return self.title
 
     i18n = TranslationField(fields=("name", "title"))
-    raw = models.Manager()
     objects = SoftDeletableManager()
-    deleted = DeletedManager()
+    trash = TrashManager()
     tracker = FieldTracker()
     slugify_field = 'name'
 

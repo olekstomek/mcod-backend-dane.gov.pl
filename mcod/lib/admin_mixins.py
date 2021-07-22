@@ -19,14 +19,11 @@ from mcod import settings
 from mcod.core.admin import MCODChangeList, MCODTrashChangeList
 from mcod.histories.models import History
 from mcod.tags.views import TagAutocompleteJsonView
-from mcod.unleash import is_enabled
 
 
 class TagAutocompleteMixin:
     def autocomplete_view(self, request):
-        if is_enabled('S18_new_tags.be'):
-            return TagAutocompleteJsonView.as_view(model_admin=self)(request)
-        return super().autocomplete_view(request)
+        return TagAutocompleteJsonView.as_view(model_admin=self)(request)
 
 
 class DecisionFilter(admin.SimpleListFilter):
@@ -56,7 +53,7 @@ class ActionsMixin(object):
     def get_actions(self, request):
         """Override delete_selected action description."""
         actions = super().get_actions(request)
-        if self.delete_selected_msg:
+        if self.delete_selected_msg and 'delete_selected' in actions:
             func, action, description = actions.get('delete_selected')
             actions['delete_selected'] = func, action, self.delete_selected_msg
         return actions
@@ -82,16 +79,35 @@ class AddChangeMixin(object):
         return super().has_change_permission(request, obj=obj)
 
 
-class TrashMixin(admin.ModelAdmin):
+class TrashMixin(ActionsMixin, admin.ModelAdmin):
+    delete_selected_msg = _("Delete selected objects")
+    related_objects_query = None
+    cant_restore_msg = _('Couldn\'t restore following objects,'
+                         ' because their related objects are still removed: {}')
 
-    if is_enabled('S25_restore_from_trash_action.be'):
-        actions = ['restore_objects']
+    excluded_actions = ['export_to_csv']
+
+    actions = ['restore_objects']
+
+    def get_actions(self, request):
+        actions = super().get_actions(request)
+        for action in self.excluded_actions:
+            actions.pop(action, None)
+        return actions
 
     def restore_objects(self, request, queryset):
-        for obj in queryset:
+        to_restore = queryset
+        cant_restore = None
+        if self.related_objects_query:
+            query = {self.related_objects_query + '__is_removed': True}
+            to_restore = to_restore.exclude(**query)
+            cant_restore = queryset.filter(**query)
+        for obj in to_restore:
             obj.is_removed = False
             obj.save()
-        self.message_user(request, _('Successfully restored objects: {}').format(queryset.count()))
+        if cant_restore is not None:
+            self.message_user(request, self.cant_restore_msg.format(', '.join([str(obj) for obj in cant_restore])))
+        self.message_user(request, _('Successfully restored objects: {}').format(to_restore.count()))
 
     restore_objects.short_description = _('Restore selected objects')
 
@@ -99,13 +115,13 @@ class TrashMixin(admin.ModelAdmin):
         return MCODTrashChangeList
 
     def get_queryset(self, request):
-        return self.model.deleted.all()
+        return self.model.trash.all()
 
     def has_add_permission(self, request, obj=None):
         return False
 
     def render_change_form(self, request, context, add=False, change=False, form_url='', obj=None):
-        if hasattr(self.model, 'accusative_case') and is_enabled('S21_admin_ui_changes.be'):
+        if hasattr(self.model, 'accusative_case'):
             if add:
                 title = _('Add %s - trash')
             elif self.has_change_permission(request, obj):
@@ -435,44 +451,32 @@ class AdminListMixin(object):
             'all': ('./fontawesome/css/all.min.css',)
         }
 
-    if is_enabled('S21_admin_ui_changes.be'):
-        task_status_to_css_class = {
-            'SUCCESS': 'fas fa-check text-success',
-            'PENDING': 'fas fa-question-circle text-warning',
-            'FAILURE': 'fas fa-times-circle text-error',
-            None: 'fas fa-minus-circle text-light'
-        }
+    task_status_to_css_class = {
+        'SUCCESS': 'fas fa-check text-success',
+        'PENDING': 'fas fa-question-circle text-warning',
+        'FAILURE': 'fas fa-times-circle text-error',
+        None: 'fas fa-minus-circle text-light'
+    }
 
-        task_status_tooltip = {
-            'SUCCESS': _('Correct Validation'),
-            'PENDING': _('Validation in progress'),
-            'FAILURE': _('Validation failed'),
-            None: _('No validation')
-        }
+    task_status_tooltip = {
+        'SUCCESS': _('Correct Validation'),
+        'PENDING': _('Validation in progress'),
+        'FAILURE': _('Validation failed'),
+        None: _('No validation')
+    }
 
-        def _format_list_status(self, val):
-            return format_html(f'<i class="{self.task_status_to_css_class[val]}"'
-                               f' title="{self.task_status_tooltip[val]}"></i>')
-    else:
-        task_status_to_css_class = {
-            'SUCCESS': 'fas fa-check-circle text-success',
-            'PENDING': 'fas fa-question-circle text-warning',
-            'FAILURE': 'fas fa-times-circle text-error',
-            None: 'fas fa-minus-circle text-light'
-        }
-
-        def _format_list_status(self, val):
-            return format_html('<i class="%s"></i>' % self.task_status_to_css_class[val])
+    def _format_list_status(self, val):
+        return format_html(f'<i class="{self.task_status_to_css_class[val]}"'
+                           f' title="{self.task_status_tooltip[val]}"></i>')
 
 
 class DynamicAdminListDisplayMixin:
 
     def replace_attributes(self, source_list):
-        if is_enabled('S21_admin_ui_changes.be'):
-            for mixin_label_attr in self.mixins_label_attribute.values():
-                source_list = [
-                    display_attr if display_attr != mixin_label_attr and display_attr != f'_{mixin_label_attr}'
-                    else f'{mixin_label_attr}_label' for display_attr in source_list]
+        for mixin_label_attr in self.mixins_label_attribute.values():
+            source_list = [
+                display_attr if display_attr != mixin_label_attr and display_attr != f'_{mixin_label_attr}'
+                else f'{mixin_label_attr}_label' for display_attr in source_list]
         return source_list
 
     def get_list_display(self, request):
@@ -579,7 +583,8 @@ class StatusLabelAdminMixin(BaseStatusLabelAdminMixin):
 
     STATUS_CSS_CLASSES = {
         'published': 'label label-success',
-        'draft': 'label label-warning'
+        'draft': 'label label-warning',
+        'publication_finished': 'label label-info',
     }
 
     def get_status_value(self, obj):
@@ -669,12 +674,17 @@ class DecisionStatusLabelAdminMixin(FormatLabelBaseMixin):
 
 
 class MCODAdminMixin:
+    @property
+    def admin_url(self):
+        opts = self.model._meta
+        changelist_url = 'admin:%s_%s_changelist' % (opts.app_label, opts.model_name)
+        return reverse(changelist_url)
 
     def get_changelist(self, request, **kwargs):
         return MCODChangeList
 
     def render_change_form(self, request, context, add=False, change=False, form_url='', obj=None):
-        if hasattr(self.model, 'accusative_case') and is_enabled('S21_admin_ui_changes.be'):
+        if hasattr(self.model, 'accusative_case'):
             if add:
                 title = _('Add %s')
             elif self.has_change_permission(request, obj):

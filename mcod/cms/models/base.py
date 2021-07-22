@@ -8,6 +8,7 @@ from django.shortcuts import redirect
 from django.utils.translation import activate, get_language
 from django.utils.translation import ugettext_lazy as _
 from django.utils.text import slugify
+from fancy_cache.memory import find_urls
 from modeltrans.fields import TranslationField
 from rest_framework.fields import CharField
 from rest_framework.exceptions import MethodNotAllowed
@@ -22,8 +23,11 @@ from wagtail.images.models import AbstractImage, AbstractRendition
 from mcod.cms.fields import CustomTextField
 from mcod.core.api.search import signals as search_signals
 from mcod.core.db.mixins import ApiMixin
+from mcod.unleash import is_enabled
+
 
 logger = logging.getLogger('wagtail.core')
+mcod_logger = logging.getLogger('mcod')
 
 
 class BasePageMeta(PageBase):
@@ -106,8 +110,8 @@ class BasePage(ApiMixin, Page, metaclass=BasePageMeta):
 
     indexable = False
 
-    def copy_pl_to_en(self):
-        self.title_en = self.title
+    def get_copyable_fields(self):
+        return ['title']
 
     @property
     def is_indexable(self):
@@ -316,6 +320,12 @@ class BasePage(ApiMixin, Page, metaclass=BasePageMeta):
         is_indexable = getattr(instance, 'is_indexable', False)
         if is_indexable and instance.live:
             search_signals.update_document.send(sender, instance)
+        if getattr(instance, 'url_path', None) and is_enabled('S27_cms_api_cache.be'):
+            removed_cache_items = list(find_urls([
+                f'*{instance.url_path}',
+                f'*{instance.url_path}?*'], purge=True))
+            for url, key, count in removed_cache_items:
+                mcod_logger.debug('URL \"%s\" removed from cache on post_save \"%s\" page signal.' % (url, instance))
 
     @staticmethod
     def on_pre_delete(sender, instance, using, **kwargs):

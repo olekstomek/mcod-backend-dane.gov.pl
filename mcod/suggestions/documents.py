@@ -57,4 +57,4 @@ class AcceptedDatasetSubmissionDoc(Document):
             return related_instance.submission
 
     def get_queryset(self):
-        return super().get_queryset().filter(status='published')
+        return super().get_queryset().filter(status__in=AcceptedDatasetSubmission.PUBLISHED_STATUSES)

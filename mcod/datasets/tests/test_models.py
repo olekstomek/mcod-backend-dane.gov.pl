@@ -127,7 +127,7 @@ class TestDatasetModel(object):
         assert 'published' == dataset.resources.first().status
         dataset.delete()
         assert dataset.is_removed is True
-        resource = Resource.deleted.get(id=resource.id)
+        resource = Resource.trash.get(id=resource.id)
         assert resource.is_removed is True
 
     def test_unsafe_delete_dataset_and_its_resources(self, dataset_with_resources):
@@ -148,13 +148,13 @@ class TestDatasetModel(object):
         assert resource in dataset.resources.all()
         dataset.delete()
         assert resource not in Resource.objects.all()
-        assert resource in Resource.deleted.all()
+        assert resource in Resource.trash.all()
 
         dataset.is_removed = False
         dataset.save()
 
         assert resource not in Resource.objects.all()
-        assert resource in Resource.deleted.all()
+        assert resource in Resource.trash.all()
 
     def test_set_draft_for_dataset_also_change_his_resources_to_draft(self, dataset_with_resources):
         dataset = dataset_with_resources

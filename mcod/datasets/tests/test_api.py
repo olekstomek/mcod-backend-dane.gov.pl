@@ -5,16 +5,13 @@ from django.utils.translation import gettext_lazy as _
 
 from mcod.datasets.models import Dataset
 from mcod.datasets.serializers import _UPDATE_FREQUENCY
-from mcod.unleash import is_enabled
 
 
 scenarios('features/dataset_comment.feature')
-scenarios('features/dataset_details_admin.feature')
 scenarios('features/dataset_resources_list_api.feature')
-scenarios('features/datasets_list_admin.feature')
 scenarios('features/datasets_list_api.feature', example_converters=dict(field_value=int))
-if is_enabled('S23_csv_metadata.be'):
-    scenarios('features/dataset_resources_download_csv_api.feature')
+scenarios('features/dataset_resources_download_csv_api.feature')
+scenarios('features/dataset_resources_download_xml_api.feature')
 
 
 @pytest.mark.elasticsearch

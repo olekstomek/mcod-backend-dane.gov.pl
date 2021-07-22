@@ -22,10 +22,11 @@ from mcod.celeryapp import app
 from mcod.core.serializers import csv_serializers_registry as csr
 from mcod.core.utils import save_as_csv
 from mcod.datasets.models import Dataset
+from mcod.reports.models import Report, SummaryDailyReport
 from mcod.resources.models import Resource
 from mcod.resources.tasks import validate_link
-from mcod.reports.models import Report, SummaryDailyReport
 from mcod.suggestions.serializers import DatasetSubmissionCSVSerializer
+from mcod.unleash import is_enabled
 
 User = get_user_model()
 logger = logging.getLogger('mcod')
@@ -222,15 +223,20 @@ def dict_fetch_all(cursor):
 @app.task
 def create_daily_resources_report():
     str_date = datetime.datetime.now().strftime('%Y_%m_%d_%H%M')
-
+    if is_enabled('S16_new_date_counters.be'):
+        view_name = 'mv_resource_dataset_organization_new_counters_report'
+    else:
+        view_name = 'mv_resource_dataset_organization_report'
     with connection.cursor() as cursor:
-        cursor.execute("""
+        cursor.execute(f"""REFRESH MATERIALIZED VIEW {view_name}""")
+        cursor.execute(f"""
             SELECT id_zasobu,
                    NULL as link_zasobu,
                    nazwa,
                    opis,
                    typ,
                    format,
+                   formaty_po_konwersji,
                    data_utworzenia_zasobu,
                    data_modyfikacji_zasobu,
                    stopien_otwartosci,
@@ -247,7 +253,7 @@ def create_daily_resources_report():
                    rodzaj,
                    data_utworzenia_instytucji,
                    liczba_udostepnionych_zbiorow_danych
-            FROM mv_resource_dataset_organization_report
+            FROM {view_name}
         """)
         results = dict_fetch_all(cursor)
 

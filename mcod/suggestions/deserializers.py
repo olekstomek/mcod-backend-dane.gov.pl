@@ -21,32 +21,40 @@ class SubmissionApiRequest(CommonSchema):
 
 
 class SubmissionListRequest(ListingSchema):
-    is_active = search_fields.FilterField(NumberTermSchema,
-                                          doc_template='docs/generic/fields/number_term_field.html',
-                                          doc_base_url='/submissions/accepted')
-    id = search_fields.FilterField(NumberTermSchema,
-                                   doc_template='docs/generic/fields/number_term_field.html',
-                                   doc_base_url='/submissions/accepted',
-                                   doc_field_name='ID')
-    title = search_fields.FilterField(StringMatchSchema,
-                                      doc_template='docs/generic/fields/string_match_field.html',
-                                      doc_base_url='/submissions/accepted',
-                                      doc_field_name='title')
-    notes = search_fields.FilterField(StringMatchSchema,
-                                      doc_template='docs/generic/fields/string_match_field.html',
-                                      doc_base_url='/submissions/accepted')
-    organization_name = search_fields.FilterField(StringMatchSchema,
-                                                  doc_template='docs/generic/fields/string_match_field.html',
-                                                  doc_base_url='/submissions/accepted')
-    submission_date = search_fields.FilterField(DateTermSchema,
-                                                doc_template='docs/generic/fields/number_term_field.html',
-                                                doc_base_url='/submissions/accepted')
-    data_link = search_fields.FilterField(StringMatchSchema,
-                                          doc_template='docs/generic/fields/string_match_field.html',
-                                          doc_base_url='/submissions/accepted')
-    decision_date = search_fields.FilterField(DateTermSchema,
-                                              doc_template='docs/generic/fields/number_term_field.html',
-                                              doc_base_url='/submissions/accepted')
+    is_active = search_fields.FilterField(
+        NumberTermSchema,
+        doc_template='docs/generic/fields/number_term_field.html',
+        doc_base_url='/submissions/accepted')
+    id = search_fields.FilterField(
+        NumberTermSchema,
+        doc_template='docs/generic/fields/number_term_field.html',
+        doc_base_url='/submissions/accepted',
+        doc_field_name='ID')
+    title = search_fields.FilterField(
+        StringMatchSchema,
+        doc_template='docs/generic/fields/string_match_field.html',
+        doc_base_url='/submissions/accepted',
+        doc_field_name='title')
+    notes = search_fields.FilterField(
+        StringMatchSchema,
+        doc_template='docs/generic/fields/string_match_field.html',
+        doc_base_url='/submissions/accepted')
+    organization_name = search_fields.FilterField(
+        StringMatchSchema,
+        doc_template='docs/generic/fields/string_match_field.html',
+        doc_base_url='/submissions/accepted')
+    submission_date = search_fields.FilterField(
+        DateTermSchema,
+        doc_template='docs/generic/fields/number_term_field.html',
+        doc_base_url='/submissions/accepted')
+    data_link = search_fields.FilterField(
+        StringMatchSchema,
+        doc_template='docs/generic/fields/string_match_field.html',
+        doc_base_url='/submissions/accepted')
+    decision_date = search_fields.FilterField(
+        DateTermSchema,
+        doc_template='docs/generic/fields/number_term_field.html',
+        doc_base_url='/submissions/accepted')
 
     sort = search_fields.SortField(
         sort_fields={
@@ -78,9 +86,12 @@ class CreateSubmissionRequest(TopLevel):
 class CreateDatasetSubmissionAttrs(ObjectAttrs):
     title = core_fields.String(description='Name', example='Lorem Ipsum', required=True)
     notes = core_fields.String(description='Description', example='Lorem Ipsum', required=True)
-    organization_name = core_fields.String(description='Organization', example='ACME', required=False)
-    data_link = core_fields.URL(description='Link to data', example='https://dane.gov.pl', required=False)
-    potential_possibilities = core_fields.String(description='potential possibilities', example='none', required=False)
+    organization_name = core_fields.String(
+        description='Organization', example='ACME', required=False)
+    data_link = core_fields.URL(
+        description='Link to data', example='https://dane.gov.pl', required=False)
+    potential_possibilities = core_fields.String(
+        description='potential possibilities', example='none', required=False)
 
     class Meta:
         strict = True
@@ -125,7 +136,8 @@ class DeleteFeedbackRequest(TopLevel):
 
 
 class AcceptedSubmissionCommentAttrs(ObjectAttrs):
-    comment = core_fields.String(description='Accepted submission comment', example='Lorem Ipsum', required=True)
+    comment = core_fields.String(
+        description='Accepted submission comment', example='Lorem Ipsum', required=True)
 
 
 class AcceptedSubmissionCommentApiRequest(TopLevel):

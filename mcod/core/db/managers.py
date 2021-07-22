@@ -1,10 +1,11 @@
 from django.core.paginator import Paginator
 from django.db import models
-from model_utils.managers import SoftDeletableQuerySet
+from django.db.models import QuerySet
+
+from mcod.core.managers import SoftDeletableQuerySet
 
 
-class QuerySetMixin(object):
-
+class QuerySetMixin:
     def get_filtered_results(self, **kwargs):
         return self.filter()
 
@@ -17,8 +18,7 @@ class QuerySetMixin(object):
         return self._get_page(qs, **kwargs)
 
 
-class DecisionSortableMixin(object):
-
+class DecisionSortableManagerMixin:
     def with_decision(self):
         return super().get_queryset().with_decision()
 
@@ -26,8 +26,7 @@ class DecisionSortableMixin(object):
         return super().get_queryset().without_decision()
 
 
-class DecisionSortableSoftDeletableQuerySet(SoftDeletableQuerySet):
-
+class DecisionQuerySetMixin:
     def with_decision(self):
         return self.exclude(decision='')
 
@@ -35,6 +34,26 @@ class DecisionSortableSoftDeletableQuerySet(SoftDeletableQuerySet):
         return self.filter(decision='')
 
 
-class DeletedManager(models.Manager):
+class DecisionSortableSoftDeletableQuerySet(DecisionQuerySetMixin, SoftDeletableQuerySet):
+    pass
+
+
+class TrashQuerySet(QuerySet):
+    def delete(self):
+        self.update(is_permanently_removed=True)
+
+
+class DecisionSortableTrashQuerySet(DecisionQuerySetMixin, TrashQuerySet):
+    pass
+
+
+class TrashManager(models.Manager):
+    _queryset_class = TrashQuerySet
+
     def get_queryset(self):
-        return super().get_queryset().filter(is_removed=True)
+        return super().get_queryset().filter(is_removed=True, is_permanently_removed=False)
+
+
+class PermanentlyRemovedManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().filter(is_permanently_removed=True)

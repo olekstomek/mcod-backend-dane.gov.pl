@@ -14,7 +14,6 @@ from marshmallow import utils
 from marshmallow.orderedset import OrderedSet
 
 from mcod.core import utils as api_utils
-from mcod.unleash import is_enabled
 
 
 BEFORE_DESERIALIZE = 'before_deserialize'
@@ -402,7 +401,7 @@ class ExtendedFieldMixin(metaclass=ExtendedFieldMeta):
             _val = self._get_value(value, attr, obj, **kwargs)
             ret = _val if self._is_not_serialized(_val) else super()._serialize(_val, attr, obj, **kwargs)
             _repr = getattr(value, 'repr', ret) or ''
-            return {'repr': _repr, 'val': ret} if is_enabled('S16_special_signs.be') else ret
+            return {'repr': _repr, 'val': ret}
 
         return value if self._is_not_serialized(value) else super()._serialize(value, attr, obj, **kwargs)
 

@@ -8,7 +8,7 @@ from django.apps import apps
 from elasticsearch_dsl import Q
 
 from mcod.applications.deserializers import ApplicationApiRequest, ApplicationApiSearchRequest, CreateSubmissionRequest
-from mcod.applications.documents import ApplicationDocumentActive
+from mcod.applications.documents import ApplicationDocument
 from mcod.applications.serializers import ApplicationApiResponse, SubmissionApiResponse
 from mcod.applications.tasks import create_application_proposal_task, send_application_proposal
 from mcod.core.api.handlers import CreateOneHdlr, SearchHdlr, RetrieveOneHdlr
@@ -16,7 +16,7 @@ from mcod.core.api.hooks import login_optional
 from mcod.core.api.views import JsonAPIView
 from mcod.core.versioning import versioned
 from mcod.datasets.deserializers import DatasetApiSearchRequest
-from mcod.datasets.documents import DatasetDocumentActive
+from mcod.datasets.documents import DatasetDocument
 from mcod.datasets.serializers import DatasetApiResponse
 
 
@@ -38,7 +38,7 @@ class ApplicationSearchApiView(JsonAPIView):
     class GET(SearchHdlr):
         deserializer_schema = partial(ApplicationApiSearchRequest, many=False)
         serializer_schema = partial(ApplicationApiResponse, many=True)
-        search_document = ApplicationDocumentActive()
+        search_document = ApplicationDocument()
 
 
 class ApplicationApiView(JsonAPIView):
@@ -94,7 +94,7 @@ class ApplicationDatasetsView(JsonAPIView):
     class GET(SearchHdlr):
         deserializer_schema = partial(DatasetApiSearchRequest, many=False)
         serializer_schema = partial(DatasetApiResponse, many=True)
-        search_document = DatasetDocumentActive()
+        search_document = DatasetDocument()
         include_default = ['institution']
 
         def _queryset_extra(self, queryset, id=None, **kwargs):

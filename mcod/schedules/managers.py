@@ -1,7 +1,7 @@
-from model_utils.managers import SoftDeletableQuerySet, SoftDeletableManager
 from notifications.base.models import NotificationQuerySet as BaseNotificationQuerySet
 
-from mcod.core.db.managers import DeletedManager, QuerySetMixin
+from mcod.core.db.managers import TrashManager, QuerySetMixin
+from mcod.core.managers import SoftDeletableQuerySet, SoftDeletableManager
 
 
 class NotificationQuerySet(QuerySetMixin, BaseNotificationQuerySet):
@@ -153,7 +153,7 @@ class CommentManager(CommentManagerMixin, SoftDeletableManager):
         return super().get_queryset().published()
 
 
-class CommentDeletedManager(CommentManagerMixin, DeletedManager):
+class CommentTrashManager(CommentManagerMixin, TrashManager):
     pass
 
 
@@ -190,7 +190,7 @@ class ScheduleManager(ScheduleManagerMixin, SoftDeletableManager):
         return super().get_queryset().published()
 
 
-class ScheduleDeletedManager(ScheduleManagerMixin, DeletedManager):
+class ScheduleTrashManager(ScheduleManagerMixin, TrashManager):
     pass
 
 
@@ -198,7 +198,7 @@ class UserScheduleItemManager(UserScheduleItemManagerMixin, SoftDeletableManager
     pass
 
 
-class UserScheduleItemDeletedManager(UserScheduleItemManagerMixin, DeletedManager):
+class UserScheduleItemTrashManager(UserScheduleItemManagerMixin, TrashManager):
     pass
 
 
@@ -208,5 +208,5 @@ class UserScheduleManager(UserScheduleManagerMixin, SoftDeletableManager):
         return super().get_queryset().published()
 
 
-class UserScheduleDeletedManager(UserScheduleManagerMixin, DeletedManager):
+class UserScheduleTrashManager(UserScheduleManagerMixin, TrashManager):
     pass

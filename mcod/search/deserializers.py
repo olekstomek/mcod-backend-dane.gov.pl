@@ -2,6 +2,7 @@ from django.utils.translation import get_language, gettext_lazy as _
 from elasticsearch_dsl import Search, MultiSearch
 from marshmallow import validates, ValidationError, validate
 
+from mcod import settings
 from mcod.core.api.jsonapi.deserializers import TopLevel, ObjectAttrs
 from mcod.core.api import fields as core_fields
 from mcod.core.api.schemas import (
@@ -26,7 +27,6 @@ from mcod.search.fields import (
     get_advanced_options,
     nested_query_with_advanced_opts,
 )
-from mcod.search.utils import search_index_name
 
 SPARQL_FORMATS = {
     # europeandataportal format choices: rdflib.SparqlStore valid params.
@@ -38,6 +38,8 @@ SPARQL_FORMATS = {
     'application/sparql-results+xml': 'xml',
 }
 SPARQL_FORMAT_CHOICES = SPARQL_FORMATS.keys()
+
+SPARQL_ENDPOINTS = list(settings.SPARQL_ENDPOINTS.keys())
 
 
 class SourceFilterSchema(ExtSchema):
@@ -89,7 +91,15 @@ class DataAggregations(ExtSchema):
             'by_institution_type': {
                 'field': 'institution_type',
                 'size': 10
-            }
+            },
+            'by_license_code': {
+                'field': 'license_code',
+                'size': 100
+            },
+            'by_update_frequency': {
+                'field': 'update_frequency',
+                'size': 100
+            },
         }
     )
 
@@ -199,6 +209,20 @@ class ApiSearchRequest(ListingSchema):
         doc_field_name='institution_type'
     )
     source = fields.FilterField(SourceFilterSchema)
+    license_code = fields.FilterField(
+        NumberTermSchema,
+        doc_template='docs/generic/fields/number_term_field.html',
+        doc_base_url='/search',
+        doc_field_name='license code',
+        query_field='license_code'
+    )
+    update_frequency = fields.FilterField(
+        StringTermSchema,
+        query_field='update_frequency',
+        doc_template='docs/generic/fields/string_term_field.html',
+        doc_base_url='/search',
+        doc_field_name='update_frequency'
+    )
 
     @validates('q')
     def validate_q(self, queries, down_limit=2, up_limit=3000):
@@ -230,6 +254,10 @@ class SparqlRequestAttrs(ObjectAttrs):
             error=_('Unsupported format. Supported are: %(formats)s') % {'formats': ', '.join(SPARQL_FORMAT_CHOICES)}))
     page = core_fields.Int()
     per_page = core_fields.Int()
+    external_sparql_endpoint = core_fields.Str(
+        validate=validate.OneOf(choices=SPARQL_ENDPOINTS,
+                                error=_('Unsupported SPARQL endpoint value. Supported values are: {providers}').format(
+                                    providers=', '.join(SPARQL_ENDPOINTS))))
 
     class Meta:
         strict = True
@@ -276,10 +304,10 @@ class ApiSuggestRequest(CommonSchema):
 
         per_model = data.get('per_model', 1)
 
-        ms = MultiSearch(index=search_index_name())
+        ms = MultiSearch(index=settings.ELASTICSEARCH_COMMON_ALIAS_NAME)
 
         for model in models:
-            query = Search(index=search_index_name())
+            query = Search(index=settings.ELASTICSEARCH_COMMON_ALIAS_NAME)
             query = query.filter('term', model=model)
             query = query.query('bool',
                                 should=[nested_query_with_advanced_opts(phrase, field, lang, op, suffix)
@@ -293,7 +321,7 @@ class ApiSuggestRequest(CommonSchema):
     def validate_models(self, models):
         for model in models.split(','):
             if model not in self._supported_models:
-                msg = _('The entered model - {model}, is not supported') % {'model': model}
+                msg = _('The entered model - %(model)s, is not supported') % {'model': model}
                 raise ValidationError(msg)
 
     @validates('advanced')

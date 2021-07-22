@@ -62,7 +62,14 @@ def serve(request, path):
 @user_passes_test(lambda user: user.is_superuser and user.is_active)
 def copy_pl_to_en(request, page_id):
     page = get_object_or_404(Page, id=page_id).specific
-    page.copy_pl_to_en()
+    copyable_fields = page.get_copyable_fields()
+    latest_revision = page.get_latest_revision_as_page()
+    for field_name in copyable_fields:
+        field_name_en = f'{field_name}_en'
+        latest_revision_pl_attr = getattr(latest_revision, field_name)
+        setattr(page, field_name_en, latest_revision_pl_attr)
+        setattr(page, field_name, latest_revision_pl_attr)
+
     page.save_revision()
     return JsonResponse({'success': True})
 

@@ -35,7 +35,7 @@ Feature: Resource from link creation
   Scenario: Resource creation is ok
     Given dataset with id 999
     When admin's request method is POST
-    And admin's request posted resource data is {"title": "test", "description": "Opis zasobu", "switcher": "link", "file": "", "link": "http://test.to.resource.pl/1.xls", "dataset": 999, "data_date": "22.05.2020", "status": "published"}
+    And admin's request posted resource data is {"title": "test", "description": "more than 20 characters", "switcher": "link", "file": "", "link": "http://test.to.resource.pl/1.xls", "dataset": 999, "data_date": "22.05.2020", "status": "published"}
     And admin's page /resources/resource/add/ is requested
     Then admin's response status code is 200
     And admin's response page contains /change/">test</a>" został pomyślnie dodany.
@@ -47,5 +47,3 @@ Feature: Resource from link creation
     And admin's page /resources/resource/add/ is requested
     Then admin's response status code is 200
     And admin's response page contains required id="id_title"></textarea><span class="help-inline"><ul class="errorlist"><li>To pole jest obowiązkowe.</li></ul>
-
-

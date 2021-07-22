@@ -3,7 +3,6 @@ from __future__ import unicode_literals, absolute_import
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 from django_elasticsearch_dsl.registries import registry
-from elasticsearch_dsl.mapping import Mapping
 from six.moves import input
 
 
@@ -131,20 +130,9 @@ class Command(BaseCommand):
 
         return _docs
 
-    def _update_common_index_mappings(self, models):
-        _mapping = Mapping('doc')
-        _index_name = settings.ELASTICSEARCH_INDEX_NAMES['common']
-        _docs = [doc for doc in self._get_docs(models) if doc.Index.name == _index_name]
-        for doc in _docs:
-            self.stdout.write("Updating '{}' index mappings for {}".format(_index_name, doc.__name__))
-            _mapping.update(doc._doc_type.mapping)
-        return _mapping
-
     def _create(self, models, options):
         for index in registry.get_indices(models):
             self.stdout.write("Creating index '{}'".format(index._name))
-            if index._name == settings.ELASTICSEARCH_INDEX_NAMES['common']:
-                index._mapping = self._update_common_index_mappings(models)
             index.create()
 
     def _populate_parallel(self, models, options):

@@ -1,14 +1,41 @@
+import os
+
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django_celery_results.models import TaskResult
 
+from mcod import settings
+from mcod.core.utils import sizeof_fmt
 from model_utils.models import TimeStampedModel
 
 User = get_user_model()
 
 
-class Report(TimeStampedModel):
+class ReportMixin:
+
+    @property
+    def file_name(self):
+        return os.path.basename(self.file) if self.file else None
+
+    @property
+    def file_url_path(self):
+        if self.file:
+            return self.file if self.file.startswith('/') else f'/{self.file}'
+
+    @property
+    def file_size(self):
+        if self.file:
+            try:
+                return sizeof_fmt(os.path.getsize(os.path.join(
+                    settings.ROOT_DIR, self.file.strip('/'))
+                ))
+            except FileNotFoundError:
+                return None
+        return '-'
+
+
+class Report(ReportMixin, TimeStampedModel):
     ordered_by = models.ForeignKey(
         User,
         models.DO_NOTHING,
@@ -33,6 +60,10 @@ class Report(TimeStampedModel):
     class Meta:
         verbose_name = _("Report")
         verbose_name_plural = _("Reports")
+
+    @property
+    def status(self):
+        return self.task.status if self.task else 'PENDING'
 
 
 class MonitoringReport(Report):
@@ -95,7 +126,7 @@ class OrganizationReport(Report):
         verbose_name_plural = _("Institution reports")
 
 
-class SummaryDailyReport(TimeStampedModel):
+class SummaryDailyReport(ReportMixin, TimeStampedModel):
     file = models.CharField(null=True, max_length=512, verbose_name=_('File path'))
     ordered_by = models.ForeignKey(
         User,

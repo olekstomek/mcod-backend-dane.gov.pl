@@ -16,7 +16,7 @@ from mcod.core import storages
 from mcod.core.api.search import signals as search_signals
 from mcod.core.api.rdf import signals as rdf_signals
 from mcod.core.db.models import ExtendedModel, update_watcher, TrashModelBase
-from mcod.organizations.managers import OrganizationManager, OrganizationDeletedManager
+from mcod.organizations.managers import OrganizationManager, OrganizationTrashManager
 from mcod.organizations.signals import remove_related_datasets
 
 
@@ -34,7 +34,7 @@ class Organization(ExtendedModel):
         ('other', _('Other')),
     )
     SIGNALS_MAP = {
-        'updated': (rdf_signals.update_graph_with_related,
+        'updated': (rdf_signals.update_graph_with_conditional_related,
                     search_signals.update_document_with_related, core_signals.notify_updated),
         'published': (rdf_signals.create_graph,
                       search_signals.update_document_with_related, core_signals.notify_published),
@@ -44,7 +44,7 @@ class Organization(ExtendedModel):
                     search_signals.remove_document_with_related, core_signals.notify_removed),
     }
 
-    title = models.CharField(max_length=100, verbose_name=_('Title'))
+    title = models.CharField(max_length=100, verbose_name=_('Name'))
     description = models.TextField(blank=True, null=True, verbose_name=_('Description'))
     image = models.ImageField(max_length=254, storage=storages.get_storage('organizations'),
                               upload_to='%Y%m%d',
@@ -198,9 +198,8 @@ class Organization(ExtendedModel):
             return None
         return _(' int. ').join(i.strip() for i in [fax, self.fax_internal] if i)
 
-    raw = models.Manager()
     objects = OrganizationManager()
-    deleted = OrganizationDeletedManager()
+    trash = OrganizationTrashManager()
 
     tracker = FieldTracker()
     slugify_field = 'title'

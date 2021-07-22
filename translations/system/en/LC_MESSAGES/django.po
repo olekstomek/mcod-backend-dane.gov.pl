@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-04-13 16:35+0200\n"
+"POT-Creation-Date: 2021-06-21 13:25+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -410,6 +410,9 @@ msgstr ""
 msgid "Date to"
 msgstr ""
 
+msgid "Link title"
+msgstr ""
+
 msgid "The page title as you'd like it to be seen by the public"
 msgstr ""
 
@@ -666,6 +669,9 @@ msgstr ""
 msgid "Published"
 msgstr ""
 
+msgid "Publication finished"
+msgstr ""
+
 msgid "{} - trash"
 msgstr ""
 
@@ -696,6 +702,11 @@ msgstr ""
 msgid "Selected categories"
 msgstr ""
 
+msgid ""
+"Couldn't restore following datasets, because their related organizations are "
+"still removed: {}"
+msgstr ""
+
 msgid "Comment must be at least 3 characters long"
 msgstr ""
 
@@ -709,31 +720,6 @@ msgid "Source"
 msgstr ""
 
 msgid "Customfields"
-msgstr ""
-
-msgid ""
-"The recipient should inform about the date, time of completion and obtaining "
-"information from the obliged entity"
-msgstr ""
-
-msgid ""
-"The recipient should inform about the processing of the information when it "
-"modifies it"
-msgstr ""
-
-msgid "The scope of the provider's responsibility for the information provided"
-msgstr ""
-
-msgid ""
-"Conditions for using public information that meets the characteristics of "
-"the work or constitute a database (Article 13 paragraph 2 of the Act on the "
-"re-use of public sector information)"
-msgstr ""
-
-msgid ""
-"Conditions for using public sector information containing personal data "
-"(Article 14 paragraph 1 point 4 of the Act on the re-use of public Sector "
-"Information)"
 msgstr ""
 
 msgid ""
@@ -809,7 +795,41 @@ msgstr ""
 msgid "Url"
 msgstr ""
 
+msgid ""
+"Conditions for using public information that meets the characteristics of "
+"the work or constitute a database (Article 13 paragraph 2 of the Act on the "
+"re-use of public sector information)"
+msgstr ""
+
+msgid ""
+"Conditions for using public sector information containing personal data "
+"(Article 14 paragraph 1 point 4 of the Act on the re-use of public Sector "
+"Information)"
+msgstr ""
+
+msgid ""
+"The recipient should inform about the processing of the information when it "
+"modifies it"
+msgstr ""
+
+msgid "The scope of the provider's responsibility for the information provided"
+msgstr ""
+
+msgid ""
+"The recipient should inform about the date, time of completion and obtaining "
+"information from the obliged entity"
+msgstr ""
+
 msgid "Institution"
+msgstr ""
+
+msgid "turn on notification"
+msgstr ""
+
+msgid "set notifications frequency"
+msgstr ""
+
+msgid "the person who is the notifications recipient"
 msgstr ""
 
 msgid "source"
@@ -825,6 +845,10 @@ msgid "modified"
 msgstr ""
 
 msgid "acc: Dataset"
+msgstr ""
+
+#, python-format
+msgid "The value must be between %(min)s and %(max)s"
 msgstr ""
 
 msgid "id"
@@ -857,6 +881,38 @@ msgstr ""
 msgid "The number of followers"
 msgstr ""
 
+msgid ""
+"This dataset is public information, it can be reused under the following "
+"conditions: "
+msgstr ""
+
+msgid "Dataset URL"
+msgstr ""
+
+msgid "Dataset created"
+msgstr ""
+
+msgid "Dataset verified"
+msgstr ""
+
+msgid "Dataset views count"
+msgstr ""
+
+msgid "Dataset downloads count"
+msgstr ""
+
+msgid "Number of data"
+msgstr ""
+
+msgid "Terms of use"
+msgstr ""
+
+msgid "License"
+msgstr ""
+
+msgid "last import timestamp"
+msgstr ""
+
 #, python-format
 msgid " (version %(version)s)"
 msgstr ""
@@ -867,6 +923,12 @@ msgstr ""
 
 #, python-format
 msgid "A comment was posted on the data set %(title)s%(version)s"
+msgstr ""
+
+msgid "Discourse Integration"
+msgstr ""
+
+msgid "Only administrators and agents have access to forum"
 msgstr ""
 
 msgid "Delete selected elements"
@@ -1549,9 +1611,6 @@ msgstr ""
 msgid "last import status"
 msgstr ""
 
-msgid "last import timestamp"
-msgstr ""
-
 msgid "portal url"
 msgstr ""
 
@@ -1577,10 +1636,6 @@ msgid "Inaccessible API!"
 msgstr ""
 
 msgid "Data source for this institution already exists!"
-msgstr ""
-
-#, python-format
-msgid "Remote hash not found in %(url)s location!"
 msgstr ""
 
 msgid "Trash (Data Sources)"
@@ -1677,12 +1732,6 @@ msgid "Validation of MD5"
 msgstr ""
 
 msgid "Validation of xml file"
-msgstr ""
-
-msgid "Datasets & Resources Import Report"
-msgstr ""
-
-msgid "DATASETS & RESOURCES IMPORT REPORT"
 msgstr ""
 
 #, python-format
@@ -1788,6 +1837,20 @@ msgid "Decision taken"
 msgstr ""
 
 msgid "Decision not taken"
+msgstr ""
+
+msgid "Delete selected objects"
+msgstr ""
+
+msgid ""
+"Couldn't restore following objects, because their related objects are still "
+"removed: {}"
+msgstr ""
+
+msgid "Successfully restored objects: {}"
+msgstr ""
+
+msgid "Restore selected objects"
 msgstr ""
 
 #, python-format
@@ -2023,9 +2086,6 @@ msgid "URL"
 msgstr ""
 
 msgid "acc: License"
-msgstr ""
-
-msgid "License"
 msgstr ""
 
 msgid "Delete selected newsletters"
@@ -2275,10 +2335,22 @@ msgstr ""
 msgid " int. "
 msgstr ""
 
-msgid "ID"
+msgid "The number of datasets"
 msgstr ""
 
-msgid "The number of datasets"
+msgid "Organization URL"
+msgstr ""
+
+msgid "Organization created"
+msgstr ""
+
+msgid "Organization modified"
+msgstr ""
+
+msgid "Number of datasets"
+msgstr ""
+
+msgid "Number of organization resources"
 msgstr ""
 
 msgid "Hide table"
@@ -2370,9 +2442,6 @@ msgstr ""
 msgid "Web Site"
 msgstr ""
 
-msgid "Number of data"
-msgstr ""
-
 msgid "Percent od data"
 msgstr ""
 
@@ -2392,9 +2461,6 @@ msgid "File format"
 msgstr ""
 
 msgid "Category name"
-msgstr ""
-
-msgid "Number of datasets"
 msgstr ""
 
 msgid "Number of uses"
@@ -2565,6 +2631,28 @@ msgstr ""
 msgid "Map definition saved"
 msgstr ""
 
+msgid ""
+"Couldn't restore following resources, because their related datasets are "
+"still removed: {}"
+msgstr ""
+
+msgid "Chart creation for this resource is blocked!"
+msgstr ""
+
+msgid "No permission to define chart"
+msgstr ""
+
+msgid "You cannot change type of chart!"
+msgstr ""
+
+msgid "You cannot add another private chart!"
+msgstr ""
+
+msgid ""
+"You cannot put changes into chart defined by Data Provider. Please provide "
+"new chart name."
+msgstr ""
+
 msgid "Selected items {} come from different map data sets."
 msgstr ""
 
@@ -2595,6 +2683,9 @@ msgstr ""
 msgid ""
 "You can't set status of this resource to published, because it's dataset is "
 "still a draft. You should first published that dataset: "
+msgstr ""
+
+msgid "Do not allow user charts to be created"
 msgstr ""
 
 msgid "Data source"
@@ -2634,6 +2725,9 @@ msgstr ""
 msgid "API - change"
 msgstr ""
 
+msgid "File - change"
+msgstr ""
+
 msgid "external identifier of resource taken during import process (optional)"
 msgstr ""
 
@@ -2644,6 +2738,9 @@ msgid "Packed file"
 msgstr ""
 
 msgid "File as CSV"
+msgstr ""
+
+msgid "File as JSON-LD"
 msgstr ""
 
 msgid "File mimetype"
@@ -2665,6 +2762,9 @@ msgid "Format"
 msgstr ""
 
 msgid "Mark resource as API"
+msgstr ""
+
+msgid "Mark resource as file"
 msgstr ""
 
 msgid "Openness score"
@@ -2730,33 +2830,6 @@ msgstr ""
 msgid "downloads_count"
 msgstr ""
 
-msgid "Dataset URL"
-msgstr ""
-
-msgid "Dataset created"
-msgstr ""
-
-msgid "Dataset verified"
-msgstr ""
-
-msgid "Dataset views count"
-msgstr ""
-
-msgid "Dataset downloads count"
-msgstr ""
-
-msgid "Terms of use"
-msgstr ""
-
-msgid "Organization URL"
-msgstr ""
-
-msgid "Organization created"
-msgstr ""
-
-msgid "Organization modified"
-msgstr ""
-
 msgid "Resource URL"
 msgstr ""
 
@@ -2781,13 +2854,26 @@ msgstr ""
 msgid "NO"
 msgstr ""
 
-msgid ""
-"This dataset is public information, it can be reused under the following "
-"conditions: "
+msgid "Download URL"
+msgstr ""
+
+msgid "symbol"
 msgstr ""
 
 #, python-format
 msgid "A comment was posted on the resource %(title)s"
+msgstr ""
+
+msgid "Numeric"
+msgstr ""
+
+#, python-format
+msgid ""
+"During the verification of column \"%(colname)s\" with the rule \"%(rule)s\" "
+"detected errors (max 5)"
+msgstr ""
+
+msgid "Address feature"
 msgstr ""
 
 msgid "label"
@@ -2800,9 +2886,6 @@ msgid "universal address"
 msgstr ""
 
 msgid "address"
-msgstr ""
-
-msgid "No permission to define chart"
 msgstr ""
 
 msgid "Schedules"
@@ -2984,8 +3067,8 @@ msgstr ""
 msgid "Invalid maximum list length"
 msgstr ""
 
-#, python-brace-format
-msgid "The entered model - {model}, is not supported"
+#, python-format
+msgid "The entered model - %(model)s, is not supported"
 msgstr ""
 
 msgid "advanced option should take one of values: any, all, exact, synonyms"
@@ -3031,16 +3114,10 @@ msgstr ""
 msgid "Configuration"
 msgstr ""
 
-msgid "Numeric"
-msgstr ""
-
 msgid "Universal address"
 msgstr ""
 
 msgid "PNA code"
-msgstr ""
-
-msgid "Address feature"
 msgstr ""
 
 msgid "Field of logical values"
@@ -3088,19 +3165,10 @@ msgstr ""
 msgid "House number"
 msgstr ""
 
-msgid "Częstotliwość aktualizacji zbioru wg DCAT-AP"
-msgstr ""
-
 msgid "Delete selected special signs"
 msgstr ""
 
-msgid "symbol"
-msgstr ""
-
 msgid "special sign"
-msgstr ""
-
-msgid "Trash (Special Signs)"
 msgstr ""
 
 msgid "text of comment"
@@ -3175,6 +3243,12 @@ msgid "proposal active"
 msgstr ""
 
 msgid "publish for all users"
+msgstr ""
+
+msgid "describe how the case was resolved"
+msgstr ""
+
+msgid "date of completion of publication"
 msgstr ""
 
 msgid "acc: Accepted dataset submission"
@@ -3261,13 +3335,13 @@ msgstr ""
 msgid "Resource demand reported"
 msgstr ""
 
-#, python-brace-format
+#, python-format
 msgid ""
-"On the accepted dataset submission {title} [{url}] was posted a comment:"
+"On the accepted dataset submission %(title)s [%(url)s] was posted a comment:"
 msgstr ""
 
-#, python-brace-format
-msgid "A comment was posted on the accepted dataset submission {title}"
+#, python-format
+msgid "A comment was posted on the accepted dataset submission %(title)s"
 msgstr ""
 
 msgid "Valid values are 'plus' and 'minus'"
@@ -3417,6 +3491,9 @@ msgstr ""
 msgid "Are you sure you want to delete the \"%(escaped_object)s\"? "
 msgstr ""
 
+msgid "Removing an object is an irreversible operation."
+msgstr ""
+
 msgid "Yes, I'm sure"
 msgstr ""
 
@@ -3552,15 +3629,6 @@ msgstr ""
 msgid "Resources list"
 msgstr ""
 
-msgid "During the verification of column "
-msgstr ""
-
-msgid " with the rule "
-msgstr ""
-
-msgid " detected errors (max 5)'"
-msgstr ""
-
 msgid "Row number"
 msgstr ""
 
@@ -3605,6 +3673,18 @@ msgstr ""
 
 #, python-format
 msgid " By %(filter_title)s "
+msgstr ""
+
+msgid "Open Data - Forum"
+msgstr ""
+
+msgid "Password"
+msgstr ""
+
+msgid "Forgotten your password or username?"
+msgstr ""
+
+msgid "Log in"
 msgstr ""
 
 msgid "Filter instances by"
@@ -3746,9 +3826,6 @@ msgid "Created at"
 msgstr ""
 
 msgid "Modified at"
-msgstr ""
-
-msgid "Download URL"
 msgstr ""
 
 msgid "Columns mapping"
@@ -3929,6 +4006,62 @@ msgstr ""
 msgid "Please do not reply to it."
 msgstr ""
 
+msgid "Explorer"
+msgstr ""
+
+msgid "Internal link"
+msgstr ""
+
+msgid "External link"
+msgstr ""
+
+msgid "Email link"
+msgstr ""
+
+msgid "Phone link"
+msgstr ""
+
+msgid "Anchor link"
+msgstr ""
+
+msgid "Add an anchor link"
+msgstr ""
+
+msgid "Insert anchor"
+msgstr ""
+
+msgid "Choose"
+msgstr ""
+
+msgid "Choose a page"
+msgstr ""
+
+#, python-format
+msgid ""
+"\n"
+"                Only pages of type \"%(type)s\" may be chosen for this "
+"field. Search results will exclude pages of other types.\n"
+"                "
+msgid_plural ""
+"\n"
+"                Only the following page types may be chosen for this field: "
+"%(type)s. Search results will exclude pages of other types.\n"
+"            "
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "Add an email link"
+msgstr ""
+
+msgid "Insert link"
+msgstr ""
+
+msgid "Add an external link"
+msgstr ""
+
+msgid "Add a phone link"
+msgstr ""
+
 msgid "Lista ankiet"
 msgstr ""
 
@@ -3956,6 +4089,13 @@ msgstr ""
 msgid "Nie zostały jeszcze utworzone żadne ankiety."
 msgstr ""
 
+#, python-format
+msgid "Explore subpages of '%(title)s'"
+msgstr ""
+
+msgid "Explore"
+msgstr ""
+
 msgid "The data cannot be displayed correctly. Change the data type."
 msgstr ""
 
@@ -3972,9 +4112,6 @@ msgid "Column number"
 msgstr ""
 
 msgid "Change type"
-msgstr ""
-
-msgid "Do not allow user charts to be created"
 msgstr ""
 
 msgid "Save the map definition"
@@ -4061,12 +4198,6 @@ msgstr ""
 msgid "Agents added to meeting"
 msgstr ""
 
-msgid "Passwords not match"
-msgstr ""
-
-msgid "Account for this email already exist"
-msgstr ""
-
 msgid "Full name"
 msgstr ""
 
@@ -4077,6 +4208,9 @@ msgid "Role"
 msgstr ""
 
 msgid "Invalid user state."
+msgstr ""
+
+msgid "Passwords not match"
 msgstr ""
 
 msgid "Meeting name"
@@ -4091,12 +4225,12 @@ msgstr ""
 msgid "(Select of agent is required)"
 msgstr ""
 
+msgid "(Select of institution is required)"
+msgstr ""
+
 msgid ""
 "(Select of institution is not required. Lack of choice makes possible to "
 "login to admin panel also.)"
-msgstr ""
-
-msgid "(Select of institution is required)"
 msgstr ""
 
 msgid "Organization selection for an agent is obligatory!"
@@ -4108,13 +4242,13 @@ msgstr ""
 msgid "The two password fields didn't match."
 msgstr ""
 
-msgid "Password"
-msgstr ""
-
 msgid "Password confirmation"
 msgstr ""
 
 msgid "Enter the same password as above, for verification."
+msgstr ""
+
+msgid "Account for this email already exist"
 msgstr ""
 
 msgid ""

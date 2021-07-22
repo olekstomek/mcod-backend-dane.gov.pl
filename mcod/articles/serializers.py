@@ -11,7 +11,7 @@ from mcod.core.api.jsonapi.serializers import (
     HighlightObjectMixin
 )
 from mcod.core.api.schemas import ExtSchema
-from mcod.lib.serializers import TranslatedStr, TranslatedTagsList, KeywordsList
+from mcod.lib.serializers import TranslatedStr, KeywordsList
 from mcod.watchers.serializers import SubscriptionMixin
 
 
@@ -78,7 +78,6 @@ class ArticleApiAttrs(ObjectAttrs, HighlightObjectMixin):
     title = TranslatedStr()
     notes = TranslatedStr()
     author = fields.Str(faker_type='firstname')
-    tags = TranslatedTagsList(TranslatedStr(), faker_type='tagslist')
     keywords = KeywordsList(TranslatedStr(), faker_type='tagslist')
     views_count = fields.Integer(faker_type='integer')
     followed = fields.Boolean()

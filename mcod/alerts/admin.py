@@ -9,7 +9,7 @@ from django.utils.translation import gettext_lazy as _
 from suit.widgets import SuitSplitDateTimeWidget
 
 from mcod.alerts.models import Alert, DISPLAY_STATUS
-from mcod.unleash import is_enabled
+
 from mcod.lib.admin_mixins import (
     LangFieldsOnlyMixin, CreatedByDisplayAdminMixin, StatusLabelAdminMixin,
     DynamicAdminListDisplayMixin, MCODAdminMixin
@@ -46,19 +46,13 @@ class AlertForm(ModelForm):
         )
 
         widgets = {
-            'title_pl': Textarea(attrs={'style': 'width: 99%', 'rows': 1}),
-            'title_en': Textarea(attrs={'style': 'width: 99%', 'rows': 1}),
+            'title_pl': Textarea(attrs={'style': 'width: 99%', 'rows': 2}),
+            'title_en': Textarea(attrs={'style': 'width: 99%', 'rows': 2}),
             'description_pl': CKEditorWidget(config_name='alert_description'),
             'description_en': CKEditorWidget(config_name='alert_description'),
             'start_date': SuitSplitDateTimeWidget(),
             'finish_date': SuitSplitDateTimeWidget()
         }
-
-    def __init__(self, *args, **kwargs):
-        super(AlertForm, self).__init__(*args, **kwargs)
-        if is_enabled('S21_admin_ui_changes.be'):
-            self.fields['title_pl'].widget.attrs['rows'] = 2
-            self.fields['title_en'].widget.attrs['rows'] = 2
 
     def clean(self):
         cleaned = super().clean()

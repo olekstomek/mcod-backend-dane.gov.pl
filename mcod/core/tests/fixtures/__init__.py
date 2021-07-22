@@ -10,7 +10,6 @@ from mcod.core.tests.fixtures.licenses import *  # noqa
 from mcod.core.tests.fixtures.newsletter import *  # noqa
 from mcod.core.tests.fixtures.tags import *  # noqa
 from mcod.core.tests.fixtures.users import *  # noqa
-from mcod.core.tests.fixtures.dcat_vocabularies import *  # noqa
 from mcod.core.tests.fixtures.rdf import *  # noqa
 from mcod.core.tests.fixtures.suggestions import *  # noqa
 from mcod.lib.triggers import session_store
@@ -46,23 +45,15 @@ def pytest_sessionfinish(session):
 def pytest_runtest_setup(item):
     from django_elasticsearch_dsl.registries import registry
     from mcod.core.api.rdf.registry import registry as rdf_registry
-    from elasticsearch_dsl.mapping import Mapping
     import random
     import string
 
     es_marker = item.get_closest_marker('elasticsearch')
 
     if es_marker:
-        common_idx_name = settings.ELASTICSEARCH_INDEX_NAMES['common']
         for index in registry.get_indices():
             index.delete(ignore=404)
             index.settings(**settings.ELASTICSEARCH_DSL_INDEX_SETTINGS)
-            if index._name == 'common':
-                common_mapping = Mapping('doc')
-                common_docs = [doc for doc in registry.get_documents() if doc.Index.name == common_idx_name]
-                for doc in common_docs:
-                    common_mapping.update(doc._doc_type.mapping)
-                index.mapping = common_mapping
             index.create()
 
     sparql_marker = item.get_closest_marker('sparql')

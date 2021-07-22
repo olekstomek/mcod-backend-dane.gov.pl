@@ -8,7 +8,6 @@ from mcod.organizations.models import Organization
 from mcod.core.db.models import STATUS_CHOICES
 from localflavor.pl.forms import PLPostalCodeField, PLREGONField
 from mcod.users.models import User
-from mcod.unleash import is_enabled
 
 
 class OrganizationForm(forms.ModelForm):
@@ -66,16 +65,10 @@ class OrganizationForm(forms.ModelForm):
         super(OrganizationForm, self).__init__(*args, **kwargs)
         if 'abbreviation' in self.fields:
             self.fields['abbreviation'].required = False
-        if 'epuap' in self.fields and is_enabled('S15_epuap_optional.be'):
+        if 'epuap' in self.fields:
             self.fields['epuap'].required = False
         if self.instance.pk:
             self.fields['users'].initial = self.instance.users.all()
-        if not is_enabled('S23_private_institutions.be'):
-            self.fields['institution_type'].choices = [
-                (value, label)
-                for value, label in self.fields['institution_type'].choices
-                if value != Organization.INSTITUTION_TYPE_PRIVATE
-            ]
 
     def clean_fax_internal(self):
         if 'fax' not in self.cleaned_data:

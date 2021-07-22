@@ -6,12 +6,11 @@ from django.utils.translation import gettext as _
 
 from mcod.core.api import fields as api_fields
 from mcod.core.serializers import CSVSerializer
-from mcod.lib.fields import OldRelationship
-from mcod.lib.serializers import BasicSerializer, BasicSchema, TranslatedStr
+from mcod.lib.serializers import BasicSchema, TranslatedStr
 
 
 class UserCSVSerializer(CSVSerializer):
-    id = api_fields.Int(data_key=_('ID'), required=True, example=77)
+    id = api_fields.Int(data_key=_('id'), required=True, example=77)
     email = api_fields.Email(data_key=_('Email'), default='', required=True, example='user@example.com')
     fullname = api_fields.Str(data_key=_('Full name'), default='', example='Jan Kowalski')
     official_phone = api_fields.Method('get_phone', data_key=_('Official phone'), example='+481234567890')
@@ -74,13 +73,6 @@ class UserSchema(ja.Schema):
         return data
 
 
-class UserSerializer(UserSchema, BasicSerializer):
-    class Meta:
-        type_ = 'user'
-        strict = True
-        self_url = '/auth/user'
-
-
 class UserInstitution(BasicSchema):
     id = ma.fields.Int()
     title = TranslatedStr()
@@ -92,14 +84,3 @@ class UserInstitution(BasicSchema):
         self_url = '/institutions/{institution_id}'
         self_url_kwargs = {"institution_id": "<id>",
                            "institution_slug": "<slug>"}
-
-
-class RegistrationSerializer(UserSchema, BasicSerializer):
-    is_newsletter_receiver = ma.fields.Bool(
-        required=False, faker_type='boolean', example=True)
-    institutions = OldRelationship(schema=UserInstitution, many=True, type_='institution')
-
-    class Meta:
-        type_ = 'user'
-        strict = True
-        self_url = '/'

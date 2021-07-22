@@ -1,10 +1,14 @@
 # -*- coding: utf-8 -*-
+import re
 from functools import partial
+from urllib.parse import urlparse
 
 import falcon
 from dal import autocomplete
 from django.apps import apps
+from django.contrib.admin.views.autocomplete import AutocompleteJsonView
 from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.db import models
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.views import View
@@ -15,10 +19,10 @@ from mcod.core.api.hooks import login_optional
 from mcod.core.api.views import JsonAPIView
 from mcod.core.versioning import versioned
 from mcod.datasets.deserializers import DatasetApiSearchRequest
-from mcod.datasets.documents import DatasetDocumentActive
+from mcod.datasets.documents import DatasetDocument
 from mcod.datasets.serializers import DatasetApiResponse
 from mcod.organizations.deserializers import InstitutionApiRequest, InstitutionApiSearchRequest
-from mcod.organizations.documents import InstitutionDocumentActive
+from mcod.organizations.documents import InstitutionDocument
 from mcod.organizations.models import Organization
 from mcod.organizations.serializers import InstitutionApiResponse
 
@@ -41,7 +45,7 @@ class InstitutionSearchView(JsonAPIView):
     class GET(SubscriptionSearchHdlr):
         deserializer_schema = partial(InstitutionApiSearchRequest, many=False)
         serializer_schema = partial(InstitutionApiResponse, many=True)
-        search_document = InstitutionDocumentActive()
+        search_document = InstitutionDocument()
 
 
 class InstitutionApiView(JsonAPIView):
@@ -84,7 +88,7 @@ class InstitutionDatasetSearchApiView(JsonAPIView):
     class GET(SearchHdlr):
         deserializer_schema = partial(DatasetApiSearchRequest, many=False)
         serializer_schema = partial(DatasetApiResponse, many=True)
-        search_document = DatasetDocumentActive()
+        search_document = DatasetDocument()
 
         def _queryset_extra(self, queryset, id=None, **kwargs):
             if id:
@@ -120,5 +124,25 @@ class InstitutionTypeAdminView(PermissionRequiredMixin, View):
 
     def get(self, request, *args, **kwargs):
         organization_id = request.GET.get('organization_id')
-        organization = get_object_or_404(Organization, id=organization_id)
+        organization = get_object_or_404(Organization.raw, id=organization_id)
         return JsonResponse({'institution_type': organization.institution_type})
+
+
+class OrganizationAutocompleteJsonView(AutocompleteJsonView):
+    DATASET_CHANGE_PATTERN = re.compile(r'/datasets/dataset/(?P<dataset_id>\d+)/change')
+
+    def get_queryset(self):
+        referer = urlparse(self.request.headers.get('Referer'))
+        request_url = urlparse(self.request.build_absolute_uri())
+
+        q = models.Q()
+        if referer.netloc == request_url.netloc and referer.path.startswith('/datasets/dataset/'):
+            q = models.Q(status='published')
+            match = self.DATASET_CHANGE_PATTERN.search(referer.path)
+            if match:
+                dataset_id = match.group('dataset_id')
+                dataset = apps.get_model('datasets', 'Dataset').objects.get(id=dataset_id)
+                if dataset.organization_id:
+                    q |= models.Q(id=dataset.organization_id)
+
+        return super().get_queryset().filter(q)

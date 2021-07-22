@@ -117,7 +117,7 @@ class ProxyDocumentRegistry:
 
         data = []
         for obj in related_instances:
-            if not obj.is_removed:
+            if not obj.is_removed and not obj.is_permanently_removed:
                 meta = obj._meta
                 data.append({
                     'app_label': meta.app_label,

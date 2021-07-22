@@ -11,7 +11,6 @@ from mcod.lib.admin_mixins import (
     SoftDeleteMixin, CreatedByDisplayAdminMixin, StatusLabelAdminMixin,
     DynamicAdminListDisplayMixin, MCODAdminMixin
 )
-from mcod.unleash import is_enabled
 
 
 @admin.register(Article)
@@ -56,6 +55,13 @@ class ArticleAdmin(DynamicAdminListDisplayMixin, CreatedByDisplayAdminMixin, Sta
             }
         ),
 
+        (
+            _("Tags"),
+            {
+                'classes': ('suit-tab', 'suit-tab-tags',),
+                'fields': ('tags_pl', 'tags_en'),
+            }
+        ),
     )
     readonly_fields = ['preview_link']
     suit_form_tabs = (
@@ -77,30 +83,15 @@ class ArticleAdmin(DynamicAdminListDisplayMixin, CreatedByDisplayAdminMixin, Sta
     form = ArticleForm
 
     def get_fieldsets(self, request, obj=None):
-        if is_enabled('S18_new_tags.be'):
-            tags_tab_fields = ('tags_pl', 'tags_en')
-        else:
-            tags_tab_fields = ('tags', )
-
-        tags_fieldset = (
-            (
-                _("Tags"),
-                {
-                    'classes': ('suit-tab', 'suit-tab-tags',),
-                    'fields': tags_tab_fields,
-                }
-            ),
-        )
-        return self.fieldsets + tags_fieldset + tuple(self.get_translations_fieldsets())
+        return self.fieldsets + tuple(self.get_translations_fieldsets())
 
     def get_form(self, request, obj=None, **kwargs):
         form = super().get_form(request, obj, **kwargs)
-        if is_enabled('S18_new_tags.be'):
-            form.recreate_tags_widgets(request=request, db_field=Article.tags.field, admin_site=self.admin_site)
+        form.recreate_tags_widgets(request=request, db_field=Article.tags.field, admin_site=self.admin_site)
         return form
 
     def get_queryset(self, request):
-        qs = Article.objects.all()
+        qs = super().get_queryset(request)
         self.request = request
         return qs
 
@@ -125,14 +116,9 @@ class ArticleAdmin(DynamicAdminListDisplayMixin, CreatedByDisplayAdminMixin, Sta
 
 
 @admin.register(ArticleTrash)
-class ArticleTrashAdmin(TrashMixin):
+class ArticleTrashAdmin(HistoryMixin, TrashMixin):
     list_display = ['title', 'author']
     search_fields = ['title', 'author']
-
-    if is_enabled('S18_new_tags.be'):
-        tags_fields = ('tags_list_pl', 'tags_list_en')
-    else:
-        tags_fields = ('tags',)
 
     fields = [
         'title',
@@ -141,7 +127,8 @@ class ArticleTrashAdmin(TrashMixin):
         'notes',
         'slug',
         'status',
-        *tags_fields,
+        'tags_list_pl',
+        'tags_list_en',
         'license_id',
         'is_removed'
     ]
@@ -152,7 +139,8 @@ class ArticleTrashAdmin(TrashMixin):
         'notes',
         'slug',
         'status',
-        *tags_fields,
+        'tags_list_pl',
+        'tags_list_en',
         'license_id'
     ]
 

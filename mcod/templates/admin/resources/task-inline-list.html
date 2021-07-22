@@ -2,8 +2,6 @@
 <div class="inline-group {{ inline_admin_formset.opts.suit_classes }}" id="{{ inline_admin_formset.formset.prefix }}-group">
   <div class="tabular inline-related {% if forloop.last %}last-related{% endif %}">
 {{ inline_admin_formset.formset.management_form }}
-{% is_unleash_enabled "S21_admin_ui_changes.be" as ui_changes_flag %}
-{% with ui_changes=ui_changes_flag %}
 <fieldset class="module">
    <h2>{% trans 'Tasks list' %}</h2>
    {{ inline_admin_formset.formset.non_form_errors }}
@@ -23,7 +21,7 @@
              {% for message_line in inline_admin_form.form.instance.taskresult.message %}
                 <tr>
                  {% if forloop.counter == 1 %}
-                     <td rowspan="{{ inline_admin_form.form.instance.taskresult.message|length }}" class="field-status_label"><span class="{% if ui_changes %}{{ inline_admin_form.form.instance.taskresult.status | inline_task_status_class }}{% endif %}">{% trans inline_admin_form.form.instance.taskresult.status %}</span></td>
+                     <td rowspan="{{ inline_admin_form.form.instance.taskresult.message|length }}" class="field-status_label"><span class="{{ inline_admin_form.form.instance.taskresult.status | inline_task_status_class }}">{% trans inline_admin_form.form.instance.taskresult.status %}</span></td>
                      <td rowspan="{{ inline_admin_form.form.instance.taskresult.message|length }}" class="field-date_done">{{ inline_admin_form.form.instance.taskresult.date_done }}</td>
                  {% endif %}
                  {% for recommend_line in inline_admin_form.form.instance.taskresult.recommendation %}
@@ -38,7 +36,6 @@
      </tbody>
    </table>
 </fieldset>
-{% endwith %}
   {{ defaults }}
   </div>
 </div>

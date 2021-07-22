@@ -8,7 +8,6 @@ from mcod import settings
 
 from mcod.core.api.rdf.profiles.common import RDFClass, RDFNestedField, CATALOG_URL
 from mcod.lib.rdf.rdf_field import RDFField
-from mcod.unleash import is_enabled
 
 
 class SCHEMACatalog(RDFClass):
@@ -59,8 +58,7 @@ class SCHEMADataset(RDFClass):
     modified = RDFField(predicate=ns.SCHEMA.dateModified)
     version = RDFField(predicate=ns.SCHEMA.version)
     tags = RDFField(predicate=ns.SCHEMA.keywords)
-    if is_enabled('S21_licenses.be'):
-        license = RDFField(predicate=ns.SCHEMA.license, required=False)
+    license = RDFField(predicate=ns.SCHEMA.license, required=False)
 
     def get_subject(self, data):
         return URIRef(data['frontend_absolute_url'])

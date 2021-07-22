@@ -41,3 +41,5 @@ notify_removed = ExtendedSignal()
 notify_m2m_added = ExtendedSignal()
 notify_m2m_removed = ExtendedSignal()
 notify_m2m_cleaned = ExtendedSignal()
+
+permanently_remove_related_objects = ExtendedSignal()

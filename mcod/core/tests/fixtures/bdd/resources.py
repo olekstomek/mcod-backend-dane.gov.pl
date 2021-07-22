@@ -1,19 +1,26 @@
+import json
 import os
 import uuid
 from io import BytesIO
 
 import factory
 import pytest
+import requests
+import requests_mock
+from dateutil import parser
 from django.apps import apps
 from django.core.files import File
 from django.utils.timezone import datetime
 from pytest_bdd import given, when, then
 from pytest_bdd import parsers
-from dateutil import parser
 
 from mcod import settings
-from mcod.core.tests.fixtures.bdd.common import copyfile
-from mcod.resources.factories import ChartFactory, ResourceFactory
+from mcod.core.tests.fixtures.bdd.common import copyfile, prepare_file
+from mcod.counters.factories import ResourceViewCounterFactory, ResourceDownloadCounterFactory
+from mcod.datasets.factories import DatasetFactory
+from mcod.harvester.factories import DataSourceFactory
+from mcod.resources.factories import ChartFactory, ResourceFactory, TaskResultFactory
+from mcod.unleash import is_enabled
 
 
 @pytest.fixture
@@ -87,7 +94,7 @@ def geo_tabular_data_resource(buzzfeed_dataset, buzzfeed_editor, mocker):
 
     res = Resource(
         title='Geo tab test',
-        description='Geo tab test',
+        description='more than 20 characters',
         file=_name,
         link=f'http://falconframework.org/media/resources/{_name}',
         format='csv',
@@ -134,6 +141,41 @@ def remote_file_resource(buzzfeed_dataset, buzzfeed_editor, mocker, httpserver):
 
 
 @pytest.fixture
+def remote_file_resource_of_api_type(buzzfeed_dataset, buzzfeed_editor, httpserver):
+    from mcod.resources.models import Resource
+    httpserver.serve_content(
+        content=get_json_file().read(),
+        headers={
+            'content-type': 'application/json'
+        },
+    )
+    res = Resource(
+        title='Remote file resource',
+        description='Remote file resource',
+        link=httpserver.url,
+        format='json',
+        openness_score=3,
+        views_count=10,
+        downloads_count=20,
+        dataset=buzzfeed_dataset,
+        created_by=buzzfeed_editor,
+        modified_by=buzzfeed_editor,
+        data_date=datetime.today(),
+        type='api',
+    )
+    res.save()
+    return res
+
+
+@pytest.fixture
+def remote_file_resource_with_forced_file_type(remote_file_resource):
+    remote_file_resource.type = 'file'
+    remote_file_resource.forced_file_type = True
+    remote_file_resource.save()
+    return remote_file_resource
+
+
+@pytest.fixture
 def local_file_resource(buzzfeed_dataset, buzzfeed_editor, mocker):
     from mcod.resources.models import Resource
     _name = 'geo.csv'
@@ -159,6 +201,28 @@ def local_file_resource(buzzfeed_dataset, buzzfeed_editor, mocker):
     return res
 
 
+@pytest.fixture
+def resource_with_xls_file(example_xls_file):
+    res = ResourceFactory.create(
+        type='file',
+        format='xls',
+        link=None,
+        file=example_xls_file,
+    )
+    res.revalidate()
+    res.increase_openness_score()
+    return res
+
+
+@pytest.fixture
+def resource_with_success_tasks_statuses(resource):
+    tasks = TaskResultFactory.create_batch(size=3, status='SUCCESS')
+    resource.link_tasks.add(tasks[0])
+    resource.file_tasks.add(tasks[1])
+    resource.data_tasks.add(tasks[2])
+    return resource
+
+
 @given(parsers.parse('resource'))
 def resource():
     res = ResourceFactory.create()
@@ -173,6 +237,22 @@ def resource_with_file(file_csv):
         file=File(file_csv)
     )
     return res
+
+
+@pytest.fixture
+def resource_with_counters():
+    res = ResourceFactory.create()
+    ResourceViewCounterFactory.create_batch(size=2, resource=res)
+    ResourceDownloadCounterFactory.create_batch(size=2, resource=res)
+    return res
+
+
+@pytest.fixture
+def imported_ckan_resource():
+    _source = DataSourceFactory.create(source_type='CKAN', name='Test name', portal_url='http://example.com')
+    _dataset = DatasetFactory.create(source=_source)
+    _resource = ResourceFactory.create(dataset=_dataset)
+    return _resource
 
 
 def get_html_file():
@@ -238,31 +318,23 @@ def three_resources_with_different_created_at(dates):
     return resources
 
 
-@given(parsers.parse('chart of type {is_default} with id {chart_id:d} for resource with id {resource_id:d}'))
-def chart_for_resource_id(context, is_default, chart_id, resource_id):
+@given(parsers.parse('default charts for resource with id {resource_id:d} with ids {charts_ids_str}'))
+def default_charts_for_resource_id(context, resource_id, charts_ids_str):
     resource = ResourceFactory.create(id=resource_id)
-    is_default = True if is_default == 'default' else False
-    return ChartFactory.create(id=chart_id, resource=resource, created_by=context.user, is_default=is_default)
+    for chart_id in charts_ids_str.split(','):
+        ChartFactory.create(id=chart_id, resource=resource, created_by=context.user, is_default=True, chart={})
 
 
-@given(parsers.parse('removed chart of type {is_default} with id {chart_id:d} for resource with id {resource_id:d}'))
-def removed_chart_for_resource_id(context, is_default, chart_id, resource_id):
+@given(parsers.parse('private chart for resource with id {resource_id:d} with id {chart_id}'))
+def private_chart_for_resource_id_with_id(context, resource_id, chart_id):
     resource = ResourceFactory.create(id=resource_id)
-    is_default = True if is_default == 'default' else False
-    return ChartFactory.create(
-        id=chart_id, resource=resource, created_by=context.user, is_default=is_default, is_removed=True)
+    ChartFactory.create(id=chart_id, resource=resource, created_by=context.user, is_default=False, chart={})
 
 
-@given(parsers.parse('bunch of various charts for resource with id {resource_id:d}'))
-def bunch_of_charts_for_resource_id(active_editor, active_user, context, resource_id):
-    resource = ResourceFactory.create(id=resource_id)
-    ChartFactory.create(resource=resource, created_by=active_editor, is_default=True, chart={})
-    ChartFactory.create(resource=resource, created_by=active_user, is_default=False, chart={})
-
-
-@given(parsers.parse('two charts for resource with id {resource_id:d}'))
-def two_charts_for_resource_id(context, resource_id):
-    resource = ResourceFactory.create(id=resource_id)
+@given(parsers.parse('two charts for resource with {data_str}'))
+def two_charts_for_resource_id(context, data_str):
+    data = json.loads(data_str)
+    resource = ResourceFactory.create(**data)
     ChartFactory.create(resource=resource, created_by=context.user, is_default=True)
     ChartFactory.create(resource=resource, created_by=context.user, is_default=False)
 
@@ -286,8 +358,24 @@ def resource_with_xls_file_converted_to_csv(res_id, example_xls_file):
         link=None,
         file=example_xls_file,
     )
+    res.revalidate()
     res.increase_openness_score()
     return res
+
+
+@given(parsers.parse('resource with csv file converted to jsonld with params {params_str}'))
+def resource_with_csv_file_converted_to_jsonld(csv2jsonld_csv_file, csv2jsonld_jsonld_file, params_str):
+    params = json.loads(params_str)
+    obj_id = params.pop('id')
+    return ResourceFactory.create(
+        id=obj_id,
+        type='file',
+        format='csv',
+        link=None,
+        file=csv2jsonld_csv_file,
+        jsonld_file=csv2jsonld_jsonld_file,
+        **params,
+    )
 
 
 @given(parsers.parse('resource with id {res_id} and simple csv file'))
@@ -373,11 +461,36 @@ def remove_resource(resource_id):
     inst.save()
 
 
-@then(parsers.parse('resource with id {resource_id:d} views_count is {val:d}'))
-def resource_views_count_is(resource_id, val):
+@then(parsers.parse('resource with id {resource_id:d} {counter_type} is {val:d}'))
+def resource_views_count_is(resource_id, counter_type, val):
     model = apps.get_model('resources', 'resource')
     obj = model.objects.get(pk=resource_id)
-    assert obj.views_count == val
+    if is_enabled('S16_new_date_counters.be'):
+        current_count = getattr(obj, f'computed_{counter_type}')
+    else:
+        current_count = getattr(obj, counter_type)
+    assert current_count == val
+
+
+@given(parsers.parse('resource with id {resource_id:d} and {counter_type} is {val:d}'))
+def given_resource_views_count_is(resource_id, counter_type, val):
+    kwargs = {
+        'id': resource_id,
+        counter_type: val,
+        'type': 'file'
+    }
+    return ResourceFactory.create(**kwargs)
+
+
+@given(parsers.parse('unpublished resource with id {resource_id:d} and {counter_type} is {val:d}'))
+def given_unpublished_resource_views_count_is(resource_id, counter_type, val):
+    kwargs = {
+        'id': resource_id,
+        counter_type: val,
+        'status': 'draft',
+        'type': 'file'
+    }
+    return ResourceFactory.create(**kwargs)
 
 
 @then(parsers.parse('resource csv file has {columns} as headers'))
@@ -403,3 +516,73 @@ def resource_csv_file_has_headers(resource_with_xls_file_converted_to_csv, colum
 #     inst = model.objects.get(pk=resource_id)
 #     inst.status = status
 #     inst.save()
+
+
+def get_mock_response(mock_request, content_filename, headers):
+    with open(content_filename, 'rb') as f:
+        mock_request.get('http://mocker-test.com', headers=headers, content=f.read())
+    return requests.get('http://mocker-test.com')
+
+
+@pytest.fixture
+@requests_mock.Mocker(kw='mock_request')
+def xml_resource_api_response(file_xml, **kwargs):
+    headers = {
+        'Content-Type': 'text/xml'
+    }
+    return get_mock_response(kwargs['mock_request'], file_xml.name, headers)
+
+
+@pytest.fixture
+@requests_mock.Mocker(kw='mock_request')
+def xml_resource_file_response(file_xml, **kwargs):
+    headers = {
+        'Content-Disposition': 'attachment; filename="example.xml"',
+        'Content-Type': 'text/xml'
+    }
+    return get_mock_response(kwargs['mock_request'], file_xml.name, headers)
+
+
+@pytest.fixture
+@requests_mock.Mocker(kw='mock_request')
+def html_resource_response(file_html, **kwargs):
+    headers = {
+        'Content-Type': 'text/html'
+    }
+    return get_mock_response(kwargs['mock_request'], file_html.name, headers)
+
+
+@pytest.fixture
+@requests_mock.Mocker(kw='mock_request')
+def json_resource_response(file_json, **kwargs):
+    headers = {
+        'Content-Type': 'application/json'
+    }
+    return get_mock_response(kwargs['mock_request'], file_json.name, headers)
+
+
+@pytest.fixture
+def shapefile_world():
+    return [prepare_file('TM_WORLD_BORDERS-0.3.%s' % ext) for ext in ('shp', 'shx', 'prj', 'dbf')]
+
+
+@pytest.fixture
+def shapefile_trees():
+    return [prepare_file('iglaste.tar.xz'), prepare_file('iglaste_other.tar.xz')]
+
+
+@given(parsers.parse('resource with {filename} file and id {obj_id}'))
+@given('resource with <filename> file and id <obj_id>')
+def resource_with_id_and_filename(filename, dataset, obj_id):
+    from mcod.resources.models import Resource
+    full_filename = prepare_file(filename)
+    with open(full_filename, 'rb') as outfile:
+        Resource.objects.create(
+            id=obj_id,
+            title='Local file resource',
+            description='Resource with file',
+            file=File(outfile),
+            dataset=dataset,
+            data_date=datetime.today(),
+            status='published'
+        )

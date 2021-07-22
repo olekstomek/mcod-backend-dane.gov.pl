@@ -8,7 +8,6 @@ import mcod.core.api.rdf.namespaces as ns
 from mcod import settings
 from mcod.core.api.rdf.profiles.common import RDFClass, RDFNestedField, CATALOG_URL
 from mcod.lib.rdf.rdf_field import RDFField
-from mcod.unleash import is_enabled
 
 VOCABULARIES = {
     'theme': 'http://publications.europa.eu/resource/authority/data-theme/',
@@ -102,10 +101,7 @@ class DCATDistribution(RDFClass):
     access_url = RDFField(predicate=ns.DCAT.accessURL, object_type=URIRef)
     download_url = RDFField(predicate=ns.DCAT.downloadURL, object_type=URIRef, allow_null=False)
     file_size = RDFField(predicate=ns.DCAT.byteSize, object_type=partial(Literal, datatype=XSD.decimal))
-    if is_enabled('S21_licenses.be'):
-        license = RDFField(predicate=ns.DCAT.license, object_type=URIRef)
-    else:
-        license = RDFField(predicate=ns.DCAT.license, object_type=partial(Literal, datatype=ns.DCT.LicenseDocument))
+    license = RDFField(predicate=ns.DCAT.license, object_type=URIRef)
 
     def get_subject(self, data):
         return URIRef(data['access_url'])
@@ -206,7 +202,7 @@ class DCATDataset(RDFClass):
         for category in data['categories']:
             category['scheme'] = {
                 'subject': URIRef(VOCABULARIES['theme'].rstrip('/')),
-                'title_pl': 'System zarządzania wiedzą',
+                'title_pl': 'Kategoria danych',
                 'title_en': 'Data theme',
             }
         return data['categories']
@@ -283,7 +279,7 @@ class DCATCatalog(RDFClass):
             },
             'theme_taxonomy': {
                 'subject': URIRef(VOCABULARIES['theme'].rstrip('/')),
-                'title_pl': 'System zarządzania wiedzą',
+                'title_pl': 'Kategoria danych',
                 'title_en': 'Data theme',
             },
             'dataset': data.get('dataset_refs'),

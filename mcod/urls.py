@@ -18,6 +18,7 @@ from mcod.cms import urls as cms_urls
 from mcod.cms.api.router import CmsApiRouter
 from mcod.cms.api.views import CmsPagesViewSet, ImagesViewSet
 
+
 panel_app_config = apps.get_app_config('mcod.pn_apps')
 
 urlpatterns = []
@@ -70,6 +71,7 @@ else:
         path('', admin.site.urls, name='admin'),
         # Non-admin urls
         path('pn-apps/', include('mcod.pn_apps.urls')),
+        path('discourse/', include('mcod.discourse.urls')),
         path(
             'robots.txt',
             TemplateView.as_view(template_name="admin/robots.txt", content_type="text/plain"),

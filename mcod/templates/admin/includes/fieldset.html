@@ -1,6 +1,4 @@
 {% load suit_tags core_tags %}
-{% is_unleash_enabled "S21_admin_ui_changes.be" as ui_changes_flag %}
-{% with ui_changes=ui_changes_flag %}
 <fieldset class="module aligned{{ fieldset.name|yesno:' with-legend, first' }} {{ fieldset.classes }}">
     {% if fieldset.name %}
         <h2 class="legend">{{ fieldset.name }}
@@ -27,14 +25,10 @@
 
                         <div class="control-label{% if field.is_readonly %} readonly-control-label{% endif %}">
                             {% if not field.field.is_hidden %}
-                                {% if ui_changes %}
                                 {% if field.field.name == 'is_chart_creation_blocked' %}
                                     {{ field.label_tag|cut:":"|add_required_span_tag }}
                                 {% else %}
                                     {{ field.label_tag|add_required_span_tag }}
-                                {% endif %}
-                                {% else %}
-                                {{ field.label_tag }}
                                 {% endif %}
                             {% endif %}
                         </div>
@@ -105,4 +99,3 @@
 {% if 'plugin-holder' in fieldset.classes %}
     <hr class="plugin-holder-separator">
 {% endif %}
-{% endwith %}

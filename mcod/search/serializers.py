@@ -16,11 +16,12 @@ from mcod.core.api.schemas import ExtSchema
 from mcod.datasets.serializers import (
     CategoryAggregation,
     InstitutionAggregation,
-    SourceSchema
+    SourceSchema,
+    LicenseAggregation,
+    UpdateFrequencyAggregation,
 )
-from mcod.lib.serializers import TranslatedStr, TranslatedTagsList, KeywordsList
+from mcod.lib.serializers import TranslatedStr, KeywordsList
 from mcod.organizations.serializers import DataSourceAttr
-from mcod.unleash import is_enabled
 from mcod.watchers.serializers import SubscriptionMixin
 
 
@@ -63,7 +64,6 @@ class CommonObjectApiAttrs(ObjectAttrs, HighlightObjectMixin):
     slug = TranslatedStr()
     title = TranslatedStr()
     notes = TranslatedStr()
-    tags = TranslatedTagsList(TranslatedStr(), faker_type='tagslist')
     keywords = KeywordsList(TranslatedStr(), faker_type='tagslist')
     modified = fields.DateTime()
     created = fields.DateTime()
@@ -100,11 +100,8 @@ class CommonObjectApiAttrs(ObjectAttrs, HighlightObjectMixin):
     @staticmethod
     def self_api_url(data):
         api_url = getattr(settings, 'API_URL', 'https://api.dane.gov.pl')
-        if is_enabled('S24_es_documents_unification.be'):
-            model = data.model
-            obj_id = data.id
-        else:
-            model, obj_id = getattr(data.meta, 'id').split('-')
+        model = data.model
+        obj_id = data.id
         slug = data['slug'][get_language()]
         return f'{api_url}/{model}s/{obj_id},{slug}'
 
@@ -157,6 +154,12 @@ class CommonObjectApiAggregations(ExtSchema):
                                         many=True,
                                         attribute='_filter_by_institution_type.by_institution_type.buckets')
     search_date_range = fields.Nested(SearchDateRangeAggregation)
+    by_license_code = fields.Nested(LicenseAggregation,
+                                    many=True,
+                                    attribute='_filter_by_license_code.by_license_code.buckets')
+    by_update_frequency = fields.Nested(UpdateFrequencyAggregation,
+                                        many=True,
+                                        attribute='_filter_by_update_frequency.by_update_frequency.buckets')
 
 
 class CommonObjectApiMetaSchema(TopLevelMeta):

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-04-16 15:06+0200\n"
+"POT-Creation-Date: 2021-06-28 14:20+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -410,15 +410,11 @@ msgstr "Kolor"
 msgid "acc: Category"
 msgstr "kategorię"
 
-#, fuzzy
-#| msgid "Date"
 msgid "Date from"
-msgstr "Data"
+msgstr "Data początku"
 
-#, fuzzy
-#| msgid "Date"
 msgid "Date to"
-msgstr "Data"
+msgstr "Data końca"
 
 msgid "Link title"
 msgstr "Tytuł linku"
@@ -728,6 +724,13 @@ msgstr "Dostępne kategorie"
 msgid "Selected categories"
 msgstr "Wybrane kategorie"
 
+msgid ""
+"Couldn't restore following datasets, because their related organizations are "
+"still removed: {}"
+msgstr ""
+"Nie można przywrócić następujących zbiorów danych, ponieważ organizacje, do "
+"których przynależą wciąż pozostają usunięte: {}"
+
 msgid "Comment must be at least 3 characters long"
 msgstr "Komentarz musi mieć przynajmniej 3 znaki"
 
@@ -744,44 +747,11 @@ msgid "Customfields"
 msgstr "Pola niestandardowe"
 
 msgid ""
-"The recipient should inform about the date, time of completion and obtaining "
-"information from the obliged entity"
-msgstr ""
-"Odbiorca powinien poinformować o źródle, czasie wytworzenia i pozyskania "
-"informacji od podmiotu zobowiązanego"
-
-msgid ""
-"The recipient should inform about the processing of the information when it "
-"modifies it"
-msgstr ""
-"Odbiorca powinien poinformować o przetworzeniu informacji, gdy ją jakkolwiek "
-"modyfikuje"
-
-msgid "The scope of the provider's responsibility for the information provided"
-msgstr "Zakres odpowiedzialności dostawcy za przekazywane informacje"
-
-msgid ""
-"Conditions for using public information that meets the characteristics of "
-"the work or constitute a database (Article 13 paragraph 2 of the Act on the "
-"re-use of public sector information)"
-msgstr ""
-"Warunki wykorzystywania informacji sektora publicznego spełniających cechy "
-"utworu lub stanowiących bazę danych (art. 13 ust. 2 ustawy o ponownym "
-"wykorzystywaniu informacji sektora publicznego)"
-
-msgid ""
-"Conditions for using public sector information containing personal data "
-"(Article 14 paragraph 1 point 4 of the Act on the re-use of public Sector "
-"Information)"
-msgstr ""
-"Warunki wykorzystywania informacji sektora publicznego zawierającej dane "
-"osobowe (art. 14 ust. 1 pkt 4 ustawy o ponownym wykorzystywaniu informacji "
-"sektora publicznego)"
-
-msgid ""
 "If you select a draft, the status of all published resources belonging to "
 "that set will be changed to a draft"
 msgstr ""
+"Jeśli wybierzesz szkic, status wszystkich opubilkowanych zasobów należących "
+"do tego zbioru zostanie zmieninony na szkic"
 
 msgid ""
 "Allowed file extensions: jpg, gif, png. For better readability, we "
@@ -860,8 +830,52 @@ msgstr "Wersja"
 msgid "Url"
 msgstr "Url"
 
+msgid ""
+"Conditions for using public information that meets the characteristics of "
+"the work or constitute a database (Article 13 paragraph 2 of the Act on the "
+"re-use of public sector information)"
+msgstr ""
+"Warunki wykorzystywania informacji sektora publicznego spełniających cechy "
+"utworu lub stanowiących bazę danych (art. 13 ust. 2 ustawy o ponownym "
+"wykorzystywaniu informacji sektora publicznego)"
+
+msgid ""
+"Conditions for using public sector information containing personal data "
+"(Article 14 paragraph 1 point 4 of the Act on the re-use of public Sector "
+"Information)"
+msgstr ""
+"Warunki wykorzystywania informacji sektora publicznego zawierającej dane "
+"osobowe (art. 14 ust. 1 pkt 4 ustawy o ponownym wykorzystywaniu informacji "
+"sektora publicznego)"
+
+msgid ""
+"The recipient should inform about the processing of the information when it "
+"modifies it"
+msgstr ""
+"Odbiorca powinien poinformować o przetworzeniu informacji, gdy ją jakkolwiek "
+"modyfikuje"
+
+msgid "The scope of the provider's responsibility for the information provided"
+msgstr "Zakres odpowiedzialności dostawcy za przekazywane informacje"
+
+msgid ""
+"The recipient should inform about the date, time of completion and obtaining "
+"information from the obliged entity"
+msgstr ""
+"Odbiorca powinien poinformować o źródle, czasie wytworzenia i pozyskania "
+"informacji od podmiotu zobowiązanego"
+
 msgid "Institution"
 msgstr "Instytucja"
+
+msgid "turn on notification"
+msgstr "włącz powiadomienie"
+
+msgid "set notifications frequency"
+msgstr "ustaw częstotliwość powiadomień"
+
+msgid "the person who is the notifications recipient"
+msgstr "osoba, do której będą wysyłane powiadomienia"
 
 msgid "source"
 msgstr "źródło"
@@ -877,6 +891,10 @@ msgstr "zmodyfikowany"
 
 msgid "acc: Dataset"
 msgstr "zbiór danych"
+
+#, python-format
+msgid "The value must be between %(min)s and %(max)s"
+msgstr "Wartość musi być pomiędzy %(min)s a %(max)s"
 
 msgid "id"
 msgstr ""
@@ -908,6 +926,40 @@ msgstr "zmodyfikowany przez"
 msgid "The number of followers"
 msgstr "Liczba obserwujących"
 
+msgid ""
+"This dataset is public information, it can be reused under the following "
+"conditions: "
+msgstr ""
+"Ten zbiór danych jest informacją publiczną, może być ponownie wykorzystywany "
+"pod poniższymi warunkami:"
+
+msgid "Dataset URL"
+msgstr "URL zbioru"
+
+msgid "Dataset created"
+msgstr "Data udostępnienia zbioru"
+
+msgid "Dataset verified"
+msgstr "Data aktualizacji zbioru"
+
+msgid "Dataset views count"
+msgstr "Liczba wyświetleń zbioru"
+
+msgid "Dataset downloads count"
+msgstr "Liczba pobrań zbioru"
+
+msgid "Number of data"
+msgstr "Liczba danych"
+
+msgid "Terms of use"
+msgstr "Warunki wykorzystywania"
+
+msgid "License"
+msgstr "Licencja"
+
+msgid "last import timestamp"
+msgstr "data ostatniego importu"
+
 #, python-format
 msgid " (version %(version)s)"
 msgstr " (wersja %(version)s)"
@@ -919,6 +971,14 @@ msgstr "Do zbioru %(title)s%(version)s [%(url)s] została zgłoszona uwaga:"
 #, python-format
 msgid "A comment was posted on the data set %(title)s%(version)s"
 msgstr "Zgłoszono uwagę do zbioru %(title)s%(version)s"
+
+#, fuzzy
+#| msgid "Documentation"
+msgid "Discourse Integration"
+msgstr "Dokumentacja"
+
+msgid "Only administrators and agents have access to forum"
+msgstr "Tylko administratorzy i pełnomocnicy mają dostęp do forum"
 
 msgid "Delete selected elements"
 msgstr "Usuń zaznaczone elementy"
@@ -1653,9 +1713,6 @@ msgstr "kategoria"
 msgid "last import status"
 msgstr "status ostatniego importu"
 
-msgid "last import timestamp"
-msgstr "data ostatniego importu"
-
 msgid "portal url"
 msgstr "URL (adres portalu)"
 
@@ -1682,10 +1739,6 @@ msgstr "Niedostępne API!"
 
 msgid "Data source for this institution already exists!"
 msgstr "Źródło danych dla tej instytucji już istnieje!"
-
-#, python-format
-msgid "Remote hash not found in %(url)s location!"
-msgstr "Nie znaleziono skrótu hash w lokalizacji %(url)s!"
 
 msgid "Trash (Data Sources)"
 msgstr "Kosz (źródła danych)"
@@ -1789,12 +1842,6 @@ msgstr "Walidacja MD5"
 
 msgid "Validation of xml file"
 msgstr "Walidacja pliku xml"
-
-msgid "Datasets & Resources Import Report"
-msgstr "Raport importu zbiorów danych i zasobów"
-
-msgid "DATASETS & RESOURCES IMPORT REPORT"
-msgstr "RAPORT IMPORTU ZBIORÓW DANYCH I ZASOBÓW"
 
 #, python-format
 msgid "%(url)s: invalid response code: %(code)s (%(reason)s)"
@@ -1903,7 +1950,16 @@ msgstr "Decyzja podjęta"
 msgid "Decision not taken"
 msgstr "Decyzja niepodjęta"
 
-#, python-brace-format
+msgid "Delete selected objects"
+msgstr "Usuń wybrane obiekty"
+
+msgid ""
+"Couldn't restore following objects, because their related objects are still "
+"removed: {}"
+msgstr ""
+"Nie można przywrócić następujących obiektów, ponieważ powiązane z nimi "
+"obiekty wciąż pozostają usunięte: {}"
+
 msgid "Successfully restored objects: {}"
 msgstr "Pomyślnie przywróconych elementów: {}"
 
@@ -1924,7 +1980,7 @@ msgstr "Obejrzyj %s - kosz"
 
 #, python-format
 msgid "Change history: %s"
-msgstr "Zmień historie: %s"
+msgstr "Historia zmian: %s"
 
 msgid "Translation ({lang_code.upper()})"
 msgstr "Tłumaczenie ({lang_code.upper()})"
@@ -2174,9 +2230,6 @@ msgstr "URL"
 msgid "acc: License"
 msgstr "licencję"
 
-msgid "License"
-msgstr "Licencja"
-
 msgid "Delete selected newsletters"
 msgstr "Usuń wybrane newslettery"
 
@@ -2373,6 +2426,9 @@ msgid ""
 "this institution will be changed to a draft.Also all resources of those "
 "datasets will be change to a draft"
 msgstr ""
+"Jeśli wybierzecz szkic, status wszystkich opublikowanych zbiorów danych "
+"należących do tej instytucji zostanie zmieniony na szkic. Również wszystkie "
+"zasoby tych zbiorów zostaną zmienione na szkic"
 
 msgid "Local government"
 msgstr "Administracją samorządowa"
@@ -2428,11 +2484,23 @@ msgstr "instytucję"
 msgid " int. "
 msgstr " wew. "
 
-msgid "ID"
-msgstr ""
-
 msgid "The number of datasets"
 msgstr "Liczba zbiorów danych"
+
+msgid "Organization URL"
+msgstr "URL dostawcy"
+
+msgid "Organization created"
+msgstr "Data utworzenia dostawcy"
+
+msgid "Organization modified"
+msgstr "Data aktualizacji dostawcy"
+
+msgid "Number of datasets"
+msgstr "Liczba zbiorów danych"
+
+msgid "Number of organization resources"
+msgstr "Liczba zasobów dostawcy"
 
 msgid "Hide table"
 msgstr "Ukryj tabelę"
@@ -2472,75 +2540,6 @@ msgstr "Brak"
 
 msgid "Percent"
 msgstr "Procent"
-
-msgid "Web Site"
-msgstr "Strona internetowa"
-
-msgid "Number of data"
-msgstr "Liczba danych"
-
-msgid "Percent od data"
-msgstr "Procent danych"
-
-msgid "Downloads"
-msgstr "Liczba pobrań"
-
-msgid "Views"
-msgstr "Liczba wyświetleń"
-
-msgid "Openness level"
-msgstr "Stopień otwartości"
-
-msgid "Level {}"
-msgstr "Stopień {}"
-
-msgid "File format"
-msgstr "Format pliku"
-
-msgid "Category name"
-msgstr "Nazwa kategorii"
-
-msgid "Number of datasets"
-msgstr "Liczba zbiorów danych"
-
-msgid "Number of uses"
-msgstr "Liczba użyć"
-
-msgid "Searched keyword"
-msgstr "Wyszukiwana fraza"
-
-msgid "Number of searches"
-msgstr "Liczba wyszukiwań"
-
-msgid "Number of datasets added"
-msgstr "Liczba nowych zbiorów danych"
-
-msgid "Most downloaded datasets"
-msgstr "Zbiory danych z największą liczbą pobrań"
-
-msgid "Most viewed datasets"
-msgstr "Najbardziej popularne zbiory danych"
-
-msgid "Datasets openess rating"
-msgstr "Liczba danych w podziale na stopień otwartości"
-
-msgid "Top file formats"
-msgstr "Najbardziej popularne formaty"
-
-msgid "Top themes"
-msgstr "Najczęściej używane kategorie"
-
-msgid "Top tags"
-msgstr "Najczęściej używane słowa kluczowe"
-
-msgid "Top keywords"
-msgstr "Najczęściej wyszukiwane słowa"
-
-msgid "Views of datasets"
-msgstr "Liczba wyświetleń zbiorów danych"
-
-msgid "Downloads of datasets"
-msgstr "Liczba pobrań zbiorów danych"
 
 msgid "Providers"
 msgstr "Dostawcy"
@@ -2588,6 +2587,69 @@ msgstr "Brak wizualizacji"
 
 msgid "Way of presentation"
 msgstr "Sposób prezentacji"
+
+msgid "Web Site"
+msgstr "Strona internetowa"
+
+msgid "Percent od data"
+msgstr "Procent danych"
+
+msgid "Downloads"
+msgstr "Liczba pobrań"
+
+msgid "Views"
+msgstr "Liczba wyświetleń"
+
+msgid "Openness level"
+msgstr "Stopień otwartości"
+
+msgid "Level {}"
+msgstr "Stopień {}"
+
+msgid "File format"
+msgstr "Format pliku"
+
+msgid "Category name"
+msgstr "Nazwa kategorii"
+
+msgid "Number of uses"
+msgstr "Liczba użyć"
+
+msgid "Searched keyword"
+msgstr "Wyszukiwana fraza"
+
+msgid "Number of searches"
+msgstr "Liczba wyszukiwań"
+
+msgid "Number of datasets added"
+msgstr "Liczba nowych zbiorów danych"
+
+msgid "Most downloaded datasets"
+msgstr "Zbiory danych z największą liczbą pobrań"
+
+msgid "Most viewed datasets"
+msgstr "Najbardziej popularne zbiory danych"
+
+msgid "Datasets openess rating"
+msgstr "Liczba danych w podziale na stopień otwartości"
+
+msgid "Top file formats"
+msgstr "Najbardziej popularne formaty"
+
+msgid "Top themes"
+msgstr "Najczęściej używane kategorie"
+
+msgid "Top tags"
+msgstr "Najczęściej używane słowa kluczowe"
+
+msgid "Top keywords"
+msgstr "Najczęściej wyszukiwane słowa"
+
+msgid "Views of datasets"
+msgstr "Liczba wyświetleń zbiorów danych"
+
+msgid "Downloads of datasets"
+msgstr "Liczba pobrań zbiorów danych"
 
 msgid "Unauthorized"
 msgstr ""
@@ -2722,6 +2784,32 @@ msgstr "Zmieniono typ danych"
 msgid "Map definition saved"
 msgstr "Zapisano definicję mapy"
 
+msgid ""
+"Couldn't restore following resources, because their related datasets are "
+"still removed: {}"
+msgstr ""
+"Nie można przywrócić następujących zasobów, ponieważ ich zbiory danych wciąż "
+"pozostają usunięte: {}"
+
+msgid "Chart creation for this resource is blocked!"
+msgstr "Tworzenie wykresów dla tego zasobu jest zablokowane!"
+
+msgid "No permission to define chart"
+msgstr "Brak uprawnień do definiowania wykresu"
+
+msgid "You cannot change type of chart!"
+msgstr "Zmiana typu wykresu jest niemożliwa!"
+
+msgid "You cannot add another private chart!"
+msgstr "Dodanie kolejnego wykresu prywatnego jest niemożliwe!"
+
+msgid ""
+"You cannot put changes into chart defined by Data Provider. Please provide "
+"new chart name."
+msgstr ""
+"Nie możesz zmienić wykresu zdefiniowanego przez Dostawcę danych. Zmiany na "
+"wykresie zapisz pod nową nazwą."
+
 msgid "Selected items {} come from different map data sets."
 msgstr "Wybrane elementy {} pochodzą z różnych zestawów danych mapowych."
 
@@ -2804,6 +2892,9 @@ msgstr "API"
 msgid "API - change"
 msgstr "API - zmiana"
 
+msgid "File - change"
+msgstr "Plik - zmiana"
+
 msgid "external identifier of resource taken during import process (optional)"
 msgstr ""
 "zewnętrzny identyfikator zasobu pobrany podczas procesu importu (opcjonalny)"
@@ -2816,6 +2907,9 @@ msgstr "Spakowany plik"
 
 msgid "File as CSV"
 msgstr "Plik jako CSV"
+
+msgid "File as JSON-LD"
+msgstr "Plik jako JSON-LD"
 
 msgid "File mimetype"
 msgstr "Typ MIME pliku"
@@ -2837,6 +2931,9 @@ msgstr "Format"
 
 msgid "Mark resource as API"
 msgstr "Oznacz zasób jako API"
+
+msgid "Mark resource as file"
+msgstr "Oznacz zasób jako plik"
 
 msgid "Openness score"
 msgstr "Ranking otwartości"
@@ -2892,6 +2989,9 @@ msgstr ""
 msgid "format"
 msgstr "format"
 
+msgid "formats after conversion"
+msgstr "formaty po konwersji"
+
 msgid "openness_score"
 msgstr "ranking otwartości"
 
@@ -2900,33 +3000,6 @@ msgstr "licznik odwiedzin"
 
 msgid "downloads_count"
 msgstr "licznik pobrań"
-
-msgid "Dataset URL"
-msgstr "URL zbioru"
-
-msgid "Dataset created"
-msgstr "Data udostępnienia zbioru"
-
-msgid "Dataset verified"
-msgstr "Data aktualizacji zbioru"
-
-msgid "Dataset views count"
-msgstr "Liczba wyświetleń zbioru"
-
-msgid "Dataset downloads count"
-msgstr "Liczba pobrań zbioru"
-
-msgid "Terms of use"
-msgstr "Warunki wykorzystywania"
-
-msgid "Organization URL"
-msgstr "URL dostawcy"
-
-msgid "Organization created"
-msgstr "Data utworzenia dostawcy"
-
-msgid "Organization modified"
-msgstr "Data aktualizacji dostawcy"
 
 msgid "Resource URL"
 msgstr "URL danych"
@@ -2952,16 +3025,29 @@ msgstr "TAK"
 msgid "NO"
 msgstr "NIE"
 
-msgid ""
-"This dataset is public information, it can be reused under the following "
-"conditions: "
-msgstr ""
-"Ten zbiór danych jest informacją publiczną, może być ponownie wykorzystywany "
-"pod poniższymi warunkami:"
+msgid "Download URL"
+msgstr "URL pliku (do pobrania)"
+
+msgid "symbol"
+msgstr "symbol"
 
 #, python-format
 msgid "A comment was posted on the resource %(title)s"
 msgstr "Zgłoszono uwagę do zasobu %(title)s"
+
+msgid "Numeric"
+msgstr "Pole numeryczne"
+
+#, python-format
+msgid ""
+"During the verification of column \"%(colname)s\" with the rule \"%(rule)s\" "
+"detected errors (max 5)"
+msgstr ""
+"Podczas weryfikacji kolumny \"%(colname)s\" regułą \"%(rule)s\" wykryto "
+"błędy (wyświetlane jest nie więcej niż 5 błędów)"
+
+msgid "Address feature"
+msgstr "Cecha adresu"
 
 msgid "label"
 msgstr "etykieta"
@@ -2974,9 +3060,6 @@ msgstr "adres uniwersalny"
 
 msgid "address"
 msgstr "adres"
-
-msgid "No permission to define chart"
-msgstr "Brak uprawnień do definiowania wykresu"
 
 msgid "Schedules"
 msgstr "Harmonogramy"
@@ -3160,9 +3243,9 @@ msgstr "Niepoprawny rozmiar podpowiedzi"
 msgid "Invalid maximum list length"
 msgstr ""
 
-#, python-brace-format
-msgid "The entered model - {model}, is not supported"
-msgstr ""
+#, python-format
+msgid "The entered model - %(model)s, is not supported"
+msgstr "Wprowadzony model - %(model)s, nie jest wspierany"
 
 msgid "advanced option should take one of values: any, all, exact, synonyms"
 msgstr ""
@@ -3207,17 +3290,11 @@ msgstr "Laboratorium Otwarte Dane"
 msgid "Configuration"
 msgstr "Konfiguracja"
 
-msgid "Numeric"
-msgstr "Pole numeryczne"
-
 msgid "Universal address"
 msgstr "Adres uniwersalny"
 
 msgid "PNA code"
 msgstr "Kod PNA"
-
-msgid "Address feature"
-msgstr "Cecha adresu"
 
 msgid "Field of logical values"
 msgstr "Pole wartości logicznych"
@@ -3264,20 +3341,11 @@ msgstr "Miejscowość"
 msgid "House number"
 msgstr "Numer domu"
 
-msgid "Częstotliwość aktualizacji zbioru wg DCAT-AP"
-msgstr ""
-
 msgid "Delete selected special signs"
 msgstr "Usuń wybrane znaki umowne"
 
-msgid "symbol"
-msgstr ""
-
 msgid "special sign"
 msgstr "znak umowny"
-
-msgid "Trash (Special Signs)"
-msgstr "Kosz (Znaki umowne)"
 
 msgid "text of comment"
 msgstr "treść uwagi"
@@ -3314,6 +3382,9 @@ msgid ""
 msgstr ""
 "Jeżeli chcesz opublikować propozycję nowych danych dla wszystkich "
 "użytkowników to propozycja musi posiadać status \"Opublikowany\""
+
+msgid "Publication finished"
+msgstr "Publikacja zakończona"
 
 msgid "Title, type, domain od propossed data"
 msgstr "Nazwa, rodzaj, dziedzina proponowanych danych"
@@ -3356,6 +3427,12 @@ msgstr "propozycja aktywna"
 
 msgid "publish for all users"
 msgstr "Opublikuj dla wszystkich użytkowników"
+
+msgid "describe how the case was resolved"
+msgstr "Opisz sposób rozwiązania sprawy"
+
+msgid "date of completion of publication"
+msgstr "Data zakończenia publikacji"
 
 msgid "acc: Accepted dataset submission"
 msgstr "zaakceptowaną propozycję nowych danych"
@@ -3441,15 +3518,15 @@ msgstr ""
 msgid "Resource demand reported"
 msgstr "Zgłoszono zapotrzebowanie na zasoby"
 
-#, python-brace-format
+#, python-format
 msgid ""
-"On the accepted dataset submission {title} [{url}] was posted a comment:"
+"On the accepted dataset submission %(title)s [%(url)s] was posted a comment:"
 msgstr ""
-"Do propozycji nowych danych {title} [{url}] został zgłoszony komentarz:"
+"Do propozycji nowych danych %(title)s [%(url)s] został zgłoszony komentarz:"
 
-#, python-brace-format
-msgid "A comment was posted on the accepted dataset submission {title}"
-msgstr "Został dodany komentarz do propozycji nowych danych {title}"
+#, python-format
+msgid "A comment was posted on the accepted dataset submission %(title)s"
+msgstr "Został dodany komentarz do propozycji nowych danych %(title)s"
 
 msgid "Valid values are 'plus' and 'minus'"
 msgstr ""
@@ -3613,6 +3690,9 @@ msgstr ""
 msgid "Are you sure you want to delete the \"%(escaped_object)s\"? "
 msgstr "Czy na pewno chcesz usunąć \"%(escaped_object)s\"?"
 
+msgid "Removing an object is an irreversible operation."
+msgstr "Usunięcie obiektu jest operacją nieodwracalną."
+
 msgid "Yes, I'm sure"
 msgstr "Tak, potwierdzam."
 
@@ -3754,15 +3834,6 @@ msgstr "zakładka niedostępna – zasób nie posiada widoku tabelarycznego"
 msgid "Resources list"
 msgstr "Zasoby"
 
-msgid "During the verification of column "
-msgstr "Podczas weryfikacji kolumny"
-
-msgid " with the rule "
-msgstr " regułą "
-
-msgid " detected errors (max 5)'"
-msgstr " wykryto błędy (wyświetlane jest nie więcej niż 5)"
-
 msgid "Row number"
 msgstr "Numer wiersza"
 
@@ -3810,6 +3881,18 @@ msgstr "Potwierdź dodanie"
 #, python-format
 msgid " By %(filter_title)s "
 msgstr " Przez  %(filter_title)s "
+
+msgid "Open Data - Forum"
+msgstr "Otwarte Dane - Forum"
+
+msgid "Password"
+msgstr "Hasło"
+
+msgid "Forgotten your password or username?"
+msgstr ""
+
+msgid "Log in"
+msgstr "Zaloguj się"
 
 msgid "Filter instances by"
 msgstr ""
@@ -3952,9 +4035,6 @@ msgstr "Data utworzenia"
 msgid "Modified at"
 msgstr "Data modyfikacji"
 
-msgid "Download URL"
-msgstr "URL pliku (do pobrania)"
-
 msgid "Columns mapping"
 msgstr "Mapowanie kolumn"
 
@@ -4061,6 +4141,23 @@ msgstr ""
 "W celu dokończenia procesu rejestracji kliknij (lub skopiuj i wklej w pole "
 "adres przeglądarki internetowej) poniższy link."
 
+msgid "Reminder about the Data set update"
+msgstr "Przypomnienie o aktualizacji Zbioru danych"
+
+#, python-format
+msgid ""
+"We would like to remind you about the upcoming date of updating the data set "
+"<a href=\"%(url)s\" >%(dataset_title)s</a> on the Dane.gov.pl portal."
+msgstr ""
+"Przypominamy o zbliżającym się terminie aktualizacji zbioru danych "
+"<a href=\"%(url)s\" >%(dataset_title)s</a> na portalu Dane.gov.pl."
+
+#, python-format
+msgid ""
+"Przypominamy o zbliżającym się terminie aktualizacji zbioru danych "
+"%(dataset_title)s na portalu Dane.gov.pl."
+msgstr ""
+
 msgid "Password reset"
 msgstr "Reset hasła"
 
@@ -4151,6 +4248,64 @@ msgstr "Ta wiadomość została wygenerowana automatycznie."
 msgid "Please do not reply to it."
 msgstr "Prosimy na nią nie odpowiadać."
 
+msgid "Explorer"
+msgstr "Odkrywca"
+
+msgid "Internal link"
+msgstr "Link wewnętrzny"
+
+msgid "External link"
+msgstr "Link zewnętrzny"
+
+msgid "Email link"
+msgstr "Link do e-maila"
+
+msgid "Phone link"
+msgstr "Link do telefonu"
+
+msgid "Anchor link"
+msgstr "Link kotwiczący"
+
+msgid "Add an anchor link"
+msgstr "Dodaj link kotwiczący"
+
+msgid "Insert anchor"
+msgstr "Wklej kotwicę"
+
+msgid "Choose"
+msgstr "Wybierz"
+
+msgid "Choose a page"
+msgstr "Wybierz stronę"
+
+#, python-format
+msgid ""
+"\n"
+"                Only pages of type \"%(type)s\" may be chosen for this "
+"field. Search results will exclude pages of other types.\n"
+"                "
+msgid_plural ""
+"\n"
+"                Only the following page types may be chosen for this field: "
+"%(type)s. Search results will exclude pages of other types.\n"
+"            "
+msgstr[0] ""
+msgstr[1] ""
+msgstr[2] ""
+msgstr[3] ""
+
+msgid "Add an email link"
+msgstr "Dodaj link do e-maila"
+
+msgid "Insert link"
+msgstr "Wklej link"
+
+msgid "Add an external link"
+msgstr "Dodaj link zewnętrzny"
+
+msgid "Add a phone link"
+msgstr "Dodaj link do telefonu"
+
 msgid "Lista ankiet"
 msgstr ""
 
@@ -4177,6 +4332,13 @@ msgstr ""
 
 msgid "Nie zostały jeszcze utworzone żadne ankiety."
 msgstr ""
+
+#, python-format
+msgid "Explore subpages of '%(title)s'"
+msgstr "Odkryj podstrony '%(title)s'"
+
+msgid "Explore"
+msgstr "Odkryj"
 
 msgid "The data cannot be displayed correctly. Change the data type."
 msgstr "Dane nie mogą być poprawnie wyświetlone. Zmień typ danych."
@@ -4280,12 +4442,6 @@ msgstr "Lista pełnomocników"
 msgid "Agents added to meeting"
 msgstr "Dodani pełnomocnicy do spotkania"
 
-msgid "Passwords not match"
-msgstr "Hasła nie pasują"
-
-msgid "Account for this email already exist"
-msgstr "Konto powiązane z tym adresem email już istnieje"
-
 msgid "Full name"
 msgstr "Imię i nazwisko"
 
@@ -4297,6 +4453,9 @@ msgstr "Rola"
 
 msgid "Invalid user state."
 msgstr "Niepoprawny status użytkownika."
+
+msgid "Passwords not match"
+msgstr "Hasła nie pasują"
 
 msgid "Meeting name"
 msgstr "Nazwa spotkania"
@@ -4329,14 +4488,14 @@ msgstr "Wybrana instutucja musi być na liście Wybranych instytucji!"
 msgid "The two password fields didn't match."
 msgstr "Hasła nie pasują"
 
-msgid "Password"
-msgstr "Hasło"
-
 msgid "Password confirmation"
 msgstr "Potwierdzenie hasła"
 
 msgid "Enter the same password as above, for verification."
 msgstr "Wprowadź identyczne hasło jak powyżej w celu weryfikacji."
+
+msgid "Account for this email already exist"
+msgstr "Konto powiązane z tym adresem email już istnieje"
 
 msgid ""
 "Raw passwords are not stored, so there is no way to see this user's "

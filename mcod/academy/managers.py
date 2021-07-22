@@ -1,21 +1,21 @@
 from django.db.models import Case, CharField, Count, Max, Min, Q, When, Value
 from django.utils import timezone
-from model_utils.managers import SoftDeletableQuerySet, SoftDeletableManager
 
-from mcod.core.db.managers import DeletedManager
+from mcod.core.db.managers import TrashManager
+from mcod.core.managers import SoftDeletableQuerySet, SoftDeletableManager, TrashQuerySet
 
 
-class CourseQuerySet(SoftDeletableQuerySet):
-
+class CourseQuerySetMixin:
     def published(self):
         return self.filter(status='published')
 
     def with_schedule(self):
         today = timezone.now().date()
+        q_modules_not_removed = Q(modules__is_removed=False, modules__is_permanently_removed=False)
         return self.annotate(
-            _start=Min('modules__start', filter=Q(modules__is_removed=False)),
-            _end=Max('modules__end', filter=Q(modules__is_removed=False)),
-            _modules_count=Count('modules', filter=Q(modules__is_removed=False)),
+            _start=Min('modules__start', filter=q_modules_not_removed),
+            _end=Max('modules__end', filter=q_modules_not_removed),
+            _modules_count=Count('modules', filter=q_modules_not_removed),
             _course_state=Case(
                 When(_start__lte=today, _end__gte=today, then=Value('current')),
                 When(_start__gt=today, then=Value('planned')),
@@ -24,6 +24,14 @@ class CourseQuerySet(SoftDeletableQuerySet):
                 output_field=CharField(),
             )
         )
+
+
+class CourseQuerySet(CourseQuerySetMixin, SoftDeletableQuerySet):
+    pass
+
+
+class CourseTrashQuerySet(CourseQuerySetMixin, TrashQuerySet):
+    pass
 
 
 class CourseManager(SoftDeletableManager):
@@ -36,8 +44,8 @@ class CourseManager(SoftDeletableManager):
         return super().get_queryset().with_schedule()
 
 
-class CourseDeletedManager(DeletedManager):
-    _queryset_class = CourseQuerySet
+class CourseTrashManager(TrashManager):
+    _queryset_class = CourseTrashQuerySet
 
     def with_schedule(self):
         return super().get_queryset().with_schedule()

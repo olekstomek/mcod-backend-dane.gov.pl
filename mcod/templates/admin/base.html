@@ -9,10 +9,7 @@
   <link rel="stylesheet" type="text/css" href="{% static 'suit/css/suit.css' %}" media="all">
   {% block extrastyle %}{% endblock %}
   {% if LANGUAGE_BIDI %}<link rel="stylesheet" type="text/css" href="{% block stylesheet_rtl %}{% static "admin/css/rtl.css" %}{% endblock %}"/>{% endif %}
-  {% is_unleash_enabled "S21_admin_ui_changes.be" as ui_changes %}
-  {% if ui_changes %}
   <link rel="stylesheet" type="text/css" href="{% static 'admin/css/od2021.css' %}" media="all">
-  {% endif %}
   <script type="text/javascript">window.__admin_media_prefix__ = "{% filter escapejs %}{% static "admin/" %}{% endfilter %}";</script>
   {% block suit_jquery %}
       {% if '1.9'|django_version_gte %}
@@ -230,6 +227,6 @@
     </script>
   {% endif %}
   {% block extrajs %}{% endblock %}
-{% if ui_changes %}<script src="{% static 'admin/js/od2021.js' %}"></script>{% endif %}
+<script src="{% static 'admin/js/od2021.js' %}"></script>
 </body>
 </html>

@@ -6,11 +6,12 @@ from mcod.core.tests.fixtures import *  # noqa
 from mcod.core.tests.fixtures.bdd.common import prepare_file
 from mcod.resources.archives import UnsupportedArchiveError
 from mcod.resources.file_validation import analyze_resource_file
-from mcod.resources.models import Chart, Resource
+from mcod.resources.models import Resource
 
 
 @given('I have buzzfeed resource with tabular data')
 def tabular_resource(buzzfeed_fakenews_resource):
+    buzzfeed_fakenews_resource.revalidate()
     return buzzfeed_fakenews_resource
 
 
@@ -50,29 +51,6 @@ def no_data_resource(dataset):
     resource.dataset = dataset
     resource.save()
     return resource
-
-
-@pytest.fixture
-def private_chart(buzzfeed_fakenews_resource, active_editor):
-    chart = Chart()
-    chart.chart = ["private chart"]
-    chart.resource = buzzfeed_fakenews_resource
-    chart.created_by = active_editor
-    chart.modified_by = active_editor
-    chart.save()
-    return chart
-
-
-@pytest.fixture
-def default_chart(buzzfeed_fakenews_resource, active_editor):
-    chart = Chart()
-    chart.is_default = True
-    chart.chart = ["default chart"]
-    chart.resource = buzzfeed_fakenews_resource
-    chart.created_by = active_editor
-    chart.modified_by = active_editor
-    chart.save()
-    return chart
 
 
 @then(parsers.parse('file is validated and result is {resource_file_format}'))

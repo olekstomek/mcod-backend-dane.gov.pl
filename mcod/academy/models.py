@@ -8,12 +8,12 @@ from django.dispatch import receiver
 from django.utils.translation import gettext_lazy as _, pgettext_lazy, override
 from modeltrans.fields import TranslationField
 from model_utils import FieldTracker
-from model_utils.managers import SoftDeletableManager
 
-from mcod.academy.managers import CourseManager, CourseDeletedManager
+from mcod.academy.managers import CourseManager, CourseTrashManager
 from mcod.core import storages
-from mcod.core.db.managers import DeletedManager
+from mcod.core.db.managers import TrashManager
 from mcod.core.db.models import ExtendedModel, TrashModelBase
+from mcod.core.managers import SoftDeletableManager
 
 
 class Course(ExtendedModel):
@@ -41,9 +41,8 @@ class Course(ExtendedModel):
         null=True, blank=True,
     )
 
-    raw = models.Manager()
     objects = CourseManager()
-    deleted = CourseDeletedManager()
+    trash = CourseTrashManager()
     i18n = TranslationField()
     tracker = FieldTracker()
 
@@ -112,9 +111,8 @@ class CourseModule(ExtendedModel):
     number_of_days = models.PositiveIntegerField(
         verbose_name=_('number of days'), validators=[MinValueValidator(1), MaxValueValidator(2)])
 
-    raw = models.Manager()
     objects = SoftDeletableManager()
-    deleted = DeletedManager()
+    trash = TrashManager()
     i18n = TranslationField()
     tracker = FieldTracker()
 

@@ -36,7 +36,7 @@ class ConfirmResetPasswordApiResponse(TopLevel):
 
 
 class UserCSVSerializer(CSVSerializer):
-    id = fields.Int(data_key=_('ID'), required=True, example=77)
+    id = fields.Int(data_key=_('id'), required=True, example=77)
     email = fields.Email(data_key=_('Email'), default='', required=True, example='user@example.com')
     fullname = fields.Str(data_key=_('Full name'), default='', example='Jan Kowalski')
     official_phone = fields.Method('get_phone', data_key=_('Official phone'), example='+481234567890')

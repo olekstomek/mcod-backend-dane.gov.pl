@@ -19,6 +19,7 @@ from mcod import settings
 from mcod.core.api import fields as api_fields
 from mcod.core.api.search.analyzers import polish_analyzer
 from mcod.resources.archives import ArchiveReader
+from mcod.resources.goodtables_checks import ZERO_DATA_ROWS
 from mcod.resources.geo import (
     ShapeTransformer,
     median_point,
@@ -27,7 +28,6 @@ from mcod.resources.geo import (
     extract_coords_from_uaddress
 )
 from mcod.resources.type_guess import Table
-from mcod.unleash import is_enabled
 
 es_connections = Connections()
 es_connections.configure(**settings.ELASTICSEARCH_DSL)
@@ -374,10 +374,8 @@ def prepare_item(item, col_type=None, special_signs=None):
     elif col_type == 'time' and isinstance(item, time):
         item = item.strftime('%H:%M:%S')
     item = None if item == '' else item
-    if is_enabled('S16_special_signs.be'):
-        repr_item = str(item) if item is not None and isinstance(item, (int, float)) else item
-        return {'repr': item, 'val': None if special_signs and repr_item in special_signs else item}
-    return item
+    repr_item = str(item) if item is not None and isinstance(item, (int, float)) else item
+    return {'repr': item, 'val': None if special_signs and repr_item in special_signs else item}
 
 
 class CustomObject(dsl_field.Object):
@@ -589,6 +587,7 @@ class TabularData(IndexedData):
 
     def validate(self):
         kwargs = dict(
+            checks=['structure', 'schema', ZERO_DATA_ROWS],
             skip_checks=['extra-header', 'blank-header', 'blank-row', 'duplicate-row'],
             error_limit=10,
             format=self.resource.format,

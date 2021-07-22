@@ -9,7 +9,6 @@ from mcod.lib.admin_mixins import (
     SoftDeleteMixin, TrashMixin, CreatedByDisplayAdminMixin,
     StatusLabelAdminMixin, DynamicAdminListDisplayMixin, MCODAdminMixin
 )
-from mcod.unleash import is_enabled
 
 
 class GuideAdminMixin(DynamicAdminListDisplayMixin, CreatedByDisplayAdminMixin,
@@ -104,6 +103,5 @@ class GuideTrashAdmin(GuideAdminMixin, HistoryMixin, TrashMixin):
     )
 
 
-if is_enabled('S15_guides.be'):
-    admin.site.register(Guide, GuideAdmin)
-    admin.site.register(GuideTrash, GuideTrashAdmin)
+admin.site.register(Guide, GuideAdmin)
+admin.site.register(GuideTrash, GuideTrashAdmin)

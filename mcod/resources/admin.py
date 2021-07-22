@@ -1,10 +1,10 @@
 from dal_admin_filters import AutocompleteFilter
 from django.conf import settings
 from django.contrib import admin, messages
-from django.core.exceptions import PermissionDenied, FieldDoesNotExist
-from django.db.models import Subquery, OuterRef, ManyToManyField
+from django.core.exceptions import PermissionDenied
+from django.db.models import Subquery, OuterRef, Q
 from django.forms.models import model_to_dict
-from django.http.response import HttpResponseRedirect, Http404
+from django.http.response import HttpResponseRedirect
 from django.template.loader import get_template
 from django.urls import reverse, path
 from django.utils.html import format_html
@@ -13,15 +13,30 @@ from django.utils.translation import gettext_lazy as _
 from django_celery_results.models import TaskResult
 
 from mcod.lib.admin_mixins import (
-    AddChangeMixin, AdminListMixin, TrashMixin, HistoryMixin,
-    LangFieldsOnlyMixin, SoftDeleteMixin, StatusLabelAdminMixin, DynamicAdminListDisplayMixin, MCODAdminMixin
+    AddChangeMixin,
+    AdminListMixin,
+    DynamicAdminListDisplayMixin,
+    HistoryMixin,
+    LangFieldsOnlyMixin,
+    MCODAdminMixin,
+    SoftDeleteMixin,
+    StatusLabelAdminMixin,
+    TrashMixin,
 )
 from mcod.lib.helpers import get_paremeters_from_post
 from mcod.reports.admin import ExportCsvMixin
 from mcod.resources.forms import ChangeResourceForm, AddResourceForm, TrashResourceForm
 from mcod.resources.models import (
-    Resource, ResourceTrash, RESOURCE_TYPE_WEBSITE, RESOURCE_TYPE,
-    RESOURCE_TYPE_API_CHANGE_LABEL, RESOURCE_TYPE_API_CHANGE, RESOURCE_TYPE_API
+    Resource,
+    ResourceTrash,
+    RESOURCE_FORCED_TYPE,
+    RESOURCE_TYPE,
+    RESOURCE_TYPE_API,
+    RESOURCE_TYPE_API_CHANGE,
+    RESOURCE_TYPE_FILE,
+    RESOURCE_TYPE_FILE_CHANGE,
+    RESOURCE_TYPE_WEBSITE,
+    supported_formats_choices,
 )
 from mcod.unleash import is_enabled
 
@@ -36,6 +51,27 @@ class DatasetFilter(AutocompleteFilter):
     widget_attrs = {
         'data-placeholder': _('Filter by dataset name')
     }
+
+
+class FormatFilter(admin.SimpleListFilter):
+    parameter_name = 'format'
+    title = 'Format'
+
+    def lookups(self, request, model_admin):
+        return supported_formats_choices()
+
+    def queryset(self, request, queryset):
+        val = self.value()
+        if not val:
+            return queryset
+        query = Q(format=val)
+        if val in ['json-ld', 'jsonld']:
+            query.add(~Q(jsonld_file=None), Q.OR)
+            query.add(~Q(jsonld_file=''), Q.AND)
+        elif val == 'csv':
+            query.add(~Q(csv_file=None), Q.OR)
+            query.add(~Q(csv_file=''), Q.AND)
+        return queryset.filter(query)
 
 
 class TaskStatus(admin.SimpleListFilter):
@@ -61,9 +97,11 @@ class TypeFilter(admin.SimpleListFilter):
     qs_param = '_type'
 
     def lookups(self, request, model_admin):
+        additional_lookups = RESOURCE_FORCED_TYPE if is_enabled('S27_forced_file_type.be') else (
+            RESOURCE_FORCED_TYPE[0],)
         return (
             *RESOURCE_TYPE,
-            (RESOURCE_TYPE_API_CHANGE, RESOURCE_TYPE_API_CHANGE_LABEL),
+            *additional_lookups,
         )
 
     def queryset(self, request, queryset):
@@ -73,8 +111,10 @@ class TypeFilter(admin.SimpleListFilter):
 
         if value == RESOURCE_TYPE_API_CHANGE:
             return queryset.filter(type=RESOURCE_TYPE_API, forced_api_type=True)
-
-        return queryset.filter(type=value).exclude(forced_api_type=True)
+        elif value == RESOURCE_TYPE_FILE_CHANGE:
+            return queryset.filter(type=RESOURCE_TYPE_FILE, forced_file_type=True)
+        return queryset.filter(type=value).exclude(
+            Q(forced_api_type=True) | Q(forced_file_type=True))
 
 
 class LinkStatusFilter(TaskStatus):
@@ -133,7 +173,7 @@ def process_verification_results(col, results, table_schema, rules):
     msg_class = messages.ERROR
     colname = get_colname(col, table_schema)
     results_hits = results.get('hits')
-    translated_rule_name = rules_names.get(rules[col])
+    translated_rule_name = rules_names.get(rules[col], rules[col])
     if results_hits:
         hits = results_hits.get('hits')
         if len(hits) > 0:
@@ -164,12 +204,8 @@ class ResourceAdmin(DynamicAdminListDisplayMixin, AddChangeMixin, StatusLabelAdm
                     HistoryMixin, ExportCsvMixin, LangFieldsOnlyMixin, MCODAdminMixin, admin.ModelAdmin):
     actions_on_top = True
 
-    if is_enabled('S22_forced_api_type.be'):
-        TYPE_FILTER = TypeFilter
-        TYPE_DISPLAY_FIELD = 'type_as_str'
-    else:
-        TYPE_FILTER = 'type'
-        TYPE_DISPLAY_FIELD = 'type'
+    TYPE_FILTER = TypeFilter
+    TYPE_DISPLAY_FIELD = 'type_as_str'
 
     def change_suit_form_tabs(self, obj):
         form_tabs = [
@@ -227,19 +263,17 @@ class ResourceAdmin(DynamicAdminListDisplayMixin, AddChangeMixin, StatusLabelAdm
             'classes': ('suit-tab', 'suit-tab-general'),
             'fields': ('status', 'from_resource'),
         }),
+        (None, {
+            'classes': ('suit-tab', 'suit-tab-general'),
+            'fields': ('special_signs',),
+        })
     ]
-    if is_enabled('S16_special_signs.be'):
-        add_fieldsets.append(
-            (None, {
-                'classes': ('suit-tab', 'suit-tab-general'),
-                'fields': ('special_signs', ),
-            })
-        )
 
     change_readonly_fields = (
         'formats',
         'file',
         'csv_file',
+        'jsonld_file',
         'packed_file',
         'link',
         'modified',
@@ -268,9 +302,10 @@ class ResourceAdmin(DynamicAdminListDisplayMixin, AddChangeMixin, StatusLabelAdm
         'created',
     ]
 
+    format_filter = [FormatFilter] if is_enabled('S28_resources_format_filter.be') else ['format']
     list_filter = [
         DatasetFilter,
-        "format",
+        *format_filter,
         TYPE_FILTER,
         "status",
         LinkStatusFilter,
@@ -287,6 +322,11 @@ class ResourceAdmin(DynamicAdminListDisplayMixin, AddChangeMixin, StatusLabelAdm
         DataTaskResultInline,
         LinkTaskResultInline,
     ]
+    suit_form_includes = (
+        ('widgets/resource_data_types_actions.html', 'bottom', 'types'),
+        ('widgets/resource_data_rules_actions.html', 'bottom', 'rules'),
+        ('widgets/resource_maps_and_plots_actions.html', 'bottom', 'maps_and_plots'),
+    )
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == 'dataset':
@@ -330,7 +370,7 @@ class ResourceAdmin(DynamicAdminListDisplayMixin, AddChangeMixin, StatusLabelAdm
         if is_enabled('S24_named_charts.be'):
             fields = ('maps_and_plots', 'is_chart_creation_blocked', )
         else:
-            fields = ('maps_and_plots', )
+            fields = ('maps_and_plots', )  # pragma: no cover
         fieldsets = [(
             None,
             {
@@ -342,15 +382,23 @@ class ResourceAdmin(DynamicAdminListDisplayMixin, AddChangeMixin, StatusLabelAdm
 
     def get_fieldsets(self, request, obj=None):
         if obj:
+            jsonld_file = ['jsonld_file'] if obj.jsonld_file and is_enabled('S27_csv_to_jsonld.be') else []
+            special_signs = ['special_signs'] if not obj.is_imported else []
             extra_fields = []
-            if is_enabled('S22_forced_api_type.be') and (obj.type == RESOURCE_TYPE_WEBSITE or obj.forced_api_type):
+            if obj.type == RESOURCE_TYPE_WEBSITE or obj.forced_api_type:
                 extra_fields = ['forced_api_type']
+            elif is_enabled('S27_forced_file_type.be') and not obj.forced_api_type and (
+                    obj.type == RESOURCE_TYPE_API or obj.forced_file_type or
+                    (obj.type == RESOURCE_TYPE_FILE and obj.tracker.has_changed('forced_file_type'))):
+                extra_fields = ['forced_file_type']
 
+            extra_fields = extra_fields if not obj.is_imported else []
             tab_general_fields = (
                 'link',
                 *extra_fields,
                 'file',
                 'csv_file',
+                *jsonld_file,
                 'packed_file',
                 'title',
                 'description',
@@ -358,7 +406,7 @@ class ResourceAdmin(DynamicAdminListDisplayMixin, AddChangeMixin, StatusLabelAdm
                 'dataset',
                 'data_date',
                 'status',
-                'special_signs',
+                *special_signs,
                 'show_tabular_view',
                 'modified',
                 'created',
@@ -367,10 +415,6 @@ class ResourceAdmin(DynamicAdminListDisplayMixin, AddChangeMixin, StatusLabelAdm
                 'file_info',
                 'file_encoding',
             )
-            if obj.is_imported:
-                tab_general_fields = (x for x in tab_general_fields if x != 'special_signs')
-            if not is_enabled('S16_special_signs.be'):
-                tab_general_fields = (x for x in tab_general_fields if x != 'special_signs')
             if not obj.csv_file:
                 tab_general_fields = (x for x in tab_general_fields if x != 'csv_file')
             change_fieldsets = [
@@ -418,16 +462,13 @@ class ResourceAdmin(DynamicAdminListDisplayMixin, AddChangeMixin, StatusLabelAdm
         return tuple(set(readonly_fields))
 
     def render_change_form(self, request, context, add=False, change=False, form_url='', obj=None):
-        context.update(
-            {
-                'suit_form_tabs': self.change_suit_form_tabs(obj) if obj else self.add_suit_form_tabs
-            }
-        )
+        extra = {
+            'suit_form_tabs': self.change_suit_form_tabs(obj) if obj else self.add_suit_form_tabs,
+        }
         if obj and obj.is_imported:
-            context.update({
-                'show_save': False,
-                'show_save_and_continue': False,
-            })
+            extra['show_save'] = False
+            extra['show_save_and_continue'] = False
+        context.update(extra)
         return super().render_change_form(request, context, add=add, change=change, form_url=form_url, obj=obj)
 
     def get_queryset(self, request):
@@ -452,25 +493,7 @@ class ResourceAdmin(DynamicAdminListDisplayMixin, AddChangeMixin, StatusLabelAdm
             _data_status=Subquery(
                 data_tasks.values('status')[:1])
         )
-
         return qs
-
-    def get_field_queryset(self, db, db_field, request):
-        if 'object_id' in request.resolver_match.kwargs:
-            resource_id = int(request.resolver_match.kwargs['object_id'])
-            if db_field.name == 'link_tasks':
-                return db_field.remote_field.model._default_manager.filter(
-                    link_task_resources__id=resource_id,
-                )
-            if db_field.name == 'file_tasks':
-                return db_field.remote_field.model._default_manager.filter(
-                    file_task_resources__id=resource_id,
-                )
-            if db_field.name == 'data_tasks':
-                return db_field.remote_field.model._default_manager.filter(
-                    data_task_resources__id=resource_id,
-                )
-        super().get_field_queryset(db, db_field, request)
 
     def link_status(self, obj):
         return self._format_list_status(obj._link_status)
@@ -493,17 +516,12 @@ class ResourceAdmin(DynamicAdminListDisplayMixin, AddChangeMixin, StatusLabelAdm
 
     tabular_view.admin_order_field = '_data_status'
 
-    if is_enabled('S21_admin_ui_changes.be'):
-        tabular_view.short_description = format_html('<i class="fas fa-table" title="{}"></i>'.format(
-            _('Tabular data validation status')))
-        file_status.short_description = format_html('<i class="fas fa-file" title="{}"></i>'.format(
-            _('File validation status')))
-        link_status.short_description = format_html('<i class="fas fa-link" title="{}"></i>'.format(
-            _('Link validation status')))
-    else:
-        tabular_view.short_description = format_html('<i class="fas fa-table"></i>')
-        file_status.short_description = format_html('<i class="fas fa-file"></i>')
-        link_status.short_description = format_html('<i class="fas fa-link"></i>')
+    tabular_view.short_description = format_html('<i class="fas fa-table" title="{}"></i>'.format(
+        _('Tabular data validation status')))
+    file_status.short_description = format_html('<i class="fas fa-file" title="{}"></i>'.format(
+        _('File validation status')))
+    link_status.short_description = format_html('<i class="fas fa-link" title="{}"></i>'.format(
+        _('Link validation status')))
 
     def save_model(self, request, obj, form, change):
         if not obj.id:
@@ -533,15 +551,6 @@ class ResourceAdmin(DynamicAdminListDisplayMixin, AddChangeMixin, StatusLabelAdm
                 initial['title_en'] = data.get('title_en')
                 initial['description_en'] = data.get('description_en')
                 initial['slug_en'] = data.get('slug_en')
-
-        for k in initial:
-            try:
-                f = self.model._meta.get_field(k)
-            except FieldDoesNotExist:
-                continue
-            # We have to special-case M2Ms as a list of comma-separated PKs.
-            if isinstance(f, ManyToManyField):
-                initial[k] = initial[k].split(",")
         return initial
 
     def get_urls(self):
@@ -554,15 +563,18 @@ class ResourceAdmin(DynamicAdminListDisplayMixin, AddChangeMixin, StatusLabelAdm
     def revalidate(self, request, resource_id, *args, **kwargs):
         if not self.has_change_permission(request):
             raise PermissionDenied
-
         try:
             resource = self.model.objects.get(pk=resource_id)
         except self.model.DoesNotExist:
-            return Http404(_('Resource with this id does not exists'))
+            url = reverse(
+                'admin:resources_resource_changelist',
+                current_app=self.admin_site.name,
+            )
+            messages.add_message(request, messages.WARNING, _('Resource with this id does not exists'))
+            return HttpResponseRedirect(url)
 
         resource.revalidate()
         messages.add_message(request, messages.SUCCESS, _('Task for resource revalidation queued'))
-
         url = reverse(
             'admin:resources_resource_change',
             args=[resource_id],
@@ -579,22 +591,19 @@ class ResourceAdmin(DynamicAdminListDisplayMixin, AddChangeMixin, StatusLabelAdm
                 res, msg_class = process_verification_results(col, res, obj.tabular_data_schema, rules)
                 self.message_user(request, res, msg_class)
             return HttpResponseRedirect(".")
-
         elif '_change_type' in request.POST:
             obj.save()
             messages.add_message(request, messages.SUCCESS, _('Data type changed'))
             self.revalidate(request, obj.id)
-
         elif '_map_save' in request.POST:
             obj.save()
             messages.add_message(request, messages.SUCCESS, _('Map definition saved'))
             self.revalidate(request, obj.id)
-            # add here another actions
 
         return super().response_change(request, obj)
 
     def _changeform_view(self, request, object_id, form_url, extra_context):
-        if '_validate_rules' in request.POST:
+        if '_verify_rules' in request.POST:
             obj = self.model.objects.get(pk=object_id)
             return self.response_change(request, obj)
         else:
@@ -602,28 +611,39 @@ class ResourceAdmin(DynamicAdminListDisplayMixin, AddChangeMixin, StatusLabelAdm
 
 
 @admin.register(ResourceTrash)
-class TrashAdmin(TrashMixin):
+class TrashAdmin(HistoryMixin, TrashMixin):
     list_display = ['title', 'dataset', 'modified']
     search_fields = ['title', 'dataset__title']
-    fields = [
-        'file',
-        'link',
-        'title',
-        'description',
-        'dataset',
-        'status',
-        'created',
-        'modified',
-        'verified',
-        'data_date',
-        'is_removed',
-    ]
-    readonly_fields = [field for field in fields if field != 'is_removed']
-
     form = TrashResourceForm
+    is_history_with_unknown_user_rows = True
+    related_objects_query = 'dataset'
+    cant_restore_msg = _(
+        'Couldn\'t restore following resources, because their related datasets are still removed: {}')
+
+    def get_fields(self, request, obj=None):
+        csv_file = ['csv_file'] if obj and obj.csv_file else []
+        jsonld_file = ['jsonld_file'] if obj and obj.jsonld_file and is_enabled('S27_csv_to_jsonld.be') else []
+        return [
+            'file',
+            *csv_file,
+            *jsonld_file,
+            'link',
+            'title',
+            'description',
+            'dataset',
+            'status',
+            'created',
+            'modified',
+            'verified',
+            'data_date',
+            'is_removed',
+        ]
+
+    def get_readonly_fields(self, request, obj=None):
+        return [field for field in self.get_fields(request, obj=obj) if field != 'is_removed']
 
     def get_queryset(self, request):
-        qs = Resource.deleted.all()
+        qs = super().get_queryset(request)
         if request.user.is_superuser:
             return qs
         return qs.filter(dataset__organization_id__in=request.user.organizations.all())

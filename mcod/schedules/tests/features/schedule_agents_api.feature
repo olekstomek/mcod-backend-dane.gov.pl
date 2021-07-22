@@ -1,5 +1,5 @@
 Feature: Schedule agents API
-  Scenario Outline: Test schedule agent details endpoint is not accessible for active user
+  Scenario Outline: Schedule agent details endpoint is not accessible for active user
     Given logged active user
     And logged out agent user created with {"id": 999}
     When api request method is GET
@@ -14,7 +14,7 @@ Feature: Schedule agents API
     | en        | errors/[0]/detail | Additional permissions are required! |
     | pl        | errors/[0]/detail | Wymagane są dodatkowe uprawnienia!   |
 
-  Scenario Outline: Test schedule agent details endpoint is not accessible for agent
+  Scenario Outline: Schedule agent details endpoint is not accessible for agent
     Given logged out agent user created with {"id": 999, "email": "agent1@dane.gov.pl"}
     And logged agent user
     When api request method is GET
@@ -29,7 +29,16 @@ Feature: Schedule agents API
     | en        | errors/[0]/detail | Additional permissions are required! |
     | pl        | errors/[0]/detail | Wymagane są dodatkowe uprawnienia!   |
 
-  Scenario: Test that schedule agent details endpoint is accessible for admin
+  Scenario: Schedule agent details endpoint returns 404 for invalid agent id
+    Given logged out agent user created with {"id": 999}
+    And schedule data created with {"schedule_id": 999, "schedule_state": "planned"}
+    And logged admin user
+    When api request method is GET
+    And api request path is /auth/schedule_agents/9999
+    Then send api request and fetch the response
+    And api's response status code is 404
+
+  Scenario: Schedule agent details endpoint is accessible for admin
     Given logged out agent user created with {"id": 999}
     And schedule data created with {"schedule_id": 999, "schedule_state": "planned"}
     And logged admin user
@@ -44,7 +53,7 @@ Feature: Schedule agents API
     And api's response body has field data/attributes/planned_user_schedule/is_ready
     And api's response body has field data/attributes/planned_user_schedule/state
 
-  Scenario: Test that admin is able to create user schedule item for specified agent
+  Scenario: Admin is able to create user schedule item for specified agent
     Given logged out agent user created with {"id": 999}
     And schedule data created with {"schedule_id": 999, "schedule_state": "planned"}
     And logged admin user
@@ -56,7 +65,7 @@ Feature: Schedule agents API
     And api's response body field data/type is user_schedule_item
     And api's response body field data/attributes/state is planned
 
-  Scenario: Test that active user cannot to create user schedule item for specified agent
+  Scenario: Active user cannot create user schedule item for specified agent
     Given logged out agent user created with {"id": 999}
     And schedule data created with {"schedule_id": 999, "schedule_state": "planned"}
     And logged active user
@@ -67,7 +76,7 @@ Feature: Schedule agents API
     And api's response status code is 403
     And api's response body field errors/[0]/detail is Wymagane są dodatkowe uprawnienia!
 
-  Scenario: Test that admin cannot to create user schedule item for specified agent if planned schedule is not found
+  Scenario: Admin cannot create user schedule item for specified agent if planned schedule is not found
     Given logged out agent user created with {"id": 999}
     And logged admin user
     When api request method is POST
@@ -76,3 +85,12 @@ Feature: Schedule agents API
     Then send api request and fetch the response
     And api's response status code is 403
     And api's response body field errors/[0]/title is There is no currently planned schedule yet!
+
+  Scenario: Create user schedule item for specified agent request returns 404 for invalid agent id
+    Given logged out agent user created with {"id": 999}
+    And logged admin user
+    When api request method is POST
+    And api request path is /auth/schedule_agents/9999
+    And api request user_schedule_item data has {"is_new": true}
+    Then send api request and fetch the response
+    And api's response status code is 404

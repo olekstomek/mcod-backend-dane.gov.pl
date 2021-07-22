@@ -1,13 +1,14 @@
 from django.utils.translation import gettext as _
-from marshmallow import validates, ValidationError
+from marshmallow import pre_load, validate, validates, validates_schema, ValidationError
 
-from mcod.core.api import fields as core_fields
+from mcod.core.api import fields
 from mcod.core.api.jsonapi.deserializers import TopLevel, ObjectAttrs
 from mcod.core.api.schemas import (
     CommonSchema, ExtSchema, ListingSchema, ListTermsSchema, NumberTermSchema, StringTermSchema, StringMatchSchema,
     DateTermSchema)
 from mcod.core.api.search import fields as search_fields
 from mcod.datasets.deserializers import RdfValidationRequest
+from mcod.unleash import is_enabled
 
 
 class ResourceDatasetFilterField(ExtSchema):
@@ -221,7 +222,7 @@ class GeoApiSearchRequest(ListingSchema):
 
 
 class CreateCommentAttrs(ObjectAttrs):
-    comment = core_fields.String(required=True, description='Comment body', example='Looks unpretty')
+    comment = fields.String(required=True, description='Comment body', example='Looks unpretty')
 
     @validates('comment')
     def validate_comment(self, comment):
@@ -239,18 +240,51 @@ class CreateCommentRequest(TopLevel):
         attrs_schema = CreateCommentAttrs
 
 
-class CreateChartAttrs(ObjectAttrs):
-    resource_id = core_fields.Int(dump_only=True)
-    chart = core_fields.Raw(required=True)
-    is_default = core_fields.Bool()
+class ChartAttrs(ObjectAttrs):
+    resource_id = fields.Int(dump_only=True)
+    chart = fields.Raw(required=True)
+    is_default = fields.Bool()
+    if is_enabled('S24_named_charts.be'):
+        name = fields.Str(required=True, validate=validate.Length(min=1, max=200))
 
     class Meta:
-        object_type = "chart"
+        object_type = 'chart'
         strict = True
         ordered = True
 
+    @pre_load
+    def prepare_data(self, data, **kwargs):
+        data.setdefault('is_default', False)
+        return data
 
-class CreateChartRequest(TopLevel):
+    @validates_schema
+    def validate_schema(self, data, **kwargs):
+        chart = self.context.get('chart')
+        resource = self.context['resource']
+        user = self.context['user']
+        if is_enabled('S24_named_charts.be'):
+            if resource.is_chart_creation_blocked and not any([user.is_staff, user.is_superuser]):
+                raise ValidationError(_('Chart creation for this resource is blocked!'))
+            if data['is_default'] and not any([user.is_superuser,
+                                               user.is_editor_of_organization(resource.institution)]):
+                raise ValidationError(_('No permission to define chart'))
+            if chart and chart.is_default != data['is_default']:
+                raise ValidationError(_('You cannot change type of chart!'))
+            private_charts = resource.charts.filter(is_default=False, created_by=user)
+            if chart:
+                private_charts = private_charts.exclude(id=chart.id)
+            if not data['is_default'] and private_charts.exists():
+                raise ValidationError(_('You cannot add another private chart!'))
+            charts_with_same_name = resource.charts.filter(is_default=True, name=data['name'])
+            if chart:
+                charts_with_same_name = charts_with_same_name.exclude(id=chart.id)
+            if charts_with_same_name.exists() and data['is_default']:
+                raise ValidationError(
+                    _('You cannot put changes into chart defined by Data Provider. Please provide new chart name.')
+                )
+
+
+class ChartApiRequest(TopLevel):
     class Meta:
-        attrs_schema = CreateChartAttrs
+        attrs_schema = ChartAttrs
         attrs_schema_required = True

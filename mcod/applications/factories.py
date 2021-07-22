@@ -36,4 +36,16 @@ class ApplicationFactory(factory.django.DjangoModelFactory):
         django_get_or_create = ('title',)
 
 
+class ApplicationProposalFactory(factory.django.DjangoModelFactory):
+    title = factory.Faker('text', max_nb_chars=80, locale='pl_PL')
+    notes = factory.Faker('paragraph', nb_sentences=5, locale='pl_PL')
+    author = factory.Faker('name')
+    url = factory.Faker('url')
+
+    class Meta:
+        model = models.ApplicationProposal
+        django_get_or_create = ('title',)
+
+
 factories_registry.register('application', ApplicationFactory)
+factories_registry.register('applicationproposal', ApplicationProposalFactory)

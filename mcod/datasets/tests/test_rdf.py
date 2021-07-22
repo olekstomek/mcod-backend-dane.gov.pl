@@ -12,11 +12,9 @@ from mcod.core.api.rdf.profiles.common import CATALOG_URL
 from mcod.core.api.rdf.profiles.dcat_ap import VOCABULARIES
 from mcod.datasets.serializers import UPDATE_FREQUENCY_TO_DCAT
 from mcod.lib.extended_graph import ExtendedGraph
-from mcod.unleash import is_enabled
 
 scenarios('features/dataset_rdf.feature')
-if is_enabled('S22_sparql_object_management.be'):
-    scenarios('features/dataset_sparql.feature')
+scenarios('features/dataset_sparql.feature')
 
 
 @pytest.mark.elasticsearch
@@ -192,7 +190,7 @@ def get_catalog_dcat_ap_triples(dataset, config):
 
         (catalog_ref, ns.DCAT.themeTaxonomy, theme_taxonomy_ref),
         (theme_taxonomy_ref, RDF.type, ns.SKOS.ConceptScheme),
-        (theme_taxonomy_ref, ns.DCT.title, Literal('System zarządzania wiedzą', lang='pl')),
+        (theme_taxonomy_ref, ns.DCT.title, Literal('Kategoria danych', lang='pl')),
         (theme_taxonomy_ref, ns.DCT.title, Literal('Data theme', lang='en')),
 
         (catalog_ref, ns.FOAF.homepage, homepage_ref),
@@ -235,12 +233,8 @@ def get_dataset_dcat_ap_triples(dataset, config):
 
     vocab = VOCABULARIES
 
-    if is_enabled('S21_licenses.be'):
-        license_link = resource.dataset.license_link
-        license_triple = (resource_ref, ns.DCAT.license, URIRef(license_link))
-    else:
-        license_name = resource.dataset.license.name if resource.dataset.license else "unknown"
-        license_triple = (resource_ref, ns.DCAT.license, Literal(license_name, datatype=ns.DCT.LicenseDocument))
+    license_link = resource.dataset.license_link
+    license_triple = (resource_ref, ns.DCAT.license, URIRef(license_link))
 
     vcard_kind_ref = BNode('VcardKind')
     vcard_kind_triples = get_vcard_kind_dcat_ap_triples(vcard_kind_ref, config)
@@ -257,7 +251,7 @@ def get_dataset_dcat_ap_triples(dataset, config):
             (category_ref, ns.SKOS.prefLabel, Literal(category.title, lang='pl')),
             (category_ref, ns.SKOS.prefLabel, Literal(category.title, lang='en')),
             (theme_taxonomy_ref, RDF.type, ns.SKOS.ConceptScheme),
-            (theme_taxonomy_ref, ns.DCT.title, Literal('System zarządzania wiedzą', lang='pl')),
+            (theme_taxonomy_ref, ns.DCT.title, Literal('Kategoria danych', lang='pl')),
             (theme_taxonomy_ref, ns.DCT.title, Literal('Data theme', lang='en')),
         ])
 
@@ -368,14 +362,8 @@ def get_dataset_schemaorg_triples(dataset):
     dataset_uri = dataset.frontend_absolute_url
     dataset_ref = URIRef(dataset_uri)
 
-    dataset_license_triples = []
-
-    if is_enabled('S21_licenses.be'):
-        resource_license_triple = (resource_ref, ns.SCHEMA.license, Literal(resource.dataset.license_link))
-        dataset_license_triples = [(dataset_ref, ns.SCHEMA.license, Literal(dataset.license_link))]
-    else:
-        license_name = resource.dataset.license.name if resource.dataset.license else "unknown"
-        resource_license_triple = (resource_ref, ns.SCHEMA.license, Literal(license_name))
+    resource_license_triple = (resource_ref, ns.SCHEMA.license, Literal(resource.dataset.license_link))
+    dataset_license_triples = [(dataset_ref, ns.SCHEMA.license, Literal(dataset.license_link))]
 
     triples = [
         # DATASET

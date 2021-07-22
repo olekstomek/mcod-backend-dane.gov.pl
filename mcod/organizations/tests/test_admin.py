@@ -5,18 +5,11 @@ from django.utils.encoding import smart_text
 from pytest_bdd import scenarios
 
 from mcod.organizations.models import Organization
-from mcod.unleash import is_enabled
-
-if is_enabled('S18_new_tags.be'):
-    organization_creation_admin = 'features/organization_creation_admin_new_tags.feature'
-else:
-    organization_creation_admin = 'features/organization_creation_admin_old_tags.feature'
 
 
 scenarios(
     'features/organization_details_admin.feature',
     'features/organizations_list_admin.feature',
-    organization_creation_admin,
 )
 
 
@@ -92,7 +85,7 @@ def test_add_dataset_to_organization_from_organization_form(admin, tag, tag_pl, 
         "datasets-2-MIN_NUM_FORMS": "0",
         "datasets-2-MAX_NUM_FORMS": "1000",
         "datasets-2-0-title": "test",
-        "datasets-2-0-notes": "<p>123</p>",
+        "datasets-2-0-notes": "<p>more than 20 characters</p>",
         "datasets-2-0-url": "",
         "json_key[datasets-2-0-customfields]": "key",
         "json_value[datasets-2-0-customfields]": "value",
@@ -105,15 +98,11 @@ def test_add_dataset_to_organization_from_organization_form(admin, tag, tag_pl, 
         "datasets-2-0-id": "",
         "datasets-2-0-organization": "",
         "datasets-2-0-image": small_image,
+        "datasets-2-0-tags_pl": [tag_pl.id],
 
     }
-    if is_enabled('S18_new_tags.be'):
-        data['datasets-2-0-tags_pl'] = [tag_pl.id]
-    else:
-        data['datasets-2-0-tags'] = [tag.id]
 
     client.post(reverse("admin:organizations_organization_add"), data=data, follow=True)
-
     org = Organization.objects.last()
     assert org.title == "Miasto Brańsk"
     assert org.datasets.last().title == 'test'

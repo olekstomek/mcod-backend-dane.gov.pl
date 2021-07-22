@@ -1,9 +1,11 @@
+import datetime
 import dpath
 import json
 import os
 import shutil
 import smtplib
 
+from django.apps import apps
 from django.test import Client
 from django.utils import translation
 
@@ -11,7 +13,6 @@ from pytest_bdd import given, parsers, then, when
 
 from mcod import settings
 from mcod.core.registries import factories_registry
-from mcod.unleash import is_enabled
 
 
 def copyfile(src, dst):
@@ -29,7 +30,12 @@ def prepare_file(filename):
 
 def create_object(obj_type, obj_id, is_removed=False, status='published', **kwargs):
     _factory = factories_registry.get_factory(obj_type)
-    return _factory(pk=obj_id, is_removed=is_removed, status=status, **kwargs)
+    kwargs['pk'] = obj_id
+    if obj_type != 'tag':
+        kwargs['is_removed'] = is_removed
+    if 'user' not in obj_type:
+        kwargs['status'] = status
+    return _factory(**kwargs)
 
 
 @given('list of sent emails is empty')
@@ -295,8 +301,11 @@ def translated_object_type(object_type):
 
 @given('<object_type> created with params <params>')
 @given(parsers.parse('{object_type} created with params {params}'))
-def object_type_created_with_params(object_type, params):
+def object_type_created_with_params(context, object_type, params):
     params = json.loads(params)
+    if object_type.endswith('report'):
+        _factory = factories_registry.get_factory(object_type)
+        return _factory.create(**params)
     object_id = params.pop('id')
     tags = params.pop('tags', [])
     tag_factory = factories_registry.get_factory('tag')
@@ -306,6 +315,8 @@ def object_type_created_with_params(object_type, params):
         _tags.append(tag)
     if _tags:
         params['tags'] = _tags
+    if object_type == 'chart':
+        params['created_by'] = context.user
     create_object(object_type, object_id, **params)
 
 
@@ -381,14 +392,23 @@ def admin_request_method(admin_context, request_method):
 
 
 @given(parsers.parse('admin\'s request logged user is {user_type}'))
+@given('admin\'s request logged user is <user_type>')
 def admin_request_logged_user_is(admin_context, user_type):
-    assert user_type in ['academy admin', 'laboratory admin', 'active user', 'admin user', 'editor user']
     _factory = factories_registry.get_factory(user_type)
+    assert _factory is not None
     admin_context.admin.user = _factory.create(
         email='{}@dane.gov.pl'.format(user_type.replace(' ', '_')),
         password='12345.Abcde',
         phone='0048123456789',
     )
+
+
+@given(parsers.parse('admin\'s request logged {user_type} created with params {user_params}'))
+def admin_request_logged_user_with_id(admin_context, user_type, user_params):
+    _factory = factories_registry.get_factory(user_type)
+    assert _factory is not None
+    data = json.loads(user_params)
+    admin_context.admin.user = _factory(**data)
 
 
 @when(parsers.parse('admin\'s request posted {data_type} data is {req_post_data}'))
@@ -402,6 +422,13 @@ def api_request_post_data(admin_context, data_type, req_post_data):
             "notes": "opis",
             "url": "http://test.pl",
             "status": "published",
+        },
+        'article': {
+            "title": "Test with article title",
+            "slug": "",
+            "notes": "Tresc",
+            "status": "published",
+            "category": None,
         },
         'course': {
             "modules-TOTAL_FORMS": "1",
@@ -429,6 +456,51 @@ def api_request_post_data(admin_context, data_type, req_post_data):
             "file": "",
             "materials_file": "",
             "status": "published",
+        },
+        'dataset': {
+            "title": "Test with dataset title",
+            "notes": "more than 20 characters",
+            "status": "published",
+            "update_frequency": "weekly",
+            "url": "http://www.test.pl",
+            "organization": [],
+            "tags": [],
+
+            "resources-TOTAL_FORMS": "0",
+            "resources-INITIAL_FORMS": "0",
+            "resources-MIN_NUM_FORMS": "0",
+            "resources-MAX_NUM_FORMS": "1000",
+            "resources-2-TOTAL_FORMS": "0",
+            "resources-2-INITIAL_FORMS": "0",
+            "resources-2-MIN_NUM_FORMS": "0",
+            "resources-2-MAX_NUM_FORMS": "1000",
+        },
+        'datasource': {
+            '_save': [''],
+            'name': [''],
+            'description': [''],
+            'source_type': [''],
+            'source_hash': [''],
+            'xml_url': [''],
+            'portal_url': ['http://example.com'],
+            'api_url': [''],
+            'organization': [],
+            'frequency_in_days': [],
+            'status': [''],
+            'license_condition_db_or_copyrighted': [''],
+            'categories': [],
+            'institution_type': ['local'],
+            'imports-TOTAL_FORMS': ['0'],
+            'imports-INITIAL_FORMS': ['0'],
+            'imports-MIN_NUM_FORMS': ['0'],
+            'imports-MAX_NUM_FORMS': ['0'],
+            'datasource_datasets-TOTAL_FORMS': ['0'],
+            'datasource_datasets-INITIAL_FORMS': ['0'],
+            'datasource_datasets-MIN_NUM_FORMS': ['0'],
+            'datasource_datasets-MAX_NUM_FORMS': ['0']
+        },
+        'datasetsubmission': {
+
         },
         'institution': {
             "_save": "",
@@ -554,12 +626,8 @@ def api_request_post_data(admin_context, data_type, req_post_data):
         }
     }
     assert data_type in default_post_data.keys()
-    if is_enabled('S18_new_tags.be'):
-        default_post_data["datasets-2-0-tags_pl"] = []
-        default_post_data["datasets-2-0-tags_en"] = []
-    else:
-        default_post_data["datasets-2-0-tags"] = []
-
+    default_post_data["datasets-2-0-tags_pl"] = []
+    default_post_data["datasets-2-0-tags_en"] = []
     data = default_post_data.get(data_type, {}).copy()
     data.update(post_data)
     admin_context.obj = data
@@ -567,6 +635,16 @@ def api_request_post_data(admin_context, data_type, req_post_data):
 
 @then(parsers.parse('admin\'s response status code is {status_code:d}'))
 def admin_response_status_code(admin_context, status_code):
+    assert status_code == admin_context.response.status_code, 'Response status should be "%s", is "%s"' % (
+        status_code,
+        admin_context.response.status_code
+    )
+
+
+@then(parsers.parse("admin's response status code is 200 if {has_trash:d} else 404"))
+@then("admin's response status code is 200 if <has_trash> else 404")
+def admin_response_status_code_is_200_or_404(admin_context, has_trash):
+    status_code = 200 if has_trash else 404
     assert status_code == admin_context.response.status_code, 'Response status should be "%s", is "%s"' % (
         status_code,
         admin_context.response.status_code
@@ -598,6 +676,7 @@ def admin_response_page_not_contains(admin_context, value):
 
 
 @when(parsers.parse('admin\'s page {page_url} is requested'))
+@when('admin\'s page <page_url> is requested')
 def admin_page_is_requested(admin_context, page_url):
     client = Client()
     client.force_login(admin_context.admin.user)
@@ -668,3 +747,42 @@ def removed_objects_with_ids(object_type, object_ids):
         instance = _factory(pk=int(obj_id))
         instance.is_removed = True
         instance.save()
+
+
+@then(parsers.parse('{object_type} with title {title} contains data {data_str}'))
+def obj_with_title_attribute_is(object_type, title, data_str):
+    model = apps.get_model(object_type)
+    obj = model.objects.get(title=title)
+    data = json.loads(data_str)
+    for attr_name, attr_value in data.items():
+        obj_attr = getattr(obj, attr_name)
+        if isinstance(obj_attr, datetime.date):
+            obj_attr = str(obj_attr)
+        assert obj_attr == attr_value, f'{object_type} attribute {attr_name} should be {attr_value}, but is {obj_attr}'
+
+
+@given('removed <object_type> objects with ids <object_with_related_removed_ids> and'
+       ' removed related <related_object_type> through <relation_name>')
+def removed_objects_with_ids_and_removed_related_object(
+        object_type, object_with_related_removed_ids, related_object_type, relation_name):
+    _factory = factories_registry.get_factory(object_type)
+    _related_factory = factories_registry.get_factory(related_object_type)
+    split_ids = object_with_related_removed_ids.split(',')
+    related_object = _related_factory.create(is_removed=True)
+    factory_kwargs = {'is_removed': True, relation_name: related_object}
+    for obj_id in split_ids:
+        factory_kwargs['pk'] = int(obj_id)
+        _factory.create(**factory_kwargs)
+
+
+@then(parsers.parse('{object_type} with id {obj_id} contains data {data_str}'))
+@then('<object_type> with id <obj_id> contains data <data_str>')
+def obj_with_id_attribute_is(object_type, obj_id, data_str):
+    model = apps.get_model(object_type)
+    obj = model.objects.get(id=obj_id)
+    data = json.loads(data_str)
+    for attr_name, attr_value in data.items():
+        obj_attr = getattr(obj, attr_name)
+        if isinstance(obj_attr, datetime.date):
+            obj_attr = str(obj_attr)
+        assert obj_attr == attr_value, f'{object_type} attribute {attr_name} should be {attr_value}, but is {obj_attr}'

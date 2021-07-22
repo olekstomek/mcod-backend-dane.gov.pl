@@ -4,7 +4,6 @@ from django.apps import apps
 from django.db.models.manager import BaseManager
 from elasticsearch_dsl.utils import AttrList, AttrDict
 from django.utils.translation import get_language
-from mcod import settings
 from mcod.core.api import fields
 
 
@@ -102,23 +101,6 @@ class TranslatedStr(fields.String):
             attr = '{}_{}'.format(attr, lang)
             value = getattr(obj, attr, None) or value
         return super()._serialize(value, attr, obj, **kwargs)
-
-
-class TranslatedTagsList(fields.List):
-    def _serialize(self, value, attr, obj, **kwargs):
-        def get_tag_name(tag, lang):
-            return getattr(tag, f'name_{lang}') or getattr(tag, f'name_{settings.LANGUAGE_CODE}')
-
-        tags_list = []
-        if not hasattr(obj, attr):
-            return tags_list
-        lang = get_language()
-        if isinstance(value, BaseManager):
-            tags_list = [get_tag_name(i, lang) for i in value.filter(language='')]
-        elif isinstance(value, AttrList):
-            tags_list = [i[lang] for i in value]
-
-        return [x for x in tags_list if x]
 
 
 class KeywordsList(fields.List):

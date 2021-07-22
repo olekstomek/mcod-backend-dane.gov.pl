@@ -13,10 +13,9 @@ from django_admin_multiple_choice_list_filter.list_filters import MultipleChoice
 from mcod.core.admin import MCODChangeList
 from mcod.lib.admin_mixins import (
     ActionsMixin, CRUDMessageMixin, HistoryMixin, TrashMixin,
-    StateStatusLabelAdminMixin, DynamicAdminListDisplayMixin
-)
+    StateStatusLabelAdminMixin, DynamicAdminListDisplayMixin,
+    SoftDeleteMixin)
 from mcod.reports.admin import ExportCsvMixin
-from mcod.unleash import is_enabled
 from mcod.users.forms import MeetingForm, UserCreationForm, UserChangeForm, FilteredSelectMultipleCustom
 from mcod.users.models import ACADEMY_PERMS_CODENAMES, LABS_PERMS_CODENAMES, User, Meeting, MeetingFile, MeetingTrash
 
@@ -85,7 +84,7 @@ class UserRoleListFilter(MultipleChoiceListFilter):
 
 @admin.register(User)
 class UserAdmin(DynamicAdminListDisplayMixin, StateStatusLabelAdminMixin, HistoryMixin,
-                ExportCsvMixin, AdminConfirmMixin, UserAdmin):
+                ExportCsvMixin, AdminConfirmMixin, SoftDeleteMixin, UserAdmin):
     add_form_template = 'admin/users/user/add_form.html'
     actions_on_top = True
     list_display = [
@@ -100,7 +99,7 @@ class UserAdmin(DynamicAdminListDisplayMixin, StateStatusLabelAdminMixin, Histor
     add_form = UserCreationForm
     change_password_form = AdminPasswordChangeForm
     confirm_change = True
-    confirmation_fields = ['is_agent'] if is_enabled('hod.be') else None
+    confirmation_fields = ['is_agent']
 
     def _change_confirmation_view(self, request, object_id, form_url, extra_context):  # noqa: C901
         to_field = request.POST.get(TO_FIELD_VAR, request.GET.get(TO_FIELD_VAR))
@@ -258,7 +257,7 @@ class UserAdmin(DynamicAdminListDisplayMixin, StateStatusLabelAdminMixin, Histor
             not obj.from_agent and not obj.agent_organization_main and not obj.extra_agent_of)
         _copy_agent_fields = [
             'is_agent_opts',
-            'from_agent'] if show_copy_agent_fields and is_enabled('S19_copy_agent.be') else []
+            'from_agent'] if show_copy_agent_fields else []
         permissions_fields = [
             'is_staff',
             'organizations',
@@ -307,7 +306,7 @@ class UserAdmin(DynamicAdminListDisplayMixin, StateStatusLabelAdminMixin, Histor
         ]
 
     def get_queryset(self, request):
-        qs = super(UserAdmin, self).get_queryset(request).exclude(is_removed=True)
+        qs = super().get_queryset(request).exclude(is_removed=True).exclude(is_permanently_removed=True)
         return qs if request.user.is_superuser else qs.filter(id=request.user.id)
 
     def save_model(self, request, obj, form, change):

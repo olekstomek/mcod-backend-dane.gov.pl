@@ -10,6 +10,7 @@ from mcod.articles.models import ArticleCategory
 from mcod.cms.models import FormPageSubmission
 from mcod.cms.models.formpage import Formset
 from mcod.datasets.models import Dataset
+from mcod.reports.models import Report
 from mcod.resources.models import Resource
 from mcod.resources.tasks import (
     process_resource_file_task,
@@ -153,11 +154,24 @@ class Command(BaseCommand):
             help='Loads data from file into FormDataSubmissions form_data field',
         )
 
+        parser.add_argument(
+            '--reports-id-column',
+            action='store_const',
+            dest='action',
+            const='reports-id-column',
+            help='Changes column name in reports from ID to id',
+        )
+
     def fix_resources(self):
         rs = Resource.objects.filter(dataset__is_removed=True)
         for r in rs:
             print(f"Resource ({r.id}) is set as removed because dataset ({r.dataset.id}) is removed")
             r.is_removed = True
+            r.save()
+        rs = Resource.objects.filter(dataset__is_permanently_removed=True)
+        for r in rs:
+            print(f"Resource ({r.id}) is set as permanently removed because dataset ({r.dataset.id}) is permanently removed")
+            r.is_permanently_removed = True
             r.save()
         rs = Resource.objects.filter(dataset__status="draft")
         for r in rs:
@@ -187,6 +201,11 @@ class Command(BaseCommand):
         for d in ds:
             print(f"Dataset ({d.id}) is set as removed because organization ({d.organization.id}) is removed")
             d.is_removed = True
+            d.save()
+        ds = Dataset.objects.filter(organization__is_permanently_removed=True)
+        for d in ds:
+            print(f"Dataset ({d.id}) is set as permanently removed because organization ({d.organization.id}) is permanently removed")  # noqa
+            d.is_permanently_removed = True
             d.save()
         ds = Dataset.objects.filter(organization__status="draft")
         for d in ds:
@@ -310,7 +329,7 @@ class Command(BaseCommand):
     def verified_for_removed_resources(self):
         # usunięte zasoby
         print("Aktualizacja verified dla usuniętych zasobów")
-        resources = Resource.deleted.all()
+        resources = Resource.trash.all()
         resources_count = resources.count()
         i = 0
         for r in resources:
@@ -358,7 +377,7 @@ class Command(BaseCommand):
     def verified_for_removed_datasets(self):
         # usunięte zbiory
         print("Aktualizacja verified dla usuniętych zbiorów")
-        datasets = Dataset.deleted.all()
+        datasets = Dataset.trash.all()
         datasets_count = datasets.count()
         i = 0
         for dataset in datasets:
@@ -514,6 +533,39 @@ class Command(BaseCommand):
             submission.save()
             print(f"FormPageSubmission's ({submission.id}) form_data after load:\n{submission.form_data}")
 
+    def fix_reports_id_column(self):
+        def file_starts_with_text(path, text):
+            with open(path) as file:
+                return file.read(len(text)) == text
+
+        def fix_id_column(path):
+            with open(path, 'rb') as file:
+                content = file.read()
+            assert content.startswith(b'ID;')
+            content = b'id' + content[2:]
+            with open(path, 'wb') as file:
+                file.write(content)
+
+        for report in Report.objects.all():
+            if not report.file:
+                print(f"report {report.id} doesn't have file")
+                continue
+
+            filepath = report.file
+            if filepath.startswith('/media/'):
+                filepath = filepath[1:]
+
+            fullpath = os.path.join(settings.ROOT_DIR, filepath)
+            if not os.path.exists(fullpath):
+                print(f"file {fullpath} doesn't exist")
+                continue
+
+            if not file_starts_with_text(fullpath, 'ID;'):
+                continue
+
+            print(f"converting report {report.id} with file {report.file}")
+            fix_id_column(filepath)
+
     def handle(self, *args, **options):
         if not options['action']:
             raise CommandError(
@@ -522,7 +574,7 @@ class Command(BaseCommand):
                 "'--resourcedatadate', '--resourcesformats', '--migratefollowings', '--setverified', "
                 "'--resources-links', '--resources-validation-results', '--resources-has-table-has-map', "
                 "'--submissions-to-new-format', '--submissions-to-old-format', "
-                "'--submissions-formdata-save', '--submissions-formdata-load'."
+                "'--submissions-formdata-save', '--submissions-formdata-load', '--reports-id-column'."
             )
         action = options['action']
 
@@ -542,6 +594,7 @@ class Command(BaseCommand):
             'submissions-to-old-format': self.convert_form_page_submissions_to_old_format,
             'submissions-formdata-save': self.save_form_page_submissions_form_data_to_file,
             'submissions-formdata-load': self.load_form_page_submissions_form_data_from_file,
+            'reports-id-column': self.fix_reports_id_column,
         }
         if action == 'all':
             self.fix_searchhistories()

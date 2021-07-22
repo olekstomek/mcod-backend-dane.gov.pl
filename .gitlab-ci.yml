@@ -20,7 +20,8 @@ prepare-images:
   script:
     - docker build -f docker/elasticsearch/Dockerfile -t $REGISTRY_PATH/elasticsearch:6.7.0-mcod-1 .
     - docker build -f docker/postgres/Dockerfile -t $REGISTRY_PATH/postgresql:10-mcod .
-    - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN registry.dane.gov.pl
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD registry.dane.gov.pl
+    #- docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN registry.dane.gov.pl
     - docker push $REGISTRY_PATH/elasticsearch:6.7.0-mcod-1
     - docker push $REGISTRY_PATH/postgresql:10-mcod
   except:
@@ -102,7 +103,8 @@ build-devel:
     - devel
   script:
     - docker build --build-arg REQ_FILE=requirements-common.txt -f docker/app/Dockerfile -t $REGISTRY_PATH/backend:devel .
-    - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN registry.dane.gov.pl
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD registry.dane.gov.pl
+    #- docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN registry.dane.gov.pl
     - docker push $REGISTRY_PATH/backend:devel
   tags:
     - shell
@@ -113,7 +115,8 @@ build-master:
     - master
   script:
     - docker build --build-arg REQ_FILE=requirements-common.txt -f docker/app/Dockerfile -t $REGISTRY_PATH/backend:master .
-    - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN registry.dane.gov.pl
+    #- docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN registry.dane.gov.pl
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD registry.dane.gov.pl
     - docker push $REGISTRY_PATH/backend:master
   tags:
     - shell
@@ -124,7 +127,8 @@ release-prod:
     - export API_VERSION=$(changelog current)
     - cat CHANGELOG.md
   script:
-    - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN registry.dane.gov.pl
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD registry.dane.gov.pl
+    #- docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN registry.dane.gov.pl
     - docker tag $REGISTRY_PATH/backend:master $REGISTRY_PATH/backend:master-$API_VERSION
     - docker tag $REGISTRY_PATH/backend:master $REGISTRY_PATH/backend:master-prod-latest
     - docker push $REGISTRY_PATH/backend:master-$API_VERSION
@@ -153,10 +157,8 @@ publish-code:
   before_script:
     - export API_VERSION=$(changelog current)
   script:
-    - git archive --output backend_$API_VERSION.zip -9 HEAD
-    - docker build --build-arg API_VERSION=$API_VERSION -f docker/code-repo/Dockerfile -t $REGISTRY_PATH/backend-archive:master .
-    - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN registry.dane.gov.pl
-    - docker push $REGISTRY_PATH/backend-archive:master
+    - git archive --output /gluster/mcod/code/backend_$API_VERSION.zip -9 HEAD
+    - ln -sfn /gluster/mcod/code/backend_$API_VERSION.zip /gluster/mcod/code/backend_latest.zip
   except:
     - devel
     - schedules

@@ -1,5 +1,5 @@
 import pytest
-from falcon import HTTP_OK
+from falcon import HTTP_OK, HTTP_201
 from django_redis import get_redis_connection
 
 
@@ -23,7 +23,7 @@ def test_searchhistories_middleware_set_up_key_in_redis(client, active_editor):
 
     token = resp.json['data']['attributes']['token']
 
-    assert resp.status == HTTP_OK
+    assert resp.status == HTTP_201
     resp = client.simulate_get(
         '/1.4/search',
         query_string='q=testmiddleware',

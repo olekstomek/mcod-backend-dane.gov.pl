@@ -2,12 +2,12 @@ from django.contrib.postgres.indexes import GinIndex
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from model_utils import FieldTracker
-from model_utils.managers import SoftDeletableManager
 from modeltrans.fields import TranslationField
 
 from mcod.core import storages
-from mcod.core.db.managers import DeletedManager
+from mcod.core.db.managers import TrashManager
 from mcod.core.db.models import ExtendedModel, TrashModelBase
+from mcod.core.managers import SoftDeletableManager
 from mcod.lib.widgets import RichTextUploadingField
 
 EVENT_TYPES = [
@@ -23,9 +23,8 @@ class LabEvent(ExtendedModel):
     notes = RichTextUploadingField(verbose_name=_("Notes"))
     execution_date = models.DateField(verbose_name=_("Execution date"))
 
-    raw = models.Manager()
     objects = SoftDeletableManager()
-    deleted = DeletedManager()
+    trash = TrashManager()
     i18n = TranslationField(fields=("title", "notes"))
     tracker = FieldTracker()
 
@@ -61,9 +60,8 @@ class LabReport(ExtendedModel):
     )
     lab_event = models.ForeignKey(to=LabEvent, on_delete=models.DO_NOTHING, related_name="reports")
 
-    raw = models.Manager()
     objects = SoftDeletableManager()
-    deleted = DeletedManager()
+    trash = TrashManager()
     i18n = TranslationField(fields=())
     tracker = FieldTracker()
 

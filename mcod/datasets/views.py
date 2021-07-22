@@ -21,12 +21,12 @@ from mcod.datasets.deserializers import (
     CreateCommentRequest,
     CatalogRdfApiRequest
 )
-from mcod.datasets.documents import DatasetDocumentActive
-from mcod.datasets.handlers import DatasetResourcesMetadataViewHandler
+from mcod.datasets.documents import DatasetDocument
+from mcod.datasets.handlers import CSVMetadataViewHandler, XMLMetadataViewHandler
 from mcod.datasets.models import Dataset
 from mcod.datasets.serializers import DatasetApiResponse, CommentApiResponse, DatasetRDFResponseSchema
 from mcod.resources.deserializers import ResourceApiSearchRequest
-from mcod.resources.documents import ResourceDocumentActive
+from mcod.resources.documents import ResourceDocument
 from mcod.resources.serializers import ResourceApiResponse
 
 
@@ -48,7 +48,7 @@ class DatasetSearchView(JsonAPIView):
     class GET(SubscriptionSearchHdlr):
         deserializer_schema = partial(DatasetApiSearchRequest, many=False)
         serializer_schema = partial(DatasetApiResponse, many=True)
-        search_document = DatasetDocumentActive()
+        search_document = DatasetDocument()
         include_default = ['institution']
 
 
@@ -81,7 +81,7 @@ class CatalogRDFView(RDFView):
     class GET(ShaclMixin, SearchHdlr):
         deserializer_schema = partial(CatalogRdfApiRequest, many=False)
         serializer_schema = partial(DatasetRDFResponseSchema, many=True)
-        search_document = DatasetDocumentActive()
+        search_document = DatasetDocument()
 
         def _queryset_extra(self, queryset, *args, **kwargs):
             queryset.aggs.metric('catalog_modified', A('max', field='last_modified_resource'))
@@ -132,7 +132,7 @@ class DatasetResourceSearchApiView(JsonAPIView):
     class GET(SearchHdlr):
         deserializer_schema = partial(ResourceApiSearchRequest, many=False)
         serializer_schema = partial(ResourceApiResponse, many=True)
-        search_document = ResourceDocumentActive()
+        search_document = ResourceDocument()
 
         def _queryset_extra(self, queryset, id=None, **kwargs):
             if id:
@@ -189,15 +189,15 @@ class DatasetAutocompleteAdminView(autocomplete.Select2QuerySetView):
         return qs
 
 
-class DatasetResourcesMetadataCsvView(BaseView):
+class CSVMetadataView(BaseView):
 
     def on_get(self, request, response, *args, **kwargs):
         self.handle(request, response, self.GET, *args, **kwargs)
 
-    class GET(DatasetResourcesMetadataViewHandler):
+    class GET(CSVMetadataViewHandler):
 
         def _get_queryset(self, cleaned, *args, **kwargs):
-            return self.database_model.objects.filter(dataset_id=kwargs['id'])
+            return self.database_model.objects.filter(pk=kwargs['id'])
 
     def on_get_catalog(self, request, response, *args, **kwargs):
         self.handle(request, response, self.GETCatalog, *args, **kwargs)
@@ -206,7 +206,7 @@ class DatasetResourcesMetadataCsvView(BaseView):
 
         def serialize(self, *args, **kwargs):
             try:
-                with open(f'{settings.DATASET_CSV_CATALOG_MEDIA_ROOT}/{get_language()}/katalog.csv', 'rb') as f:
+                with open(f'{settings.METADATA_MEDIA_ROOT}/{get_language()}/katalog.csv', 'rb') as f:
                     catalog_file = f.read()
             except FileNotFoundError:
                 raise falcon.HTTPNotFound
@@ -215,3 +215,31 @@ class DatasetResourcesMetadataCsvView(BaseView):
 
     def set_content_type(self, resp, **kwargs):
         return settings.EXPORT_FORMAT_TO_MIMETYPE['csv']
+
+
+class XMLMetadataView(BaseView):
+
+    def on_get(self, request, response, *args, **kwargs):
+        self.handle(request, response, self.GET, *args, **kwargs)
+
+    class GET(XMLMetadataViewHandler):
+
+        def _get_queryset(self, cleaned, *args, **kwargs):
+            return self.database_model.objects.filter(id=kwargs['id'])
+
+    def on_get_catalog(self, request, response, *args, **kwargs):
+        self.handle(request, response, self.GETCatalog, *args, **kwargs)
+
+    class GETCatalog(BaseHdlr):
+
+        def serialize(self, *args, **kwargs):
+            try:
+                with open(f'{settings.METADATA_MEDIA_ROOT}/{get_language()}/katalog.xml', 'rb') as f:
+                    catalog_file = f.read()
+            except FileNotFoundError:
+                raise falcon.HTTPNotFound
+            self.response.downloadable_as = 'katalog.xml'
+            return catalog_file
+
+    def set_content_type(self, resp, **kwargs):
+        return settings.EXPORT_FORMAT_TO_MIMETYPE['xml']

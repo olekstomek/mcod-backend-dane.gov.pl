@@ -1,4 +1,5 @@
 recommendations = {
+    'zero-data-rows': 'Uzupełnij plik danymi',
     'io-error': 'Sprawdź: \n'
                 '- czy plik znajduje się we wskazanej lokalizacji,\n'
                 '- czy są prawidłowe uprawnienia do odczytu pliku,\n'

@@ -3,7 +3,6 @@ from django.utils.translation import gettext_lazy as _
 
 from mcod.categories.models import Category, CategoryTrash
 from mcod.lib.admin_mixins import TrashMixin, HistoryMixin, LangFieldsOnlyMixin, MCODAdminMixin
-from mcod.unleash import is_enabled
 
 
 @admin.register(Category)
@@ -11,14 +10,11 @@ class CategoryAdmin(LangFieldsOnlyMixin, HistoryMixin, MCODAdminMixin, admin.Mod
     prepopulated_fields = {
         "slug": ("title",),
     }
-
+    is_history_with_unknown_user_rows = True
     actions_on_top = True
-    list_display = ['title_i18n', 'obj_history']
+    list_display = ['title_i18n', 'code', 'obj_history']
 
-    first_section_fields = ['title', 'slug', 'description']
-    if is_enabled('S19_DCAT_categories.be'):
-        list_display.insert(1, 'code')
-        first_section_fields.insert(0, 'code')
+    first_section_fields = ['code', 'title', 'slug', 'description']
 
     fieldsets = [
         (None, {
@@ -49,5 +45,13 @@ class CategoryAdmin(LangFieldsOnlyMixin, HistoryMixin, MCODAdminMixin, admin.Mod
 
 
 @admin.register(CategoryTrash)
-class CategoryTrashAdmin(TrashMixin):
-    pass
+class CategoryTrashAdmin(HistoryMixin, TrashMixin):
+    is_history_with_unknown_user_rows = True
+    readonly_fields = (
+        'code',
+        'title',
+        'description',
+        'image',
+        'status',
+    )
+    fields = [field for field in readonly_fields] + ['is_removed']

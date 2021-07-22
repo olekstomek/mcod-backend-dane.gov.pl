@@ -6,6 +6,7 @@ from rdflib.plugins.stores.sparqlstore import (
 
 from mcod import settings
 from mcod.core.api.rdf.namespaces import NAMESPACES
+from mcod.core.api.rdf.profiles.dcat_ap import DCATCatalog
 from mcod.lib.extended_graph import ExtendedGraph
 from mcod.lib.rdf import extra_triples
 
@@ -19,6 +20,25 @@ class SPARQLUpdateStore(BaseSPARQLUpdateStore):
     def add_object(self, obj):
         query, ns = obj.as_sparql_create_query()
         self.update(query, initNs=ns)
+
+    def get_catalog_metadata_create_query(self, context):
+        catalog = DCATCatalog()
+        catalog_triples = catalog.to_triples(context)
+        catalog_metadata = ''.join([f'{triple[0].n3()} {triple[1].n3()} {triple[2].n3()} . ' for triple
+                                    in catalog_triples])
+        return 'INSERT DATA { %(data)s }' % {'data': catalog_metadata}
+
+    def add_catalog_metadata(self, context):
+        self.update(self.get_catalog_metadata_create_query(context))
+
+    def delete_catalog_metadata(self):
+        self.update(self.get_catalog_metadata_delete_query())
+
+    def get_catalog_metadata_delete_query(self):
+        catalog = DCATCatalog()
+        catalog_subject = catalog.get_subject({})
+        return 'DELETE {{?s  ?p   ?o . ?o  ?p1  ?o1 .}} WHERE {{ ?s  ?p  ?o . FILTER (?s = {}) .' \
+               ' OPTIONAL {{?o  ?p1  ?o1  . FILTER (isBlank(?o)) }} }}'.format(catalog_subject.n3())
 
     def get_object_graph(self, query):
         g = ExtendedGraph(ordered=True)
@@ -83,7 +103,7 @@ def my_bnode_ext(node):
         return '<bnode:b%s>' % node
 
 
-def get_sparql_store(readonly=False, return_format='xml'):
+def get_sparql_store(readonly=False, return_format='xml', external_sparql_endpoint=None):
     if readonly:
         params = {
             'auth': (settings.SPARQL_USER, settings.SPARQL_PASSWORD),
@@ -91,6 +111,11 @@ def get_sparql_store(readonly=False, return_format='xml'):
             'method': 'POST',
             'returnFormat': return_format,
         }
+        external_endpoint_url = settings.SPARQL_ENDPOINTS[external_sparql_endpoint] if\
+            external_sparql_endpoint and settings.SPARQL_ENDPOINTS.get(external_sparql_endpoint) else None
+        if external_endpoint_url:
+            params.pop('auth')
+            params['endpoint'] = external_endpoint_url
         return SPARQLStore(**params)
 
     params = {

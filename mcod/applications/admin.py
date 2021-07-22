@@ -1,5 +1,4 @@
 from django.contrib import admin, messages
-from django.http import HttpResponseRedirect
 from django.utils.safestring import mark_safe
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
@@ -23,7 +22,6 @@ from mcod.lib.admin_mixins import (
     MCODAdminMixin
 )
 from mcod.reports.admin import ExportCsvMixin
-from mcod.unleash import is_enabled
 
 
 @admin.register(Application)
@@ -74,16 +72,10 @@ class ApplicationAdmin(DynamicAdminListDisplayMixin, CreatedByDisplayAdminMixin,
 
     def get_form(self, request, obj=None, **kwargs):
         form = super().get_form(request, obj, **kwargs)
-        if is_enabled('S18_new_tags.be'):
-            form.recreate_tags_widgets(request=request, db_field=Application.tags.field, admin_site=self.admin_site)
+        form.recreate_tags_widgets(request=request, db_field=Application.tags.field, admin_site=self.admin_site)
         return form
 
     def get_fieldsets(self, request, obj=None):
-        if is_enabled('S18_new_tags.be'):
-            tags_tab_fields = ('tags_pl', 'tags_en')
-        else:
-            tags_tab_fields = ('tags', )
-
         tab_general_fields = (
             'notes',
             'author',
@@ -140,7 +132,7 @@ class ApplicationAdmin(DynamicAdminListDisplayMixin, CreatedByDisplayAdminMixin,
                 None,
                 {
                     'classes': ('suit-tab', 'suit-tab-tags',),
-                    'fields': tags_tab_fields,
+                    'fields': ('tags_pl', 'tags_en'),
                 }
             )
         ]
@@ -170,22 +162,14 @@ class ApplicationAdmin(DynamicAdminListDisplayMixin, CreatedByDisplayAdminMixin,
             obj.external_datasets = form.cleaned_data['external_datasets']
         super().save_model(request, obj, form, change)
 
-    def get_queryset(self, request):
-        return Application.objects.all()
-
 
 @admin.register(ApplicationTrash)
-class TrashApplicationAdmin(TrashMixin):
+class TrashApplicationAdmin(HistoryMixin, TrashMixin):
     list_display = ['title', 'author', 'url']
     search_fields = ['title', 'author', 'url']
 
-    if is_enabled('S18_new_tags.be'):
-        tags_fields = ('tags_list_pl', 'tags_list_en')
-    else:
-        tags_fields = ('tags',)
-
     readonly_fields = [
-        'title', 'author', 'datasets', 'image', 'notes', 'slug', 'status', *tags_fields, 'url',
+        'title', 'author', 'datasets', 'image', 'notes', 'slug', 'status', 'tags_list_pl', 'tags_list_en', 'url',
     ]
     fields = [x for x in readonly_fields] + ['is_removed']
 
@@ -281,11 +265,9 @@ class ApplicationProposalAdmin(ApplicationProposalMixin, ExportCsvMixin, SoftDel
         ('general', _('General')),
     )
 
-    def changelist_view(self, request, extra_context=None):
-        query_string = request.META.get('QUERY_STRING', '')
-        if 'decision' not in query_string:
-            return HttpResponseRedirect(request.path + '?decision=not_taken')
-        return super().changelist_view(request, extra_context=extra_context)
+    @property
+    def admin_url(self):
+        return super().admin_url + '?decision=not_taken'
 
     def save_model(self, request, obj, form, change):
         if not obj.id:
@@ -316,13 +298,6 @@ class ApplicationProposalTrashAdmin(ApplicationProposalMixin, TrashMixin):
         'decision_date',
     ]
     fields = [x for x in readonly_fields] + ['is_removed']
-
-    def delete_model(self, request, obj):
-        obj.delete(soft=False)
-
-    def delete_queryset(self, request, queryset):
-        for obj in queryset:
-            obj.delete(soft=False)
 
 
 admin.site.register(ApplicationProposal, ApplicationProposalAdmin)

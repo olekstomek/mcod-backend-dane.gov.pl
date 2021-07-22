@@ -7,7 +7,6 @@ from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.files.uploadedfile import SimpleUploadedFile
 from mcod.resources.models import Resource, TaskResult, Chart, update_resource
-from mcod.unleash import is_enabled
 
 
 class TestResourceModel(object):
@@ -16,22 +15,30 @@ class TestResourceModel(object):
         assert resource.type == 'website'
         resource.forced_api_type = True
         resource.save()
-        if is_enabled('S22_forced_api_type.be'):
-            assert resource.type == 'api'
-            resource.revalidate()
-            resource.refresh_from_db()
-            assert resource.type == 'api'
-        else:
-            assert resource.type == 'website'
-            resource.revalidate()
-            resource.refresh_from_db()
-            assert resource.type == 'website'
+        assert resource.type == 'api'
+        resource.revalidate()
+        resource.refresh_from_db()
+        assert resource.type == 'api'
         resource.forced_api_type = False
         resource.save()
         assert resource.type == 'website'
         resource.revalidate()
         resource.refresh_from_db()
         assert resource.type == 'website'
+
+    def test_forced_file_type_toggle(self, remote_file_resource_of_api_type):
+        resource = remote_file_resource_of_api_type
+        assert resource.type == 'api'
+        resource.forced_file_type = True
+        resource.save()
+        resource.revalidate()
+        resource.refresh_from_db()
+        assert resource.type == 'file'
+        resource.forced_file_type = False
+        resource.save()
+        resource.revalidate()
+        resource.refresh_from_db()
+        assert resource.type == 'api'
 
     def test_resource_fields(self, resource):
         r_dict = resource.__dict__
@@ -61,7 +68,7 @@ class TestResourceModel(object):
         assert resource.status == 'published'
         resource.delete()
         assert resource.is_removed is True
-        assert Resource.deleted.get(id=resource.id)
+        assert Resource.trash.get(id=resource.id)
         assert Resource.raw.get(id=resource.id)
         with pytest.raises(ObjectDoesNotExist):
             Resource.objects.get(id=resource.id)
@@ -72,7 +79,7 @@ class TestResourceModel(object):
         with pytest.raises(ObjectDoesNotExist):
             Resource.raw.get(id=resource.id)
         with pytest.raises(ObjectDoesNotExist):
-            Resource.deleted.get(id=resource.id)
+            Resource.trash.get(id=resource.id)
 
     def test_file_url_and_path(self, resource, mocker):
         mocker.patch('mcod.resources.tasks.download_file', return_value=('file', {}))

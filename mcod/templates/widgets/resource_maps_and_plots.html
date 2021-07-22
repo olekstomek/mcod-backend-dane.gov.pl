@@ -37,33 +37,3 @@
         </tbody>
     </table>
 </div>
-
-{% block actions %}
-    <div id="widget_actions" class="hide">
-        <button
-            id="map_save"
-            type="submit"
-            class="btn btn-info tab-button"
-            name="_map_save"
-        >
-            {% trans 'Save the map definition' %}
-        </button>
-        <a
-            id="map_preview"
-            class="btn tab-button"
-            target="_blank"
-            href="{{ map_preview }}"
-        >
-            {% trans 'Map preview' %}
-        </a>
-        <a
-            id=" chart_preview"
-            class="btn tab-button"
-            target="_blank"
-            href="{{ chart_preview }}"
-        >
-            {% trans 'Chart definition and preview' %}
-        </a>
-    </div>
-{% endblock %}
-

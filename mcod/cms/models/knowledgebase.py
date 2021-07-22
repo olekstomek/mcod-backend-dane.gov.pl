@@ -100,11 +100,8 @@ class KBRootPage(BasePage):
         verbose_name = "Baza wiedzy"
         verbose_name_plural = "Bazy wiedzy"
 
-    def copy_pl_to_en(self):
-        super().copy_pl_to_en()
-        self.body_en = self.body
-        self.top_content_box_en = self.top_content_box
-        self.bottom_content_box_en = self.bottom_content_box
+    def get_copyable_fields(self):
+        return super().get_copyable_fields() + ['body', 'top_content_box', 'bottom_content_box']
 
 
 class KBCategoryPage(BasePage):
@@ -189,11 +186,8 @@ class KBCategoryPage(BasePage):
         verbose_name = "Kategoria stron w bazie wiedzy"
         verbose_name_plural = "Kategorie stron w bazie wiedzy"
 
-    def copy_pl_to_en(self):
-        super().copy_pl_to_en()
-        self.body_en = self.body
-        self.top_content_box_en = self.top_content_box
-        self.bottom_content_box_en = self.bottom_content_box
+    def get_copyable_fields(self):
+        return super().get_copyable_fields() + ['body', 'top_content_box', 'bottom_content_box']
 
 
 class KBPage(BasePage):
@@ -252,9 +246,8 @@ class KBPage(BasePage):
         verbose_name = "Strona bazy wiedzy"
         verbose_name_plural = "Strona bazy wiedzy"
 
-    def copy_pl_to_en(self):
-        super().copy_pl_to_en()
-        self.body_en = self.body
+    def get_copyable_fields(self):
+        return super().get_copyable_fields() + ['body']
 
 
 class KBQAPage(BasePage):

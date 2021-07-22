@@ -2,7 +2,6 @@ from collections import defaultdict
 from django.db.models import Model
 from mcod.lib.rdf.store import get_sparql_store
 from mcod.core.api.search.tasks import _instance
-from mcod.unleash import is_enabled
 
 
 class SparqlGraphRegistry:
@@ -21,14 +20,13 @@ class SparqlGraphRegistry:
             self.sparql_store.update(query, initNs=ns)
 
     def register_graph(self, graph_cls):
-        if is_enabled('S22_sparql_object_management.be'):
-            self._models[graph_cls.model].add(graph_cls)
-            related_models = graph_cls.related_models or []
-            parent_model = graph_cls.parent_model
-            for related_model in related_models:
-                self._related_models[related_model].add(graph_cls.model)
-            if parent_model:
-                self._parent_models[parent_model].add(graph_cls.model)
+        self._models[graph_cls.model].add(graph_cls)
+        related_models = graph_cls.related_models or []
+        parent_model = graph_cls.parent_model
+        for related_model in related_models:
+            self._related_models[related_model].add(graph_cls.model)
+        if parent_model:
+            self._parent_models[parent_model].add(graph_cls.model)
 
     def related_condition_changed(self, instance):
         condition_attr_changed = [graph(named_graph=self._named_graph).related_condition_changed(instance)

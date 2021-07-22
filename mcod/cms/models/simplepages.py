@@ -57,9 +57,8 @@ class SimplePageMixin(BasePage):
         verbose_name_plural = "Proste strony WWW"
         abstract = True
 
-    def copy_pl_to_en(self):
-        super().copy_pl_to_en()
-        self.body_en = self.body
+    def get_copyable_fields(self):
+        return super().get_copyable_fields() + ['body']
 
 
 class SimplePage(SimplePageMixin):

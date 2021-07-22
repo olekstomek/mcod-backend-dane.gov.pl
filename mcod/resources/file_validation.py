@@ -6,7 +6,7 @@ from mimeparse import parse_mime_type
 from mcod import settings
 from mcod.resources import guess
 from mcod.resources.archives import UnsupportedArchiveError, is_archive_file, ArchiveReader
-from mcod.resources.geo import are_shapefiles, analyze_shapefile
+from mcod.resources.geo import are_shapefiles, analyze_shapefile, is_geotiff, has_geotiff_files
 from mcod.unleash import is_enabled
 
 logger = logging.getLogger('mcod')
@@ -51,8 +51,6 @@ def _analyze_plain_text(path, extension, encoding):
         encoding, backup_encoding = guess.file_encoding(path)
         logger.debug(f" encoding (guess-plain): {encoding}")
         logger.debug(f" backup_encoding (guess-plain): {backup_encoding}")
-        if not is_enabled('csv_encoding_not_found.be'):
-            encoding = encoding or backup_encoding
 
     extension = guess.text_file_format(path, encoding or backup_encoding) or extension
     logger.debug(f"  extension (guess-plain): {extension}")
@@ -121,21 +119,21 @@ def check_support(ext, content_type):
     raise UnknownFileFormatError('unknown-file-format')
 
 
-def analyze_resource_file(path, extension=None):
+def get_file_info(path):
     _magic = magic.Magic(mime=True, mime_encoding=True)
+    result = _magic.from_file(path)
+    return parse_mime_type(result)
 
-    def _parse_mime_type(path):
-        result = _magic.from_file(path)
-        return parse_mime_type(result)
 
+def analyze_resource_file(path, extension=None):
     logger.debug(f"analyze_resource_file({path}, {extension})")
-    family, content_type, options = _parse_mime_type(path)
+    family, content_type, options = get_file_info(path)
     extracted = None
     if is_archive_file(content_type):
         extracted = ArchiveReader(path)
         if len(extracted) == 1:
             path = extracted[0]
-            family, content_type, options = _parse_mime_type(path)
+            family, content_type, options = get_file_info(path)
             logger.debug(f"  extracted file {path}")
         else:
             if are_shapefiles(extracted):
@@ -143,7 +141,12 @@ def analyze_resource_file(path, extension=None):
                 extension = 'shp'
                 content_type = 'shapefile'
                 logger.debug(f"  recognized shapefile {shp_type}, {options}")
+            elif is_enabled('S29_geotiff_file_support.be') and has_geotiff_files(extracted):
+                family = 'image'
+                content_type = 'tiff;application=geotiff'
 
+    if is_enabled('S29_geotiff_file_support.be') and is_geotiff(path):
+        content_type += ';application=geotiff'
     file_mimetype = f'{family}/{content_type}'
     logger.debug(f"  parsed mimetype: {file_mimetype});{options}")
     file_info = magic.from_file(path)

@@ -32,7 +32,7 @@ Feature: Courses list API
     | agent user       |
 
   Scenario: Test courses list endpoint returns required data
-    Given course with id 999
+    Given course created with params {"id": 999, "title": "Course with id: 999"}
     And logged official user
     When api request method is GET
     And api request language is en

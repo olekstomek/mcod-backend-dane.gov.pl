@@ -25,6 +25,8 @@ from django.db.models.functions import Trunc, Coalesce, Cast
 from django.utils.translation import activate
 from django.utils.translation import ugettext as _
 from user_agents import parse
+
+from mcod.categories.models import Category
 from mcod.counters.models import ResourceViewCounter, ResourceDownloadCounter
 from mcod.datasets.models import Dataset
 from mcod.organizations.models import Organization
@@ -169,7 +171,9 @@ class Top10MostDownloadedDatasets(RankingPanel):
     def get_queryset(self):
         if is_enabled('S16_new_date_counters.be'):
             qs = ResourceDownloadCounter.objects.filter(
-                resource__dataset__status='published', resource__dataset__is_removed=False
+                resource__dataset__status='published',
+                resource__dataset__is_removed=False,
+                resource__dataset__is_permanently_removed=False,
             ).values('resource__dataset__title').annotate(
                 downloads_count=Coalesce(Sum('count'), 0)
             ).annotate(title_i18n=F('resource__dataset__title_i18n')).order_by('-downloads_count')
@@ -219,7 +223,9 @@ class Top10MostViewedDatasets(RankingPanel):
     def get_queryset(self):
         if is_enabled('S16_new_date_counters.be'):
             qs = ResourceViewCounter.objects.filter(
-                resource__dataset__status='published', resource__dataset__is_removed=False
+                resource__dataset__status='published',
+                resource__dataset__is_removed=False,
+                resource__dataset__is_permanently_removed=False,
             ).values('resource__dataset__title').annotate(
                 views_count=Coalesce(Sum('count'), 0)
             ).annotate(title_i18n=F('resource__dataset__title_i18n'))
@@ -887,7 +893,9 @@ class Top10MostDownloadedResources(RankingPanel):
     def get_queryset(self):
         if is_enabled('S16_new_date_counters.be'):
             qs = ResourceDownloadCounter.objects.filter(
-                resource__dataset__status='published', resource__dataset__is_removed=False
+                resource__dataset__status='published',
+                resource__dataset__is_removed=False,
+                resource__dataset__is_permanently_removed=False,
             ).annotate(title=F('resource__title')).values('title').annotate(
                 downloads_count=Sum('count')
             )
@@ -912,7 +920,9 @@ class Top10OrganizationsMostDownloadedDatasets(RankingPanel):
     def get_queryset(self):
         if is_enabled('S16_new_date_counters.be'):
             queryset = ResourceDownloadCounter.objects.filter(
-                resource__dataset__status='published', resource__dataset__is_removed=False
+                resource__dataset__status='published',
+                resource__dataset__is_removed=False,
+                resource__dataset__is_permanently_removed=False,
             ).values('resource__dataset__organization__title').annotate(
                 org_download_count=Coalesce(Sum('count'), 0)
             ).annotate(title=F('resource__dataset__organization__title'))
@@ -920,7 +930,7 @@ class Top10OrganizationsMostDownloadedDatasets(RankingPanel):
             queryset = super().get_queryset().annotate(
                 org_download_count=Coalesce(
                     Sum('datasets__downloads_count',
-                        filter=Q(datasets__is_removed=False, datasets__status='published')
+                        filter=Q(datasets__is_removed=False, datasets__is_permanently_removed=False, datasets__status='published')
                         ),
                     0)
             )
@@ -1002,7 +1012,9 @@ class Top10MostPopularResources(RankingPanel):
     def get_queryset(self):
         if is_enabled('S16_new_date_counters.be'):
             qs = ResourceViewCounter.objects.filter(
-                resource__status='published', resource__is_removed=False
+                resource__status='published',
+                resource__is_removed=False,
+                resource__is_permanently_removed=False,
             ).values('resource__title').annotate(
                 views_count=Coalesce(Sum('count'), 0)
             ).annotate(title=F('resource__title'))
@@ -1027,7 +1039,9 @@ class Top10MostPopularOrganizations(RankingPanel):
     def get_queryset(self):
         if is_enabled('S16_new_date_counters.be'):
             qs = ResourceViewCounter.objects.filter(
-                resource__dataset__status='published', resource__dataset__is_removed=False
+                resource__dataset__status='published',
+                resource__dataset__is_removed=False,
+                resource__dataset__is_permanently_removed=False,
             ).values('resource__dataset__organization__title').annotate(
                 views_sum=Coalesce(Sum('count'), 0)
             ).annotate(title=F('resource__dataset__organization__title'))
@@ -1036,7 +1050,7 @@ class Top10MostPopularOrganizations(RankingPanel):
             qs = qs.values('title').annotate(
                 views_sum=Coalesce(
                     Sum('datasets__views_count',
-                        filter=Q(datasets__is_removed=False, datasets__status='published')
+                        filter=Q(datasets__is_removed=False, datasets__is_permanently_removed=False, datasets__status='published')
                         ), 0)
             )
         return qs.order_by('-views_sum')
@@ -1083,8 +1097,12 @@ class TopResourceCountOrgfromGroup(UserFilterMixin, RankingPanel):
         qs =\
             qs.filter(
                 user_q,
-                dataset__is_removed=False, dataset__status='published',
-                dataset__organization__is_removed=False, dataset__organization__status='published',
+                dataset__is_removed=False,
+                dataset__is_permanently_removed=False,
+                dataset__status='published',
+                dataset__organization__is_removed=False,
+                dataset__organization__is_permanently_removed=False,
+                dataset__organization__status='published',
             ).values('dataset__organization_id').annotate(**annotates)
         return qs.order_by('-rtc_all').values(
             'dataset__organization__title', 'dataset__organization_id', *annotates.keys())
@@ -1172,14 +1190,15 @@ class MostUsedCategories(RankingPanel):
     """
     Najczęściej używane kategorie
     """
-    model = Dataset
-    x_axis_attr_name = 'category__title'
-    y_axis_attr_name = 'category_count'
+    model = Category
+    x_axis_attr_name = None
+    y_axis_attr_name = 'dataset__count'
 
     def init_labels(self):
         super().init_labels()
         self.x_axis_label = _('Category name')
         self.y_axis_label = _('Number of datasets')
+        self.x_axis_attr_name = f'title_{self.lang}'
 
     def has_perm(self):
         perms = (
@@ -1189,35 +1208,17 @@ class MostUsedCategories(RankingPanel):
         return any(perms)
 
     def get_queryset(self):
-        qs = super().get_queryset()
-        display_attrs = ['category__title']
-        if self.lang != 'pl':
-            display_attrs.append(f'category__title_{self.lang}')
-        return qs.values('category_id').annotate(
-            category_count=Count('category_id')
-        ).values('category_count', *display_attrs).order_by('-category_count')
-
-    def get_dataframe(self):
-        data = {}
-        results = self.get_results()
-        for _i, inst in enumerate(results):
-            idx = data.setdefault(self.index_label, [])
-            idx.append(_i + 1)
-            n = data.setdefault(self.x_axis_label, [])
-            title = inst.get(f'{self.x_axis_attr_name}_{self.lang}')
-            if title is None:
-                title = inst[self.x_axis_attr_name]
-            n.append(title)
-            i = data.setdefault(self.y_axis_label, [])
-            i.append(inst[self.y_axis_attr_name])
-        if not data:
-            data[self.index_label] = [1]
-            data[self.x_axis_label] = [_('None')]
-            data[self.y_axis_label] = [0]
-
-        df = pd.DataFrame(data)
-        df.set_index(self.index_label, inplace=True)
-        return df
+        qs = super().get_queryset().exclude(code='')
+        return qs.values(self.x_axis_attr_name).annotate(
+            dataset__count=Count(
+                'dataset',
+                filter=Q(
+                    dataset__is_removed=False,
+                    dataset__is_permanently_removed=False,
+                    dataset__status='published'
+                )
+            ),
+        ).order_by('-dataset__count')
 
 
 class MostUsedTags(RankingPanel):
@@ -1242,22 +1243,32 @@ class MostUsedTags(RankingPanel):
 
     def get_queryset(self):
         qs = super().get_queryset()
-
-        if is_enabled('S18_new_tags.be'):
-            qs = qs.exclude(language='')
-        else:
-            qs = qs.filter(language='')
-
+        base_sub_qs = qs.filter(pk=OuterRef('pk')).values('name')
+        dataset_subquery = base_sub_qs.annotate(dataset_tags_count=Count(
+            'dataset',
+            filter=Q(
+                dataset__is_removed=False,
+                dataset__is_permanently_removed=False,
+                dataset__status='published'
+            ), distinct=True)).values('dataset_tags_count')
+        article_subquery = base_sub_qs.annotate(article_tags_count=Count(
+            'article',
+            filter=Q(
+                article__is_removed=False,
+                article__is_permanently_removed=False,
+                article__status='published'
+            ), distinct=True)).values('article_tags_count')
+        application_subquery = base_sub_qs.annotate(application_tags_count=Count(
+            'application',
+            filter=Q(
+                application__is_removed=False,
+                application__is_permanently_removed=False,
+                application__status='published'),
+            distinct=True)).values('application_tags_count')
         return qs.values('name').annotate(
-            dataset_tags=Count(
-                'dataset',
-                filter=Q(dataset__is_removed=False, dataset__status='published'), distinct=True),
-            article_tags=Count(
-                'article',
-                filter=Q(article__is_removed=False, article__status='published'), distinct=True),
-            application_tags=Count(
-                'application',
-                filter=Q(application__is_removed=False, application__status='published'), distinct=True)
+            dataset_tags=Subquery(dataset_subquery, output_field=IntegerField()),
+            article_tags=Subquery(article_subquery, output_field=IntegerField()),
+            application_tags=Subquery(application_subquery, output_field=IntegerField())
         ).annotate(
             overall_tags=F('dataset_tags') + F('article_tags') + F('application_tags')
         ).order_by('-overall_tags')
@@ -1322,7 +1333,11 @@ class Top10LastMonthOrganizationNewDatasets(RankingPanel):
             created__date__gte=last_month_start
         )
         subquery =\
-            self.model.objects.filter(status='published', is_removed=False).filter(created__date__lt=last_month_start)
+            self.model.objects.filter(
+                status='published',
+                is_removed=False,
+                is_permanently_removed=False,
+            ).filter(created__date__lt=last_month_start)
         viz_types_dict = {
             'ct_table': Resource.objects.filter(dataset=OuterRef('pk'), has_table=True),
             'ct_chart': Resource.objects.filter(dataset=OuterRef('pk'), has_chart=True),
@@ -1446,7 +1461,11 @@ class CountChartByTimePeriod(ChartPanel):
         self.x_axis_label = _('Period')
 
     def get_queryset(self):
-        qs = self.model.objects.filter(resource__dataset__status='published', resource__dataset__is_removed=False)
+        qs = self.model.objects.filter(
+            resource__dataset__status='published',
+            resource__dataset__is_removed=False,
+            resource__dataset__is_permanently_removed=False,
+        )
         qs = qs.annotate(
             period=Trunc('timestamp', kind=self.timeperiod)
         ).values('period').annotate(count_sum=Sum('count')).values(
@@ -1559,7 +1578,11 @@ class OrganizationGroupCountByTimePeriod(UserFilterMixin, CombinedChartMixin, Co
             counter_query = self.get_user_query('resource__dataset__organization__agents__pk')
         qs =\
             self.model.objects.filter(
-                counter_query, resource__dataset__status='published', resource__dataset__is_removed=False)
+                counter_query,
+                resource__dataset__status='published',
+                resource__dataset__is_removed=False,
+                resource__dataset__is_permanently_removed=False,
+            )
         qs = qs.annotate(
             period=Trunc('timestamp', kind=self.timeperiod)
         ).values(*group_values).annotate(count_sum=Sum('count')).values(

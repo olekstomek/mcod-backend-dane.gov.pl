@@ -62,8 +62,5 @@ class RootPage(BasePage):
         verbose_name = "Strona główna"
         verbose_name_plural = "Strony główne"
 
-    def copy_pl_to_en(self):
-        super().copy_pl_to_en()
-        self.over_login_section_cb_en = self.over_login_section_cb
-        self.over_search_field_cb_en = self.over_search_field_cb
-        self.over_latest_news_cb_en = self.over_latest_news_cb
+    def get_copyable_fields(self):
+        return super().get_copyable_fields() + ['over_login_section_cb', 'over_search_field_cb', 'over_latest_news_cb']

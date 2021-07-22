@@ -57,15 +57,3 @@ class TranslatedKeywordField(fields.NestedField):
         attr = attr or field_name
 
         super().__init__(*args, attr=f'{attr}_translated', properties=properties, multi=True, **kwargs)
-
-
-class TranslatedKeywordsList(fields.NestedField):
-    def __init__(self, *args, field_kwargs=None, properties=None, **kwargs):
-        field_kwargs = field_kwargs or {}
-
-        properties = properties or {
-            lang_code: fields.KeywordField(**field_kwargs)
-            for lang_code in settings.MODELTRANS_AVAILABLE_LANGUAGES
-        }
-
-        super().__init__(properties=properties, multi=True, *args, **kwargs)

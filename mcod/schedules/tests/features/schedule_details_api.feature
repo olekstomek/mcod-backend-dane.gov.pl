@@ -1,5 +1,5 @@
 Feature: Schedule details API
-  Scenario: Schedule details endpoint returns valid data for admin
+  Scenario: Schedule details endpoint for admin
     Given logged admin user
     And schedule with id 999
     When api request method is GET
@@ -10,7 +10,7 @@ Feature: Schedule details API
     And api's response body field data/attributes has fields period_name,start_date,end_date,new_end_date,link,state,is_blocked,name,total_agents_count
     And api's response body field data/relationships has fields user_schedules,user_schedule_items,agents
 
-  Scenario: Schedule details endpoint returns valid data for agent
+  Scenario: Schedule details endpoint for agent
     Given logged agent user
     And schedule with id 999
     When api request method is GET
@@ -21,6 +21,13 @@ Feature: Schedule details API
     And api's response body field data/attributes has fields period_name,start_date,end_date,new_end_date,link,state,is_blocked,name,total_agents_count
     And api's response body field data/relationships has fields user_schedules,user_schedule_items
     And api's response body field data/relationships has no fields agents
+
+  Scenario: Current schedule details endpoint returns 404 if no planned schedule yet
+    Given logged admin user
+    When api request method is GET
+    And api request path is /auth/schedules/current
+    And send api request and fetch the response
+    Then api's response status code is 404
 
   Scenario: Schedule details endpoint is not available for active user
     Given logged active user
@@ -62,6 +69,23 @@ Feature: Schedule details API
     And send api request and fetch the response
     Then api's response status code is 403
     And api's response body field errors/[0]/title is 403 Forbidden
+
+  Scenario: Update schedule request returns 404 for invalid schedule id
+    Given logged admin user
+    And schedule with id 999
+    When api request method is PATCH
+    And api request schedule data has {}
+    And api request path is /auth/schedules/9999
+    And send api request and fetch the response
+    Then api's response status code is 404
+
+  Scenario: Update current schedule request returns 404 if no currently planned schedule yet
+    Given logged admin user
+    When api request method is PATCH
+    And api request schedule data has {}
+    And api request path is /auth/schedules/current
+    And send api request and fetch the response
+    Then api's response status code is 404
 
   Scenario: Passing end_date in schedule update request is optional
     Given logged admin user

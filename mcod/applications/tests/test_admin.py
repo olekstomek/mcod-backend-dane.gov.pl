@@ -3,7 +3,6 @@ from django.urls import reverse
 from pytest_bdd import scenarios
 
 from mcod.applications.models import Application
-from mcod.unleash import is_enabled
 
 
 scenarios(
@@ -71,20 +70,13 @@ def test_add_tags_to_applications(admin, tag, tag_pl, application):
         'notes': 'tresc',
         'url': "http://test.pl",
         'status': 'published',
+        'tags_pl': [tag_pl.id],
     }
-    if is_enabled('S18_new_tags.be'):
-        data['tags_pl'] = [tag_pl.id]
-        assert tag_pl not in application.tags.all()
-    else:
-        data['tags'] = [tag.id]
-        assert tag not in application.tags.all()
 
+    assert tag_pl not in application.tags.all()
     client = Client()
     client.force_login(admin)
     client.post(reverse('admin:applications_application_change', args=[application.id]), data, follow=True)
     app = Application.objects.get(id=application.id)
     assert app.slug == "name"
-    if is_enabled('S18_new_tags.be'):
-        assert tag_pl in application.tags.all()
-    else:
-        assert tag in application.tags.all()
+    assert tag_pl in application.tags.all()

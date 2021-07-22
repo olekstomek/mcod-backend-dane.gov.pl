@@ -2,7 +2,7 @@ import pytest
 
 from pytest_bdd import given, then, parsers
 from mcod.core.tests.fixtures import *  # noqa
-from mcod.datasets.documents import DatasetDocumentActive
+from mcod.datasets.documents import DatasetDocument
 from mcod.resources.models import Resource
 from mcod.resources.file_validation import analyze_resource_file
 from mcod.resources.archives import UnsupportedArchiveError
@@ -15,7 +15,7 @@ def datasets_list_in_response_is_sorted_by(context, sort):
         order = 'desc' if sort.startswith('-') else 'asc'
         field = sort[1:] if sort.startswith('-') else sort
         sort = {field: {'order': order, 'nested': {'path': 'title'}}}
-    _sorted = DatasetDocumentActive().search().filter('term', status='published').sort(sort)[:len(data)]
+    _sorted = DatasetDocument().search().filter('term', status='published').sort(sort)[:len(data)]
     items = [int(x['id']) for x in data]
     sorted_items = [x.id for x in _sorted]
     assert items == sorted_items

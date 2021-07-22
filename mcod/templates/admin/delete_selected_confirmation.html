@@ -27,6 +27,10 @@
               <p>({% trans 'All existing datasets and resources imported from this source will be deleted also.' %})</p>
             {% endif %}
         {% endfor %}
+        {% if not queryset.model.trash_class or queryset.model.is_trash %}
+            <p class="irreversible-deletion-warning">{% trans "Removing an object is an irreversible operation." %}</p>
+        {% endif %}
+
         <form method="post">{% csrf_token %}
             <div>
                 {% for obj in queryset %}

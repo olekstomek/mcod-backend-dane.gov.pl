@@ -1,7 +1,7 @@
 import json
 
 import marshmallow as ma
-from django.utils.translation import gettext_lazy as _, get_language
+from django.utils.translation import gettext_lazy as _
 from django.utils.html import strip_tags
 
 from mcod.core.api import fields, schemas
@@ -104,11 +104,14 @@ class ResourceApiAttrs(ObjectAttrs, HighlightObjectMixin):
     file_size = fields.Integer()
     csv_file_url = fields.Str()
     csv_file_size = fields.Integer()
+    if is_enabled('S27_csv_to_jsonld.be'):
+        jsonld_file_url = fields.Str()
+        jsonld_file_size = fields.Integer()
+        jsonld_download_url = fields.Str()
     download_url = fields.Str()
     csv_download_url = fields.Str()
     link = fields.Str()
-    if is_enabled('S16_special_signs.be'):
-        data_special_signs = fields.Nested(SpecialSignSchema, data_key='special_signs', many=True)
+    data_special_signs = fields.Nested(SpecialSignSchema, data_key='special_signs', many=True)
     if is_enabled('S24_named_charts.be'):
         is_chart_creation_blocked = fields.Bool()
 
@@ -180,10 +183,7 @@ class ResourceRDFMixin(ProfilesMixin):
     format = ma.fields.Str()
     file_mimetype = ma.fields.Str()
     file_size = ma.fields.Int()
-    if is_enabled('S21_licenses.be'):
-        license = ma.fields.Function(lambda r: r.dataset.license_link)
-    else:
-        license = ma.fields.Function(lambda r: r.dataset.license.name if r.dataset.license else "unknown")
+    license = ma.fields.Function(lambda r: r.dataset.license_link)
 
 
 class ResourceRDFResponseSchema(ResourceRDFMixin, RDFResponseSchema):
@@ -357,6 +357,7 @@ class ResourceCSVSchema(CSVSerializer):
     file_is_valid = fields.Str(data_key=_('file_tasks_last_status'), default='')
     data_is_valid = fields.Str(data_key=_('data_tasks_last_status'), default='')
     format = fields.Str(data_key=_("format"), default='')
+    converted_formats_str = fields.Str(data_key=_('formats after conversion'))
     dataset = fields.Str(attribute='dataset.title', data_key=_("dataset"), default='')
     status = fields.Str(data_key=_("status"), default='')
     created_by = fields.Int(attribute='created_by.id', data_key=_("created_by"), default=None)
@@ -384,6 +385,8 @@ class ChartApiRelationships(Relationships):
 class ChartApiAttrs(ObjectAttrs):
     chart = fields.Raw()
     is_default = fields.Boolean()
+    if is_enabled('S24_named_charts.be'):
+        name = fields.Str()
 
     def get_chart(self, obj):
         return json.dumps(obj.chart)
@@ -392,8 +395,11 @@ class ChartApiAttrs(ObjectAttrs):
         relationships_schema = ChartApiRelationships
         object_type = 'chart'
         api_path = 'chart'
-        url_template = '{api_url}/charts/{ident}'
         model = 'resources.Chart'
+        if is_enabled('S24_named_charts.be'):
+            url_template = '{api_url}/resources/{data.resource.ident}/charts/{ident}'
+        else:
+            url_template = '{api_url}/charts/{ident}'
 
 
 class ChartApiData(Object):
@@ -405,67 +411,64 @@ class ChartApiData(Object):
         return super().prepare_data(data, **kwargs)
 
 
+class ChartApiMeta(TopLevelMeta):
+    named_charts = fields.Bool()
+
+
 class ChartApiResponse(TopLevel):
     class Meta:
         data_schema = ChartApiData
         attrs_schema = ChartApiAttrs
+        meta_schema = ChartApiMeta
 
     @ma.pre_dump
     def prepare_top_level(self, c, **kwargs):
         if self.context['is_listing']:
             c.data = c.data if hasattr(c, 'data') else []
+            c.meta.setdefault('named_charts', self.context.get('named_charts', False))
         return super().prepare_top_level(c, **kwargs)
 
 
-class DatasetResourcesCSVSerializer(CSVSerializer):
-    dataset_url = fields.Url(attribute='dataset.frontend_absolute_url', data_key=_('Dataset URL'))
-    dataset_title = fields.Str(attribute='dataset.title', data_key=_('Title'))
-    dataset_description = fields.Function(lambda obj: strip_tags(obj.dataset.notes) if obj.dataset.notes else '',
-                                          data_key=_('Notes'))
-    dataset_keywords = fields.Function(lambda obj: obj.dataset.tags_as_str(get_language()), data_key=_('Tag'))
-    dataset_categories = fields.Str(attribute='dataset.categories_list_str', data_key=_('Category'))
-    dataset_update_frequency = fields.Str(attribute='dataset.update_frequency', data_key=_('Update frequency'))
-    dataset_created = fields.DateTime(attribute='dataset.created', data_key=_('Dataset created'), format='iso8601')
-    dataset_verified = fields.DateTime(attribute='dataset.verified', data_key=_('Dataset verified'), format='iso8601')
-    dataset_views_count = fields.Function(
-        lambda obj: obj.dataset.computed_views_count if
-        is_enabled('S16_new_date_counters.be') and hasattr(obj.dataset, 'computed_views_count') else
-        obj.dataset.views_count, data_key=_("Dataset views count"), default=None)
-    dataset_downloads_count = fields.Function(
-        lambda obj: obj.dataset.computed_downloads_count if
-        is_enabled('S16_new_date_counters.be') and hasattr(obj.dataset, 'computed_downloads_count') else
-        obj.dataset.downloads_count,
-        data_key=_('Dataset downloads count'), default=None)
-    dataset_resources_count = fields.Int(attribute='resources_count', data_key=_('Number of data'))
-    dataset_conditions = fields.Method('get_dataset_conditions', data_key=_('Terms of use'))
-    dataset_license = fields.Str(attribute='dataset.license_name', data_key=_('License'))
-    organization_url = fields.Url(attribute='dataset.organization.frontend_absolute_url',
-                                  data_key=_('Organization URL'))
-    organization_type = fields.Function(lambda obj: obj.dataset.organization.get_institution_type_display(),
-                                        data_key=_('Institution type'))
-    organization_title = fields.Str(attribute='dataset.organization.title', data_key=_('Name'))
-    organization_abbr_title = fields.Str(attribute='dataset.organization.abbreviation',
-                                         data_key=_('Abbreviation'), default='')
-    organization_epuap = fields.Str(attribute='dataset.organization.epuap', data_key=_('EPUAP'), default='')
-    organization_website = fields.Url(attribute='dataset.organization.website', data_key=_('Website'))
-    organization_created = fields.DateTime(attribute='dataset.organization.created',
-                                           data_key=_('Organization created'), format='iso8601')
-    organization_modified = fields.DateTime(attribute='dataset.organization.modified',
-                                            data_key=_('Organization modified'), format='iso8601')
-    organization_datasets_count = fields.Int(attribute='datasets_count',
-                                             data_key=_('Number of datasets'))
-    organization_postal_code = fields.Str(attribute='dataset.organization.postal_code', data_key=_('Postal code'))
-    organization_city = fields.Str(attribute='dataset.organization.city', data_key=_('City'))
-    organization_street_type = fields.Str(attribute='dataset.organization.street_type', data_key=_('Street type'))
-    organization_street = fields.Str(attribute='dataset.organization.street', data_key=_('Street'))
-    organization_street_number = fields.Str(attribute='dataset.organization.street_number', data_key=_('Street number'))
-    organization_flat_number = fields.Str(attribute='dataset.organization.flat_number', data_key=_('Flat number'))
-    organization_email = fields.Email(attribute='dataset.organization.email', data_key=_('Email'))
-    organization_phone_number = fields.Str(attribute='dataset.organization.tel', data_key=_('Phone'))
+class SourceCSVSchema(ExtSchema):
+    title = fields.Str()
+    url = fields.URL()
+    update_frequency = TranslatedStr()
+    last_import_timestamp = fields.DateTime()
+
+
+class ResourceXMLSerializer(schemas.ExtSchema):
+    id = fields.Integer()
+    access_url = fields.Url(attribute='frontend_absolute_url')
+    title = TranslatedStr()
+    description = TranslatedStr()
+    openness_score = fields.Integer()
+    format = fields.Str()
+    resource_views_count = fields.Method('get_views_count', data_key='views_count')
+    resource_downloads_count = fields.Method('get_downloads_count', data_key='downloads_count')
+    created = fields.DateTime(format='iso8601')
+    data_date = fields.Date()
+    type = fields.Function(lambda resource: resource.get_type_display())
+    file_size = fields.Function(lambda obj: sizeof_fmt(obj.file_size) if obj.file_size else '')
+
+    visualization_types = ListWithoutNoneStrElement(fields.Str())
+    download_url = fields.Str()
+    data_special_signs = fields.Nested(SpecialSignSchema, data_key='special_signs', many=True)
+
+    def get_views_count(self, resource):
+        if is_enabled('S16_new_date_counters.be') and hasattr(resource, 'computed_views_count'):
+            return resource.computed_views_count
+        return resource.views_count
+
+    def get_downloads_count(self, resource):
+        if is_enabled('S16_new_date_counters.be') and hasattr(resource, 'computed_downloads_count'):
+            return resource.computed_downloads_count
+        return resource.downloads_count
+
+
+class ResourceCSVMetadataSerializer(schemas.ExtSchema):
     frontend_absolute_url = fields.Url(data_key=_('Resource URL'))
-    title = fields.Str(data_key=_('Resource title'), default='')
-    description = fields.Function(lambda obj: strip_tags(obj.description) if obj.description else '',
-                                  data_key=_('Resource description'))
+    title = TranslatedStr(data_key=_('Resource title'), default='')
+    description = TranslatedStr(data_key=_('Resource description'))
     created = fields.DateTime(data_key=_('Resource created'), format='iso8601')
     data_date = fields.Date(data_key=_('Data date'))
     openness_score = fields.Int(data_key=_('Openness score'))
@@ -483,16 +486,21 @@ class DatasetResourcesCSVSerializer(CSVSerializer):
     has_table = fields.Function(lambda obj: _('YES') if obj.has_table else _('NO'), data_key=_('Table'))
     has_chart = fields.Function(lambda obj: _('YES') if obj.has_chart else _('NO'), data_key=_('Map'))
     has_map = fields.Function(lambda obj: _('YES') if obj.has_map else _('NO'), data_key=_('Chart'))
+    download_url = fields.Url(data_key=_('Download URL'))
+    data_special_signs = fields.Nested(SpecialSignSchema, data_key=_('special signs'), many=True)
 
-    def get_dataset_conditions(self, obj):
-        dataset = obj.dataset
-        conditions = _('This dataset is public information, it can be reused under the following conditions: ')
-        terms = [str(dataset._meta.get_field('license_condition_modification').verbose_name) if
-                 dataset.license_condition_modification else '',
-                 str(dataset._meta.get_field('license_condition_source').verbose_name) if
-                 dataset.license_condition_source else '',
-                 dataset.license_condition_db_or_copyrighted, dataset.license_condition_personal_data]
-        return conditions + '\n'.join([term for term in terms if term])
+    @ma.post_dump(pass_many=False)
+    def prepare_nested_data(self, data, **kwargs):
+        special_signs = data.get(_('special signs'))
+        signs_str = '\n'.join(['{name_label}: {name}, {symbol_label}: "{symbol}", {desc_label}: {desc}'.format(
+            name=sign['name'], name_label=_('name'),
+            symbol=sign['symbol'], symbol_label=_('symbol'),
+            desc=sign['description'], desc_label=_('description')) for sign in special_signs])
+        data[_('special signs')] = signs_str
+        values_with_html = [_('Resource title'), _('Resource description')]
+        for attribute in values_with_html:
+            data[attribute] = strip_tags(data[attribute])
+        return data
 
     class Meta:
         ordered = True

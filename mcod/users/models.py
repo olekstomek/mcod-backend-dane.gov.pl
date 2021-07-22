@@ -2,17 +2,18 @@ from uuid import uuid4
 
 import time
 import logging
+
 from constance import config
 from django.apps import apps
 from django.conf import settings
+
 from django.contrib.postgres.fields import JSONField
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin, Permission
-from django.contrib.auth.signals import user_logged_in, user_logged_out
 from django.contrib.sessions.backends.cache import KEY_PREFIX
 from django.core.cache import caches
 from django.core.mail import send_mail, get_connection
 from django.core.paginator import Paginator
-from django.db import models, connection, transaction
+from django.db import models, transaction
 from django.db.models import Case, Count, When
 from django.db.models.signals import pre_save, post_save, post_delete
 from django.dispatch import receiver
@@ -23,19 +24,19 @@ from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _, override, pgettext_lazy, get_language
 from modeltrans.fields import TranslationField
 from model_utils import FieldTracker
-from model_utils.models import SoftDeletableModel
 from model_utils.models import TimeStampedModel
-from pydiscourse import DiscourseClient
-from pydiscourse.exceptions import DiscourseClientError
 
 from mcod.core import storages
 from mcod.core.api.search.tasks import update_document_task
 from mcod.core.db.mixins import AdminMixin, ApiMixin
 from mcod.core.db.models import ExtendedModel, TrashModelBase
+from mcod.core.managers import SoftDeletableQuerySet
+from mcod.core.models import SoftDeletableModel
 from mcod.lib.jwt import decode_jwt_token
 from mcod.watchers.models import Notification, MODEL_TO_OBJECT_NAME
-from mcod.users.managers import MeetingDeletedManager, MeetingFileManager, MeetingFileDeletedManager, MeetingManager
-
+from mcod.unleash import is_enabled
+from mcod.users.managers import MeetingTrashManager, MeetingFileManager, MeetingFileTrashManager, MeetingManager
+from mcod.users.signals import user_changed
 
 TOKEN_TYPES = (
     (0, _('Email validation token')),
@@ -83,6 +84,7 @@ logger = logging.getLogger('mcod')
 
 
 class UserManager(BaseUserManager):
+    _queryset_class = SoftDeletableQuerySet
     use_in_migrations = True
 
     def _create_user(self, email, password=None, **extra_fields):
@@ -165,11 +167,11 @@ class User(AdminMixin, ApiMixin, AbstractBaseUser, PermissionsMixin, SoftDeletab
     agent_organizations = models.ManyToManyField(
         'organizations.Organization', verbose_name=_('Organizations'), blank=True, related_name='agents')
     agent_organization_main = models.ForeignKey(
-        'organizations.Organization', models.CASCADE, blank=True, null=True,
+        'organizations.Organization', models.SET_NULL, blank=True, null=True,
         verbose_name=_('main organization of agent'), related_name='agent_organization_main_users',
     )
     extra_agent_of = models.ForeignKey(
-        'self', models.CASCADE, blank=True, null=True, limit_choices_to=agents_choices,
+        'self', models.SET_NULL, blank=True, null=True, limit_choices_to=agents_choices,
         verbose_name=_('extra agent of'), related_name='extra_agent')
     from_agent = models.ForeignKey('self', models.SET_NULL, blank=True, null=True)
     followed_applications = models.ManyToManyField('applications.Application',
@@ -193,6 +195,8 @@ class User(AdminMixin, ApiMixin, AbstractBaseUser, PermissionsMixin, SoftDeletab
                                                       verbose_name=_('RODO & privacy policy accepted'))
     lang = models.CharField(max_length=2, verbose_name=_("User language"), default=settings.LANGUAGE_CODE,
                             choices=settings.LANGUAGES)
+    discourse_user_name = models.CharField(max_length=100, blank=True, null=True, editable=False)
+    discourse_api_key = models.CharField(max_length=100, blank=True, null=True, editable=False)
 
     is_active = models.BooleanField(
         _('active'),
@@ -383,6 +387,10 @@ class User(AdminMixin, ApiMixin, AbstractBaseUser, PermissionsMixin, SoftDeletab
         return roles
 
     @property
+    def username(self):
+        return self.fullname
+
+    @property
     def count_datasets_created(self):
         return self.datasets_created.all().count()
 
@@ -398,6 +406,11 @@ class User(AdminMixin, ApiMixin, AbstractBaseUser, PermissionsMixin, SoftDeletab
     def has_access_to_academy_in_dashboard(self):
         return (self.is_superuser or self.is_official or self.agent or self.is_staff or
                 self.is_academy_admin)
+
+    @property
+    def has_access_to_forum(self):
+        _s = True if (self.discourse_user_name and self.discourse_api_key) else False
+        return self.is_active and (self.is_superuser or self.agent) and _s
 
     @property
     def has_access_to_laboratory_in_dashboard(self):
@@ -467,9 +480,16 @@ class User(AdminMixin, ApiMixin, AbstractBaseUser, PermissionsMixin, SoftDeletab
         return all(field is not None
                    for field in (self.phone, self.fullname))
 
+    @property
+    def discourse_username(self):
+        return self.discourse_user_name
+
     @classmethod
     def accusative_case(cls):
         return _("acc: User")
+
+    def is_editor_of_organization(self, organization):
+        return self.is_staff and organization in self.organizations.all()
 
     def set_academy_perms(self, is_academy_admin=False):
         perms = Permission.objects.filter(content_type__app_label='academy', codename__in=ACADEMY_PERMS_CODENAMES)
@@ -505,10 +525,14 @@ class User(AdminMixin, ApiMixin, AbstractBaseUser, PermissionsMixin, SoftDeletab
                 if any((is_default, not is_default and not chart, chart and chart.created_by == self)):
                     return True
             else:  # edytor poza swoją instytucją.
+                if resource.is_chart_creation_blocked and is_enabled('S24_named_charts.be'):
+                    return False
                 if any((not is_default and not chart, chart and chart.is_private and chart.created_by == self)):
                     return True
             return False
         else:  # zwykły dla wszystkich instytucji.
+            if resource.is_chart_creation_blocked and is_enabled('S24_named_charts.be'):
+                return False
             if any((not is_default and not chart, chart and chart.is_private and chart.created_by == self)):
                 return True
         return False
@@ -601,7 +625,7 @@ class User(AdminMixin, ApiMixin, AbstractBaseUser, PermissionsMixin, SoftDeletab
 @receiver(pre_save, sender=User)
 def pre_save_handler(sender, instance, *args, **kwargs):
     instance.full_clean()
-    if instance.is_removed is True:
+    if instance.is_removed or instance.is_permanently_removed:
         instance.email = f"{time.time()}_{uuid4()}@dane.gov.pl"
         instance.fullname = ""
         instance.status = "blocked"
@@ -613,7 +637,7 @@ def pre_save_handler(sender, instance, *args, **kwargs):
 
 
 @receiver(post_save, sender=User)
-def post_save_handler(sender, instance, *args, **kwargs):
+def post_save_handler(sender, instance, signal, created=False, raw=False, update_fields=None, using='default', *args, **kwargs):
     if not instance.is_agent and instance.extra_agent.exists():
         instance.extra_agent.update(extra_agent_of=None)
 
@@ -629,35 +653,7 @@ def post_save_handler(sender, instance, *args, **kwargs):
                 obj.is_agent = False
                 obj.save()
 
-
-@receiver(user_logged_in)
-def update_last_login(sender, request, user, **kwargs):
-    connection.cursor().execute(f'SET myapp.userid = "{user.id}"')
-    user.last_login = timezone.now()
-    user.save()
-
-
-@receiver(user_logged_out)
-def logout_from_discourse(sender, request, user, **kwargs):
-    discourse_url = settings.DISCOURSE_URL
-    api_username = settings.DISCOURSE_API_USER
-    api_key = settings.DISCOURSE_API_KEY
-    if discourse_url and api_username and api_key:
-        client = DiscourseClient(
-            discourse_url,
-            api_username=api_username,
-            api_key=api_key
-        )
-        try:
-            user_details = client.user_by_external_id(user.pk)
-        except DiscourseClientError as err:
-            user_details = {}
-            logger.debug(f'Discourse connection failed, could not retrieve user[#{user.pk}] data. Details: {err}')
-        except Exception as err:
-            user_details = {}
-            logger.error(f'Discourse client error: {err}')
-        if user_details.get('id') and user_details.get('user_auth_tokens'):
-            client.log_out(user_details['id'])
+    user_changed.send(sender=User, user=instance, created=created)
 
 
 def get_token_expiration_date():
@@ -737,9 +733,8 @@ class Meeting(ExtendedModel):
 
     members = models.ManyToManyField('users.User', related_name='meetings', verbose_name=_('members'))
 
-    raw = models.Manager()
     objects = MeetingManager()
-    deleted = MeetingDeletedManager()
+    trash = MeetingTrashManager()
     i18n = TranslationField()
     tracker = FieldTracker()
 
@@ -772,9 +767,8 @@ class MeetingFile(ExtendedModel):
     file = models.FileField(verbose_name=_('file'), storage=storages.get_storage('meetings'), max_length=2000)
     meeting = models.ForeignKey(to=Meeting, on_delete=models.DO_NOTHING, related_name='files')
 
-    raw = models.Manager()
     objects = MeetingFileManager()
-    deleted = MeetingFileDeletedManager()
+    trash = MeetingFileTrashManager()
     i18n = TranslationField()
     tracker = FieldTracker()
 

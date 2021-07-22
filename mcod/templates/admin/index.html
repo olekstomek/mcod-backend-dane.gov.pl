@@ -27,68 +27,44 @@
 
     <div id="content-main">
         {% if app_list %}
-            {% is_unleash_enabled "S25_admin_ui_inline_trash.be" as S25_admin_ui_inline_trash %}
             {% for app in app_list %}
                 {% if app.app_label not in SETTINGS.SUIT_CONFIG.APPS_SKIPPED_IN_DASHBOARD %}
                     <div class="module">
-                        <table class="table-overview applist {% if S25_admin_ui_inline_trash %}minw-500{% else %}minw-400{% endif %}"
+                        <table class="table-overview applist minw-500"
                                summary="{% blocktrans with name=app.name %}Models available in the {{ name }} application.{% endblocktrans %}">
                             <caption><a href="{{ app.app_url }}"
                                         class="section">{% trans app.name %} {{ app.skip_dashboard }}</a></caption>
                             {% for model in app.models %}
+                                {% get_model_extra_data app.app_label model.object_name as model_data %}
+                                {% if not model_data.is_trash %}
+                                <tr>
 
-                                {% if S25_admin_ui_inline_trash %}
-                                    {% get_model_extra_data app.app_label model.object_name as model_data %}
-                                    {% if not model_data.is_trash %}
-                                    <tr>
+                                    <th class="col-5" scope="row">{{ model.name }}</th>
 
-                                        <th class="col-5" scope="row">{{ model.name }}</th>
+                                    <td class="col-2">
+                                        {% if model.admin_url %}
+                                            <a href="{{ model_data.admin_url }}" class="changelink icon">
+                                                {% trans 'Change' %}
+                                            </a>
+                                        {% endif %}
+                                    </td>
 
-                                        <td class="col-2">
-                                            {% if model.admin_url %}
-                                                <a href="{{ model.admin_url }}" class="changelink icon">
-                                                    {% trans 'Change' %}
-                                                </a>
-                                            {% endif %}
-                                        </td>
+                                    <td class="col-3">
+                                        {% if model.add_url %}
+                                            <a href="{{ model.add_url }}" class="addlink icon">
+                                                <i class="icon-plus-sign icon-alpha75"></i>{% trans 'Add' %}
+                                            </a>
+                                        {% endif %}
+                                    </td>
 
-                                        <td class="col-3">
-                                            {% if model.add_url %}
-                                                <a href="{{ model.add_url }}" class="addlink icon">
-                                                    <i class="icon-plus-sign icon-alpha75"></i>{% trans 'Add' %}
-                                                </a>
-                                            {% endif %}
-                                        </td>
-
-                                        <td class="col-2">
-                                            {% if model_data.trash_url %}
-                                                <a href="{{ model_data.trash_url }}" class="changelink icon">
-                                                    {% trans 'Trash' %}
-                                                </a>
-                                            {% endif %}
-                                        </td>
-                                    </tr>
-                                    {% endif %}
-
-                                {% else %}
-                                    <tr>
-                                        <th class="col-6" scope="row">{{ model.name }}</th>
-                                        <td class="col-3">
-                                            {% if model.admin_url %}
-                                                <a href="{{ model.admin_url }}" class="changelink icon">
-                                                    {% trans 'Change' %}
-                                                </a>
-                                            {% endif %}
-                                        </td>
-
-                                        <td class="col-3">
-                                            {% if model.add_url %}
-                                                <a href="{{ model.add_url }}" class="addlink icon">
-                                                    <i class="icon-plus-sign icon-alpha75"></i>{% trans 'Add' %}
-                                                </a>
-                                            {% endif %}
-                                        </td>
-                                    </tr>
+                                    <td class="col-2">
+                                        {% if model_data.trash_url %}
+                                            <a href="{{ model_data.trash_url }}" class="changelink icon">
+                                                {% trans 'Trash' %}
+                                            </a>
+                                        {% endif %}
+                                    </td>
+                                </tr>
                                 {% endif %}
                             {% endfor %}
                         </table>

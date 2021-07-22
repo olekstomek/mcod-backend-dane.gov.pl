@@ -6,7 +6,6 @@ from namedlist import namedlist
 from mcod.datasets.forms import DatasetForm
 from mcod.datasets.models import Dataset
 from mcod.lib.helpers import change_namedlist
-from mcod.unleash import is_enabled
 
 fields = [
     'slug',
@@ -52,7 +51,7 @@ empty = entry(
 
 minimal = change_namedlist(empty, {
     'title': "Dataset title",
-    'notes': 'dataset description',
+    'notes': 'more than 20 characters',
     'slug': "test",
     'url': 'http://cos.tam.pl',
     'update_frequency': "weekly",
@@ -140,22 +139,14 @@ class TestDatasetFormValidity:
             "update_frequency": update_frequency,
             "category": legacy_category,
             "status": status,
+            "tags_pl": [tag_pl.id],
         }
-        if is_enabled('S18_new_tags.be'):
-            data['tags_pl'] = [tag_pl.id]
-        else:
-            data['tags'] = [tag.id]
 
         form = DatasetForm(data=data)
         assert form.is_valid() is validity
-
         if validity and title != "no name":
             form.save()
             assert Dataset.objects.last().title == title
-        # if title == "no name":
-        #     with pytest.raises(ValidationError) as e:
-        #         form.save()
-        #     # assert "'slug'" in str(e.value)
 
     def test_dataset_form_add_tags(self, tag, tag_pl, tag_en, institution):
         data = {
@@ -163,27 +154,20 @@ class TestDatasetFormValidity:
             'slug': "test-add-tag",
             'status': 'published',
             'organization': institution.id,
-            'notes': "notes",
+            'notes': "more than 20 characters",
             "update_frequency": "weekly",
             'url': "http://cos.tam.pl",
+            'tags_pl': [tag_pl],
+            'tags_en': [tag_en],
         }
-        if is_enabled('S18_new_tags.be'):
-            data['tags_pl'] = [tag_pl]
-            data['tags_en'] = [tag_en]
-        else:
-            data['tags'] = [tag]
 
         form = DatasetForm(data=data)
         assert form.is_valid()
         form.save()
         dataset = Dataset.objects.last()
         assert dataset.slug == "test-add-tag"
-
-        if is_enabled('S18_new_tags.be'):
-            assert tag_pl in dataset.tags.all()
-            assert tag_en in dataset.tags.all()
-        else:
-            assert tag in dataset.tags.all()
+        assert tag_pl in dataset.tags.all()
+        assert tag_en in dataset.tags.all()
 
     def test_dataset_form_add_categories(self, categories, tag, tag_pl, institution):
         data = {
@@ -191,15 +175,12 @@ class TestDatasetFormValidity:
             'slug': "test-add-categories",
             'status': 'published',
             'organization': institution.id,
-            'notes': "notes",
+            'notes': "more than 20 characters",
             "update_frequency": "weekly",
             'url': "http://cos.tam.pl",
-            'categories': [category.id for category in categories]
+            'categories': [category.id for category in categories],
+            'tags_pl': [tag_pl],
         }
-        if is_enabled('S18_new_tags.be'):
-            data['tags_pl'] = [tag_pl]
-        else:
-            data['tags'] = [tag]
 
         form = DatasetForm(data=data)
         assert form.is_valid()
@@ -211,18 +192,15 @@ class TestDatasetFormValidity:
         data = {
             'title': "test metadata_modified title",
             'slug': "Test",
-            'notes': 'dataset notes',
+            'notes': 'more than 20 characters',
             'organization': institution.id,
             'url': 'http://cos.tam.pl',
             'update_frequency': "weekly",
             'license_id': "other-pd",
             'status': 'published',
             'validity': True,
+            'tags_pl': [tag_pl.id],
         }
-        if is_enabled('S18_new_tags.be'):
-            data['tags_pl'] = [tag_pl.id]
-        else:
-            data['tags'] = [tag.id]
 
         form = DatasetForm(data=data)
         assert form.is_valid()
@@ -237,15 +215,12 @@ class TestDatasetFormValidity:
             'slug': "test-add-tag",
             'status': 'published',
             'organization': institution.id,
-            'notes': "notes",
+            'notes': "more than 20 characters",
             "update_frequency": "weekly",
             'url': "http://cos.tam.pl",
             'category': legacy_category.id,
+            'tags_pl': [tag_pl.id],
         }
-        if is_enabled('S18_new_tags.be'):
-            data['tags_pl'] = [tag_pl.id]
-        else:
-            data['tags'] = [tag.id]
 
         form = DatasetForm(data=data)
         form.is_valid()
@@ -261,13 +236,10 @@ class TestDatasetFormValidity:
             'slug': "test-add-tag",
             'status': 'published',
             'organization': institution.id,
-            'notes': "notes",
+            'notes': "more than 20 characters",
             "update_frequency": "weekly",
             'url': "http://cos.tam.pl",
+            'tags_pl': [tag_pl.id],
         }
-        if is_enabled('S18_new_tags.be'):
-            data['tags_pl'] = [tag_pl.id]
-        else:
-            data['tags'] = [tag.id]
         form = DatasetForm(data=data, files={'image': small_image})
         assert form.is_valid()

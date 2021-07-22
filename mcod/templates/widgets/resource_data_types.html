@@ -1,4 +1,4 @@
-{% load i18n static%}
+{% load i18n static %}
 
 {% include "widgets/data_alert.html" %}
 
@@ -44,15 +44,3 @@
         </tbody>
     </table>
 </div>
-
-{% block actions %}
-<div id="widget_actions" class="hide">
-    <button
-            type="submit"
-            class="btn btn-info"
-            name="_change_type"
-    >
-        {% trans 'Change type' %}
-    </button>
-</div>
-{% endblock %}

@@ -3,13 +3,9 @@ import time
 
 from celery import shared_task
 from celery_progress.backend import ProgressRecorder
-from constance import config
 from django.apps import apps
-from django.core.mail import get_connection, send_mail
-from django.template.loader import render_to_string
 from django.utils.translation import gettext_lazy as _
 
-from mcod import settings
 from mcod.harvester.utils import (
     check_content_type,
     check_xml_filename,
@@ -30,31 +26,6 @@ def import_data_task(obj_id, force=False):
     obj = data_source_model.objects.active().filter(id=obj_id).first()
     if obj and (obj.import_needed() or force):
         obj.import_data()
-    return {}
-
-
-@shared_task
-def send_import_report_mail_task(obj_id):
-    model = apps.get_model('harvester.DataSourceImport')
-    obj = model.objects.filter(id=obj_id).first()
-    if obj and obj.datasource.emails_list:
-        msg_count = None
-        try:
-            context = {'obj': obj}
-
-            msg_count = send_mail(
-                obj.datasource.title,
-                render_to_string('harvester/mails/import-report.txt', context),
-                config.NO_REPLY_EMAIL,
-                obj.datasource.emails_list,
-                connection=get_connection(settings.EMAIL_BACKEND),
-                html_message=render_to_string('harvester/mails/import-report.html', context),
-            )
-        except Exception as exc:
-            logger.error(exc)
-        if msg_count:
-            obj.is_report_email_sent = True
-            obj.save()
     return {}
 
 

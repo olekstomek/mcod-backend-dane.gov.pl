@@ -1,6 +1,8 @@
+import datetime
+
 import factory
 
-from mcod.harvester.models import DataSource, FREQUENCY_CHOICES
+from mcod.harvester.models import DataSource, FREQUENCY_CHOICES, DataSourceImport
 from mcod.core.registries import factories_registry
 from mcod.categories.factories import CategoryFactory
 from mcod.users.factories import AdminFactory
@@ -35,6 +37,23 @@ class XMLDataSourceFactory(DataSourceFactory):
     organization = factory.SubFactory(OrganizationFactory)
 
 
+class DCATDataSourceFactory(DataSourceFactory):
+    source_type = 'dcat'
+    api_url = factory.Faker('url')
+    organization = factory.SubFactory(OrganizationFactory)
+    sparql_query = 'SELECT * WHERE {?s <some.uri/with/id> ?o}'
+
+
+class DataSourceImportFactory(factory.django.DjangoModelFactory):
+    start = factory.Faker('past_datetime', start_date="-30d", tzinfo=datetime.timezone.utc)
+    datasource = factory.SubFactory(DataSourceFactory)
+
+    class Meta:
+        model = DataSourceImport
+
+
 factories_registry.register('datasource', DataSourceFactory)
 factories_registry.register('ckan_datasource', CKANDataSourceFactory)
 factories_registry.register('xml_datasource', XMLDataSourceFactory)
+factories_registry.register('dcat_datasource', DCATDataSourceFactory)
+factories_registry.register('datasourceimport', DataSourceImportFactory)

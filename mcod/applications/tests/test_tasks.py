@@ -1,12 +1,14 @@
 import os
 
-from django.utils.translation import get_language
+from django.conf import settings
+from django.test import override_settings
 
-from mcod import settings
 from mcod.applications.tasks import send_application_proposal
 
 
-class TestApplicationsTaks(object):
+class TestApplicationsTasks(object):
+    @override_settings(EMAIL_BACKEND='django.core.mail.backends.filebased.EmailBackend',
+                       EMAIL_FILE_PATH='/tmp/app-messages')
     def test_sending_application_proposal(self, datasets):
         image_b64 = [
             "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAAElBMVEUAAAAAAACAgAC9vb3AwAD/",
@@ -44,9 +46,8 @@ class TestApplicationsTaks(object):
                 assert app_proposal[key] in plain
                 assert app_proposal[key] in html
             for ds in datasets[:2]:
-                ds_api_url = f"{settings.BASE_URL}/{get_language()}/dataset/{ds.id}"
-                assert ds_api_url in plain
-                assert ds_api_url in html
+                assert ds.frontend_absolute_url in plain
+                assert ds.frontend_absolute_url in html
 
             assert app_proposal['notes'] in plain
             _prepared = app_proposal['notes'].replace('\n', '<br>')

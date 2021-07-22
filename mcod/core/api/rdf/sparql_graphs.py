@@ -53,6 +53,25 @@ class SparqlGraph:
             q = 'INSERT DATA {{ {} }}'.format(' '.join(list(graph_nodes.values())))
         return q
 
+    def _get_delete_triple_query(self, graph_nodes):
+        if self._named_graph:
+            q = 'DELETE DATA {{ GRAPH {} {{ {} }} }}'.format(
+                f'{self._named_graph} ', ' '.join(list(graph_nodes.values())))
+        else:
+            q = 'DELETE DATA {{ {} }}'.format(' '.join(list(graph_nodes.values())))
+        return q
+
+    def _get_delete_triple_filter_query(self, sub, pred):
+        if self._named_graph:
+            q = 'DELETE {{ GRAPH {graph_name} {{?s  ?p   ?o }} }}' \
+                ' WHERE {{ GRAPH {graph_name} {{ ?s  ?p  ?o . FILTER' \
+                ' (?s = {sub} && ?p = {pred}) }} }}'.format(graph_name=f'{self._named_graph} ', sub=sub.n3(),
+                                                            pred=pred.n3())
+        else:
+            q = 'DELETE {{?s  ?p   ?o }} WHERE {{ ?s  ?p  ?o . FILTER (?s = {sub} && ?p = {pred}) }}'.format(
+                sub=sub.n3(), pred=pred.n3())
+        return q
+
     def create(self, instance):
         ns, instance_nodes = self._prepare_query_data(instance)
         return self._get_create_query(instance_nodes), ns

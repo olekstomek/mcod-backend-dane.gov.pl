@@ -25,7 +25,6 @@ from mcod.lib.admin_mixins import (
     DynamicAdminListDisplayMixin,
     MCODAdminMixin
 )
-from mcod.unleash import is_enabled
 from mcod.users.forms import FilteredSelectMultipleCustom
 
 
@@ -62,11 +61,7 @@ class DataSourceDatasets(AdminListMixin, PaginationInline):
     extra = 0
     suit_classes = 'suit-tab suit-tab-datasets'
     model = Dataset
-    fields = ['_title', 'modified', 'organization_title']
-    if is_enabled('S19_DCAT_categories.be'):
-        fields += ['categories_titles']
-    else:
-        fields += ['category_title']
+    fields = ['_title', 'modified', 'organization_title', 'categories_titles']
     page_param = 'r'  # number of page for paginated results.
 
     def has_add_permission(self, request, obj=None):
@@ -212,7 +207,7 @@ class DataSourceAdmin(DynamicAdminListDisplayMixin, CreatedByDisplayAdminMixin, 
     last_import.admin_order_field = 'last_import_status'
 
     def get_queryset(self, request):
-        qs = DataSource.objects.all()
+        qs = super().get_queryset(request)
         if not request.user.is_superuser:
             qs = qs.filter(Q(organization__in=request.user.organizations.iterator()) | Q(organization__isnull=True))
         return qs
@@ -245,11 +240,6 @@ class DataSourceAdmin(DynamicAdminListDisplayMixin, CreatedByDisplayAdminMixin, 
             self.message_user(request, _('Import data task was launched!'), level=messages.SUCCESS)
 
     def get_fieldsets(self, request, obj=None):
-        if is_enabled('S19_DCAT_categories.be'):
-            categories_field = 'categories'
-        else:
-            categories_field = 'category'
-
         if obj:
             fields = (
                 'name',
@@ -268,7 +258,7 @@ class DataSourceAdmin(DynamicAdminListDisplayMixin, CreatedByDisplayAdminMixin, 
                 'modified_by',
                 'status',
                 'license_condition_db_or_copyrighted',
-                categories_field,
+                'categories',
                 'institution_type',
                 'emails',
                 'sparql_query',
@@ -287,7 +277,7 @@ class DataSourceAdmin(DynamicAdminListDisplayMixin, CreatedByDisplayAdminMixin, 
                 'frequency_in_days',
                 'status',
                 'license_condition_db_or_copyrighted',
-                categories_field,
+                'categories',
                 'institution_type',
                 'emails',
                 'sparql_query',
@@ -299,12 +289,12 @@ class DataSourceAdmin(DynamicAdminListDisplayMixin, CreatedByDisplayAdminMixin, 
                 fields = (x for x in fields if x not in ['portal_url',
                                                          'api_url',
                                                          'license_condition_db_or_copyrighted',
-                                                         categories_field,
+                                                         'categories',
                                                          'institution_type'])
             elif obj.is_dcat:
                 fields = (x for x in fields if x not in ['source_hash', 'xml_url', 'portal_url',
                                                          'license_condition_db_or_copyrighted',
-                                                         categories_field,
+                                                         'categories',
                                                          'institution_type'])
         return [
             (None, {'classes': ('suit-tab', 'suit-tab-general',), 'fields': fields}),
@@ -355,16 +345,15 @@ class DataSourceAdmin(DynamicAdminListDisplayMixin, CreatedByDisplayAdminMixin, 
 
 class DataSourceImportAdmin(MCODAdminMixin, admin.ModelAdmin):
 
-    def get_exclude(self, request, obj=None):
-        exclude = super().get_exclude(request, obj=obj) or []
-        if not is_enabled('harvester_mails.be'):
-            exclude.append('is_report_email_sent')
-        return exclude
+    exclude = ['is_report_email_sent']  # email reports aren't implemented.
 
     def has_add_permission(self, request):
         return False
 
     def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
         return False
 
     def _error_desc(self, obj):
@@ -377,11 +366,7 @@ class DataSourceImportAdmin(MCODAdminMixin, admin.ModelAdmin):
         return fields
 
 
-class DataSourceTrashAdmin(CreatedByDisplayAdminMixin, TrashMixin):
-    if is_enabled('S19_DCAT_categories.be'):
-        categories_field = 'categories_list'
-    else:
-        categories_field = 'category'
+class DataSourceTrashAdmin(CreatedByDisplayAdminMixin, HistoryMixin, TrashMixin):
     search_fields = ['name']
     list_display = ('name', 'created_by')
     readonly_fields = (
@@ -397,7 +382,7 @@ class DataSourceTrashAdmin(CreatedByDisplayAdminMixin, TrashMixin):
         'modified_by',
         'status',
         'license_condition_db_or_copyrighted',
-        categories_field,
+        'categories_list',
         'institution_type',
         'emails',
     )
@@ -414,11 +399,12 @@ class DataSourceTrashAdmin(CreatedByDisplayAdminMixin, TrashMixin):
         'modified_by',
         'status',
         'license_condition_db_or_copyrighted',
-        categories_field,
+        'categories_list',
         'institution_type',
         'emails',
         'is_removed',
     )
+    is_history_other = True
 
     def categories_list(self, instance):
         return instance.categories_list_as_html

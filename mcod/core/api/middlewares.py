@@ -173,7 +173,7 @@ class CounterMiddleware(object):
         except (ValueError, IndexError):
             view, obj_id = None, None
 
-        if view in settings.COUNTED_VIEWS:
+        if view in settings.COUNTED_VIEWS and resp.status == falcon.HTTP_200:
             counter = Counter()
             counter.incr_view_count(view, obj_id)
 

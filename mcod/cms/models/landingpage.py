@@ -57,6 +57,5 @@ class LandingPage(BasePage):
         verbose_name = "Strona startowa"
         verbose_name_plural = "Strony startowe"
 
-    def copy_pl_to_en(self):
-        super().copy_pl_to_en()
-        self.body_en = self.body
+    def get_copyable_fields(self):
+        return super().get_copyable_fields() + ['body']

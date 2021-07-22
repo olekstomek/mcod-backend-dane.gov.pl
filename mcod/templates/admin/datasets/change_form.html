@@ -3,16 +3,93 @@
 
 {% block extrastyle %}
     {{ block.super }}
-    {% is_unleash_enabled "S21_licenses.be" as S21_licenses %}
-    {% if S21_licenses %}
     <link rel="stylesheet" type="text/css" href="{% static 'admin/css/dataset_change_form.css' %}" media="all">
-    {% endif %}
 {% endblock extrastyle %}
 
 {% block extrajs %}
     {{ block.super }}
-    {% is_unleash_enabled "S21_licenses.be" as S21_licenses %}
-    {% if S21_licenses %}
     {% include 'admin/datasets/licences/licenses_script.html' %}
+
+    {% is_unleash_enabled "S29_update_frequency_notifications_pa.be" as S29_update_frequency_notifications_pa %}
+    {% if S29_update_frequency_notifications_pa %}
+    <script>
+        var $updateFrequency = $("div.field-update_frequency");
+        var $updateFrequencySelect = $updateFrequency.find('select#id_update_frequency');
+        var frequencyNotifications = {
+            weekly: {value: 1, text: 'dzień'},
+            monthly: {value: 3, text: 'dni'},
+            quarterly: {value: 7, text: 'dni'},
+            everyHalfYear: {value: 7, text: 'dni'},
+            yearly: {value: 7, text: 'dni'}
+        };
+        var $updateNotificationRecipientEmailInput = $("input#id_update_notification_recipient_email");
+
+        {% if user.is_superuser %}
+            var $isUpdateNotificationEnabledParent = $("#id_is_update_notification_enabled").parent();
+            var $updateNotificationFrequencyParent = $("#id_update_notification_frequency").parent();
+            $isUpdateNotificationEnabledParent.append('<span style="padding-left: 10px">Do dostawcy zostanie wysłany komunikat przypominający o aktualizacji danych</span>');
+            $updateNotificationFrequencyParent.append('<span style="padding-left: 10px">Liczba dni, według których powiadomienie zostanie wysłane do dostawcy przed planowaną datą aktualizacji danych, licząc od daty pierwszego dodania zbioru.</span>');
+            var $updateNotificationFrequencyInput = $("input#id_update_notification_frequency");
+
+            var $isUpdateNotificationEnabledControlGroup = $("div.control-group.form-row.field-is_update_notification_enabled");
+            var $updateNotificationFrequencyControlGroup = $("div.control-group.form-row.field-update_notification_frequency");
+            var $updateNotificationRecipientEmailControlGroup = $("div.control-group.form-row.field-update_notification_recipient_email");
+            var $updateNotificationRecipientEmailHelpInline = $updateNotificationRecipientEmailControlGroup.find('span.help-inline');
+
+            function toggleFrequencyFields(updateFrequency, initial=false) {
+                var frequencyNotification = frequencyNotifications[updateFrequency];
+                if (frequencyNotification === undefined) {
+                    $isUpdateNotificationEnabledControlGroup.css('display', 'none');
+                    $updateNotificationFrequencyControlGroup.css('display', 'none');
+                    $updateNotificationRecipientEmailControlGroup.css('display', 'none');
+                    if (!initial) {
+                        $updateNotificationFrequencyInput.val('');
+                    }
+                } else {
+                    $isUpdateNotificationEnabledControlGroup.css('display', 'inline');
+                    $updateNotificationFrequencyControlGroup.css('display', 'inline');
+                    $updateNotificationRecipientEmailControlGroup.css('display', 'inline');
+                    if (!initial || $updateNotificationFrequencyInput.val() === '') {
+                        $updateNotificationFrequencyInput.val(frequencyNotification.value);
+                    }
+                }
+            }
+
+            toggleFrequencyFields($updateFrequencySelect.val(), true);
+            if($updateNotificationRecipientEmailInput.val() === "") {
+                $updateNotificationRecipientEmailInput.val("{{ user.email }}");
+            }
+
+            $updateFrequencySelect.change(function(){
+                toggleFrequencyFields($(this).val());
+            });
+
+            function showEmailHelpInline() {
+                $updateNotificationRecipientEmailHelpInline.css('display', 'block');
+            }
+
+            $updateNotificationRecipientEmailInput.change(showEmailHelpInline).keyup(showEmailHelpInline);
+
+        {% else %}
+            $updateNotificationRecipientEmailInput.val("{{ user.email }}");
+            $updateFrequency.find('.controls').append('<span class="help-inline" style="margin-top: 5px;"></span>');
+            var $updateFrequencyHelp = $updateFrequency.find('.help-inline');
+
+            function updateUpdateFrequencyHelp(updateFrequency) {
+                var frequencyNotification = frequencyNotifications[updateFrequency];
+                var alertText = "";
+                if (frequencyNotification !== undefined) {
+                    var daysText = `${frequencyNotification.value} ${frequencyNotification.text}`;
+                    alertText = `Powiadomienie o zbliżającym się terminie aktualizacji danych zostanie wysłane ${daysText} przed datą aktualizacji, jeżeli chcesz zmienić dzień wysyłki powiadomienia skontaktuj się z administratorem`;
+                }
+                $updateFrequencyHelp.text(alertText);
+            }
+
+            updateUpdateFrequencyHelp($updateFrequencySelect.val());
+            $updateFrequencySelect.change(function(){
+                updateUpdateFrequencyHelp($(this).val());
+            });
+        {% endif %}
+    </script>
     {% endif %}
 {% endblock extrajs %}

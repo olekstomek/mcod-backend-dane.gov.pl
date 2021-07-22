@@ -66,8 +66,7 @@ class RetrieveTabularMixin(object):
 
     def update_context(self):
         data = getattr(self.response.context, 'data', None)
-        if not data:
-            self.response.context.data = UserScheduleItem.objects.none()
+        self.response.context.data = UserScheduleItem.objects.none() if not data else data
         # checking if full export is expected.
         cdata = getattr(self.request.context, 'cleaned_data', {})
         self.response.context.full = True if cdata.get('full', False) and self.request.user.is_superuser else False
@@ -202,7 +201,7 @@ class UserScheduleItemsView(JsonAPIView):
                 user=self.request.user.extra_agent_of or self.request.user, schedule=schedule,
                 defaults={'created_by': self.request.user})
             if user_schedule.is_ready:
-                raise falcon.HTTPForbidden(title='You cannot to add new item - your schedule is set ready!')
+                raise falcon.HTTPForbidden(title='You cannot add new item - your schedule is set ready!')
             data['user_schedule'] = user_schedule
             data['created_by'] = self.request.user
             self.response.context.data = self.database_model.objects.create(**data)
@@ -510,10 +509,8 @@ class ExportUrlView(JsonAPIView):
         def _get_data(self, cleaned, *args, **kwargs):
             export_format = kwargs['export_format']
             base_url = self.request.relative_uri.split(f'.{export_format}')[0]
-            query_string = self.request.query_string
-            url = f'{settings.API_URL}{base_url}/{self.response._token}.{export_format}'
-            if query_string:
-                url = f'{url}?{query_string}'
+            query_string = f'?{self.request.query_string}' if self.request.query_string else ''
+            url = f'{settings.API_URL}{base_url}/{self.response._token}.{export_format}{query_string}'
             data = {
                 'id': str(uuid.uuid4()),
                 'url': url,
@@ -628,7 +625,7 @@ class UserScheduleView(JsonAPIView):
                 except UserSchedule.DoesNotExist:
                     raise falcon.HTTPNotFound
                 if self._cached_instance.schedule.state == 'archival':
-                    raise falcon.HTTPForbidden(title='You cannot to add new item to archival schedule!')
+                    raise falcon.HTTPForbidden(title='You cannot add new item to archival schedule!')
             return self._cached_instance
 
         def clean(self, *args, **kwargs):
@@ -758,15 +755,13 @@ class ScheduleView(JsonAPIView):
             instance = getattr(self, '_cached_instance', None)
             if not instance:
                 if 'schedule_id' in kwargs:
-                    try:
-                        self._cached_instance = self.database_model.objects.get(
-                            pk=kwargs['schedule_id'], status=self.database_model.STATUS.published)
-                    except self.database_model.DoesNotExist:
-                        raise falcon.HTTPNotFound
+                    instance = self.database_model.objects.filter(
+                        pk=kwargs['schedule_id'], status=self.database_model.STATUS.published).first()
                 else:
-                    self._cached_instance = self.database_model.get_current_plan()
-                    if not self._cached_instance:
-                        raise falcon.HTTPNotFound
+                    instance = self.database_model.get_current_plan()
+                if not instance:
+                    raise falcon.HTTPNotFound
+                self._cached_instance = instance
             return self._cached_instance
 
         def clean(self, *args, **kwargs):
@@ -813,15 +808,13 @@ class ScheduleView(JsonAPIView):
             instance = getattr(self, '_cached_instance', None)
             if not instance:
                 if 'schedule_id' in kwargs:
-                    try:
-                        self._cached_instance = self.database_model.objects.get(
-                            pk=kwargs['schedule_id'], status=self.database_model.STATUS.published)
-                    except self.database_model.DoesNotExist:
-                        raise falcon.HTTPNotFound
+                    instance = self.database_model.objects.filter(
+                        pk=kwargs['schedule_id'], status=self.database_model.STATUS.published).first()
                 else:
-                    self._cached_instance = self.database_model.get_current_plan()
-                    if not self._cached_instance:
-                        raise falcon.HTTPNotFound
+                    instance = self.database_model.get_current_plan()
+                if not instance:
+                    raise falcon.HTTPNotFound
+                self._cached_instance = instance
             return self._cached_instance
 
         def _get_data(self, cleaned, *args, **kwargs):
@@ -850,15 +843,13 @@ class ScheduleTabularView(TabularView):
             instance = getattr(self, '_cached_instance', None)
             if not instance:
                 if 'schedule_id' in kwargs:
-                    try:
-                        self._cached_instance = Schedule.objects.get(
-                            pk=kwargs['schedule_id'], status=Schedule.STATUS.published)
-                    except Schedule.DoesNotExist:
-                        raise falcon.HTTPNotFound
+                    instance = Schedule.objects.filter(
+                        pk=kwargs['schedule_id'], status=Schedule.STATUS.published).first()
                 else:
-                    self._cached_instance = Schedule.get_current_plan()
-                    if not self._cached_instance:
-                        raise falcon.HTTPNotFound
+                    instance = Schedule.get_current_plan()
+                if not instance:
+                    raise falcon.HTTPNotFound
+                self._cached_instance = instance
             return self._cached_instance
 
         def _get_queryset(self, cleaned, *args, **kwargs):

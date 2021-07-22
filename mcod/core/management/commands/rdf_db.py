@@ -1,5 +1,6 @@
 from django.apps import apps
 from django.core.management.base import BaseCommand, CommandError
+from django.db.models import Max
 from django.utils.six.moves import input
 
 from mcod.lib.rdf.store import get_sparql_store
@@ -39,6 +40,31 @@ class Command(BaseCommand):
             const='rebuild',
             help='Delete the RDF database and then recreate and populate it',
         )
+
+        parser.add_argument(
+            '--init_catalog_metadata',
+            action='store_const',
+            dest='action',
+            const='init_catalog_metadata',
+            help='Initialize main catalog metadata',
+        )
+
+        parser.add_argument(
+            '--reinit_catalog_metadata',
+            action='store_const',
+            dest='action',
+            const='reinit_catalog_metadata',
+            help='Delete and create main catalog metadata.',
+        )
+
+        parser.add_argument(
+            '--delete_catalog_metadata',
+            action='store_const',
+            dest='action',
+            const='delete_catalog_metadata',
+            help='Delete main catalog metadata',
+        )
+
         parser.add_argument(
             '--models',
             metavar='app[.model]',
@@ -54,18 +80,21 @@ class Command(BaseCommand):
         if not options['action']:
             raise CommandError(
                 "No action specified. Must be one of"
-                " '--create', '--delete' or '--rebuild' ."
+                " '--create', '--delete', '--rebuild', '--init_catalog_metadata',"
+                " '--delete_catalog_metadata' or '--reinit_catalog_metadata' ."
             )
 
         action = options['action']
         self.sparql_store = get_sparql_store()
 
-        if action in ['create', 'delete', 'rebuild']:
+        if action in ['create', 'delete', 'rebuild', 'init_catalog_metadata',
+                      'delete_catalog_metadata', 'reinit_catalog_metadata']:
             getattr(self, f'_{action}')(options)
         else:
             raise CommandError(
                 "Invalid action. Must be one of"
-                " '--create','--populate', '--delete' or '--rebuild' ."
+                " '--create', '--delete', '--rebuild', '--init_catalog_metadata',"
+                " '--delete_catalog_metadata' or '--reinit_catalog_metadata' ."
             )
 
     def _get_models(self, args):
@@ -117,6 +146,8 @@ class Command(BaseCommand):
             for obj in resources:
                 self.stdout.write(f'Push into Graph Store resource: id {obj.id}, \"{obj}\" in RDF database...')
                 self.sparql_store.add_object(obj)
+            if not ('resource_ids' in options or 'dataset_ids' in options):
+                self._init_catalog_metadata(options)
         else:
             self.stdout.write('Aborted')
 
@@ -141,3 +172,20 @@ class Command(BaseCommand):
                 self.stdout.write('Aborted')
         except KeyboardInterrupt:
             raise CommandError('\nExecution of command interrupted by user!')
+
+    def _init_catalog_metadata(self, options):
+        dataset = apps.get_model('datasets.Dataset')
+        resource = apps.get_model('resources.Resource')
+        catalog_modified = resource.objects.all().aggregate(Max('modified'))['modified__max']
+        datasets_urls = [ds.frontend_absolute_url for ds in dataset.objects.filter(status='published')]
+        context = {'dataset_refs': datasets_urls,
+                   'catalog_modified': catalog_modified}
+        self.stdout.write('Initializing catalog metadata.')
+        self.sparql_store.add_catalog_metadata(context)
+
+    def _delete_catalog_metadata(self, options):
+        self.sparql_store.delete_catalog_metadata()
+
+    def _reinit_catalog_metadata(self, options):
+        self._delete_catalog_metadata(options)
+        self._init_catalog_metadata(options)

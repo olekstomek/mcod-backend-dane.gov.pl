@@ -1,11 +1,10 @@
 from django.core.paginator import Paginator
-from model_utils.managers import SoftDeletableQuerySet, SoftDeletableManager
 
-from mcod.core.db.managers import DeletedManager
+from mcod.core.db.managers import TrashManager
+from mcod.core.managers import SoftDeletableQuerySet, SoftDeletableManager, TrashQuerySet
 
 
-class OrganizationQuerySet(SoftDeletableQuerySet):
-
+class OrganizationQuerySetMixin:
     def get_filtered_results(self, **kwargs):
         query = {}
         if 'agents__isnull' in kwargs:
@@ -32,9 +31,15 @@ class OrganizationQuerySet(SoftDeletableQuerySet):
         return self.exclude(institution_type=self.model.INSTITUTION_TYPE_PRIVATE)
 
 
-class OrganizationManagerMixin(object):
-    _queryset_class = OrganizationQuerySet
+class OrganizationQuerySet(OrganizationQuerySetMixin, SoftDeletableQuerySet):
+    pass
 
+
+class OrganizationTrashQuerySet(OrganizationQuerySetMixin, TrashQuerySet):
+    pass
+
+
+class OrganizationManagerMixin:
     def get_paginated_results(self, **kwargs):
         return super().get_queryset().get_paginated_results(**kwargs)
 
@@ -49,8 +54,8 @@ class OrganizationManagerMixin(object):
 
 
 class OrganizationManager(OrganizationManagerMixin, SoftDeletableManager):
-    pass
+    _queryset_class = OrganizationQuerySet
 
 
-class OrganizationDeletedManager(OrganizationManagerMixin, DeletedManager):
-    pass
+class OrganizationTrashManager(OrganizationManagerMixin, TrashManager):
+    _queryset_class = OrganizationTrashQuerySet

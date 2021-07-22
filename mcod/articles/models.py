@@ -6,14 +6,14 @@ from django.db import models
 from django.dispatch import receiver
 from django.utils.translation import gettext_lazy as _
 from model_utils import FieldTracker
-from model_utils.managers import SoftDeletableManager
 from modeltrans.fields import TranslationField
 
 from mcod.articles.signals import update_related_articles
 from mcod.core import signals as core_signals
 from mcod.core.api.search import signals as search_signals
-from mcod.core.db.managers import DeletedManager
+from mcod.core.db.managers import TrashManager
 from mcod.core.db.models import ExtendedModel, update_watcher, TrashModelBase
+from mcod.core.managers import SoftDeletableManager
 from mcod.lib.widgets import RichTextUploadingField
 
 
@@ -72,9 +72,8 @@ class ArticleCategory(ExtendedModel):
     tracker = FieldTracker()
     slugify_field = 'name'
 
-    raw = models.Manager()
     objects = SoftDeletableManager()
-    deleted = DeletedManager()
+    trash = TrashManager()
 
     class Meta:
         verbose_name = _("Article Category")
@@ -177,18 +176,12 @@ class Article(ExtendedModel):
     def is_news(self):
         return bool(self.category.type == 'article')
 
-    @property
-    def tags_list(self):
-        # TODO change self.tags.filter(language='') to self.tags.all() on S18_new_tags.be removal
-        return [tag.translations_dict for tag in self.tags.filter(language='')]
-
     def tags_as_str(self, lang):
         return ', '.join(sorted([tag.name for tag in self.tags.filter(language=lang)], key=str.lower))
 
     @property
     def keywords_list(self):
-        # TODO change self.tags.exclude(language='') to self.tags.all() on S18_new_tags.be removal
-        return [tag.to_dict for tag in self.tags.exclude(language='')]
+        return [tag.to_dict for tag in self.tags.all()]
 
     @property
     def keywords(self):
@@ -198,9 +191,8 @@ class Article(ExtendedModel):
     tracker = FieldTracker()
     slugify_field = 'title'
 
-    raw = models.Manager()
     objects = SoftDeletableManager()
-    deleted = DeletedManager()
+    trash = TrashManager()
 
     class Meta:
         verbose_name = _("Article")

@@ -1,8 +1,11 @@
+import csv
+import glob
 import json
 import logging
 import os
 import re
 import shutil
+import tempfile
 
 import unicodecsv
 from io import BytesIO
@@ -10,11 +13,13 @@ from io import BytesIO
 import magic
 from celery.signals import task_prerun, task_failure, task_success, task_postrun
 from constance import config
+from csvwlib import CSVWConverter
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.postgres.fields import JSONField
 from django.contrib.postgres.indexes import GinIndex
 from django.core.exceptions import ValidationError
+from django.core.paginator import Paginator
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.db.models import Max, Sum
@@ -24,28 +29,29 @@ from django.template.defaultfilters import filesizeformat
 from django.utils.deconstruct import deconstructible
 from django.utils.functional import cached_property
 from django.utils.timezone import now
-from django.utils.translation import gettext_lazy as _, get_language
+from django.utils.translation import gettext_lazy as _
 from django_celery_results.models import TaskResult as TaskResultOrig
 from elasticsearch_dsl.connections import Connections
 from mimeparse import parse_mime_type
 from model_utils import FieldTracker
-from model_utils.managers import SoftDeletableManager
 from modeltrans.fields import TranslationField
 
 from mcod.core import signals as core_signals
 from mcod.core import storages
 from mcod.core.api.search import signals as search_signals
 from mcod.core.api.rdf import signals as rdf_signals
-from mcod.core.db.managers import DeletedManager
+from mcod.core.db.managers import TrashManager
 from mcod.core.db.models import ExtendedModel, update_watcher, TrashModelBase
 from mcod.core.utils import sizeof_fmt
 from mcod.counters.models import ResourceDownloadCounter, ResourceViewCounter
 from mcod.datasets.models import Dataset
 from mcod.lib.data_rules import painless_body
+from mcod.resources.archives import is_archive_file
 from mcod.resources.error_mappings import recommendations, messages
+from mcod.resources.file_validation import get_file_info
 from mcod.resources.indexed_data import ShpData, TabularData
-from mcod.resources.link_validation import content_type_from_file_format
-from mcod.resources.manager import ResourceManager
+from mcod.resources.managers import ChartManager, ResourceManager
+from mcod.resources.score_computation import get_score
 from mcod.resources.signals import revalidate_resource, update_chart_resource
 from mcod.resources.tasks import process_resource_from_url_task, process_resource_file_task, \
     process_resource_file_data_task, validate_link
@@ -63,9 +69,8 @@ STATUS_CHOICES = [
     ('draft', _('Draft'))
 ]
 
-OPENNESS_SCORE = {_type: os for _, _type, _, os in settings.SUPPORTED_CONTENT_TYPES}
-
 signal_logger = logging.getLogger('signals')
+logger = logging.getLogger('mcod')
 
 
 class ResourceDataValidationError(Exception):
@@ -137,14 +142,23 @@ class FileValidator(object):
 
 RESOURCE_TYPE_WEBSITE = 'website'
 RESOURCE_TYPE_API = 'api'
+RESOURCE_TYPE_FILE = 'file'
 RESOURCE_TYPE = (
-    ('file', _('File')),
+    (RESOURCE_TYPE_FILE, _('File')),
     (RESOURCE_TYPE_WEBSITE, _('Web Site')),
     (RESOURCE_TYPE_API, _('API')),
 )
 
 RESOURCE_TYPE_API_CHANGE = 'api-change'
 RESOURCE_TYPE_API_CHANGE_LABEL = _('API - change')
+
+RESOURCE_TYPE_FILE_CHANGE = 'file-change'
+RESOURCE_TYPE_FILE_CHANGE_LABEL = _('File - change')
+
+RESOURCE_FORCED_TYPE = (
+    (RESOURCE_TYPE_API_CHANGE, RESOURCE_TYPE_API_CHANGE_LABEL),
+    (RESOURCE_TYPE_FILE_CHANGE, RESOURCE_TYPE_FILE_CHANGE_LABEL),
+)
 
 
 class TaskResult(TaskResultOrig):
@@ -311,6 +325,9 @@ class Resource(ExtendedModel):
     csv_file = models.FileField(verbose_name=_("File as CSV"), storage=storages.get_storage('resources'),
                                 upload_to='%Y%m%d',
                                 max_length=2000, blank=True, null=True)
+    jsonld_file = models.FileField(verbose_name=_("File as JSON-LD"), storage=storages.get_storage('resources'),
+                                   upload_to='%Y%m%d',
+                                   max_length=2000, blank=True, null=True)
     file_mimetype = models.TextField(blank=True, null=True, editable=False, verbose_name=_("File mimetype"))
     file_info = models.TextField(blank=True, null=True, editable=False, verbose_name=_("File info"))
     file_encoding = models.CharField(max_length=150, null=True, blank=True, editable=False,
@@ -327,6 +344,7 @@ class Resource(ExtendedModel):
     type = models.CharField(max_length=10, choices=RESOURCE_TYPE, default='file', editable=False,
                             verbose_name=_("Type"))
     forced_api_type = models.BooleanField(verbose_name=_("Mark resource as API"), default=False)
+    forced_file_type = models.BooleanField(verbose_name=_("Mark resource as file"), default=False)
     openness_score = models.IntegerField(default=0, verbose_name=_("Openness score"),
                                          validators=[MinValueValidator(0), MaxValueValidator(5)])
 
@@ -388,9 +406,19 @@ class Resource(ExtendedModel):
         return self.title
 
     @property
+    def license_code(self):
+        return self.dataset.license_code
+
+    @property
+    def update_frequency(self):
+        return self.dataset.update_frequency
+
+    @property
     def type_as_str(self):
         if self.type == RESOURCE_TYPE_API and self.forced_api_type:
             return RESOURCE_TYPE_API_CHANGE_LABEL
+        elif self.type == RESOURCE_TYPE_FILE and self.forced_file_type:
+            return RESOURCE_TYPE_FILE_CHANGE_LABEL
         return self.get_type_display()
     type_as_str.fget.short_description = _("Type")
 
@@ -410,7 +438,12 @@ class Resource(ExtendedModel):
     def is_linked(self):
         if self.is_imported:
             return self.availability == 'remote'
-        return bool(self.link and not self.link.startswith(settings.API_URL))
+        return bool(self.link and not self.is_link_internal)
+
+    @property
+    def is_link_internal(self):
+        api_url_old = settings.API_URL.replace('https:', 'http:')
+        return self.link and (self.link.startswith(settings.API_URL) or self.link.startswith(api_url_old))
 
     @property
     def is_imported(self):
@@ -450,12 +483,72 @@ class Resource(ExtendedModel):
 
     @property
     def csv_file_url(self):
-        return '%s%s' % (settings.API_URL, self.csv_file.url) if self.csv_file else None
+        return self._get_absolute_url(
+            self.csv_file.url,
+            base_url=settings.API_URL,
+            use_lang=False) if self.csv_file else None
+
+    @property
+    def is_archived_csv(self):
+        path = self.file.path if self.file and self.format == 'csv' else None
+        if path:
+            try:
+                family, content_type, options = get_file_info(path)
+            except FileNotFoundError:
+                return False
+            return is_archive_file(content_type)
+        return False
+
+    def get_csv_file_internal_url(self, suffix='.utf8_encoded.csv'):
+        """
+        Returns absolute url to csv file for convertion to json-ld.
+        During the process new csv file (with specified suffix) is created in media directory
+        to meet the requirements of converter (csvwlib.utils.CSVUtils).
+        """
+        if self.is_archived_csv:  # archived csv file should not be converted to jsonld.
+            return None
+        _file = self.file if self.file and self.format == 'csv' else None
+        _file_utf8 = None
+        if _file:  # ensure csv can be converted to json-ld: utf-8, delimiter is colon (,), etc.
+            with open(_file.path, 'r', encoding=self.file_encoding, newline='') as f:
+                dialect = csv.Sniffer().sniff(f.readline())
+                f.seek(0)
+                reader = csv.reader(f, dialect)
+                _file_utf8 = tempfile.NamedTemporaryFile(
+                    mode='w',
+                    dir=os.path.dirname(_file.path),
+                    delete=False,
+                    encoding='utf-8',
+                    suffix=suffix,
+                )
+                writer = csv.writer(_file_utf8)
+                writer.writerows((row for row in reader))
+                _file_utf8.close()
+
+        if _file_utf8:
+            url = _file.url.replace(os.path.basename(_file.name), os.path.basename(_file_utf8.name))
+        else:
+            url = _file.url if _file else self.csv_file.url if self.csv_file else None
+        return self._get_internal_url(url) if url else None
+
+    @property
+    def jsonld_file_url(self):
+        return self._get_absolute_url(
+            self.jsonld_file.url,
+            base_url=settings.API_URL,
+            use_lang=False) if self.jsonld_file else None
 
     @property
     def csv_file_size(self):
         try:
             return self.csv_file.size if self.csv_file else None
+        except FileNotFoundError:
+            return None
+
+    @property
+    def jsonld_file_size(self):
+        try:
+            return self.jsonld_file.size if self.jsonld_file else None
         except FileNotFoundError:
             return None
 
@@ -518,8 +611,24 @@ class Resource(ExtendedModel):
 
     @property
     def formats(self):
-        if self.format:
-            return '{}{}'.format(self.get_format_display(), ', CSV' if self.csv_file else '')
+        if self.formats_list:
+            return ', '.join(self.formats_list).upper()
+
+    @property
+    def converted_formats(self):
+        items = [
+            'csv' if self.csv_file else None,
+            'json-ld' if self.jsonld_file else None,
+        ]
+        return [format for format in items if format]
+
+    @property
+    def converted_formats_str(self):
+        return ','.join(self.converted_formats)
+
+    @property
+    def formats_list(self):
+        return [self.format] + self.converted_formats if self.format else self.converted_formats
 
     @property
     def download_url(self):
@@ -530,6 +639,10 @@ class Resource(ExtendedModel):
     @property
     def csv_download_url(self):
         return '{}/resources/{}/csv'.format(settings.API_URL, self.ident) if self.csv_file else None
+
+    @property
+    def jsonld_download_url(self):
+        return '{}/resources/{}/jsonld'.format(settings.API_URL, self.ident) if self.jsonld_file else None
 
     @property
     def is_indexable(self):
@@ -586,7 +699,37 @@ class Resource(ExtendedModel):
             f.seek(0)
             csv_file = self.save_file(f, f'{csv_filename}.csv')
         self.csv_file = csv_file
+        if is_enabled('S27_csv_to_jsonld.be'):
+            self.jsonld_file = self.convert_csv_to_jsonld()
         self.save()
+
+    def convert_csv_to_jsonld(self):
+        url = self.get_csv_file_internal_url()
+        if url:
+            jsonld_filename = f'{os.path.splitext(self.file_basename)[0]}.jsonld'
+            logger.debug(f'Trying to convert {url} to json-ld file named {jsonld_filename}')
+            try:
+                graph = CSVWConverter.to_rdf(url)
+                # override context to omit long list of default namespaces as @context in json-ld.
+                context = dict(
+                    (pfx, str(ns))
+                    for (pfx, ns) in graph.namespaces() if pfx and pfx == 'csvw')
+                data = graph.serialize(format='json-ld', context=context, auto_compact=True).decode()
+                csv_original_url = self._get_absolute_url(
+                    self.file.url, base_url=settings.API_URL, use_lang=False)
+                data = data.replace(url, csv_original_url)
+                pattern = f'{os.path.dirname(os.path.realpath(self.file.path))}/*.utf8_encoded.csv'
+                tmp_files = glob.glob(pattern)
+                for f in tmp_files:
+                    try:
+                        os.remove(f)
+                        logger.debug(f'Temporary file was deleted: {f}')
+                    except OSError as e:
+                        logger.debug(e)
+                return self.save_file(BytesIO(data.encode('utf-8')), jsonld_filename)
+            except Exception as exc:
+                logger.debug(exc)
+                return None
 
     def save_file(self, content, filename):
         dt = self.created.date() if self.created else now().date()
@@ -599,7 +742,7 @@ class Resource(ExtendedModel):
         return '%s/%s' % (subdir, filename)
 
     def revalidate(self, **kwargs):
-        if not self.link or self.link.startswith(settings.API_URL):
+        if not self.link or self.is_link_internal:
             process_resource_file_task.s(self.id, **kwargs).apply_async(countdown=2)
         else:
             process_resource_from_url_task.s(self.id, **kwargs).apply_async(
@@ -616,6 +759,10 @@ class Resource(ExtendedModel):
             [x.packed_file.path for x in cls.raw.exclude(packed_file=None).exclude(packed_file='')])
         resources_files.extend(
             [x.csv_file.path for x in cls.raw.exclude(csv_file=None).exclude(csv_file='')])
+        resources_files.extend(
+            [x.jsonld_file.path for x in cls.raw.exclude(jsonld_file=None).exclude(jsonld_file='')])
+        resources_files.extend(
+            [x.old_file.path for x in cls.raw.exclude(old_file=None).exclude(old_file='')])
         return resources_files
 
     @classmethod
@@ -646,25 +793,15 @@ class Resource(ExtendedModel):
     def sizeof_fmt(cls, file_size):
         return sizeof_fmt(file_size)
 
-    def get_chart(self, user=None):
-        result = None
-        if user:
-            qs = self.charts.filter(is_removed=False, created_by=user)
-            result = qs.filter(is_default=False).last() or qs.filter(is_default=True).last()
-        return result or self.charts.filter(is_removed=False, is_default=True).last()
-
-    def get_chart_for_update(self, user, is_default):
-        qs = self.charts.filter(is_removed=False, is_default=is_default)
-        return qs.filter(created_by=user).last() or (qs.last() if is_default else None)
-
     def get_openness_score(self, format_=None):
         format_ = format_ or self.format
         if self.csv_file:
             format_ = 'csv'
+        if self.jsonld_file and is_enabled('S27_csv_to_jsonld.be'):
+            format_ = 'jsonld'
         if format_ is None:
             return 0
-        _, content = content_type_from_file_format(format_.lower())
-        return OPENNESS_SCORE.get(content, 0)
+        return get_score(self, format_)
 
     @property
     def file_size_human_readable(self):
@@ -723,9 +860,15 @@ class Resource(ExtendedModel):
     tracker = FieldTracker()
     slugify_field = 'title'
 
-    raw = models.Manager()
     objects = ResourceManager()
-    deleted = DeletedManager()
+    trash = TrashManager()
+
+    class Meta:
+        verbose_name = _("Resource")
+        verbose_name_plural = _("Resources")
+        db_table = 'resource'
+        default_manager_name = "objects"
+        indexes = [GinIndex(fields=["i18n"]), ]
 
     @property
     def chartable(self):
@@ -743,11 +886,11 @@ class Resource(ExtendedModel):
 
     @property
     def map_preview(self):
-        return f"{settings.BASE_URL}/{get_language()}/dataset/{self.dataset.id}/resource/{self.id}/preview/map"
+        return self._get_absolute_url(f'/dataset/{self.dataset.id}/resource/{self.id}/preview/map')
 
     @property
     def chart_preview(self):
-        return f"{settings.BASE_URL}/{get_language()}/dataset/{self.dataset.id}/resource/{self.id}/preview/chart"
+        return self._get_absolute_url(f'/dataset/{self.dataset.id}/resource/{self.id}/preview/chart')
 
     def has_tabular_format(self, extra_formats=tuple()):
         base_formats = ['csv', 'tsv', 'xls', 'xlsx', 'ods']
@@ -785,12 +928,59 @@ class Resource(ExtendedModel):
         namespaces_dict = {prefix: ns for prefix, ns in g.namespaces()}
         return 'INSERT DATA { %(data)s }' % {'data': data}, namespaces_dict
 
-    class Meta:
-        verbose_name = _("Resource")
-        verbose_name_plural = _("Resources")
-        db_table = 'resource'
-        default_manager_name = "objects"
-        indexes = [GinIndex(fields=["i18n"]), ]
+    def _charts_for_user(self, user, **kwargs):
+        qs = self.charts.all()
+        public = qs.filter(is_default=True)
+        public = public.order_by('-id')[:1]
+        private = qs.filter(is_default=False, created_by=user).order_by('-id')[:1] if user.is_authenticated else None
+        return public.union(private).order_by('-is_default') if private else public
+
+    def charts_for_user(self, user, **kwargs):
+        if not is_enabled('S24_named_charts.be'):
+            return self._charts_for_user(user, **kwargs)
+
+        queryset = self.charts.filter(is_default=True)
+        if not self.is_chart_creation_blocked and user.is_authenticated:
+            private = self.charts.filter(is_default=False, created_by=user).order_by('-id')[:1]
+            queryset = queryset.union(private)
+        queryset = queryset.order_by('-is_default', 'name')
+        return self._get_page(queryset, **kwargs)
+
+    def _get_page(self, queryset, page=1, per_page=20, **kwargs):
+        paginator = Paginator(queryset, per_page)
+        return paginator.get_page(page)
+
+    def save_chart(self, user, data):
+        if is_enabled('S24_named_charts.be'):
+            return self.save_named_chart(user, data)
+        is_default = data.get('is_default', False)
+        chart = self.charts.chart_to_update(user, is_default)
+        if not user.can_add_resource_chart(self, is_default, chart):
+            raise Exception(_('No permission to define chart'))
+        if chart:
+            chart.chart = data.get('chart')
+            chart.modified_by = user
+            chart.save()
+        else:
+            chart = self.charts.create(created_by=user, **data)
+        return chart
+
+    def save_named_chart(self, user, data):
+        return Chart.objects.create(resource=self, created_by=user, **data)
+
+    def get_resource_type(self):
+        res_type = self.type
+        if self.id and self.tracker.has_changed('forced_api_type'):
+            if self.forced_api_type and res_type == RESOURCE_TYPE_WEBSITE:
+                res_type = RESOURCE_TYPE_API
+            elif not self.forced_api_type and res_type == RESOURCE_TYPE_API:
+                res_type = RESOURCE_TYPE_WEBSITE
+        if self.id and self.tracker.has_changed('forced_file_type'):
+            if not self.forced_file_type and res_type == RESOURCE_TYPE_FILE:
+                res_type = RESOURCE_TYPE_API
+            elif self.forced_file_type and res_type == RESOURCE_TYPE_API:
+                res_type = RESOURCE_TYPE_FILE
+        return res_type
 
 
 class Chart(ExtendedModel):
@@ -806,7 +996,8 @@ class Chart(ExtendedModel):
     uuid = None
     views_count = None
 
-    resource = models.ForeignKey(Resource, on_delete=models.DO_NOTHING, related_name="charts")
+    name = models.CharField(max_length=200, verbose_name=_('name'), blank=True)
+    resource = models.ForeignKey(Resource, on_delete=models.CASCADE, related_name='charts')
     chart = JSONField()
     is_default = models.BooleanField(default=False)
     created_by = models.ForeignKey(
@@ -830,12 +1021,16 @@ class Chart(ExtendedModel):
 
     tracker = FieldTracker()
 
-    raw = models.Manager()
-    objects = SoftDeletableManager()
-    deleted = DeletedManager()
+    objects = ChartManager()
+    trash = TrashManager()
 
     class Meta:
-        db_table = "resource_chart"
+        default_manager_name = 'objects'
+        base_manager_name = 'objects'
+        db_table = 'resource_chart'
+
+    def __str__(self):
+        return f'{self.id} - {self.name}' if self.name else f'{self.id}'
 
     @property
     def signals_map(self):
@@ -850,33 +1045,35 @@ class Chart(ExtendedModel):
         return self.resource.dataset.organization
 
     @classmethod
-    def get_charts(cls, resource_id, user=None):
-        default_charts = cls.objects.filter(resource_id=resource_id, is_default=True).order_by('-id')[:1]
-        if user:
-            user_charts = cls.objects.filter(
-                resource_id=resource_id, is_default=False, created_by=user).order_by('-id')[:1]
-            return default_charts.union(user_charts)
-        return default_charts
-
-    @classmethod
-    def save_chart(cls, user, instance, data):
-        data.setdefault('is_default', False)
-        if instance:
-            instance.chart = data.get('chart')
-            if not instance.modified_by or instance.modified_by != user:
-                instance.modified_by = user
-            instance.save()
-        else:
-            instance = cls.objects.create(created_by=user, **data)
-        return instance
-
-    @classmethod
     def without_i18_fields(cls):
         """Hack which prevents from creation of translated fields (inherited from ExtendedModel)."""
         return True
 
+    def can_be_updated_by(self, user):
+        return user.is_superuser or \
+            (self.is_default and user.is_editor_of_organization(self.resource.institution)) or \
+            (not self.is_default and self.created_by_id == user.id)
+
     def get_unique_slug(self):
         return f"chart-{self.id}"
+
+    def is_visible_for(self, user):
+        if user.is_authenticated:
+            if any([
+                user.is_superuser,
+                self.is_default,
+                (self.created_by_id == user.id),
+                user.is_editor_of_organization(self.organization),
+            ]):
+                return True
+        return True if self.is_default else False
+
+    def update(self, user, data):
+        self.name = data['name']
+        self.chart = data['chart']
+        self.is_default = data['is_default']
+        self.modified_by = user
+        self.save()
 
 
 class ResourceTrash(Resource, metaclass=TrashModelBase):
@@ -895,7 +1092,7 @@ def update_modified_by(sender, instance, *args, **kwargs):
 @receiver(update_chart_resource, sender=Chart)
 def update_chart_resource_handler(sender, instance, *args, **kwargs):
     Resource.objects.filter(id=instance.resource_id).update(
-        has_chart=instance.resource.charts.filter(is_removed=False, is_default=True).exists())
+        has_chart=instance.resource.charts.filter(is_removed=False, is_permanently_removed=False, is_default=True).exists())
 
     signal_logger.debug(
         'Reindex resource after chart updated',
@@ -927,12 +1124,9 @@ def preprocess_resource(sender, instance, *args, **kwargs):
         if not instance.data_date or instance.data_date < creation_date:
             instance.data_date = creation_date
     instance.openness_score = instance.get_openness_score()
-    instance.has_chart = instance.charts.filter(is_removed=False, is_default=True).exists()
-    if is_enabled('S22_forced_api_type.be') and instance.id and instance.tracker.has_changed('forced_api_type'):
-        if instance.forced_api_type and instance.type == RESOURCE_TYPE_WEBSITE:
-            instance.type = RESOURCE_TYPE_API
-        elif not instance.forced_api_type and instance.type == RESOURCE_TYPE_API:
-            instance.type = RESOURCE_TYPE_WEBSITE
+    instance.has_chart = instance.charts.filter(
+        is_removed=False, is_permanently_removed=False, is_default=True).exists()
+    instance.type = instance.get_resource_type()
 
 
 @receiver(post_save, sender=Resource)
@@ -957,8 +1151,10 @@ def process_resource(sender, instance, *args, **kwargs):
         },
         exc_info=1
     )
-
-    if any([instance.tracker.has_changed('link'), instance.tracker.has_changed('availability')]):
+    changed_forced_file_type = instance.tracker.has_changed('forced_file_type')
+    previous_forced_file_type = instance.tracker.previous('forced_file_type')
+    if any([instance.tracker.has_changed('link'), instance.tracker.has_changed('availability'),
+            (changed_forced_file_type and previous_forced_file_type is not None)]):
         process_resource_from_url_task.s(instance.id).apply_async(countdown=2)
     elif instance.tracker.has_changed('file') or instance.state_restored:
         process_resource_file_task.s(instance.id).apply_async(countdown=2)

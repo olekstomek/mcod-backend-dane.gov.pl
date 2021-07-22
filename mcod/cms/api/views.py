@@ -1,18 +1,21 @@
 from django.conf import settings
+from django.conf.urls import url
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
+from django.utils.decorators import method_decorator
 from django.utils.translation import activate
-from django.conf.urls import url
-from rest_framework.response import Response
+from django.views.decorators.vary import vary_on_cookie
+from fancy_cache import cache_page
 from rest_framework.exceptions import NotFound, MethodNotAllowed
-
+from rest_framework.response import Response
 from wagtail.api.v2.views import BaseAPIViewSet, PagesAPIViewSet
 from wagtail.core.models import PageRevision, Page
 from wagtail.api.v2.utils import BadRequestError, filter_page_type, page_models_from_string
 from wagtail.images.api.v2.views import ImagesAPIViewSet
 
 from mcod.cms.api.serializers import CmsPageSerializer
+from mcod.unleash import is_enabled
 
 
 class ImagesViewSet(ImagesAPIViewSet):
@@ -83,11 +86,19 @@ class CmsPagesViewSet(PagesAPIViewSet):
     detail_only_fields = ['parent']
     lookup_field = 'url_path'
     lookup_url_kwarg = None
+    is_cms_api_cache_used = is_enabled('S27_cms_api_cache.be')
 
     def _activate_language(self, request):
         lang = request.query_params.get('lang', 'pl')
         if lang in settings.LANGUAGE_CODES:
             activate(lang)
+
+    def is_superuser_rev_request(self):
+        return bool(
+            self.request.user and
+            self.request.user.is_superuser and
+            self.request.query_params.get('rev') and
+            self.kwargs.get('url_path'))
 
     def get_object(self):
         queryset = self.filter_queryset(self.get_queryset())
@@ -101,11 +112,12 @@ class CmsPagesViewSet(PagesAPIViewSet):
             'attribute on the view correctly.' %
             (self.__class__.__name__, lookup_url_kwarg)
         )
-        rev_id = self.request.query_params.get('rev')
-        url_path = self.kwargs['url_path']
-        if self.request.user and self.request.user.is_superuser and rev_id and url_path:
+        if self.is_superuser_rev_request():
+            rev_id = self.request.query_params.get('rev')
             query_filter = {
-                'revisions__content_json__icontains': '"{}": "{}"'.format(self.lookup_field, self.kwargs[lookup_url_kwarg])
+                'revisions__content_json__icontains': '"{}": "{}"'.format(
+                    self.lookup_field,
+                    self.kwargs[lookup_url_kwarg])
             }
             obj = queryset.filter(**query_filter).order_by('revisions__id').first()
             if not obj:
@@ -128,13 +140,27 @@ class CmsPagesViewSet(PagesAPIViewSet):
 
         return obj
 
-    def page_view(self, request, url_path=None):
+    if is_cms_api_cache_used:
+        @method_decorator(
+            cache_page(
+                settings.CMS_API_CACHE_TIMEOUT,
+                key_prefix='cms-api',
+                remember_all_urls=True,
+                remember_stats_all_urls=True,
+            )
+        )
+        @method_decorator(vary_on_cookie)
+        def page_view(self, request, url_path=None):
+            return self._page_view(request, url_path=url_path)
+    else:
+        def page_view(self, request, url_path=None):
+            return self._page_view(request, url_path=url_path)
+
+    def _page_view(self, request, url_path=None):
         url_path = '' if not url_path else url_path
         url_parts = [part.strip('/') for part in url_path.split('/') if part]
         self.kwargs['url_path'] = '/{}/'.format('/'.join(url_parts)).replace('//', '/')
-
         instance = self.get_object()
-
         self._activate_language(request)
         serializer = self.get_serializer(instance)
         return Response(serializer.data)

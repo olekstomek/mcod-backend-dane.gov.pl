@@ -1,8 +1,6 @@
 {% load core_tags %}
 
 <script>
-    {% is_unleash_enabled "S23_private_institutions.be" as S23_private_institutions %}
-    {% if S23_private_institutions %}
     const institutionTypePrivate = 'private';
     const hasAccessToPublicInstitutions = {{ user.has_access_to_public_institutions|yesno:"true,false" }};
     const hasAccessToPrivateInstitutions = {{ user.has_access_to_private_institutions|yesno:"true,false" }};
@@ -25,6 +23,8 @@
 
     const $licenseTabButton = $("#suit_form_tabs > li > a[href='#licenses']");
     const $licenseTab = $licenseTabButton.parent();
+
+    const licenseConditionDbOrCopyrightedPattern = /^id_(datasets-2-\d-)?license_condition_db_or_copyrighted$/;
 
     function disableLicensesTab() {
         $licenseTabButton.addClass('disabledTab');
@@ -102,7 +102,6 @@
     } else if (hasAccessToPrivateInstitutions) {
         initializeLicensesTabPrivate()
     }
-    {% endif %}
 
     var $licenseConditionDbOrCopyrighted = $("div.control-group.field-license_condition_db_or_copyrighted");
     var isLicenseReadonly = $licenseConditionDbOrCopyrighted.find("span.readonly").length;
@@ -119,9 +118,9 @@
         $(".control-group.field-license_condition_db_or_copyrighted .control-label").css("border-bottom", "none");
     }
 
-    function refresh_license_choices(text) {
+    function refresh_license_choices(text, prefix) {
         var enable = text !== '';
-        var $radios = $("#id_{{ prefix }}license_chosen input[type=radio]");
+        var $radios = $(`#id_${prefix}license_chosen input[type=radio]`);
         var $firstRadio = $radios.first();
         if (enable) {
             $radios.removeAttr('disabled');
@@ -136,10 +135,12 @@
     if (window.CKEDITOR) {
         CKEDITOR.on('instanceCreated', function (event) {
             var editor = event.editor;
-            if (editor.name === 'id_{{ prefix }}license_condition_db_or_copyrighted') {
-                refresh_license_choices(editor.getData());
+            var match = editor.name.match(licenseConditionDbOrCopyrightedPattern);
+            if (match) {
+                var prefix = match[1] || '';
+                refresh_license_choices(editor.getData(), prefix);
                 editor.on('change', function () {
-                    refresh_license_choices(editor.getData());
+                    refresh_license_choices(editor.getData(), prefix);
                 });
             }
         });

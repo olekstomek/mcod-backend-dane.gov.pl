@@ -7,16 +7,16 @@ from celery import shared_task
 from constance import config
 from django.apps import apps
 from django.core.mail import send_mail, get_connection
+from django.conf import settings
 from django.template.loader import render_to_string
 from django.utils import translation
 from django.utils.translation import ugettext_lazy as _
 
-from mcod import settings
 from mcod.core.api.search.tasks import update_with_related_task
+from mcod.core.api.rdf.tasks import update_graph_task
 from mcod.resources.file_validation import analyze_resource_file
 from mcod.resources.indexed_data import FileEncodingValidationError
 from mcod.resources.link_validation import download_file, check_link_status
-from mcod.unleash import is_enabled
 
 logger = logging.getLogger('mcod')
 
@@ -30,8 +30,8 @@ def process_resource_from_url_task(resource_id, update_file=True, **kwargs):
         return {}
 
     if update_file:
-        resource_type, options = download_file(resource.link)
-        if is_enabled('S22_forced_api_type.be') and resource_type == 'website' and resource.forced_api_type:
+        resource_type, options = download_file(resource.link, resource.forced_file_type)
+        if resource_type == 'website' and resource.forced_api_type:
             logger.debug("Resource of type 'website' forced into type 'api'!")
             resource_type = 'api'
 
@@ -69,7 +69,7 @@ def process_resource_from_url_task(resource_id, update_file=True, **kwargs):
         result['url'] = resource.file_url
 
     update_with_related_task.s('resources', 'Resource', resource.id).apply_async()
-
+    update_graph_task.s('resources', 'Resource', resource.id).apply_async(countdown=1)
     return json.dumps(result)
 
 
@@ -111,6 +111,7 @@ def process_resource_file_task(resource_id, update_link=True, **kwargs):
             countdown=2)
 
     update_with_related_task.s('resources', 'Resource', resource_id).apply_async()
+    update_graph_task.s('resources', 'Resource', resource.id).apply_async(countdown=1)
 
     return json.dumps({
         'uuid': str(resource.uuid),

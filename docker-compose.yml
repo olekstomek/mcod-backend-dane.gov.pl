@@ -116,11 +116,11 @@ services:
       - 443:443
     env_file:
       - .env
-    extra_hosts:
-      - host.docker.internal:172.18.18.1
     networks:
       backend:
         ipv4_address: 172.18.18.100
+    extra_hosts:
+      - host.docker.internal:172.17.0.1
 
   mcod-discourse:
     container_name: mcod-discourse
@@ -133,7 +133,9 @@ services:
     volumes:
       - 'discourse_vol:/bitnami'
     environment:
+      - POSTGRESQL_HOST=mcod-db
       - POSTGRESQL_ROOT_USER=${POSTGRES_USER}
+      - POSTGRESQL_ROOT_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRESQL_CLIENT_CREATE_DATABASE_NAME=forum
       - POSTGRESQL_CLIENT_CREATE_DATABASE_USERNAME=${POSTGRES_USER}
       - POSTGRESQL_CLIENT_CREATE_DATABASE_PASSWORD=${POSTGRES_PASSWORD}
@@ -141,8 +143,10 @@ services:
       - DISCOURSE_POSTGRESQL_USERNAME=${POSTGRES_USER}
       - DISCOURSE_POSTGRESQL_PASSWORD=${POSTGRES_PASSWORD}
       - DISCOURSE_HOSTNAME=forum.mcod.local
-    env_file:
-      - .env
+      - REDIS_HOST=mcod-redis
+    networks:
+      backend:
+        ipv4_address: 172.18.18.140
 
   mcod-discourse-sidekiq:
     container_name: mcod-discourse-sidekiq
@@ -155,13 +159,22 @@ services:
     volumes:
       - 'discourse_vol:/bitnami'
     environment:
+      - POSTGRESQL_HOST=mcod-db
+      - POSTGRESQL_ROOT_USER=${POSTGRES_USER}
+      - POSTGRESQL_ROOT_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRESQL_CLIENT_CREATE_DATABASE_NAME=forum
+      - POSTGRESQL_CLIENT_CREATE_DATABASE_USERNAME=${POSTGRES_USER}
+      - POSTGRESQL_CLIENT_CREATE_DATABASE_PASSWORD=${POSTGRES_PASSWORD}
       - DISCOURSE_POSTGRESQL_NAME=forum
       - DISCOURSE_POSTGRESQL_USERNAME=${POSTGRES_USER}
       - DISCOURSE_POSTGRESQL_PASSWORD=${POSTGRES_PASSWORD}
       - DISCOURSE_HOSTNAME=forum.mcod.local
+      - REDIS_HOST=mcod-redis
       - DISCOURSE_PORT=3000
-    env_file:
-      - .env
+    networks:
+      backend:
+        ipv4_address: 172.18.18.141
+  
 
 networks:
   backend:

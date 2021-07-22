@@ -3,9 +3,10 @@
 import logging
 import os
 import json
+from functools import partial
+
 import django
 import elasticapm
-from functools import partial
 import falcon
 from elasticapm.conf import setup_logging
 from elasticapm.handlers.logging import LoggingHandler
@@ -20,14 +21,13 @@ from webargs import falconparser
 from mcod import settings
 from mcod.core.api import middlewares
 from mcod.core.api.converters import ExportFormatConverter, RDFFormatConverter
-from mcod.core.api.media import ExportHandler, RDFHandler, SparqlHandler
+from mcod.core.api.media import ExportHandler, RDFHandler, SparqlHandler, XMLHandler
 from mcod.core.api.utils.json_encoders import APIEncoder
 from mcod.core.api.apm import get_client, get_data_from_request
+from mcod.core.utils import get_limiter_key
 from mcod.lib.errors import error_serializer, error_handler, error_404_handler, error_422_handler, error_500_handler
-from mcod.unleash import is_enabled
 
 logger = logging.getLogger("elasticapm.errors.client")
-mcod_logger = logging.getLogger('mcod')
 
 jsonapi_handler = JSONHandler(
     dumps=partial(json.dumps, cls=APIEncoder)
@@ -37,6 +37,8 @@ extra_handlers = {
     # JSON:API
     'application/vnd.api+json': jsonapi_handler,
     'application/vnd.api+json; ext=bulk': jsonapi_handler,
+    # XML
+    'application/xml': XMLHandler(),
     # other
     'text/csv': ExportHandler(),
     'text/tsv': ExportHandler(),
@@ -104,22 +106,18 @@ class ApiApp(falcon.API):
 
 
 class Cache(BaseCache):
-
+    """Cache which uses custom version of middleware."""
     @property
     def middleware(self):
         return middlewares.FalconCacheMiddleware(self.cache, self.config)
 
 
 app_cache = Cache(config={
+    'CACHE_TYPE': 'redis',
     'CACHE_EVICTION_STRATEGY': 'time-based',
-    'CACHE_TYPE': 'simple',
+    'CACHE_KEY_PREFIX': 'falcon-cache',
+    'CACHE_REDIS_URL': settings.REDIS_URL,
 })  # https://falcon-caching.readthedocs.io/en/stable/
-
-
-def get_limiter_key(req, resp, resource, params):
-    key = req.access_route[-2] if len(req.access_route) > 1 else req.remote_addr
-    mcod_logger.debug(f'Falcon-Limiter key: {key}')
-    return key
 
 
 limiter = Limiter(
@@ -150,7 +148,7 @@ def get_api_app():
         _middlewares.append(middlewares.CsrfMiddleware())
     if settings.FALCON_LIMITER_ENABLED:
         _middlewares.append(limiter.middleware)
-    if settings.ENABLE_FALCON_CACHING and is_enabled('S15_guides.be'):
+    if settings.FALCON_CACHING_ENABLED:
         _middlewares.append(app_cache.middleware)
 
     app = ApiApp(middleware=_middlewares)

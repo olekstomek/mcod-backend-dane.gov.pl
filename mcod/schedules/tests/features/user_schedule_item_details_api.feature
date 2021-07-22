@@ -67,7 +67,16 @@ Feature: User schedule item details API
     | user_schedule_item | {"dataset_title": "Zgłoszenie w realizacji", "is_new": true, "description": "", "is_accepted": true, "is_resource_added_notes": "", "is_resource_added": true, "recommendation_notes": null, "resource_link": "http://example.com"}   |
     | user_schedule_item | {"dataset_title": "Zgłoszenie w realizacji", "is_new": true, "description": "", "is_accepted": true, "is_resource_added_notes": null, "is_resource_added": true, "recommendation_notes": null, "resource_link": "http://example.com"} |
 
-  Scenario: Agent cannot to add new user schedule item if currently planned schedule is blocked
+  Scenario: Agent cannot add new user schedule item if there is no currently planned schedule yet
+    Given logged agent user created with {"id": 999}
+    When api request method is POST
+    And api request user_schedule_item data has {"is_new": true}
+    And api request path is /auth/user_schedule_items/
+    And send api request and fetch the response
+    Then api's response status code is 403
+    And api's response body field errors/[0]/title is There is no currently planned schedule yet!
+
+  Scenario: Agent cannot add new user schedule item if currently planned schedule is blocked
     Given logged agent user created with {"id": 999}
     And schedule data created with {"schedule_id": 999, "schedule_is_blocked": true, "user_id": 999, "user_schedule_id": 999}
     When api request method is POST
@@ -87,6 +96,35 @@ Feature: User schedule item details API
     And send api request and fetch the response
     Then api's response status code is 201
     And api's response body field data/attributes/dataset_title is Zgłoszenie do zablokowanego harmonogramu
+
+  Scenario: Create user schedule item by admin request returns 404 for invalid user schedule id (9999)
+    Given logged admin user
+    When api request method is POST
+    And api request user_schedule_item data has {"dataset_title": "Zgłoszenie do archiwalnego harmonogramu", "is_new": true}
+    And api request path is /auth/user_schedules/9999
+    And send api request and fetch the response
+    Then api's response status code is 404
+
+  Scenario: Admin cannot add new user schedule item to archival schedule
+    Given logged out agent user created with {"id": 999}
+    And schedule data created with {"schedule_id": 999, "schedule_state": "archival", "user_id": 999, "user_schedule_id": 999}
+    And logged admin user
+    When api request method is POST
+    And api request user_schedule_item data has {"dataset_title": "Zgłoszenie do archiwalnego harmonogramu", "is_new": true}
+    And api request path is /auth/user_schedules/999
+    And send api request and fetch the response
+    Then api's response status code is 403
+    And api's response body field errors/[0]/title is You cannot add new item to archival schedule!
+
+  Scenario: Agent cannot add new user schedule item if currently planned schedule is set ready
+    Given logged agent user created with {"id": 999}
+    And schedule data created with {"schedule_id": 999, "user_id": 999, "user_schedule_id": 999, "user_schedule_is_ready": true}
+    When api request method is POST
+    And api request user_schedule_item data has {"is_new": true}
+    And api request path is /auth/user_schedule_items/
+    And send api request and fetch the response
+    Then api's response status code is 403
+    And api's response body field errors/[0]/title is You cannot add new item - your schedule is set ready!
 
   Scenario: User schedule item details endpoint returns valid data for admin
     Given logged admin user
@@ -117,6 +155,15 @@ Feature: User schedule item details API
     And schedule data created with {"schedule_id": 999, "user_id": 998, "user_schedule_id": 999, "user_schedule_item_id": 999}
     When api request method is GET
     And api request path is /auth/user_schedule_items/999
+    And send api request and fetch the response
+    Then api's response status code is 404
+
+  Scenario: Delete user schedule item request returns 404 for invalid user schedule item id
+    Given logged out agent user created with {"id": 999}
+    And schedule data created with {"schedule_id": 999, "schedule_is_blocked": true, "user_id": 999, "user_schedule_id": 999, "user_schedule_item_id": 999}
+    And logged admin user
+    When api request method is DELETE
+    And api request path is /auth/user_schedule_items/9999
     And send api request and fetch the response
     Then api's response status code is 404
 
@@ -226,6 +273,13 @@ Feature: User schedule item details API
     Then api's response status code is 403
     And api's response body field errors/[0]/detail is Wymagane są dodatkowe uprawnienia!
 
+  Scenario: User schedule item comments list endpoint returns 404 for invalid id
+    Given logged agent user created with {"id": 999, "email": "agent@dane.gov.pl"}
+    When api request method is GET
+    And api request path is /auth/user_schedule_items/9999/comments
+    And send api request and fetch the response
+    Then api's response status code is 404
+
   Scenario: Agent can add comment related to specified user schedule item
     Given logged out agent user created with {"id": 999, "email": "agent@dane.gov.pl"}
     And schedule data created with {"schedule_id": 999, "user_id": 999, "user_schedule_id": 999, "user_schedule_item_id": 999}
@@ -248,7 +302,15 @@ Feature: User schedule item details API
     Then api's response status code is 201
     And api's response body field data/attributes/text is Test comment
 
-  Scenario: Active admin cannot to add comment related to specified user schedule item
+  Scenario: Posting new comment request returns 404 for invalid user schedule item id
+    Given logged admin user
+    When api request method is POST
+    And api request comment data has {"text": "Test comment"}
+    And api request path is /auth/user_schedule_items/9999/comments
+    And send api request and fetch the response
+    Then api's response status code is 404
+
+  Scenario: Active admin cannot add comment related to specified user schedule item
     Given logged out agent user created with {"id": 999, "email": "agent@dane.gov.pl"}
     And schedule data created with {"schedule_id": 999, "user_id": 999, "user_schedule_id": 999, "user_schedule_item_id": 999}
     And logged active user
@@ -279,3 +341,11 @@ Feature: User schedule item details API
     And send api request and fetch the response
     Then api's response status code is 403
     And api's response body field errors/[0]/title is You have no permission to update the resource!
+
+  Scenario: Edit of comment request returns 404 for invalid user schedule item id
+    Given logged agent user created with {"id": 999, "email": "agent@dane.gov.pl"}
+    When api request method is PATCH
+    And api request comment data has {"text": "Edited comment!"}
+    And api request path is /auth/user_schedule_items/comments/9999/edit
+    And send api request and fetch the response
+    Then api's response status code is 404

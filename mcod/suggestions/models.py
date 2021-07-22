@@ -5,25 +5,38 @@ from django.dispatch import receiver
 from django.forms.models import model_to_dict
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
-from model_utils import FieldTracker
+from model_utils import FieldTracker, Choices
+from model_utils.fields import MonitorField
 from modeltrans.fields import TranslationField
 
-from mcod.core.db.models import ExtendedModel, TrashModelBase
+from mcod.core.db.models import ExtendedModel, TrashModelBase, STATUS_CHOICES
 from mcod.datasets.tasks import send_dataset_comment
 from mcod.resources.tasks import send_resource_comment
 from mcod.suggestions.managers import (
-    AcceptedDatasetSubmissionDeletedManager,
+    AcceptedDatasetSubmissionTrashManager,
     AcceptedDatasetSubmissionManager,
     DatasetCommentManager,
-    DatasetCommentDeletedManager,
-    DatasetSubmissionDeletedManager,
+    DatasetCommentTrashManager,
+    DatasetSubmissionTrashManager,
     DatasetSubmissionManager,
     ResourceCommentManager,
-    ResourceCommentDeletedManager,
+    ResourceCommentTrashManager,
 )
 from mcod.suggestions.tasks import send_data_suggestion, send_dataset_suggestion_mail_task
 
 User = get_user_model()
+
+
+ACCEPTED_DATASET_SUBMISSION_STATUS_CHOICES = [
+    *STATUS_CHOICES,
+    ('publication_finished', _('Publication finished')),
+]
+
+ACCEPTED_DATASET_SUBMISSION_STATUS_CHOICES_NO_PUBLISHED = [
+    (value, description)
+    for value, description in ACCEPTED_DATASET_SUBMISSION_STATUS_CHOICES
+    if value != 'published'
+]
 
 
 class Suggestion(models.Model):
@@ -95,9 +108,8 @@ class DatasetSubmission(DatasetSubmissionMixin):
     # user_opinions = models.ManyToManyField(User, through='SubmissionOpinion',
     #                                        related_name='dataset_submission_opinions')
 
-    raw = models.Manager()
     objects = DatasetSubmissionManager()
-    deleted = DatasetSubmissionDeletedManager()
+    trash = DatasetSubmissionTrashManager()
     i18n = TranslationField()
     tracker = FieldTracker()
 
@@ -127,6 +139,8 @@ class DatasetSubmission(DatasetSubmissionMixin):
 
 
 class AcceptedDatasetSubmission(DatasetSubmissionMixin):
+    STATUS = Choices(*ACCEPTED_DATASET_SUBMISSION_STATUS_CHOICES)
+    PUBLISHED_STATUSES = (STATUS.published, STATUS.publication_finished)
     created_by = models.ForeignKey(
         User, models.DO_NOTHING, blank=True, null=True, verbose_name=_('created by'),
         related_name='accepteddatasetsubmissions_created',
@@ -142,6 +156,10 @@ class AcceptedDatasetSubmission(DatasetSubmissionMixin):
     is_active = models.BooleanField(default=False, verbose_name=_('proposal active'))
 
     is_published_for_all = models.BooleanField(default=False, verbose_name=_('publish for all users'))
+
+    publication_finished_comment = models.TextField(blank=True, verbose_name=_('describe how the case was resolved'))
+    publication_finished_at = MonitorField(monitor='status', when=['publication_finished', ],
+                                           verbose_name=_("date of completion of publication"))
 
     @property
     def feedback_counters(self):
@@ -162,9 +180,64 @@ class AcceptedDatasetSubmission(DatasetSubmissionMixin):
     def accusative_case(cls):
         return _('acc: Accepted dataset submission')
 
-    raw = models.Manager()
+    @property
+    def state_published(self):
+        if all([
+            self.status in self.PUBLISHED_STATUSES,
+            not self.is_removed,
+        ]):
+            if self.is_created:
+                return True
+            else:
+                if not self.was_published:
+                    if self.was_removed:
+                        return True
+                    else:
+                        if self.prev_status in (None, self.STATUS.draft):
+                            return True
+        return False
+
+    @property
+    def state_removed(self):
+        if all([
+            not self.is_created,
+            not self.was_removed,
+            self.prev_status in self.PUBLISHED_STATUSES
+        ]):
+            if self.status == self.STATUS.draft:
+                return True
+            elif self.status in self.PUBLISHED_STATUSES and self.is_removed:
+                return True
+        return False
+
+    @property
+    def state_restored(self):
+        if all([
+            self.status in self.PUBLISHED_STATUSES,
+            not self.is_removed,
+            not self.is_created,
+            self.was_published
+        ]):
+            if self.was_removed:
+                return True
+            elif self.prev_status == self.STATUS.draft:
+                return True
+        return False
+
+    @property
+    def state_updated(self):
+        if all([
+            self.status in self.PUBLISHED_STATUSES,
+            not self.is_removed,
+            not self.is_created,
+            self.prev_status in self.PUBLISHED_STATUSES,
+            not self.was_removed
+        ]):
+            return True
+        return False
+
     objects = AcceptedDatasetSubmissionManager()
-    deleted = AcceptedDatasetSubmissionDeletedManager()
+    trash = AcceptedDatasetSubmissionTrashManager()
     i18n = TranslationField(fields=('title', 'notes', 'organization_name', 'potential_possibilities'))
     tracker = FieldTracker()
 
@@ -202,7 +275,6 @@ class CommentMixin(ExtendedModel):
     is_portal_error = models.BooleanField(default=False, verbose_name=_('portal error'))
     is_other_error = models.BooleanField(default=False, verbose_name=_('other error'))
 
-    raw = models.Manager()
     i18n = TranslationField()
 
     class Meta(ExtendedModel.Meta):
@@ -235,7 +307,7 @@ class DatasetComment(CommentMixin):
         related_name='dataset_comments_modified',
     )
 
-    deleted = DatasetCommentDeletedManager()
+    trash = DatasetCommentTrashManager()
     objects = DatasetCommentManager()
     tracker = FieldTracker()
 
@@ -284,7 +356,7 @@ class ResourceComment(CommentMixin):
         related_name='resource_comments_modified',
     )
 
-    deleted = ResourceCommentDeletedManager()
+    trash = ResourceCommentTrashManager()
     objects = ResourceCommentManager()
     tracker = FieldTracker()
 

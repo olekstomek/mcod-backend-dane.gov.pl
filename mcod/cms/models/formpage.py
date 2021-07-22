@@ -274,7 +274,5 @@ class FormPage(BasePage):
         verbose_name = "Formularz lub ankieta"
         verbose_name_plural = "Formularze lub ankiety"
 
-    def copy_pl_to_en(self):
-        super().copy_pl_to_en()
-        self.intro_en = self.intro
-        self.thank_you_text_en = self.thank_you_text
+    def get_copyable_fields(self):
+        return super().get_copyable_fields() + ['intro', 'thank_you_text']

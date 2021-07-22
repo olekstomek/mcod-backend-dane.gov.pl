@@ -1,14 +1,12 @@
-import logging
-
 from django_elasticsearch_dsl.registries import registry
 from django_elasticsearch_dsl.signals import BaseSignalProcessor
 
 from mcod.core.api.search.tasks import delete_document_task, delete_related_documents_task, delete_with_related_task, \
     update_with_related_task, update_document_task, update_related_task
 from mcod.core.db.elastic import ProxyDocumentRegistry
+from mcod.core.mixins.signals import SignalLoggerMixin
 from mcod.core.signals import ExtendedSignal
 
-signal_logger = logging.getLogger('signals')
 
 update_document = ExtendedSignal()
 update_document_with_related = ExtendedSignal()
@@ -17,7 +15,7 @@ remove_document = ExtendedSignal()
 remove_document_with_related = ExtendedSignal()
 
 
-class AsyncSignalProcessor(BaseSignalProcessor):
+class AsyncSignalProcessor(SignalLoggerMixin, BaseSignalProcessor):
     def _get_object_name(self, obj):
         return obj._meta.concrete_model._meta.object_name
 
@@ -36,77 +34,35 @@ class AsyncSignalProcessor(BaseSignalProcessor):
         remove_document_with_related.disconnect(self.remove_with_related)
 
     def update(self, sender, instance, *args, **kwargs):
-        signal_logger.debug(
-            'Updating document in elasticsearch',
-            extra={
-                'sender': '{}.{}'.format(sender._meta.model_name, sender._meta.object_name),
-                'instance': '{}.{}'.format(instance._meta.model_name, instance._meta.object_name),
-                'instance_id': instance.id,
-                'signal': 'update_document'
-            },
-            exc_info=1
-        )
+        self.debug('Updating document in elasticsearch', sender, instance, 'update_document')
         obj_name = self._get_object_name(instance)
         update_document_task.s(instance._meta.app_label, obj_name, instance.id).apply_async(
             countdown=1)
 
     def update_related(self, sender, instance, model, pk_set, **kwargs):
-        signal_logger.debug(
-            'Updating related documents in elasticsearch',
-            extra={
-                'sender': '{}.{}'.format(sender._meta.model_name, sender._meta.object_name),
-                'instance': '{}.{}'.format(instance._meta.model_name, instance._meta.object_name),
-                'instance_id': instance.id,
-                'signal': 'update_related'
-            },
-            exc_info=1
-        )
-
+        self.debug('Updating related documents in elasticsearch', sender, instance, 'update_related')
         update_related_task.s(model._meta.app_label, model._meta.object_name, list(pk_set)).apply_async(
             countdown=2)
 
     def update_with_related(self, sender, instance, *args, **kwargs):
-        signal_logger.debug(
+        self.debug(
             'Updating document and related documents in elasticsearch',
-            extra={
-                'sender': '{}.{}'.format(sender._meta.model_name, sender._meta.object_name),
-                'instance': '{}.{}'.format(instance._meta.model_name, instance._meta.object_name),
-                'instance_id': instance.id,
-                'signal': 'update_document_with_related'
-            },
-            exc_info=1
+            sender, instance, 'update_document_with_related'
         )
         obj_name = self._get_object_name(instance)
         update_with_related_task.s(instance._meta.app_label, obj_name, instance.id).apply_async(
             countdown=2)
 
     def remove(self, sender, instance, *args, **kwargs):
-        signal_logger.debug(
-            'Removing document from elasticsearch',
-            extra={
-                'sender': '{}.{}'.format(sender._meta.model_name, sender._meta.object_name),
-                'instance': '{}.{}'.format(instance._meta.model_name, instance._meta.object_name),
-                'instance_id': instance.id,
-                'signal': 'remove_document'
-            },
-            exc_info=1
-        )
-
+        self.debug('Removing document from elasticsearch', sender, instance, 'remove_document')
         obj_name = self._get_object_name(instance)
         delete_document_task.s(instance._meta.app_label, obj_name, instance.id).apply_async(
             countdown=1)
 
     def remove_with_related(self, sender, instance, *args, **kwargs):
-        signal_logger.debug(
+        self.debug(
             'Removing document and related documents from elasticsearch',
-            extra={
-                'sender': '{}.{}'.format(sender._meta.model_name, sender._meta.object_name),
-                'instance': '{}.{}'.format(instance._meta.model_name, instance._meta.object_name),
-                'instance_id': instance.id,
-                'signal': 'remove_document_with_related'
-            },
-            exc_info=1
-        )
+            sender, instance, 'remove_document_with_related')
         object_name = self._get_object_name(instance)
         registry_proxy = ProxyDocumentRegistry(registry)
         related_instances_data = registry_proxy.get_data_of_related_instances(instance)

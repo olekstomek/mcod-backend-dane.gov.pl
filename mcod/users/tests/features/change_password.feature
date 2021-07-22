@@ -1,24 +1,18 @@
 Feature: Change password
 
-  Scenario: Change password is ok in API 1.0
+  Scenario Outline: Change password
     Given logged active user with email ActiveTestUser@dane.gov.pl and password 12345.Abcde
     When api request method is POST
-    And api request path is /1.0/auth/password/change
-    And api request posted data is {"old_password": "12345.Abcde", "new_password1": "AaCc.5922", "new_password2": "AaCc.5922"}
-    And send api request and fetch the response
-    Then api's response status code is 200
-    And api's response json is empty
-    And password AaCc.5922 is valid for user ActiveTestUser@dane.gov.pl
-
-  Scenario: Change password is ok in API 1.4
-    Given logged active user with email ActiveTestUser@dane.gov.pl and password 12345.Abcde
-    When api request method is POST
-    And api request path is /1.4/auth/password/change
+    And api request path is <request_path>
     And api request posted data is {"data": {"type": "user", "attributes": {"old_password": "12345.Abcde", "new_password1": "AaCc.5922", "new_password2": "AaCc.5922"}}}
     And send api request and fetch the response
     Then api's response status code is 200
     And api's response body field data/attributes/is_password_changed is True
     And password AaCc.5922 is valid for user ActiveTestUser@dane.gov.pl
+    Examples:
+    | request_path              |
+    | /1.0/auth/password/change |
+    | /1.4/auth/password/change |
 
   Scenario Outline: Change password by logged out
     Given active user with email ActiveTestUser@dane.gov.pl and password 12345.Abcde

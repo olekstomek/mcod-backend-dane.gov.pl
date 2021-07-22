@@ -6,6 +6,7 @@ from django.utils.functional import cached_property
 from django.contrib.auth import get_user_model
 from django.contrib.postgres.fields import JSONField
 from django.contrib.postgres.indexes import GinIndex
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Max, Sum, Q
 from django.db.models.signals import pre_save, post_save
@@ -13,17 +14,17 @@ from django.dispatch import receiver
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _, get_language
 from model_utils import FieldTracker
-from model_utils.managers import SoftDeletableManager
 from django.utils.safestring import mark_safe
 from modeltrans.fields import TranslationField
 
 from mcod import settings
-from mcod.unleash import is_enabled
+
+from mcod.datasets.managers import DatasetManager
 from mcod.watchers.tasks import update_model_watcher_task
 from mcod.core import signals as core_signals
 from mcod.core.api.search import signals as search_signals
 from mcod.core.api.rdf import signals as rdf_signals
-from mcod.core.db.managers import DeletedManager
+from mcod.core.db.managers import TrashManager
 from mcod.core.db.models import ExtendedModel, update_watcher, TrashModelBase
 from mcod.counters.models import ResourceDownloadCounter, ResourceViewCounter
 from mcod.datasets.signals import remove_related_resources
@@ -42,6 +43,20 @@ UPDATE_FREQUENCY = (
     ("weekly", _("weekly")),
     ("daily", _("daily")),
 )
+UPDATE_FREQUENCY_NOTIFICATION_RANGES = {
+    'yearly': (1, 365),
+    'everyHalfYear': (1, 182),
+    'quarterly': (1, 90),
+    'monthly': (1, 30),
+    'weekly': (1, 6),
+}
+UPDATE_NOTIFICATION_FREQUENCY_DEFAULT_VALUES = {
+    'yearly': 7,
+    'everyHalfYear': 7,
+    'quarterly': 7,
+    'monthly': 3,
+    'weekly': 1,
+}
 
 TYPE = (
     ('application', _('application')),
@@ -67,6 +82,7 @@ class Dataset(ExtendedModel):
         (LICENSE_CC_BY_ND, "CC BY-ND 4.0"),
         (LICENSE_CC_BY_NC_ND, "CC BY-NC-ND 4.0"),
     )
+    LICENSE_CODE_TO_NAME = dict(LICENSES)
 
     SIGNALS_MAP = {
         'updated': (
@@ -135,6 +151,13 @@ class Dataset(ExtendedModel):
                                      verbose_name=_('Institution'))
     customfields = JSONField(blank=True, null=True, verbose_name=_("Customfields"))
     update_frequency = models.CharField(max_length=50, blank=True, null=True, verbose_name=_("Update frequency"))
+    is_update_notification_enabled = models.BooleanField(
+        default=True, verbose_name=_('turn on notification'))
+    update_notification_frequency = models.PositiveSmallIntegerField(
+        null=True, blank=True, verbose_name=_('set notifications frequency'))
+    update_notification_recipient_email = models.EmailField(
+        blank=True, verbose_name=_('the person who is the notifications recipient'))
+
     category = models.ForeignKey('categories.Category', on_delete=models.SET_NULL, blank=True, null=True,
                                  verbose_name=_('Category'), limit_choices_to=Q(code=''))
 
@@ -248,7 +271,8 @@ class Dataset(ExtendedModel):
 
     @property
     def formats(self):
-        return list(set(res.format for res in self.resources.all() if res.format is not None))
+        items = [x.formats_list for x in self.resources.all() if x.formats_list]
+        return sorted(set([item for sublist in items for item in sublist]))
 
     @property
     def types(self):
@@ -267,14 +291,8 @@ class Dataset(ExtendedModel):
         return list(set(res.openness_score for res in self.resources.all()))
 
     @property
-    def tags_list(self):
-        # TODO change self.tags.filter(language='') to self.tags.all() on S18_new_tags.be removal
-        return [tag.translations_dict for tag in self.tags.filter(language='')]
-
-    @property
     def keywords_list(self):
-        # TODO change self.tags.exclude(language='') to self.tags.all() on S18_new_tags.be removal
-        return [tag.to_dict for tag in self.tags.exclude(language='')]
+        return [tag.to_dict for tag in self.tags.all()]
 
     @property
     def keywords(self):
@@ -297,16 +315,17 @@ class Dataset(ExtendedModel):
         return ', '.join(self.categories.all().values_list('title', flat=True))
 
     @property
-    def license_name(self):
-        if is_enabled('S21_licenses.be'):
-            license_ = self.LICENSE_CC0
-            if self.license_condition_source or self.license_condition_modification or self.license_condition_responsibilities:
-                license_ = self.LICENSE_CC_BY
-            if self.license_chosen and self.license_chosen > license_:
-                license_ = self.license_chosen
-            return dict(self.LICENSES).get(license_)
+    def license_code(self):
+        license_ = self.LICENSE_CC0
+        if self.license_condition_source or self.license_condition_modification or self.license_condition_responsibilities:
+            license_ = self.LICENSE_CC_BY
+        if self.license_chosen and self.license_chosen > license_:
+            license_ = self.license_chosen
+        return license_
 
-        return self.license.name if self.license and self.license.name else ''
+    @property
+    def license_name(self):
+        return self.LICENSE_CODE_TO_NAME.get(self.license_code)
 
     @property
     def license_link(self):
@@ -392,10 +411,24 @@ class Dataset(ExtendedModel):
         namespaces_dict = {prefix: ns for prefix, ns in g.namespaces()}
         return 'INSERT DATA { %(data)s }' % {'data': data}, namespaces_dict
 
+    def clean(self):
+        _range = UPDATE_FREQUENCY_NOTIFICATION_RANGES.get(self.update_frequency)
+        if (_range and self.update_notification_frequency and
+                self.update_notification_frequency not in range(_range[0], _range[1] + 1)):
+            msg = _('The value must be between %(min)s and %(max)s') % {'min': _range[0], 'max': _range[1]}
+            raise ValidationError({'update_notification_frequency': msg})
+
+    @property
+    def frequency_display(self):
+        return dict(UPDATE_FREQUENCY).get(self.update_frequency)
+
+    @property
+    def dataset_update_notification_recipient(self):
+        return self.update_notification_recipient_email or self.modified_by.email
+
     i18n = TranslationField(fields=("title", "notes", "image_alt"))
-    raw = models.Manager()
-    objects = SoftDeletableManager()
-    deleted = DeletedManager()
+    objects = DatasetManager()
+    trash = TrashManager()
     tracker = FieldTracker()
     slugify_field = 'title'
     last_modified_resource.fget.short_description = _("modified")

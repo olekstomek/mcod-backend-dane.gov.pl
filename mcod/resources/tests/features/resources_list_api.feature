@@ -166,3 +166,14 @@ Feature: Resources list API
     And api's response body field data/[0]/attributes/csv_file_url endswith example_xls_file.csv
     And api's response body field data/[0]/attributes/csv_file_size is not None
     And api's response body field data/[0]/attributes/csv_download_url is not None
+
+  Scenario: Test csv resource converted to jsonld on resources list
+    Given resource with csv file converted to jsonld with params {"id": 999}
+    When api request method is GET
+    And api request path is /1.4/resources/?id=999
+    And send api request and fetch the response
+    Then api's response body field data/[0]/attributes/file_url endswith csv2jsonld.csv
+    And api's response body field data/[0]/attributes/jsonld_file_url endswith csv2jsonld.jsonld
+    And api's response body field data/[0]/attributes/jsonld_file_size is not None
+    And api's response body field data/[0]/attributes/jsonld_download_url is not None
+    And api's response body field data/[0]/attributes/openness_score is 4

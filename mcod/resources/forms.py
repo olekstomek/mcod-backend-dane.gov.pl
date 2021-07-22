@@ -10,6 +10,7 @@ from django.utils.translation import gettext_lazy as _
 from django.contrib.postgres.forms.jsonb import JSONField
 
 from mcod import settings
+from mcod.lib.field_validators import ContainsLetterValidator
 from mcod.lib.widgets import (
     CKEditorWidget,
     ResourceDataRulesWidget,
@@ -19,7 +20,6 @@ from mcod.lib.widgets import (
 from mcod.resources.archives import ARCHIVE_EXTENSIONS
 from mcod.resources.models import Resource, supported_formats_choices
 from mcod.special_signs.models import SpecialSign
-from mcod.unleash import is_enabled
 
 
 SUPPORTED_FILE_EXTENSIONS = [f'.{x[0]}' for x in supported_formats_choices()]
@@ -141,25 +141,29 @@ class SpecialSignMultipleChoiceField(forms.ModelMultipleChoiceField):
 
 
 class ResourceForm(forms.ModelForm):
-    title = forms.CharField(widget=forms.Textarea(attrs={'style': 'width: 99%', 'rows': 1}), label=_("Title"))
+    title = forms.CharField(widget=forms.Textarea(attrs={'style': 'width: 99%', 'rows': 2}), label=_("Title"))
     title_en = forms.CharField(
-        widget=forms.Textarea(attrs={'style': 'width: 99%', 'rows': 1}), label=_("Title") + " (EN)", required=False)
+        widget=forms.Textarea(attrs={'style': 'width: 99%', 'rows': 2}), label=_("Title") + " (EN)", required=False)
     description = forms.CharField(
-        widget=CKEditorWidget, label=_("Description"), max_length=settings.DESCRIPTION_FIELD_MAX_LENGTH)
+        widget=CKEditorWidget,
+        label=_("Description"),
+        min_length=settings.DESCRIPTION_FIELD_MIN_LENGTH,
+        max_length=settings.DESCRIPTION_FIELD_MAX_LENGTH,
+        validators=[ContainsLetterValidator()],
+    )
     description_en = forms.CharField(
-        widget=CKEditorWidget, label=_("Description") + " (EN)", required=False,
-        max_length=settings.DESCRIPTION_FIELD_MAX_LENGTH)
+        widget=CKEditorWidget,
+        label=_("Description") + " (EN)",
+        required=False,
+        min_length=settings.DESCRIPTION_FIELD_MIN_LENGTH,
+        max_length=settings.DESCRIPTION_FIELD_MAX_LENGTH,
+        validators=[ContainsLetterValidator()],
+    )
 
     special_signs = SpecialSignMultipleChoiceField(
         queryset=SpecialSign.objects.published(), required=False, label=_('Special Signs'),
         widget=FilteredSelectMultiple(_('special signs'), False),
     )
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        if is_enabled('S21_admin_ui_changes.be') and self.fields.get('title') and self.fields.get('title_en'):
-            self.fields['title'].widget.attrs['rows'] = 2
-            self.fields['title_en'].widget.attrs['rows'] = 2
 
 
 class ChangeResourceForm(ResourceForm):

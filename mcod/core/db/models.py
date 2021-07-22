@@ -5,25 +5,28 @@ from functools import partial
 from django.conf import settings
 from django.db import models
 from django.db.models.base import ModelBase
+from django.db.models.deletion import get_candidate_relations_to_delete
+from django.dispatch import receiver
 from django.template.defaultfilters import truncatechars
 from django.utils.functional import cached_property
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _, get_language
 from model_utils import Choices
-from model_utils.models import SoftDeletableModel, TimeStampedModel
+from model_utils.models import TimeStampedModel
 from model_utils.models import StatusModel, MonitorField
 
 from mcod.core import signals
 from mcod.core.api.search import signals as search_signals
-# from mcod.core.db import elastic
 from mcod.core.db.mixins import AdminMixin, ApiMixin
+from mcod.core.models import SoftDeletableModel
 from mcod.core.serializers import csv_serializers_registry as csr
 from mcod.core.registries import rdf_serializers_registry as rsr
+from mcod.core.signals import permanently_remove_related_objects
 from mcod.watchers.models import Subscription, ModelWatcher
 from mcod.watchers.tasks import update_model_watcher_task
-from mcod.unleash import is_enabled
 
 signal_logger = logging.getLogger('signals')
+logger = logging.getLogger('mcod')
 
 STATUS_CHOICES = [
     ('published', _('Published')),
@@ -35,6 +38,7 @@ _SIGNALS_MAP = {
     'published': (search_signals.update_document_with_related, signals.notify_published),
     'restored': (search_signals.update_document_with_related, signals.notify_restored),
     'removed': (search_signals.remove_document_with_related, signals.notify_removed),
+    'permanently_removed': (signals.permanently_remove_related_objects, ),
     'pre_m2m_added': (signals.notify_m2m_added, ),
     'pre_m2m_removed': (signals.notify_m2m_removed, ),
     'pre_m2m_cleaned': (signals.notify_m2m_cleaned, ),
@@ -167,6 +171,10 @@ class BaseExtendedModel(AdminMixin, ApiMixin, StatusModel, TimeStampedModel):
         return False
 
     @property
+    def state_permanently_removed(self):
+        return False
+
+    @property
     def state_restored(self):
         if all([
             self.status == self.STATUS.published,
@@ -216,6 +224,9 @@ class BaseExtendedModel(AdminMixin, ApiMixin, StatusModel, TimeStampedModel):
     @staticmethod
     def _get_absolute_url(url, base_url=settings.BASE_URL, use_lang=True):
         return f'{base_url}/{get_language()}{url}' if use_lang else f'{base_url}{url}'
+
+    def _get_internal_url(self, url, use_lang=False):
+        return self._get_absolute_url(url, base_url=settings.API_URL_INTERNAL, use_lang=use_lang)
 
     @staticmethod
     def on_class_prepared(sender, *args, **kwargs):
@@ -310,6 +321,10 @@ class ExtendedModel(SoftDeletableModel, BaseExtendedModel):
         return True if self.tracker.previous('is_removed') else False
 
     @property
+    def was_permanently_removed(self):
+        return True if self.tracker.previous('is_permanently_removed') else False
+
+    @property
     def state_published(self):
         if all([
             self.status == self.STATUS.published,
@@ -338,6 +353,10 @@ class ExtendedModel(SoftDeletableModel, BaseExtendedModel):
             elif self.status == self.STATUS.published and self.is_removed:
                 return True
         return False
+
+    @property
+    def state_permanently_removed(self):
+        return not self.was_permanently_removed and self.is_permanently_removed
 
     @property
     def state_restored(self):
@@ -415,13 +434,43 @@ class TrashModelBase(ModelBase):
 
     def __new__(cls, name, bases, attrs, **kwargs):
         new_class = super().__new__(cls=cls, name=name, bases=bases, attrs=attrs, **kwargs)
-        if is_enabled('S25_admin_ui_inline_trash.be'):
-            for base_class in bases:
-                if isinstance(base_class, ModelBase):
-                    base_class.trash_class = new_class
-        if is_enabled('S21_admin_ui_changes.be'):
-            for base in bases:
-                if hasattr(base, '_meta') and isinstance(base, ModelBase):
-                    new_class._meta.verbose_name = _('{} - trash').format(base._meta.verbose_name)
-                    new_class._meta.verbose_name_plural = _('{} - trash').format(base._meta.verbose_name_plural)
+        new_class.is_trash = True
+        for base_class in bases:
+            if isinstance(base_class, ModelBase):
+                base_class.trash_class = new_class
+        for base in bases:
+            if hasattr(base, '_meta') and isinstance(base, ModelBase):
+                new_class._meta.verbose_name = _('{} - trash').format(base._meta.verbose_name)
+                new_class._meta.verbose_name_plural = _('{} - trash').format(base._meta.verbose_name_plural)
         return new_class
+
+
+@receiver(permanently_remove_related_objects)
+def permanently_remove_related_objects_after_instance_removal(sender, instance, *args, **kwargs):
+    signal_logger.debug(
+        f'Permanently removing objects related to {sender.__name__} with id {instance.id}',
+        extra={
+            'sender': '{}.{}'.format(sender._meta.model_name, sender._meta.object_name),
+            'instance': '{}.{}'.format(instance._meta.model_name, instance._meta.object_name),
+            'instance_id': instance.id,
+            'signal': 'permanently_remove_related_objects'
+        },
+        exc_info=1
+    )
+
+    opts = sender._meta
+    for relation in get_candidate_relations_to_delete(opts):
+        field = relation.field
+        if issubclass(field.remote_field.related_model, SoftDeletableModel):
+            if field.remote_field.on_delete == models.CASCADE:
+                related_model = field.remote_field.related_model
+                counter = 0
+                for obj in related_model.raw.filter(**{field.name: instance}):
+                    if not obj.is_removed:
+                        obj.delete()
+                    obj.delete(permanent=True)
+                    counter += 1
+
+                if counter:
+                    logger.debug(f'Removed {counter} {related_model.__name__}s related '
+                                 f'to {sender.__name__} with id {instance.id}')

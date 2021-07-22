@@ -1,11 +1,12 @@
 import marshmallow as ma
 from django.apps import apps
 from django.db.models.manager import Manager
-from django.utils.translation import gettext_lazy as _
+from django.utils.html import strip_tags
+from django.utils.translation import gettext_lazy as _, get_language
 from querystring_parser import builder
 
 from mcod import settings
-from mcod.core.api import fields
+from mcod.core.api import fields, schemas
 from mcod.core.api.jsonapi.serializers import (
     Relationships,
     Relationship,
@@ -24,8 +25,8 @@ from mcod.datasets.models import UPDATE_FREQUENCY
 from mcod.core.api.rdf.schema_mixins import ProfilesMixin
 from mcod.lib.extended_graph import ExtendedGraph
 from mcod.lib.serializers import TranslatedStr, KeywordsList
-from mcod.lib.serializers import TranslatedTagsList
-from mcod.resources.serializers import ResourceRDFMixin
+from mcod.organizations.serializers import InstitutionXMLSerializer, InstitutionCSVMetadataSerializer
+from mcod.resources.serializers import ResourceRDFMixin, ResourceXMLSerializer, ResourceCSVMetadataSerializer
 from mcod.unleash import is_enabled
 from mcod.watchers.serializers import SubscriptionMixin
 
@@ -225,6 +226,13 @@ class SourceSchema(ExtSchema):
     last_import_timestamp = fields.DateTime()
 
 
+class SourceXMLSchema(ExtSchema):
+    title = fields.Str()
+    url = fields.URL()
+    update_frequency = TranslatedStr()
+    last_import_timestamp = fields.DateTime()
+
+
 class TransUpdateFreqField(fields.String):
     @fields.after_serialize
     def translate(self, value=None):
@@ -243,6 +251,32 @@ class CategoryAggregation(ExtAggregation):
     class Meta:
         model = 'categories.Category'
         title_field = 'title_i18n'
+
+
+class LicenseAggregation(schemas.ExtSchema):
+    id = fields.String(attribute='key')
+    title = fields.String()
+    doc_count = fields.Integer()
+
+    @ma.pre_dump(pass_many=True)
+    def prepare_data(self, data, many, **kwargs):
+        if many:
+            for item in data:
+                item['title'] = Dataset.LICENSE_CODE_TO_NAME.get(item.key)
+        return data
+
+
+class UpdateFrequencyAggregation(schemas.ExtSchema):
+    id = fields.String(attribute='key')
+    title = fields.String()
+    doc_count = fields.Integer()
+
+    @ma.pre_dump(pass_many=True)
+    def prepare_data(self, data, many, **kwargs):
+        if many:
+            for item in data:
+                item['title'] = _UPDATE_FREQUENCY.get(item.key)
+        return data
 
 
 class DatasetApiAggregations(ExtSchema):
@@ -346,7 +380,6 @@ class DatasetApiAttrs(ObjectAttrs, HighlightObjectMixin):
     category = fields.Nested(DatasetCategoryAttr, many=False)
     formats = fields.List(fields.String())
     types = fields.List(fields.String())
-    tags = TranslatedTagsList(TranslatedStr())
     keywords = KeywordsList(TranslatedStr())
     openness_scores = fields.List(fields.Int())
     license_chosen = fields.Integer()
@@ -392,138 +425,6 @@ class DatasetApiResponse(SubscriptionMixin, TopLevel):
         aggs_schema = DatasetApiAggregations
 
 
-# class SearchResultAttrs(ObjectAttrs):
-#     title = TranslatedStr()
-#     notes = TranslatedStr()
-#
-#     class Meta:
-#         ordered = True
-
-
-# class ApplicationSearchResultAttrs(SearchResultAttrs):
-#     notes = TranslatedStr()
-#     author = fields.Str()
-#     verified = fields.DateTime(attribute='modified')
-#     tags = TranslatedTagsList(TranslatedStr())
-
-
-# class ArticleSearchResultAttrs(SearchResultAttrs):
-#     notes = TranslatedStr()
-#     verified = fields.DateTime(attribute='modified')
-#     tags = TranslatedTagsList(TranslatedStr())
-
-
-# class DatasetSearchResultAttrs(SearchResultAttrs):
-#     verified = fields.DateTime()
-#     source_title = fields.Str()
-#     source_url = fields.URL()
-#     source_type = fields.Str()
-#     tags = TranslatedTagsList(TranslatedStr())
-#     keywords = KeywordsList(TranslatedStr())
-
-
-# class InstitutionSearchResultAttrs(SearchResultAttrs):
-#     verified = fields.DateTime(attribute='modified')
-
-
-# class ResourceSearchResultAttrs(SearchResultAttrs):
-#     notes = TranslatedStr(attribute='description')
-#     verified = fields.DateTime()
-
-
-# class DocumentTypeAggregation(Aggregation):
-#     application = fields.Int(attribute='application.doc_count')
-#     dataset = fields.Int(attribute='dataset.doc_count')
-#     institution = fields.Int(attribute='institution.doc_count')
-#     news = fields.Int(attribute='news.doc_count')
-#     knowledge_base = fields.Int(attribute='knowledge_base.doc_count')
-#     resource = fields.Int(attribute='resource.doc_count')
-#
-#     @ma.pre_dump(pass_many=True)
-#     def prepare_data(self, data, many):
-#         if many:
-#             keys = [x['key'] for x in data]
-#             for key in ['application', 'article', 'dataset', 'institution', 'knowledge_base', 'news', 'resource']:
-#                 if key not in keys:
-#                     data.append({'key': key, 'doc_count': 0})
-#             for item in data:
-#                 item['title'] = key.upper()
-#         return data
-
-
-# class SearchApiAggregations(ExtSchema):
-#     type = fields.Nested(DocumentTypeAggregation, attribute='documents_by_type.buckets', many=False)
-#
-#     class Meta:
-#         ordered = True
-#
-#     @ma.pre_dump
-#     def prepare_data(self, data):
-#         documents_by_type = getattr(data, 'documents_by_type', None)
-#         if not documents_by_type:
-#             return {'documents_by_type': {
-#                 'buckets': {
-#                     'application': {'doc_count': 0},
-#                     'dataset': {'doc_count': 0},
-#                     'institution': {'doc_count': 0},
-#                     'knowledge_base': {'doc_count': 0},
-#                     'news': {'doc_count': 0},
-#                     'resource': {'doc_count': 0},
-#                 }}}
-#         return data
-
-
-# class SearchApiResult(Object):
-#     class Meta:
-#         attrs_schema = SearchResultAttrs
-#
-#     @ma.pre_dump(pass_many=False)
-#     def prepare_data(self, doc):
-#         data = super().prepare_data(doc)
-#         data['_type'] = doc.search_type
-#         lang = get_language()
-#         if lang in ['en', 'pl']:
-#             ident = '{},{}'.format(doc.id, getattr(doc.slug, lang, doc.slug))
-#         else:
-#             ident = doc.id
-#         data['links']['self'] = f'{self.api_url}/{doc.meta.index}/{ident}'
-#         return data
-
-
-# class ApplicationSearchApiResult(SearchApiResult):
-#     class Meta:
-#         attrs_schema = ApplicationSearchResultAttrs
-
-
-# class ArticleSearchApiResult(SearchApiResult):
-#     class Meta:
-#         attrs_schema = ArticleSearchResultAttrs
-
-
-# class InstitutionSearchApiResult(SearchApiResult):
-#     class Meta:
-#         attrs_schema = InstitutionSearchResultAttrs
-
-
-# class DatasetSearchApiResult(SearchApiResult):
-#     class Meta:
-#         attrs_schema = DatasetSearchResultAttrs
-
-
-# class ResourceSearchApiResult(SearchApiResult):
-#     class Meta:
-#         attrs_schema = ResourceSearchResultAttrs
-
-
-# DATA_SCHEMAS = {  # TODO it is misleading since isn't used anywhere
-#     'application': ApplicationSearchApiResult,
-#     'article': ArticleSearchApiResult,
-#     'institution': InstitutionSearchApiResult,
-#     'dataset': DatasetSearchApiResult,
-#     'resource': ResourceSearchApiResult,
-# }
-
-
 class CommentApiRelationships(Relationships):
     dataset = fields.Nested(Relationship, many=False, _type='dataset', url_template='{api_url}/datasets/{ident}')
 
@@ -563,3 +464,146 @@ class DatasetCSVSchema(CSVSerializer):
     class Meta:
         ordered = True
         model = 'datasets.Dataset'
+
+
+class DatasetXMLSerializer(ExtSchema):
+    id = fields.Integer()
+    url = fields.Url(attribute='frontend_absolute_url')
+    title = TranslatedStr()
+    notes = TranslatedStr()
+    keywords = fields.Function(lambda dataset: (tag.name for tag in getattr(dataset, f'tags_{get_language()}')))
+    categories = fields.Nested(DatasetCategoryAttr, many=True)
+    update_frequency = TransUpdateFreqField()
+    created = fields.DateTime()
+    verified = fields.DateTime()
+    dataset_views_count = fields.Method('get_views_count', data_key='views_count')
+    dataset_downloads_count = fields.Method('get_downloads_count', data_key='downloads_count')
+    published_resources_count = fields.Int(attribute='published_resources__count')
+    license = fields.Str(attribute='license_name')
+    conditions = fields.Method('get_conditions')
+    organization = fields.Method('get_organization')
+    resources = fields.Method('get_resources')
+
+    source = fields.Nested(SourceXMLSchema)
+
+    def get_views_count(self, dataset):
+        if is_enabled('S16_new_date_counters.be') and hasattr(dataset, 'computed_views_count'):
+            return dataset.computed_views_count
+        return dataset.views_count
+
+    def get_downloads_count(self, dataset):
+        if is_enabled('S16_new_date_counters.be') and hasattr(dataset, 'computed_downloads_count'):
+            return dataset.computed_downloads_count
+        return dataset.downloads_count
+
+    def get_conditions(self, dataset):
+        conditions = _('This dataset is public information, it can be reused under the following conditions: ')
+        terms = [str(dataset._meta.get_field('license_condition_modification').verbose_name) if
+                 dataset.license_condition_modification else '',
+                 str(dataset._meta.get_field('license_condition_source').verbose_name) if
+                 dataset.license_condition_source else '',
+                 dataset.license_condition_db_or_copyrighted, dataset.license_condition_personal_data]
+        return conditions + '\n'.join([term for term in terms if term])
+
+    def get_organization(self, dataset):
+        context = {
+            'published_datasets_count': dataset.organization_published_datasets__count,
+            'published_resources_count': dataset.organization_published_resources__count,
+        }
+        return InstitutionXMLSerializer(many=False, context=context).dump(dataset.organization)
+
+    def get_resources(self, dataset):
+        return ResourceXMLSerializer(many=True).dump(dataset.published_resources)
+
+
+class DatasetResourcesCSVSerializer(CSVSerializer):
+    dataset_url = fields.Url(attribute='frontend_absolute_url', data_key=_('Dataset URL'))
+    dataset_title = TranslatedStr(attribute='title', data_key=_('Title'))
+    dataset_description = TranslatedStr(attribute='notes', data_key=_('Notes'))
+    dataset_keywords = fields.Function(
+        lambda obj: ', '.join((tag.name for tag in getattr(obj, f'tags_{get_language()}'))), data_key=_('Tag'))
+    dataset_categories = fields.Function(
+        lambda obj: ', '.join((category.title_i18n for category in obj.categories.all())),
+        data_key=_('Category'))
+    dataset_update_frequency = fields.Str(attribute='frequency_display', data_key=_('Update frequency'))
+    dataset_created = fields.DateTime(attribute='created', data_key=_('Dataset created'), format='iso8601')
+    dataset_verified = fields.DateTime(attribute='verified', data_key=_('Dataset verified'), format='iso8601')
+    dataset_views_count = fields.Function(
+        lambda obj: obj.computed_views_count if
+        is_enabled('S16_new_date_counters.be') and hasattr(obj, 'computed_views_count') else
+        obj.views_count, data_key=_("Dataset views count"), default=None)
+    dataset_downloads_count = fields.Function(
+        lambda obj: obj.computed_downloads_count if
+        is_enabled('S16_new_date_counters.be') and hasattr(obj, 'computed_downloads_count') else
+        obj.downloads_count,
+        data_key=_('Dataset downloads count'), default=None)
+    dataset_resources_count = fields.Int(attribute='published_resources__count', data_key=_('Number of data'))
+    dataset_conditions = fields.Method('get_dataset_conditions', data_key=_('Terms of use'))
+    dataset_license = fields.Str(attribute='license_name', data_key=_('License'))
+    dataset_source = fields.Nested(SourceXMLSchema, attribute='source', data_key=_('source'))
+    organization = fields.Method('get_organization')
+    resources = fields.Nested(ResourceCSVMetadataSerializer, many=True, attribute='published_resources')
+
+    @ma.post_dump(pass_many=True)
+    def unpack_nested_data(self, data, many, **kwargs):
+        new_result_data = []
+        for record in data:
+            resources = record.pop('resources')
+            organization = record.pop('organization')
+            record.update(**organization)
+            for resource in resources:
+                tmp_record = record.copy()
+                tmp_record.update(**resource)
+                new_result_data.append(tmp_record)
+        return new_result_data
+
+    def get_dataset_conditions(self, dataset):
+        conditions = _('This dataset is public information, it can be reused under the following conditions: ')
+        terms = [str(dataset._meta.get_field('license_condition_modification').verbose_name) if
+                 dataset.license_condition_modification else '',
+                 str(dataset._meta.get_field('license_condition_source').verbose_name) if
+                 dataset.license_condition_source else '',
+                 dataset.license_condition_db_or_copyrighted, dataset.license_condition_personal_data]
+        return conditions + '\n'.join([term for term in terms if term])
+
+    @ma.post_dump(pass_many=False)
+    def prepare_nested_data(self, data, **kwargs):
+        source = data.get(_('source'))
+        if source:
+            source_str =\
+                '{title_label}: {title}, {url_label}: {url},' \
+                ' {last_import_label}: {last_import}, {frequency_label}: {frequency}'.format(
+                    title=source['title'], title_label=_('name'),
+                    url=source['url'], url_label=_('url'),
+                    last_import=source['last_import_timestamp'], last_import_label=_('last import timestamp'),
+                    frequency=source['update_frequency'], frequency_label=_('Update frequency')
+                )
+            data[_('source')] = source_str
+        data[_('Notes')] = strip_tags(data[_('Notes')])
+        return data
+
+    def get_organization(self, dataset):
+        context = {
+            'published_datasets_count': dataset.organization_published_datasets__count,
+            'published_resources_count': dataset.organization_published_resources__count,
+        }
+        return InstitutionCSVMetadataSerializer(many=False, context=context).dump(dataset.organization)
+
+    def get_csv_headers(self):
+        result = []
+        for field_name, field in self.fields.items():
+            if field_name == 'organization':
+                org_headers = [org_field.data_key for org_field_name, org_field in
+                               InstitutionCSVMetadataSerializer().fields.items()]
+                result.extend(org_headers)
+            elif field_name == 'resources':
+                res_headers = [res_field.data_key for res_field_name, res_field in
+                               field.schema.fields.items()]
+                result.extend(res_headers)
+            else:
+                header = field.data_key or field_name
+                result.append(header)
+        return result
+
+    class Meta:
+        ordered = True

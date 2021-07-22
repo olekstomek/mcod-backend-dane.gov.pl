@@ -5,11 +5,11 @@ from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from modeltrans.fields import TranslationField
 from model_utils import FieldTracker
-from model_utils.managers import SoftDeletableManager
 
-from mcod.core.db.managers import DeletedManager
+from mcod.core.db.managers import TrashManager
 from mcod.core.db.models import ExtendedModel, TrashModelBase
-from mcod.guides.managers import GuideManager, GuideDeletedManager
+from mcod.core.managers import SoftDeletableManager
+from mcod.guides.managers import GuideManager, GuideTrashManager
 
 
 class Guide(ExtendedModel):
@@ -31,9 +31,8 @@ class Guide(ExtendedModel):
         related_name='guides_modified',
     )
 
-    raw = models.Manager()
     objects = GuideManager()
-    deleted = GuideDeletedManager()
+    trash = GuideTrashManager()
     i18n = TranslationField(fields=('title',))
     tracker = FieldTracker()
 
@@ -83,9 +82,8 @@ class GuideItem(ExtendedModel):
     is_clickable = models.BooleanField(verbose_name=_('clicking is required'), default=False)
     is_expandable = models.BooleanField(verbose_name=_('element is expandable'), default=False)
 
-    raw = models.Manager()
     objects = SoftDeletableManager()
-    deleted = DeletedManager()
+    trash = TrashManager()
     i18n = TranslationField(fields=('title', 'content'))
     tracker = FieldTracker()
 

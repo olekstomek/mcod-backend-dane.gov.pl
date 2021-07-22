@@ -1,4 +1,4 @@
-from model_utils.managers import SoftDeletableQuerySet, SoftDeletableManager
+from mcod.core.managers import SoftDeletableQuerySet, SoftDeletableManager
 
 
 class DataSourceQuerySet(SoftDeletableQuerySet):

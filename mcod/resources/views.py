@@ -7,7 +7,6 @@ import falcon
 from apispec import APISpec
 from django.apps import apps
 from django.template import loader
-from django.utils.translation import gettext_lazy as _
 from elasticsearch_dsl import A
 
 from mcod import settings
@@ -18,17 +17,28 @@ from mcod.core.api.handlers import (
     RemoveOneHdlr,
     RetrieveManyHdlr,
     SubscriptionSearchHdlr,
-    ShaclMixin)
+    ShaclMixin,
+    UpdateOneHdlr,
+)
 from mcod.core.api.hooks import login_optional, login_required
 from mcod.core.api.openapi.plugins import TabularDataPlugin
+from mcod.core.api.schemas import ListingSchema
 from mcod.core.api.versions import DOC_VERSIONS
 from mcod.core.api.views import JsonAPIView, RDFView
 from mcod.core.versioning import versioned
 from mcod.counters.lib import Counter
 from mcod.lib.encoders import DateTimeToISOEncoder
-from mcod.resources.deserializers import ResourceApiRequest, ResourceApiSearchRequest, TableApiRequest, \
-    TableApiSearchRequest, CreateCommentRequest, GeoApiSearchRequest, CreateChartRequest, ResourceRdfApiRequest
-from mcod.resources.documents import ResourceDocumentActive
+from mcod.resources.deserializers import (
+    ChartApiRequest,
+    CreateCommentRequest,
+    GeoApiSearchRequest,
+    ResourceApiRequest,
+    ResourceApiSearchRequest,
+    ResourceRdfApiRequest,
+    TableApiRequest,
+    TableApiSearchRequest,
+)
+from mcod.resources.documents import ResourceDocument
 from mcod.resources.serializers import (
     ChartApiResponse,
     CommentApiResponse,
@@ -38,6 +48,7 @@ from mcod.resources.serializers import (
     ResourceRDFResponseSchema,
     TableApiResponse,
 )
+from mcod.unleash import is_enabled
 
 
 Resource = apps.get_model('resources', 'Resource')
@@ -61,7 +72,7 @@ class ResourcesView(JsonAPIView):
     class GET(SubscriptionSearchHdlr):
         deserializer_schema = partial(ResourceApiSearchRequest)
         serializer_schema = partial(ResourceApiResponse, many=True)
-        search_document = ResourceDocumentActive()
+        search_document = ResourceDocument()
 
 
 class ResourceView(JsonAPIView):
@@ -358,10 +369,11 @@ class ResourceFileDownloadView(object):
     def __init__(self, file_type=None):
         super().__init__()
         self.file_type = file_type
+        self.is_csv_to_jsonld_enabled = is_enabled('S27_csv_to_jsonld.be')
 
     def on_get(self, request, response, id, *args, **kwargs):
         try:
-            resource = Resource.objects.get(pk=id)
+            resource = Resource.objects.get(pk=id, status='published')
         except Resource.DoesNotExist:
             raise falcon.HTTPNotFound
 
@@ -375,6 +387,8 @@ class ResourceFileDownloadView(object):
             response.location = resource.link
         elif self.file_type == 'csv':
             response.location = resource.csv_file_url
+        elif self.file_type == 'jsonld' and self.is_csv_to_jsonld_enabled:
+            response.location = resource.jsonld_file_url
         else:
             response.location = resource.file_url
 
@@ -464,7 +478,43 @@ class ResourceDownloadCounter(object):
         resp.body = json.dumps({}, cls=DateTimeToISOEncoder)
 
 
-class ResourceChartView(JsonAPIView):
+class CHART_POST(CreateOneHdlr):
+    deserializer_schema = ChartApiRequest
+    serializer_schema = ChartApiResponse
+    database_model = apps.get_model('resources', 'Resource')
+
+    def clean(self, *args, **kwargs):
+        self.deserializer.context.update({
+            'resource': self._get_instance(*args, **kwargs),
+            'user': self.request.user,
+        })
+        return super().clean(*args, **kwargs)
+
+    def _get_instance(self, *args, **kwargs):
+        instance = getattr(self, '_cached_instance', None)
+        if not instance:
+            try:
+                self._cached_instance = self.database_model.objects.get(
+                    pk=kwargs['id'],
+                    status=self.database_model.STATUS.published,
+                )
+            except self.database_model.DoesNotExist:
+                raise falcon.HTTPNotFound
+        return self._cached_instance
+
+    def _get_data(self, cleaned, *args, **kwargs):
+        resource = self._get_instance(*args, **kwargs)
+        try:
+            self.response.context.data = resource.save_chart(self.request.user, cleaned['data']['attributes'])
+        except Exception as exc:
+            raise falcon.HTTPForbidden(title=exc)
+
+
+class ChartView(JsonAPIView):
+
+    @falcon.before(login_required)
+    def on_delete(self, request, response, *args, **kwargs):
+        self.handle_delete(request, response, self.DELETE, *args, **kwargs)
 
     @falcon.before(login_optional)
     def on_get(self, request, response, *args, **kwargs):
@@ -475,47 +525,90 @@ class ResourceChartView(JsonAPIView):
         self.handle(request, response, self.GET, *args, **kwargs)
 
     @falcon.before(login_required)
+    def on_patch(self, request, response, *args, **kwargs):
+        self.handle_patch(request, response, self.PATCH, *args, **kwargs)
+
+    @falcon.before(login_required)
     def on_post(self, request, response, *args, **kwargs):
-        self.handle_post(request, response, self.POST, *args, **kwargs)
+        self.handle_post(request, response, CHART_POST, *args, **kwargs)
+
+    class DELETE(RemoveOneHdlr):
+        database_model = apps.get_model('resources', 'Chart')
+
+        def clean(self, *args, **kwargs):
+            try:
+                instance = self.database_model.objects.published().get(id=kwargs.get('chart_id'))
+            except self.database_model.DoesNotExist:
+                raise falcon.HTTPNotFound
+            if not self.request.user.can_delete_resource_chart(instance):
+                raise falcon.HTTPForbidden
+            return instance
+
+        def run(self, *args, **kwargs):
+            instance = self.clean(*args, **kwargs)
+            instance.delete(modified_by=self.request.user)
+            return {}
 
     class GET(RetrieveOneHdlr):
         deserializer_schema = ChartApiResponse
         serializer_schema = ChartApiResponse
-        database_model = apps.get_model('resources', 'Chart')
-        resource_model = apps.get_model('resources', 'Resource')
+        chart_model = apps.get_model('resources', 'Chart')
+        database_model = apps.get_model('resources', 'Resource')
+
+        def _get_chart_instance(self, id, *args, **kwargs):
+            instance = getattr(self, '_cached_instance', None)
+            if not instance:
+                try:
+                    self._cached_instance = self.chart_model.objects.published().get(
+                        pk=kwargs['chart_id'], resource_id=id)
+                except self.chart_model.DoesNotExist:
+                    raise falcon.HTTPNotFound
+            if not self._cached_instance.is_visible_for(self.request.user):
+                raise falcon.HTTPForbidden
+            return self._cached_instance
 
         def _get_instance(self, id, *args, **kwargs):
-            try:
-                self.resource = self.resource_model.objects.get(pk=id)
-            except self.resource_model.DoesNotExist:
-                raise falcon.HTTPNotFound
-            return self.resource.get_chart(
-                self.request.user if self.request.user.is_authenticated else None)
+            if 'chart_id' in kwargs and is_enabled('S24_named_charts.be'):
+                return self._get_chart_instance(id, *args, **kwargs)
+            resource = super()._get_instance(id, *args, **kwargs)
+            return resource.charts.chart_for_user(self.request.user)
 
-    class POST(CreateOneHdlr):
-        deserializer_schema = CreateChartRequest
-        serializer_schema = ChartApiResponse
+    class PATCH(UpdateOneHdlr):
         database_model = apps.get_model('resources', 'Chart')
-        resource_model = apps.get_model('resources', 'Resource')
+        deserializer_schema = ChartApiRequest
+        serializer_schema = ChartApiResponse
 
-        def clean(self, id, *args, **kwargs):
+        def clean(self, *args, **kwargs):
+            chart = self._get_instance(*args, **kwargs)
+            if not chart.can_be_updated_by(self.request.user):
+                raise falcon.HTTPForbidden(title='You have no permission to update the resource!')
+            self.deserializer.context.update({
+                'chart': chart,
+                'resource': chart.resource,
+                'user': self.request.user,
+            })
+            return super().clean(validators=None, *args, **kwargs)
+
+        def _get_instance(self, *args, **kwargs):
+            instance = getattr(self, '_cached_instance', None)
+            if not instance:
+                try:
+                    self._cached_instance = self.database_model.objects.published().get(
+                        pk=kwargs['chart_id'], resource_id=kwargs['id'])
+                except self.database_model.DoesNotExist:
+                    raise falcon.HTTPNotFound
+            return self._cached_instance
+
+        def _get_data(self, cleaned, id, *args, **kwargs):
+            chart = self._get_instance(*args, **kwargs)
             try:
-                self.resource = self.resource_model.objects.get(pk=id)
-            except self.resource_model.DoesNotExist:
-                raise falcon.HTTPNotFound
-            return super().clean(*args, **kwargs)
-
-        def _get_data(self, cleaned, *args, **kwargs):
-            data = cleaned['data']['attributes']
-            is_default = data.get('is_default', False)
-            chart = self.resource.get_chart_for_update(self.request.user, is_default)
-            if not self.request.user.can_add_resource_chart(self.resource, is_default, chart):
-                raise falcon.HTTPForbidden(title=_('No permission to define chart'))
-            data['resource'] = self.resource
-            self.response.context.data = self.database_model.save_chart(self.request.user, chart, data)
+                chart.update(self.request.user, cleaned['data']['attributes'])
+                return chart
+            except Exception as exc:
+                raise falcon.HTTPForbidden(title=exc)
 
 
-class ResourceChartsView(JsonAPIView):
+class ChartsView(JsonAPIView):
 
     @falcon.before(login_optional)
     def on_get(self, request, response, *args, **kwargs):
@@ -525,42 +618,33 @@ class ResourceChartsView(JsonAPIView):
         """
         self.handle(request, response, self.GET, *args, **kwargs)
 
+    @falcon.before(login_required)
+    def on_post(self, request, response, *args, **kwargs):
+        self.handle_post(request, response, CHART_POST, *args, **kwargs)
+
     class GET(RetrieveManyHdlr):
-        database_model = apps.get_model('resources', 'Chart')
-        resource_model = apps.get_model('resources', 'Resource')
+        database_model = apps.get_model('resources', 'Resource')
+        deserializer_schema = ListingSchema
         serializer_schema = partial(ChartApiResponse, many=True)
+        named_charts = is_enabled('S24_named_charts.be')
+
+        def _get_instance(self, *args, **kwargs):
+            instance = getattr(self, '_cached_instance', None)
+            if not instance:
+                try:
+                    self._cached_instance = self.database_model.objects.get(
+                        pk=kwargs['id'],
+                        status=self.database_model.STATUS.published,
+                    )
+                except self.database_model.DoesNotExist:
+                    raise falcon.HTTPNotFound
+            return self._cached_instance
 
         def clean(self, *args, **kwargs):
-            try:
-                self.resource_model.objects.get(pk=kwargs.get('id'))
-            except self.resource_model.DoesNotExist:
-                raise falcon.HTTPNotFound
+            self.serializer.context['named_charts'] = self.named_charts
+            self._get_instance(*args, **kwargs)
             return super().clean(*args, **kwargs)
 
         def _get_queryset(self, cleaned, *args, **kwargs):
-            return self.database_model.get_charts(
-                kwargs.get('id'), self.request.user if self.request.user.is_authenticated else None)
-
-
-class ChartDeleteView(JsonAPIView):
-
-    @falcon.before(login_required)
-    def on_delete(self, request, response, *args, **kwargs):
-        self.handle_delete(request, response, self.DELETE, *args, **kwargs)
-
-    class DELETE(RemoveOneHdlr):
-        database_model = apps.get_model('resources', 'Chart')
-
-        def clean(self, id, *args, **kwargs):
-            try:
-                instance = self.database_model.objects.get(id=id)
-            except self.database_model.DoesNotExist:
-                raise falcon.HTTPNotFound
-            if not self.request.user.can_delete_resource_chart(instance):
-                raise falcon.HTTPForbidden
-            return instance
-
-        def run(self, id, *args, **kwargs):
-            instance = self.clean(id, *args, **kwargs)
-            instance.delete(modified_by=self.request.user)
-            return {}
+            resource = self._get_instance(*args, **kwargs)
+            return resource.charts_for_user(self.request.user, **cleaned)

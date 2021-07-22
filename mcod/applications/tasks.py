@@ -7,6 +7,7 @@ from PIL import Image
 from celery import shared_task
 from constance import config
 from django.apps import apps
+from django.conf import settings
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.mail import get_connection
 from django.core.mail.message import EmailMultiAlternatives
@@ -14,7 +15,6 @@ from django.template.loader import render_to_string
 from django.utils.text import slugify
 from django.utils import translation
 
-from mcod import settings
 from mcod.core.api.search import signals as search_signals
 
 

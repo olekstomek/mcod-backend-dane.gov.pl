@@ -22,19 +22,21 @@
     {{ block.super }}
     <script type="text/javascript">
         $(function () {
-            var $p = $('<p><a class="expand-btn" href="#"></a><p>');
-            var $expandable = $(".expandable");
-            const EXPANDED = 'expanded';
-            $p.children('a').click(function() {
-                if($(this).hasClass(EXPANDED)) {
-                    $(this).removeClass(EXPANDED);
-                    $expandable.slideUp();
-                } else {
-                    $(this).addClass(EXPANDED);
-                    $expandable.slideDown();
-                }
+            $(".expandable").each(function(index) {
+                var $expandable = $(this);
+                var $p = $('<p><a class="expand-btn" href="#"></a><p>');
+                const EXPANDED = 'expanded';
+                $p.children('a').click(function() {
+                    if($(this).hasClass(EXPANDED)) {
+                        $(this).removeClass(EXPANDED);
+                        $expandable.slideUp();
+                    } else {
+                        $(this).addClass(EXPANDED);
+                        $expandable.slideDown();
+                    }
+                });
+                $expandable.before($p);
             });
-            $expandable.before($p);
         });
     </script>
 {% endblock %}

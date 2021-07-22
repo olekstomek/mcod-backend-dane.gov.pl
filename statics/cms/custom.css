@@ -119,3 +119,7 @@ div.copy_pl_to_en > span:hover {
 .copy_pl_to_en_dialog span.dialog_accept:hover {
     border-top: 4px solid #003f41;
 }
+
+.modal-content .link-types {
+  display: none;
+}

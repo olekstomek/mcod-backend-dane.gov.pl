@@ -6,14 +6,14 @@ from django.apps import apps
 from elasticsearch_dsl.query import Q
 
 from mcod.articles.deserializers import ArticleApiRequest, ArticleApiSearchRequest
-from mcod.articles.documents import ArticleDocumentActive
+from mcod.articles.documents import ArticleDocument
 from mcod.articles.serializers import ArticleApiResponse
 from mcod.core.api.handlers import SearchHdlr, RetrieveOneHdlr
 from mcod.core.api.hooks import login_optional
 from mcod.core.api.views import JsonAPIView
 from mcod.core.versioning import versioned
 from mcod.datasets.deserializers import DatasetApiSearchRequest
-from mcod.datasets.documents import DatasetDocumentActive
+from mcod.datasets.documents import DatasetDocument
 from mcod.datasets.serializers import DatasetApiResponse
 
 
@@ -35,7 +35,7 @@ class ArticlesView(JsonAPIView):
     class GET(SearchHdlr):
         deserializer_schema = partial(ArticleApiSearchRequest, many=False)
         serializer_schema = partial(ArticleApiResponse, many=True)
-        search_document = ArticleDocumentActive()
+        search_document = ArticleDocument()
 
 
 class ArticleView(JsonAPIView):
@@ -91,7 +91,7 @@ class ArticleDatasetsView(JsonAPIView):
     class GET(SearchHdlr):
         deserializer_schema = partial(DatasetApiSearchRequest, many=False)
         serializer_schema = partial(DatasetApiResponse, many=True)
-        search_document = DatasetDocumentActive()
+        search_document = DatasetDocument()
         include_default = ['institution']
 
         def _queryset_extra(self, queryset, id=None, **kwargs):

@@ -59,7 +59,6 @@ class CommonSearchField(MultiMatchField):
                 queries.append(nested_query_with_advanced_opts(query, path, lang, op, suffix))
 
             queries.append(keywords_query(query, lang))
-            queries.append(nested_query_with_advanced_opts(query, 'tags', lang, op))
 
             for field in ('abbreviation', 'author'):
                 queries.append(

@@ -3,7 +3,13 @@ from pytest_bdd import scenarios
 import pytest
 
 
-scenarios('features/accepteddatasetsubmission_list_api.feature')
+from mcod.suggestions.tasks import deactivate_accepted_dataset_submissions, send_data_suggestion
+
+
+scenarios(
+    'features/api/accepteddatasetsubmission_list.feature',
+    'features/api/submissions.feature',
+)
 
 
 @pytest.mark.elasticsearch
@@ -32,3 +38,15 @@ def test_unpublished_accepted_submission_not_in_public_details_view(
     obj_id = accepted_dataset_submission.pk
     resp = client14.simulate_get(f'/submissions/accepted/public/{obj_id}')
     assert HTTP_NOT_FOUND == resp.status
+
+
+@pytest.mark.elasticsearch
+def test_send_data_suggestion_task(suggestion):
+    result = send_data_suggestion.delay(suggestion.id, {'notes': 'test send data suggestion'})
+    assert result.result['suggestion'] == 'test send data suggestion'
+
+
+@pytest.mark.elasticsearch
+def test_deactivate_accepted_dataset_submissions_task():
+    result = deactivate_accepted_dataset_submissions.delay()
+    assert result.result['deactivated'] == 0

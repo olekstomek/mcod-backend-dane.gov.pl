@@ -7,13 +7,11 @@ from bs4 import BeautifulSoup
 import jsonschema
 import rdflib
 import xml
-from chardet import UniversalDetector
 from lxml import etree
 from tabulator import Stream
 from tabulator.exceptions import FormatError, EncodingError
 from zipfile import BadZipFile
 from mcod import settings
-from mcod.unleash import is_enabled
 
 
 GUESS_FROM_BUFFER = (
@@ -36,10 +34,7 @@ def file_encoding(path):
     iso_counter = 0
     cp_counter = 0
 
-    if is_enabled('S18_file_encoding_with_cchardet.be'):
-        _detector = cchardet.UniversalDetector()
-    else:
-        _detector = UniversalDetector()
+    _detector = cchardet.UniversalDetector()
 
     with open(path, 'rb') as f:
         for line in f:

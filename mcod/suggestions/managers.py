@@ -1,10 +1,9 @@
-from model_utils.managers import SoftDeletableManager
+from mcod.core.db.managers import TrashManager, DecisionSortableManagerMixin, DecisionSortableSoftDeletableQuerySet, \
+    DecisionSortableTrashQuerySet
+from mcod.core.managers import SoftDeletableManager
 
-from mcod.core.db.managers import DeletedManager, DecisionSortableMixin, DecisionSortableSoftDeletableQuerySet
 
-
-class AcceptedDatasetSubmissionMixin(object):
-
+class AcceptedDatasetSubmissionManagerMixin:
     def active(self):
         return super().get_queryset().active()
 
@@ -12,8 +11,7 @@ class AcceptedDatasetSubmissionMixin(object):
         return super().get_queryset().inactive()
 
 
-class AcceptedDatasetSubmissionQuerySet(DecisionSortableSoftDeletableQuerySet):
-
+class AcceptedDatasetSubmissionQuerySetMixin:
     def active(self):
         return self.filter(is_active=True)
 
@@ -21,33 +19,41 @@ class AcceptedDatasetSubmissionQuerySet(DecisionSortableSoftDeletableQuerySet):
         return self.filter(is_active=False)
 
 
-class DatasetCommentManager(DecisionSortableMixin, SoftDeletableManager):
+class AcceptedDatasetSubmissionQuerySet(AcceptedDatasetSubmissionQuerySetMixin, DecisionSortableSoftDeletableQuerySet):
+    pass
+
+
+class AcceptedDatasetSubmissionTrashQuerySet(AcceptedDatasetSubmissionQuerySetMixin, DecisionSortableTrashQuerySet):
+    pass
+
+
+class DatasetCommentManager(DecisionSortableManagerMixin, SoftDeletableManager):
     _queryset_class = DecisionSortableSoftDeletableQuerySet
 
 
-class DatasetCommentDeletedManager(DecisionSortableMixin, DeletedManager):
+class DatasetCommentTrashManager(DecisionSortableManagerMixin, TrashManager):
+    _queryset_class = DecisionSortableTrashQuerySet
+
+
+class DatasetSubmissionManager(DecisionSortableManagerMixin, SoftDeletableManager):
     _queryset_class = DecisionSortableSoftDeletableQuerySet
 
 
-class DatasetSubmissionManager(DecisionSortableMixin, SoftDeletableManager):
-    _queryset_class = DecisionSortableSoftDeletableQuerySet
+class DatasetSubmissionTrashManager(DecisionSortableManagerMixin, TrashManager):
+    _queryset_class = DecisionSortableTrashQuerySet
 
 
-class AcceptedDatasetSubmissionManager(AcceptedDatasetSubmissionMixin, DatasetSubmissionManager):
+class AcceptedDatasetSubmissionManager(AcceptedDatasetSubmissionManagerMixin, DatasetSubmissionManager):
     _queryset_class = AcceptedDatasetSubmissionQuerySet
 
 
-class DatasetSubmissionDeletedManager(DecisionSortableMixin, DeletedManager):
+class AcceptedDatasetSubmissionTrashManager(AcceptedDatasetSubmissionManagerMixin, DatasetSubmissionTrashManager):
+    _queryset_class = AcceptedDatasetSubmissionTrashQuerySet
+
+
+class ResourceCommentManager(DecisionSortableManagerMixin, SoftDeletableManager):
     _queryset_class = DecisionSortableSoftDeletableQuerySet
 
 
-class AcceptedDatasetSubmissionDeletedManager(AcceptedDatasetSubmissionMixin, DatasetSubmissionDeletedManager):
-    _queryset_class = AcceptedDatasetSubmissionQuerySet
-
-
-class ResourceCommentManager(DecisionSortableMixin, SoftDeletableManager):
-    _queryset_class = DecisionSortableSoftDeletableQuerySet
-
-
-class ResourceCommentDeletedManager(DecisionSortableMixin, DeletedManager):
-    _queryset_class = DecisionSortableSoftDeletableQuerySet
+class ResourceCommentTrashManager(DecisionSortableManagerMixin, TrashManager):
+    _queryset_class = DecisionSortableTrashQuerySet

@@ -29,30 +29,6 @@ ELASTICSEARCH_HISTORIES_IDX_SETTINGS = {
 
 LANGUAGE_CODE = 'pl'
 
-VOCABULARY_SOURCES.update({
-    'single_choice_dummy_proc': {
-        'processor_kwargs': {
-            'file_url': '',
-            'filename': '',
-        },
-        'processor_path': 'mcod.lib.tests.dcat.utils.processors.DummyProcessor',
-        'choice_field_class': 'django.forms.ChoiceField',
-        'label': 'Test label'
-    },
-    'multi_choice_dummy_proc': {
-        'processor_kwargs': {
-            'file_url': '',
-            'filename': '',
-            'many': True
-        },
-        'processor_path': 'mcod.lib.tests.dcat.utils.processors.DummyProcessor',
-        'choice_field_class': 'django.forms.MultipleChoiceField',
-        'label': 'Test label'
-    }
-})
-
-MODELS_DCAT_VOCABULARIES['TestModel'] = ['single_choice_dummy_proc', 'multi_choice_dummy_proc']
-
 
 def get_es_index_names():
     import uuid
@@ -99,7 +75,7 @@ RESOURCES_MEDIA_ROOT = str(os.path.join(MEDIA_ROOT, 'resources'))
 RESOURCES_FILES_TO_REMOVE_ROOT = str(ROOT_DIR.path(MEDIA_ROOT, 'to_be_removed', 'resources'))
 REPORTS_MEDIA_ROOT = str(os.path.join(MEDIA_ROOT, 'reports'))
 DCAT_VOCABULARIES_MEDIA_ROOT = str(ROOT_DIR.path(MEDIA_ROOT, 'resources'))
-DATASET_CSV_CATALOG_MEDIA_ROOT = str(ROOT_DIR.path(MEDIA_ROOT, 'datasets', 'catalog'))
+METADATA_MEDIA_ROOT = str(ROOT_DIR.path(MEDIA_ROOT, 'datasets', 'catalog'))
 
 CACHES.update({'test': {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'}})
 # CACHES = {
@@ -190,3 +166,5 @@ ES_PL_SYN_FILTER_KWARGS = {
     "synonyms": ["sierściuch, kot"]
 }
 FALCON_LIMITER_ENABLED = False
+
+DISCOURSE_FORUM_ENABLED = False

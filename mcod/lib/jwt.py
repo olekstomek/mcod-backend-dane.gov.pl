@@ -79,11 +79,16 @@ def get_auth_token(user, session_key, now=None, exp_delta=None):
     if not now:
         now = datetime.utcnow()
 
+    discourse_api_key = user.discourse_api_key if user.has_access_to_forum else None
+    discourse_user_name = user.discourse_user_name if user.has_access_to_forum else None
+
     payload = {
         'user': {
             'session_key': session_key,
             'email': user.email,
             'roles': user.system_roles,
+            'discourse_user_name': discourse_user_name,
+            'discourse_api_key': discourse_api_key
         }
     }
 

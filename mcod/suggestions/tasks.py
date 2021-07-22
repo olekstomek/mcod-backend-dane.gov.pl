@@ -72,7 +72,8 @@ def send_dataset_suggestion_mail_task(obj_id):
     result = None
     if obj:
         conn = get_connection(settings.EMAIL_BACKEND)
-        emails = [config.TESTER_EMAIL] if settings.DEBUG and config.TESTER_EMAIL else [config.CONTACT_MAIL, ]
+        emails = [config.TESTER_EMAIL] if settings.DEBUG and config.TESTER_EMAIL else [
+            config.CONTACT_MAIL, ]
         context = {'obj': obj, 'host': settings.BASE_URL}
         with override('pl'):
             msg_plain = render_to_string('mails/dataset-suggestion.txt', context)
@@ -89,7 +90,7 @@ def send_dataset_suggestion_mail_task(obj_id):
             mail.attach_alternative(msg_html, 'text/html')
             result = mail.send()
     return {
-        'sent': True if result else False,
+        'sent': bool(result),
         'obj_id': obj.id if obj else None,
     }
 
@@ -99,7 +100,7 @@ def create_accepted_dataset_suggestion_task(obj_id):
     model = apps.get_model('suggestions.DatasetSubmission')
     obj = model.convert_to_accepted(obj_id)
     return {
-        'created': True if obj else False,
+        'created': bool(obj),
         'obj_id': obj.id if obj else None,
     }
 
@@ -122,15 +123,15 @@ def send_accepted_submission_comment(comment, frontend_url, submission_title,
     connection = get_connection(connection_backend)
     with override('pl'):
         title = submission_title.replace('\n', ' ').replace('\r', '')
-        msg_template = _('On the accepted dataset submission {title} [{url}] was posted a comment:')
-        msg = msg_template.format(**{
+        msg_template = _('On the accepted dataset submission %(title)s [%(url)s] was posted a comment:')
+        msg = msg_template % {
             'title': title,
             'url': frontend_url,
-        })
-        html_msg = msg_template.format(**{
+        }
+        html_msg = msg_template % {
             'title': title,
             'url': f'<a href="{frontend_url}">{frontend_url}</a>',
-        })
+        }
         context = {
             'host': settings.BASE_URL,
             'url': frontend_url,
@@ -140,19 +141,24 @@ def send_accepted_submission_comment(comment, frontend_url, submission_title,
             'html_message': html_msg,
         }
 
-        subject = _('A comment was posted on the accepted dataset submission {title}').format(title=title)
-        msg_plain = \
-            render_to_string('mails/accepted-dataset-submission-comment.txt', context=context)
-        msg_html = \
-            render_to_string('mails/accepted-dataset-submission-comment.html', context=context)
+        subject = _('A comment was posted on the accepted dataset submission %(title)s') % {
+            'title': title}
+        msg_plain = render_to_string(
+            'mails/accepted-dataset-submission-comment.txt', context=context)
+        msg_html = render_to_string(
+            'mails/accepted-dataset-submission-comment.html', context=context)
+        recipient_list = [config.TESTER_EMAIL] if settings.DEBUG and config.TESTER_EMAIL else [
+            config.CONTACT_MAIL]
         try:
             send_mail(
                 subject,
                 msg_plain,
                 config.SUGGESTIONS_EMAIL,
-                [config.TESTER_EMAIL] if settings.DEBUG and config.TESTER_EMAIL else [config.CONTACT_MAIL],
+                recipient_list,
                 connection=connection,
                 html_message=msg_html,
             )
         except Exception as err:
-            logger.error(f'Error during sending of an email comment for accepted submission {title}: {err}')
+            msg = 'Error during sending of an email comment for accepted submission {}: {}'.format(
+                title, err)
+            logger.error(msg)

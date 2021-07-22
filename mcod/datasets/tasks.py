@@ -1,17 +1,22 @@
+import logging
 import os
-import tempfile
 from datetime import datetime
-from dateutil.relativedelta import relativedelta
+
 from celery import shared_task
 from constance import config
+from dateutil.relativedelta import relativedelta
 from django.apps import apps
+from django.conf import settings
 from django.core.mail import send_mail, get_connection
+from django.core.mail.message import EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.utils import translation
 from django.utils.translation import ugettext_lazy as _
 
-from mcod import settings
-from mcod.core.utils import save_as_csv
+from mcod.core.utils import save_as_csv, save_as_xml
+from mcod.datasets.models import Dataset
+
+logger = logging.getLogger('mcod')
 
 
 @shared_task
@@ -69,41 +74,84 @@ def send_dataset_comment(dataset_id, comment, lang=None):
     }
 
 
-def _batch_qs(qs):
-    batch_size = settings.CSV_CATALOG_BATCH_SIZE
-    total = qs.count()
-    for start in range(0, total, batch_size):
-        end = min(start + batch_size, total)
-        yield start, end, total, qs[start:end]
+def create_catalog_metadata_file(qs_data, schema, extension, save_serialized_data_func):
+    today = datetime.today().date()
+    previous_day = today - relativedelta(days=1)
+
+    for language in settings.LANGUAGE_CODES:
+        lang_catalog_path = f'{settings.METADATA_MEDIA_ROOT}/{language}'
+        previous_day_file = f'{lang_catalog_path}/katalog_{previous_day}.{extension}'
+        new_file = f'{lang_catalog_path}/katalog_{today}.{extension}'
+        symlink_file = f'{lang_catalog_path}/katalog.{extension}'
+
+        if not os.path.exists(lang_catalog_path):
+            os.makedirs(lang_catalog_path)
+
+        with translation.override(language):
+            data = schema.dump(qs_data)
+            with open(new_file, 'w') as file:
+                save_serialized_data_func(file, data)
+
+        if os.path.exists(previous_day_file):
+            os.remove(previous_day_file)
+
+        if os.path.exists(new_file):
+            if os.path.exists(symlink_file) or os.path.islink(symlink_file):
+                os.remove(symlink_file)
+            os.symlink(new_file, symlink_file)
 
 
 @shared_task
-def create_catalog_metadata_csv_file():
-    from mcod.resources.serializers import DatasetResourcesCSVSerializer
-    model = apps.get_model('resources', 'Resource')
-    schema = DatasetResourcesCSVSerializer(many=True)
-    overall_data = []
-    today = datetime.today().date()
-    previous_day = today - relativedelta(days=1)
-    data_qs = model.objects.with_metadata()
-    for start, end, total, qs in _batch_qs(data_qs):
-        overall_data.extend(qs)
-    for language in settings.LANGUAGE_CODES:
-        lang_catalog_path = f'{settings.DATASET_CSV_CATALOG_MEDIA_ROOT}/{language}'
-        if not os.path.exists(lang_catalog_path):
-            os.makedirs(lang_catalog_path)
-        with translation.override(language):
-            csv_data = schema.dump(overall_data)
-            previous_day_file = f'{lang_catalog_path}/katalog_{previous_day}.csv'
-            new_file = f'{lang_catalog_path}/katalog_{today}.csv'
-            symlink_file = f'{lang_catalog_path}/katalog.csv'
-            link_dir = os.path.dirname(symlink_file)
-            with open(new_file, 'w') as csv_file:
-                save_as_csv(csv_file, schema.get_csv_headers(), csv_data)
-            if os.path.exists(previous_day_file):
-                temp_link_name = tempfile.mktemp(dir=link_dir)
-                os.symlink(new_file, temp_link_name)
-                os.replace(temp_link_name, symlink_file)
-                os.remove(previous_day_file)
-            else:
-                os.symlink(new_file, symlink_file)
+def create_catalog_metadata_files():
+    from mcod.datasets.serializers import DatasetXMLSerializer, DatasetResourcesCSVSerializer
+    dataset_model = apps.get_model('datasets', 'Dataset')
+    qs_data = dataset_model.objects.with_metadata_fetched_as_list()
+
+    xml_schema = DatasetXMLSerializer(many=True)
+    create_catalog_metadata_file(qs_data, xml_schema, 'xml', save_as_xml)
+
+    csv_schema = DatasetResourcesCSVSerializer(many=True)
+
+    def save_serialized_data_func(file, data):
+        save_as_csv(file, csv_schema.get_csv_headers(), data)
+
+    create_catalog_metadata_file(qs_data, csv_schema, 'csv', save_serialized_data_func)
+
+
+@shared_task
+def send_dataset_update_reminder():
+    logger.debug('Attempting to send datasets update reminders.')
+    messages = []
+    conn = get_connection(settings.EMAIL_BACKEND)
+
+    freq_updates_with_delays = {
+        'yearly': {'default_delay': 7, 'relative_delta': relativedelta(years=1)},
+        'everyHalfYear': {'default_delay': 7, 'relative_delta': relativedelta(months=6)},
+        'quarterly': {'default_delay': 7, 'relative_delta': relativedelta(months=3)},
+        'monthly': {'default_delay': 3, 'relative_delta': relativedelta(months=1)},
+        'weekly': {'default_delay': 1, 'relative_delta': relativedelta(days=7)},
+    }
+    qs = Dataset.objects.datasets_to_notify(list(freq_updates_with_delays.keys()))
+    upcoming_updates = []
+    for freq, freq_details in freq_updates_with_delays.items():
+        notification_delays = set(list(qs.filter(
+            update_notification_frequency__isnull=False
+        ).values_list('update_notification_frequency', flat=True).distinct()))
+        notification_delays.add(freq_details['default_delay'])
+        upcoming_updates.extend(
+            [(datetime.today().date() + relativedelta(days=delay)) - freq_details['relative_delta']
+             for delay in notification_delays])
+    ds_to_notify = qs.filter(max_data_date__in=upcoming_updates).select_related('modified_by')
+    logger.debug(f'Found {len(ds_to_notify)} datasets.')
+    for ds in ds_to_notify:
+        context = {'dataset_title': ds.title,
+                   'url': ds.frontend_absolute_url,
+                   'host': settings.BASE_URL}
+        subject = ds.title.replace('\n', '').replace('\r', '')
+        msg_plain = render_to_string('mails/dataset-update-reminder.txt', context=context)
+        msg_html = render_to_string('mails/dataset-update-reminder.html', context=context)
+        messages.append(EmailMultiAlternatives(
+            subject, msg_plain, config.NO_REPLY_EMAIL,
+            [ds.dataset_update_notification_recipient], alternatives=[(msg_html, 'text/html')]))
+    sent_messages = conn.send_messages(messages)
+    logger.debug(f'Sent {sent_messages} messages with dataset update reminder.')

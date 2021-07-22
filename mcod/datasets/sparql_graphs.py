@@ -1,7 +1,9 @@
+from django.db.models import Model
 import marshmallow as ma
 from rdflib import ConjunctiveGraph
 from rdflib import URIRef
 from mcod.core.api.rdf.sparql_graphs import SparqlGraph
+from mcod.core.api.rdf.graph_mixins import SparqlGraphCatalogModifiedMixin
 import mcod.core.api.rdf.namespaces as ns
 from mcod.datasets.serializers import DatasetRDFResponseSchema
 from mcod.datasets.models import Dataset
@@ -10,7 +12,7 @@ from mcod.organizations.models import Organization
 from mcod.categories.models import Category
 
 
-class DatasetSparqlGraph(SparqlGraph, DatasetRDFResponseSchema):
+class DatasetSparqlGraph(SparqlGraph, DatasetRDFResponseSchema, SparqlGraphCatalogModifiedMixin):
     model = Dataset
     related_models = [Resource, Category, Organization]
     parent_model = Organization
@@ -52,18 +54,28 @@ class DatasetSparqlGraph(SparqlGraph, DatasetRDFResponseSchema):
     def _prepare_catalog_entry(self, instance):
         catalog = self.get_rdf_class_for_catalog()()
         catalog_subject = catalog.get_subject({})
-        catalog_node = f'{catalog_subject.n3()} {URIRef(ns.DCAT.Dataset).n3()}' \
-                       f' {URIRef(instance.frontend_absolute_url).n3()} . '
+        if isinstance(instance, Model):
+            catalog_node = f'{catalog_subject.n3()} {URIRef(ns.DCAT.dataset).n3()}' \
+                           f' {URIRef(instance.frontend_absolute_url).n3()} . '
+        else:
+            catalog_node = ''.join([f'{catalog_subject.n3()} {URIRef(ns.DCAT.dataset).n3()}'
+                                    f' {URIRef(ins.frontend_absolute_url).n3()} . ' for ins in instance])
         return catalog_subject.n3(), catalog_node
 
     def create(self, instance):
         _ns, instance_nodes = self._prepare_query_data(instance)
         catalog_subject, catalog_node = self._prepare_catalog_entry(instance)
         instance_nodes[catalog_subject] = catalog_node
-        return self._get_create_query(instance_nodes), _ns
+        create_q = self._get_create_query(instance_nodes)
+        catalog_modified_q, modified_ns = self.update_catalog_modified(instance)
+        _ns.update(**modified_ns)
+        return f'{create_q}; {catalog_modified_q}', _ns
 
     def delete(self, instance):
         ns, instance_nodes = self._prepare_query_data(instance)
         catalog_subject, catalog_node = self._prepare_catalog_entry(instance)
-        instance_nodes[catalog_subject] = catalog_node
-        return self._get_delete_query(instance_nodes), ns
+        del_ds_q = self._get_delete_query(instance_nodes)
+        del_ds_cat_entries = self._get_delete_triple_query({catalog_subject: catalog_node})
+        catalog_modified_q, modified_ns = self.update_catalog_modified(instance)
+        ns.update(**modified_ns)
+        return f'{del_ds_q}; {del_ds_cat_entries}; {catalog_modified_q}', ns

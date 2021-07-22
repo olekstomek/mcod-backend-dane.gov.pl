@@ -6,14 +6,14 @@ from elasticsearch_dsl import DateHistogramFacet, MultiSearch, Search, TermsFace
 from elasticsearch_dsl.aggs import Terms, Nested, Filter
 from elasticsearch_dsl.connections import get_connection
 
+from mcod import settings
 from mcod.alerts.utils import get_active_alerts
 from mcod.core.api.search.facets import NestedFacet
 from mcod.core.api.views import JsonAPIView
 from mcod.core.versioning import versioned
-from mcod.datasets.documents import DatasetDocumentActive
+from mcod.datasets.documents import DatasetDocument
 from mcod.lib.handlers import BaseHandler
-from mcod.resources.documents import ResourceDocumentActive
-from mcod.search.utils import search_index_name
+from mcod.resources.documents import ResourceDocument
 from mcod.tools.depricated.schemas import StatsSchema
 from mcod.tools.depricated.serializers import StatsMeta, StatsSerializer
 
@@ -33,7 +33,7 @@ class StatsView(JsonAPIView):
 
         def _data(self, request, cleaned, *args, explain=None, **kwargs):
             m_search = MultiSearch()
-            search = Search(using=connection, index=search_index_name(), extra={'size': 0})
+            search = Search(using=connection, index=settings.ELASTICSEARCH_COMMON_ALIAS_NAME, extra={'size': 0})
             search.aggs.bucket(
                 'documents_by_type',
                 TermsFacet(field='model').get_aggregation()
@@ -45,8 +45,8 @@ class StatsView(JsonAPIView):
                     min_doc_count=0
                 ).get_aggregation()
             )
-            d_search = DatasetDocumentActive().search().extra(size=0).filter('match', status='published')
-            r_search = ResourceDocumentActive().search().extra(size=0).filter('match', status='published')
+            d_search = DatasetDocument().search().extra(size=0).filter('match', status='published')
+            r_search = ResourceDocument().search().extra(size=0).filter('match', status='published')
 
             d_search.aggs.bucket('datasets_by_institution',
                                  NestedFacet('institution',

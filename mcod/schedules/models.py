@@ -15,16 +15,15 @@ from notifications.signals import notify
 from mcod.core.db.models import ExtendedModel
 from mcod.schedules.managers import (
     CommentManager,
-    CommentDeletedManager,
+    CommentTrashManager,
     NotificationQuerySet,
     ScheduleManager,
-    ScheduleDeletedManager,
+    ScheduleTrashManager,
     UserScheduleItemManager,
-    UserScheduleItemDeletedManager,
+    UserScheduleItemTrashManager,
     UserScheduleManager,
-    UserScheduleDeletedManager,
+    UserScheduleTrashManager,
 )
-from mcod.unleash import is_enabled
 
 
 YES = _('Yes')
@@ -85,9 +84,8 @@ class Schedule(ExtendedModel):
         'users.User', models.DO_NOTHING, null=True, blank=True, verbose_name=_('modified by'),
         related_name='schedules_modified')
 
-    raw = models.Manager()
     objects = ScheduleManager()
-    deleted = ScheduleDeletedManager()
+    trash = ScheduleTrashManager()
     i18n = TranslationField()
     tracker = FieldTracker()
 
@@ -126,7 +124,7 @@ class Schedule(ExtendedModel):
 
     @classmethod
     def get_dashboard_aggregations_for(cls, user):
-        schedule = cls.get_current_plan() if (user.is_superuser or user.agent) and is_enabled('hod.be') else None
+        schedule = cls.get_current_plan() if (user.is_superuser or user.agent) else None
         if user.is_superuser:
             return {
                 'started': schedule.get_started_count() if schedule else 0,
@@ -229,9 +227,8 @@ class UserSchedule(ExtendedModel):
         'users.User', models.DO_NOTHING, null=True, blank=True, verbose_name=_('modified by'),
         related_name='user_schedules_modified')
 
-    raw = models.Manager()
     objects = UserScheduleManager()
-    deleted = UserScheduleDeletedManager()
+    trash = UserScheduleTrashManager()
     i18n = TranslationField()
     tracker = FieldTracker()
 
@@ -343,9 +340,8 @@ class UserScheduleItem(ExtendedModel):
         'users.User', models.DO_NOTHING, null=True, blank=True, verbose_name=_('modified by'),
         related_name='user_schedule_items_modified')
 
-    raw = models.Manager()
     objects = UserScheduleItemManager()
-    deleted = UserScheduleItemDeletedManager()
+    trash = UserScheduleItemTrashManager()
     i18n = TranslationField()
     tracker = FieldTracker()
 
@@ -466,9 +462,8 @@ class Comment(ExtendedModel):
         'users.User', models.DO_NOTHING, null=True, blank=True, verbose_name=_('modified by'),
         related_name='user_schedule_item_comments_modified')
 
-    raw = models.Manager()
     objects = CommentManager()
-    deleted = CommentDeletedManager()
+    trash = CommentTrashManager()
     i18n = TranslationField()
     tracker = FieldTracker()
 

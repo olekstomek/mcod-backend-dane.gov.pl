@@ -98,7 +98,7 @@ class TestOrganizationModel:
         institution_with_datasets.delete()
         for dataset in datasets:
             assert dataset not in Dataset.objects.all()
-            assert dataset in Dataset.deleted.all()
+            assert dataset in Dataset.trash.all()
 
     def test_changing_organization_to_draft_also_set_draft_for_his_datasets(self, institution_with_datasets):
         assert institution_with_datasets.status == 'published'

@@ -2,7 +2,7 @@
 Feature: Course details page in admin panel
 
   Scenario: Course change page is not visible for NOT academy admin
-    Given course with id 999
+    Given course created with params {"id": 999, "title": "Course with id: 999"}
     And admin's request logged user is active user
     When admin's request method is GET
     And admin's page /academy/course/999/change/ is requested
@@ -23,7 +23,7 @@ Feature: Course details page in admin panel
     And admin's page /academy/course/add/ is requested
     Then admin's response status code is 200
     And admin's response page contains /change/">test</a>" został pomyślnie dodany.
-    And course with title test contains data {"notes": "Opis...", "venue": "Królewska 27", "participants_number": 10, "start": "2020-07-01", "end": "2020-07-02"}
+    And academy.Course with title test contains data {"notes": "Opis...", "venue": "Królewska 27", "participants_number": 10, "start": "2020-07-01", "end": "2020-07-02"}
 
   Scenario: Course related session type is required
     When admin's request method is POST

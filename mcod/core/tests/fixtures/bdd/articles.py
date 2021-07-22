@@ -1,4 +1,4 @@
-from pytest_bdd import given
+from pytest_bdd import given, then
 from pytest_bdd import parsers
 
 from mcod.articles.factories import ArticleFactory, ArticleCategoryFactory
@@ -34,8 +34,10 @@ def article_category():
 
 @given(parsers.parse('article category with id {category_id:d}'))
 def article_category_with_id(category_id):
-    _cat = ArticleCategoryFactory.create(id=category_id, title='Article Category {}'.format(category_id))
-    return _cat
+    return ArticleCategoryFactory.create(
+        id=category_id,
+        name='Article Category {}'.format(category_id),
+    )
 
 
 @given(parsers.parse('article'))
@@ -109,3 +111,9 @@ def articles():
 def x_articles(article_count):
     _num = article_count or 3
     return ArticleFactory.create_batch(_num)
+
+
+@then(parsers.parse('article with title {article_title} has tag with id {tag_id:d}'))
+def article_with_title_has_tag_with_id(article_title, tag_id):
+    article = ArticleFactory._meta.model.objects.get(title=article_title)
+    assert tag_id in article.tags.values_list('id', flat=True)

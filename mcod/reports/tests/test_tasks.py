@@ -1,3 +1,4 @@
+import csv
 import datetime
 import json
 import os
@@ -5,9 +6,13 @@ from time import sleep
 from django.apps import apps
 from django.contrib.auth import get_user_model
 from django.conf import settings
+from django.db.models import Sum
 
+
+from mcod.counters.models import ResourceViewCounter, ResourceDownloadCounter
 from mcod.reports.models import SummaryDailyReport
 from mcod.reports.tasks import generate_csv, create_daily_resources_report
+from mcod.unleash import is_enabled
 
 User = get_user_model()
 Report = apps.get_model('reports', 'Report')
@@ -114,3 +119,25 @@ class TestTasks(object):
         assert r.file.startswith('media/reports/daily/Zbiorczy_raport_dzienny_')
         assert r.file.endswith('.csv')
         assert request_date in r.file
+
+    def test_counters_in_daily_report(self, admin, resource_with_counters):
+        admin.id = 1
+        admin.email = "testadmin@test.xx"
+        admin.save()
+        create_daily_resources_report()
+        r = SummaryDailyReport.objects.last()
+        file_path = f'{settings.TEST_ROOT}/{r.file}'
+        with open(file_path, 'r') as report_file:
+            reader = csv.reader(report_file, delimiter=',')
+            next(reader)
+            resource_data = next(reader)
+        if is_enabled('S16_new_date_counters.be'):
+            views_count = ResourceViewCounter.objects.filter(
+                resource_id=resource_with_counters.pk).aggregate(views_sum=Sum('count'))['views_sum']
+            downloads_count = ResourceDownloadCounter.objects.filter(
+                resource_id=resource_with_counters.pk).aggregate(downloads_sum=Sum('count'))['downloads_sum']
+        else:
+            views_count = resource_with_counters.views_count
+            downloads_count = resource_with_counters.downloads_count
+        assert int(resource_data[10]) == views_count
+        assert int(resource_data[11]) == downloads_count

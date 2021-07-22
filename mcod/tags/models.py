@@ -45,7 +45,8 @@ class Tag(BaseExtendedModel):
                     ),
     }
     name = models.CharField(max_length=100, verbose_name=_("name"))
-    language = models.CharField(max_length=2, choices=settings.LANGUAGES, default='', verbose_name=_("language"), db_index=True)
+    language = models.CharField(
+        max_length=2, choices=settings.LANGUAGES, default=settings.LANGUAGES[0][0], verbose_name=_("language"), db_index=True)
 
     created_by = models.ForeignKey(
         User,

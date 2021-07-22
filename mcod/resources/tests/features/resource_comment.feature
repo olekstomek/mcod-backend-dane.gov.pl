@@ -1,3 +1,4 @@
+@elasticsearch
 Feature: Resource Comment
 
   Scenario Outline: Commenting for resource works fine

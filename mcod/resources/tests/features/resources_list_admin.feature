@@ -14,3 +14,10 @@ Feature: Resources list in admin panel
     And admin's page /resources/resource/ is requested
     Then admin's response status code is 200
     And admin's response page not contains Test widoczności zasobu na liście
+
+  Scenario: Resources converted from csv to jsonld are returned in results when jsonld format is filtered
+    Given resource with csv file converted to jsonld with params {"id": 999, "title": "Test filtrowania wg formatu"}
+    When admin's request method is GET
+    And admin's page /resources/resource/?format=jsonld is requested
+    Then admin's response status code is 200
+    And admin's response page contains Test filtrowania wg formatu

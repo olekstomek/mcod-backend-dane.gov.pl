@@ -228,16 +228,15 @@ class ResourceDataSchemaWidget(JsonPairInputsWidget):
             return mark_safe(html)
 
     def value_from_datadict(self, data, files, name):
-
         schema = self.instance.tabular_data_schema
-        for k, v in data.items():
-            if k.startswith("schema_type_"):
-                index = int(k.replace("schema_type_", ""))
-                schema["fields"][index]['type'] = v
-
-                if v in ['date', 'datetime', 'time'] and schema['fields'][index]['format'] == 'default':
-                    schema['fields'][index]['format'] = "any"
-
+        _data = {int(k.replace('schema_type_', '')): v for k, v in data.items() if k.startswith('schema_type_')}
+        for k, v in _data.items():
+            schema['fields'][k]['type'] = v
+            if v in ['date', 'datetime', 'time'] and schema['fields'][k]['format'] == 'default':
+                schema['fields'][k]['format'] = 'any'
+            # The format keyword options for `string` are `default`, `email`, `uri`, `binary`, and `uuid`.
+            if v == 'string' and schema['fields'][k]['format'] == 'any':
+                schema['fields'][k]['format'] = 'default'
         return json.dumps(schema)
 
 
@@ -261,10 +260,7 @@ class ResourceMapsAndPlotsWidget(JsonPairInputsWidget):
                 'data': data,
                 'selects': selects,
                 'headers': headers,
-                'map_preview': self.instance.map_preview,
-                'chart_preview': self.instance.chart_preview
             })
-
             return mark_safe(html)
 
     def value_from_datadict(self, data, files, name):

@@ -20,7 +20,6 @@ from django.utils.safestring import mark_safe
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 from model_utils import FieldTracker
-from model_utils.managers import SoftDeletableManager
 from modeltrans.fields import TranslationField
 from wagtail.admin.edit_handlers import FieldPanel, MultiFieldPanel, StreamFieldPanel
 from wagtail.api import APIField
@@ -32,14 +31,14 @@ from wagtail.embeds.blocks import EmbedBlock
 from wagtail.images.blocks import ImageChooserBlock
 from wagtail.search import index
 
-from mcod.applications.managers import ApplicationProposalManager, ApplicationProposalDeletedManager
+from mcod.applications.managers import ApplicationProposalManager, ApplicationProposalTrashManager
 from mcod.applications.signals import generate_thumbnail, update_application_document
 from mcod.applications.tasks import generate_logo_thumbnail_task
 from mcod.core import signals as core_signals, storages
 from mcod.core.api.search import signals as search_signals
-from mcod.core.db.managers import DeletedManager
+from mcod.core.db.managers import TrashManager
 from mcod.core.db.models import ExtendedModel, update_watcher, TrashModelBase
-from mcod.unleash import is_enabled
+from mcod.core.managers import SoftDeletableManager
 
 User = get_user_model()
 
@@ -259,9 +258,8 @@ class ApplicationProposal(ApplicationMixin):
         related_name='application_proposals_modified'
     )
 
-    raw = models.Manager()
     objects = ApplicationProposalManager()
-    deleted = ApplicationProposalDeletedManager()
+    trash = ApplicationProposalTrashManager()
     i18n = TranslationField()
     tracker = FieldTracker()
 
@@ -343,15 +341,8 @@ class ApplicationProposal(ApplicationMixin):
                 tag_ids = []
                 for name in keywords:
                     tag, created = tag_model.objects.get_or_create(
-                        name=name, language='', defaults={'created_by_id': data['created_by_id']})
+                        name=name, language='pl', defaults={'created_by_id': data['created_by_id']})
                     tag_ids.append(tag.id)
-
-                if is_enabled('S18_new_tags.be'):
-                    for name in keywords:
-                        tag, created = tag_model.objects.get_or_create(
-                            name=name, language='pl', defaults={'created_by_id': data['created_by_id']})
-                        tag_ids.append(tag.id)
-
                 if tag_ids:
                     application.tags.set(tag_ids)
             proposal.application = application
@@ -502,18 +493,12 @@ class Application(ApplicationMixin):
     def has_image_thumb(self):
         return bool(self.image_thumb)
 
-    @cached_property
-    def tags_list(self):
-        # TODO change self.tags.filter(language='') to self.tags.all() on S18_new_tags.be removal
-        return [tag.translations_dict for tag in self.tags.filter(language='')]
-
     def tags_as_str(self, lang):
         return ', '.join(sorted([tag.name for tag in self.tags.filter(language=lang)], key=str.lower))
 
     @property
     def keywords_list(self):
-        # TODO change self.tags.exclude(language='') to self.tags.all() on S18_new_tags.be removal
-        return [tag.to_dict for tag in self.tags.exclude(language='')]
+        return [tag.to_dict for tag in self.tags.all()]
 
     @property
     def keywords(self):
@@ -543,9 +528,8 @@ class Application(ApplicationMixin):
 
     i18n = TranslationField(fields=("title", "notes", 'image_alt', 'illustrative_graphics_alt'))
 
-    raw = models.Manager()
     objects = SoftDeletableManager()
-    deleted = DeletedManager()
+    trash = TrashManager()
     tracker = FieldTracker()
     slugify_field = 'title'
 

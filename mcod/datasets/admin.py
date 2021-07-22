@@ -8,8 +8,8 @@ from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 from django_celery_results.models import TaskResult
 
-from mcod.datasets.forms import DatasetForm, TrashDatasetForm, UPDATE_FREQUENCY
-from mcod.datasets.models import Dataset, DatasetTrash
+from mcod.datasets.forms import DatasetForm, TrashDatasetForm
+from mcod.datasets.models import Dataset, DatasetTrash, UPDATE_NOTIFICATION_FREQUENCY_DEFAULT_VALUES
 from mcod.lib.admin_mixins import (
     AddChangeMixin,
     AdminListMixin,
@@ -26,12 +26,11 @@ from mcod.lib.admin_mixins import (
 from mcod.reports.admin import ExportCsvMixin
 from mcod.resources.forms import ResourceListForm, AddResourceForm
 from mcod.resources.models import Resource
-from mcod.lib.dcat.vocabularies.manager import VocabulariesManager
 from mcod.unleash import is_enabled
 from mcod.users.forms import FilteredSelectMultipleCustom
 
 
-class InlineChangeList(object):
+class InlineChangeList:
     can_show_all = True
     multi_page = True
     get_query_string = ChangeList.__dict__['get_query_string']
@@ -51,15 +50,13 @@ class PaginationInline(admin.TabularInline):
     page_param = 'p'
 
     def get_formset(self, request, obj=None, **kwargs):
-        formset_class = super(PaginationInline, self).get_formset(
-            request, obj, **kwargs)
+        formset_class = super().get_formset(request, obj, **kwargs)
 
         class PaginationFormSet(formset_class):
             def __init__(self, *args, **kwargs):
-                super(PaginationFormSet, self).__init__(*args, **kwargs)
-
-                qs = self.queryset
-                paginator = Paginator(qs, self.per_page)
+                super().__init__(*args, **kwargs)
+                queryset = self.queryset
+                paginator = Paginator(queryset, self.per_page)
                 try:
                     page_num = int(request.GET.get(self.page_param, '0'))
                 except ValueError:
@@ -73,10 +70,7 @@ class PaginationInline(admin.TabularInline):
                 self.cl = InlineChangeList(request, page_num, paginator, page_param=self.page_param)
                 self.paginator = paginator
 
-                if self.cl.show_all:
-                    self._queryset = qs
-                else:
-                    self._queryset = page.object_list
+                self._queryset = queryset if self.cl.show_all else page.object_list
 
         PaginationFormSet.per_page = self.per_page
         PaginationFormSet.page_param = self.page_param
@@ -133,42 +127,32 @@ class ChangeResourceStacked(DynamicAdminListDisplayMixin, ModifiedByDisplayAdmin
 
     data_status.admin_order_field = '_data_status'
 
-    if is_enabled('S21_admin_ui_changes.be'):
-        data_status.short_description = format_html('<i class="fas fa-table" title="{}"></i>'.format(
-            _('Tabular data validation status')))
-        file_status.short_description = format_html('<i class="fas fa-file" title="{}"></i>'.format(
-            _('File validation status')))
-        link_status.short_description = format_html('<i class="fas fa-link" title="{}"></i>'.format(
-            _('Link validation status')))
-    else:
-        data_status.short_description = format_html('<i class="fas fa-table"></i>')
-        file_status.short_description = format_html('<i class="fas fa-file"></i>')
-        link_status.short_description = format_html('<i class="fas fa-link"></i>')
+    data_status.short_description = format_html('<i class="fas fa-table" title="{}"></i>'.format(
+        _('Tabular data validation status')))
+    file_status.short_description = format_html('<i class="fas fa-file" title="{}"></i>'.format(
+        _('File validation status')))
+    link_status.short_description = format_html('<i class="fas fa-link" title="{}"></i>'.format(
+        _('Link validation status')))
 
     def get_queryset(self, request):
-        qs = super().get_queryset(request).order_by('-modified')
-
+        queryset = super().get_queryset(request).order_by('-modified')
         if request.user.is_staff and not request.user.is_superuser:
-            qs = qs.filter(dataset__organization__in=request.user.organizations.iterator())
-
+            queryset = queryset.filter(dataset__organization__in=request.user.organizations.iterator())
         link_tasks = TaskResult.objects.filter(link_task_resources=OuterRef('pk')).order_by('-date_done')
-        qs = qs.annotate(
+        queryset = queryset.annotate(
             _link_status=Subquery(
                 link_tasks.values('status')[:1])
         )
         file_tasks = TaskResult.objects.filter(file_task_resources=OuterRef('pk')).order_by('-date_done')
-        qs = qs.annotate(
+        queryset = queryset.annotate(
             _file_status=Subquery(
                 file_tasks.values('status')[:1])
         )
-
         data_tasks = TaskResult.objects.filter(data_task_resources=OuterRef('pk')).order_by('-date_done')
-        qs = qs.annotate(
+        return queryset.annotate(
             _data_status=Subquery(
                 data_tasks.values('status')[:1])
         )
-
-        return qs
 
     def has_add_permission(self, request, obj=None):
         return False
@@ -227,9 +211,9 @@ class AddResourceStacked(InlineModelAdmin):
         'dataset',
         'data_date',
         'status',
+        'special_signs',
     )
-    if is_enabled('S16_special_signs.be'):
-        _fields += ('special_signs', )
+
     fieldsets = (
         (
             None,
@@ -263,7 +247,7 @@ class AddResourceStacked(InlineModelAdmin):
         if not obj.created_by:
             obj.created_by = request.user
         obj.modified_by = request.user
-        super(AddResourceStacked, self).save_model(request, obj, form, change)
+        super().save_model(request, obj, form, change)
 
 
 class OrganizationFilter(AutocompleteFilter):
@@ -298,12 +282,8 @@ class DatasetAdmin(DynamicAdminListDisplayMixin, CreatedByDisplayAdminMixin, Sta
         "slug": ("title", ),
     }
 
-    list_filter = []
-    if is_enabled('S19_DCAT_categories.be'):
-        list_filter += ['categories']
-    else:
-        list_filter += ['category']
-    list_filter += [
+    list_filter = [
+        'categories',
         OrganizationFilter,
         'status'
     ]
@@ -323,49 +303,34 @@ class DatasetAdmin(DynamicAdminListDisplayMixin, CreatedByDisplayAdminMixin, Sta
     )
 
     def update_frequency_display(self, obj):
-        if obj.update_frequency:
-            return dict(UPDATE_FREQUENCY)[obj.update_frequency]
+        return obj.frequency_display
 
     update_frequency_display.short_description = _('Update frequency')
 
     def get_fieldsets(self, request, obj=None):
-        if is_enabled('S18_new_tags.be'):
-            tags_tab_fields = ('tags_list_pl', 'tags_list_en') if obj and obj.is_imported else ('tags_pl', 'tags_en')
-        else:
-            tags_tab_fields = ('tags_list', ) if obj and obj.is_imported else ('tags', )
+        tags_tab_fields = ('tags_list_pl', 'tags_list_en') if obj and obj.is_imported else ('tags_pl', 'tags_en')
         update_frequency_field = "update_frequency_display" if obj and obj.is_imported else "update_frequency"
-        if is_enabled('dcat_vocabularies.be'):
-            vocab_manager = VocabulariesManager('Dataset')
-            vocabulary_choice_fields = vocab_manager.vocabularies
-        else:
-            vocabulary_choice_fields = []
+
+        frequency_fields = []
+        if is_enabled('S29_update_frequency_notifications_pa.be') and not (obj and obj.is_imported):
+            frequency_fields = [
+                'is_update_notification_enabled',
+                'update_notification_frequency',
+                'update_notification_recipient_email',
+            ]
 
         general_fields = ["notes", "url", "image", "image_alt", "dataset_logo", "customfields", update_frequency_field,
-                          'organization']
-        if is_enabled('S19_DCAT_categories.be'):
-            general_fields += ['categories_list'] if obj and obj.is_imported else ['categories']
-        else:
-            general_fields += ['category']
-        general_fields += vocabulary_choice_fields
+                          *frequency_fields, 'organization']
+        general_fields += ['categories_list'] if obj and obj.is_imported else ['categories']
         general_fields += ['status', 'created_by', 'created', 'modified', 'verified']
-
-        if is_enabled('S21_licenses.be'):
-            license_fields = (
-                "license_condition_source",
-                "license_condition_modification",
-                "license_condition_responsibilities",
-                "license_condition_db_or_copyrighted",
-                "license_chosen",
-                "license_condition_personal_data",
-            )
-        else:
-            license_fields = (
-                "license_condition_source",
-                "license_condition_modification",
-                "license_condition_responsibilities",
-                "license_condition_db_or_copyrighted",
-                "license_condition_personal_data",
-            )
+        license_fields = (
+            "license_condition_source",
+            "license_condition_modification",
+            "license_condition_responsibilities",
+            "license_condition_db_or_copyrighted",
+            "license_chosen",
+            "license_condition_personal_data",
+        )
 
         return [
             (
@@ -407,10 +372,6 @@ class DatasetAdmin(DynamicAdminListDisplayMixin, CreatedByDisplayAdminMixin, Sta
         return instance.categories_list_as_html
     categories_list.short_description = _('Categories')
 
-    def tags_list(self, instance):
-        return instance.tags_list_as_str
-    tags_list.short_description = _('Tags')
-
     def tags_list_pl(self, instance):
         return instance.tags_as_str(lang='pl')
     tags_list_pl.short_description = _('Tags') + ' (PL)'
@@ -424,23 +385,25 @@ class DatasetAdmin(DynamicAdminListDisplayMixin, CreatedByDisplayAdminMixin, Sta
             queryset = queryset.filter(source__isnull=True)
         return super().get_search_results(request, queryset, search_term)
 
-    def render_change_form(self, request, context, add=False, change=False, form_url='', obj=None):
+    def render_change_form(self, request, context, **kwargs):
+        obj = kwargs.get('obj')
         if obj and obj.source:
             context.update({
                 'show_save': False,
                 'show_save_and_continue': False,
             })
-        return super().render_change_form(request, context, add=add, change=change, form_url=form_url, obj=obj)
+        return super().render_change_form(request, context, **kwargs)
 
     def save_model(self, request, obj, form, change):
         if not obj.id:
             obj.created_by = request.user
         obj.modified_by = request.user
-        if is_enabled('dcat_vocabularies.be'):
-            vocab_manager = VocabulariesManager('Dataset')
-            obj.dcat_vocabularies =\
-                vocab_manager.update_object_vocabularies(obj.dcat_vocabularies, form.changed_data, form.cleaned_data)
-        super(DatasetAdmin, self).save_model(request, obj, form, change)
+        if not request.user.is_superuser:
+            obj.update_notification_recipient_email = request.user.email
+            if obj.tracker.has_changed('update_frequency'):
+                obj.update_notification_frequency = UPDATE_NOTIFICATION_FREQUENCY_DEFAULT_VALUES.get(obj.update_frequency)
+
+        super().save_model(request, obj, form, change)
 
     def save_formset(self, request, form, formset, change):
         instances = formset.save(commit=False)
@@ -448,23 +411,19 @@ class DatasetAdmin(DynamicAdminListDisplayMixin, CreatedByDisplayAdminMixin, Sta
             if not instance.id:
                 instance.created_by = request.user
             instance.modified_by = request.user
-        super(DatasetAdmin, self).save_formset(request, form, formset, change)
+        super().save_formset(request, form, formset, change)
 
     def get_form(self, request, obj=None, **kwargs):
         self._request = request
-        form = super(DatasetAdmin, self).get_form(request, obj, **kwargs)
-        if is_enabled('dcat_vocabularies.be') and obj:
-            VocabulariesManager.set_vocabulary_fields_initial(form, obj)
-        if is_enabled('S18_new_tags.be'):
-            form.recreate_tags_widgets(request=request, db_field=Dataset.tags.field, admin_site=self.admin_site)
+        form = super().get_form(request, obj, **kwargs)
+        form.recreate_tags_widgets(request=request, db_field=Dataset.tags.field, admin_site=self.admin_site)
         return form
 
     def get_queryset(self, request):
-        qs = Dataset.objects.all()
-
+        queryset = super().get_queryset(request)
         if request.user.is_superuser:
-            return qs
-        return qs.filter(organization_id__in=request.user.organizations.all())
+            return queryset
+        return queryset.filter(organization_id__in=request.user.organizations.all())
 
     def dataset_logo(self, obj):
         return obj.dataset_logo or '-'
@@ -492,9 +451,12 @@ class DatasetAdmin(DynamicAdminListDisplayMixin, CreatedByDisplayAdminMixin, Sta
 
 
 @admin.register(DatasetTrash)
-class DatasetTrashAdmin(TrashMixin):
+class DatasetTrashAdmin(HistoryMixin, TrashMixin):
     search_fields = ['title', 'organization__title']
     list_display = ['title', 'organization']
+    related_objects_query = 'organization'
+    cant_restore_msg = _(
+        'Couldn\'t restore following datasets, because their related organizations are still removed: {}')
     fields = [
         'title',
         'slug',
@@ -503,40 +465,22 @@ class DatasetTrashAdmin(TrashMixin):
         "customfields",
         "update_frequency",
         'organization',
+        'categories_list',
     ]
-    if is_enabled('S19_DCAT_categories.be'):
-        fields += ['categories_list']
-    else:
-        fields += ['category']
 
-    if is_enabled('S18_new_tags.be'):
-        tags_fields = ('tags_list_pl', 'tags_list_en')
-    else:
-        tags_fields = ('tags',)
-
-    if is_enabled('S21_licenses.be'):
-        license_fields = (
-            "license_condition_source",
-            "license_condition_modification",
-            "license_condition_responsibilities",
-            "license_condition_db_or_copyrighted",
-            "license_chosen",
-            "license_condition_personal_data",
-        )
-    else:
-        license_fields = (
-            "license_id",
-            "license_condition_source",
-            "license_condition_original",
-            "license_condition_modification",
-            "license_condition_responsibilities",
-            "license_condition_db_or_copyrighted",
-            "license_condition_personal_data",
-        )
+    license_fields = (
+        "license_condition_source",
+        "license_condition_modification",
+        "license_condition_responsibilities",
+        "license_condition_db_or_copyrighted",
+        "license_chosen",
+        "license_condition_personal_data",
+    )
 
     fields += [
         'status',
-        *tags_fields,
+        'tags_list_pl',
+        'tags_list_en',
         *license_fields,
         "image",
         "image_alt",
@@ -551,31 +495,27 @@ class DatasetTrashAdmin(TrashMixin):
         "customfields",
         "update_frequency",
         'organization',
-    ]
-    if is_enabled('S19_DCAT_categories.be'):
-        readonly_fields += ['categories_list']
-    else:
-        readonly_fields += ['category']
-
-    readonly_fields += [
+        'categories_list',
         'status',
-        *tags_fields,
+        'tags_list_pl',
+        'tags_list_en',
         *license_fields,
         "image",
         "image_alt",
     ]
 
     form = TrashDatasetForm
+    is_history_with_unknown_user_rows = True
 
     def categories_list(self, instance):
         return instance.categories_list_as_html
     categories_list.short_description = _('Categories')
 
     def get_queryset(self, request):
-        qs = Dataset.deleted.all()
+        queryset = super().get_queryset(request)
         if request.user.is_superuser:
-            return qs
-        return qs.filter(organization_id__in=request.user.organizations.all())
+            return queryset
+        return queryset.filter(organization_id__in=request.user.organizations.all())
 
     def tags_list_pl(self, instance):
         return instance.tags_as_str(lang='pl')

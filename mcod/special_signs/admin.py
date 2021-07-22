@@ -6,7 +6,6 @@ from mcod.lib.admin_mixins import (
 )
 from mcod.special_signs.forms import SpecialSignAdminForm
 from mcod.special_signs.models import SpecialSign
-from mcod.unleash import is_enabled
 
 
 class SpecialSignAdminMixin(ActionsMixin, CRUDMessageMixin):
@@ -76,5 +75,4 @@ class SpecialSignAdmin(SpecialSignAdminMixin, HistoryMixin, LangFieldsOnlyMixin,
         return readonly_fields
 
 
-if is_enabled('S16_special_signs.be'):
-    admin.site.register(SpecialSign, SpecialSignAdmin)
+admin.site.register(SpecialSign, SpecialSignAdmin)

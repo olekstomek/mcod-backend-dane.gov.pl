@@ -20,9 +20,13 @@ APPS_DIR = ROOT_DIR.path('mcod')
 
 DATA_DIR = ROOT_DIR.path('data')
 
+SCHEMAS_DIR = DATA_DIR.path('schemas')
+
 HARVESTER_DATA_DIR = DATA_DIR.path('harvester')
 
 SHACL_SHAPES_DIR = DATA_DIR.path('shacl')
+
+SPEC_DIR = DATA_DIR.path('spec')
 
 LOGS_DIR = str(ROOT_DIR.path('logs'))
 
@@ -124,6 +128,7 @@ INSTALLED_APPS = [
     'mcod.schedules',
     'mcod.guides',
     'mcod.special_signs',
+    'mcod.discourse',
 ]
 
 MIDDLEWARE = [
@@ -343,7 +348,7 @@ REPORTS_MEDIA_ROOT = str(ROOT_DIR.path(MEDIA_ROOT, 'reports'))
 LABORATORY_MEDIA_ROOT = str(ROOT_DIR.path(MEDIA_ROOT, 'lab_reports'))
 RESOURCES_FILES_TO_REMOVE_ROOT = str(ROOT_DIR.path(MEDIA_ROOT, 'to_be_removed', 'resources'))
 DCAT_VOCABULARIES_MEDIA_ROOT = str(ROOT_DIR.path(MEDIA_ROOT, 'dcat', 'vocabularies'))
-DATASET_CSV_CATALOG_MEDIA_ROOT = str(ROOT_DIR.path(MEDIA_ROOT, 'datasets', 'catalog'))
+METADATA_MEDIA_ROOT = str(ROOT_DIR.path(MEDIA_ROOT, 'datasets', 'catalog'))
 
 MEDIA_URL = '/media/'
 ACADEMY_URL = '%s%s' % (MEDIA_URL, 'academy')
@@ -414,9 +419,19 @@ CACHES = {
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         }
+    },
+    # https://docs.wagtail.io/en/stable/advanced_topics/performance.html#caching-image-renditions
+    'renditions': {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "%s/2" % REDIS_URL,
+        'TIMEOUT': 600,
+        'OPTIONS': {
+            'MAX_ENTRIES': 1000
+        }
     }
-
 }
+
+CMS_API_CACHE_TIMEOUT = env('CMS_API_CACHE_TIMEOUT', default=3600)  # 1 hour.
 
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 SESSION_CACHE_ALIAS = "sessions"
@@ -573,18 +588,22 @@ SUIT_CONFIG = {
                 {
                     'model': 'applications.applicationproposal',
                     'permissions': 'auth.add_user',
+                    'url': '/applications/applicationproposal/?decision=not_taken',
                 },
                 {
                     'label': _('Data suggestions'),
                     'model': 'suggestions.datasetsubmission',
+                    'url': '/suggestions/datasetsubmission/?decision=not_taken',
                 },
                 {
                     'model': 'suggestions.datasetcomment',
                     'permissions': 'auth.add_user',
+                    'url': '/suggestions/datasetcomment/?decision=not_taken',
                 },
                 {
                     'model': 'suggestions.resourcecomment',
                     'permissions': 'auth.add_user',
+                    'url': '/suggestions/resourcecomment/?decision=not_taken',
                 },
             ]
         },
@@ -668,11 +687,9 @@ ELASTICSEARCH_DSL = {
     },
 }
 
-ELASTICSEARCH_COMMON_INDEX_NAME = "common"
 ELASTICSEARCH_COMMON_ALIAS_NAME = "common_alias"
 
 ELASTICSEARCH_INDEX_NAMES = OrderedDict({
-    "common": ELASTICSEARCH_COMMON_INDEX_NAME,
     "articles": "articles",
     "applications": "applications",
     "courses": "courses",
@@ -746,7 +763,6 @@ CELERY_TASK_ROUTES = {
     'mcod.counters.tasks.save_counters': {'queue': 'periodic'},
     'mcod.harvester.tasks.harvester_supervisor': {'queue': 'harvester'},
     'mcod.harvester.tasks.import_data_task': {'queue': 'harvester'},
-    'mcod.harvester.tasks.send_import_report_mail_task': {'queue': 'harvester'},
     'mcod.harvester.tasks.validate_xml_url_task': {'queue': 'harvester'},
     'mcod.histories.tasks.index_history': {'queue': 'periodic'},
     'mcod.datasets.tasks.send_dataset_comment': {'queue': 'notifications'},
@@ -792,10 +808,6 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'mcod.searchhistories.tasks.save_searchhistories_task',
         'schedule': 300,
     },
-    'every-day-morning': {
-        'task': 'mcod.reports.tasks.create_daily_resources_report',
-        'schedule': crontab(minute=0, hour=2)
-    },
     'update-query-watchers': {
         'task': 'mcod.watchers.tasks.update_query_watchers_task',
         'schedule': crontab(minute=0, hour=22)
@@ -803,6 +815,10 @@ CELERY_BEAT_SCHEDULE = {
     'send-subscriptions-report': {
         'task': 'mcod.watchers.tasks.send_report_from_subscriptions',
         'schedule': crontab(minute=0, hour=5)
+    },
+    'send-schedule-notifications': {
+        'task': 'mcod.schedules.tasks.send_schedule_notifications_task',
+        'schedule': crontab(minute=0, hour=2),
     },
     'send-newsletter': {
         'task': 'mcod.newsletter.tasks.send_newsletter',
@@ -823,6 +839,21 @@ if env('ENABLE_MONTHLY_REPORTS', default='no') in ['yes', '1', 'true']:
             'task': 'mcod.reports.tasks.create_no_resource_dataset_report',
             'schedule': crontab(minute=0, hour=3, day_of_month=1)
         }
+    })
+
+if ENVIRONMENT in ['dev', 'int']:
+    CELERY_BEAT_SCHEDULE.update({
+        'hourly': {
+            'task': 'mcod.reports.tasks.create_daily_resources_report',
+            'schedule': 3600
+        }
+    })
+else:
+    CELERY_BEAT_SCHEDULE.update({
+        'every-day-morning': {
+            'task': 'mcod.reports.tasks.create_daily_resources_report',
+            'schedule': crontab(minute=0, hour=2)
+        },
     })
 
 RESOURCE_MIN_FILE_SIZE = 1024
@@ -1014,20 +1045,20 @@ if APM_SERVER_URL and COMPONENT in APM_SERVICES:
     ]
 
 SUPPORTED_CONTENT_TYPES = [
-    # (family, type, extensions, openness score)
-    ('application', 'csv', ('csv',), 3),
+    # (family, type, extensions, default openness score, other possible openness scores)
+    ('application', 'csv', ('csv',), 3, {4, 5}),
     ('application', 'epub+zip', ('epub',), 1),
     ('application', 'excel', ('xls',), 2),
-    ('application', 'gml+xml', ('xml',), 3),
-    ('application', 'json', ('json',), 3),
+    ('application', 'gml+xml', ('xml',), 3, {4, 5}),
+    ('application', 'json', ('json',), 3, {4, 5}),
     ('application', 'mspowerpoint', ('ppt', 'pot', 'ppa', 'pps', 'pwz'), 1),
     ('application', 'msword', ('doc', 'docx', 'dot', 'wiz'), 1),
     ('application', 'pdf', ('pdf',), 1),
     ('application', 'postscript', ('pdf', 'ps'), 1),
     ('application', 'powerpoint', ('ppt', 'pot', 'ppa', 'pps', 'pwz'), 1),
     ('application', 'rtf', ('rtf',), 1),
-    ('application', 'shapefile', ('shp',), 3),
-    ('application', 'vnd.api+json', ('json',), 3),  # 4?
+    ('application', 'shapefile', ('shp',), 3, {4, 5}),
+    ('application', 'vnd.api+json', ('json',), 3, {4, 5}),
     ('application', 'vnd.ms-excel', ('xls', 'xlsx', 'xlb'), 2),
     ('application', 'vnd.ms-excel.12', ('xls', 'xlsx', 'xlb'), 2),
     ('application', 'vnd.ms-excel.sheet.macroEnabled.12', ('xls', 'xlsx', 'xlb'), 2),
@@ -1045,41 +1076,42 @@ SUPPORTED_CONTENT_TYPES = [
     ('application', 'vnd.openxmlformats-officedocument.wordprocessingml.document', ('docx',), 1),
     ('application', 'vnd.visio', ('vsd',), 1),
     ('application', 'x-abiword', ('abw',), 1),
-    ('application', 'x-csv', ('csv',), 3),
+    ('application', 'x-csv', ('csv',), 3, {4, 5}),
     ('application', 'x-excel', ('xls', 'xlsx', 'xlb'), 2),
     ('application', 'x-rtf', ('rtf',), 1),
     ('application', 'xhtml+xml', ('html', 'htm'), 3),
-    ('application', 'xml', ('xml',), 3),
+    ('application', 'xml', ('xml',), 3, {4, 5}),
     ('application', 'x-tex', ('tex',), 3),
     ('application', 'x-texinfo', ('texi', 'texinfo',), 3),
-    ('application', 'x-dbf', ('dbf',), 1),
-    ('image', 'bmp', ('bmp',), 2),
+    ('application', 'x-dbf', ('dbf',), 3),
+    ('image', 'bmp', ('bmp',), 1),
     ('image', 'gif', ('gif',), 2),
-    ('image', 'jpeg', ('jpeg', 'jpg', 'jpe'), 3),
-    ('image', 'png', ('png',), 3),
+    ('image', 'jpeg', ('jpeg', 'jpg', 'jpe'), 1),
+    ('image', 'png', ('png',), 1),
     ('image', 'svg+xml', ('svg',), 3),
-    ('image', 'tiff', ('tiff',), 2),
+    ('image', 'tiff', ('tiff', 'tif'), 1),
+    ('image', 'tiff;application=geotiff', ('geotiff',), 3),
     ('image', 'webp', ('webp',), 2),
-    ('image', 'x-tiff', ('tiff',), 2),
-    ('image', 'x-ms-bmp', ('bmp',), 2),
+    ('image', 'x-tiff', ('tiff',), 1),
+    ('image', 'x-ms-bmp', ('bmp',), 1),
     ('image', 'x-portable-pixmap', ('ppm',), 2),
     ('image', 'x-xbitmap', ('xbm',), 2),
-    ('text', 'csv', ('csv',), 3),
+    ('text', 'csv', ('csv',), 3, {4, 5}),
     ('text', 'html', ('html', 'htm'), 3),
     ('text', 'xhtml+xml', ('html', 'htm'), 3),
-    ('text', 'plain', ('txt', 'rd', 'md', 'csv', 'tsv', 'bat'), 3),
+    ('text', 'plain', ('txt', 'rd', 'md', 'bat'), 1),
     ('text', 'richtext', ('rtf',), 1),
     ('text', 'tab-separated-values', ('tsv',), 3),
-    ('text', 'xml', ('xml', 'wsdl', 'xpdl', 'xsl'), 3),
+    ('text', 'xml', ('xml', 'wsdl', 'xpdl', 'xsl'), 3, {4, 5}),
     # RDF
-    ('application', 'ld+json', ('jsonld', 'json-ld'), 4),
-    ('application', 'rdf+xml', ('rdf',), 4),
-    ('text', 'n3', ('n3',), 4),
-    ('text', 'turtle', ('ttl', 'turtle'), 4),
-    ('application', 'nt-triples', ('nt', 'nt11', 'ntriples'), 4),
-    ('application', 'n-quads', ('nquads',), 4),
-    ('application', 'trix', ('trix',), 4),
-    ('application', 'trig', ('trig',), 4),
+    ('application', 'ld+json', ('jsonld', 'json-ld'), 4, {5}),
+    ('application', 'rdf+xml', ('rdf',), 4, {5}),
+    ('text', 'n3', ('n3',), 4, {5}),
+    ('text', 'turtle', ('ttl', 'turtle'), 4, {5}),
+    ('application', 'nt-triples', ('nt', 'nt11', 'ntriples'), 4, {5}),
+    ('application', 'n-quads', ('nquads',), 4, {5}),
+    ('application', 'trix', ('trix',), 4, {5}),
+    ('application', 'trig', ('trig',), 4, {5}),
 ]
 
 FILE_UPLOAD_MAX_MEMORY_SIZE = 1073741824  # 1Gb
@@ -1124,8 +1156,8 @@ CONSTANCE_CONFIG = {
     'TIME_FORMATS': ("||".join(TIME_BASE_FORMATS), "", str),
     'CATALOG__TITLE_PL': ('Portal z danymi publicznymi', '', str),
     'CATALOG__TITLE_EN': ("Poland's Open Data Portal", '', str),
-    'CATALOG__DESCRIPTION_PL': ('Dane o szczególnym znaczeniu dla rozwoju innowacyjności w państwie i rozwoju społeczeństwa informacyjnego w jednym miejscu', '', str),
-    'CATALOG__DESCRIPTION_EN': ('Data of particular importance for the development of innovation in the country and the development of the information society gathered in one location', '', str),
+    'CATALOG__DESCRIPTION_PL': ('Dane o szczególnym znaczeniu dla rozwoju innowacyjności w państwie i rozwoju społeczeństwa informacyjnego w jednym miejscu', '', str),  # noqa: E501
+    'CATALOG__DESCRIPTION_EN': ('Data of particular importance for the development of innovation in the country and the development of the information society gathered in one location', '', str),  # noqa: E501
     'CATALOG__ISSUED': (date(2014, 4, 30), "", date),
     'CATALOG__PUBLISHER__NAME_PL': ('KPRM', '', str),
     'CATALOG__PUBLISHER__NAME_EN': ('KPRM', '', str),
@@ -1160,7 +1192,7 @@ API_URL = env('API_URL', default='https://api.dane.gov.pl')
 ADMIN_URL = env('ADMIN_URL', default='https://admin.dane.gov.pl')
 CMS_URL = env('CMS_URL', default='https://cms.dane.gov.pl')
 TOURPICKER_URL = f'{BASE_URL}?tourPicker=1'
-API_URL_INTERNAL = 'http://mcod-api:8000'
+API_URL_INTERNAL = env('API_URL_INTERNAL', default='http://mcod-api:8000')
 
 PASSWORD_RESET_PATH = '/user/reset-password/%s/'
 EMAIL_VALIDATION_PATH = '/user/verify-email/%s/'
@@ -1296,7 +1328,7 @@ WAGTAILADMIN_RICH_TEXT_EDITORS = {
     'default': {
         'WIDGET': 'wagtail.admin.rich_text.DraftailRichTextArea',
         'OPTIONS': {
-            'features': ['bold', 'italic', 'h2', 'h3', 'h4',  'ol', 'ul', 'hr',
+            'features': ['bold', 'italic', 'h2', 'h3', 'h4', 'ol', 'ul', 'hr',
                          'image', 'embed', 'titled_link', 'document-link', 'lang-en', 'lang-pl']
         }
     },
@@ -1315,6 +1347,7 @@ WAGTAILADMIN_GLOBAL_PAGE_EDIT_LOCK = True
 EXPORT_FORMAT_TO_MIMETYPE = {
     'csv': 'text/csv',
     'xlsx': 'application/vnd.ms-excel',
+    'xml': 'application/xml',
 }
 
 RDF_FORMAT_TO_MIMETYPE = {
@@ -1411,6 +1444,7 @@ ES_PL_SYN_FILTER_KWARGS = {
 }
 DEACTIVATE_ACCEPTED_DATASET_SUBMISSIONS_PUBLISHED_DAYS_AGO = 90
 DESCRIPTION_FIELD_MAX_LENGTH = 10000
+DESCRIPTION_FIELD_MIN_LENGTH = 20
 
 SHACL_SHAPES = {
     # 'count': SHACL_SHAPES_DIR.join('dcat-ap.shapes.ttl').root,
@@ -1421,40 +1455,24 @@ SHACL_SHAPES = {
     'deprecateduris': SHACL_SHAPES_DIR.path('dcat-ap_2.0.1_shacl_deprecateduris.ttl').root,
 }
 
-VOCABULARY_SOURCES = {
-    'dcat_update_frequency': {
-        'processor_kwargs': {
-            'file_url': 'https://op.europa.eu/o/opportal-service/euvoc-download-handler?cellarURI=http%3A%2F%2Fpublications.europa.eu%2Fresource%2Fcellar%2Fe20301fe-928e-11e9-9369-01aa75ed71a1.0001.03%2FDOC_1&fileName=frequencies.xml',
-            'filename': 'update_frequency.xml',
-        },
-        'processor_path': 'mcod.lib.dcat.vocabularies.processors.AuthorityVocabularyProcessor',
-        'label': _('Częstotliwość aktualizacji zbioru wg DCAT-AP'),
-        'base_uri': 'http://publications.europa.eu/resource/authority/frequency/',
-        'dcat_attr': 'DCT:accrualPeriodicity',
-        'choice_field_class': 'django.forms.ChoiceField'
-    }
-}
-
-MODELS_DCAT_VOCABULARIES = {
-    'Dataset': ['dcat_update_frequency']
-}
-
 NOTIFICATIONS_NOTIFICATION_MODEL = 'schedules.Notification'
 
 SHACL_UNSUPPORTED_MIMETYPES = ['application/n-quads', 'application/trix']
 
 STATS_THEME_COOKIE_NAME = 'mcod_stats_theme'
 
-ENABLE_FALCON_CACHING = True
+FALCON_CACHING_ENABLED = env('FALCON_CACHING_ENABLED', default='yes') in ('yes', 1, 'true')
 FALCON_LIMITER_ENABLED = env('FALCON_LIMITER_ENABLED', default='yes') in ('yes', 1, 'true')
 # https://falcon-limiter.readthedocs.io/en/latest/#rate-limit-string-notation
 FALCON_LIMITER_DEFAULT_LIMITS = env('FALCON_LIMITER_DEFAULT_LIMITS', default='5 per minute,2 per second')
 FALCON_LIMITER_SPARQL_LIMITS = env('FALCON_LIMITER_SPARQL_LIMITS', default='3 per minute,1 per second')
 
-DISCOURSE_URL = env('DISCOURSE_URL', default=None)
-DISCOURSE_API_USER = env('DISCOURSE_API_USER', default=None)
-DISCOURSE_API_KEY = env('DISCOURSE_API_KEY', default=None)
-DISCOURSE_SSO_SECRET_KEY = env('DISCOURSE_SSO_SECRET_KEY', default=None)
+DISCOURSE_HOST = env('DISCOURSE_HOST', default='http://forum.mcod.local')
+DISCOURSE_SYNC_HOST = env('DISCOURSE_SYNC_HOST', default='http://forum.mcod.local')
+DISCOURSE_API_USER = env('DISCOURSE_API_USER', default='system')
+DISCOURSE_API_KEY = env('DISCOURSE_API_KEY', default='')
+DISCOURSE_SSO_SECRET = env('DISCOURSE_SSO_SECRET', default='')
+DISCOURSE_SSO_REDIRECT = env('DISCOURSE_SSO_REDIRECT', default=f'{DISCOURSE_HOST}/session/sso_login')
 
 LICENSES_LINKS = {
     "CC0 1.0": "https://creativecommons.org/publicdomain/zero/1.0/",
@@ -1473,3 +1491,9 @@ CKAN_LICENSES_WHITELIST = {
 }
 
 CSV_CATALOG_BATCH_SIZE = env('CSV_CATALOG_BATCH_SIZE', default=20000)
+
+DISCOURSE_FORUM_ENABLED = env('DISCOURSE_FORUM_ENABLED', default=True)
+
+SPARQL_ENDPOINTS = {
+    'kronika': 'http://kronik.gov.pl'  # TODO: update with valid api url
+}

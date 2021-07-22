@@ -17,7 +17,7 @@ from mcod.watchers import views as watcher_views
 from mcod.schedules import views as schedules_views
 from mcod.search import views as search_views
 from mcod.suggestions import views as submission_views
-from mcod.unleash import is_enabled
+
 
 routes = [
     # Tools & utilities
@@ -29,6 +29,7 @@ routes = [
     ('/cluster/health', core_views.ClusterHealthView()),
     ('/cluster/explain', core_views.ClusterAllocationView()),
     ('/cluster/state', core_views.ClusterStateView()),
+    ('/catalog/spec', core_views.CatalogOpenApiSpec()),
     ('/spec', core_views.OpenApiSpec()),
     ('/spec/{version}', core_views.OpenApiSpec()),
     ('/doc/', core_views.SwaggerView()),
@@ -93,11 +94,13 @@ routes = [
 
     # Resources
     ('/resources/', res_views.ResourcesView()),
-    ('/resources/charts/{id:int}', res_views.ChartDeleteView()),
-    ('/resources/{id:int}/charts', res_views.ResourceChartsView()),
-    ('/resources/{id:int},{slug}/charts', res_views.ResourceChartsView()),
-    ('/resources/{id:int}/chart', res_views.ResourceChartView()),
-    ('/resources/{id:int},{slug}/chart', res_views.ResourceChartView()),
+    ('/resources/charts/{chart_id:int}', res_views.ChartView()),  # obsolete endpoint.
+    ('/resources/{id:int}/charts', res_views.ChartsView()),
+    ('/resources/{id:int},{slug}/charts', res_views.ChartsView()),
+    ('/resources/{id:int}/charts/{chart_id:int}', res_views.ChartView()),
+    ('/resources/{id:int},{slug}/charts/{chart_id:int}', res_views.ChartView()),
+    ('/resources/{id:int}/chart', res_views.ChartView()),
+    ('/resources/{id:int},{slug}/chart', res_views.ChartView()),
     ('/resources/{id:int}', res_views.ResourceView()),
     ('/resources/{id:int},{slug}', res_views.ResourceView()),
     ('/resources/{id:int}/data', res_views.ResourceTableView()),
@@ -119,10 +122,15 @@ routes = [
     ('/resources/{id:int}/incr_download_count', res_views.ResourceDownloadCounter()),
     ('/resources/{id:int},{slug}/incr_download_count', res_views.ResourceDownloadCounter()),
     ('/resources/{id:int}/comments', res_views.ResourceCommentsView()),
+
     ('/resources/{id:int}/csv', res_views.ResourceFileDownloadView(file_type='csv')),
+    ('/resources/{id:int}/jsonld', res_views.ResourceFileDownloadView(file_type='jsonld')),
     ('/resources/{id:int}/file', res_views.ResourceFileDownloadView()),
+
     ('/resources/{id:int},{slug}/csv', res_views.ResourceFileDownloadView(file_type='csv')),
+    ('/resources/{id:int},{slug}/jsonld', res_views.ResourceFileDownloadView(file_type='jsonld')),
     ('/resources/{id:int},{slug}/file', res_views.ResourceFileDownloadView()),
+
     # Histories
     ('/histories/', history_views.HistoriesView()),
     ('/histories/{id:int}', history_views.HistoryView()),
@@ -143,70 +151,67 @@ routes = [
     ('/courses', academy_views.CoursesSearchApiView()),
 
     ('/meetings', user_views.MeetingsView()),
+    # Schedules
+    ('/auth/schedule_agents', schedules_views.AgentsView()),
+    ('/auth/schedule_agents/{id:int}', schedules_views.AgentView()),
+    ('/auth/schedule_notifications', schedules_views.NotificationsView()),
+    ('/auth/schedule_notifications/{id:int}', schedules_views.NotificationView()),
+    ('/auth/schedules', schedules_views.SchedulesView()),
+    ('/auth/schedules/current', schedules_views.ScheduleView()),
+    ('/auth/schedules/current.{export_format:export_format}', schedules_views.ExportUrlView()),
+    ('/auth/schedules/current/{token:uuid}.{export_format:export_format}', schedules_views.ScheduleTabularView()),
+    ('/auth/schedules/{schedule_id:int}', schedules_views.ScheduleView()),
+    ('/auth/schedules/{schedule_id:int},{slug}', schedules_views.ScheduleView()),
+    ('/auth/schedules/{schedule_id:int}.{export_format:export_format}', schedules_views.ExportUrlView()),
+    ('/auth/schedules/{schedule_id:int}/{token:uuid}.{export_format:export_format}',
+     schedules_views.ScheduleTabularView()),
+
+    ('/auth/schedules/{schedule_id:int}/user_schedules', schedules_views.UserSchedulesView()),
+    ('/auth/schedules/{schedule_id:int},{slug}/user_schedules', schedules_views.UserSchedulesView()),
+    ('/auth/schedules/{schedule_id:int}/user_schedule_items', schedules_views.UserScheduleItemsView()),
+    ('/auth/schedules/{schedule_id:int},{slug}/user_schedule_items', schedules_views.UserScheduleItemsView()),
+    ('/auth/user_schedules', schedules_views.UserSchedulesView()),
+    ('/auth/user_schedules.{export_format:export_format}', schedules_views.ExportUrlView()),
+    ('/auth/user_schedules/{token:uuid}.{export_format:export_format}',
+     schedules_views.UserSchedulesTabularView()),
+
+    ('/auth/user_schedules/current', schedules_views.UserScheduleView()),
+    ('/auth/user_schedules/{id:int}', schedules_views.UserScheduleView()),
+    ('/auth/user_schedules/{id:int},{slug}', schedules_views.UserScheduleView()),
+
+    ('/auth/user_schedules/{id:int}/items', schedules_views.UserScheduleItemsView()),
+    ('/auth/user_schedules/{id:int}/items.{export_format:export_format}', schedules_views.ExportUrlView()),
+    ('/auth/user_schedules/{id:int}/items/{token:uuid}.{export_format:export_format}',
+     schedules_views.UserScheduleItemsTabularView()),
+    ('/auth/user_schedules/{id:int},{slug}/items', schedules_views.UserScheduleItemsView()),
+    ('/auth/user_schedules/{id:int},{slug}/items.{export_format:export_format}',
+     schedules_views.ExportUrlView()),
+    ('/auth/user_schedules/{id:int},{slug}/items/{token:uuid}.{export_format:export_format}',
+     schedules_views.UserScheduleItemsTabularView()),
+
+    ('/auth/user_schedule_items', schedules_views.UserScheduleItemsView()),
+    ('/auth/user_schedule_items/formats', schedules_views.UserScheduleItemFormatsView()),
+    ('/auth/user_schedule_items/institutions', schedules_views.UserScheduleItemInstitutionsView()),
+    ('/auth/user_schedule_items/institutions/{user_id:int}', schedules_views.UserScheduleItemInstitutionsView()),
+    ('/auth/user_schedule_items.{export_format:export_format}', schedules_views.ExportUrlView()),
+    ('/auth/user_schedule_items/{token:uuid}.{export_format:export_format}',
+     schedules_views.UserScheduleItemsTabularView()),
+    ('/auth/user_schedule_items/{id:int}', schedules_views.UserScheduleItemView()),
+    ('/auth/user_schedule_items/{id:int},{slug}', schedules_views.UserScheduleItemView()),
+    ('/auth/user_schedule_items/{id:int}/comments', schedules_views.CommentsView()),
+    ('/auth/user_schedule_items/comments/{id:int}/edit', schedules_views.CommentsView()),
+    ('/auth/user_schedule_items/{id:int},{slug}/comments', schedules_views.CommentsView()),
+
+    ('/datasets/{id:int}/resources/metadata.csv', dataset_views.CSVMetadataView()),
+    ('/datasets/resources/metadata.csv', dataset_views.CSVMetadataView(), 'catalog'),
+
+    ('/datasets/{id:int}/resources/metadata.xml', dataset_views.XMLMetadataView()),
+    ('/datasets/resources/metadata.xml', dataset_views.XMLMetadataView(), 'catalog'),
+
+    # Guides
+    ('/guides', guides_views.GuidesView()),
+    ('/guides/{id:int}', guides_views.GuideView()),
 ]
 
-if is_enabled('hod.be'):
-    routes.extend([
-        ('/auth/schedule_agents', schedules_views.AgentsView()),
-        ('/auth/schedule_agents/{id:int}', schedules_views.AgentView()),
-        ('/auth/schedule_notifications', schedules_views.NotificationsView()),
-        ('/auth/schedule_notifications/{id:int}', schedules_views.NotificationView()),
-        ('/auth/schedules', schedules_views.SchedulesView()),
-        ('/auth/schedules/current', schedules_views.ScheduleView()),
-        ('/auth/schedules/current.{export_format:export_format}', schedules_views.ExportUrlView()),
-        ('/auth/schedules/current/{token:uuid}.{export_format:export_format}', schedules_views.ScheduleTabularView()),
-        ('/auth/schedules/{schedule_id:int}', schedules_views.ScheduleView()),
-        ('/auth/schedules/{schedule_id:int},{slug}', schedules_views.ScheduleView()),
-        ('/auth/schedules/{schedule_id:int}.{export_format:export_format}', schedules_views.ExportUrlView()),
-        ('/auth/schedules/{schedule_id:int}/{token:uuid}.{export_format:export_format}',
-         schedules_views.ScheduleTabularView()),
-
-        ('/auth/schedules/{schedule_id:int}/user_schedules', schedules_views.UserSchedulesView()),
-        ('/auth/schedules/{schedule_id:int},{slug}/user_schedules', schedules_views.UserSchedulesView()),
-        ('/auth/schedules/{schedule_id:int}/user_schedule_items', schedules_views.UserScheduleItemsView()),
-        ('/auth/schedules/{schedule_id:int},{slug}/user_schedule_items', schedules_views.UserScheduleItemsView()),
-        ('/auth/user_schedules', schedules_views.UserSchedulesView()),
-        ('/auth/user_schedules.{export_format:export_format}', schedules_views.ExportUrlView()),
-        ('/auth/user_schedules/{token:uuid}.{export_format:export_format}',
-         schedules_views.UserSchedulesTabularView()),
-
-        ('/auth/user_schedules/current', schedules_views.UserScheduleView()),
-        ('/auth/user_schedules/{id:int}', schedules_views.UserScheduleView()),
-        ('/auth/user_schedules/{id:int},{slug}', schedules_views.UserScheduleView()),
-
-        ('/auth/user_schedules/{id:int}/items', schedules_views.UserScheduleItemsView()),
-        ('/auth/user_schedules/{id:int}/items.{export_format:export_format}', schedules_views.ExportUrlView()),
-        ('/auth/user_schedules/{id:int}/items/{token:uuid}.{export_format:export_format}',
-         schedules_views.UserScheduleItemsTabularView()),
-        ('/auth/user_schedules/{id:int},{slug}/items', schedules_views.UserScheduleItemsView()),
-        ('/auth/user_schedules/{id:int},{slug}/items.{export_format:export_format}',
-         schedules_views.ExportUrlView()),
-        ('/auth/user_schedules/{id:int},{slug}/items/{token:uuid}.{export_format:export_format}',
-         schedules_views.UserScheduleItemsTabularView()),
-
-        ('/auth/user_schedule_items', schedules_views.UserScheduleItemsView()),
-        ('/auth/user_schedule_items/formats', schedules_views.UserScheduleItemFormatsView()),
-        ('/auth/user_schedule_items/institutions', schedules_views.UserScheduleItemInstitutionsView()),
-        ('/auth/user_schedule_items/institutions/{user_id:int}', schedules_views.UserScheduleItemInstitutionsView()),
-        ('/auth/user_schedule_items.{export_format:export_format}', schedules_views.ExportUrlView()),
-        ('/auth/user_schedule_items/{token:uuid}.{export_format:export_format}',
-         schedules_views.UserScheduleItemsTabularView()),
-        ('/auth/user_schedule_items/{id:int}', schedules_views.UserScheduleItemView()),
-        ('/auth/user_schedule_items/{id:int},{slug}', schedules_views.UserScheduleItemView()),
-        ('/auth/user_schedule_items/{id:int}/comments', schedules_views.CommentsView()),
-        ('/auth/user_schedule_items/comments/{id:int}/edit', schedules_views.CommentsView()),
-        ('/auth/user_schedule_items/{id:int},{slug}/comments', schedules_views.CommentsView()),
-    ])
-if is_enabled('S15_guides.be'):
-    routes.extend([
-        ('/guides', guides_views.GuidesView()),
-        ('/guides/{id:int}', guides_views.GuideView()),
-    ])
-
-if is_enabled('S23_csv_metadata.be'):
-    routes.extend([
-        ('/datasets/{id:int}/resources/metadata.csv', dataset_views.DatasetResourcesMetadataCsvView()),
-        ('/datasets/resources/metadata.csv', dataset_views.DatasetResourcesMetadataCsvView(), 'catalog'),
-    ])
 
 routes.extend(list(map(lambda x: ("/{api_version}" + x[0], *x[1:]), routes)))

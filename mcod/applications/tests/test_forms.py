@@ -3,7 +3,6 @@ from namedlist import namedlist
 from mcod.applications.forms import ApplicationForm
 from mcod.applications.models import Application
 from mcod.lib.helpers import change_namedlist
-from mcod.unleash import is_enabled
 
 fields = [
     "title",
@@ -159,11 +158,8 @@ class TestApplicationFormValidity:
             'url': "http://test.pl",
             'notes': 'tresc',
             'status': 'published',
+            'tags_pl': [tag_pl.id],
         }
-        if is_enabled('S18_new_tags.be'):
-            data['tags_pl'] = [tag_pl.id]
-        else:
-            data['tags'] = [tag.id]
 
         form = ApplicationForm(data=data)
         assert form.is_valid() is True
@@ -171,8 +167,4 @@ class TestApplicationFormValidity:
         assert not form.errors
         ap = Application.objects.last()
         assert ap.slug == "test-add-tag"
-
-        if is_enabled('S18_new_tags.be'):
-            assert tag_pl in ap.tags.all()
-        else:
-            assert tag in ap.tags.all()
+        assert tag_pl in ap.tags.all()

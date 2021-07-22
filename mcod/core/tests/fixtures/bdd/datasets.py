@@ -3,8 +3,10 @@ import time
 import csv
 import io
 import os
+import xml.etree.ElementTree as ET
 
 import pytest
+import xmlschema
 from dateutil import parser
 from django.apps import apps
 from django.conf import settings
@@ -12,7 +14,7 @@ from pytest_bdd import given, when, then
 from pytest_bdd import parsers
 
 from mcod.categories.factories import CategoryFactory
-from mcod.core.tests.fixtures.bdd.common import prepare_file, copyfile
+from mcod.core.tests.fixtures.bdd.common import prepare_file, copyfile, create_object
 from mcod.datasets.factories import DatasetFactory
 from mcod.harvester.factories import DataSourceFactory
 from mcod.resources.factories import ChartFactory, ResourceFactory
@@ -65,18 +67,17 @@ def another_dataset_with_id(dataset_id):
 #     return _dataset
 
 
-@given(parsers.parse('removed dataset with id {dataset_id:d}'))
-def removed_dataset_with_id(dataset_id):
-    _dataset = DatasetFactory.create(id=dataset_id, title='Removed dataset {}'.format(dataset_id),
-                                     is_removed=True)
-    return _dataset
-
-
 @given(parsers.parse('dataset with resources'))
 def dataset_with_resources():
     _dataset = DatasetFactory.create()
     ResourceFactory.create_batch(2, dataset=_dataset)
     return _dataset
+
+
+@given(parsers.parse('dataset with id {dataset_id:d} and institution {organization_id:d}'))
+def dataset_with_organization(dataset_id, organization_id):
+    organization = create_object('institution', organization_id)
+    return create_object('dataset', dataset_id, organization=organization)
 
 
 @given(parsers.parse('dataset with chart as visualization type'))
@@ -110,6 +111,15 @@ def imported_resource(resource_id, source_type, name, portal_url):
     _source = DataSourceFactory.create(source_type=source_type, name=name, portal_url=portal_url)
     _dataset = DatasetFactory.create(source=_source)
     _resource = ResourceFactory.create(id=resource_id, dataset=_dataset)
+    return _resource
+
+
+@given(parsers.parse('resource with id {resource_id} imported from {source_type} named {name} with url {portal_url}'
+                     ' and type {res_type}'))
+def imported_resource_of_type(resource_id, source_type, name, portal_url, res_type):
+    _source = DataSourceFactory.create(source_type=source_type, name=name, portal_url=portal_url)
+    _dataset = DatasetFactory.create(source=_source)
+    _resource = ResourceFactory.create(id=resource_id, dataset=_dataset, type=res_type)
     return _resource
 
 
@@ -219,11 +229,6 @@ def api_response_data_is_none(context):
     assert data is None
 
 
-@then(parsers.parse("api's response json is empty"))
-def api_response_json_is_empty(context):
-    assert context.response.json == {}
-
-
 @given(parsers.parse('three datasets with created dates in {dates}'))
 def three_datasets_with_different_created_at(dates):
     dates_ = dates.split("|")
@@ -267,6 +272,21 @@ def buzzfeed_dataset(journalism_category, cc_4_license, buzzfeed_organization, b
     )
     ds.tags.add(fakenews_tag, top50_tag)
     return ds
+
+
+@pytest.fixture
+def onlyheaders_csv_file():
+    return prepare_file('onlyheaders.csv')
+
+
+@pytest.fixture
+def csv2jsonld_csv_file():
+    return prepare_file('csv2jsonld.csv')
+
+
+@pytest.fixture
+def csv2jsonld_jsonld_file():
+    return prepare_file('csv2jsonld.jsonld')
 
 
 @pytest.fixture
@@ -314,9 +334,6 @@ def document_docx_pack():
 #     return prepare_file('Mexico_and_US_Border.zip')
 #
 #
-# @pytest.fixture
-# def shapefile_world():
-#     return [prepare_file('TM_WORLD_BORDERS-0.3.%s' % ext) for ext in ('shp', 'shx', 'prj', 'dbf')]
 
 
 @pytest.fixture
@@ -358,10 +375,39 @@ def api_response_is_csv_file_with_records(context, record_count):
     assert record_count == csv_record_count
 
 
+@then(parsers.parse('api response is xml file with {datasets_count} datasets and {resources_count} resources'), converters={
+    'datasets_count': int,
+    'resources_count': int,
+})
+def api_response_is_xml_file_with_datasets_and_resources(context, datasets_count, resources_count):
+    root = ET.fromstring(context.response.content.decode('utf-8'))
+    assert root.tag == 'catalog'
+    assert len(root.findall('dataset')) == datasets_count
+    assert len(root.findall('dataset/resources/resource')) == resources_count
+
+
+@then("api's response body conforms to <lang_code> xsd schema")
+def api_response_body_conforms_to_xsd_schema(context, lang_code):
+    content = context.response.content.decode('utf-8')
+    xsd_path = f'{settings.SCHEMAS_DIR}/{lang_code}/katalog.xsd'
+    xml_schema = xmlschema.XMLSchema(xsd_path)
+    xml_schema.validate(content)
+
+
 @given(parsers.parse('created catalog csv file'))
 def create_catalog_csv_file():
     src = str(os.path.join(settings.TEST_SAMPLES_PATH, 'datasets', 'pl', 'katalog.csv'))
-    dest = str(os.path.join(settings.DATASET_CSV_CATALOG_MEDIA_ROOT, 'pl', 'katalog.csv'))
-    if not os.path.exists(dest):
+    dest = str(os.path.join(settings.METADATA_MEDIA_ROOT, 'pl', 'katalog.csv'))
+    if not os.path.exists(os.path.dirname(dest)):
         os.makedirs(os.path.dirname(dest))
     copyfile(src, dest)
+
+
+@given(parsers.parse('created catalog xml file'))
+def create_catalog_xml_file():
+    for lang_code in ('pl', 'en'):
+        src = str(os.path.join(settings.TEST_SAMPLES_PATH, 'datasets', lang_code, 'katalog.xml'))
+        dest = str(os.path.join(settings.METADATA_MEDIA_ROOT, lang_code, 'katalog.xml'))
+        if not os.path.exists(os.path.dirname(dest)):
+            os.makedirs(os.path.dirname(dest))
+        copyfile(src, dest)

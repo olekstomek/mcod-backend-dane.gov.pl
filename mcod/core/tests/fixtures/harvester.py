@@ -15,15 +15,20 @@ import mcod.core.api.rdf.namespaces as ns
 
 
 @pytest.fixture
-def harvester_decoded_xml_1_2_data():
-    full_path = os.path.join(settings.TEST_SAMPLES_PATH, 'harvester_example1.2.xml')
+def harvester_decoded_xml_1_2_data(harvester_decoded_xml_1_2_import_data):
+    return list(harvester_decoded_xml_1_2_import_data['dataset'])
+
+
+@pytest.fixture
+def harvester_decoded_xml_1_2_import_data():
+    full_path = os.path.join(settings.TEST_SAMPLES_PATH, 'harvester_import_example1.2.xml')
     with open(full_path, 'r') as xml_file:
         xml_schema_version = '1.2'
         xml_schema_path = get_xml_schema_path(xml_schema_version)
         xml_schema = xmlschema.XMLSchema(xml_schema_path)
         data = xml_schema.to_dict(xml_file)
         data['xsd_schema_version'] = xml_schema_version
-    return list(data['dataset'])
+    return data
 
 
 @pytest.fixture
@@ -40,7 +45,7 @@ def harvester_xml_expected_data():
         ('categories', ['TRAN', 'ECON']),
         ('resources', [OrderedDict([
             ('ext_ident', 'zasob_extId_zasob_1'), ('status', 'published'),
-            ('link', 'https://b5c408e20be5.ngrok.io/XLSX.xlsx'), ('title_pl', 'ZASOB csv REMOTE'),
+            ('link', 'http://mock-resource.com.pl/simple.csv'), ('title_pl', 'ZASOB csv REMOTE'),
             ('title_en', 'ENGLISH TITLE - RESOURCE 1'),
             ('description_pl', 'Opis zasobu opublikowane z XMLA - aktualizacja'),
             ('description_en', 'English description of first resource'), ('availability', 'remote'),
@@ -48,7 +53,7 @@ def harvester_xml_expected_data():
             ('modified', datetime.datetime(2020, 12, 8, 0, 0, tzinfo=pytz.utc))
         ]), OrderedDict([
             ('ext_ident', 'zasob_extId_zasob_2'), ('status', 'published'),
-            ('link', 'https://a9dd10d13dd2.ngrok.io/XLSX.xlsx'), ('title_pl', 'ZASOB CSV LOCAL'),
+            ('link', 'http://mock-resource.com.pl/simple.csv'), ('title_pl', 'ZASOB CSV LOCAL'),
             ('title_en', 'ENGLISH TITLE - RESOURCE 2'), ('description_pl', 'Opis zasobu opublikowane z XMLA'),
             ('description_en', 'English description of second resource'), ('availability', 'local'),
             ('data_date', datetime.date(2020, 10, 10)), ('modified',
@@ -60,7 +65,7 @@ def harvester_xml_expected_data():
 
 @pytest.fixture
 def harvester_ckan_data():
-    full_path = os.path.join(settings.TEST_SAMPLES_PATH, 'harvester_ckan_example.json')
+    full_path = os.path.join(settings.TEST_SAMPLES_PATH, 'harvester_ckan_import_example.json')
     with open(full_path, 'r') as json_file:
         data = json.load(json_file)
     return data['result']
@@ -87,8 +92,7 @@ def harvester_ckan_expected_data():
                     ('modified', datetime.datetime(2021, 4, 15, 8, 30, 11, 533597).astimezone(local_timezone)),
                     ('created', datetime.datetime(2020, 5, 27, 15, 44, 38, 387593).astimezone(local_timezone)),
                     ('ext_ident', '6db2e083-72b8-4f92-a6ab-678fc8461865'),
-                    ('link', 'http://otwartedane.gdynia.pl/pl/dataset/512cb875-6c54-482f-b11e-69d8c7989fc8/'
-                             'resource/6db2e083-72b8-4f92-a6ab-678fc8461865/download/odpady.csv'),
+                    ('link', 'http://mock-resource.com.pl/simple.csv'),
                     ('description', '##Sektory:')])]),
             ('tags', []), ('title', 'Ilości odebranych odpadów z podziałem na sektory')])
 

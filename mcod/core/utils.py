@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+import logging
 import collections
 import csv
 import datetime
@@ -8,15 +8,21 @@ import re
 from collections import OrderedDict
 from http.cookies import SimpleCookie
 from typing import Union
+from xml.dom.minidom import parseString
+
+from dicttoxml import dicttoxml
 from pytz import utc
 
 import json_api_doc
 import jsonschema
-from django.utils.translation import activate
 from falcon import Response
 from marshmallow import class_registry
 from marshmallow.schema import BaseSchema
 from mcod import settings
+
+
+logger = logging.getLogger('mcod')
+
 
 _iso8601_datetime_re = re.compile(
     r'(?P<year>\d{4})-(?P<month>\d{1,2})-(?P<day>\d{1,2})'
@@ -40,6 +46,13 @@ def flatten_list(list_, split_delimeter=None):
             yield from flatten_list(el)
         else:
             yield el
+
+
+def get_limiter_key(req, resp, resource, params):
+    """Custom function used to generate limiter key."""
+    key = f'{req.path}_{req.access_route[-2] if len(req.access_route) > 1 else req.remote_addr}'
+    logger.debug(f'Falcon-Limiter key: {key}')
+    return key
 
 
 def jsonapi_validator(data):
@@ -184,14 +197,6 @@ def falcon_set_cookie(
     response.append_header('Set-Cookie', cookie[name].output(header=''))
 
 
-def lazy_proxy_to_es_translated_field(lazy_proxy):
-    translations = {}
-    for lang in settings.MODELTRANS_AVAILABLE_LANGUAGES:
-        activate(lang)
-        translations[lang] = str(lazy_proxy)
-    return translations
-
-
 class XmlTagIterator:
     def __init__(self, iterator, close_tags=False):
         self.iterator = iterator
@@ -261,3 +266,24 @@ def save_as_csv(file_object, headers, data, delimiter=';'):
     csv_writer.writeheader()
     for row in data:
         csv_writer.writerow(row)
+
+
+def save_as_xml(file, data):
+    def custom_item_func(parent):
+        return {
+            'catalog': 'dataset',
+            'tags': 'tag',
+            'sources': 'source',
+            'formats': 'format',
+            'keywords': 'keyword',
+            'visualization_types': 'visualization_type',
+            'openness_scores': 'openness_score',
+            'resources': 'resource',
+            'categories': 'category',
+            'types': 'type',
+            'special_signs': 'special_sign',
+        }.get(parent, 'item')
+
+    xml = dicttoxml(data, attr_type=False, item_func=custom_item_func, custom_root='catalog')
+    dom = parseString(xml)
+    file.write(dom.toprettyxml())

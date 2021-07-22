@@ -13,40 +13,23 @@ from django.contrib.auth.password_validation import validate_password as dj_vali
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.core.mail import get_connection
 from django.http import HttpResponseRedirect
+from django.conf import settings
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
-from mcod import settings
 from mcod.academy.models import Course
 from mcod.core.api.handlers import CreateOneHdlr, RetrieveOneHdlr, SearchHdlr, UpdateOneHdlr
 from mcod.core.api.hooks import login_required
 from mcod.core.api.views import JsonAPIView
 from mcod.core.versioning import versioned
 from mcod.laboratory.models import LabEvent
-from mcod.lib.handlers import (
-    BaseHandler,
-    RetrieveOneHandler,
-    CreateHandler,
-    UpdateHandler
-)
+from mcod.lib.handlers import BaseHandler
 from mcod.lib.jwt import get_auth_token
 from mcod.lib.triggers import session_store
 from mcod.schedules.models import Schedule
 from mcod.suggestions.models import AcceptedDatasetSubmission
 from mcod.tools.api.dashboard import DashboardMetaSerializer, DashboardSerializer
-from mcod.users.depricated.schemas import (
-    Registration,
-    AccountUpdate,
-    PasswordChange,
-    PasswordReset,
-    PasswordResetConfirm,
-    ResendActivationEmail,
-)
-from mcod.users.depricated.serializers import (
-    RegistrationSerializer,
-    UserSerializer
-)
 from mcod.users.documents import MeetingDoc
 from mcod.users.forms import AdminLoginForm
 from mcod.users.models import Meeting, Token
@@ -83,10 +66,6 @@ class LoginView(JsonAPIView):
     def on_post(self, request, response, *args, **kwargs):
         self.handle_post(request, response, self.POST, *args, **kwargs)
 
-    @on_post.version('1.0')
-    def on_post(self, request, response, *args, **kwargs):
-        self.handle(request, response, self.POST, *args, **kwargs)
-
     class POST(CreateOneHdlr):
         database_model = get_user_model()
         deserializer_schema = LoginApiRequest
@@ -96,7 +75,7 @@ class LoginView(JsonAPIView):
             cleaned = cleaned['data']['attributes']
             cleaned['email'] = cleaned['email'].lower()
             try:
-                user = User.objects.get(email=cleaned['email'], is_removed=False)
+                user = User.objects.get(email=cleaned['email'], is_removed=False, is_permanently_removed=False)
             except User.DoesNotExist:
                 raise falcon.HTTPUnauthorized(
                     title='401 Unauthorized',
@@ -150,10 +129,6 @@ class RegistrationView(JsonAPIView):
     def on_post(self, request, response, *args, **kwargs):
         self.handle_post(request, response, self.POST, *args, **kwargs)
 
-    @on_post.version('1.0')
-    def on_post(self, request, response, *args, **kwargs):
-        self.handle(request, response, self.POST_1_0, *args, **kwargs)
-
     class POST(CreateOneHdlr):
         database_model = get_user_model()
         deserializer_schema = RegistrationApiRequest
@@ -179,35 +154,6 @@ class RegistrationView(JsonAPIView):
                 )
             return user
 
-    class POST_1_0(CreateHandler):
-        database_model = get_user_model()
-        deserializer_schema = Registration()
-        serializer_schema = RegistrationSerializer(many=False, )
-
-        def _clean(self, request, *args, **kwargs):
-            cleaned = super()._clean(request, *args, **kwargs)
-            if User.objects.filter(email__iexact=cleaned['email']):
-                raise falcon.HTTPForbidden(
-                    title='403 Forbidden',
-                    description=_('This e-mail is already used'),
-                    code='email_already_used'
-                )
-            cleaned['email'] = cleaned['email'].lower()
-            return cleaned
-
-        def _data(self, request, cleaned, *args, **kwargs):
-            usr = User.objects.create_user(**cleaned)
-            # TODO: this is specific for mcod-backend, we should implement more generic solution
-            try:
-                connection = get_connection(settings.EMAIL_BACKEND)
-                usr.send_registration_email(connection)
-            except SMTPException:
-                raise falcon.HTTPInternalServerError(
-                    description=_('Email cannot be sent'),
-                    code='email_send_error'
-                )
-            return usr
-
 
 class AccountView(JsonAPIView):
     @falcon.before(login_required)
@@ -216,19 +162,9 @@ class AccountView(JsonAPIView):
         self.handle(request, response, self.GET, *args, **kwargs)
 
     @falcon.before(login_required)
-    @on_get.version('1.0')
-    def on_get(self, request, response, *args, **kwargs):
-        self.handle(request, response, self.GET, *args, **kwargs)
-
-    @falcon.before(login_required)
     @versioned
     def on_put(self, request, response, *args, **kwargs):
         self.handle(request, response, self.PUT, *args, **kwargs)
-
-    @falcon.before(login_required)
-    @on_put.version('1.0')
-    def on_put(self, request, response, *args, **kwargs):
-        self.handle(request, response, self.PUT_1_0, *args, **kwargs)
 
     class GET(RetrieveOneHdlr):
         serializer_schema = partial(UserApiResponse, many=False)
@@ -273,19 +209,6 @@ class AccountView(JsonAPIView):
             user.save(update_fields=list(data.keys()))
             user.refresh_from_db()
             return user
-
-    class PUT_1_0(UpdateHandler):
-        database_model = get_user_model()
-        deserializer_schema = AccountUpdate()
-        serializer_schema = UserSerializer(many=False, )
-
-        def _data(self, request, cleaned, *args, **kwargs):
-            usr = request.user
-            for attr, val in cleaned.items():
-                setattr(usr, attr, val)
-            usr.save(update_fields=list(cleaned.keys()))
-            usr.refresh_from_db()
-            return usr
 
 
 class DashboardView(JsonAPIView):
@@ -386,7 +309,7 @@ class DashboardView(JsonAPIView):
 
         @staticmethod
         def _get_suggestions_aggregations():
-            objs = AcceptedDatasetSubmission.objects.filter(is_removed=False, status='published')
+            objs = AcceptedDatasetSubmission.objects.filter(status__in=AcceptedDatasetSubmission.PUBLISHED_STATUSES)
             return {
                 'active': objs.filter(is_active=True).count(),
                 'inactive': objs.filter(is_active=False).count(),
@@ -413,11 +336,6 @@ class LogoutView(JsonAPIView):
     def on_post(self, request, response, *args, **kwargs):
         self.handle(request, response, self.POST, *args, **kwargs)
 
-    @falcon.before(login_required)
-    @on_post.version('1.0')
-    def on_post(self, request, response, *args, **kwargs):
-        self.handle(request, response, self.POST_1_0, *args, **kwargs)
-
     class POST(CreateOneHdlr):
         database_model = get_user_model()
         serializer_schema = LogoutApiResponse
@@ -427,28 +345,12 @@ class LogoutView(JsonAPIView):
             logout(self.request)
             return namedtuple('User', ['id', 'is_logged_out'])(_user_id, True)
 
-    class POST_1_0(CreateHandler):
-        database_model = get_user_model()
-
-        def _clean(self, request, *args, **kwargs):
-            return request.user
-
-        def _data(self, request, cleaned, *args, **kwargs):
-            logout(request)
-
-        def _serialize(self, data, meta, links=None, *args, **kwargs):
-            return {}
-
 
 class ResetPasswordView(JsonAPIView):
     @versioned
     def on_post(self, request, response, *args, **kwargs):
         self.handle_post(request, response, self.POST, *args, **kwargs)
         response.status = falcon.HTTP_200
-
-    @on_post.version('1.0')
-    def on_post(self, request, response, *args, **kwargs):
-        self.handle(request, response, self.POST_1_0, *args, **kwargs)
 
     class POST(CreateOneHdlr):
         deserializer_schema = partial(ResetPasswordApiRequest, many=False)
@@ -475,42 +377,11 @@ class ResetPasswordView(JsonAPIView):
             user.is_password_reset_email_sent = bool(msgs_count)
             return user
 
-    class POST_1_0(CreateHandler):
-        database_model = get_user_model()
-        deserializer_schema = PasswordReset()
-
-        def _data(self, request, cleaned, *args, **kwargs):
-            try:
-                user = User.objects.get(email=cleaned['email'])
-            except User.DoesNotExist:
-                raise falcon.HTTPNotFound(
-                    description=_('Account not found'),
-                    code='account_not_found'
-                )
-            # TODO: this is specific for mcod-backend, we should implement more generic solution
-            try:
-                connection = get_connection(settings.EMAIL_BACKEND)
-                msgs_count = user.send_password_reset_email(connection)
-            except SMTPException:
-                raise falcon.HTTPInternalServerError(
-                    description=_('Email cannot be sent'),
-                    code='email_send_error'
-                )
-            user.is_password_reset_email_sent = bool(msgs_count)
-            return user
-
-        def _serialize(self, data, meta, links=None, *args, **kwargs):
-            return {'result': 'ok'}
-
 
 class ConfirmResetPasswordView(JsonAPIView):
     @versioned
     def on_post(self, request, response, *args, **kwargs):
         self.handle_post(request, response, self.POST, *args, **kwargs)
-
-    @on_post.version('1.0')
-    def on_post(self, request, response, *args, **kwargs):
-        self.handle(request, response, self.POST_1_0, *args, **kwargs)
 
     class POST(CreateOneHdlr):
         database_model = get_user_model()
@@ -535,41 +406,12 @@ class ConfirmResetPasswordView(JsonAPIView):
             token.user.is_confirmed = True
             return token.user
 
-    class POST_1_0(CreateHandler):
-        database_model = get_user_model()
-        deserializer_schema = PasswordResetConfirm()
-
-        def _data(self, request, cleaned, token, *args, **kwargs):
-            try:
-                token = Token.objects.get(token=token, token_type=1)
-            except Token.DoesNotExist:
-                raise falcon.HTTPNotFound()
-
-            if not token.is_valid:
-                raise falcon.HTTPBadRequest(
-                    description=_('Expired token'),
-                    code='expired_token'
-                )
-
-            token.user.set_password(cleaned['new_password1'])
-            token.user.save()
-            token.invalidate()
-            return token.user
-
-        def _serialize(self, data, meta, links=None, *args, **kwargs):
-            return {}
-
 
 class ChangePasswordView(JsonAPIView):
     @falcon.before(login_required)
     @versioned
     def on_post(self, request, response, *args, **kwargs):
         self.handle(request, response, self.POST, *args, **kwargs)
-
-    @falcon.before(login_required)
-    @on_post.version('1.0')
-    def on_post(self, request, response, *args, **kwargs):
-        self.handle(request, response, self.POST_1_0, *args, **kwargs)
 
     class POST(CreateOneHdlr):
         database_model = get_user_model()
@@ -599,75 +441,11 @@ class ChangePasswordView(JsonAPIView):
             user.is_password_changed = True
             return user
 
-    class POST_1_0(CreateHandler):
-        database_model = get_user_model()
-        deserializer_schema = PasswordChange()
-        serializer_schema = UserSerializer(many=False, )
-
-        def _clean(self, request, *args, **kwargs):
-            cleaned = super()._clean(request, *args, **kwargs)
-            usr = getattr(request, 'user', None)
-            is_valid = usr.check_password(cleaned['old_password'])
-            if not is_valid:
-                raise falcon.HTTPUnprocessableEntity(
-                    description=_('Wrong password'),
-                )
-            try:
-                dj_validate_password(cleaned['new_password1'])
-            except DjangoValidationError as e:
-                raise falcon.HTTPUnprocessableEntity(
-                    description=e.error_list[0].message,
-                )
-            if cleaned['new_password1'] != cleaned['new_password2']:
-                raise falcon.HTTPUnprocessableEntity(
-                    description=_('Passwords not match'),
-                )
-
-            return cleaned
-
-        def _data(self, request, cleaned, *args, **kwargs):
-            request.user.set_password(cleaned['new_password1'])
-            request.user.save()
-
-        def _serialize(self, data, meta, links=None, *args, **kwargs):
-            return {}
-
 
 class VerifyEmailView(JsonAPIView):
     @versioned
     def on_get(self, request, response, *args, **kwargs):
         self.handle(request, response, self.GET, *args, **kwargs)
-
-    @on_get.version('1.0')
-    def on_get(self, request, response, *args, **kwargs):
-        self.handle(request, response, self.GET_1_0, *args, **kwargs)
-
-    class GET_1_0(RetrieveOneHandler):
-        database_model = get_user_model()
-
-        def _clean(self, request, token, *args, **kwargs):
-            try:
-                token = Token.objects.get(token=token, token_type=0)
-            except Token.DoesNotExist:
-                raise falcon.HTTPNotFound()
-
-            if not token.is_valid:
-                raise falcon.HTTPBadRequest(
-                    description=_('Expired token'),
-                    code='expired_token'
-                )
-
-            if not token.user.email_confirmed:
-                token.user.state = 'active' if token.user.state == 'pending' else token.user.state
-                token.user.email_confirmed = timezone.now()
-                token.user.save()
-                token.invalidate()
-
-        def _data(self, request, cleaned, *args, **kwargs):
-            return {}
-
-        def _serialize(self, data, meta, links=None, *args, **kwargs):
-            return {}
 
     class GET(RetrieveOneHdlr):
         database_model = get_user_model()
@@ -702,14 +480,10 @@ class ResendActivationEmailView(JsonAPIView):
     def on_post(self, request, response, *args, **kwargs):
         self.handle(request, response, self.POST, *args, **kwargs)
 
-    @on_post.version('1.0')
-    def on_post(self, request, response, *args, **kwargs):
-        self.handle(request, response, self.POST_1_0, *args, **kwargs)
-
     class POST(CreateOneHdlr):
         database_model = get_user_model()
-        deserializer_schema = partial(ResendActivationEmailApiRequest, many=False)
-        serializer_schema = partial(ResendActivationEmailApiResponse, many=False)
+        deserializer_schema = ResendActivationEmailApiRequest
+        serializer_schema = ResendActivationEmailApiResponse
 
         def _get_data(self, cleaned, *args, **kwargs):
             data = cleaned['data']['attributes']
@@ -730,34 +504,6 @@ class ResendActivationEmailView(JsonAPIView):
                     description=_('Email cannot be sent'),
                     code='email_send_error'
                 )
-
-    class POST_1_0(CreateHandler):
-        database_model = get_user_model()
-        deserializer_schema = ResendActivationEmail()
-
-        def _clean(self, request, *args, **kwargs):
-            cleaned = super()._clean(request, *args, **kwargs)
-            try:
-                usr = User.objects.get(email=cleaned['email'])
-            except User.DoesNotExist:
-                raise falcon.HTTPNotFound(
-                    description=_('Account not found'),
-                    code='account_not_found'
-                )
-            return usr
-
-        def _data(self, request, usr, *args, **kwargs):
-            try:
-                connection = get_connection(settings.EMAIL_BACKEND)
-                usr.resend_activation_email(connection)
-            except SMTPException:
-                raise falcon.HTTPInternalServerError(
-                    description=_('Email cannot be sent'),
-                    code='email_send_error'
-                )
-
-        def _serialize(self, data, meta, links=None, *args, **kwargs):
-            return {}
 
 
 class AdminAutocomplete(autocomplete.Select2QuerySetView):

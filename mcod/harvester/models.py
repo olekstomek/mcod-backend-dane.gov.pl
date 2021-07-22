@@ -1,6 +1,7 @@
 import logging
 import os
 import pprint
+from collections import defaultdict
 from urllib.parse import urlencode
 
 from django.apps import apps
@@ -15,20 +16,25 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 from model_utils import FieldTracker
 from model_utils.fields import AutoCreatedField
-from model_utils.models import SoftDeletableModel, TimeStampedModel
+from model_utils.models import TimeStampedModel
 from dateutil.relativedelta import relativedelta
 from marshmallow import ValidationError as SchemaValidationError
 
 from mcod import settings
 from mcod.categories.models import Category
-from mcod.core.db.managers import DeletedManager
+from mcod.core.db.managers import TrashManager
 from mcod.core.db.models import TrashModelBase
+from mcod.core.models import SoftDeletableModel
 from mcod.harvester.managers import DataSourceManager
-from mcod.harvester.tasks import send_import_report_mail_task
-from mcod.harvester.utils import get_remote_xml_hash, make_request, retrieve_to_file, validate_xml_url
+from mcod.harvester.utils import (
+    CKANImportDatasetInTrashError,
+    CKANImportError,
+    CKANImportInvalidLicenseError,
+    CKANImportOrganizationInTrashError,
+    make_request,
+    retrieve_to_file
+)
 from mcod.organizations.models import Organization
-from mcod.unleash import is_enabled
-
 
 logger = logging.getLogger('mcod')
 
@@ -77,17 +83,11 @@ IMPORT_STATUS_CHOICES = (
 class DataSource(SoftDeletableModel, TimeStampedModel):
     """Model of data source."""
     INSTITUTION_TYPE_CHOICES = Organization.INSTITUTION_TYPE_CHOICES
-    if is_enabled('S23_harvester_dcat_endpoint.be'):
-        SOURCE_TYPE_CHOICES = (
-            ('ckan', 'CKAN'),
-            ('xml', 'XML'),
-            ('dcat', 'DCAT-AP')
-        )
-    else:
-        SOURCE_TYPE_CHOICES = (
-            ('ckan', 'CKAN'),
-            ('xml', 'XML'),
-        )
+    SOURCE_TYPE_CHOICES = (
+        ('ckan', 'CKAN'),
+        ('xml', 'XML'),
+        ('dcat', 'DCAT-AP')
+    )
     STATUS_CHOICES = (
         ('active', _('active')),
         ('inactive', _('inactive')),
@@ -106,7 +106,7 @@ class DataSource(SoftDeletableModel, TimeStampedModel):
     emails = models.TextField(verbose_name=_('e-mail'), validators=[validate_emails_list])
     last_activation_date = models.DateTimeField(verbose_name=_('last activation date'), null=True, blank=True)
     category = models.ForeignKey(
-        'categories.Category', on_delete=models.CASCADE, related_name='category_datasources',
+        'categories.Category', on_delete=models.SET_NULL, related_name='category_datasources',
         verbose_name=_('category'), blank=True, null=True, limit_choices_to=Q(code=''))
 
     categories = models.ManyToManyField('categories.Category',
@@ -143,11 +143,11 @@ class DataSource(SoftDeletableModel, TimeStampedModel):
     sparql_query = models.TextField(blank=True, null=True, verbose_name=_('Sparql query'))
 
     tracker = FieldTracker()
-    raw = models.Manager()
     objects = DataSourceManager()
-    deleted = DeletedManager()
+    trash = TrashManager()
 
     class Meta:
+        default_manager_name = 'raw'
         verbose_name = _('data source')
         verbose_name_plural = _('data sources')
 
@@ -251,9 +251,6 @@ class DataSource(SoftDeletableModel, TimeStampedModel):
     def _validate_ckan_type(self):
         errors = {}
         required_msg = _('This field is required.')
-        if not is_enabled('S19_DCAT_categories.be'):
-            if not self.category:
-                errors.update({'category': required_msg})
         if not self.portal_url:
             errors.update({'portal_url': required_msg})
         if not self.api_url:
@@ -288,21 +285,6 @@ class DataSource(SoftDeletableModel, TimeStampedModel):
         if not self.organization:
             raise ValidationError({'organization': required_msg})
 
-    def validate_xml_url(self):
-        xml_hash_url, xml_hash = get_remote_xml_hash(self.xml_url)
-        if not xml_hash:
-            msg = _('Remote hash not found in %(url)s location!') % {'url': xml_hash_url}
-            raise ValidationError(msg)
-        if xml_hash == self.source_hash:
-            raise ValidationError(
-                f'Download of xml stopped! Remote hash ({xml_hash}) is the same as local ({self.source_hash}).')
-        try:
-            filename, source_hash = validate_xml_url(self.xml_url)
-        except Exception as exc:
-            raise ValidationError(exc)
-        if source_hash:
-            self.source_hash = source_hash
-
     def clean(self):
         if self.is_ckan:
             self._validate_ckan_type()
@@ -325,7 +307,7 @@ class DataSource(SoftDeletableModel, TimeStampedModel):
         objs = self.dataset_model.objects.filter(source=self).exclude(ext_ident__in=ext_idents)
         count = objs.count()
         for obj in objs:
-            obj.delete()
+            obj.delete(permanent=True)
         return count
 
     def delete_stale_resources(self, data):
@@ -337,7 +319,7 @@ class DataSource(SoftDeletableModel, TimeStampedModel):
                 dataset__source=self, dataset__ext_ident=item[0]).exclude(ext_ident__in=ext_idents)
             count += objs.count()
             for obj in objs:
-                obj.delete()
+                obj.delete(permanent=True)
         return count
 
     def update_from_items(self, data):
@@ -356,10 +338,7 @@ class DataSource(SoftDeletableModel, TimeStampedModel):
             license_chosen = self._get_license_chosen(item)
 
             organization = self._get_organization(item)
-            if is_enabled('S18_new_tags.be'):
-                tags = self._prepare_tags(item)
-            else:
-                tags = self._get_tags(item)
+            tags = self._prepare_tags(item)
             resources_data = item.pop('resources')
             item.update({
                 'category': category,
@@ -538,25 +517,6 @@ class DataSource(SoftDeletableModel, TimeStampedModel):
         resources_ext_idents = [x['ext_ident'] for x in data['resources']]
         return dataset_ext_ident, resources_ext_idents
 
-    def _get_tag_query_params(self, data):
-        lang = data.pop('lang', None)
-        query_params = {'name': data.get('name')}
-        if lang in ['en', 'pl']:
-            name = data.pop('name', '')
-            data[f'name_{lang}'] = name
-            query_params = {f'name_{lang}': name}
-        return query_params
-
-    def _get_tags(self, data):
-        data = data.pop('tags', [])
-        tag_ids = []
-        for item in data:
-            defaults = {'created_by': self.import_user}
-            query_params = self._get_tag_query_params(item)
-            obj, _ = self.tag_model.objects.get_or_create(language='', defaults=defaults, **query_params)
-            tag_ids.append(obj.id)
-        return self.tag_model.objects.filter(id__in=tag_ids)
-
     def _prepare_tags(self, data):
         tags_data = data.pop('tags', [])
         tags_ids = []
@@ -570,33 +530,48 @@ class DataSource(SoftDeletableModel, TimeStampedModel):
             tags_ids.append(tag.id)
         return self.tag_model.objects.filter(id__in=tags_ids)
 
-    def _validate_cc_licenses(self, items, error_desc):
+    def _items_partial_validation(self, items, error_desc):
         ds_rejected = 0
-        if self.is_ckan and is_enabled('S21_licenses.be'):
-            rejected_items = []
-            accepted_items = []
-            for item in items:
-                if item.get('license_id') in settings.CKAN_LICENSES_WHITELIST:
-                    accepted_items.append(item)
-                else:
-                    rejected_items.append(item)
+        accepted_items = []
+        import_errors = []
 
-            items = accepted_items
-            if rejected_items:
-                ds_rejected = len(rejected_items)
-                error_desc = str(error_desc)
-                if error_desc:
-                    error_desc += '<br>'
-                error_desc += 'Wartość w polu license_id spoza słownika CC'
+        code_to_error_class = {
+            CKANImportError.INVALID_LICENSE_ID: CKANImportInvalidLicenseError,
+            CKANImportError.ORGANIZATION_IN_TRASH: CKANImportOrganizationInTrashError,
+            CKANImportError.DATASET_IN_TRASH: CKANImportDatasetInTrashError,
+        }
 
-                item_error_descs = []
-                for item in rejected_items:
-                    item_error_descs.append(f"<p><strong>id zbioru danych:</strong> {item.get('ext_ident')}</p>"
-                                            f"<p><strong>license_id:</strong> {item.get('license_id')}</p>")
+        rejected_items = defaultdict(list)
+        for item in items:
+            if item.get('license_id') not in settings.CKAN_LICENSES_WHITELIST:
+                rejected_items[CKANImportError.INVALID_LICENSE_ID].append(item)
+                ds_rejected += 1
+                continue
 
-                inner_error_desc = '<br>'.join(item_error_descs)
-                error_desc += f'<div class="expandable">{inner_error_desc}</div>'
-        return items, ds_rejected, error_desc
+            organization = self.organization_model.raw.filter(title=item.get('organization', {}).get('title')).first()
+            if organization and organization.is_removed:
+                rejected_items[CKANImportError.ORGANIZATION_IN_TRASH].append(item)
+                ds_rejected += 1
+                continue
+
+            dataset = self.dataset_model.raw.filter(ext_ident=item.get('ext_ident'), source=self).first()
+            if dataset and dataset.is_removed:
+                rejected_items[CKANImportError.DATASET_IN_TRASH].append(item)
+                ds_rejected += 1
+                continue
+
+            accepted_items.append(item)
+
+        for code, error_class in code_to_error_class.items():
+            if rejected_items[code]:
+                import_errors.append(error_class(rejected_items=rejected_items[code]))
+
+        error_desc = str(error_desc)
+        if error_desc:
+            error_desc += '<br>'
+        error_desc += '<br>'.join(str(error) for error in import_errors)
+
+        return accepted_items, ds_rejected, error_desc
 
     def import_data(self):
         if not self.is_active:
@@ -623,7 +598,9 @@ class DataSource(SoftDeletableModel, TimeStampedModel):
             if isinstance(error_desc, dict):
                 error_desc = pprint.pformat(error_desc)
 
-        items, ds_rejected, error_desc = self._validate_cc_licenses(items, error_desc)
+        ds_rejected = 0
+        if self.is_ckan:
+            items, ds_rejected, error_desc = self._items_partial_validation(items, error_desc)
 
         dsi = DataSourceImport.objects.create(
             datasource=self,
@@ -657,8 +634,6 @@ class DataSource(SoftDeletableModel, TimeStampedModel):
         dsi.save()
         self.last_import_status = dsi.status
         self.save()
-        if self.emails_list and is_enabled('harvester_mails.be'):
-            send_import_report_mail_task.s(dsi.id).apply_async()
 
 
 class DataSourceTrash(DataSource, metaclass=TrashModelBase):

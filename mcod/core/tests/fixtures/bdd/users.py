@@ -1,11 +1,10 @@
 import json
-import os
 
 from django.test import Client as DjangoClient
+from django.core import mail
 from pytest_bdd import given, then
 from pytest_bdd import parsers
 
-from mcod import settings
 from mcod.core.caches import flush_sessions
 from mcod.core.registries import factories_registry
 from mcod.users.factories import UserFactory, AdminFactory, EditorFactory
@@ -223,6 +222,13 @@ def logged_user_with_organization(context, res_id):
     context.user.organizations.add(resource.dataset.organization)
 
 
+@given(parsers.parse('editor with id {editor_id:d} from organization of resource {res_id:d}'))
+def user_with_id_with_organization(context, editor_id, res_id):
+    resource = ResourceFactory.create(id=res_id)
+    editor = EditorFactory.create(id=editor_id)
+    editor.organizations.add(resource.dataset.organization)
+
+
 @given(parsers.parse('logged editor user with email {email_address} and password {password}'))
 def logged_editor_with_email_and_password(context, email_address, password):
     context.user = EditorFactory(
@@ -375,11 +381,14 @@ def logged_as_another_editor_with_email_and_password(context, email_address, pas
 @then(parsers.parse('sent email contains {text}'))
 @then('sent email contains <text>')
 def sent_email_contains_text(context, text):
-    assert len(os.listdir(settings.EMAIL_FILE_PATH)) == 1
-    filename = os.path.join(settings.EMAIL_FILE_PATH, os.listdir(settings.EMAIL_FILE_PATH)[0])
-    with open(filename) as f:
-        assert text in f.read(), f'Phrase: "{text}" not found in email content.'
-        f.seek(0)
+    assert len(mail.outbox) == 1
+    assert text in mail.outbox[0].body, f'Phrase: "{text}" not found in email content.'
+
+
+@then(parsers.parse('sent email recipient is {recipient}'))
+@then('sent email recipient is <recipient>')
+def sent_mail_recipient_is(context, recipient):
+    assert recipient in mail.outbox[0].to
 
 
 @then(parsers.parse('valid {link_type} link for {email} in mail content'))
@@ -390,23 +399,14 @@ def valid_link_for_email_in_mail_content(context, link_type, email):
         'confirmation': user.email_validation_absolute_url,
         'reset': user.password_reset_absolute_url,
     }
-    assert len(os.listdir(settings.EMAIL_FILE_PATH)) == 1
-    filename = os.path.join(settings.EMAIL_FILE_PATH, os.listdir(settings.EMAIL_FILE_PATH)[0])
-    with open(filename) as f:
-        assert links[link_type] in f.read()
-        f.seek(0)
+    assert len(mail.outbox) == 1
+    assert links[link_type] in mail.outbox[0].body
 
 
 @then(parsers.parse('password {password} is valid for user {email}'))
 def password_is_valid_for_user_email(password, email):
     user = User.objects.get(email=email)
     assert user.check_password(password), f'password "{password}" is not valid for user: {email}'
-
-
-@then(parsers.parse('user with email {email} state is {state}'))
-def user_with_email_state_is(email, state):
-    user = User.objects.get(email=email)
-    assert user.state == state, f'user with email {email} state should be {state}, but is {user.state}'
 
 
 @given(parsers.parse('logged {object_type} for data {user_data}'))

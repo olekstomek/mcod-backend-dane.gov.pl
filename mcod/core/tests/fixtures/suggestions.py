@@ -1,6 +1,6 @@
 import pytest
 
-from mcod.suggestions.models import AcceptedDatasetSubmission
+from mcod.suggestions.models import AcceptedDatasetSubmission, Suggestion
 
 
 @pytest.fixture
@@ -26,3 +26,8 @@ def public_accepted_dataset_submission():
         is_published_for_all=True,
         is_active=True
     )
+
+
+@pytest.fixture
+def suggestion():
+    return Suggestion.objects.create(notes='test suggestion notes')

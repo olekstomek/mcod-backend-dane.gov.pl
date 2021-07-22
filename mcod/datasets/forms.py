@@ -1,4 +1,5 @@
 from mcod.datasets.widgets import CheckboxInputWithLabel
+from mcod.lib.field_validators import ContainsLetterValidator
 from mcod.lib.widgets import CKEditorWidget
 from django import forms
 from django.contrib.postgres.forms.jsonb import JSONField
@@ -10,21 +11,20 @@ from mcod.core.db.models import STATUS_CHOICES
 from mcod.datasets.field_validators import validate_dataset_image_file_extension
 from mcod.datasets.models import UPDATE_FREQUENCY, Dataset
 from mcod.lib.widgets import JsonPairDatasetInputs
-from mcod.lib.dcat.vocabularies.metaclasses import DcatVocabAdminFormMetaClass
 from mcod.tags.forms import ModelFormWithKeywords
-from mcod.unleash import is_enabled
 
 
-class DatasetForm(ModelFormWithKeywords, metaclass=DcatVocabAdminFormMetaClass):
+class DatasetForm(ModelFormWithKeywords):
     title = forms.CharField(
         widget=forms.Textarea(
             attrs={'placeholder': _('e.g. the name of the data set'),
-                   'style': 'width: 99%', 'rows': 1}),
+                   'style': 'width: 99%', 'rows': 2}),
         label=_("Title"),
         max_length=300,
     )
     slug = forms.SlugField(label="Slug", widget=forms.TextInput(attrs={'size': 85}), required=False)
     notes = forms.CharField(
+        min_length=20,
         widget=CKEditorWidget(
             attrs={
                 'placeholder': _("Some information about the data being added"),
@@ -33,9 +33,11 @@ class DatasetForm(ModelFormWithKeywords, metaclass=DcatVocabAdminFormMetaClass):
             }
         ),
         required=True,
-        label=_('Notes')
+        label=_('Notes'),
+        validators=[ContainsLetterValidator()],
     )
     notes_en = forms.CharField(
+        min_length=20,
         widget=CKEditorWidget(
             attrs={
                 'placeholder': _("Some information about the data being added"),
@@ -44,7 +46,8 @@ class DatasetForm(ModelFormWithKeywords, metaclass=DcatVocabAdminFormMetaClass):
             }
         ),
         required=False,
-        label=_('Notes') + " (EN)"
+        label=_('Notes') + " (EN)",
+        validators=[ContainsLetterValidator()],
     )
     update_frequency = forms.ChoiceField(
         choices=UPDATE_FREQUENCY,
@@ -67,40 +70,6 @@ class DatasetForm(ModelFormWithKeywords, metaclass=DcatVocabAdminFormMetaClass):
     ),
         required=False)
 
-    if not is_enabled('S21_licenses.be'):
-        license_condition_source = forms.BooleanField(
-            label=_(
-                "The recipient should inform about the date, "
-                "time of completion and obtaining information from the obliged entity"
-            ),
-            required=False
-        )
-
-        license_condition_modification = forms.BooleanField(
-            label=_("The recipient should inform about the processing of the information when it modifies it"),
-            required=False
-        )
-
-        license_condition_responsibilities = forms.CharField(
-            label=_("The scope of the provider's responsibility for the information provided"),
-            widget=CKEditorWidget,
-            required=False
-        )
-
-        license_condition_db_or_copyrighted = forms.CharField(
-            label=_("Conditions for using public information that meets the characteristics of the work or constitute "
-                    "a database (Article 13 paragraph 2 of the Act on the re-use of public sector information)"),
-            widget=CKEditorWidget,
-            required=False
-        )
-
-        license_condition_personal_data = forms.CharField(
-            label=_("Conditions for using public sector information containing personal data (Article 14 paragraph 1 "
-                    "point 4 of the Act on the re-use of public Sector Information)"),
-            widget=CKEditorWidget,
-            required=False
-        )
-
     status = forms.ChoiceField(
         choices=STATUS_CHOICES,
         help_text=_(
@@ -109,8 +78,8 @@ class DatasetForm(ModelFormWithKeywords, metaclass=DcatVocabAdminFormMetaClass):
         )
     )
 
-    def __init__(self, *args, **kwargs):
-        super(DatasetForm, self).__init__(*args, **kwargs)
+    def __init__(self, *args, instance=None, **kwargs):
+        super(DatasetForm, self).__init__(*args, instance=instance, **kwargs)
         try:
             self.fields['image'].validators.append(validate_dataset_image_file_extension)
             self.fields['image'].help_text = \
@@ -123,40 +92,30 @@ class DatasetForm(ModelFormWithKeywords, metaclass=DcatVocabAdminFormMetaClass):
             self.fields['categories'].required = False
         except KeyError:
             pass
-        if is_enabled('S21_admin_ui_changes.be') and self.fields.get('title'):
-            self.fields['title'].widget.attrs['rows'] = 2
 
-        if is_enabled('S18_new_tags.be') and self.fields.get('tags_pl'):
+        if self.fields.get('tags_pl'):
             self.fields['tags_pl'].required = True
+
+        if 'update_notification_recipient_email' in self.fields:
+            self.fields['update_notification_recipient_email'].required = True
+            self.fields['update_notification_recipient_email'].help_text = (
+                'Uwaga! Adres email zostanie nadpisany adresem edytora, który będzie modyfikował metadane zbioru.')
+            if instance and instance.modified_by and not instance.update_notification_recipient_email:
+                self.initial['update_notification_recipient_email'] = instance.modified_by.email
 
     class Meta:
         model = Dataset
-        if is_enabled('S21_licenses.be'):
-            widgets = {
-                'license_condition_source': CheckboxInputWithLabel(label='CC BY 4.0'),
-                'license_condition_modification': CheckboxInputWithLabel(label='CC BY 4.0'),
-                'license_condition_responsibilities': CKEditorWidget(config_name='licenses'),
-                'license_condition_db_or_copyrighted': CKEditorWidget(config_name='licenses'),
-                'license_chosen': forms.RadioSelect,
-                'license_condition_personal_data': CKEditorWidget(config_name='licenses'),
-            }
 
-            license_fields = (
-                "license_condition_source",
-                "license_condition_modification",
-                "license_condition_responsibilities",
-                "license_condition_db_or_copyrighted",
-                "license_chosen",
-                "license_condition_personal_data",
-            )
-        else:
-            license_fields = (
-                'license_condition_db_or_copyrighted',
-                'license_condition_personal_data',
-                'license_condition_modification',
-                'license_condition_responsibilities',
-                'license_condition_source',
-            )
+        widgets = {
+            'license_condition_source': CheckboxInputWithLabel(label='CC BY 4.0'),
+            'license_condition_modification': CheckboxInputWithLabel(label='CC BY 4.0'),
+            'license_condition_responsibilities': CKEditorWidget(config_name='licenses'),
+            'license_condition_db_or_copyrighted': CKEditorWidget(config_name='licenses'),
+            'license_chosen': forms.RadioSelect,
+            'license_condition_personal_data': CKEditorWidget(config_name='licenses'),
+            'update_notification_frequency': forms.TextInput(attrs={'maxlength': 3}),
+        }
+
         fields = [
             'title',
             'slug',
@@ -169,7 +128,12 @@ class DatasetForm(ModelFormWithKeywords, metaclass=DcatVocabAdminFormMetaClass):
             'image',
             'update_frequency',
             'customfields',
-            *license_fields,
+            'license_condition_source',
+            'license_condition_modification',
+            'license_condition_responsibilities',
+            'license_condition_db_or_copyrighted',
+            'license_chosen',
+            'license_condition_personal_data',
             'status',
         ]
         labels = {
@@ -180,13 +144,12 @@ class DatasetForm(ModelFormWithKeywords, metaclass=DcatVocabAdminFormMetaClass):
 
     def clean(self):
         cleaned_data = super().clean()
-        if is_enabled('S21_licenses.be'):
-            if cleaned_data.get('license_condition_db_or_copyrighted') and not cleaned_data.get('license_chosen'):
-                self.add_error('license_chosen', _('Text area is filled, license must be selected'))
+        if cleaned_data.get('license_condition_db_or_copyrighted') and not cleaned_data.get('license_chosen'):
+            self.add_error('license_chosen', _('Text area is filled, license must be selected'))
         return cleaned_data
 
     def clean_license_condition_personal_data(self):
-        if is_enabled('S21_licenses.be') and self.cleaned_data.get('license_condition_personal_data'):
+        if self.cleaned_data.get('license_condition_personal_data'):
             raise forms.ValidationError(_('Chosen conditions for re-use mean that they contain personal data. '
                                           'Please contact the administrator at kontakt@dane.gov.pl.'))
         return self.cleaned_data['license_condition_personal_data']
@@ -214,9 +177,12 @@ class DatasetForm(ModelFormWithKeywords, metaclass=DcatVocabAdminFormMetaClass):
         return self.cleaned_data['status']
 
 
-class DatasetListForm(forms.ModelForm):
+class DatasetStackedNoSaveForm(forms.ModelForm):
     title = forms.HiddenInput(attrs={'required': False})
     slug = forms.HiddenInput(attrs={'required': False})
+
+    def save(self, commit=True):
+        return super().save(commit=False)
 
 
 class AddDatasetForm(DatasetForm):

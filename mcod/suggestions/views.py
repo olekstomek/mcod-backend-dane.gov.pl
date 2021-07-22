@@ -19,9 +19,16 @@ from mcod.suggestions.deserializers import (
     CreateFeedbackRequest,
     AcceptedSubmissionCommentApiRequest
 )
-from mcod.suggestions.handlers import AcceptedSubmissionRetrieveOneHdlr, AcceptedSubmissionSearchHdlr
-from mcod.suggestions.serializers import AcceptedSubmissionCommentApiResponse, PublicSubmissionApiResponse,\
-    SubmissionApiResponse, AcceptedSubmissionApiResponse
+from mcod.suggestions.handlers import (
+    AcceptedSubmissionRetrieveOneHdlr,
+    AcceptedSubmissionSearchHdlr,
+)
+from mcod.suggestions.serializers import (
+    AcceptedSubmissionApiResponse,
+    AcceptedSubmissionCommentApiResponse,
+    PublicSubmissionApiResponse,
+    SubmissionApiResponse,
+)
 from mcod.suggestions.tasks import create_dataset_suggestion, send_accepted_submission_comment
 
 
@@ -42,7 +49,7 @@ class AcceptedSubmissionListView(JsonAPIView):
     class GETPublic(AcceptedSubmissionSearchHdlr):
         serializer_schema = partial(PublicSubmissionApiResponse, many=True)
 
-        def _queryset_extra(self, queryset, **kwargs):
+        def _queryset_extra(self, queryset, *args, **kwargs):
             return queryset.filter('term', is_published_for_all=True)
 
 
@@ -58,7 +65,15 @@ class AcceptedSubmissionDetailView(JsonAPIView):
         self.handle(request, response, self.GETPublic, *args, **kwargs)
 
     class GET(AcceptedSubmissionRetrieveOneHdlr):
-        pass
+        def _get_instance(self, id, *args, **kwargs):
+            instance = getattr(self, '_cached_instance', None)
+            if not instance:
+                model = self.database_model
+                try:
+                    self._cached_instance = model.objects.get(pk=id, status__in=model.PUBLISHED_STATUSES)
+                except model.DoesNotExist:
+                    raise falcon.HTTPNotFound
+            return self._cached_instance
 
     class GETPublic(AcceptedSubmissionRetrieveOneHdlr):
         serializer_schema = partial(PublicSubmissionApiResponse, many=False)
@@ -68,8 +83,8 @@ class AcceptedSubmissionDetailView(JsonAPIView):
             if not instance:
                 model = self.database_model
                 try:
-                    self._cached_instance =\
-                        model.objects.get(pk=id, status=model.STATUS.published, is_published_for_all=True)
+                    self._cached_instance = model.objects.get(
+                        pk=id, status=model.STATUS.published, is_published_for_all=True)
                 except model.DoesNotExist:
                     raise falcon.HTTPNotFound
             return self._cached_instance
@@ -118,20 +133,9 @@ class FeedbackDatasetSubmission(JsonAPIView):
         def _get_data(self, cleaned, id, *args, **kwargs):
             data = cleaned['data']['attributes']
             submission = self.submission_model.objects.get(pk=id)
-
-            data['user'] = self.request.user
-            data['submission'] = submission
-
-            try:
-                feedback = self.database_model.objects.get(user=self.request.user, submission=submission)
-                feedback.opinion = data['opinion']
-                feedback.save()
-                self.response.context.data = feedback
-                return
-            except self.database_model.DoesNotExist:
-                pass
-
-            self.response.context.data = self.database_model.objects.create(**data)
+            obj = self.database_model.objects.update_or_create(
+                user=self.request.user, submission=submission, defaults=data)[0]
+            self.response.context.data = obj
 
     @falcon.before(login_required, roles=['editor', 'admin', 'agent'])
     @versioned
@@ -165,8 +169,8 @@ class AcceptedDatasetSubmissionCommentView(JsonAPIView):
             if not instance:
                 model = self.database_model
                 try:
-                    self._cached_instance =\
-                        model.objects.get(pk=id, status=model.STATUS.published, is_published_for_all=True)
+                    self._cached_instance = model.objects.get(
+                        pk=id, status=model.STATUS.published, is_published_for_all=True)
                 except model.DoesNotExist:
                     raise falcon.HTTPNotFound
             return self._cached_instance
@@ -179,7 +183,9 @@ class AcceptedDatasetSubmissionCommentView(JsonAPIView):
         def _get_data(self, cleaned, id, *args, **kwargs):
             instance = self._get_instance(id, *args, **kwargs)
             send_accepted_submission_comment.s(
-                cleaned['data']['attributes']['comment'], instance.frontend_absolute_url, instance.title
+                cleaned['data']['attributes']['comment'],
+                instance.frontend_absolute_url,
+                instance.title,
             ).apply_async()
             setattr(instance, 'is_comment_email_sent', True)
             return instance

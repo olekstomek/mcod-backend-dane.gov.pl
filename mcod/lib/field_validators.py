@@ -1,6 +1,8 @@
 import base64
 import binascii
 
+from django.core.validators import RegexValidator
+from django.utils.html import strip_tags
 from marshmallow import ValidationError
 from marshmallow.validate import Validator
 
@@ -24,3 +26,11 @@ class Base64(Validator):
             if len(data) > self.max_size:
                 raise ValidationError(self.length_error)
         return value
+
+
+class ContainsLetterValidator(RegexValidator):
+    regex = r'[^\W\d_]+'
+    message = 'Upewnij się, że ta wartość zawiera przynajmniej jedną literę.'
+
+    def __call__(self, value):
+        return super().__call__(strip_tags(value))

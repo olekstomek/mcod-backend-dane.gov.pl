@@ -4,7 +4,7 @@ import pandas as pd
 from falcon.media import BaseHandler
 
 from mcod.settings import RDF_FORMAT_TO_MIMETYPE
-from mcod.core.utils import save_as_csv
+from mcod.core.utils import save_as_csv, save_as_xml
 
 
 class RDFHandler(BaseHandler):
@@ -35,6 +35,22 @@ class SparqlHandler(BaseHandler):
     def serialize(self, media, content_type):
         print(content_type, media)
         return media
+
+
+class XMLHandler(BaseHandler):
+    def deserialize(self, stream, content_type, content_length):
+        # Todo - to be implemented. For now do nothing
+        return stream
+
+    def serialize(self, context, content_type):
+        output = context
+        if hasattr(context, 'serializer_schema') and hasattr(context, 'data'):
+            schema = context.serializer_schema
+            xml_data = schema.dump(context.data)
+            xml_file = io.StringIO()
+            save_as_xml(xml_file, xml_data)
+            output = xml_file.getvalue().encode('utf-8')
+        return output
 
 
 class ExportHandler(BaseHandler):
