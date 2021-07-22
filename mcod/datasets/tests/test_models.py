@@ -1,13 +1,14 @@
+import time
 import pytest
+from bs4 import BeautifulSoup
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.test import Client
+from django.utils.encoding import smart_text
 
 from mcod.datasets.models import Dataset
-from mcod.resources.models import Resource
-
-from mcod.users.models import User, UserFollowingDataset
 from mcod.organizations.models import Organization
-from bs4 import BeautifulSoup
+from mcod.resources.models import Resource
+from mcod.users.models import User, UserFollowingDataset
 
 
 def create_organization(param):
@@ -76,7 +77,6 @@ def test_get_datasets_lists(html_table):
     assert len(rows) == 2
 
 
-@pytest.mark.django_db
 class TestDatasetModel(object):
     def test_cant_create_empty_dataset(self):
         with pytest.raises(ValidationError) as e:
@@ -84,19 +84,8 @@ class TestDatasetModel(object):
             ds.full_clean()
         assert "'title'" in str(e.value)
 
-    def test_create_dataset(self, valid_organization):
-        ds = Dataset()
-        ds.title = "Title"
-        ds.slug = "slug"
-        ds.notes = "opis"
-        ds.organization = valid_organization
-        ds.full_clean()
-        assert ds.id is None
-        ds.save()
-        assert ds.id > 0
-
-    def test_dataset_fields(self, valid_dataset):
-        dataset_dict = valid_dataset.__dict__
+    def test_dataset_fields(self, dataset):
+        dataset_dict = dataset.__dict__
         fields = [
             'slug',
             'title',
@@ -106,6 +95,7 @@ class TestDatasetModel(object):
             'organization_id',
             'customfields',
             'license_condition_db_or_copyrighted',
+            'license_condition_personal_data',
             'license_condition_modification',
             'license_condition_original',
             'license_condition_responsibilities',
@@ -113,118 +103,120 @@ class TestDatasetModel(object):
             'update_frequency',
             'category_id',
             'status',
+            'image',
+            'image_alt'
         ]
 
         for f in fields:
             assert f in dataset_dict
 
-    def test_delete_dataset(self, valid_dataset):
-        assert valid_dataset.status == 'published'
-        valid_dataset.delete()
-        assert valid_dataset.is_removed is True
+    def test_delete_dataset(self, dataset):
+        assert dataset.status == 'published'
+        dataset.delete()
+        assert dataset.is_removed is True
         with pytest.raises(ObjectDoesNotExist):
-            Dataset.objects.get(id=valid_dataset.id)
-        assert Dataset.raw.get(id=valid_dataset.id)
+            Dataset.objects.get(id=dataset.id)
+        assert Dataset.raw.get(id=dataset.id)
 
-    def test_add_resource(self, valid_dataset, valid_resource2):
-        assert 0 == len(valid_dataset.resources.all())
-        valid_dataset.resources.set([valid_resource2])
-        assert 1 == len(valid_dataset.resources.all())
-        ds = Dataset.objects.get(id=valid_dataset.id)
-        assert valid_resource2 in ds.resources.all()
-
-    def test_safe_delete_dataset_also_delete_resource(self, valid_dataset, valid_resource):
-        assert 'published' == valid_dataset.status
-        assert 'published' == valid_dataset.resources.first().status
-        assert valid_resource in valid_dataset.resources.all()
-        assert 'published' == valid_dataset.resources.first().status
-        valid_dataset.delete()
-        assert valid_dataset.is_removed is True
-        resource = Resource.deleted.get(id=valid_resource.id)
+    def test_safe_delete_dataset_also_delete_resource(self, dataset_with_resources):
+        dataset = dataset_with_resources
+        resource = dataset_with_resources.resources.first()
+        assert 'published' == dataset.status
+        assert 'published' == dataset.resources.first().status
+        assert resource in dataset.resources.all()
+        assert 'published' == dataset.resources.first().status
+        dataset.delete()
+        assert dataset.is_removed is True
+        resource = Resource.deleted.get(id=resource.id)
         assert resource.is_removed is True
 
-    def test_unsafe_delete_dataset_and_its_resources(self, valid_dataset, valid_resource):
-        ds_id = valid_dataset.id
-        r_id = valid_resource.id
-        assert valid_resource in valid_dataset.resources.all()
-        valid_dataset.delete(safe=False)
+    def test_unsafe_delete_dataset_and_its_resources(self, dataset_with_resources):
+        dataset = dataset_with_resources
+        resource = dataset_with_resources.resources.first()
+        ds_id = dataset.id
+        r_id = resource.id
+        assert resource in dataset.resources.all()
+        dataset.delete(safe=False)
         with pytest.raises(ObjectDoesNotExist):
             Dataset.objects.get(id=ds_id)
         with pytest.raises(ObjectDoesNotExist):
             Resource.objects.get(id=r_id)
 
-    def test_restore_dataset_is_not_restoring_its_resources(self, valid_dataset, valid_resource):
-        assert valid_resource in valid_dataset.resources.all()
-        valid_dataset.delete()
-        assert valid_resource not in Resource.objects.all()
-        assert valid_resource in Resource.deleted.all()
+    def test_restore_dataset_is_not_restoring_its_resources(self, dataset_with_resources):
+        dataset = dataset_with_resources
+        resource = dataset_with_resources.resources.first()
+        assert resource in dataset.resources.all()
+        dataset.delete()
+        assert resource not in Resource.objects.all()
+        assert resource in Resource.deleted.all()
 
-        valid_dataset.is_removed = False
-        valid_dataset.save()
+        dataset.is_removed = False
+        dataset.save()
 
-        assert valid_resource not in Resource.objects.all()
-        assert valid_resource in Resource.deleted.all()
+        assert resource not in Resource.objects.all()
+        assert resource in Resource.deleted.all()
 
-    def test_set_draft_for_dataset_also_change_his_resources_to_draft(self, valid_dataset, valid_resource):
-        assert valid_resource in valid_dataset.resources.all()
-        assert valid_dataset.status == 'published'
-        assert valid_dataset.resources.all().first().status == 'published'
+    def test_set_draft_for_dataset_also_change_his_resources_to_draft(self, dataset_with_resources):
+        dataset = dataset_with_resources
+        resource = dataset_with_resources.resources.first()
+        assert resource in dataset.resources.all()
+        assert dataset.status == 'published'
+        assert dataset.resources.all().first().status == 'published'
 
-        valid_dataset.status = "draft"
-        valid_dataset.save()
+        dataset.status = "draft"
+        dataset.save()
 
-        assert valid_dataset.status == 'draft'
-        assert valid_dataset.resources.all().first().status == 'draft'
+        assert dataset.status == 'draft'
+        assert dataset.resources.all().first().status == 'draft'
 
-    # def test_save_with_deleted_status(self, valid_dataset, valid_resource):
-    #     assert 'published' == valid_dataset.status
-    #     assert 'published' == valid_dataset.resources.first().status
-    #     valid_dataset.status = 'archived'
-    #     valid_dataset.save()
-    #     assert 'archived' == valid_dataset.status
-    #     assert 'archived' == valid_dataset.resources.first().status
+    # def test_save_with_deleted_status(self, dataset, resource):
+    #     assert 'published' == dataset.status
+    #     assert 'published' == dataset.resources.first().status
+    #     dataset.status = 'archived'
+    #     dataset.save()
+    #     assert 'archived' == dataset.status
+    #     assert 'archived' == dataset.resources.first().status
 
     # TODO: trash functionality - as MCOD-621
-    # def test_save_with_deleted_status(self, valid_dataset, valid_resource):
-    #     assert 'active' == valid_dataset.state
-    #     assert 'active' == valid_dataset.resources.first().state
-    #     valid_dataset.state = 'archived'
-    #     valid_dataset.save()
-    #     assert 'archived' == valid_dataset.state
-    #     assert 'archived' == valid_dataset.resources.first().state
+    # def test_save_with_deleted_status(self, dataset, resource):
+    #     assert 'active' == dataset.state
+    #     assert 'active' == dataset.resources.first().state
+    #     dataset.state = 'archived'
+    #     dataset.save()
+    #     assert 'archived' == dataset.state
+    #     assert 'archived' == dataset.resources.first().state
 
 
-@pytest.mark.django_db
 class TestDatasetsUserRoles(object):
-    def test_editor_can_see_datasets_in_admin_panel(self, editor_user, valid_organization):
+    def test_editor_can_see_datasets_in_admin_panel(self, active_editor, institution):
         client = Client()
-        client.force_login(editor_user)
-        editor_user.organizations.set([valid_organization])
+        client.force_login(active_editor)
+        active_editor.organizations.set([institution])
         response = client.get("/")
         assert response.status_code == 200
-        assert '/datasets/' in str(response.content)
+        assert '/datasets/' in smart_text(response.content)
 
-    def test_editor_can_go_to_datasets_in_admin_panel(self, editor_user, valid_organization):
+    def test_editor_can_go_to_datasets_in_admin_panel(self, active_editor, institution):
         client = Client()
-        client.force_login(editor_user)
-        editor_user.organizations.set([valid_organization])
+        client.force_login(active_editor)
+        active_editor.organizations.set([institution])
         response = client.get("/datasets/")
         assert response.status_code == 200
 
-    def test_admin_can_see_datasets_in_admin_panel(self, admin_user):
+    def test_admin_can_see_datasets_in_admin_panel(self, admin):
         client = Client()
-        client.force_login(admin_user)
+        client.force_login(admin)
         response = client.get("/")
         assert response.status_code == 200
-        assert '/datasets/' in str(response.content)
+        assert '/datasets/' in smart_text(response.content)
 
-    def test_admin_can_go_to_datasets_in_admin_panel(self, admin_user):
+    def test_admin_can_go_to_datasets_in_admin_panel(self, admin):
         client = Client()
-        client.force_login(admin_user)
+        client.force_login(admin)
         response = client.get("/datasets/")
         assert response.status_code == 200
 
-    def test_editor_should_see_only_datasets_from_his_organization_admin_see_all(self, admin_user):
+    def test_editor_should_see_only_datasets_from_his_organization_admin_see_all(self, admin):
         # create organization 1 and 2
         org_1 = create_organization("organization 1")
         org_2 = create_organization("organization 2")
@@ -252,7 +244,7 @@ class TestDatasetsUserRoles(object):
         # login as admin
         # assert dataset length = 2
         client = Client()
-        client.force_login(admin_user)
+        client.force_login(admin)
         response = client.get("/datasets/dataset/")
         datasets = get_datasets_list(response.content)
         assert len(datasets) == 3
@@ -287,77 +279,87 @@ class TestDatasetsUserRoles(object):
         dataset.license_condition_db_or_copyrighted = "MIT"
         assert dataset.is_license_set
 
-    def test_followers_count(self, valid_dataset, admin_user, editor_user):
-        assert valid_dataset.followers_count == 0
-        UserFollowingDataset(follower=admin_user, dataset=valid_dataset).save()
-        assert valid_dataset.followers_count == 1
-        UserFollowingDataset(follower=editor_user, dataset=valid_dataset).save()
-        assert valid_dataset.followers_count == 2
+    def test_followers_count(self, dataset, admin, active_editor):
+        assert dataset.followers_count == 0
+        UserFollowingDataset(follower=admin, dataset=dataset).save()
+        assert dataset.followers_count == 1
+        UserFollowingDataset(follower=active_editor, dataset=dataset).save()
+        assert dataset.followers_count == 2
 
 
-@pytest.mark.django_db
 class TestDatasetVerifiedDate:
 
-    def test_new_dataset_has_verified_same_as_created(self, valid_dataset):
-        assert valid_dataset.verified == valid_dataset.created
+    def test_new_dataset_has_verified_same_as_created(self, dataset):
+        assert dataset.verified == dataset.created
 
-    def test_dataset_with_resource_has_verified_same_as_resourve_verified(self, valid_dataset, valid_resource):
-        rs = Resource.objects.get(pk=valid_resource.id)
-        ds = Dataset.objects.get(pk=valid_dataset.id)
+    def test_dataset_with_resource_has_verified_same_as_resourve_verified(self, dataset_with_resources):
+        dataset = dataset_with_resources
+        resource = dataset.resources.last()
+        rs = Resource.objects.get(pk=resource.id)
+        ds = Dataset.objects.get(pk=dataset.id)
         assert rs in ds.resources.all()
-        assert ds.verified == rs.verified
+        assert ds.verified == rs.created
 
-    def test_dataset_verified_is_created_after_delete_all_resources(self, valid_resource, valid_dataset):
-        rs = Resource.objects.get(pk=valid_resource.id)
-        ds = Dataset.objects.get(pk=valid_dataset.id)
-        assert valid_dataset.resources.count() == 1
-        assert ds.verified == rs.verified
+    def test_dataset_verified_is_created_after_delete_all_resources(self, dataset_with_resource):
+        dataset = dataset_with_resource
+        resource = dataset.resources.first()
+
+        rs = Resource.objects.get(pk=resource.id)
+        ds = Dataset.objects.get(pk=dataset.id)
+        assert dataset.resources.count() == 1
+        assert ds.verified == rs.created
         assert ds.verified != ds.created
-        valid_resource.delete()
+        resource.delete()
         assert ds.resources.count() == 0
-        ds = Dataset.objects.get(pk=valid_dataset.id)
-        assert ds.verified == valid_dataset.created
+        ds = Dataset.objects.get(pk=dataset.id)
+        assert ds.verified == dataset.created
 
-    def test_dataset_verified_is_same_as_created_when_all_his_resources_are_draft(self, valid_resource, valid_dataset):
-        rs = Resource.objects.get(pk=valid_resource.id)
-        ds = Dataset.objects.get(pk=valid_dataset.id)
+    def test_dataset_verified_is_same_as_created_when_all_his_resources_are_draft(self, dataset_with_resource):
+        dataset = dataset_with_resource
+        resource = dataset.resources.first()
+
+        rs = Resource.objects.get(pk=resource.id)
+        ds = Dataset.objects.get(pk=dataset.id)
         assert rs.status == "published"
-        assert ds.verified == rs.verified
+        assert ds.verified == rs.created
         rs.status = "draft"
         rs.save()
-        ds = Dataset.objects.get(pk=valid_dataset.id)
-        assert ds.verified == valid_dataset.created
+        ds = Dataset.objects.get(pk=dataset.id)
+        assert ds.verified == dataset.created
 
-    def test_dataset_verified_change_after_resource_revalidate(self, valid_resource, valid_dataset):
-        rs = Resource.objects.get(pk=valid_resource.id)
-        ds = Dataset.objects.get(pk=valid_dataset.id)
+    def test_dataset_verified_change_after_resource_revalidate(self, dataset_with_resource):
+        dataset = dataset_with_resource
+        assert dataset.resources.count() == 1
 
-        old = rs.verified
+        dataset = Dataset.objects.get(pk=dataset_with_resource.id)
+        resource = Resource.objects.get(pk=dataset.resources.last().id)
+
+        old = resource.created
+        assert dataset.verified == old
+
+        resource.revalidate()
+        time.sleep(1)
+        rs = Resource.objects.get(pk=resource.id)
+        ds = Dataset.objects.get(pk=dataset.id)
+
+        assert rs.created == old
         assert ds.verified == old
 
-        rs.revalidate()
-        rs = Resource.objects.get(pk=valid_resource.id)
-
-        assert old != rs.verified
-        ds = Dataset.objects.get(pk=valid_dataset.id)
-
-        assert ds.verified == rs.verified
-
-    def test_revalidation_of_resource_when_dataset_is_in_draft_state_should_not_change_verified(self, valid_resource,
-                                                                                                valid_dataset):
-        rs = Resource.objects.get(pk=valid_resource.id)
-        ds = Dataset.objects.get(pk=valid_dataset.id)
+    def test_reval_of_resource_when_dataset_is_in_draft_state_should_not_change_verified(self, dataset_with_resources):
+        dataset = dataset_with_resources
+        resource = dataset.resources.last()
+        rs = Resource.objects.get(pk=resource.id)
+        ds = Dataset.objects.get(pk=dataset.id)
 
         assert rs.status == "published"
         assert ds.status == "published"
-        assert ds.verified == rs.verified
-        assert ds.verified != rs.created
+        assert ds.verified == rs.created
 
         ds.status = "draft"
         ds.save()
 
-        rs = Resource.objects.get(pk=valid_resource.id)
-        ds = Dataset.objects.get(pk=valid_dataset.id)
+        rs = Resource.objects.get(pk=resource.id)
+        ds = Dataset.objects.get(pk=dataset.id)
 
         assert rs.status == "draft"
         assert ds.status == "draft"
@@ -365,6 +367,6 @@ class TestDatasetVerifiedDate:
 
         rs.revalidate()
 
-        ds = Dataset.objects.get(pk=valid_dataset.id)
+        ds = Dataset.objects.get(pk=dataset.id)
 
         assert ds.verified == ds.created

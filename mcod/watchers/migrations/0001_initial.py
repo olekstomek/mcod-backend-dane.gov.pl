@@ -23,7 +23,7 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('created', model_utils.fields.AutoCreatedField(default=django.utils.timezone.now, editable=False, verbose_name='created')),
                 ('modified', model_utils.fields.AutoLastModifiedField(default=django.utils.timezone.now, editable=False, verbose_name='modified')),
-                ('notification_type', models.CharField(choices=[('object_restored', 'Object republished'), ('object_trashed', 'Object withdrawaled'), ('object_updated', 'Object updated'), ('related_object_publicated', 'Related object publicated'), ('related_object_updated', 'Related object updated'), ('related_object_restored', 'Related object republished'), ('related_object_trashed', 'Related object withdrawaled'), ('result_count_incresed', 'Results incresed'), ('result_count_decresed', 'Results decresed')], max_length=30)),
+                ('notification_type', models.CharField(choices=[('object_restored', 'Object republished'), ('object_removed', 'Object withdrawaled'), ('object_updated', 'Object updated'), ('related_object_publicated', 'Related object publicated'), ('related_object_updated', 'Related object updated'), ('related_object_restored', 'Related object republished'), ('related_object_removed', 'Related object withdrawaled'), ('result_count_incresed', 'Results incresed'), ('result_count_decresed', 'Results decresed')], max_length=30)),
                 ('status', models.CharField(choices=[('new', 'New'), ('read', 'Read')], max_length=20)),
             ],
             options={

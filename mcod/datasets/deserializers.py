@@ -1,16 +1,34 @@
-from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy as _, get_language
+from elasticsearch_dsl.query import Term
 from marshmallow import validates, ValidationError
 
 from mcod.core.api import fields as core_fields
 from mcod.core.api.jsonapi.deserializers import TopLevel, ObjectAttrs
-from mcod.core.api.schemas import ListingSchema, CommonSchema, ExtSchema
-from mcod.core.api.schemas import NumberTermSchema, StringTermSchema, StringMatchSchema
+from mcod.core.api.schemas import (
+    CommonSchema, ExtSchema, ListingSchema, NumberTermSchema, StringTermSchema, StringMatchSchema, ListTermsSchema,
+    DateTermSchema)
 from mcod.core.api.search import fields as search_fields
 
 
 class CategoryFilterSchema(ExtSchema):
     id = search_fields.FilterField(NumberTermSchema, search_path='category', nested_search=True,
                                    query_field='category.id')
+
+    class Meta:
+        default_field = 'term'
+
+
+class CategoriesFilterSchema(ExtSchema):
+    id = search_fields.FilterField(NumberTermSchema, search_path='categories', nested_search=True,
+                                   query_field='categories.id')
+
+    class Meta:
+        default_field = 'term'
+
+
+class ApplicationFilterSchema(ExtSchema):
+    id = search_fields.FilterField(NumberTermSchema, search_path='application', nested_search=True,
+                                   query_field='application.id')
 
     class Meta:
         default_field = 'term'
@@ -35,7 +53,24 @@ class ResourceFilterSchema(ExtSchema):
 
 
 class DatasetAggregations(ExtSchema):
-    term = search_fields.TermsAggregationField(
+    date_histogram = search_fields.DateHistogramAggregationField(
+        aggs={
+            'by_modified': {
+                'field': 'modified',
+                'size': 500
+            },
+            'by_created': {
+                'field': 'created',
+                'size': 500
+            },
+            'by_verified': {
+                'field': 'verified',
+                'size': 500
+            }
+        }
+    )
+
+    terms = search_fields.TermsAggregationField(
         aggs={
             'by_institution': {
                 'field': 'institution.id',
@@ -43,9 +78,16 @@ class DatasetAggregations(ExtSchema):
                 'nested_path': 'institution',
             },
             'by_tag': {
+                'field': 'tags',
+                'nested_path': 'tags',
                 'size': 500,
-                'field': 'tags.pl',
-                'nested_path': 'tags'
+                'translated': True
+            },
+            'by_keyword': {
+                'field': 'keywords.name',
+                'filter': {'keywords.language': get_language},
+                'nested_path': 'keywords',
+                'size': 500,
             },
             'by_format': {
                 'size': 500,
@@ -57,17 +99,25 @@ class DatasetAggregations(ExtSchema):
             },
             'by_category': {
                 'field': 'category.id',
-                'size': 500,
-                'nested_path': 'category'
+                'nested_path': 'category',
+                'size': 100
+            },
+            'by_categories': {
+                'field': 'categories.id',
+                'nested_path': 'categories',
+                'size': 100
+            },
+            'by_types': {
+                'field': 'types',
+                'size': 100
+            },
+            'by_visualization_types': {
+                'field': 'visualization_types',
+                'size': 100
             }
 
         }
     )
-    # date_histogram = search_fields.DateHistogramAggregationField(
-    #     fields = {
-    #         'created'
-    #     }
-    # )
 
 
 class DatasetApiSearchRequest(ListingSchema):
@@ -91,7 +141,9 @@ class DatasetApiSearchRequest(ListingSchema):
                                       search_path='notes'
                                       )
     category = search_fields.FilterField(CategoryFilterSchema)
+    categories = search_fields.FilterField(CategoriesFilterSchema)
     institution = search_fields.FilterField(InstitutionFilterSchema)
+    application = search_fields.FilterField(ApplicationFilterSchema)
     tag = search_fields.FilterField(StringTermSchema,
                                     doc_template='docs/generic/fields/string_term_field.html',
                                     doc_base_url='/datasets',
@@ -100,35 +152,69 @@ class DatasetApiSearchRequest(ListingSchema):
                                     search_path='tags',
                                     query_field='tags'
                                     )
+    keyword = search_fields.FilterField(StringTermSchema,
+                                        doc_template='docs/generic/fields/string_term_field.html',
+                                        doc_base_url='/datasets',
+                                        doc_field_name='keyword',
+                                        search_path='keywords',
+                                        query_field='keywords.name',
+                                        condition=Term(keywords__language=get_language),
+                                        nested_search=True,
+                                        )
     format = search_fields.FilterField(StringTermSchema,
                                        doc_template='docs/generic/fields/string_term_field.html',
                                        doc_base_url='/datasets',
                                        doc_field_name='format',
                                        query_field='formats'
                                        )
+    types = search_fields.FilterField(StringTermSchema,
+                                      doc_template='docs/generic/fields/string_term_field.html',
+                                      doc_base_url='/datasets',
+                                      doc_field_name='types',
+                                      query_field='types'
+                                      )
     openness_score = search_fields.FilterField(NumberTermSchema,
                                                doc_template='docs/generic/fields/number_term_field.html',
                                                doc_base_url='/datasets',
-                                               doc_field_name='openness score'
+                                               doc_field_name='openness score',
+                                               query_field='openness_scores',
                                                )
     resource = search_fields.FilterField(ResourceFilterSchema)
-
-    q = search_fields.MultiMatchField(query_fields=['title^4', 'notes^2'],
-                                      nested_query_fields={'resources': ['title', ]})
+    visualization_types = search_fields.FilterField(
+        ListTermsSchema,
+        query_field='visualization_types',
+        doc_template='docs/generic/fields/string_term_field.html',
+        doc_base_url='/datasets',
+        doc_field_name='visualization types'
+    )
+    created = search_fields.FilterField(
+        DateTermSchema,
+        doc_template='docs/generic/fields/number_term_field.html',
+        doc_base_url='/datasets',
+        doc_field_name='created',
+    )
+    q = search_fields.MultiMatchField(
+        query_fields={'title': ['title^4'], 'notes': ['notes^2']},
+        nested_query_fields={'resources': ['title', ]})
     sort = search_fields.SortField(
         sort_fields={
             'id': 'id',
             'title': 'title.{lang}.sort',
             'modified': 'modified',
             'created': 'created',
+            'views_count': 'views_count',
             'verified': 'verified',
         },
-        doc_template='docs/generic/fields/sort_field.html',
-        doc_base_url='/institutions',
-        doc_field_name='sort'
+        doc_base_url='/datasets',
+        missing='id',
     )
 
     facet = search_fields.FacetField(DatasetAggregations)
+    include = search_fields.StringField(
+        data_key='include',
+        description='Allow the client to customize which related resources should be returned in included section.',
+        allowEmptyValue=True,
+    )
 
     class Meta:
         strict = True
@@ -139,7 +225,36 @@ class DatasetApiRequest(CommonSchema):
     id = search_fields.NumberField(
         _in='path', description='Dataset ID', example='447', required=True
     )
+    include = search_fields.StringField(
+        data_key='include',
+        description='Allow the client to customize which related resources should be returned in included section.',
+        allowEmptyValue=True,
+    )
+    use_rdf_db = search_fields.NoDataField()
 
+    class Meta:
+        strict = True
+        ordered = True
+
+
+class DatasetResourcesDownloadApiRequest(CommonSchema):
+
+    class Meta:
+        strict = True
+        ordered = True
+
+
+class RdfValidationRequest:
+    shacl = search_fields.StringField()
+
+
+class CatalogRdfApiRequest(DatasetApiSearchRequest, RdfValidationRequest):
+    class Meta:
+        strict = True
+        ordered = True
+
+
+class DatasetRdfApiRequest(DatasetApiRequest, RdfValidationRequest):
     class Meta:
         strict = True
         ordered = True
@@ -162,3 +277,4 @@ class CreateCommentAttrs(ObjectAttrs):
 class CreateCommentRequest(TopLevel):
     class Meta:
         attrs_schema = CreateCommentAttrs
+        attrs_schema_required = True

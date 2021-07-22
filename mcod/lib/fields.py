@@ -12,6 +12,7 @@ from marshmallow.validate import Validator
 from marshmallow_jsonapi.fields import Relationship as JSRelationship
 from marshmallow_jsonapi.utils import missing, get_value, tpl
 
+from mcod import settings
 from mcod.core.api.search import constants
 from mcod.lib import field_validators
 
@@ -45,7 +46,7 @@ def resolve_params(obj, params, default=missing):
 
 class OldRelationship(JSRelationship):
     def get_value(self, obj, attr, accessor=None, default=missing_):
-        _rel = getattr(obj, attr)
+        _rel = getattr(obj, attr, None)
         if isinstance(_rel, BaseManager):
             return _rel.all()
 
@@ -53,22 +54,25 @@ class OldRelationship(JSRelationship):
 
     def get_related_url(self, obj):
         if self.related_url:
-            params = resolve_params(obj, self.related_url_kwargs, default=self.default)
+            try:
+                params = resolve_params(obj, self.related_url_kwargs, default=self.default)
+            except AttributeError:
+                return None
             non_null_params = {
                 key: value for key, value in params.items()
                 if value is not None
             }
             if non_null_params:
-                attr = getattr(obj, self.data_key)
-                ret = {
-                    'href': self.related_url.format(**non_null_params),
-                }
+                attr = getattr(obj, self.attribute or self.data_key)
+                href = self.related_url.format(**non_null_params)
+                api_version = self.context.get('api_version')
+                href = '/{}{}'.format(api_version, href) if api_version else href
+                ret = {'href': href}
                 if self.many:
                     count = attr.count() if isinstance(attr, BaseManager) else len(attr)
                     ret['meta'] = {
                         'count': count
                     }
-
                 return ret
         return None
 
@@ -80,7 +84,7 @@ MISSING_ERROR_MESSAGE = (
 
 
 class TranslatedErrorsMixin(object):
-    def fail(self, key, **kwargs):
+    def make_error(self, key, **kwargs):
         try:
             msg = _(self.error_messages[key])
         except KeyError:
@@ -98,7 +102,7 @@ class TranslatedErrorsMixin(object):
             try:
                 r = validator(value)
                 if not isinstance(validator, Validator) and r is False:
-                    self.fail('validator_failed')
+                    self.make_error('validator_failed')
             except ValidationError as err:
                 kwargs.update(err.kwargs)
                 if isinstance(err.messages, dict):
@@ -119,8 +123,8 @@ class DataMixin:
 
 class SearchFieldMixin:
     @staticmethod
-    def _filter_empty(l):
-        return list(filter(lambda el: el != '', l))
+    def _filter_empty(filter_list):
+        return list(filter(lambda el: el != '', filter_list))
 
     def split_lookup_value(self, value, maxsplit=-1):
         return self._filter_empty(value.split(constants.SEPARATOR_LOOKUP_VALUE, maxsplit))
@@ -328,6 +332,16 @@ class FilteringFilterField(SearchFieldMixin, DataMixin, TranslatedErrorsMixin, f
 
             return queryset
 
+    def get_filter_onlist(self, value):
+        if isinstance(value, (list, tuple)):
+            __values = value
+        else:
+            __values = self.split_lookup_value(value)
+        must = []
+        for value in list(set(__values)):
+            must.append(Q('term', **{self._name: value}))
+        return Q('bool', must=must)
+
     def get_filter_term(self, value):
         return Q('term', **{self._name: value})
 
@@ -522,7 +536,7 @@ class SearchFilterField(SearchFieldMixin, DataMixin, TranslatedErrorsMixin, fiel
                     queries.append(
                         Q("match", **{field_key: {
                             'query': search_term,
-                            'fuzziness': 2,
+                            'fuzziness': 'AUTO',
                             'fuzzy_transpositions': True
                         }})
                     )
@@ -538,23 +552,24 @@ class SearchFilterField(SearchFieldMixin, DataMixin, TranslatedErrorsMixin, fiel
         return __queries
 
     def construct_translated_search(self, data):
-        lang = get_language()
         __queries = []
         for search_term in data:
             for field in self.search_i18n_fields:
-                field_key = f"{field}.{lang}"
-                queries = [
-                    Q("match", **{field_key: {
-                        'query': search_term,
-                        'fuzziness': 2,
-                        'fuzzy_transpositions': True
-                    }}),
-                    Q("match", **{field_key + ".asciied": {
-                        'query': search_term,
-                        'fuzziness': 2,
-                        'fuzzy_transpositions': True
-                    }}),
-                ]
+                queries = []
+                for lang in settings.MODELTRANS_AVAILABLE_LANGUAGES:
+                    field_key = f"{field}.{lang}"
+                    queries += [
+                        Q("match", **{field_key: {
+                            'query': search_term,
+                            'fuzziness': 'AUTO',
+                            'fuzzy_transpositions': True
+                        }}),
+                        Q("match", **{field_key + ".asciied": {
+                            'query': search_term,
+                            'fuzziness': 'AUTO',
+                            'fuzzy_transpositions': True
+                        }}),
+                    ]
 
                 __queries.append(
                     Q(
@@ -569,7 +584,7 @@ class SearchFilterField(SearchFieldMixin, DataMixin, TranslatedErrorsMixin, fiel
         # Initial kwargs for the match query
         field_kwargs = {field: {
             'query': value,
-            'fuzziness': 2,
+            'fuzziness': 'AUTO',
             'fuzzy_transpositions': True,
         }}
         # In case if we deal with structure 2

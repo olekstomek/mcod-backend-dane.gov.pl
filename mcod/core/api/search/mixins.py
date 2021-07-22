@@ -20,7 +20,7 @@ class ESQueryFieldMixin(object):
 
 class ESFilterGTIntMixin(ESQueryFieldMixin):
     @pre_load
-    def max_value(self, data):
+    def max_value(self, data, **kwargs):
         return data
 
     def make_es_queryset(self, queryset, data):

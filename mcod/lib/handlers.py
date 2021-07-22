@@ -5,8 +5,8 @@ from elasticsearch import TransportError
 from falcon.util import to_query_str
 
 from mcod import settings
-from mcod.histories.models import History
 from mcod.core.api.parsers import Parser
+from mcod.watchers.models import Subscription
 
 
 class BaseHandler:
@@ -35,6 +35,16 @@ class BaseHandler:
     def _metadata(self, request, data, *args, **kwargs):
         ms = getattr(self, 'meta_serializer', None)
         meta = ms.dump(data) if ms else {}
+        usr = getattr(request, 'user', None)
+        if usr and usr.is_authenticated:
+            try:
+                subscription = Subscription.objects.get_from_data(usr, {
+                    'object_name': 'query',
+                    'object_ident': request.url
+                }, headers=request.headers)
+                meta['subscription_url'] = subscription.api_url
+            except Subscription.DoesNotExist:
+                pass
 
         meta.update(
             {
@@ -92,7 +102,8 @@ class ListHandler(BaseHandler):
 class SearchHandler(ListHandler):
     def _data(self, request, cleaned, *args, **kwargs):
         queryset = self._get_queryset(cleaned, *args, **kwargs)
-        return self._search(queryset, cleaned, *args, **kwargs)
+        result = self._search(queryset, cleaned, *args, **kwargs)
+        return result
 
     def _queryset(self, cleaned, *args, **kwargs):
         queryset = self.search_document.search()
@@ -124,14 +135,6 @@ class RetrieveOneHandler(BaseHandler):
         try:
             return model.objects.get(pk=id)
         except model.DoesNotExist:
-            raise falcon.HTTPNotFound
-
-
-class RetrieveHistoryHandler(BaseHandler):
-    def _clean(self, request, id, *args, **kwargs):
-        try:
-            return History.objects.filter(table_name=self.table_name, row_id=id).order_by('-id')
-        except History.DoesNotExist:
             raise falcon.HTTPNotFound
 
 

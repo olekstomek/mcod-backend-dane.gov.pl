@@ -1,36 +1,34 @@
-from time import sleep
-
+from falcon import HTTP_OK, HTTP_NOT_FOUND
+from pytest_bdd import scenarios
 import pytest
-from falcon import HTTP_201, HTTP_405
-
-from mcod.suggestions.models import Suggestion
 
 
-@pytest.mark.django_db
-def test_suggestion_create(client14):
-    assert len(Suggestion.objects.all()) == 0
-    resp = client14.simulate_post(
-        path=f'/submissions',
-        json={
-            "data": {
-                "type": "submission",
-                "attributes": {
-                    "notes": "123"
-                }
-            }
-        }
-    )
-
-    assert resp.status == HTTP_201
-    sleep(2)
-    assert len(Suggestion.objects.all()) == 1
-    assert Suggestion.objects.last().notes == "123"
+scenarios('features/accepteddatasetsubmission_list_api.feature')
 
 
-@pytest.mark.django_db
-def test_suggestion_get_is_not_allowed(client14):
-    resp = client14.simulate_get(
-        path=f'/submissions'
-    )
+@pytest.mark.elasticsearch
+def test_only_published_accepted_submission_in_public_list_view(
+        public_accepted_dataset_submission, accepted_dataset_submission, client14):
+    resp = client14.simulate_get('/submissions/accepted/public')
+    assert HTTP_OK == resp.status
+    assert len(resp.json['data']) == 1
+    assert resp.json['data'][0]['attributes']['title'] == 'public test title'
+    assert resp.json.get("jsonapi")
 
-    assert resp.status == HTTP_405
+
+@pytest.mark.elasticsearch
+def test_published_accepted_submission_in_public_details_view(
+        public_accepted_dataset_submission, client14):
+    obj_id = public_accepted_dataset_submission.pk
+    resp = client14.simulate_get(f'/submissions/accepted/public/{obj_id}')
+    assert HTTP_OK == resp.status
+    assert resp.json['data']['attributes']['title'] == 'public test title'
+    assert resp.json.get("jsonapi")
+
+
+@pytest.mark.elasticsearch
+def test_unpublished_accepted_submission_not_in_public_details_view(
+        accepted_dataset_submission, client14):
+    obj_id = accepted_dataset_submission.pk
+    resp = client14.simulate_get(f'/submissions/accepted/public/{obj_id}')
+    assert HTTP_NOT_FOUND == resp.status

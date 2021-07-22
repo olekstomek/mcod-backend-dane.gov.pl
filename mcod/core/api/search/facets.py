@@ -17,3 +17,7 @@ class NestedFacet(Facet):
         inner_q = self._inner.add_filter(filter_values)
         if inner_q:
             return Q('nested', path=self._path, query=inner_q)
+
+
+class FilterFacet(Facet):
+    agg_type = 'filter'

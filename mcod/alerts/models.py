@@ -59,6 +59,10 @@ class Alert(StatusModel, TimeStampedModel):
 
     i18n = TranslationField(fields=("title", "description"), required_languages=("pl",))
 
+    @classmethod
+    def accusative_case(cls):
+        return _("acc: Alert")
+
     class Meta:
         verbose_name = _("Alert")
         verbose_name_plural = _("Alerts")

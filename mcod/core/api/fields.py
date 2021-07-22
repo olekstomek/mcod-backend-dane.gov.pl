@@ -3,17 +3,19 @@ import binascii
 import functools
 import inspect
 import operator
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 from functools import partial
 
 import markdown2
 from django.template import loader
-from django.utils.translation import gettext as _
-from marshmallow import fields, missing
+from django.utils.translation import gettext_lazy as _
+from marshmallow import fields, missing, ValidationError
 from marshmallow import utils
 from marshmallow.orderedset import OrderedSet
 
 from mcod.core import utils as api_utils
+from mcod.unleash import is_enabled
+
 
 BEFORE_DESERIALIZE = 'before_deserialize'
 BEFORE_SERIALIZE = 'before_serialize'
@@ -87,6 +89,11 @@ class ExtendedFieldMeta(type):
 
 
 class ExtendedFieldMixin(metaclass=ExtendedFieldMeta):
+
+    def __init__(self, *args, is_tabular_data_field=False, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.is_tabular_data_field = is_tabular_data_field
+
     @property
     def _missing(self):
         return missing
@@ -124,16 +131,16 @@ class ExtendedFieldMixin(metaclass=ExtendedFieldMeta):
         return getattr(self, 'many', False)
 
     @property
-    def _container(self):
-        return getattr(self, 'container', None)
+    def _inner(self):
+        return getattr(self, 'inner', None)
 
     @property
-    def _value_container(self):
-        return getattr(self, 'value_container', None)
-
-    @property
-    def _schema(self):
+    def __schema(self):
         return getattr(self, 'schema', None)
+
+    @property
+    def _value_field(self):
+        return getattr(self, 'value_field', None)
 
     @property
     def _name(self):
@@ -144,6 +151,10 @@ class ExtendedFieldMixin(metaclass=ExtendedFieldMeta):
         ret = self._prepare_openapi_property()
         ret['type'] = 'string'
         return ret
+
+    @property
+    def _doc_template(self):
+        return None
 
     def __to_choices(self):
         attributes = {}
@@ -168,9 +179,9 @@ class ExtendedFieldMixin(metaclass=ExtendedFieldMeta):
         validators = [
             validator for validator in self._validators
             if (
-                    hasattr(validator, 'min') and
-                    hasattr(validator, 'max') and
-                    not hasattr(validator, 'equal')
+                hasattr(validator, 'min') and
+                hasattr(validator, 'max') and
+                not hasattr(validator, 'equal')
             )
         ]
 
@@ -200,9 +211,9 @@ class ExtendedFieldMixin(metaclass=ExtendedFieldMeta):
         validators = [
             validator for validator in self._validators
             if (
-                    hasattr(validator, 'min') and
-                    hasattr(validator, 'max') and
-                    hasattr(validator, 'equal')
+                hasattr(validator, 'min') and
+                hasattr(validator, 'max') and
+                hasattr(validator, 'equal')
             )
         ]
 
@@ -307,13 +318,13 @@ class ExtendedFieldMixin(metaclass=ExtendedFieldMeta):
             if 'style' in meta:
                 attributes['style'] = meta['style']
 
-        doc_template = meta.get('doc_template') or None
+        doc_template = meta.get('doc_template') or self._doc_template or None
         if doc_template:
             template = loader.get_template(doc_template)
             description = template.render(self.metadata).strip()
 
         else:
-            description = meta.get('description', self._schema.__doc__) or None
+            description = meta.get('description', self.__schema.__doc__) or None
 
         if description:
             attributes['description'] = markdown2._dedent(description)
@@ -380,6 +391,21 @@ class ExtendedFieldMixin(metaclass=ExtendedFieldMeta):
     def validate_after_deserialize(self, output=None):
         return output
 
+    def _get_value(self, value, attr, obj, **kwargs):
+        return value.val if hasattr(value, 'repr') and hasattr(value, 'val') else value
+
+    def _is_not_serialized(self, value):
+        return bool(isinstance(self, (Date, DateTime, Time)) and isinstance(value, str))
+
+    def _serialize(self, value, attr, obj, **kwargs):
+        if self.is_tabular_data_field:
+            _val = self._get_value(value, attr, obj, **kwargs)
+            ret = _val if self._is_not_serialized(_val) else super()._serialize(_val, attr, obj, **kwargs)
+            _repr = getattr(value, 'repr', ret) or ''
+            return {'repr': _repr, 'val': ret} if is_enabled('S16_special_signs.be') else ret
+
+        return value if self._is_not_serialized(value) else super()._serialize(value, attr, obj, **kwargs)
+
 
 class Field(ExtendedFieldMixin, fields.Field):
     pass
@@ -412,7 +438,7 @@ class Nested(ExtendedFieldMixin, fields.Nested):
                 else:
                     ret.update(ref_schema)
         else:
-            schema_dict = self._schema.doc_schema
+            schema_dict = self.schema.doc_schema
             if ret and '$ref' in schema_dict:
                 ret.update({'allOf': [schema_dict, ]})
             else:
@@ -429,7 +455,7 @@ class List(ExtendedFieldMixin, fields.List):
     def openapi_property(self):
         ret = self._prepare_openapi_property()
         ret['type'] = 'array'
-        ret['items'] = self._container.openapi_property
+        ret['items'] = self._inner.openapi_property
         return ret
 
 
@@ -443,8 +469,8 @@ class Dict(ExtendedFieldMixin, fields.Dict):
         ret = self._prepare_openapi_property()
         ret['type'] = 'object'
         ret['nullable'] = self._metadata.get('nullable', False)
-        if self._value_container:
-            ret['additionalProperties'] = self._value_container.openapi_property
+        if self._value_field:
+            ret['additionalProperties'] = self._value_field.openapi_property
         return ret
 
 
@@ -458,7 +484,7 @@ class String(ExtendedFieldMixin, fields.String):
     @before_deserialize
     def validate_if_not_list(self, value=None, attr=None, data=None):
         if isinstance(value, (list, set)):
-            self.fail('invalid_multiple_values')
+            self.make_error('invalid_multiple_values')
         return value, attr, data
 
 
@@ -470,16 +496,16 @@ class Base64String(ExtendedFieldMixin, fields.String):
 
     @before_deserialize
     def validate_data(self, value=None, attr=None, data=None):
-        data = value.split(';base64,')[-1].encode('utf-8')
+        _data = value.split(';base64,')[-1].encode('utf-8')
         max_size = self.metadata.get('max_size', 0)
         try:
-            data = base64.b64decode(data)
+            base64.b64decode(_data)
         except binascii.Error:
-            self.fail(self.base64_error)
-        if self.max_size:
+            self.make_error('invalid_base64')
+        if max_size:
             if len(data) > max_size:
-                self.fail(self.length_error)
-        return value
+                self.make_error('too_long')
+        return value, attr, data
 
 
 class UUID(ExtendedFieldMixin, fields.UUID):
@@ -592,7 +618,7 @@ class Date(ExtendedFieldMixin, fields.Date):
     def openapi_property(self):
         ret = self._prepare_openapi_property()
         ret['type'] = 'string'
-        ret['format'] = 'date'
+        # ret['format'] = 'date'
         return ret
 
 
@@ -645,6 +671,69 @@ class Function(ExtendedFieldMixin, fields.Function):
 
 class Constant(ExtendedFieldMixin, fields.Constant):
     pass
+
+
+BBoxTuple = namedtuple('BBox', ('min_lon', 'max_lat', 'max_lon', 'min_lat', 'divider', 'agg_size'))
+
+
+class BoundingBox(Field):
+    @staticmethod
+    def bbox(value):
+        if isinstance(value, str):
+            values = value.split(',')
+            coords = (float(val) for val in values[:4])
+            divider = int(values[4]) if len(values) > 4 else 3
+            agg_size = int(values[5]) if len(values) > 5 else 8
+            return BBoxTuple(*coords, divider, agg_size)
+
+    @before_deserialize
+    def validate_bbox(self, value=None, attr=None, data=None):
+        try:
+            bbox = self.bbox(value)
+        except ValueError:
+            raise ValidationError('bbox parameter should contain 4 float values separated by commas')
+        if bbox:
+            for longitude in (bbox.min_lon, bbox.max_lon):
+                if longitude < -180 or longitude > 180:
+                    raise ValidationError('longitude out of range')
+
+            for latitude in (bbox.min_lat, bbox.max_lat):
+                if latitude < -90 or latitude > 90:
+                    raise ValidationError('latitude out of range')
+
+            if bbox.min_lat >= bbox.max_lat:
+                raise ValidationError('invalid latitude range')
+
+            if bbox.divider < 2 or bbox.divider > 4:
+                raise ValidationError('invalid tile divider range')
+
+        return value, attr, data
+
+
+class GeoDistance(Field):
+    @before_deserialize
+    def validate_geodist(self, value=None, attr=None, data=None):
+        try:
+            lon, lat, distance = value.split(',')
+        except ValueError:
+            raise ValidationError('dist parameter should contain 3 values separated by commas')
+        try:
+            lon, lat = float(lon), float(lat)
+        except ValueError:
+            raise ValidationError('wrong number notation for longitude or latitude')
+
+        if lon < -180 or lon > 180:
+            raise ValidationError('longitude out of range')
+        if lat < -90 or lat > 90:
+            raise ValidationError('latitude out of range')
+        if not distance.endswith(('km', 'm')):
+            raise ValidationError('Unsupported distance unit')
+        try:
+            float(distance.rstrip('km'))
+        except ValueError:
+            raise ValidationError('wrong number notation for distance')
+
+        return value, attr, data
 
 
 # Aliases

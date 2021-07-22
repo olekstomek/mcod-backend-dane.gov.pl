@@ -1,62 +1,82 @@
-"""mcod URL Configuration
-
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/2.0/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
-"""
 from django.conf import settings
+from django.conf.urls import include
 from django.conf.urls.static import static
 from django.contrib import admin
-from django.urls import path, include
-
+from django.urls import path, re_path
+from django.apps import apps
+from django.contrib.staticfiles.urls import staticfiles_urlpatterns
+from django.views.generic.base import TemplateView
+from wagtail.admin import urls as wagtailadmin_urls
+from wagtail.documents import urls as wagtaildocs_urls
+from wagtail.documents.api.v2.views import DocumentsAPIViewSet
+from bokeh.server.django import static_extensions
+from mcod.cms.views import revisions_view
 from mcod.datasets.views import DatasetAutocompleteAdminView
-from mcod.organizations.views import InstitutionAutocompleteAdminView
-from mcod.users.views import UserAutocomplete, AdminAutocomplete
+from mcod.organizations.views import InstitutionAutocompleteAdminView, InstitutionTypeAdminView
+from mcod.users.views import AdminAutocomplete, CustomAdminLoginView
+from mcod.cms import urls as cms_urls
+from mcod.cms.api.router import CmsApiRouter
+from mcod.cms.api.views import CmsPagesViewSet, ImagesViewSet
 
-admin.site.site_header = "Otwarte Dane"
-admin.site.site_title = "Otwarte Dane"
-admin.site.index_title = "Otwarte Dane"
+panel_app_config = apps.get_app_config('mcod.pn_apps')
 
-urlpatterns = [
-    path('i18n/', include('django.conf.urls.i18n')),
-    path('nested_admin/', include('nested_admin.urls')),
-    path('ckeditor/', include('ckeditor_uploader.urls')),
+urlpatterns = []
 
-]
+if settings.COMPONENT == 'cms':
+    api_router = CmsApiRouter('cmsapi')
+    api_router.register_endpoint('pages', CmsPagesViewSet)
+    api_router.register_endpoint('images', ImagesViewSet)
+    api_router.register_endpoint('documents', DocumentsAPIViewSet)
 
-urlpatterns += (
-    path(
-        'organization-autocomplete/',
-        InstitutionAutocompleteAdminView.as_view(),
-        name='organization-autocomplete',
-    ),
-    path(
-        'dataset-autocomplete/',
-        DatasetAutocompleteAdminView.as_view(),
-        name='dataset-autocomplete',
-    ),
-    path(
-        'user-autocomplete/',
-        UserAutocomplete.as_view(),
-        name='user-autocomplete',
-    ),
-    path(
-        'admin-autocomplete/',
-        AdminAutocomplete.as_view(),
-        name='admin-autocomplete',
-    ),
+    urlpatterns += [
+        re_path(r'^documents/', include(wagtaildocs_urls)),
+        re_path(r'^api/', api_router.urls),
+        re_path(r'^hypereditor/', include('hypereditor.urls')),
+        re_path(r'^admin/pages/(\d+)/revisions/(\d+)/view/$', revisions_view, name='revisions_view'),
+        re_path(r'^admin/', include(wagtailadmin_urls)),
+        re_path(
+            r'^robots.txt',
+            TemplateView.as_view(template_name="admin/robots.txt", content_type="text/plain"),
+        ),
+        re_path(r'', include(cms_urls)),
+    ]
+    urlpatterns += static(settings.IMAGES_URL, document_root=settings.IMAGES_MEDIA_ROOT)
+else:
+    urlpatterns += [
+        path('nested_admin/', include('nested_admin.urls')),
+        path('ckeditor/', include('ckeditor_uploader.urls')),
+        path(
+            'organization-type/',
+            InstitutionTypeAdminView.as_view(),
+            name='organization-type',
+        ),
+        path(
+            'organization-autocomplete/',
+            InstitutionAutocompleteAdminView.as_view(),
+            name='organization-autocomplete',
+        ),
+        path(
+            'dataset-autocomplete/',
+            DatasetAutocompleteAdminView.as_view(),
+            name='dataset-autocomplete',
+        ),
+        path(
+            'admin-autocomplete/',
+            AdminAutocomplete.as_view(),
+            name='admin-autocomplete',
+        ),
+        path('i18n/', include('django.conf.urls.i18n')),
+        path('login/', CustomAdminLoginView.as_view(), name='login'),
+        path('', admin.site.urls, name='admin'),
+        # Non-admin urls
+        path('pn-apps/', include('mcod.pn_apps.urls')),
+        path(
+            'robots.txt',
+            TemplateView.as_view(template_name="admin/robots.txt", content_type="text/plain"),
+        ),
+    ]
+    urlpatterns += staticfiles_urlpatterns()
 
-    path('', admin.site.urls, name='admin'),
-)
-
-urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+urlpatterns += static_extensions()
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

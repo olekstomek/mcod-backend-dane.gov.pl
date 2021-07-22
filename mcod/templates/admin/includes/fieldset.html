@@ -1,4 +1,6 @@
-{% load suit_tags %}
+{% load suit_tags core_tags %}
+{% is_unleash_enabled "S21_admin_ui_changes.be" as ui_changes_flag %}
+{% with ui_changes=ui_changes_flag %}
 <fieldset class="module aligned{{ fieldset.name|yesno:' with-legend, first' }} {{ fieldset.classes }}">
     {% if fieldset.name %}
         <h2 class="legend">{{ fieldset.name }}
@@ -12,13 +14,29 @@
             {% for field in line %}
                 {% spaceless %}
 
+
+                    {# For single field errors#}
+                    {% if singlefield and line.errors and 'maps_and_plots' in line.fields %}
+                        <div class="alert alert-error">{{ line.errors }}</div>
+                    {% endif %}
+
                     {# write special control tags only for first multi field #}
                     {% if forloop.first %}
                         <div{% if not singlefield %}
                             class="field-box{% if field.field.name %} field-{{ field.field.name }}{% endif %}"{% endif %}>
 
-                        <div class="control-label">
-                            {{ field.label_tag }}
+                        <div class="control-label{% if field.is_readonly %} readonly-control-label{% endif %}">
+                            {% if not field.field.is_hidden %}
+                                {% if ui_changes %}
+                                {% if field.field.name == 'is_chart_creation_blocked' %}
+                                    {{ field.label_tag|cut:":"|add_required_span_tag }}
+                                {% else %}
+                                    {{ field.label_tag|add_required_span_tag }}
+                                {% endif %}
+                                {% else %}
+                                {{ field.label_tag }}
+                                {% endif %}
+                            {% endif %}
                         </div>
                         <div class="controls">
                         {# if multi-fields and first field #}
@@ -30,7 +48,9 @@
                         {% if not singlefield and not forloop.first %}
                             <div class="multi-field-box{{ field.errors|yesno:' error,' }}">
                         {% endif %}
-                        {{ field.label_tag }}
+                        {% if not field.field.is_hidden %}
+                            {{ field.label_tag }}
+                        {% endif %}
                     {% endif %}
 
                 {% if not field.is_readonly and field.errors %}
@@ -48,7 +68,8 @@
                 {% endif %}
 
                 {# For single field errors#}
-                {% if singlefield and line.errors %}
+
+                {% if singlefield and line.errors and 'maps_and_plots' not in line.fields %}
                     <span class="help-inline">{{ line.errors }}</span>
                 {% endif %}
 
@@ -84,3 +105,4 @@
 {% if 'plugin-holder' in fieldset.classes %}
     <hr class="plugin-holder-separator">
 {% endif %}
+{% endwith %}

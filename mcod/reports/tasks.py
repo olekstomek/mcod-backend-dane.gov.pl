@@ -6,17 +6,26 @@ import os
 from collections import OrderedDict
 from pathlib import Path
 
-from celery import shared_task, task
+from celery import shared_task, chord
 from celery.signals import task_prerun, task_failure, task_success
 from django.apps import apps
 from django.contrib.auth import get_user_model
 from django.db import connection
+from django.db.models import Count, Q, F
 from django.utils.timezone import now
+from django.utils.translation import get_language
 from django_celery_results.models import TaskResult
 
 from mcod import settings
+from mcod.applications.serializers import ApplicationProposalCSVSerializer
+from mcod.celeryapp import app
 from mcod.core.serializers import csv_serializers_registry as csr
+from mcod.core.utils import save_as_csv
+from mcod.datasets.models import Dataset
+from mcod.resources.models import Resource
+from mcod.resources.tasks import validate_link
 from mcod.reports.models import Report, SummaryDailyReport
+from mcod.suggestions.serializers import DatasetSubmissionCSVSerializer
 
 User = get_user_model()
 logger = logging.getLogger('mcod')
@@ -27,20 +36,19 @@ def generate_csv(pks, model_name, user_id, file_name_postfix):
     app, _model = model_name.split('.')
     model = apps.get_model(app, _model)
     serializer_cls = csr.get_serializer(model)
+    if _model == 'ApplicationProposal':  # TODO: how to register it in csr?
+        serializer_cls = ApplicationProposalCSVSerializer
+    elif _model == 'DatasetSubmission':  # TODO: how to register it in csr?
+        serializer_cls = DatasetSubmissionCSVSerializer
 
     if not serializer_cls:
         raise Exception('Cound not find serializer for model %s' % model_name)
 
     serializer = serializer_cls(many=True)
-    headers = []
-    for field_name, field in serializer.fields.items():
-        header = field.data_key or field_name
-        headers.append(header)
     queryset = model.objects.filter(pk__in=pks)
     data = serializer_cls(many=True).dump(queryset)
     user = User.objects.get(pk=user_id)
-    file_name = '{}_{}.csv'.format(app, file_name_postfix)
-
+    file_name = f'{_model.lower()}s_{file_name_postfix}.csv'
     reports_path = os.path.join(settings.REPORTS_MEDIA_ROOT, app)
     os.makedirs(reports_path, exist_ok=True)
 
@@ -48,10 +56,7 @@ def generate_csv(pks, model_name, user_id, file_name_postfix):
     file_url_path = f'{settings.REPORTS_MEDIA}/{app}/{file_name}'
 
     with open(file_path, 'w') as f:
-        writer = csv.DictWriter(f, delimiter=';', fieldnames=headers)
-        writer.writeheader()
-        for rowdict in data:
-            writer.writerow(rowdict)
+        save_as_csv(f, serializer.get_csv_headers(), data)
 
     return json.dumps({
         'model': model_name,
@@ -59,6 +64,70 @@ def generate_csv(pks, model_name, user_id, file_name_postfix):
         'date': now().strftime('%Y.%m.%d %H:%M'),
         'user_email': user.email
     })
+
+
+@shared_task
+def create_no_resource_dataset_report():
+    logger.debug('Running create_no_resource_dataset_report task.')
+    app = 'datasets'
+    file_name_postfix = now().strftime('%Y%m%d%H%M%S.%s')
+    queryset =\
+        Dataset.objects.annotate(
+            all_resources=Count('resources__pk'),
+            unpublished_resources=Count('resources__pk', filter=Q(resources__status='draft'))
+        ).filter(Q(resources__isnull=True) | Q(all_resources=F('unpublished_resources')), status='published').distinct()
+    serializer_cls = csr.get_serializer(Dataset)
+    serializer = serializer_cls(many=True)
+    data = serializer.dump(queryset)
+    file_name = f'nodata_datasets_{file_name_postfix}.csv'
+    reports_path = os.path.join(settings.REPORTS_MEDIA_ROOT, app)
+    os.makedirs(reports_path, exist_ok=True)
+
+    file_path = os.path.join(reports_path, file_name)
+    file_url_path = f'{settings.REPORTS_MEDIA}/{app}/{file_name}'
+    with open(file_path, 'w') as f:
+        save_as_csv(f, serializer.get_csv_headers(), data)
+    return json.dumps({
+        'file': file_url_path,
+        'model': 'datasets.Dataset'
+    })
+
+
+def create_resource_link_validation_report():
+    app = 'resources'
+    file_name_postfix = now().strftime('%Y%m%d%H%M%S.%s')
+    queryset =\
+        Resource.objects.filter(
+            status='published', link__isnull=False, link_tasks_last_status='FAILURE'
+        ).exclude(Q(link__startswith=settings.API_URL) | Q(link__startswith=settings.BASE_URL))
+    serializer_cls = csr.get_serializer(Resource)
+    excluded_fields =\
+        ['link_is_valid', 'file_is_valid', 'data_is_valid', 'format', 'status',
+         'openness_score', 'views_count', 'downloads_count']
+    serializer = serializer_cls(many=True, exclude=excluded_fields)
+    data = serializer.dump(queryset)
+    file_name = f'brokenlinks_resources_{file_name_postfix}.csv'
+    reports_path = os.path.join(settings.REPORTS_MEDIA_ROOT, app)
+    os.makedirs(reports_path, exist_ok=True)
+
+    file_path = os.path.join(reports_path, file_name)
+    file_url_path = f'{settings.REPORTS_MEDIA}/{app}/{file_name}'
+    with open(file_path, 'w') as f:
+        save_as_csv(f, serializer.get_csv_headers(), data)
+    return json.dumps({
+        'file': file_url_path,
+        'model': 'resources.Resource'
+    })
+
+
+@shared_task
+def link_validation_success_callback():
+    return create_resource_link_validation_report()
+
+
+@shared_task
+def link_validation_error_callback():
+    return create_resource_link_validation_report()
 
 
 @task_prerun.connect(sender=generate_csv)
@@ -78,7 +147,39 @@ def append_report_task(sender, task_id, task, signal, **kwargs):
         )
         report.save()
     except Exception as e:
-        logger.error(f"reports.task: sexception on append_report_task:\n{e}")
+        logger.error(f"reports.task: exception on append_report_task:\n{e}")
+
+
+@task_success.connect(sender=link_validation_success_callback)
+@task_success.connect(sender=link_validation_error_callback)
+@task_success.connect(sender=create_no_resource_dataset_report)
+def generating_monthly_report_success(sender, result, **kwargs):
+    try:
+        result_dict = json.loads(result)
+        logger.info(f"reports.task: report generated: {result_dict.get('file')}")
+
+        result_task = TaskResult.objects.get_task(sender.request.id)
+        result_task.result = result
+        result_task.status = 'SUCCESS'
+        result_task.save()
+        result_dict['task'] = result_task
+        Report.objects.create(**result_dict)
+    except Exception as e:
+        logger.error(f"reports.task: exception on generating_monthly_report_success:\n{e}")
+
+
+@shared_task
+def validate_resources_links(ids=None):
+    if ids:
+        resources_ids = ids
+    else:
+        resources_ids = list(Resource.objects.filter(
+            status='published', link__isnull=False
+        ).exclude(Q(link__startswith=settings.API_URL) | Q(link__startswith=settings.BASE_URL)
+                  ).values_list('pk', flat=True))
+    subtasks = [validate_link.s(res_id) for res_id in resources_ids]
+    callback = link_validation_success_callback.si().on_error(link_validation_error_callback.si())
+    chord(subtasks, callback).apply_async()
 
 
 @task_success.connect(sender=generate_csv)
@@ -100,6 +201,8 @@ def generating_report_success(sender, result, **kwargs):
 
 
 @task_failure.connect(sender=generate_csv)
+@task_failure.connect(sender=create_no_resource_dataset_report)
+@task_failure.connect(sender=validate_resources_links)
 def generating_report_failure(sender, task_id, exception, args, traceback, einfo, signal, **kwargs):
     logger.debug(f"generating report failed with:\n{exception}")
     try:
@@ -116,7 +219,7 @@ def dict_fetch_all(cursor):
     return [OrderedDict(zip(columns, row)) for row in cursor.fetchall()]
 
 
-@task
+@app.task
 def create_daily_resources_report():
     str_date = datetime.datetime.now().strftime('%Y_%m_%d_%H%M')
 
@@ -150,11 +253,11 @@ def create_daily_resources_report():
 
     for r in results:
         if r['id_zasobu']:
-            r['link_zasobu'] = f"{settings.BASE_URL}/dataset/{r['id_zbioru_danych']}/resource/{r['id_zasobu']}"
+            r['link_zasobu'] = f"{settings.BASE_URL}/{get_language()}/dataset/{r['id_zbioru_danych']}/resource/{r['id_zasobu']}"
         if r['id_zbioru_danych']:
-            r['link_zbioru'] = f"{settings.BASE_URL}/dataset/{r['id_zbioru_danych']}"
+            r['link_zbioru'] = f"{settings.BASE_URL}/{get_language()}/dataset/{r['id_zbioru_danych']}"
         if r['id_instytucji']:
-            r['link_instytucji'] = f"{settings.BASE_URL}/institution/{r['id_instytucji']}"
+            r['link_instytucji'] = f"{settings.BASE_URL}/{get_language()}/institution/{r['id_instytucji']}"
 
     os.makedirs(Path(settings.REPORTS_MEDIA_ROOT, 'daily'), exist_ok=True)
     file_path = Path(settings.REPORTS_MEDIA[1:], 'daily', f'Zbiorczy_raport_dzienny_{str_date}.csv')

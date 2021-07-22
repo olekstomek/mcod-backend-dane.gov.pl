@@ -1,0 +1,94 @@
+{% if 'agent_organizations' in adminform.form.fields %}
+<script type="text/javascript">
+    function toggle_is_agent_opts() {
+        if ($('input[name=is_agent_opts]:checked').val() == 'new') {
+            $('div.field-from_agent').hide();
+            $('div.field-agent_organizations, div.field-agent_organization_main').show();
+        } else if ($('input[name=is_agent_opts]:checked').val() == 'from_agent') {
+            $('div.field-agent_organizations, div.field-agent_organization_main').hide();
+            $('div.field-from_agent').show();
+        }
+        if ($('#id_is_agent').prop('checked') === false) {
+            $('div.field-agent_organizations, div.field-agent_organization_main, div.field-from_agent').hide();
+        }
+    }
+
+    $(document).ready(function () {
+        {% if not adminform.form.agent_organizations.errors %}
+        if($('#id_is_agent').prop('checked') === false) {
+            $('div.field-is_agent_opts, div.field-from_agent, div.field-agent_organizations, div.field-agent_organization_main, div.field-extra_agents_list').hide();
+        }
+        {% endif %}
+        if($('#id_is_agent').prop('checked') === true) {
+            $('div.field-extra_agent_of').hide();
+            toggle_is_agent_opts();
+        }
+        {% if not adminform.form.organizations.errors %}
+        if($('#id_is_staff').prop('checked') === false) {
+            $('div.field-organizations').hide();
+        }
+        {% endif %}
+
+        {% if adminform.form.from_agent.errors %}
+        $('div.field-from_agent').show();
+        {% endif %}
+
+    $('#id_is_staff').change(function(){
+        if($(this).is(":checked")) {
+            $('div.field-organizations').show();
+        } else {
+            $('div.field-organizations').hide();
+        }
+    });
+
+    $('#id_is_agent').change(function(){
+        if($(this).is(":checked")) {
+            $('div.field-is_agent_opts, div.field-from_agent, div.field-agent_organizations, div.field-agent_organization_main, div.field-extra_agents_list').show();
+            $('div.field-extra_agent_of').hide();
+        } else {
+            $('div.field-is_agent_opts, div.field-from_agent, div.field-agent_organizations, div.field-agent_organization_main, div.field-extra_agents_list').hide();
+            $('div.field-extra_agent_of').show();
+        }
+        toggle_is_agent_opts();
+    });
+    $('input[type=radio][name=is_agent_opts]').change(function() {
+        toggle_is_agent_opts();
+    });
+    $('#id_agent_organization_main').data('prevOrganizationId', $('#id_agent_organization_main').val());
+    $('#id_agent_organization_main').data('prevOrganizationText', $('#id_agent_organization_main').text());
+    $('#id_agent_organization_main').change(function() {
+        var prevOrganizationId = $(this).data('prevOrganizationId');
+        var prevOrganizationText = $(this).data('prevOrganizationText');
+        var aom = $('#id_agent_organization_main').select2('data')[0];
+        var organizations = [];
+        $('#id_agent_organizations_to option').each(function(){
+            organizations.push($(this).val());
+        });
+        if (prevOrganizationId && prevOrganizationText) {
+            $('#id_agent_organizations_to').find('option[value=' + prevOrganizationId + ']').remove();
+            if (SelectBox.cache_contains('id_agent_organizations_to', prevOrganizationId)) {
+                SelectBox.add_to_cache('id_agent_organizations_from', {
+                    value: prevOrganizationId,
+                    text: prevOrganizationText,
+                    displayed: 1
+                });
+                SelectBox.delete_from_cache('id_agent_organizations_to', prevOrganizationId);
+                SelectBox.redisplay('id_agent_organizations_from');
+                SelectBox.redisplay('id_agent_organizations_to');
+            }
+        }
+        if (aom.id && organizations.indexOf(aom.id) == -1) {
+            $('#id_agent_organizations_to').append($('<option>', {value: aom.id, text: aom.text}));
+            if (SelectBox.cache_contains('id_agent_organizations_from', aom.id)) {
+                SelectBox.add_to_cache('id_agent_organizations_to', {value: aom.id, text: aom.text, displayed: 1});
+                SelectBox.delete_from_cache('id_agent_organizations_from', aom.id);
+                SelectBox.redisplay('id_agent_organizations_from');
+                SelectBox.redisplay('id_agent_organizations_to');
+            }
+            $(this).data('prevOrganizationId', aom.id);
+            $(this).data('prevOrganizationText', aom.text);
+        }
+    });
+});
+</script>
+{% endif %}

@@ -1,14 +1,12 @@
-import pytest
 import re
 from django.test import Client
 from django.conf import settings
 
 
-@pytest.mark.django_db
 class TestCommonAdmin(object):
-    def test_manual_link(self, admin_user):
+    def test_manual_link(self, admin):
         client = Client()
-        client.force_login(admin_user)
+        client.force_login(admin)
         response = client.get('/', follow=True, HTTP_ACCEPT_LANGUAGE='pl')
         assert response.status_code == 200
 

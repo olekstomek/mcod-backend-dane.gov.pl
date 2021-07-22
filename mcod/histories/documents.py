@@ -1,30 +1,37 @@
 import json
 
-from django_elasticsearch_dsl import DocType, Index, fields
+from django_elasticsearch_dsl import fields
+from django_elasticsearch_dsl.registries import registry
 
-from mcod import settings
 from mcod.histories.models import History
+from mcod import settings as mcs
+from mcod.core.db.elastic import Document
 
-INDEX = Index(settings.ELASTICSEARCH_INDEX_NAMES['histories'])
-INDEX.settings(**settings.ELASTICSEARCH_HISTORIES_IDX_SETTINGS)
 
-
-@INDEX.doc_type
-class HistoriesDoc(DocType):
+@registry.register_document
+class HistoriesDoc(Document):
     id = fields.IntegerField()
     table_name = fields.TextField()
     row_id = fields.IntegerField()
     action = fields.TextField()
-    # old_value = fields.TextField()
     new_value = fields.TextField()
     difference = fields.TextField(attr='difference')
     change_user_id = fields.IntegerField()
     change_timestamp = fields.DateField()
     message = fields.TextField()
 
-    class Meta:
-        doc_type = 'history'
+    class Index:
+        name = mcs.ELASTICSEARCH_INDEX_NAMES['histories']
+        settings = {
+            'number_of_shards': 3,
+            'number_of_replicas': 1
+        }
+
+    class Django:
         model = History
 
     def prepare_new_value(self, instance):
         return json.dumps(instance.new_value)
+
+    def get_queryset(self):
+        return super().get_queryset().exclude(table_name="user")

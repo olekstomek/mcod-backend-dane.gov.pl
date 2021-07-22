@@ -185,6 +185,11 @@ LOOKUP_FILTER_FUZZY = 'fuzzy'
 # query-dsl-type-query.html
 LOOKUP_FILTER_TYPE = 'type'
 
+# Filters documents where specified field contains all elements from list.
+# Similar to https://www.elastic.co/guide/en/elasticsearch/reference/6.7/
+# query-dsl-terms-set-query.html#query-dsl-terms-set-query
+LOOKUP_FILTER_ONLIST = 'onlist'
+
 # ****************************************************************************
 # ******************* Native geo-spatial lookup filters/queries **************
 # ****************************************************************************

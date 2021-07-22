@@ -30,5 +30,5 @@ class Command(BaseCommand):
         progress_bar = self.tqdm(desc="Validating", total=query.count())
         for resource in query:
             progress_bar.update(1)
-            resource.revalidate()
+            resource.revalidate(update_verification_date=False)
         print('Done.')

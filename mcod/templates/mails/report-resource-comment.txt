@@ -1,2 +1,2 @@
-Do zasobu {{ title }} została zgłoszona uwaga:
+Do zasobu {{ resource.title }} została zgłoszona uwaga:
 {{ comment }}

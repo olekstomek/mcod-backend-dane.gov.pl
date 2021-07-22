@@ -1,32 +1,27 @@
 # -*- coding: utf-8 -*-
-import json
-
 import falcon
-from elasticsearch import TransportError, RequestError
-from elasticsearch_dsl import DateHistogramFacet, TermsFacet
-from elasticsearch_dsl import Search
+from django.utils.translation import get_language
+from elasticsearch import TransportError
+from elasticsearch_dsl import DateHistogramFacet, MultiSearch, Search, TermsFacet
+from elasticsearch_dsl.aggs import Terms, Nested, Filter
 from elasticsearch_dsl.connections import get_connection
 
 from mcod.alerts.utils import get_active_alerts
 from mcod.core.api.search.facets import NestedFacet
-from mcod.core.api.views import BaseView
+from mcod.core.api.views import JsonAPIView
 from mcod.core.versioning import versioned
+from mcod.datasets.documents import DatasetDocumentActive
 from mcod.lib.handlers import BaseHandler
+from mcod.resources.documents import ResourceDocumentActive
+from mcod.search.utils import search_index_name
 from mcod.tools.depricated.schemas import StatsSchema
 from mcod.tools.depricated.serializers import StatsMeta, StatsSerializer
 
-indicies = [
-    "articles",
-    "applications",
-    "institutions",
-    "datasets",
-    "resources",
-]
 
 connection = get_connection()
 
 
-class StatsView(BaseView):
+class StatsView(JsonAPIView):
     @versioned
     def on_get(self, request, response, *args, **kwargs):
         self.handle(request, response, self.GET, *args, **kwargs)
@@ -37,52 +32,73 @@ class StatsView(BaseView):
         meta_serializer = StatsMeta()
 
         def _data(self, request, cleaned, *args, explain=None, **kwargs):
-            search = Search(using=connection, index=indicies, extra={'size': 0})
-            search.aggs.bucket('documents_by_type',
-                               TermsFacet(field='_type').get_aggregation()) \
-                .bucket('by_month',
-                        DateHistogramFacet(field='created', interval='month', min_doc_count=0).get_aggregation())
-            search.aggs.bucket('datasets_by_institution',
-                               NestedFacet('institution',
-                                           TermsFacet(field='institution.id')).get_aggregation())
+            m_search = MultiSearch()
+            search = Search(using=connection, index=search_index_name(), extra={'size': 0})
+            search.aggs.bucket(
+                'documents_by_type',
+                TermsFacet(field='model').get_aggregation()
+            ).bucket(
+                'by_month',
+                DateHistogramFacet(
+                    field='created',
+                    interval='month',
+                    min_doc_count=0
+                ).get_aggregation()
+            )
+            d_search = DatasetDocumentActive().search().extra(size=0).filter('match', status='published')
+            r_search = ResourceDocumentActive().search().extra(size=0).filter('match', status='published')
 
-            search.aggs.bucket('datasets_by_category',
-                               NestedFacet('category',
-                                           TermsFacet(field='category.id', min_doc_count=1, size=50)).get_aggregation())
-            search.aggs.bucket('datasets_by_tags', TermsFacet(field='tags').get_aggregation())
-            search.aggs.bucket('datasets_by_formats', TermsFacet(field='formats').get_aggregation())
-            search.aggs.bucket('datasets_by_openness_scores', TermsFacet(field='openness_scores').get_aggregation())
+            d_search.aggs.bucket('datasets_by_institution',
+                                 NestedFacet('institution',
+                                             TermsFacet(field='institution.id')).get_aggregation())
+
+            d_search.aggs.bucket('datasets_by_categories',
+                                 NestedFacet('categories',
+                                             TermsFacet(field='categories.id',
+                                                        min_doc_count=1, size=50)).get_aggregation())
+            d_search.aggs.bucket('datasets_by_category',
+                                 NestedFacet('category',
+                                             TermsFacet(field='category.id',
+                                                        min_doc_count=1, size=50)).get_aggregation())
+
+            d_search.aggs.bucket('datasets_by_tag', TermsFacet(field='tags').get_aggregation())
+
+            d_search.aggs.bucket('datasets_by_keyword', Nested(aggs={
+                'inner': Filter(
+                    aggs={'inner': Terms(field='keywords.name')},
+                    term={'keywords.language': get_language()},
+                )
+            }, path='keywords'))
+
+            d_search.aggs.bucket('datasets_by_formats', TermsFacet(field='formats').get_aggregation())
+            d_search.aggs.bucket('datasets_by_openness_scores', TermsFacet(field='openness_scores').get_aggregation())
+            r_search.aggs.bucket('resources_by_type', TermsFacet(field='type').get_aggregation())
+            m_search = m_search.add(search)
+            m_search = m_search.add(d_search)
+            m_search = m_search.add(r_search)
             if explain == '1':
-                return search.to_dict()
+                return m_search.to_dict()
             try:
-                return search.execute()
+                resp1, resp2, resp3 = m_search.execute()
+                # TODO: how to concatenate two responses in more elegant way?
+                resp1.aggregations.datasets_by_institution = resp2.aggregations.datasets_by_institution
+                resp1.aggregations.datasets_by_categories = resp2.aggregations.datasets_by_categories
+                resp1.aggregations.datasets_by_category = resp2.aggregations.datasets_by_category
+                resp1.aggregations.datasets_by_tag = resp2.aggregations.datasets_by_tag
+                resp1.aggregations.datasets_by_keyword = resp2.aggregations.datasets_by_keyword
+                resp1.aggregations.datasets_by_formats = resp2.aggregations.datasets_by_formats
+                resp1.aggregations.datasets_by_openness_scores = resp2.aggregations.datasets_by_openness_scores
+                resp1.aggregations.resources_by_type = resp3.aggregations.resources_by_type
+                return resp1
             except TransportError as err:
-                raise falcon.HTTPBadRequest(description=err.info['error']['reason'])
+                try:
+                    description = err.info['error']['reason']
+                except KeyError:
+                    description = err.error
+                raise falcon.HTTPBadRequest(description=description)
 
         def _metadata(self, request, data, *args, **kwargs):
             meta = super()._metadata(request, data, *args, **kwargs)
             meta['alerts'] = get_active_alerts(request.language)
 
             return meta
-
-
-class ClusterHealthView(object):
-    def on_get(self, request, response, *args, **kwargs):
-        response.body = json.dumps(connection.cluster.health())
-        response.status = falcon.HTTP_200
-
-
-class ClusterStateView(object):
-    def on_get(self, request, response, *args, **kwargs):
-        response.body = json.dumps(connection.cluster.state())
-        response.status = falcon.HTTP_200
-
-
-class ClusterAllocationView(object):
-    def on_get(self, request, response, *args, **kwargs):
-        try:
-            result = connection.cluster.allocation_explain()
-        except RequestError:
-            result = {}
-        response.body = json.dumps(result)
-        response.status = falcon.HTTP_200

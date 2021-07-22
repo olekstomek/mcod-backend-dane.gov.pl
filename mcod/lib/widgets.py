@@ -1,16 +1,98 @@
-# encoding: utf-8
-#  widget.py
-#  apps
-#
-#  Created by antonin on 2012-12-17.
-#  Copyright 2012 Ripple Motion. All rights reserved.
-#
-
 import json
 
-from django.forms import Widget
+from ckeditor.widgets import CKEditorWidget as BaseCKEditorWidget
+from ckeditor_uploader.fields import RichTextUploadingField as BaseRichTextUploadingField
+from ckeditor_uploader.widgets import CKEditorUploadingWidget as BaseCKEditorUploadingWidget
+from django.forms import fields, Widget
+from django.template.loader import get_template
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
+from django.conf import settings
+import more_itertools as mit
+
+
+class CKEditorMixin(object):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.config['language_list'] = ["pl:Polski", "en:Angielski"]
+        toolbar_name = self.config.get('toolbar')
+        if toolbar_name:
+            toolbar_config = self.config.get(f'toolbar_{toolbar_name}')
+            last_elem = toolbar_config[-1] if isinstance(toolbar_config, list) and len(toolbar_config) else []
+            if 'Source' not in last_elem:
+                last_elem.append('Source')
+            if 'Language' not in last_elem:
+                last_elem.append('Language')
+
+
+class CKEditorWidget(CKEditorMixin, BaseCKEditorWidget):
+    pass
+
+
+class CKEditorUploadingWidget(CKEditorMixin, BaseCKEditorUploadingWidget):
+    pass
+
+
+class RichTextUploadingFormField(fields.CharField):
+    def __init__(self, config_name='default', extra_plugins=None, external_plugin_resources=None, *args, **kwargs):
+        kwargs.update({
+            'widget': CKEditorUploadingWidget(config_name=config_name, extra_plugins=extra_plugins,
+                                              external_plugin_resources=external_plugin_resources)})
+        super(RichTextUploadingFormField, self).__init__(*args, **kwargs)
+
+
+class RichTextUploadingField(BaseRichTextUploadingField):
+    @staticmethod
+    def _get_form_class():
+        return RichTextUploadingFormField
+
+
+def optgroups(data, selected):
+    optgroups = f"<option selected value>{_('Select')}</option>\n"
+    for k, v in data.items():
+        if k == "":
+            optgroups += make_html_options(v, selected, with_first=False)
+        else:
+            optgroups += f'<optgroup label="{_(k)}">\n'
+            optgroups += make_html_options(v, selected, with_first=False)
+            optgroups += "</optgroup>\n"
+    return optgroups
+
+
+def make_html_options(pairs, selected="", with_first=True):
+    options_tmp = '<option value="{}" title="{}" {} data-animation=true>{}</option>\n'
+    if with_first:
+        options = f"<option disabled selected value>{_('Select')}</option>\n"
+    else:
+        options = ""
+    for pair in pairs:
+        if pair[0] == selected:
+            options += options_tmp.format(pair[0], pair[2], 'selected', pair[1])
+        elif pair[0] == "-":
+            options += "<option disabled></option>\n"
+        else:
+            options += options_tmp.format(pair[0], pair[2], '', pair[1])
+    return options
+
+
+def make_row(cols, row):
+    _result = [getattr(row, col) for col in cols]
+    return [(x.repr if x.repr is not None else '') if hasattr(x, 'repr') else x or '' for x in _result]
+
+
+def read(instance, limit=8):
+    data = []
+    try:
+        rows = mit.seekable(instance.data.iter(size=limit, sort="row_no"))
+        rows.seek(0)
+        column_names = instance.data.headers_map.keys()
+        for count, row in enumerate(rows, start=1):
+            data.append(make_row(column_names, row))
+            if count == limit:
+                break
+    except Exception:
+        pass
+    return data
 
 
 class JsonPairInputsWidget(Widget):
@@ -83,3 +165,125 @@ class JsonPairDatasetInputs(JsonPairInputsWidget):
         css = {
             'all': ('admin/css/customfields.css',)
         }
+
+
+class ResourceDataRulesWidget(JsonPairInputsWidget):
+
+    def render(self, name, value, attrs=None, renderer=None):
+        self.value = json.loads(value) if value else {}
+        data = json.loads(value) if value else {}
+        if data:
+            data = data.get("fields", [])
+            selects = []
+            headers = []
+            fields = []
+            for i, column in enumerate(data):
+                column_type = column.get("type")
+                column_type_input = _(column_type)
+
+                selects.append([make_html_options(settings.VERIFICATION_RULES), i])
+                fields.append(column_type_input)
+                headers.append(column.get("name", ""))
+
+            data = read(self.instance)
+
+            html = get_template("widgets/resource_data_rules.html").render({
+                'data': data,
+                'selects': selects,
+                'headers': headers,
+                'fields': fields
+            })
+
+            return mark_safe(html)
+
+    def value_from_datadict(self, data, files, name):
+
+        schema = self.instance.tabular_data_schema
+        return json.dumps(schema)
+
+
+class ResourceDataSchemaWidget(JsonPairInputsWidget):
+
+    def render(self, name, value, attrs=None, renderer=None):
+        self.value = json.loads(value) if value else {}
+        data = json.loads(value) if value else {}
+        if data:
+            data = data.get("fields", [])
+            selects = []
+            headers = []
+            for i, column in enumerate(data):
+                column_type = column.get("type")
+
+                selects.append([make_html_options(settings.DATA_TYPES, column_type), i])
+                headers.append(column.get("name", ""))
+
+            data = read(self.instance)
+
+            html = get_template("widgets/resource_data_types.html").render({
+                'data': data,
+                'selects': selects,
+                'headers': headers,
+            })
+
+            return mark_safe(html)
+
+    def value_from_datadict(self, data, files, name):
+
+        schema = self.instance.tabular_data_schema
+        for k, v in data.items():
+            if k.startswith("schema_type_"):
+                index = int(k.replace("schema_type_", ""))
+                schema["fields"][index]['type'] = v
+
+                if v in ['date', 'datetime', 'time'] and schema['fields'][index]['format'] == 'default':
+                    schema['fields'][index]['format'] = "any"
+
+        return json.dumps(schema)
+
+
+class ResourceMapsAndPlotsWidget(JsonPairInputsWidget):
+
+    def render(self, name, value, attrs=None, renderer=None):
+        self.value = json.loads(value) if value else {}
+        data = json.loads(value) if value else {}
+        if data:
+            data = data.get("fields", [])
+            selects = []
+            headers = []
+            for i, column in enumerate(data):
+                column_geo = column.get("geo")
+                selects.append([optgroups(settings.GEO_TYPES, column_geo), i])
+                headers.append(column.get("name", ""))
+
+            data = read(self.instance)
+
+            html = get_template("widgets/resource_maps_and_plots.html").render({
+                'data': data,
+                'selects': selects,
+                'headers': headers,
+                'map_preview': self.instance.map_preview,
+                'chart_preview': self.instance.chart_preview
+            })
+
+            return mark_safe(html)
+
+    def value_from_datadict(self, data, files, name):
+
+        schema = self.instance.tabular_data_schema or {}
+        if schema:
+            schema['geo'] = {}
+            for k, v in data.items():
+                if k.startswith("geo_"):
+                    index = int(k.replace("geo_", ""))
+
+                    if v:
+                        schema["fields"][index]['geo'] = v
+                        schema["geo"][v] = {
+                            "col_name": schema["fields"][index]['name'],
+                            "col_index": index,
+                        }
+
+                    else:
+                        if 'geo' in schema['fields'][index]:
+                            del schema["fields"][index]['geo']
+        return json.dumps(schema)

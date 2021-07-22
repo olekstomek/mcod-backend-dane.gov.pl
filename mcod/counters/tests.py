@@ -5,7 +5,7 @@
 # from mcod.lib.tests.helpers.elasticsearch import ElasticCleanHelper
 #
 #
-# @pytest.mark.django_db
+#
 # class TestCounters(ElasticCleanHelper):
 #     def test_application_save_counters(self, client, applications_list, mocker):
 #         app1, app2, _, app3 = applications_list

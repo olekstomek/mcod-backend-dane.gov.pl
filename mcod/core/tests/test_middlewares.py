@@ -1,12 +1,11 @@
 from django.test import Client
-import pytest
 # import falcon
 
 # FIXME: Commenting out this test again - it does not work on my environment.
 
 # @pytest.mark.run(order=0)
-# @pytest.mark.django_db
-# def test_locale_middleware(client, valid_dataset):
+#
+# def test_locale_middleware(client, dataset):
 #     test_values = [
 #         ('', 'pl', 'co tydzień'),
 #         ('*', 'pl', 'co tydzień'),
@@ -24,7 +23,7 @@ import pytest
 #         # TODO inne tłumaczenia po ich opracowaniu
 #     ]
 #     for header, lang, expected in test_values:
-#         result = client.simulate_get(f"/datasets/{valid_dataset.id}", headers={
+#         result = client.simulate_get(f"/datasets/{dataset.id}", headers={
 #             'Accept-Language': header
 #         })
 #
@@ -33,20 +32,21 @@ import pytest
 #         assert result.json['data']['attributes']['update_frequency'] == expected
 
 
-@pytest.mark.django_db
-def test_user_token_middleware(admin_user):
+def test_user_token_middleware(admin, settings):
     client = Client()
 
     resp = client.get("/")
     assert resp.status_code == 302
-    assert 'test_mcod_token' not in resp.cookies
+    assert settings.API_TOKEN_COOKIE_NAME not in resp.cookies
 
-    client.force_login(admin_user)
+    client.force_login(admin)
     resp = client.get("/")
     assert resp.status_code == 200
-    assert 'test_mcod_token' in resp.cookies
+    assert settings.API_TOKEN_COOKIE_NAME in resp.cookies
 
     client.get('/logout/')
     resp = client.get('/')
     assert resp.status_code == 302
-    assert 'test_mcod_token' not in resp.cookies
+    assert settings.API_TOKEN_COOKIE_NAME in resp.cookies
+    assert resp.cookies[settings.API_TOKEN_COOKIE_NAME]['expires'] == 'Thu, 01 Jan 1970 00:00:00 GMT'
+    # cookie will be deleted

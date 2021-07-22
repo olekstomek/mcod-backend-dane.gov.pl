@@ -1,5 +1,5 @@
 {% extends "admin/base_site.html" %}
-{% load i18n admin_static admin_modify suit_tags core_tags admin_urls %}
+{% load i18n static admin_modify suit_tags core_tags admin_urls %}
 {% load url from suit_compat %}
 
 {% block extrahead %}{{ block.super }}
@@ -104,28 +104,32 @@
 
                     {% block submit_buttons_bottom %}
                         {% submit_row %}
-                        {% if object_id %}
-                            <div class="submit-row clearfix">
-                                <a href="/resources/resource/add/?from_id={{ object_id }}" class="btn btn-high" id="duplicate_button">
-                                    {% blocktrans %}Copy to new <br>resource{% endblocktrans %}
-                                </a>
-                            </div>
-                        {% endif %}
+                        {% if not 'resourcetrash' in request.path %}
+                            {% if object_id and not original.is_imported %}
+                                <div class="submit-row clearfix">
+                                    <a href="/resources/resource/add/?from_id={{ object_id }}" class="btn btn-high"
+                                       id="duplicate_button">
+                                        {% blocktrans %}Copy to new <br>resource{% endblocktrans %}
+                                    </a>
+                                </div>
+                            {% endif %}
 
-                        {% if object_id %}
-                            <div>
-                                <a href="/resources/resource/{{ object_id }}/revalidate/" class="btn extra-btn" id="revalidate_button">
-                                    {% trans "Revalidate" %}
-                                </a>
-                            </div>
+                            {% if object_id and not original.is_imported %}
+                                <div>
+                                    <a href="/resources/resource/{{ object_id }}/revalidate/" class="btn extra-btn"
+                                       id="revalidate_button">
+                                        {% trans "Revalidate" %}
+                                    </a>
+                                </div>
+                            {% endif %}
                         {% endif %}
-
                     {% endblock %}
 
                 </div>
 
                 {% block object-tools %}
                     {% if change %}{% if not is_popup %}
+                        {% if not original.is_imported %}
                         <h4 class="italic-title">{% trans 'tools'|capfirst %}</h4>
                         <ul class="box menu-box">
                             {% block object-tools-items %}
@@ -151,9 +155,9 @@
                                     </li>
                                     {# {% blocktrans with cl.opts.verbose_name as name %}Add {{ name }}{% endblocktrans %}</a>#}
                                 {% endif %}
-
                             {% endblock %}
                         </ul>
+                        {% endif %}
                     {% endif %}{% endif %}
 
                 {% endblock %}
@@ -167,7 +171,16 @@
                     {% if suit_form_tabs %}
                         <ul id="suit_form_tabs" class="nav nav-tabs nav-tabs-suit" data-tab-prefix="suit-tab">
                             {% for tab in suit_form_tabs %}
-                                <li><a href="#{{ tab.0 }}">{{ tab.1 }}</a></li>{% endfor %}
+                                <li {% if tab.2 == 'disabled' %}
+                                    class="disabled disabledTab"
+                                    title="{% blocktrans %}unavailable tab - the resource does not have a tabular view{% endblocktrans %}"
+                                {% endif %}
+                                >
+                                    <a {% if tab.2 == 'disabled' %} class="disabledTab" {% endif %} href="#{{ tab.0 }}">
+                                        {{ tab.1 }}
+                                    </a>
+                                </li>
+                            {% endfor %}
                         </ul>
                     {% endif %}
                 {% endblock %}
@@ -233,10 +246,52 @@
                 {% prepopulated_fields_js %}
 
             </div>
+            <div id="tab_actions">
+            </div>
         </form>
     </div>
+
+
+
+    {% if verification_results %}
+        <!-- The Modal -->
+        <div id="verification_results" class="modal">
+
+            <!-- Modal content -->
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <p>Results of validation</p>
+            </div>
+
+        </div>
+
+        <script>
+
+            var modal = document.getElementById("verification_results");
+
+            var span = document.getElementsByClassName("close")[0];
+
+
+            span.onclick = function () {
+                modal.style.display = "none";
+            }
+
+            window.onclick = function (event) {
+                if (event.target == modal) {
+                    modal.style.display = "none";
+                }
+            }
+        </script>
+    {% endif %}
+
 {% endblock %}
 
+{% block javascripts %}
+    {{ block.super }}
 
+
+
+
+{% endblock %}
 {# Empty centered sidebar as now we use sidebar in content block#}
 {% block sidebar_content %}{% endblock %}

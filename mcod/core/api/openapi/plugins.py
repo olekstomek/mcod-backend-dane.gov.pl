@@ -69,7 +69,8 @@ class MCODPlugin(BasePlugin):
                     _p = param.split(':')[0]
                     uri = uri.replace(param, _p)
             resource = route.resource
-            mapping[resource.__class__] = uri
+            if resource.__class__ not in mapping:  # prevents overriding by uri with /{api_version}/ prefix.
+                mapping[resource.__class__] = uri
             routes_to_check.extend(route.children)
 
         return mapping

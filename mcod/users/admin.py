@@ -1,152 +1,468 @@
+from admin_confirm import AdminConfirmMixin
 from django.contrib import admin
+from django.contrib.admin.exceptions import DisallowedModelAdminToField
+from django.contrib.admin.options import TO_FIELD_VAR
+from django.contrib.admin.utils import unquote
 from django.contrib.auth.admin import UserAdmin, AdminPasswordChangeForm
-
-from mcod.reports.admin import ExportCsvMixin
-from mcod.lib.admin_mixins import HistoryMixin
-from mcod.users.models import User
-from mcod.users.forms import UserCreationForm, UserChangeForm
+from django.core.exceptions import PermissionDenied
+from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
-import copy
+from django.utils.safestring import mark_safe
+from django_admin_multiple_choice_list_filter.list_filters import MultipleChoiceListFilter
+
+from mcod.core.admin import MCODChangeList
+from mcod.lib.admin_mixins import (
+    ActionsMixin, CRUDMessageMixin, HistoryMixin, TrashMixin,
+    StateStatusLabelAdminMixin, DynamicAdminListDisplayMixin
+)
+from mcod.reports.admin import ExportCsvMixin
+from mcod.unleash import is_enabled
+from mcod.users.forms import MeetingForm, UserCreationForm, UserChangeForm, FilteredSelectMultipleCustom
+from mcod.users.models import ACADEMY_PERMS_CODENAMES, LABS_PERMS_CODENAMES, User, Meeting, MeetingFile, MeetingTrash
 
 
-# admin.site.disable_action('delete_selected')
+class UserChangeList(MCODChangeList):
+    def __init__(self, request, *args, **kwargs):
+        super().__init__(request, *args, **kwargs)
+        user_roles = request.GET.getlist('role')
+        self.role_query_string = ''
+        for item in user_roles:
+            self.role_query_string += f'&role={item}'
+        if self.role_query_string and 'role' in self.params:
+            del self.params['role']
+
+    def get_query_string(self, new_params=None, remove=None):
+        query_string = super().get_query_string(new_params=new_params, remove=remove)
+        if self.role_query_string:
+            query_string += self.role_query_string
+        return query_string
+
+
+class UserRoleListFilter(MultipleChoiceListFilter):
+    template = 'admin/users/user/roles_filter.html'
+    title = _('choose roles')
+    parameter_name = 'role'
+
+    def __init__(self, request, params, model, model_admin):
+        super().__init__(request, params, model, model_admin)
+        self.used_parameters[self.parameter_name] = list(set(request.GET.getlist(self.parameter_name, [])))
+
+    def lookups(self, request, model_admin):
+        return (
+            ('staff', _('Editor')),
+            ('official', _('Official')),
+            ('agent', _('Agent')),
+            ('superuser', _('Admin')),
+            ('aod_admin', _('AOD admin')),
+            ('lod_admin', _('LOD admin')),
+        )
+
+    def value(self):
+        return ','.join(self.used_parameters.get(self.parameter_name))
+
+    def queryset(self, request, queryset):
+        roles = list(set(request.GET.getlist(self.parameter_name)))
+        query = Q()
+        if 'staff' in roles:
+            query |= Q(is_staff=True)
+        if 'official' in roles:
+            query |= Q(is_official=True)
+        if 'agent' in roles:
+            query |= Q(is_agent=True)
+        if 'superuser' in roles:
+            query |= Q(is_superuser=True)
+
+        if 'aod_admin' in roles:
+            aod_admin_ids = queryset.filter(
+                user_permissions__codename=ACADEMY_PERMS_CODENAMES[0]).values_list('id', flat=True)
+            query |= Q(id__in=aod_admin_ids)
+        if 'lod_admin' in roles:
+            lod_admin_ids = queryset.filter(
+                user_permissions__codename=LABS_PERMS_CODENAMES[0]).values_list('id', flat=True)
+            query |= Q(id__in=lod_admin_ids)
+        return queryset.filter(query) if query else queryset
 
 
 @admin.register(User)
-class UserAdmin(HistoryMixin, ExportCsvMixin, UserAdmin):
+class UserAdmin(DynamicAdminListDisplayMixin, StateStatusLabelAdminMixin, HistoryMixin,
+                ExportCsvMixin, AdminConfirmMixin, UserAdmin):
+    add_form_template = 'admin/users/user/add_form.html'
     actions_on_top = True
-    list_display = ["email", "fullname", "state", "last_login", "is_staff", "is_superuser"]
-
-    fieldsets = [
-        (
-            None,
-            {
-                'classes': ('suit-tab', 'suit-tab-general',),
-                'fields': [
-                    "email",
-                    "password",
-                ]
-            }
-
-        ),
-        (
-            _("Personal info"),
-            {
-                'classes': ('suit-tab', 'suit-tab-general',),
-                'fields': [
-                    "fullname",
-                    ("phone", "phone_internal"),
-                ]
-            }
-
-        ),
-        (
-            _("Permisions"),
-            {
-                'classes': ('suit-tab', 'suit-tab-general',),
-                'fields': [
-                    "is_staff",
-                    "is_superuser",
-                    "state",
-                ]
-            }
-
-        ),
-        (
-            _("Organizations"),
-            {
-                'classes': ('suit-tab', 'suit-tab-organizations',),
-                'fields': ("organizations",)
-            }
-
-        )
-    ]
-
-    add_fieldsets = [
-        (
-            None,
-            {
-                'classes': ('suit-tab', 'suit-tab-general',),
-                'fields': [
-                    "email",
-                    "password1",
-                    "password2"
-                ]
-            }
-
-        ),
-        (
-            _("Personal info"),
-            {
-                'classes': ('suit-tab', 'suit-tab-general',),
-                'fields': [
-                    "fullname",
-                    ("phone", "phone_internal"),
-                ]
-            }
-
-        ),
-        (
-            _("Permisions"),
-            {
-                'classes': ('suit-tab', 'suit-tab-general',),
-                'fields': [
-                    "is_staff",
-                    "is_superuser",
-                    "state",
-                ]
-            }
-
-        ),
-        (
-            _("Organizations"),
-            {
-                'classes': ('suit-tab', 'suit-tab-organizations',),
-                'fields': ("organizations",)
-            }
-
-        )
-    ]
+    list_display = [
+        'email', 'fullname', 'state', 'last_login', 'is_staff', 'is_official', 'is_agent', 'is_superuser',
+        '_is_academy_admin', '_is_labs_admin']
 
     ordering = ('email',)
-    search_fields = ["email", "fullname"]
-    list_filter = ["state", "is_staff", "is_superuser"]
+    readonly_fields = ('extra_agents_list', )
+    search_fields = ['email', 'fullname']
 
     form = UserChangeForm
     add_form = UserCreationForm
     change_password_form = AdminPasswordChangeForm
+    confirm_change = True
+    confirmation_fields = ['is_agent'] if is_enabled('hod.be') else None
 
-    suit_form_tabs = (
-        ('general', _('General')),
-        ('organizations', _('Institutions')),
-    )
+    def _change_confirmation_view(self, request, object_id, form_url, extra_context):  # noqa: C901
+        to_field = request.POST.get(TO_FIELD_VAR, request.GET.get(TO_FIELD_VAR))
+        if to_field and not self.to_field_allowed(request, to_field):
+            raise DisallowedModelAdminToField(
+                "The field %s cannot be referenced." % to_field
+            )
+
+        model = self.model
+        opts = model._meta
+
+        add = object_id is None
+        if add:
+            if not self.has_add_permission(request):
+                raise PermissionDenied
+
+            obj = None
+        else:
+            obj = self.get_object(request, unquote(object_id), to_field)
+            if obj is None:
+                return self._get_obj_does_not_exist_redirect(request, opts, object_id)
+
+            if not self.has_view_or_change_permission(request, obj):
+                raise PermissionDenied
+
+        ModelForm = self.get_form(request, obj=obj, change=not add)
+        is_agent_initial = obj.is_agent
+
+        form = ModelForm(request.POST, request.FILES, instance=obj)
+        form_validated = form.is_valid()
+        new_object = self.save_form(request, form, change=not add) if form_validated else form.instance
+
+        is_agent_disabled = False
+        if form_validated:
+            is_agent_changed = form.fields['is_agent'].has_changed(
+                is_agent_initial, new_object.is_agent) if 'is_agent' in form.fields else False
+            is_agent_disabled = is_agent_changed and not new_object.is_agent
+
+        is_confirm_required = bool(is_agent_disabled and new_object.user_schedules.exists())
+
+        if not is_confirm_required:
+            return super()._changeform_view(request, object_id, form_url, extra_context)
+
+        # Parse raw form data from POST
+        form_data = {}
+        # Parse the original save action from request
+        save_action = None
+        for key in request.POST:
+            if key in ["_save", "_saveasnew", "_addanother", "_continue"]:
+                save_action = key
+
+            if key.startswith("_") or key == "csrfmiddlewaretoken":
+                continue
+            form_data[key] = request.POST.get(key)
+        context = {
+            **self.admin_site.each_context(request),
+            "preserved_filters": self.get_preserved_filters(request),
+            "title": _('Confirm user change'),
+            "subtitle": str(obj),
+            "object_name": str(obj),
+            "object_id": object_id,
+            "app_label": opts.app_label,
+            "model_name": opts.model_name,
+            "opts": opts,
+            "form_data": form_data,
+            "add": add,
+            "submit_name": save_action,
+            **(extra_context or {}),
+        }
+        return self.render_change_confirmation(request, context)
+
+    def get_autocomplete_fields(self, request):
+        return ['agent_organization_main']
+
+    def get_changelist(self, request, **kwargs):
+        return UserChangeList  # overriden to fix pagination links for multi user role filtering.
+
+    def get_list_display(self, request):
+        list_display = super().get_list_display(request)
+        for idx, item in enumerate(list_display):
+            if item == 'is_superuser':
+                list_display[idx] = '_is_superuser'
+        return list_display
+
+    def get_list_filter(self, request):
+        return['state', UserRoleListFilter]
+
+    def formfield_for_dbfield(self, db_field, request, **kwargs):
+        formfield = super().formfield_for_dbfield(db_field, request, **kwargs)
+        organizations_attrs = {
+            'data-from-box-label': _('Available institutions'),
+            'data-to-box-label': _('Selected institutions'),
+        }
+        attrs = {
+            'organizations': organizations_attrs,
+            'agent_organizations': organizations_attrs,
+        }
+        if db_field.name in ['organizations', 'agent_organizations']:
+            formfield.label = ''
+            formfield.help_text = ''
+            formfield.widget = admin.widgets.RelatedFieldWidgetWrapper(
+                FilteredSelectMultipleCustom(formfield.label.lower(), False, attrs=attrs.get(db_field.name)),
+                db_field.remote_field,
+                self.admin_site,
+                can_add_related=False,
+            )
+        return formfield
+
+    def get_readonly_fields(self, request, obj=None):
+        if not request.user.is_superuser:
+            return ('is_academy_admin', 'is_labs_admin', )
+        return super().get_readonly_fields(request, obj=obj)
 
     def get_form(self, request, obj=None, **kwargs):
         self._request = request
-        form = super(UserAdmin, self).get_form(request, obj, **kwargs)
+        form = super(UserAdmin, self).get_form(request, obj=obj, **kwargs)
         form.declared_fields['phone'].required = form.base_fields['fullname'].required = request.user.is_normal_staff
         return form
 
-    @property
-    def suit_form_tabs(self):
-        tabs = [
-            ('general', _('General')),
-        ]
-        if self._request.user.is_superuser:
-            tabs += [('organizations', _('Institutions'))]
-        return tabs
+    @mark_safe
+    def extra_agents_list(self, obj):
+        result = ', '.join(
+            ['<a href="%s" target="_blank">%s</a>' % (
+                x.admin_change_url, x.email) for x in obj.extra_agent.order_by('email')])
+        return result or '-'
+    extra_agents_list.allow_tags = True
+    extra_agents_list.short_description = _('extra agents')
+
+    def _is_superuser(self, obj):
+        return obj.is_superuser
+    _is_superuser.admin_order_field = 'is_superuser'
+    _is_superuser.boolean = True
+    _is_superuser.short_description = _('Admin')
+
+    def _is_academy_admin(self, obj):
+        return getattr(obj, 'is_academy_admin', False)
+    _is_academy_admin.boolean = True
+    _is_academy_admin.short_description = _('Admin AOD')
+
+    def _is_labs_admin(self, obj):
+        return getattr(obj, 'is_labs_admin', False)
+    _is_labs_admin.boolean = True
+    _is_labs_admin.short_description = _('Admin LOD')
+
+    suit_form_tabs = (
+        ('general', _('General')),
+    )
 
     def get_fieldsets(self, request, obj=None):
-        fieldsets = copy.deepcopy(super(UserAdmin, self).get_fieldsets(request, obj))
+        _agent_organizations_fields = [
+            'agent_organization_main',
+            'agent_organizations',
+            'extra_agent_of']
+        show_copy_agent_fields = obj is None or (
+            not obj.from_agent and not obj.agent_organization_main and not obj.extra_agent_of)
+        _copy_agent_fields = [
+            'is_agent_opts',
+            'from_agent'] if show_copy_agent_fields and is_enabled('S19_copy_agent.be') else []
+        permissions_fields = [
+            'is_staff',
+            'organizations',
+            'is_official',
+            'is_superuser',
+            'is_academy_admin',
+            'is_labs_admin',
+            'is_agent',
+            *_copy_agent_fields,
+            *_agent_organizations_fields,
+            'extra_agents_list',
+            'state',
+        ]
         if not request.user.is_superuser:
-            fieldsets[2] = (None, {'fields': []})
-        return fieldsets
+            permissions_fields = [
+                x for x in permissions_fields if x not in [
+                    'agent_organizations', 'agent_organization_main', 'extra_agent_of']]
+
+        general_tab = (
+            None,
+            {
+                'classes': ('suit-tab', 'suit-tab-general',),
+                'fields': ['email', 'password'] if obj else ['email', 'password1', 'password2'],
+            }
+        )
+        personal_info_tab = (
+            _('Personal info'), {
+                'classes': ('suit-tab', 'suit-tab-general',),
+                'fields': [
+                    'fullname',
+                    ('phone', 'phone_internal'),
+                ]
+            }
+        )
+        permissions_tab = (
+            _('Permissions'), {
+                'classes': ('suit-tab', 'suit-tab-general',),
+                'fields': permissions_fields,
+            }
+        ) if request.user.is_superuser else (None, {'fields': []})
+
+        return [
+            general_tab,
+            personal_info_tab,
+            permissions_tab,
+        ]
 
     def get_queryset(self, request):
         qs = super(UserAdmin, self).get_queryset(request).exclude(is_removed=True)
-        if request.user.is_superuser:
-            return qs
-        return qs.filter(id=request.user.id)
+        return qs if request.user.is_superuser else qs.filter(id=request.user.id)
 
-    # def has_delete_permission(self, request, obj=None):
-    #     return False
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        data = form.cleaned_data
+        if 'is_academy_admin' in data:
+            obj.set_academy_perms(data['is_academy_admin'])
+        if 'is_labs_admin' in data:
+            obj.set_labs_perms(data['is_labs_admin'])
+
+
+class MeetingFilesInline(admin.StackedInline):
+    model = MeetingFile
+    fields = ['file']
+    extra = 0
+    verbose_name_plural = _('Add files')
+    ordering = ('created', )
+
+
+class MeetingAdminMixin(ActionsMixin, CRUDMessageMixin, HistoryMixin):
+    delete_selected_msg = _('Delete selected meetings')
+    filter_horizontal = ('members', )
+    form = MeetingForm
+    inlines = [
+        MeetingFilesInline,
+    ]
+    is_history_other = True
+    list_display = ['_title', '_venue', 'start_date', '_duration_hours']
+    obj_gender = 'n'
+    search_fields = ['title']
+
+    def _title(self, obj):
+        return obj.title
+    _title.short_description = _('meeting name')
+    _title.admin_order_field = 'title'
+
+    def _venue(self, obj):
+        return obj.venue
+    _venue.short_description = _('meeting venue')
+    _venue.admin_order_field = 'venue'
+
+    def _duration_hours(self, obj):
+        return obj.duration_hours
+    _duration_hours.short_description = _('duration hours')
+    _duration_hours.admin_order_field = 'start_time'
+
+    def formfield_for_manytomany(self, db_field, request, **kwargs):
+        if db_field.name == 'members':
+            kwargs['queryset'] = User.objects.agents()
+        return super().formfield_for_manytomany(db_field, request, **kwargs)
+
+    def formfield_for_dbfield(self, db_field, request, **kwargs):
+        formfield = super().formfield_for_dbfield(db_field, request, **kwargs)
+        if db_field.name == 'members':
+            formfield.label = _('Add meeting members')
+            formfield.widget = admin.widgets.RelatedFieldWidgetWrapper(
+                FilteredSelectMultipleCustom(
+                    _('members'), False, attrs={
+                        'data-from-box-label': _('Agents list'),
+                        'data-to-box-label': _('Agents added to meeting'),
+                    },
+                ),
+                db_field.remote_field,
+                self.admin_site,
+                can_add_related=False,
+            )
+        return formfield
+
+
+class MeetingAdmin(MeetingAdminMixin, admin.ModelAdmin):
+
+    actions_on_top = True
+    fieldsets = [
+        (
+            None, {
+                'classes': ('suit-tab', 'suit-tab-general',),
+                'fields': (
+                    'title',
+                )
+            },
+        ),
+        (
+            None, {
+                'classes': ('suit-tab', 'suit-tab-general',),
+                'fields': (
+                    'venue',
+                )
+            },
+        ),
+        (
+            None, {
+                'classes': ('suit-tab', 'suit-tab-general',),
+                'fields': (
+                    'description',
+                )
+            },
+        ),
+        (
+            None, {
+                'classes': ('suit-tab', 'suit-tab-general',),
+                'fields': (
+                    'start_date',
+                )
+            },
+        ),
+        (
+            None, {
+                'classes': ('suit-tab', 'suit-tab-general', ),
+                'fields': (
+                    'start_time',
+                    'end_time',
+                )
+            },
+        ),
+        (
+            None, {
+                'classes': ('suit-tab', 'suit-tab-general',),
+                'fields': (
+                    'members',
+                )
+            },
+        ),
+        (
+            None, {
+                'classes': ('suit-tab', 'suit-tab-general',),
+                'fields': (
+                    'status',
+                )
+            },
+        ),
+    ]
+    suit_form_tabs = (
+        ('general', _('General')),
+    )
+
+
+class MeetingTrashAdmin(MeetingAdminMixin, TrashMixin):
+
+    readonly_fields = (
+        'title',
+        'venue',
+        'description',
+        'start_date',
+        'start_time',
+        'end_time',
+        'members',
+        'status',
+    )
+    fields = [field for field in readonly_fields] + ['is_removed']
+
+
+admin.site.register(Meeting, MeetingAdmin)
+admin.site.register(MeetingTrash, MeetingTrashAdmin)
+
+
+admin.site.site_header = 'Otwarte Dane'
+admin.site.site_title = 'Otwarte Dane'
+admin.site.index_title = 'Otwarte Dane'

@@ -2,7 +2,6 @@ import datetime
 import json
 import os
 from time import sleep
-import pytest
 from django.apps import apps
 from django.contrib.auth import get_user_model
 from django.conf import settings
@@ -15,12 +14,11 @@ Report = apps.get_model('reports', 'Report')
 TaskResult = apps.get_model('django_celery_results', 'TaskResult')
 
 
-@pytest.mark.django_db
 class TestTasks(object):
-    def test_generate_csv(self, active_user, admin_user):
+    def test_generate_csv(self, active_user, admin):
         request_date = datetime.datetime(2018, 12, 4)
         eager = generate_csv.s(
-            [active_user.id, admin_user.id],
+            [active_user.id, admin.id],
             User._meta.label,
             active_user.id,
             request_date.strftime('%Y%m%d%H%M%S.%s')
@@ -51,7 +49,7 @@ class TestTasks(object):
 
         assert len(lines) == 3
         for line in lines:
-            assert len(line.split(';')) == 7
+            assert len(line.split(';')) == 15
 
     def test_invalid_user_ordering_report(self, active_user):
         request_date = datetime.datetime.now()
@@ -103,10 +101,10 @@ class TestTasks(object):
     #     FIXME na gitlabie jest SUCCESS
     #     settings.REPORTS_MEDIA_ROOT = bkp
 
-    def test_create_daily_resources_report(self, admin_user, valid_resource):
-        admin_user.id = 1
-        admin_user.email = "testadmin@test.xx"
-        admin_user.save()
+    def test_create_daily_resources_report(self, admin, resource):
+        admin.id = 1
+        admin.email = "testadmin@test.xx"
+        admin.save()
 
         request_date = datetime.datetime.now().strftime('%Y_%m_%d_%H')
         create_daily_resources_report()

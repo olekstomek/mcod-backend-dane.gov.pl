@@ -3,7 +3,6 @@ from collections import OrderedDict
 
 from django.utils.translation import gettext_lazy as _
 from marshmallow import validate
-from marshmallow.compat import with_metaclass
 from marshmallow.schema import BaseSchema, SchemaMeta
 from marshmallow.utils import is_collection
 
@@ -18,12 +17,17 @@ class ExtSchemaMeta(SchemaMeta):
         return klass
 
 
-class ExtSchema(with_metaclass(ExtSchemaMeta, BaseSchema)):
+class ExtSchema(BaseSchema, metaclass=ExtSchemaMeta):
     __doc__ = BaseSchema.__doc__
 
     @property
     def api_url(self):
-        return getattr(settings, 'API_URL', 'https://api.dane.gov.pl')
+        url = getattr(settings, 'API_URL', 'https://api.dane.gov.pl')
+        api_version = self.context.get('api_version')
+        if not api_version:
+            request = self.context.get('request')
+            api_version = getattr(request, 'api_version', None) if request else None
+        return f'{url}/{api_version}' if api_version else url
 
     @property
     def _many(self):
@@ -33,8 +37,8 @@ class ExtSchema(with_metaclass(ExtSchemaMeta, BaseSchema)):
     def _fields(self):
         return getattr(self, 'fields', getattr(self, '_declared_fields', None))
 
-    @property  # noqa:C901
-    def doc_schema(self):
+    @property
+    def doc_schema(self):  # noqa:C901
         _meta_cls = getattr(self, 'Meta', None)
         _declared_fields = getattr(self, '_declared_fields', dict())
         if getattr(_meta_cls, 'fields', None) or getattr(_meta_cls, 'additional', None):
@@ -105,6 +109,18 @@ class NumberTermSchema(ExtSchema):
         default_field = 'term'
 
 
+class DateTermSchema(ExtSchema):
+    term = fields.TermField(example=10)
+    terms = fields.TermsField(example=10)
+    gt = fields.RangeGtField(example=10)
+    gte = fields.RangeGteField(example=10)
+    lt = fields.RangeLtField(example=10)
+    lte = fields.RangeLteField(example=10)
+
+    class Meta:
+        default_field = 'term'
+
+
 class StringTermSchema(ExtSchema):
     term = fields.TermField(example='Lorem')
     terms = fields.TermsField(example='Lorem,Ipsum')
@@ -151,7 +167,7 @@ class ListingSchema(CommonSchema):
         data_key='page',
         missing=1,
         default=1,
-        example=5,
+        example=1,
         description='Page number. Default value is 1.',
         validate=validate.Range(1, error=_('Invalid page number'))
     )
@@ -176,6 +192,13 @@ class ListingSchema(CommonSchema):
 
     class Meta:
         strict = True
+
+
+class ListTermsSchema(ExtSchema):
+    terms = fields.ListTermsField(example='Lorem,Ipsum')
+
+    class Meta:
+        default_field = 'terms'
 
 #
 # class JsonApiRequestData(ExtSchema):

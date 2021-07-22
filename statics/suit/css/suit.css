@@ -2704,7 +2704,7 @@ a.btn {
 }
 
 .inner-two-columns .inner-center-column .tab-content {
-    overflow: inherit;
+    /*overflow: inherit;*/
     margin-bottom: 15px
 }
 
@@ -2856,4 +2856,14 @@ a.append-icon i {
 .btn.extra-btn {
     padding-left: 0px;
     padding-right: 0px;
+}
+
+
+li.disabledTab {
+    cursor: not-allowed;
+}
+
+a.disabledTab {
+    pointer-events: none;
+    cursor: not-allowed;
 }

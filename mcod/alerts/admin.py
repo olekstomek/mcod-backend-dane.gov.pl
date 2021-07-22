@@ -1,4 +1,4 @@
-from ckeditor.widgets import CKEditorWidget
+from mcod.lib.widgets import CKEditorWidget
 from django.contrib import admin
 from django.db.models import Case, CharField, Value, When
 from django.forms import ModelForm, ValidationError
@@ -9,7 +9,11 @@ from django.utils.translation import gettext_lazy as _
 from suit.widgets import SuitSplitDateTimeWidget
 
 from mcod.alerts.models import Alert, DISPLAY_STATUS
-from mcod.lib.admin_mixins import LangFieldsOnlyMixin
+from mcod.unleash import is_enabled
+from mcod.lib.admin_mixins import (
+    LangFieldsOnlyMixin, CreatedByDisplayAdminMixin, StatusLabelAdminMixin,
+    DynamicAdminListDisplayMixin, MCODAdminMixin
+)
 
 
 class DisplayStatusFilter(admin.SimpleListFilter):
@@ -50,6 +54,12 @@ class AlertForm(ModelForm):
             'finish_date': SuitSplitDateTimeWidget()
         }
 
+    def __init__(self, *args, **kwargs):
+        super(AlertForm, self).__init__(*args, **kwargs)
+        if is_enabled('S21_admin_ui_changes.be'):
+            self.fields['title_pl'].widget.attrs['rows'] = 2
+            self.fields['title_en'].widget.attrs['rows'] = 2
+
     def clean(self):
         cleaned = super().clean()
         finish_date = cleaned.get('finish_date')
@@ -68,8 +78,10 @@ class AlertForm(ModelForm):
 
 
 @admin.register(Alert)
-class AlertAdmin(LangFieldsOnlyMixin, admin.ModelAdmin):
-    list_display = ('title_i18n', 'display_status_str', 'created_by', 'start_date', 'finish_date', 'status')
+class AlertAdmin(DynamicAdminListDisplayMixin, CreatedByDisplayAdminMixin,
+                 StatusLabelAdminMixin, LangFieldsOnlyMixin, MCODAdminMixin, admin.ModelAdmin):
+    list_display = ('title_i18n', 'display_status_str', 'created_by',
+                    'start_date', 'finish_date', 'status')
     search_fields = ("title_i18n",)
     list_filter = (
         ('start_date', admin.DateFieldListFilter),
@@ -109,7 +121,7 @@ class AlertAdmin(LangFieldsOnlyMixin, admin.ModelAdmin):
 
     suit_form_tabs = (
         ('general', _('General')),
-        *LangFieldsOnlyMixin.get_traslations_tabs()
+        *LangFieldsOnlyMixin.get_translations_tabs()
     )
 
     def get_fieldsets(self, request, obj=None):

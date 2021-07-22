@@ -45,7 +45,7 @@ function start_inline($) {
         $this.each(function (i) {
             $(this).not("." + options.emptyCssClass).addClass(options.formCssClass);
         });
-        if ($this.length && showAddButton) {
+        if ($this.length) {
             var addButton = options.addButton;
             if (addButton === null) {
                 if ($this.prop("tagName") === "TR") {
@@ -59,6 +59,9 @@ function start_inline($) {
                     $this.filter(":last").after('<div class="' + options.addCssClass + '"><a href="#">' + options.addText + "</a></div>");
                     addButton = $this.filter(":last").next().find("a");
                 }
+            }
+            if (!showAddButton) {
+                $("."+options.addCssClass).hide();
             }
             addButton.click(function (e) {
                 e.preventDefault();

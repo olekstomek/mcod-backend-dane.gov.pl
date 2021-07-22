@@ -1,0 +1,158 @@
+{% load core_tags %}
+
+<script>
+    {% is_unleash_enabled "S23_private_institutions.be" as S23_private_institutions %}
+    {% if S23_private_institutions %}
+    const institutionTypePrivate = 'private';
+    const hasAccessToPublicInstitutions = {{ user.has_access_to_public_institutions|yesno:"true,false" }};
+    const hasAccessToPrivateInstitutions = {{ user.has_access_to_private_institutions|yesno:"true,false" }};
+    {% with organization_id=adminform.form.instance.organization_id %}
+        const organizationId = {% if organization_id  %}{{ organization_id }}{% else %}null{% endif %};
+    {% endwith %}
+    const $institutionTypeSelect = $("#id_institution_type");
+    const institutionTypeSelectExists = $institutionTypeSelect.length;  // change form inside organization form
+    const hasDynamicLicensesTab = (hasAccessToPublicInstitutions && hasAccessToPrivateInstitutions) || institutionTypeSelectExists;
+    const $organizationSelect = $("#id_organization");
+    const organizationSelectExists = $organizationSelect.length;
+    const organizationIdSelected = $organizationSelect.val();
+    const organizationIdComputed = organizationIdSelected || organizationId;
+
+    const LicenseConditionSourceTextPublic = "Odbiorca powinien poinformować o źródle, czasie wytworzenia i pozyskania informacji od podmiotu zobowiązanego";
+    const LicenseConditionSourceTextPrivate = "Odbiorca powinien poinformować o źródle, czasie wytworzenia i pozyskania informacji od podmiotu udostępniającego informacje";
+
+    const LicenseConditionDbOrCopyrightedTextPublic = "Warunki wykorzystywania informacji sektora publicznego spełniających cechy utworu lub stanowiących bazę danych (art. 13 ust. 2 ustawy o ponownym wykorzystywaniu informacji sektora publicznego):";
+    const LicenseConditionDbOrCopyrightedTextPrivate = "Warunki wykorzystywania informacji spełniających cechy utworu lub stanowiących bazę danych:";
+
+    const $licenseTabButton = $("#suit_form_tabs > li > a[href='#licenses']");
+    const $licenseTab = $licenseTabButton.parent();
+
+    function disableLicensesTab() {
+        $licenseTabButton.addClass('disabledTab');
+        $licenseTab.addClass('disabled');
+        $licenseTab.attr('title', 'Zakładka zostanie odblokowana po wybraniu instytucji. Reguła blokowania zakładki: instytucja niewypełniona - zakładka zablokowana, instytucja wypełniona - zakładka odblokowana');
+    }
+
+    function enableLicensesTab() {
+        $licenseTabButton.removeClass('disabledTab');
+        $licenseTab.removeClass('disabled');
+        $licenseTab.removeAttr('title');
+    }
+
+    function initializeLicensesTabPrivate() {
+        $("div.field-license_condition_source .control-label label").text(LicenseConditionSourceTextPrivate);
+        $("div.field-license_condition_db_or_copyrighted .control-label label").text(LicenseConditionDbOrCopyrightedTextPrivate);
+        $("div.field-license_condition_personal_data").hide();
+    }
+
+    function initializeLicensesTabPublic() {
+        $("div.field-license_condition_source .control-label label").text(LicenseConditionSourceTextPublic);
+        $("div.field-license_condition_db_or_copyrighted .control-label label").text(LicenseConditionDbOrCopyrightedTextPublic);
+        $("div.field-license_condition_personal_data").show();
+    }
+
+    function updateDatasetFormset(institutionType) {
+        if(institutionType === institutionTypePrivate) {
+            initializeLicensesTabPrivate();
+        } else {
+            initializeLicensesTabPublic();
+        }
+    }
+
+    function updateLicensesTab(organizationId) {
+        if (!organizationId) {
+            disableLicensesTab();
+            return;
+        }
+        $.ajax({
+            type: "GET",
+            url: "{% url 'organization-type' %}",
+            data: {organization_id: organizationId},
+            success: function (data) {
+                if (data.institution_type === institutionTypePrivate) {
+                    initializeLicensesTabPrivate()
+                } else {
+                    initializeLicensesTabPublic();
+                }
+                enableLicensesTab();
+            },
+            error: function (data) {
+                disableLicensesTab();
+            }
+        });
+    }
+
+    if (hasDynamicLicensesTab) {
+        if (institutionTypeSelectExists) {
+            updateDatasetFormset($institutionTypeSelect.val());
+            $institutionTypeSelect.change(function () {
+                updateDatasetFormset($(this).val());
+            });
+
+        } else if (organizationSelectExists) {
+            $organizationSelect.change(function () {
+                updateLicensesTab($(this).val());
+            });
+        } else {
+            if (organizationIdComputed) {
+                updateLicensesTab(organizationIdComputed);
+            } else {
+                disableLicensesTab();
+            }
+        }
+    } else if (hasAccessToPrivateInstitutions) {
+        initializeLicensesTabPrivate()
+    }
+    {% endif %}
+
+    var $licenseConditionDbOrCopyrighted = $("div.control-group.field-license_condition_db_or_copyrighted");
+    var isLicenseReadonly = $licenseConditionDbOrCopyrighted.find("span.readonly").length;
+    if (isLicenseReadonly) {
+        var $licenseChosen = $("div.control-group.field-license_chosen");
+        var $licenseChosenContent = $licenseChosen.find("span.readonly");
+        $licenseChosenContent.css('display', 'block').removeClass('readonly');
+        $licenseConditionDbOrCopyrighted.find("span.readonly").prepend($licenseChosenContent);
+        $licenseChosen.hide();
+    } else {
+        $licenseConditionDbOrCopyrighted.find("div.controls").prepend("<strong>W przypadku wybrania tej opcji należy zaznaczyć licencje poniżej.</strong>");
+        var $licenseConditionResponsibilities = $("div.control-group.field-license_condition_responsibilities");
+        $licenseConditionResponsibilities.find("div.controls").append("<strong>CC BY 4.0</strong>");
+        $(".control-group.field-license_condition_db_or_copyrighted .control-label").css("border-bottom", "none");
+    }
+
+    function refresh_license_choices(text) {
+        var enable = text !== '';
+        var $radios = $("#id_{{ prefix }}license_chosen input[type=radio]");
+        var $firstRadio = $radios.first();
+        if (enable) {
+            $radios.removeAttr('disabled');
+        } else {
+            $radios.attr('disabled', 'disabled');
+            $radios.prop('checked', false);
+            $firstRadio.removeAttr('disabled');
+            $firstRadio.prop('checked', true);
+        }
+    }
+
+    if (window.CKEDITOR) {
+        CKEDITOR.on('instanceCreated', function (event) {
+            var editor = event.editor;
+            if (editor.name === 'id_{{ prefix }}license_condition_db_or_copyrighted') {
+                refresh_license_choices(editor.getData());
+                editor.on('change', function () {
+                    refresh_license_choices(editor.getData());
+                });
+            }
+        });
+    }
+
+    $("a.accordion-expander").click(function () {
+        var $relatedBlock = $(this).parent().next();
+        if ($(this).hasClass("collapsed")) {
+            $(this).removeClass("collapsed");
+            $relatedBlock.slideDown();
+        } else {
+            $(this).addClass("collapsed");
+            $relatedBlock.slideUp();
+        }
+    });
+</script>

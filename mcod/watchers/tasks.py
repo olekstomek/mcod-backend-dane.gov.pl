@@ -1,72 +1,111 @@
+from datetime import date
+import pytz
 from celery import shared_task
+from django.apps import apps
+from django.contrib.auth import get_user_model
+from django.utils.timezone import datetime, timedelta
 
 
 @shared_task
-def watcher_updated_task(watcher_id, prev_value, obj_state):
-    pass
+def update_model_watcher_task(app_name, model_name, instance_id, obj_state='updated'):
+    from mcod.watchers.models import OBJ_STATE_2_NOTIFICATION_TYPES
+    ModelWatcher = apps.get_model('watchers', 'ModelWatcher')
+    try:
+        model = apps.get_model(app_name, model_name.title())
+        if hasattr(model, 'raw'):
+            instance = model.raw.get(pk=instance_id)
+        else:
+            instance = model.objects.get(pk=instance_id)
+    except model.DoesNotExist:
+        return {}
+
+    try:
+        if obj_state in ('m2m_added', 'm2m_cleaned', 'm2m_removed', 'm2m_updated', 'm2m_restored'):
+            prev_value = instance.tracker.previous('ref_value')
+            _type = OBJ_STATE_2_NOTIFICATION_TYPES[obj_state]
+            watcher = ModelWatcher.objects.get_from_instance(instance)
+            model_watcher_updated_task.s(
+                watcher.id,
+                _type,
+                prev_value
+            ).apply_async()
+        else:
+            ModelWatcher.objects.update_from_instance(instance, obj_state=obj_state)
+    except ModelWatcher.DoesNotExist:
+        return {}
 
 
 @shared_task
-def query_watcher_created_task(watcher_id, created_at=None):
-    pass
+def remove_user_notifications_task(user_id, data):
+    Notification = apps.get_model('watchers', 'Notification')
+    qs = Notification.objects.filter(subscription__user_id=user_id)
+    ids = [int(item['id']) for item in data]
+    if ids:
+        qs = qs.filter(pk__in=ids)
+        qs.delete()
+    return {}
 
-#     @staticmethod
-#     def obj_to_data(url, headers=None):
-#         scheme, netloc, path, query, fragment = urlsplit(url)
-#         view = app._router_search(path.strip('/'))
-#         if not view:
-#             raise Exception('No handler for this url.')
-#         _scheme, _netloc, __, __ = urlsplit(settings.API_URL)
-#         if scheme != _scheme or netloc != _netloc:
-#             raise Exception('Invalid url address.')
-#         if query:
-#             query = parser.parse(query)
-#
-#         return {
-#             'scheme': scheme,
-#             'netloc': netloc,
-#             'path': path,
-#             'query': query or {},
-#             'headers': headers or {}
-#         }
-#
-#     @staticmethod
-#     def data_to_obj(data):
-#         if not any('schema', 'netloc', 'path', 'query', 'headers') in data:
-#             raise Exception('invalid data')
-#
-#         url = '{}://{}/{}'.format(data['schema'], data['netloc'], data['path'])
-#         params = data['query']
-#         params['page'] = 1
-#         params['per_page'] = 1
-#         return url, params, data['headers']
-#
-#     def run(self, request=None):
-#         url, params, headers = self.data_to_obj(self.data)
-#         try:
-#             result = requests.get(url, params=params, headers=headers)
-#             if result.status_code != 200:
-#                 raise requests.exceptions.RequestException
-#         except requests.exceptions.RequestException:
-#             raise Exception('Network error, could not get response')
-#
-#         if result.headers['Content-Type'] != 'application/vnd.api+json':
-#             raise Exception('Invalid response content-type')
-#
-#         data = result.json()
-#         try:
-#             new_value = data['meta']['count']
-#         except KeyError:
-#             raise Exception('Invalid response format.')
-#
-#         prev_value = self.ref_value.get('count', 0) if self.ref_value else 0
-#
-#         if new_value != prev_value:
-#             self.ref_value = {
-#                 'count': new_value
-#             }
-#
-#             self.last_ref_change = now()
-#             self.save()
-#
-#             watcher_updated.send(self, prev_value, new_value)
+
+@shared_task
+def update_notifications_task(user_id, data):
+    Notification = apps.get_model('watchers', 'Notification')
+    qs = Notification.objects.filter(subscription__user_id=user_id)
+    for item in data:
+        qs.filter(pk=int(item['id'])).update(**item['attributes'])
+
+    return {}
+
+
+@shared_task
+def update_notifications_status_task(user_id, status='read'):
+    Notification = apps.get_model('watchers', 'Notification')
+    _status = 'new' if status == 'read' else 'read'
+    qs = Notification.objects.filter(subscription__user_id=user_id, status=_status)
+    qs.update(status=status)
+    return {}
+
+
+@shared_task
+def model_watcher_updated_task(watcher_id, notification_type, prev_value):
+    ModelWatcher = apps.get_model('watchers', 'ModelWatcher')
+    Notification = apps.get_model('watchers', 'Notification')
+    watcher = ModelWatcher.objects.get(pk=watcher_id)
+    if watcher.is_active or notification_type in 'object_removed':
+        notifications = [Notification(
+            subscription=subscription,
+            notification_type=notification_type, status='new', ref_value=watcher.ref_value)
+            for subscription in watcher.subscriptions.all()
+        ]
+        Notification.objects.bulk_create(notifications)
+    return {}
+
+
+@shared_task
+def update_query_watchers_task():
+    SearchQueryWatcher = apps.get_model('watchers', 'SearchQueryWatcher')
+    SearchQueryWatcher.objects.reload()
+    return {}
+
+
+@shared_task
+def query_watcher_updated_task(watcher_id, notification_type, prev_value):
+    SearchQueryWatcher = apps.get_model('watchers', 'SearchQueryWatcher')
+    Notification = apps.get_model('watchers', 'Notification')
+    watcher = SearchQueryWatcher.objects.get(pk=watcher_id, is_active=True)
+    notifications = [Notification(
+        subscription=subscription,
+        notification_type=notification_type, status='new', ref_value=watcher.ref_value)
+        for subscription in watcher.subscriptions.all()
+    ]
+    Notification.objects.bulk_create(notifications)
+    return {}
+
+
+@shared_task
+def send_report_from_subscriptions():
+    User = get_user_model()
+    date_till = datetime.combine(date.today(), datetime.min.time()).replace(tzinfo=pytz.utc)
+    date_from = date_till - timedelta(days=1)
+    for user in User.objects.filter(state='active'):
+        user.send_subscriptions_report(date_from, date_till)
+    return {}

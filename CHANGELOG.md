@@ -14,6 +14,151 @@
 ### Breaks
 
 
+## 2.12.0 - (2021-04-13)
+---
+
+## 2.11.1 - (2021-03-17)
+---
+
+## 2.11.0 - (2021-03-15)
+---
+
+## 2.10.0 - (2021-02-24)
+---
+
+## 2.9.0 - (2021-02-01)
+---
+
+## 2.8.1 - (2020-12-29)
+---
+
+## 2.8.0 - (2020-12-15)
+---
+
+## 2.7.0 - (2020-12-01)
+---
+
+## 2.6.0 - (2020-10-18)
+---
+
+## 2.5.0 - (2020-09-30)
+---
+
+## 2.4.0 - (2020-09-07)
+---
+
+## 2.3.1 - (2020-08-11)
+---
+
+## 2.3.0 - (2020-07-29)
+---
+
+## 2.2.1 - (2020-07-03)
+---
+
+## 2.2.0 - (2020-06-29)
+---
+
+## 2.1.1 - (2020-06-17)
+---
+
+## 2.1.0 - (2020-05-28)
+---
+
+## 2.0.0 - (2020-05-11)
+---
+
+## 1.18.0 - (2020-05-04)
+---
+
+## 1.17.0 - (2020-03-16)
+---
+
+## 1.16.0 - (2020-03-09)
+---
+
+## 1.15.1 - (2020-02-18)
+---
+
+## 1.15.0 - (2020-02-18)
+---
+
+## 1.14.0 - (2020-01-22)
+---
+
+## 1.13.0 - (2019-12-18)
+---
+
+## 1.12.1 - (2019-11-28)
+---
+
+## 1.12.0 - (2019-11-25)
+---
+
+## 1.11.0 - (2019-09-25)
+---
+
+### New
+* Możliwość zmiany statusu wszystkim notyfikacjom (MCOD-1605, MCOD-1632)
+* Migracja końcówek artykułów na API 1.4 (MCOD-1641)
+* Migracja strony gównej do API 1.4 (MCOD-1630)
+* Narzędzie do modyfikacji schematu zasobu (MCOD-1591, MCOD-1617)
+* Raporty mailowe z aktywności w obserwowanych obiektach (MCOD-824, MCOD-1631)
+* Newsletter (MCOD-1280, MCOD-1645, MCOD-1673, MCOD-1629, MCOD-1670, MCOD-1671)
+
+### Changes
+* Zmiana koloru przycisku "Zgłoś uwagi" (MCOD-1573)
+* Zmiany tekstów związanych z rejestracją użytkownika (MCOD-1654)
+
+
+### Fixes
+* Poprawki w dokumentacji API (MCOD-1323)
+* Usunięcie nieużywanych końcówek typu autocomplete (MCOD-1675)
+* Poprawki związane z przyszłym wdrożeniem modułu CMS
+* Inne drobne poprawki w PA
+
+
+## 1.10.1 - (2019-09-05)
+---
+
+## 1.10.0 - (2019-09-04)
+---
+
+## 1.9.0 - (2019-06-14)
+---
+
+### New
+* Implementacja w API 1.4 obsługi użytkownika (konto, zmiana hasła, logowanie i tp) (MCOD-1481)
+* Konwersja plików  SHP do GeoJSON (MCOD-1469)
+* Indeksowanie danych geograficznych w Elasticsearchu (MCOD-1470)
+### Changes
+* Weryfikacja pierwszej kolumny zasobu na zgodność z formatem numerycznym (MCOD-1489)
+* Rozszerzenie historii wyszukiwania użytkownika o instytucje, materiały edukacyjne, pomoc. (MCOD-1505)
+### Fixes
+* Poprawka do zasobów spakowanych zawierajacych więcej niż jeden plik (MCOD-1507)
+* Poprawka do wyświetlania formatu .ods jako True (MCOD-1406)
+* Poprawka tekstu w treści maila (MCOD-1494)
+* Poprawka wyników wyszukiwania w API 1.4 (MCOD-1530)
+
+
+## 1.8.0 - (2019-06-14)
+---
+
+### New
+* Obsługa slug'ów we wszystkich obiektach API (MCOD-1325)
+* Nowa końcówka API do pobierania zasobu (MCOD-1428)
+* (WIP) Narzędzie dla dostawców do walidacji zasobów (MCOD-1455)
+* Rozszerzenie mechanizmu walidacji zasobów o nowe komunikaty o błędach (MCOD-1501)
+* 
+### Changes
+* migracja kolejnych końcówek API do wersji 1.4
+* dostosowanie formatu odpowiedzi w przypadku błędów do Json:API
+
+### Fixes
+* Poprawki związane z błędnym działanie liczników wyświetleń oraz pobrań (MCOD-1510, MCOD-1518)
+* Poprawki związane z błędnym generowaniem slug'ów dla zbiorów danych
+
+
 ## 1.7.0 - (2019-05-30)
 ---
 

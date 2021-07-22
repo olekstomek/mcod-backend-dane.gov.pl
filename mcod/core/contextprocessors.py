@@ -14,5 +14,5 @@ def apm(request):
         route = request.path
 
     return {
-        'admin_amp_transaction_name': route_to_name(route, prefix='admin', method=request.method)
+        'admin_amp_transaction_name': route_to_name(route, method=request.method)
     }

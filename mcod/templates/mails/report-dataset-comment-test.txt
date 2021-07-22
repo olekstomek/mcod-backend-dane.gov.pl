@@ -1,3 +1,4 @@
-adresaci: {{ emails }}
-Do zbioru {{ title }} (wersja {{ version }}) [{{ url }}] została zgłoszona uwaga:
+{% load i18n %}
+{% trans 'recipients' %}: {{ dataset.comment_mail_recipients|join:", " }}
+{{ message }}
 {{ comment }}

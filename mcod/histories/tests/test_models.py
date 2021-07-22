@@ -2,7 +2,7 @@
 # from mcod.histories.models import History
 #
 #
-# @pytest.mark.django_db
+#
 # class TestApplicationModel(object):
 #     def test_read_history_for_application(self, valid_application):
 #         assert History.get_object_history(valid_application).count() == 1

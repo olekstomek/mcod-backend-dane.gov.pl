@@ -1,7 +1,7 @@
 import pytest
 from django.contrib.auth import get_user_model
 
-from mcod.users.depricated.schemas import Login, Registration  # , RegistrationRequest
+from mcod.users.depricated.schemas import Registration  # , RegistrationRequest
 
 User = get_user_model()
 
@@ -43,7 +43,7 @@ class Common(object):
 
 
 # class TestAccountSchema(Common):
-#     @pytest.mark.django_db
+#
 #     def test_serialization_from_model(self, db_user):
 #         self._test_serialized_user(db_user, AccountSchema)
 #
@@ -61,21 +61,6 @@ class Common(object):
 #         with pytest.raises(marshmallow.exceptions.ValidationError) as e:
 #             AccountSchema().validate(user_dict)
 #         assert 'state' in e.value.messages
-
-
-class TestLogin(Common):
-    @pytest.mark.django_db
-    def test_serialization_from_model(self, db_user):
-        db_user.token = 'abcdef'
-        self._test_serialized_user(db_user, Login)
-
-    def test_missing_password(self, user_dict):
-        result = Login().validate({'email': 'test@example.com'})
-        assert 'password' in result
-
-    def test_missing_email(self, user_dict):
-        res = Login().validate({'password': '123'})
-        assert 'email' in res
 
 
 class TestRegistrationRequest():

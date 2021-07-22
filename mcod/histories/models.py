@@ -84,6 +84,7 @@ class History(models.Model):
         return _("acc: History")
 
     def indexing(self):
+
         Document = get_document_for_model(History)
 
         obj = Document(

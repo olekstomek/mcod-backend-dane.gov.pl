@@ -6,6 +6,9 @@ flag=0
 retries=0
 max_retries=2
 sleep_time=3
+
+workers=${API_WORKERS:-2}
+
 while [ $flag -eq 0 ]; do
     if [ $retries -eq $max_retries ]; then
         echo Executed $retries retries, aborting
@@ -14,10 +17,10 @@ while [ $flag -eq 0 ]; do
     sleep $sleep_time
     if [ "$POSTGRES_HOST_TYPE" == "machine" ]; then
         python manage.py migrate
-        gunicorn mcod.api:app --bind 0.0.0.0:8000 --reload -R --env PYTHONUNBUFFERED=1 -k gevent
+        gunicorn mcod.api:app --workers=$workers --bind 0.0.0.0:8000 -R --env PYTHONUNBUFFERED=1
     else
         wait-for-it mcod-db:5432 -s --timeout=10 -- python manage.py migrate
-        wait-for-it mcod-db:5432 -s --timeout=10 -- gunicorn mcod.api:app --bind 0.0.0.0:8000 --reload -R --env PYTHONUNBUFFERED=1 -k gevent
+        wait-for-it mcod-db:5432 -s --timeout=10 -- gunicorn mcod.api:app --workers=$workers --bind 0.0.0.0:8000 -R --env PYTHONUNBUFFERED=1
     fi
     if [ $? -eq 0 ]; then
         flag=1

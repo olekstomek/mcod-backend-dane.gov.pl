@@ -1,4 +1,4 @@
-{% load i18n admin_static admin_urls suit_tags suit_list %}
+{% load i18n static admin_urls suit_tags suit_list %}
 <div class="inline-group {{ inline_admin_formset.opts.suit_classes }}" id="{{ inline_admin_formset.formset.prefix }}-group">
 {{ inline_admin_formset.formset.management_form }}
 {{ inline_admin_formset.formset.non_form_errors }}
@@ -44,11 +44,13 @@
             if (typeof SelectFilter != "undefined"){
                 $(".selectfilter").each(function(index, value){
                   var namearr = value.name.split('-');
-                  SelectFilter.init(value.id, namearr[namearr.length-1], false, "{% static "admin/" %}");
+                  var fieldname = $(this).data('fieldName') || namearr[namearr.length-1];
+                  SelectFilter.init(value.id, fieldname, false, "{% static "admin/" %}");
                 });
                 $(".selectfilterstacked").each(function(index, value){
                   var namearr = value.name.split('-');
-                  SelectFilter.init(value.id, namearr[namearr.length-1], true, "{% static "admin/" %}");
+                  var fieldname = $(this).data('fieldName') || namearr[namearr.length-1];
+                  SelectFilter.init(value.id, fieldname, true, "{% static "admin/" %}");
                 });
             }
         };

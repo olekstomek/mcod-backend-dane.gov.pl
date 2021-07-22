@@ -1,0 +1,36 @@
+from django.db import models
+from django.utils.translation import gettext_lazy as _
+from modeltrans.fields import TranslationField
+from model_utils import FieldTracker
+
+from mcod.special_signs.managers import SpecialSignManager, SpecialSignDeletedManager
+from mcod.core.db.models import ExtendedModel
+
+
+class SpecialSign(ExtendedModel):
+    symbol = models.CharField(max_length=30, verbose_name=_('symbol'))
+    name = models.CharField(max_length=100, verbose_name=_('name'))
+    description = models.TextField(verbose_name=_('description'))
+    created_by = models.ForeignKey(
+        'users.User', models.DO_NOTHING, null=True, blank=True, editable=False, verbose_name=_('created by'),
+        related_name='special_signs_created',
+    )
+    modified_by = models.ForeignKey(
+        'users.User', models.DO_NOTHING, null=True, blank=True, editable=False, verbose_name=_('modified by'),
+        related_name='special_signs_modified',
+    )
+
+    raw = models.Manager()
+    objects = SpecialSignManager()
+    deleted = SpecialSignDeletedManager()
+    i18n = TranslationField(fields=('name', 'description'), required_languages=('pl',))
+    tracker = FieldTracker()
+    slugify_field = 'name'
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        default_manager_name = 'objects'
+        verbose_name = _('special sign')
+        verbose_name_plural = _('special signs')

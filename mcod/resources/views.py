@@ -1,34 +1,50 @@
 # -*- coding: utf-8 -*-
 
 import json
-from collections import namedtuple
 from functools import partial
-from uuid import uuid4
 
 import falcon
 from apispec import APISpec
 from django.apps import apps
 from django.template import loader
+from django.utils.translation import gettext_lazy as _
+from elasticsearch_dsl import A
 
 from mcod import settings
-from mcod.core.api.handlers import SearchHdlr, RetrieveOneHdlr, CreateOneHdlr
+from mcod.core.api.handlers import (
+    SearchHdlr,
+    RetrieveOneHdlr,
+    CreateOneHdlr,
+    RemoveOneHdlr,
+    RetrieveManyHdlr,
+    SubscriptionSearchHdlr,
+    ShaclMixin)
+from mcod.core.api.hooks import login_optional, login_required
 from mcod.core.api.openapi.plugins import TabularDataPlugin
 from mcod.core.api.versions import DOC_VERSIONS
-from mcod.core.api.views import BaseView
+from mcod.core.api.views import JsonAPIView, RDFView
 from mcod.core.versioning import versioned
 from mcod.counters.lib import Counter
 from mcod.lib.encoders import DateTimeToISOEncoder
-from mcod.lib.handlers import SearchHandler, RetrieveOneHandler
-from mcod.resources.depricated.schemas import ResourcesList
-from mcod.resources.depricated.serializers import ResourceSerializer, ResourcesMeta, ResourceDataSerializer
 from mcod.resources.deserializers import ResourceApiRequest, ResourceApiSearchRequest, TableApiRequest, \
-    TableApiSearchRequest, CreateCommentRequest
-from mcod.resources.documents import ResourceDoc
-from mcod.resources.serializers import ResourceApiResponse, CommentApiResponse, TableApiResponse
-from mcod.resources.tasks import send_resource_comment
+    TableApiSearchRequest, CreateCommentRequest, GeoApiSearchRequest, CreateChartRequest, ResourceRdfApiRequest
+from mcod.resources.documents import ResourceDocumentActive
+from mcod.resources.serializers import (
+    ChartApiResponse,
+    CommentApiResponse,
+    GeoApiResponse,
+    GeoFeatureRecord,
+    ResourceApiResponse,
+    ResourceRDFResponseSchema,
+    TableApiResponse,
+)
 
 
-class ResourcesView(BaseView):
+Resource = apps.get_model('resources', 'Resource')
+
+
+class ResourcesView(JsonAPIView):
+    @falcon.before(login_optional)
     @versioned
     def on_get(self, request, response, *args, **kwargs):
         """
@@ -37,26 +53,19 @@ class ResourcesView(BaseView):
         """
         self.handle(request, response, self.GET, *args, **kwargs)
 
+    @falcon.before(login_optional)
     @on_get.version('1.0')
     def on_get(self, request, response, *args, **kwargs):
-        self.handle(request, response, self.GET_1_0, *args, **kwargs)
+        self.handle(request, response, self.GET, *args, **kwargs)
 
-    class GET_1_0(SearchHandler):
-        meta_serializer = ResourcesMeta()
-        deserializer_schema = ResourcesList()
-        serializer_schema = ResourceSerializer(many=True)
-        search_document = ResourceDoc()
-
-    class GET(SearchHdlr):
+    class GET(SubscriptionSearchHdlr):
         deserializer_schema = partial(ResourceApiSearchRequest)
         serializer_schema = partial(ResourceApiResponse, many=True)
-        search_document = ResourceDoc()
-
-        def _queryset_extra(self, queryset, *args, **kwargs):
-            return queryset.filter('term', status='published')
+        search_document = ResourceDocumentActive()
 
 
-class ResourceView(BaseView):
+class ResourceView(JsonAPIView):
+    @falcon.before(login_optional)
     @versioned
     def on_get(self, request, response, *args, **kwargs):
         """
@@ -65,50 +74,57 @@ class ResourceView(BaseView):
         """
         self.handle(request, response, self.GET, *args, **kwargs)
 
+    @falcon.before(login_optional)
     @on_get.version('1.0')
     def on_get(self, request, response, *args, **kwargs):
-        self.handle(request, response, self.GET_1_0, *args, **kwargs)
+        self.handle(request, response, self.GET, *args, **kwargs)
 
     class GET(RetrieveOneHdlr):
         deserializer_schema = partial(ResourceApiRequest)
         database_model = apps.get_model('resources', 'Resource')
         serializer_schema = partial(ResourceApiResponse, many=False)
+        include_default = ['dataset', 'institution']
 
-        def _get_instance(self, id, *args, **kwargs):
+
+class ResourceRDFView(RDFView):
+    def on_get(self, request, response, *args, **kwargs):
+        self.handle(request, response, self.GET, *args, **kwargs)
+
+    class GET(ShaclMixin, RetrieveOneHdlr):
+        deserializer_schema = ResourceRdfApiRequest
+        database_model = apps.get_model('resources', 'Resource')
+        serializer_schema = ResourceRDFResponseSchema
+
+        def serialize(self, *args, **kwargs):
+            if self.use_rdf_db():
+                store = self.get_sparql_store()
+                return store.get_resource_graph(**kwargs)
+            return super().serialize(*args, **kwargs)
+
+        def _get_instance(self, dataset_id, *args, **kwargs):
             instance = getattr(self, '_cached_instance', None)
             if not instance:
                 model = self.database_model
                 try:
-                    self._cached_instance = model.objects.get(pk=id, status="published")
+                    self._cached_instance = model.objects.get(
+                        dataset_id=dataset_id, pk=kwargs['res_id'], status=model.STATUS.published)
                 except model.DoesNotExist:
                     raise falcon.HTTPNotFound
             return self._cached_instance
 
-    class GET_1_0(RetrieveOneHandler):
-        database_model = apps.get_model('resources', 'Resource')
-        serializer_schema = ResourceSerializer(many=False, include_data=('dataset',))
 
-        def _clean(self, request, id, *args, **kwargs):
-            model = self.database_model
-            try:
-                return model.objects.get(pk=id, status="published")
-            except model.DoesNotExist:
-                raise falcon.HTTPNotFound
-
-
-class ResourceTableView(BaseView):
+class ResourceTableView(JsonAPIView):
     @versioned
     def on_get(self, request, response, *args, **kwargs):
         """
         ---
         doc_template: docs/tables/list_view.yml
-
         """
         self.handle(request, response, self.GET, *args, **kwargs)
 
     @on_get.version('1.0')
     def on_get(self, request, response, *args, **kwargs):
-        self.handle(request, response, self.GET_1_0, *args, **kwargs)
+        self.handle(request, response, self.GET, *args, **kwargs)
 
     class GET(SearchHdlr):
         deserializer_schema = partial(TableApiSearchRequest)
@@ -116,19 +132,17 @@ class ResourceTableView(BaseView):
         serializer_schema = partial(TableApiResponse, many=True)
 
         def _queryset_extra(self, queryset, *args, **kwargs):
-            return queryset.sort('_score', 'row_no')
+            sort = self.request.context.cleaned_data.get('sort')
+            return queryset if sort else queryset.sort('_score', 'row_no')
 
-        def _get_resource_instance(self, id):
+        def _get_resource_instance(self, resource_id):
             cached_resource = getattr(self, '_cached_resource', None)
             if not cached_resource:
                 model = self.database_model
                 try:
-                    self._cached_resource = model.objects.get(pk=id, status="published")
+                    self._cached_resource = model.objects.get(pk=resource_id, status="published")
 
                 except model.DoesNotExist:
-                    raise falcon.HTTPNotFound
-
-                if not self._cached_resource.tabular_data:
                     raise falcon.HTTPNotFound
 
             return self._cached_resource
@@ -136,57 +150,55 @@ class ResourceTableView(BaseView):
         def _get_data(self, cleaned, id, *args, **kwargs):
             resource = self._get_resource_instance(id)
 
-            self.search_document = resource.tabular_data.doc
+            if resource.data and resource.data.available:
+                self.search_document = resource.data.doc
+                schema_cls = TableApiResponse
+                _fields = resource.data.get_api_fields()
+                schema_cls.opts.attrs_schema._declared_fields = _fields
+                self.serializer_schema = partial(schema_cls, many=True)
 
-            schema_cls = TableApiResponse
-            _fields = resource.tabular_data.get_api_fields()
-            schema_cls.opts.attrs_schema._declared_fields = _fields
-            self.serializer_schema = partial(schema_cls, many=True)
-            if resource.tabular_data and resource.tabular_data.available:
-                return super()._get_data(cleaned, id, *args, **kwargs)
+                _data = super()._get_data(cleaned, id, *args, **kwargs)
+                aggs = {}
+                for agg_name in _data.aggregations._d_.keys():
+                    _, agg_type, col_name = agg_name.split('_')
+                    if agg_type not in aggs:
+                        aggs[agg_type] = []
+                    aggs[agg_type].append({
+                        'column': col_name,
+                        'value': getattr(_data.aggregations, agg_name).value
+                    })
+                for agg_type, value in aggs.items():
+                    setattr(_data.aggregations, agg_type, value)
+                return _data
 
-            raise falcon.HTTPNotFound
+            return []
 
         def _get_meta(self, cleaned, id, *args, **kwargs):
             resource = self._get_resource_instance(id)
-            if resource.tabular_data and resource.tabular_data.available:
-                return dict(
-                    headers_map=resource.tabular_data.headers_map,
-                    data_schema=resource.tabular_data.get_schema(use_aliases=True)
-                )
-            return {}
+            return resource.data_meta
 
-    class GET_1_0(RetrieveOneHandler):
-        database_model = apps.get_model('resources', 'Resource')
-        serializer_schema = ResourceDataSerializer(many=False)
+        def _get_queryset(self, cleaned, id, *args, **kwargs):
+            resource = self._get_resource_instance(id)
+            self.search_document = resource.data.doc
+            self.deserializer.fields['sort'].sort_map = resource.data.get_sort_map()
+            self.deserializer.context['index'] = resource.data.doc._index
+            return super()._get_queryset(cleaned, *args, **kwargs)
 
-        def _clean(self, request, id, *args, **kwargs):
-            model = self.database_model
-            try:
-                return model.objects.get(pk=id, status="published")
-            except model.DoesNotExist:
-                raise falcon.HTTPNotFound
+        def prepare_context(self, *args, **kwargs):
+            cleaned = getattr(self.request.context, 'cleaned_data') or {}
+            debug_enabled = getattr(self.response.context, 'debug', False)
+            if debug_enabled:
+                self.response.context.query = self._get_debug_query(cleaned, *args, **kwargs)
+            result = self._get_data(cleaned, *args, **kwargs)
 
-        def _data(self, request, cleaned, *args, **kwargs):
-            if cleaned.data_is_valid == 'SUCCESS' and cleaned.show_tabular_view:
-                try:
-                    headers_map = cleaned.tabular_data.headers_map
-                    data = []
-                    for result in cleaned.tabular_data.iter(from_=0, size=1000):
-                        data.append([getattr(result, attr) for attr in headers_map.values()])
-
-                    return {
-                        'id': cleaned.id,
-                        'schema': cleaned.tabular_data.schema,
-                        'headers': list(headers_map.keys()),
-                        'data': data
-                    }
-
-                except Exception:
-                    return {}
+            self.response.context.data = result
+            self.response.context.meta = self._get_meta(result, *args, **kwargs)
+            included = self._get_included(result, *args, **kwargs)
+            if included:
+                self.response.context.included = included
 
 
-class ResourceTableRowView(BaseView):
+class ResourceTableRowView(JsonAPIView):
     @versioned
     def on_get(self, request, response, *args, **kwargs):
         """
@@ -200,45 +212,122 @@ class ResourceTableRowView(BaseView):
         serializer_schema = partial(TableApiResponse, many=False)
         database_model = apps.get_model('resources', 'Resource')
 
-        def _get_instance(self, id, *args, **kwargs):
-            instance = getattr(self, '_cached_instance', None)
-            if not instance:
-                model = self.database_model
-                try:
-                    self._cached_instance = model.objects.get(pk=id, status="published")
-                except model.DoesNotExist:
-                    raise falcon.HTTPNotFound
-            return self._cached_instance
-
         def _get_data(self, cleaned, id, row_id, *args, **kwargs):
             resource = self._get_instance(id, *args, **kwargs)
-            self.search_document = resource.tabular_data.doc
+            self.search_document = resource.data.doc
 
             schema_cls = TableApiResponse
-            _fields = resource.tabular_data.get_api_fields()
+            _fields = resource.data.get_api_fields()
             schema_cls.opts.attrs_schema._declared_fields = _fields
             self.serializer_schema = partial(schema_cls, many=True)
-            if resource.tabular_data and resource.tabular_data.available:
+            if resource.data and resource.data.available:
                 return self.search_document.get(row_id)
 
             raise falcon.HTTPNotFound
 
         def _get_meta(self, cleaned, id, *args, **kwargs):
             resource = self._get_instance(id, *args, **kwargs)
-            if resource.tabular_data and resource.tabular_data.available:
-                return dict(
-                    headers_map=resource.tabular_data.headers_map,
-                    data_schema=resource.tabular_data.get_schema(use_aliases=True)
-                )
-            return {}
+            return resource.data_meta
 
 
-class ResourceCommentsView(BaseView):
+class ResourceGeoView(JsonAPIView):
+    @versioned
+    def on_get(self, request, response, *args, **kwargs):
+        self.handle(request, response, self.GET, *args, **kwargs)
+
+    class GET(SearchHdlr):
+        deserializer_schema = GeoApiSearchRequest
+        database_model = apps.get_model('resources', 'Resource')
+        serializer_schema = partial(GeoApiResponse, many=True)
+
+        def _get_resource_instance(self, resource_id):
+            cached_resource = getattr(self, '_cached_resource', None)
+            if not cached_resource:
+                model = self.database_model
+                try:
+                    self._cached_resource = model.objects.get(pk=resource_id, status="published")
+
+                except model.DoesNotExist:
+                    raise falcon.HTTPNotFound
+
+                if not self._cached_resource.data:
+                    raise falcon.HTTPNotFound
+
+            return self._cached_resource
+
+        def _get_data(self, cleaned, id, *args, **kwargs):
+            resource = self._get_resource_instance(id)
+            if resource.data and resource.data.available:
+                self.search_document = resource.data.doc
+
+                schema_cls = GeoFeatureRecord
+                schema_cls.opts.fields = resource.data.get_api_fields()
+                self.serializer_schema = partial(GeoApiResponse, many=True)
+
+                data = super()._get_data(cleaned, id, *args, **kwargs)
+
+                tiles = []
+                for agg_name in data.aggregations._d_.keys():
+                    if agg_name.startswith('tile'):
+                        agg = getattr(data.aggregations, agg_name)
+                        tile = {
+                            'tile_name': agg_name,
+                            'doc_count': agg.buckets.bound.doc_count,
+                            'shapes': agg.buckets.bound.points.hits,
+                        }
+                        if agg.buckets.bound.doc_count != 0:
+                            tile['centroid'] = [agg.buckets.bound.centroid.location.lon,
+                                                agg.buckets.bound.centroid.location.lat]
+                            tiles.append(tile)
+                    elif agg_name == 'bounds' and hasattr(data.aggregations.bounds, 'bounds'):
+                        data.aggregations.bounds = {
+                            'top_left': [data.aggregations.bounds.bounds.top_left.lon,
+                                         data.aggregations.bounds.bounds.top_left.lat],
+                            'bottom_right': [data.aggregations.bounds.bounds.bottom_right.lon,
+                                             data.aggregations.bounds.bounds.bottom_right.lat]
+                        }
+                    elif agg_name == 'others':
+                        data._hits = data.aggregations.others.buckets.others.others.hits
+
+                if tiles:
+                    data.aggregations.tiles = tiles
+                return data
+
+            raise falcon.HTTPNotFound
+
+        def _queryset_extra(self, queryset, *args, **kwargs):
+            queryset.aggs.metric('bounds', A('geo_bounds', field='point'))
+            return queryset
+
+        def _get_queryset(self, cleaned, id, *args, **kwargs):
+            if cleaned.get('no_data', False):
+                cleaned['per_page'] = 0
+            resource = self._get_resource_instance(id)
+            self.deserializer.fields['sort'].sort_map = resource.data.get_sort_map()
+            return super()._get_queryset(cleaned, *args, **kwargs)
+
+        def _get_meta(self, cleaned, id, *args, **kwargs):
+            resource = self._get_resource_instance(id)
+            return resource.data_meta
+
+        def prepare_context(self, *args, **kwargs):
+            cleaned = getattr(self.request.context, 'cleaned_data') or {}
+            result = self._get_data(cleaned, *args, **kwargs)
+            self.response.context.meta = {}
+            if any(bool(getattr(result, attr, False)) for attr in ['hits', 'aggregations']):
+                self.response.context.data = result
+                self.response.context.meta = self._get_meta(result, *args, **kwargs)
+                included = [x for x in self._get_included(result, *args, **kwargs) if x]
+                if included:
+                    self.response.context.included = included
+
+
+class ResourceCommentsView(JsonAPIView):
     def on_post(self, request, response, *args, **kwargs):
         self.handle(request, response, self.POST, *args, **kwargs)
 
     class POST(CreateOneHdlr):
-        deserializer_schema = partial(CreateCommentRequest)
+        deserializer_schema = CreateCommentRequest
         serializer_schema = partial(CommentApiResponse, many=False)
         database_model = apps.get_model('resources', 'Resource')
 
@@ -258,35 +347,38 @@ class ResourceCommentsView(BaseView):
             return cleaned
 
         def _get_data(self, cleaned, id, *args, **kwargs):
-            attrs = cleaned['data']['attributes']
-            send_resource_comment.s(id, attrs['comment']).apply_async(countdown=1)
-            result = namedtuple('Comment', ['id', 'comment', 'resource'])(
-                str(uuid4()),
-                attrs['comment'],
-                self._get_resource(id, *args, **kwargs)
-            )
-            return result
+            data = cleaned['data']['attributes']
+            model = apps.get_model('suggestions.ResourceComment')
+            self.response.context.data = model.objects.create(resource_id=id, **data)
 
 
 class ResourceFileDownloadView(object):
+    """Increments download counter for specified resource."""
+
+    def __init__(self, file_type=None):
+        super().__init__()
+        self.file_type = file_type
+
     def on_get(self, request, response, id, *args, **kwargs):
-        Resource = apps.get_model('resources', 'Resource')
         try:
             resource = Resource.objects.get(pk=id)
         except Resource.DoesNotExist:
             raise falcon.HTTPNotFound
 
-        if not resource.type == 'file':
-            raise falcon.HTTPNotFound
-
-        if not resource.file_url:
+        if not resource.type == 'file' or (not resource.file_url and not resource.link):
             raise falcon.HTTPNotFound
 
         counter = Counter()
         counter.incr_download_count(id)
 
-        response.location = resource.file_url
-        response.status = falcon.HTTP_301
+        if resource.is_linked:
+            response.location = resource.link
+        elif self.file_type == 'csv':
+            response.location = resource.csv_file_url
+        else:
+            response.location = resource.file_url
+
+        response.status = falcon.HTTP_302
 
 
 class ResourceTableSpecView(object):
@@ -296,7 +388,6 @@ class ResourceTableSpecView(object):
         if version and version not in DOC_VERSIONS:
             raise falcon.HTTPBadRequest(description='Unsupported API version')
 
-        Resource = apps.get_model('resources', 'Resource')
         try:
             resource = Resource.objects.get(pk=id)
         except Resource.DoesNotExist:
@@ -305,13 +396,13 @@ class ResourceTableSpecView(object):
         if not resource.tabular_data_schema:
             raise falcon.HTTPNotFound
 
-        if not resource.tabular_data.available:
+        if not resource.data.available:
             raise falcon.HTTPNotFound
 
         template = loader.get_template('docs/tables/description.html')
         context = {
             'resource': resource,
-            'headers_map': dict(resource.tabular_data.headers_map)
+            'headers_map': resource.data.headers_map
         }
         description = template.render(context)
 
@@ -326,7 +417,7 @@ class ResourceTableSpecView(object):
         )
 
         schema_cls = TableApiResponse
-        _fields = resource.tabular_data.get_api_fields()
+        _fields = resource.data.get_api_fields()
         schema_cls.opts.attrs_schema._declared_fields = _fields
 
         spec.components.schema('Rows', schema_cls=schema_cls, many=True)
@@ -340,7 +431,6 @@ class ResourceTableSpecView(object):
 
 class ResourceSwaggerView(object):
     def on_get(self, request, response, id):
-        Resource = apps.get_model('resources', 'Resource')
         try:
             resource = Resource.objects.get(pk=id)
         except Resource.DoesNotExist:
@@ -372,3 +462,105 @@ class ResourceDownloadCounter(object):
         resp.status = falcon.HTTP_200
         resp.content_type = 'text/html'
         resp.body = json.dumps({}, cls=DateTimeToISOEncoder)
+
+
+class ResourceChartView(JsonAPIView):
+
+    @falcon.before(login_optional)
+    def on_get(self, request, response, *args, **kwargs):
+        """
+        ---
+        doc_template: docs/resources/chart_view.yml
+        """
+        self.handle(request, response, self.GET, *args, **kwargs)
+
+    @falcon.before(login_required)
+    def on_post(self, request, response, *args, **kwargs):
+        self.handle_post(request, response, self.POST, *args, **kwargs)
+
+    class GET(RetrieveOneHdlr):
+        deserializer_schema = ChartApiResponse
+        serializer_schema = ChartApiResponse
+        database_model = apps.get_model('resources', 'Chart')
+        resource_model = apps.get_model('resources', 'Resource')
+
+        def _get_instance(self, id, *args, **kwargs):
+            try:
+                self.resource = self.resource_model.objects.get(pk=id)
+            except self.resource_model.DoesNotExist:
+                raise falcon.HTTPNotFound
+            return self.resource.get_chart(
+                self.request.user if self.request.user.is_authenticated else None)
+
+    class POST(CreateOneHdlr):
+        deserializer_schema = CreateChartRequest
+        serializer_schema = ChartApiResponse
+        database_model = apps.get_model('resources', 'Chart')
+        resource_model = apps.get_model('resources', 'Resource')
+
+        def clean(self, id, *args, **kwargs):
+            try:
+                self.resource = self.resource_model.objects.get(pk=id)
+            except self.resource_model.DoesNotExist:
+                raise falcon.HTTPNotFound
+            return super().clean(*args, **kwargs)
+
+        def _get_data(self, cleaned, *args, **kwargs):
+            data = cleaned['data']['attributes']
+            is_default = data.get('is_default', False)
+            chart = self.resource.get_chart_for_update(self.request.user, is_default)
+            if not self.request.user.can_add_resource_chart(self.resource, is_default, chart):
+                raise falcon.HTTPForbidden(title=_('No permission to define chart'))
+            data['resource'] = self.resource
+            self.response.context.data = self.database_model.save_chart(self.request.user, chart, data)
+
+
+class ResourceChartsView(JsonAPIView):
+
+    @falcon.before(login_optional)
+    def on_get(self, request, response, *args, **kwargs):
+        """
+        ---
+        doc_template: docs/resources/charts_view.yml
+        """
+        self.handle(request, response, self.GET, *args, **kwargs)
+
+    class GET(RetrieveManyHdlr):
+        database_model = apps.get_model('resources', 'Chart')
+        resource_model = apps.get_model('resources', 'Resource')
+        serializer_schema = partial(ChartApiResponse, many=True)
+
+        def clean(self, *args, **kwargs):
+            try:
+                self.resource_model.objects.get(pk=kwargs.get('id'))
+            except self.resource_model.DoesNotExist:
+                raise falcon.HTTPNotFound
+            return super().clean(*args, **kwargs)
+
+        def _get_queryset(self, cleaned, *args, **kwargs):
+            return self.database_model.get_charts(
+                kwargs.get('id'), self.request.user if self.request.user.is_authenticated else None)
+
+
+class ChartDeleteView(JsonAPIView):
+
+    @falcon.before(login_required)
+    def on_delete(self, request, response, *args, **kwargs):
+        self.handle_delete(request, response, self.DELETE, *args, **kwargs)
+
+    class DELETE(RemoveOneHdlr):
+        database_model = apps.get_model('resources', 'Chart')
+
+        def clean(self, id, *args, **kwargs):
+            try:
+                instance = self.database_model.objects.get(id=id)
+            except self.database_model.DoesNotExist:
+                raise falcon.HTTPNotFound
+            if not self.request.user.can_delete_resource_chart(instance):
+                raise falcon.HTTPForbidden
+            return instance
+
+        def run(self, id, *args, **kwargs):
+            instance = self.clean(id, *args, **kwargs)
+            instance.delete(modified_by=self.request.user)
+            return {}

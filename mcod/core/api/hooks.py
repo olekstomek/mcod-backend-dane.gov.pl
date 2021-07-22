@@ -1,31 +1,77 @@
 # -*- coding: utf-8 -*-
 from importlib import import_module
 
+import json
+import uuid
+
 import falcon
 from django.contrib.auth import get_user
 from django.contrib.auth.models import AnonymousUser
+from django.db import connection
 from django.utils.translation import gettext_lazy as _
+from django_redis import get_redis_connection
 
 from mcod import settings
 from mcod.lib.jwt import decode_jwt_token
 
 session_store = import_module(settings.SESSION_ENGINE).SessionStore
 
+role_properties = {
+    # role: model property
+    'admin': 'is_superuser',
+    'lod_admin': 'is_labs_admin',
+    'aod_admin': 'is_academy_admin',
+    'official': 'is_official',
+    'editor': 'is_staff',
+    'user': 'is_active',
+    'agent': 'agent',
+}
 
-def login_required(req, resp, resource, params):
-    auth_header = req.get_header('Authorization')
 
-    if not auth_header:
-        raise falcon.HTTPUnauthorized(
-            title='401 Unauthorized',
-            description=_('Missing authorization header'),
-            code='token_missing'
+def check_roles(user, roles):
+    if not any(
+        getattr(user, role_properties[role])
+        for role in roles
+    ):
+        raise falcon.HTTPForbidden(
+            title='403 Forbidden',
+            description=_('Additional permissions are required!'),
+            code='additional_perms_required'
         )
-    user_payload = decode_jwt_token(auth_header)['user']
+
+
+def login_required(req, resp, resource, params, roles=('user', ), save=False, restore_from=None):  # noqa: C901
+    if restore_from:
+        if restore_from not in params:
+            raise falcon.HTTPUnauthorized(
+                title='401 Unauthorized',
+                description=_('Missing token'),
+                code='token_missing'
+            )
+        redis_connection = get_redis_connection()
+        _key = params[restore_from]
+        if isinstance(_key, uuid.UUID):
+            _key = _key.hex
+        user_payload = redis_connection.get(_key)
+        try:
+            user_payload = json.loads(user_payload)
+        except Exception:
+            user_payload = {}
+    else:
+        auth_header = req.get_header('Authorization')
+
+        if not auth_header:
+            raise falcon.HTTPUnauthorized(
+                title='401 Unauthorized',
+                description=_('Missing authorization header'),
+                code='token_missing'
+            )
+        user_payload = decode_jwt_token(auth_header)['user']
+
     if not set(('session_key', 'email')) <= set(user_payload):
         raise falcon.HTTPUnauthorized(
             title='401 Unauthorized',
-            description=_('Invalid authorization header'),
+            description=_('Invalid token') if restore_from else _('Invalid authorization header'),
             code='token_error'
         )
     req.session = session_store(user_payload['session_key'])
@@ -64,7 +110,19 @@ def login_required(req, resp, resource, params):
                 code='account_inactive'
             )
 
+    check_roles(user, roles)
+
     req.user = user
+    connection.cursor().execute(f'SET myapp.userid = "{user.id}"')
+    if save:
+        redis_connection = get_redis_connection()
+        _token = uuid.uuid4().hex
+        user_payload = {
+            'session_key': req.session.session_key,
+            'email': req.user.email,
+        }
+        redis_connection.set(_token, json.dumps(user_payload), ex=60)
+        resp._token = _token
 
 
 def login_optional(req, resp, resource, *args, **kwargs):
@@ -88,3 +146,5 @@ def login_optional(req, resp, resource, *args, **kwargs):
     if user != AnonymousUser() and any((not user, user.email != user_payload['email'], user.state != 'active')):
         user = AnonymousUser()
     req.user = user
+    if user.id:
+        connection.cursor().execute(f'SET myapp.userid = "{user.id}"')

@@ -3,25 +3,31 @@ from falcon import HTTP_OK
 from django_redis import get_redis_connection
 
 
-@pytest.mark.django_db
-def test_searchhistories_middleware_set_up_key_in_redis(client, editor_user):
-    redis_con = get_redis_connection("default")
+@pytest.mark.redis
+@pytest.mark.elasticsearch
+def test_searchhistories_middleware_set_up_key_in_redis(client, active_editor):
+    redis_con = get_redis_connection('default')
     keys = [k.decode() for k in redis_con.keys()]
 
-    key = f"search_history_user_{editor_user.id}"
+    key = f'search_history_user_{active_editor.id}'
     assert key not in keys
     resp = client.simulate_post(path='/auth/login', json={
-        'email': editor_user.email,
-        'password': 'Britenet.1'
+        'data': {
+            'type': 'user',
+            'attributes': {
+                'email': active_editor.email,
+                'password': '12345.Abcde',
+            }
+        }
     })
 
     token = resp.json['data']['attributes']['token']
 
     assert resp.status == HTTP_OK
     resp = client.simulate_get(
-        "/datasets",
-        query_string="q=testmiddleware",
-        headers={"Authorization": f"Bearer {token}"}
+        '/1.4/search',
+        query_string='q=testmiddleware',
+        headers={'Authorization': f'Bearer {token}'}
     )
     assert HTTP_OK == resp.status
 
@@ -30,67 +36,56 @@ def test_searchhistories_middleware_set_up_key_in_redis(client, editor_user):
     redis_con.delete(key)  # clean for future tests
 
 
-@pytest.mark.django_db
-def test_searchhistories_middleware_simply_get_on_page_shouldnt_increas_list(client, editor_user):
-    redis_con = get_redis_connection("default")
-    keys = [k.decode() for k in redis_con.keys()]
-
-    key = f"search_history_user_{editor_user.id}"
-    assert key not in keys
+@pytest.mark.redis
+@pytest.mark.elasticsearch
+def test_searchhistories_middleware_ignore_search_without_query(client, active_editor):
+    redis_con = get_redis_connection('default')
+    key = f'search_history_user_{active_editor.id}'
     resp = client.simulate_post(path='/auth/login', json={
-        'email': editor_user.email,
-        'password': 'Britenet.1'
+        'data': {
+            'type': 'user',
+            'attributes': {
+                'email': active_editor.email,
+                'password': '12345.Abcde',
+            }
+        }
     })
 
     token = resp.json['data']['attributes']['token']
 
-    assert resp.status == HTTP_OK
     resp = client.simulate_get(
-        "/datasets",
-        query_string="page=1&per_page=5&q=&sort=-modified",
-        headers={"Authorization": f"Bearer {token}"}
-    )
-    assert HTTP_OK == resp.status
-
-    resp = client.simulate_get(
-        "/applications",
-        query_string="page=1&per_page=5&q=&sort=-created",
-        headers={"Authorization": f"Bearer {token}"}
-    )
-    assert HTTP_OK == resp.status
-
-    resp = client.simulate_get(
-        "/articles",
-        query_string="page=1&per_page=5&q=&sort=-created",
-        headers={"Authorization": f"Bearer {token}"}
+        '/1.4/search',
+        query_string='sort=relevance&page=1&per_page=20',
+        headers={'Authorization': f'Bearer {token}'}
     )
     assert HTTP_OK == resp.status
 
     keys = [k.decode() for k in redis_con.keys()]
     assert key not in keys
+    redis_con.delete(key)  # clean for future tests
 
 
-@pytest.mark.django_db
-def test_searchhistories_middleware_search_for_institutions_is_not_saved(client, editor_user):
-    redis_con = get_redis_connection("default")
-    keys = [k.decode() for k in redis_con.keys()]
-
-    key = f"search_history_user_{editor_user.id}"
-    assert key not in keys
+@pytest.mark.elasticsearch
+def test_searchhistories_middleware_ignore_suggestion_path(client, active_editor):
+    key = f'search_history_user_{active_editor.id}'
     resp = client.simulate_post(path='/auth/login', json={
-        'email': editor_user.email,
-        'password': 'Britenet.1'
+        'data': {
+            'type': 'user',
+            'attributes': {
+                'email': active_editor.email,
+                'password': '12345.Abcde',
+            }
+        }
     })
 
     token = resp.json['data']['attributes']['token']
-
-    assert resp.status == HTTP_OK
+    query_string = 'q=test_phrase&models=application,article,dataset,institution,knowledge_base,resource&per_model=1'
     resp = client.simulate_get(
-        "/institutions",
-        query_string="q=testmiddleware",
-        headers={"Authorization": f"Bearer {token}"}
+        '/1.4/search/suggest',
+        query_string=query_string,
+        headers={'Authorization': f'Bearer {token}'}
     )
     assert HTTP_OK == resp.status
-
+    redis_con = get_redis_connection('default')
     keys = [k.decode() for k in redis_con.keys()]
     assert key not in keys

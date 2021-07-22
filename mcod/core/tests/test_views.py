@@ -80,7 +80,7 @@
 #         assert result.json['title'] == '520 Response Error'
 #
 #     @pytest.mark.run(order=0)
-#     @pytest.mark.django_db
+#
 #     def test_model_validation(self, client, mocker, active_user):
 #         client.app.add_route('/test_model_validation_1', SampleResource(), {'GET': 'model_validation_1'})
 #         client.app.add_route('/test_model_validation_2', SampleResource(), {'GET': 'model_validation_2'})

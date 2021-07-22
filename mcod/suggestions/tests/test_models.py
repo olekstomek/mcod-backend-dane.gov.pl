@@ -5,7 +5,7 @@
 # from django.utils.translation import gettext_lazy as _
 #
 #
-# @pytest.mark.django_db
+#
 # def test_create_suggestion(mailoutbox):
 #     assert len(mailoutbox) == 0
 #

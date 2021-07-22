@@ -13,9 +13,10 @@ from modeltrans.fields import TranslationField
 from mcod.categories.signals import update_related_datasets, null_in_related_datasets
 from mcod.core import storages
 from mcod.core.api.search import signals as search_signals
+from mcod.core.api.rdf import signals as rdf_signals
 from mcod.core.api.search.tasks import null_field_in_related_task
 from mcod.core.db.managers import DeletedManager
-from mcod.core.db.models import ExtendedModel
+from mcod.core.db.models import ExtendedModel, TrashModelBase
 
 User = get_user_model()
 
@@ -27,8 +28,9 @@ class Category(ExtendedModel):
         'updated': (update_related_datasets,),
         'published': (update_related_datasets,),
         'restored': (update_related_datasets,),
-        'removed': (null_in_related_datasets,),
+        'removed': (null_in_related_datasets, rdf_signals.update_related_graph),
     }
+    code = models.CharField(max_length=100, verbose_name=_("Code"))
     title = models.CharField(max_length=100, verbose_name=_("Title"))
     description = models.TextField(null=True, verbose_name=_("Description"))
     color = models.CharField(max_length=20, default="#000000", null=True, verbose_name=_("Color"))
@@ -87,7 +89,7 @@ class Category(ExtendedModel):
 
 @receiver(null_in_related_datasets, sender=Category)
 def null_category_in_datasets(sender, instance, *args, **kwargs):
-    signal_logger.info(
+    signal_logger.debug(
         'Setting null in datasets',
         extra={
             'sender': '{}.{}'.format(sender._meta.model_name, sender._meta.object_name),
@@ -103,7 +105,7 @@ def null_category_in_datasets(sender, instance, *args, **kwargs):
 
 @receiver(update_related_datasets, sender=Category)
 def update_category_in_datasets(sender, instance, *args, **kwargs):
-    signal_logger.info(
+    signal_logger.debug(
         'Updating related datasets',
         extra={
             'sender': '{}.{}'.format(sender._meta.model_name, sender._meta.object_name),
@@ -115,9 +117,10 @@ def update_category_in_datasets(sender, instance, *args, **kwargs):
     )
     for dataset in instance.dataset_set.all():
         search_signals.update_document.send(dataset._meta.model, dataset)
+        rdf_signals.update_graph.send(dataset._meta.model, dataset)
 
 
-class CategoryTrash(Category):
+class CategoryTrash(Category, metaclass=TrashModelBase):
     class Meta:
         proxy = True
         verbose_name = _("Trash")

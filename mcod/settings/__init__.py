@@ -2,7 +2,7 @@
 import os
 import importlib
 
-my_module = importlib.import_module(os.getenv('DJANGO_SETTINGS_MODULE', 'mcod.settings.local'))
+my_module = importlib.import_module(os.getenv('DJANGO_SETTINGS_MODULE', 'mcod.settings.base'))
 my_module_dict = my_module.__dict__
 
 try:

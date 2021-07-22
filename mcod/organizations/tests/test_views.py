@@ -1,33 +1,28 @@
-import pytest
 from django.test import Client
 from django.urls import reverse
 
 
-@pytest.mark.django_db
-def test_organization_autocomplete_view(valid_organization, valid_organization2, admin_user):
+def test_organization_autocomplete_view(institutions, admin):
     client = Client()
-    client.force_login(admin_user)
+    client.force_login(admin)
 
     response = client.get(reverse("admin:organizations_organization_autocomplete"))
 
-    assert len(response.json()['results']) == 2
+    assert len(response.json()['results']) == 3
 
 
-@pytest.mark.django_db
-def test_organization_autocomplete_view_editor_without_organization(valid_organization, editor_user):
+def test_organization_autocomplete_view_editor_without_organization(institution, active_editor_without_org):
     client = Client()
-    client.force_login(editor_user)
+    client.force_login(active_editor_without_org)
 
     response = client.get(reverse("admin:organizations_organization_autocomplete"))
 
     assert response.json() == {'error': '403 Forbidden'}
 
 
-@pytest.mark.django_db
-def test_organization_autocomplete_view_editor_with_organization(valid_organization, valid_organization2,
-                                                                 user_with_organization):
+def test_organization_autocomplete_view_editor_with_organization(institutions, active_editor):
     client = Client()
-    client.force_login(user_with_organization)
+    client.force_login(active_editor)
 
     response = client.get(reverse("admin:organizations_organization_autocomplete"))
 

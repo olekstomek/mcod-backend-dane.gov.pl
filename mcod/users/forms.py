@@ -1,32 +1,150 @@
 from django import forms
+from django.contrib.admin import forms as admin_forms
 from django.contrib.admin.widgets import FilteredSelectMultiple
 from django.contrib.auth import forms as auth_forms
+from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
-from mcod.users.models import User
-from mcod.organizations.models import Organization
+from suit.widgets import SuitDateWidget, SuitTimeWidget
+
+from mcod import settings
+from mcod.lib.widgets import CKEditorWidget
+from mcod.users.models import Meeting, User
 from mcod.lib.forms.fields import PhoneNumberField, InternalPhoneNumberField
 
 
+class FilteredSelectMultipleCustom(FilteredSelectMultiple):
+    template_name = 'widgets/select_custom.html'
+
+    @property
+    def media(self):
+        extra = '' if settings.DEBUG else '.min'
+        js = [
+            'vendor/jquery/jquery%s.js' % extra,
+            'jquery.init.js',
+            'core.js',
+            'SelectBox.js',
+            'SelectFilter2_custom.js',
+        ]
+        return forms.Media(js=["admin/js/%s" % path for path in js])
+
+
+class MeetingForm(forms.ModelForm):
+
+    class Meta:
+        model = Meeting
+        fields = ['title', 'venue', 'description', 'start_date', 'start_time', 'end_time', 'status', 'members']
+        labels = {
+            'title': _('Meeting name'),
+        },
+        widgets = {
+            'start_date': SuitDateWidget,
+            'start_time': SuitTimeWidget,
+            'end_time': SuitTimeWidget,
+            'description': CKEditorWidget,
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for name in ('title', 'venue', 'description'):
+            if name in self.fields:
+                self.fields[name].widget.attrs.update({'class': 'span12'})
+
+
+class RadioSelect(forms.widgets.RadioSelect):
+    template_name = 'admin/users/user/radio.html'
+
+
 class UserForm(forms.ModelForm):
-    organizations = forms.ModelMultipleChoiceField(
-        queryset=Organization.objects.all(),
-        required=False,
-        widget=FilteredSelectMultiple(_('organizations'), False),
-        label=_("Organizations")
-    )
     phone = PhoneNumberField(label=_("Phone number"), required=False)
     phone_internal = InternalPhoneNumberField(label=_("int."), required=False)
+    is_academy_admin = forms.BooleanField(label=_('Admin AOD'), required=False)
+    is_labs_admin = forms.BooleanField(label=_('Admin LOD'), required=False)
+    is_agent_opts = forms.ChoiceField(
+        choices=(('new', _('New permissions')), ('from_agent', _('Copy from agent'))), label='', required=False,
+        widget=RadioSelect, initial='new')
+    from_agent = forms.ModelChoiceField(
+        queryset=User.objects.agents().order_by('email'), label='', required=False,
+        help_text=_('(Select of agent is required)'))
+
+    class Meta:
+        model = User
+        fields = '__all__'
+        help_texts = {
+            'agent_organization_main': _('(Select of institution is required)'),
+            'is_staff': _(
+                '(Select of institution is not required. Lack of choice makes possible to login to admin panel also.)'
+            ),
+            'is_superuser': '',
+        }
+        labels = {
+            'is_superuser': _('Admin'),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance.pk:
+            if 'is_academy_admin' in self.fields:
+                self.fields['is_academy_admin'].initial = self.instance.is_academy_admin
+            if 'is_labs_admin' in self.fields:
+                self.fields['is_labs_admin'].initial = self.instance.is_labs_admin
+            if 'extra_agent_of' in self.fields:
+                qs = self.fields['extra_agent_of'].queryset.exclude(id=self.instance.pk)
+                self.fields['extra_agent_of'].queryset = qs
 
     def clean_phone_internal(self):
         if self.cleaned_data['phone_internal'] and not self.cleaned_data.get('phone'):
             raise InternalPhoneNumberField.NoMainNumberError
         return self.cleaned_data['phone_internal']
 
+    def clean(self):  # noqa: C901
+        data = super().clean()
+        required_msg = _('This field is required!')
+        agent_organizations = data.get('agent_organizations')
+        agent_org_main = data.get('agent_organization_main')
+        is_agent = data.get('is_agent')
+        is_agent_opts = data.get('is_agent_opts')
+        from_agent = data.get('from_agent')
+        is_staff = data.get('is_staff')
+        if is_staff is None and self.instance:
+            is_staff = self.instance.is_staff
+        extra_agent_of = data.get('extra_agent_of')
+        if not is_staff:
+            data['organizations'] = []
+        if is_agent:
+            if is_agent_opts == 'from_agent':
+                if not from_agent:
+                    self.add_error('from_agent', required_msg)
+                data.pop('agent_organizations', None)
+            if is_agent_opts in [None, '', 'new']:
+                if not agent_organizations:
+                    self.add_error('agent_organizations',
+                                   _('Organization selection for an agent is obligatory!'))
+                if not agent_org_main:
+                    self.add_error('agent_organization_main', required_msg)
+            if agent_org_main and agent_org_main not in agent_organizations:
+                self.add_error(
+                    'agent_organization_main',
+                    _('Selected institution must be on selected institutions list!'))
+            if extra_agent_of:
+                data['extra_agent_of'] = None
+        else:
+            if agent_organizations:
+                data['agent_organizations'] = []
+            if agent_org_main:
+                data['agent_organization_main'] = None
+
+        is_academy_admin = data.get('is_academy_admin')
+        is_labs_admin = data.get('is_labs_admin')
+        is_superuser = data.get('is_superuser')
+        if any([is_academy_admin, is_labs_admin, is_superuser]):
+            data['is_staff'] = True
+        return data
+
     def save(self, commit=True):
         super(UserForm, self).save(commit=False)
         if commit:
             self.instance.save()
-        if self.instance.pk:
+        if self.instance.pk and 'organizations' in self.cleaned_data:
             self.instance.organizations.set(self.cleaned_data['organizations'])
         return self.instance
 
@@ -39,10 +157,11 @@ class UserCreationForm(UserForm):
     password2 = forms.CharField(label=_("Password confirmation"), widget=forms.PasswordInput,
                                 help_text=_("Enter the same password as above, for verification."))
 
-    class Meta:
-        model = User
-        fields = ['email', 'fullname', 'phone', 'phone_internal', 'is_staff', 'is_superuser', 'state',
-                  'organizations']
+    class Meta(UserForm.Meta):
+        fields = [
+            'email', 'fullname', 'phone', 'phone_internal', 'is_agent', 'is_staff', 'is_superuser', 'state',
+            'organizations',
+        ]
 
     def clean_email(self):
         email = self.data.get('email', "")
@@ -77,17 +196,33 @@ class UserChangeForm(UserForm):
                                                         "this user's password, but you can change the password "
                                                         "using <a href=\"../password/\">this form</a>."))
 
-    class Meta:
-        model = User
-        fields = '__all__'
-
     def __init__(self, *args, **kwargs):
         super(UserChangeForm, self).__init__(*args, **kwargs)
         f = self.fields.get('user_permissions', None)
         if f is not None:
             f.queryset = f.queryset.select_related('content_type')
-        if self.instance.pk:
-            self.fields['organizations'].initial = self.instance.organizations.all()
 
     def clean_password(self):
-        return self.initial["password"]
+        return self.initial["password"] if 'password' in self.initial else None
+
+
+class AdminLoginForm(admin_forms.AdminAuthenticationForm):
+    error_messages = {
+        **admin_forms.AdminAuthenticationForm.error_messages,
+        'confirm_email': _("You should confirm your email before logging in."),
+        'blocked': _("This user is blocked, please contact the administrators."),
+    }
+
+    def confirm_login_allowed(self, user):
+        if user.state == 'pending':
+            raise ValidationError(
+                self.error_messages['confirm_email'],
+                code='confirm_email',
+            )
+        elif user.state == 'blocked':
+            raise ValidationError(
+                self.error_messages['blocked'],
+                code='blocked',
+            )
+
+        super().confirm_login_allowed(user)

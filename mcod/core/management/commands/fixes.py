@@ -1,12 +1,25 @@
+import json
+import os
+from pathlib import Path
+
 from django.core.management.base import BaseCommand, CommandError
 from django.db.models import F
 
+from mcod import settings
 from mcod.articles.models import ArticleCategory
-from mcod.resources.models import Resource
-
+from mcod.cms.models import FormPageSubmission
+from mcod.cms.models.formpage import Formset
 from mcod.datasets.models import Dataset
+from mcod.resources.models import Resource
+from mcod.resources.tasks import (
+    process_resource_file_task,
+    update_resource_validation_results_task,
+    update_resource_has_table_has_map_task,
+)
 
 task_list = ['file_tasks', 'data_tasks', 'link_tasks']
+
+MEDIA_PATH = '/usr/src/mcod_backend/media/'
 
 
 class Command(BaseCommand):
@@ -60,6 +73,15 @@ class Command(BaseCommand):
         )
 
         parser.add_argument(
+            '--migratefollowings',
+            action='store_const',
+            dest='action',
+            const='migratefollowings',
+            help='Copy following to subscriptions'
+
+        )
+
+        parser.add_argument(
             '--setverified',
             action="store_const",
             dest="action",
@@ -67,11 +89,74 @@ class Command(BaseCommand):
             help="Fix verfied for datasets and resources"
         )
 
+        parser.add_argument(
+            '--resourcesformats',
+            action="store_const",
+            dest="action",
+            const="resourcesformats",
+            help="Run fixes for resources formats"
+        )
+
+        parser.add_argument(
+            '--resources-links',
+            action='store_const',
+            dest='action',
+            const='resources-links',
+            help='Run fixes for resources links',
+        )
+
+        parser.add_argument(
+            '--resources-validation-results',
+            action='store_const',
+            dest='action',
+            const='resources-validation-results',
+            help='Updates link_tasks_last_status, file_tasks_last_status, data_tasks_last_status of resources',
+        )
+
+        parser.add_argument(
+            '--resources-has-table-has-map',
+            action='store_const',
+            dest='action',
+            const='resources-has-table-has-map',
+            help='Updates has_table and has_map attributes of resources',
+        )
+
+        parser.add_argument(
+            '--submissions-to-new-format',
+            action='store_const',
+            dest='action',
+            const='submissions-to-new-format',
+            help='Converts FormDataSubmissions form_data field to new format',
+        )
+
+        parser.add_argument(
+            '--submissions-to-old-format',
+            action='store_const',
+            dest='action',
+            const='submissions-to-old-format',
+            help='Converts FormDataSubmissions form_data field to old format',
+        )
+
+        parser.add_argument(
+            '--submissions-formdata-save',
+            action='store_const',
+            dest='action',
+            const='submissions-formdata-save',
+            help='Saves FormDataSubmissions form_data field to file',
+        )
+
+        parser.add_argument(
+            '--submissions-formdata-load',
+            action='store_const',
+            dest='action',
+            const='submissions-formdata-load',
+            help='Loads data from file into FormDataSubmissions form_data field',
+        )
+
     def fix_resources(self):
-        from mcod.resources.models import Resource
         rs = Resource.objects.filter(dataset__is_removed=True)
         for r in rs:
-            print(f"Resorce ({r.id}) is set as removed because dataset ({r.dataset.id}) is removed")
+            print(f"Resource ({r.id}) is set as removed because dataset ({r.dataset.id}) is removed")
             r.is_removed = True
             r.save()
         rs = Resource.objects.filter(dataset__status="draft")
@@ -97,7 +182,6 @@ class Command(BaseCommand):
     def fix_datasets(self):
         from django.db.models import CharField
         from django.db.models.functions import Length
-        from mcod.datasets.models import Dataset
 
         ds = Dataset.objects.filter(organization__is_removed=True)
         for d in ds:
@@ -172,12 +256,21 @@ class Command(BaseCommand):
         """
         Ustawia dla istniejących zasobów data_date na wartość z created
         """
-        from mcod.resources.models import Resource
         print("Przygotowuje się do ustawienia daty danych dla istniejących zasobów ...")
         resources_with_files = Resource.raw.all()
         print(f"Do zaktualizowania: {resources_with_files.count()}")
         resources_with_files.update(data_date=F('created'))
         print("Operacja zakończona")
+
+    def fix_resources_validation_results(self):
+        resources = Resource.raw.order_by('id')
+        for obj in resources:
+            update_resource_validation_results_task.s(obj.id).apply_async()
+
+    def fix_resources_has_table_has_map(self):
+        resources = Resource.raw.order_by('id')
+        for obj in resources:
+            update_resource_has_table_has_map_task.s(obj.id).apply_async()
 
     def verified_for_published_datasets(self):
         # region istniejace zbiory
@@ -297,29 +390,163 @@ class Command(BaseCommand):
         self.verified_for_removed_datasets()
         self.verified_for_draft_datasets()
 
+    def fix_followings(self):
+        from mcod.users.models import UserFollowingApplication, UserFollowingArticle, UserFollowingDataset
+        from mcod.watchers.models import Subscription, ModelWatcher
+        for following in UserFollowingArticle.objects.all():
+            watcher, _ = ModelWatcher.objects.get_or_create_from_instance(following.article)
+            Subscription.objects.get_or_create(
+                user=following.follower,
+                watcher=watcher,
+                name='article-%i' % following.article.id
+            )
+
+        for following in UserFollowingApplication.objects.all():
+            watcher, _ = ModelWatcher.objects.get_or_create_from_instance(following.application)
+            Subscription.objects.get_or_create(
+                user=following.follower,
+                watcher=watcher,
+                name='application-%i' % following.application.id
+            )
+        for following in UserFollowingDataset.objects.all():
+            watcher, _ = ModelWatcher.objects.get_or_create_from_instance(following.dataset)
+            Subscription.objects.get_or_create(
+                user=following.follower,
+                watcher=watcher,
+                name='dataset-%i' % following.dataset.id
+            )
+
+    def fix_resources_links(self):
+        self.stdout.write('Fixing of resources broken links - with . (dot) suffix.')
+        counter = 0
+        for obj in Resource.objects.filter(link__endswith='.'):
+            if obj.file_url.startswith(settings.API_URL) and obj.format:
+                broken_link = obj.link
+                fixed_link = f'{obj.link}{obj.format}'
+                obj.link = fixed_link
+                obj.save()
+                counter += 1
+                self.stdout.write(f'Resource with id: {obj.id} link changed from {broken_link} to {fixed_link}')
+        self.stdout.write(f'Number of fixes: {counter}')
+
+    def fix_resources_formats(self):
+        print("Fixing invalid resource formats (with format='True')")
+
+        objs = Resource.raw.filter(format='True')
+        for obj in objs:
+            print(f'Resource with invalid format found: id:{obj.id} , format:{obj.format}')
+            process_resource_file_task.s(obj.id, update_link=False).apply_async(
+                countdown=1)
+        if objs.count():
+            print('Done.')
+        else:
+            print('Resources with format=\'True\' was not found.')
+
+    def convert_form_page_submissions_to_new_format(self):
+        print('Converting FormPageSubmissions form_data to NEW format.')
+        for submission in FormPageSubmission.objects.all():
+            print(f"FormPageSubmission's ({submission.id}) form_data is:\n{submission.form_data}")
+            submission_modified = False
+            formsets = Formset.objects.filter(page=submission.page)
+            for question in formsets:
+                question_id = str(question.ident)
+
+                results = submission.form_data.get(question_id)
+                if isinstance(results, list):
+                    fields_ids = (field.id for field in question.fields)
+                    submission.form_data[question_id] = dict(zip(fields_ids, results))
+                    submission_modified = True
+
+            if submission_modified:
+                submission.save()
+                print(f"Converted FormPageSubmission's ({submission.id}) form_data to:\n{submission.form_data}")
+
+    def convert_form_page_submissions_to_old_format(self):
+        print('Converting FormPageSubmissions form_data to OLD format.')
+        for submission in FormPageSubmission.objects.all():
+            print(f"FormPageSubmission's ({submission.id}) form_data is:\n{submission.form_data}")
+            submission_modified = False
+            formsets = Formset.objects.filter(page=submission.page)
+            for question in formsets:
+                question_id = str(question.ident)
+
+                results = submission.form_data.get(question_id)
+                if isinstance(results, dict):
+                    new_results = [None] * len(question.fields)
+                    field_id_to_index_map = {
+                        field.id: index
+                        for index, field in enumerate(question.fields)
+                    }
+
+                    for field_id, result in results.items():
+                        field_index = field_id_to_index_map[field_id]
+                        new_results[field_index] = result
+
+                    submission.form_data[question_id] = new_results
+                    submission_modified = True
+
+            if submission_modified:
+                submission.save()
+                print(f"Converted FormPageSubmission's ({submission.id}) form_data to:\n{submission.form_data}")
+
+    def save_form_page_submissions_form_data_to_file(self):
+        Path(MEDIA_PATH).mkdir(parents=True, exist_ok=True)
+        filepath = os.path.join(MEDIA_PATH, 'FormPageSubmissions.json')
+        print(f'Saving FormPageSubmissions form_data to file:{filepath}')
+        data = json.dumps({
+            submission.id: submission.form_data
+            for submission in FormPageSubmission.objects.all()
+        })
+        print(data)
+        with open(filepath, 'w') as file:
+            file.write(data)
+
+    def load_form_page_submissions_form_data_from_file(self):
+        filepath = os.path.join(MEDIA_PATH, 'FormPageSubmissions.json')
+        print(f'Loading FormPageSubmissions form_data from file:{filepath}')
+        with open(filepath) as file:
+            data = json.load(file)
+
+        for submission_id, form_data in data.items():
+            submission = FormPageSubmission.objects.get(id=submission_id)
+            print(f"FormPageSubmission's ({submission.id}) form_data before load:\n{submission.form_data}")
+            submission.form_data = form_data
+            submission.save()
+            print(f"FormPageSubmission's ({submission.id}) form_data after load:\n{submission.form_data}")
+
     def handle(self, *args, **options):
         if not options['action']:
             raise CommandError(
                 "No action specified. Must be one of"
                 " '--all','--searchhistories', '--resources', '--datasets', '--articlecategories', "
-                "'--resourcedatadate' ."
+                "'--resourcedatadate', '--resourcesformats', '--migratefollowings', '--setverified', "
+                "'--resources-links', '--resources-validation-results', '--resources-has-table-has-map', "
+                "'--submissions-to-new-format', '--submissions-to-old-format', "
+                "'--submissions-formdata-save', '--submissions-formdata-load'."
             )
         action = options['action']
 
+        actions = {
+            'articlecategories': self.fix_article_categories,
+            'datasets': self.fix_datasets,
+            'resources-links': self.fix_resources_links,
+            'migratefollowings': self.fix_followings,
+            'resourcedatadate': self.fix_resources_data_date,
+            'resources': self.fix_resources,
+            'resourcesformats': self.fix_resources_formats,
+            'searchhistories': self.fix_searchhistories,
+            'setverified': self.fix_verified,
+            'resources-validation-results': self.fix_resources_validation_results,
+            'resources-has-table-has-map': self.fix_resources_has_table_has_map,
+            'submissions-to-new-format': self.convert_form_page_submissions_to_new_format,
+            'submissions-to-old-format': self.convert_form_page_submissions_to_old_format,
+            'submissions-formdata-save': self.save_form_page_submissions_form_data_to_file,
+            'submissions-formdata-load': self.load_form_page_submissions_form_data_from_file,
+        }
         if action == 'all':
             self.fix_searchhistories()
             self.fix_datasets()
             self.fix_resources()
             self.fix_article_categories()
-        elif action == 'searchhistories':
-            self.fix_searchhistories()
-        elif action == 'datasets':
-            self.fix_datasets()
-        elif action == 'resources':
-            self.fix_resources()
-        elif action == 'articlecategories':
-            self.fix_article_categories()
-        elif action == 'resourcedatadate':
-            self.fix_resources_data_date()
-        elif action == 'setverified':
-            self.fix_verified()
+        elif action in actions.keys():
+            actions[action]()

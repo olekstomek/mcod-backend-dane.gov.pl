@@ -1,0 +1,69 @@
+{% load i18n static %}
+
+{% include "widgets/data_alert.html" %}
+<link rel="stylesheet" type="text/css" href="{% static 'admin/css/resource_widgets.css' %}">
+
+<div>
+    <table class="table table-stripped table-condensed resource-widget">
+        <thead>
+        <tr>
+            <th>{% blocktrans %}Map{% endblocktrans %}:</th>
+            {% for select in selects %}
+                <th>
+                    <select name="geo_{{ select.1 }}">
+                        {{ select.0|safe }}
+                    </select>
+                </th>
+            {% endfor %}
+        </tr>
+        <tr>
+            <th>{% blocktrans %}Columns headers{% endblocktrans %}:</th>
+            {% for header in headers %}
+                <th title="{{ header }}">{{ header }}</th>
+            {% endfor %}
+        </tr>
+        </thead>
+        <tbody>
+        {% if data %}
+            {% for row in data %}
+                <tr>
+                    <td></td>
+                    {% for col in row %}
+                        <td>{{ col }}</td>
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+        {% endif %}
+        </tbody>
+    </table>
+</div>
+
+{% block actions %}
+    <div id="widget_actions" class="hide">
+        <button
+            id="map_save"
+            type="submit"
+            class="btn btn-info tab-button"
+            name="_map_save"
+        >
+            {% trans 'Save the map definition' %}
+        </button>
+        <a
+            id="map_preview"
+            class="btn tab-button"
+            target="_blank"
+            href="{{ map_preview }}"
+        >
+            {% trans 'Map preview' %}
+        </a>
+        <a
+            id=" chart_preview"
+            class="btn tab-button"
+            target="_blank"
+            href="{{ chart_preview }}"
+        >
+            {% trans 'Chart definition and preview' %}
+        </a>
+    </div>
+{% endblock %}
+

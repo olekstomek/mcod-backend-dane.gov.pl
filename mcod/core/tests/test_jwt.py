@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 import falcon
 import pytest
 
-from mcod.lib.jwt import parse_auth_token, get_auth_header, decode_jwt_token, DateTimeToISOEncoder
+from mcod.lib.jwt import parse_auth_token, decode_jwt_token, DateTimeToISOEncoder
 
 
 @pytest.fixture(scope='module')
@@ -46,15 +46,6 @@ class TestJWT(object):
 
         result = parse_auth_token('Bearer abcdef')
         assert result == 'abcdef'
-
-    @pytest.mark.run(order=1)
-    def test_auth_header(self, now, token_exp_delta, valid_header):
-        auth_header = get_auth_header('a', 'user', '1', now=now, exp_delta=token_exp_delta)
-        assert auth_header == valid_header
-        auth_header = get_auth_header('a', 'user', '1', now=now)
-        assert not auth_header == valid_header
-        auth_header = get_auth_header('a', 'user', '1')
-        assert not auth_header == valid_header
 
     @pytest.mark.run(order=1)
     def test_decode_token(self, now, valid_header, token_exp_delta):

@@ -1,3 +1,10 @@
+/* Chrome 77 fix */
+#suit-left {
+   position: absolute;
+   left: 0;
+   margin-left: 0;
+}
+
 .alerts-app {
     font-size: 17px;
     font-weight: normal;

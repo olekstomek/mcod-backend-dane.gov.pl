@@ -42,3 +42,42 @@ def image_data(image_path):
     image = MIMEImage(image_data)
     image.add_header('Content-ID', '<' + cid_name + '>')
     return image
+
+
+def get_paremeters_from_post(POST, startswith="rule_type_", resultname="col"):
+    parameters = {}
+    for rule in POST:
+        if rule.startswith(startswith):
+            _id = int(rule.replace(startswith, "")) + 1
+            col_id = f"{resultname}{_id}"
+            parameters[col_id] = POST[rule]
+    return parameters
+
+
+def oracle_symb_to_python_directices(date_format: str) -> str:
+    """Translates some of oracle datetime symbols to python datetime directives
+
+    ex: oracle use MM to
+
+
+    https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-date-format.html
+
+    https://docs.python.org/3.8/library/datetime.html#strftime-and-strptime-behavior
+
+    """
+
+    out = date_format
+    replacements = {
+        "yyyy": "%Y",
+        "MM": "%m",
+        "dd": "%d",
+        "HH": "%H",
+        "mm": "%M",
+        "ss": "%S",
+        "SSSSSS": "%f"
+    }
+
+    for k, v in replacements.items():
+        out = out.replace(k, v)
+
+    return out

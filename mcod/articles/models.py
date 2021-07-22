@@ -1,6 +1,5 @@
 import logging
 
-from ckeditor_uploader.fields import RichTextUploadingField
 from django.contrib.auth import get_user_model
 from django.contrib.postgres.indexes import GinIndex
 from django.db import models
@@ -14,11 +13,20 @@ from mcod.articles.signals import update_related_articles
 from mcod.core import signals as core_signals
 from mcod.core.api.search import signals as search_signals
 from mcod.core.db.managers import DeletedManager
-from mcod.core.db.models import ExtendedModel, update_watcher
+from mcod.core.db.models import ExtendedModel, update_watcher, TrashModelBase
+from mcod.lib.widgets import RichTextUploadingField
+
 
 User = get_user_model()
 
 signal_logger = logging.getLogger('signals')
+
+
+CATEGORY_TYPES = (
+    ('article', _('Article')),
+    ('knowledge_base', _('Knowledge base')),
+    ('unlisted', _('Not listed')),
+)
 
 
 class ArticleCategory(ExtendedModel):
@@ -30,6 +38,7 @@ class ArticleCategory(ExtendedModel):
     }
 
     name = models.CharField(max_length=100, unique=True, verbose_name=_("name"))
+    type = models.CharField(max_length=20, choices=CATEGORY_TYPES, verbose_name=_("type"), default="unlisted")
     description = models.CharField(max_length=500, blank=True, verbose_name=_("Description"))
 
     created_by = models.ForeignKey(
@@ -51,10 +60,15 @@ class ArticleCategory(ExtendedModel):
         related_name='article_categories_modified'
     )
 
+    @property
+    def image_url(self):
+        return ''
+
     def __str__(self):
         return self.name_i18n
 
-    i18n = TranslationField(fields=("name", "description"))
+    i18n = TranslationField(fields=("name", "description"), required_languages=('pl',))
+
     tracker = FieldTracker()
     slugify_field = 'name'
 
@@ -72,7 +86,7 @@ class ArticleCategory(ExtendedModel):
 
 @receiver(update_related_articles, sender=ArticleCategory)
 def reindex_related_articles(sender, instance, *args, **kwargs):
-    signal_logger.info(
+    signal_logger.debug(
         'Reindex related articles',
         extra={
             'sender': '{}.{}'.format(sender._meta.model_name, sender._meta.object_name),
@@ -148,8 +162,37 @@ class Article(ExtendedModel):
         return self.datasets.filter(status='published')
 
     @property
+    def frontend_url(self):
+        return f'/article/{self.ident}'
+
+    @property
+    def frontend_absolute_url(self):
+        return self._get_absolute_url(self.frontend_url)
+
+    @property
+    def is_knowledge_base(self):
+        return bool(self.category.type == 'knowledge_base')
+
+    @property
+    def is_news(self):
+        return bool(self.category.type == 'article')
+
+    @property
     def tags_list(self):
-        return [tag.name_translated for tag in self.tags.all()]
+        # TODO change self.tags.filter(language='') to self.tags.all() on S18_new_tags.be removal
+        return [tag.translations_dict for tag in self.tags.filter(language='')]
+
+    def tags_as_str(self, lang):
+        return ', '.join(sorted([tag.name for tag in self.tags.filter(language=lang)], key=str.lower))
+
+    @property
+    def keywords_list(self):
+        # TODO change self.tags.exclude(language='') to self.tags.all() on S18_new_tags.be removal
+        return [tag.to_dict for tag in self.tags.exclude(language='')]
+
+    @property
+    def keywords(self):
+        return self.tags
 
     i18n = TranslationField(fields=("title", "notes"))
     tracker = FieldTracker()
@@ -167,7 +210,7 @@ class Article(ExtendedModel):
         indexes = [GinIndex(fields=["i18n"]), ]
 
 
-class ArticleTrash(Article):
+class ArticleTrash(Article, metaclass=TrashModelBase):
     class Meta:
         proxy = True
         verbose_name = _("Trash")
@@ -178,6 +221,9 @@ core_signals.notify_published.connect(update_watcher, sender=Article)
 core_signals.notify_restored.connect(update_watcher, sender=Article)
 core_signals.notify_updated.connect(update_watcher, sender=Article)
 core_signals.notify_removed.connect(update_watcher, sender=Article)
+core_signals.notify_m2m_added.connect(update_watcher, sender=Article.datasets.through)
+core_signals.notify_m2m_removed.connect(update_watcher, sender=Article.datasets.through)
+core_signals.notify_m2m_cleaned.connect(update_watcher, sender=Article.datasets.through)
 
 core_signals.notify_published.connect(update_watcher, sender=ArticleTrash)
 core_signals.notify_restored.connect(update_watcher, sender=ArticleTrash)

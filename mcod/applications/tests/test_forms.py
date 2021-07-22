@@ -3,6 +3,7 @@ from namedlist import namedlist
 from mcod.applications.forms import ApplicationForm
 from mcod.applications.models import Application
 from mcod.lib.helpers import change_namedlist
+from mcod.unleash import is_enabled
 
 fields = [
     "title",
@@ -40,7 +41,6 @@ full = entry(
 )
 
 
-@pytest.mark.django_db
 class TestApplicationFormValidity:
     """
     * - Not null fields:
@@ -124,27 +124,23 @@ class TestApplicationFormValidity:
         if validity and title != "no name":
             form.save()
             assert Application.objects.last().title == title
-        # if title == "no name":
-        #     with pytest.raises(ValidationError) as e:
-        #         form.save()
-        #     assert "'slug'" in str(e.value)
 
-    def test_application_form_add_datasets(slef, valid_dataset):
+    def test_application_form_add_datasets(self, dataset):
         form = ApplicationForm(data={
             'title': "Test with dataset title",
             'slug': "test-with-dataset-title",
             'url': "http://test.pl",
             'notes': 'tresc',
             'status': 'published',
-            'datasets': [valid_dataset]
+            'datasets': [dataset]
         })
         assert form.is_valid() is True
         form.save()
         ap = Application.objects.last()
         assert ap.title == "Test with dataset title"
-        assert valid_dataset in ap.datasets.all()
+        assert dataset in ap.datasets.all()
 
-    def test_application_form_add_invalid_datasets(slef):
+    def test_application_form_add_invalid_datasets(self):
         form = ApplicationForm(data={
             'title': "Test with dataset title",
             'slug': "test-with-dataset-title",
@@ -156,18 +152,27 @@ class TestApplicationFormValidity:
         assert form.is_valid() is False
         assert form.errors == {'datasets': ['Podaj listę wartości.']}
 
-    def test_application_form_add_tags(self, valid_tag):
-        form = ApplicationForm(data={
+    def test_application_form_add_tags(self, tag, tag_pl):
+        data = {
             'title': "Test add tag",
             'slug': "test-add-tag",
             'url': "http://test.pl",
             'notes': 'tresc',
             'status': 'published',
-            'tags': [valid_tag]
-        })
+        }
+        if is_enabled('S18_new_tags.be'):
+            data['tags_pl'] = [tag_pl.id]
+        else:
+            data['tags'] = [tag.id]
+
+        form = ApplicationForm(data=data)
         assert form.is_valid() is True
         form.save()
         assert not form.errors
         ap = Application.objects.last()
         assert ap.slug == "test-add-tag"
-        assert valid_tag in ap.tags.all()
+
+        if is_enabled('S18_new_tags.be'):
+            assert tag_pl in ap.tags.all()
+        else:
+            assert tag in ap.tags.all()

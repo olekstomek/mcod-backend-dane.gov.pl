@@ -23,7 +23,7 @@ def get_index_and_mapping_for_model(model):
 def sort_by_list(unsorted_dict, sorted_keys):
     __unsorted_dict_keys = [__key for __key in unsorted_dict.keys()]
     __sorted_keys = (
-            tuple(sorted_keys) + tuple(set(__unsorted_dict_keys) - set(sorted_keys))
+        tuple(sorted_keys) + tuple(set(__unsorted_dict_keys) - set(sorted_keys))
     )
     for key in __sorted_keys:
         if key in unsorted_dict:

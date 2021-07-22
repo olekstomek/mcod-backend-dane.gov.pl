@@ -7,7 +7,4 @@
 
 {{ link }}
 
-{% blocktrans %}Sincerely,{% endblocktrans %}
-{% blocktrans %}The Open Data Data Administrators team{% endblocktrans %}
-
-{% blocktrans %}The message was generated automatically, please do not reply to it.{% endblocktrans %}
+{% include 'mails/_footer.txt' %}

@@ -35,7 +35,24 @@ class Report(TimeStampedModel):
         verbose_name_plural = _("Reports")
 
 
+class MonitoringReport(Report):
+
+    @classmethod
+    def accusative_case(cls):
+        return _("acc: Monitoring report")
+
+    class Meta:
+        proxy = True
+        verbose_name = _('Monitoring')
+        verbose_name_plural = _('Monitoring')
+
+
 class UserReport(Report):
+
+    @classmethod
+    def accusative_case(cls):
+        return _("acc: User report")
+
     class Meta:
         proxy = True
         verbose_name = _("User report")
@@ -43,6 +60,11 @@ class UserReport(Report):
 
 
 class ResourceReport(Report):
+
+    @classmethod
+    def accusative_case(cls):
+        return _("acc: Resource report")
+
     class Meta:
         proxy = True
         verbose_name = _("Reource report")
@@ -50,6 +72,11 @@ class ResourceReport(Report):
 
 
 class DatasetReport(Report):
+
+    @classmethod
+    def accusative_case(cls):
+        return _("acc: Dataset report")
+
     class Meta:
         proxy = True
         verbose_name = _("Dataset report")
@@ -57,6 +84,11 @@ class DatasetReport(Report):
 
 
 class OrganizationReport(Report):
+
+    @classmethod
+    def accusative_case(cls):
+        return _("acc: Institution report")
+
     class Meta:
         proxy = True
         verbose_name = _("Institution report")
@@ -76,6 +108,10 @@ class SummaryDailyReport(TimeStampedModel):
     )
 
     status = models.CharField(max_length=20, default="SUCCESS")
+
+    @classmethod
+    def accusative_case(cls):
+        return _("acc: Daily report")
 
     class Meta:
         verbose_name = _("Summary daily report")

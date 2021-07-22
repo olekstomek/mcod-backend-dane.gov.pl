@@ -1,17 +1,17 @@
 import django
 import pytest
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.signals import user_logged_in
 from django.core.exceptions import ObjectDoesNotExist
 from django.test import Client
-from django.utils import timezone
+from django.utils import timezone, translation
 
 from mcod.users.models import Token, get_token_expiration_date
 
 User = get_user_model()
 
 
-@pytest.mark.django_db
 def test_user_create(inactive_user):
     usr = User.objects.get(email=inactive_user.email)
     assert usr.id == inactive_user.id
@@ -19,7 +19,6 @@ def test_user_create(inactive_user):
     assert usr.state == 'pending'
 
 
-@pytest.mark.django_db
 def test_last_login(inactive_user):
     now = timezone.now()
     user_logged_in.send(User, request=None, user=inactive_user)
@@ -27,35 +26,31 @@ def test_last_login(inactive_user):
     assert now < usr.last_login
 
 
-@pytest.mark.django_db
 def test_email_unique():
     with pytest.raises(django.core.exceptions.ValidationError) as e:
-        User.objects.create_user('aaa@example.com', 'Britenet.1')
-        User.objects.create_user('aaa@example.com', 'Britenet.1')
+        User.objects.create_user('aaa@example.com', '12345.Abcde')
+        User.objects.create_user('aaa@example.com', '12345.Abcde')
     assert 'email' in e.value.message_dict
 
 
-@pytest.mark.django_db
 def test_is_active(active_user):
     assert active_user.state == 'active'
     assert active_user.is_active is True
 
 
-@pytest.mark.django_db
 def test_admin_panel_access_flag(active_user):
     assert active_user.system_role == 'user'
 
     active_user.is_superuser = True
-    assert active_user.system_role == 'staff'
+    assert active_user.system_role == 'admin'
 
     active_user.is_superuser = False
     active_user.is_staff = True
-    assert active_user.system_role == 'staff'
+    assert active_user.system_role == 'editor'
 
 
-@pytest.mark.django_db
 def test_check_session_valid(mocker):
-    usr = User.objects.create_user('aaa@example.com', 'Britenet.1')
+    usr = User.objects.create_user('aaa@example.com', '12345.Abcde')
     assert usr.check_session_valid(None) is False
     assert usr.check_session_valid('aaa') is False
 
@@ -95,7 +90,6 @@ def test_check_session_valid(mocker):
     assert usr.check_session_valid('aaa') is True
 
 
-@pytest.mark.django_db
 def test_tokens(active_user):
     assert active_user.tokens.count() == 0
 
@@ -132,24 +126,23 @@ def test_tokens(active_user):
     assert token.expiration_date.date() == exp_date
 
 
-@pytest.mark.django_db
 class TestLogin(object):
 
-    def test_admin_can_login_to_admin_panel(self, admin_user):
+    def test_admin_can_login_to_admin_panel(self, admin):
         client = Client()
         response = client.get("/")
         assert response.status_code == 302
         assert response.url == '/login/?next=/'
-        client.login(email=admin_user.email, password="Britenet.1")
+        client.login(email=admin.email, password="12345.Abcde")
         response = client.get("/")
         assert response.status_code == 200
 
-    def test_editor_can_login_to_admin_panel(self, editor_user):
+    def test_editor_can_login_to_admin_panel(self, active_editor):
         client = Client()
         response = client.get("/")
         assert response.status_code == 302
         assert response.url == '/login/?next=/'
-        client.login(email=editor_user.email, password="Britenet.1")
+        client.login(email=active_editor.email, password="12345.Abcde")
         response = client.get("/")
         assert response.status_code == 200
 
@@ -158,12 +151,11 @@ class TestLogin(object):
         response = client.get("/")
         assert response.status_code == 302
         assert response.url == '/login/?next=/'
-        client.login(email=active_user.email, password="Britenet.1")
+        client.login(email=active_user.email, password="12345.Abcde")
         response = client.get("/")
         assert response.status_code == 302
 
 
-@pytest.mark.django_db
 def test_user_manager_create_superuser():
     superuser = User.objects.create_superuser(None, "superadmin@test.pl", "password")
     assert superuser.email == "superadmin@test.pl"
@@ -173,7 +165,6 @@ def test_user_manager_create_superuser():
     assert str(superuser) == "superadmin@test.pl"
 
 
-@pytest.mark.django_db
 def test_user_soft_delete(active_user):
     u = active_user
     u.delete()
@@ -181,9 +172,14 @@ def test_user_soft_delete(active_user):
     assert User.objects.get(id=active_user.id)
 
 
-@pytest.mark.django_db
 def test_user_unsafe_delete(active_user):
     u = active_user
     u.delete(soft=False)
     with pytest.raises(ObjectDoesNotExist):
         User.objects.get(id=active_user.id)
+
+
+def test__get_absolute_url_with_lang(active_user):
+    test_url = '/test/path'
+    with translation.override('pl'):
+        assert active_user._get_absolute_url(test_url) == f'{settings.BASE_URL}/pl/test/path'

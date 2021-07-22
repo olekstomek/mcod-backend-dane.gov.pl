@@ -30,7 +30,8 @@ class Object(schemas.ExtSchema):
             load_only=(), dump_only=(), partial=False, unknown=None,
     ):
         self._declared_fields['attributes'] = fields.Nested(
-            self.opts.attrs_schema, name='attributes', many=False
+            self.opts.attrs_schema, name='attributes', required=getattr(self.opts, 'attrs_schema_required', False),
+            many=False,
         )
 
         # relationships_schema = getattr(self.opts.attrs_schema.opts, 'relationships_schema', None)
@@ -52,6 +53,8 @@ class TopLevelOpts(SchemaOpts):
     def __init__(self, meta, **kwargs):
         SchemaOpts.__init__(self, meta, **kwargs)
         self.attrs_schema = getattr(meta, 'attrs_schema', None)
+        self.attrs_schema_many = getattr(meta, 'attrs_schema_many', False)
+        self.attrs_schema_required = getattr(meta, 'attrs_schema_required', False)
 
         if self.attrs_schema and not issubclass(self.attrs_schema, ObjectAttrs):
             raise Exception("{} must be a subclass of ObjectAttrs".format(self.attrs_schema))
@@ -74,8 +77,10 @@ class TopLevel(schemas.ExtSchema):
             (self.opts.object_schema,), {}
         )
         setattr(data_cls.opts, 'attrs_schema', self.opts.attrs_schema)
+        setattr(data_cls.opts, 'attrs_schema_required', self.opts.attrs_schema_required)
 
-        self._declared_fields['data'] = fields.Nested(data_cls, name='data', many=False)
+        self._declared_fields['data'] = fields.Nested(
+            data_cls, name='data', many=self.opts.attrs_schema_many, required=self.opts.attrs_schema_required)
 
         super().__init__(only=only, exclude=exclude, many=False, context=context,
                          load_only=load_only, dump_only=dump_only,

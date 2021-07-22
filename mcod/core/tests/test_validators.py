@@ -39,14 +39,14 @@ class TestFieldsValidators(object):
 
         image, img_size = base64_image
 
-        validator = field_validators.Base64(max_size=img_size-1)
+        validator = field_validators.Base64(max_size=img_size - 1)
 
         with pytest.raises(mmValidationError) as e:
             validator(image)
         assert e.value.messages[0] == field_validators.Base64.default_length_error
 
         validator = field_validators.Base64(
-            max_size=img_size-1,
+            max_size=img_size - 1,
             base64_error="Ala ma kota",
             length_error="Kot ma alę"
         )

@@ -1,0 +1,19 @@
+{% load i18n %}
+---
+tags:
+  - API Endpoints
+summary: Returns list of applications
+description: |
+  {% spaceless %}
+      <p>Gives the ability to browse, filter and search applications.</p>
+      {% include "docs/applications/obj_description.html" %}
+  {% endspaceless %}
+parameters:
+  schema: ApplicationApiSearchRequest
+responses:
+  200:
+    description: valid response in jsonapi format
+    content:
+      application/vnd.api+json:
+        schema:
+          $ref: '#/components/schemas/Applications'

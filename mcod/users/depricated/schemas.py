@@ -3,6 +3,7 @@ import falcon
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password as dj_validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
+from django.utils import timezone
 from django.utils.translation import gettext as _
 from marshmallow import Schema, ValidationError, validates_schema, post_load
 
@@ -15,31 +16,31 @@ from mcod.lib import fields
 User = get_user_model()
 
 
-class Login(Schema):
-    """
-        Login request
-    """
-    email = fields.Email(required=True,
-                         faker_type='email', example='user@example.com')
-    password = fields.Str(required=True,
-                          faker_type='password', example='Kai7!!phoom')
-
-    class Meta:
-        strict = True
-
-
 class AccountUpdate(Schema):
     """
         Update user profile (for authenticated user, a.k.a. show my profile)
     """
-    fullname = fields.Str(missing=None,
-                          faker_type='name', example='Jan Kowalski')
-    phone = fields.Str(missing=None, faker_type='phone', example='+48123123123')
+    fullname = fields.Str()
+    phone = fields.Str()
+    subscriptions_report_opt_in = fields.Boolean()
+    rodo_privacy_policy_opt_in = fields.Boolean()
+
     # about = fields.Str(
     #   missing=None, faker_type='sentence', example='I am a very talented programmer.')
 
     class Meta:
         strict = True
+
+    @post_load
+    def prepare_data(self, data, **kwargs):
+        se = data.get('subscriptions_report_opt_in', None)
+        pp = data.get('rodo_privacy_policy_opt_in', None)
+        now = timezone.now()
+        if se is not None:
+            data['subscriptions_report_opt_in'] = now if se else None
+        if pp is not None:
+            data['rodo_privacy_policy_opt_in'] = now if pp else None
+        return data
 
 
 class Registration(AccountUpdate):
@@ -52,7 +53,7 @@ class Registration(AccountUpdate):
     password2 = fields.Str(required=True, faker_type='password', example='Kai7!!phoom')
 
     @validates_schema()
-    def validate_passwords(self, data):
+    def validate_passwords(self, data, **kwargs):
         if 'password1' in data:
             try:
                 dj_validate_password(data['password1'])
@@ -65,10 +66,11 @@ class Registration(AccountUpdate):
                                           field_names=['password1', 'password2'])
 
     @post_load
-    def prepare_data(self, data):
+    def prepare_data(self, data, **kwargs):
         data['password'] = data['password1']
         data.pop('password1')
         data.pop('password2')
+        data.pop('subscriptions_report_opt_in', None)
         return data
 
     def clean(self, request, locations=None):
@@ -124,7 +126,7 @@ class PasswordResetConfirm(Schema):
                                example='Msww8.1dF')
 
     @validates_schema()
-    def validate_passwords(self, data):
+    def validate_passwords(self, data, **kwargs):
         if 'new_password1' in data:
             try:
                 dj_validate_password(data['new_password1'])

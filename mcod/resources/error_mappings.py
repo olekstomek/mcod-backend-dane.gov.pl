@@ -1,74 +1,61 @@
 recommendations = {
-    'io-error': 'Napraw ścieżkę, jeśli nie jest poprawna',
-    'http-error': 'Napraw link URL, jeśli nie jest poprawny',
-    'source-error': "- Napraw zawartość danych, np. zmień dane JSON na tablicę lub tablice/obiekty\n"
-                    "- Ustaw poprawne ustawienia źródła w walidatorze.",
-    'scheme-error': "- Napraw schemat danych, np. zmień schemat z FTP na HTTP (?)\n"
-                    "- Ustaw poprawny schemat w walidatorze.",
-    'format-error': "- Napraw format danych, np. zmień format z TXT na CSV\n"
-                    "- Ustaw poprawny format w walidatorze.",
-    'encoding-error': "Napraw źródło danych, jeśli jest uszkodzone.\n"
-                      " - Ustaw poprawne kodowanie w walidatorze.",
-    'blank-header': "Dodaj brakującą nazwę kolumny do pierwszego wiersza źródła danych.\n"
-                    "- Jeśli pierwszy wiersz zaczyna się od lub kończy przecinkiem, usuń go.\n"
-                    "- Aby zignorować błąd, wyłącz sprawdzanie `puste nagłówki` w walidatorze.",
-    'duplicate-header': "Dodaj brakującą nazwę kolumny do pierwszego wiersza danych.\n"
-                        "- Jeśli pierwszy wiersz zaczyna się od, lub kończy przecinkiem, usuń go.\n"
-                        "- Aby zignorować błąd, wyłącz sprawdzanie \"zduplikowany nagłówek\" w walidatorze.",
+    'io-error': 'Sprawdź: \n'
+                '- czy plik znajduje się we wskazanej lokalizacji,\n'
+                '- czy są prawidłowe uprawnienia do odczytu pliku,\n'
+                '- czy dysk na którym znajduje się plik nie został uszkodzony,\n'
+                'ew. skontaktuj się z administratorem systemu.',
+    'http-error': 'Sprawdź poprawność adresu URL',
+    'source-error': "Popraw strukturę danych w pliku, przygotuj dane zgodnie ze standardem technicznym;\n"
+                    "- sprawdź czy dane są ustrukturyzowane;\n"
+                    "- zmień kodowanie pliku na UTF-8,\n"
+                    "- sprawdź, czy plik nie zawiera scalonych komórek.",
+    'scheme-error': "- Popraw strukturę danych w pliku, przygotuj dane zgodnie ze standardem technicznym;\n"
+                    "- zmień kodowanie pliku na UTF-8,\n"
+                    "- sprawdź, czy plik nie zawiera scalonych komórek;\n"
+                    "- sprawdź czy plik nie zawiera pustych komórek w nagłówku.",
+    'format-error': "- Sprawdź format pliku zawierającego dane,\n"
+                    "- zapisz ponownie dane w prawidłowym formacie.",
+    'EmptyDocument': "Sprawdź czy dokument nie jest pusty.",
+    'encoding-error': "Popraw kodowanie znaków w pliku stanowiącym źródło danych na UTF-8.",
+    'blank-header': "-Dodaj brakującą nazwę kolumny w pierwszym wierszu (nagłówku) źródła danych\n"
+                    "- jeśli pierwszy wiersz zaczyna się od lub kończy przecinkiem, usuń przecinek,\n"
+                    "- sprawdź czy komórki nagłówka nie są scalone.",
+    'duplicate-header': "- Zmień nazwę lub nazwy kolumn w pierwszym wierszu (nagłówku) źródła danych tak,"
+                        "aby były niepowtarzalne,\n"
+                        "- sprawdź czy komórki nie są scalone.",
     'blank-row': "Usuń wiersz.\n"
                  "- Aby zignorować błąd, wyłącz sprawdzanie \"pusty wiersz\" w walidatorze.",
     'duplicate-row': "Jeśli niektóre dane są niepoprawne, popraw je.\n"
                      "- Jeśli cały wiersz jest niepoprawnie zduplikowany, usuń go.\n"
                      "- Aby zignorować błąd, wyłącz sprawdzanie `zduplikowany wiersz` w walidatorze.",
-    'extra-value': "Sprawdź, czy dane zawierają dodatkowy przecinek między wartościami w tym wierszu.\n"
-                   "- Aby zignorować błąd, wyłącz  sprawdzanie wartości dodatkowej w walidatorze",
-    'missing-value': "Sprawdź, czy w danych nie brakuje przecinka między wartościami w tym wierszu.\n"
-                     "- Aby zignorować błąd, wyłącz sprawdzanie \"brakującej wartości\" w walidatorze.",
-    'schema-error': "Zaktualizuj deskryptor schematu żeby stał się poprawny\n"
-                    "- Aby zignorować błąd, wyłącz sprawdzanie schematu w walidatorze.",
-    'non-matching-header': "Zmień nazwę nagłówka w źródle danych lub nazwe pola w schemacie\n"
-                           "- Aby zignorować błąd, wyłącz sprawdzanie \"nie pasującego nagłówka\" w walidatorze.",
-    'extra-header': "Usuń dodatkową kolumnę ze źródła danych lub dodaj brakujące pole do schematu\n"
-                    "- Aby zignorować bład, wyłącz sprawdzanie \"dodatkowego nagłówka\" w walidatorze.",
-    'missing-header': "Dodaj brakującą kolumnę do źródła danych lub usuń dodatkowe pole ze schematu\n"
-                      "- Aby zignorować błąd, wyłącz sprawdzanie  \"brakujący nagłówek\" w walidatorze.",
-    'type-or-format-error': "- Jeśli ta wartość nie jest poprawna, zaktualizuj wartość.\n"
-                            "- Jeśli ta wartość jest prawidłowa, dostosuj typ i / lub format.\n"
-                            "- Aby zignorować błąd, wyłącz sprawdzanie \"błąd typu lub formatu\" w walidatorze.\n"
-                            "W takim przypadku wszystkie sprawdzenia schematu dla wartości wierszy będą ignorowane.",
-    'required-constraint': "- Jeśli ta wartość nie jest poprawna, zaktualizuj wartość.\n"
-                           "- Jeśli wartość jest prawidłowa, usuń ograniczenie \"wymagalność\" ze schematu.\n"
-                           "- Jeśli ten błąd powinien być ignorowany, wyłącz sprawdzanie `wymagalność' w walidatorze.",
-    'pattern-constraint': "- Jeśli ta wartość nie jest poprawna, zaktualizuj wartość.\n"
-                          "- Jeśli wartość jest prawidłowa, usuń lub zmień ograniczenie  \"wzorzec\" w schemacie.\n"
-                          "- Jeśli ten błąd powinien zostać zignorowany, wyłącz sprawdzanie \"wzorca\" w walidatorze.",
-    'unique-constraint': "- Jeśli ta wartość nie jest poprawna, zaktualizuj wartość.\n"
-                         "- Jeśli wartość jest poprawna , wartości w tej kolumnie nie są unikalne. Usuń ograniczenie"
-                         "\"unikalność\" ze schematu.\n"
-                         "- Jeśli ten błąd powinien zostać zignorowany, wyłącz sprawdzanie \"unikalność\""
-                         " w walidatorze.",
-    'enumerable-constraint': "- Jeśli ta wartość nie jest poprawna, zaktualizuj wartość.\n"
-                             "- Jeśli wartość jest prawidłowa, usuń lub zmień ograniczenie \"enum\" w schemacie.\n"
-                             "- Jeśli ten błąd powinien zostać zignorowany, wyłącz sprawdzenie \"enumeracja\" "
-                             "w walidatorze.",
-    'minimum-constraint': "- Jeśli ta wartość nie jest poprawna, zaktualizuj wartość.\n"
-                          "- Jeśli wartość jest prawidłowa, usuń lub zmien wartosć minimalną w schemacie.\n"
-                          "- Jeśli ten błąd powinien być ignorowany, wyłącz sprawdzenie \"wartości minimalnej\""
-                          "w walidatorze.",
-    'maximum-constraint': "- Jeśli ta wartość nie jest poprawna, zaktualizuj wartość.\n"
-                          "- Jeśli wartość jest prawidłowa, usuń lub zmień  wartość maksymalną w schemacie.\n"
-                          "- Jeśli błąd ten powinien zostać zignorowany, należy wyłączyć sprawdzanie \"wartości "
-                          "maksymalnej\" w walidatorze.",
-    'minimum-length-constraint': "- Jeśli ta wartość nie jest poprawna, zaktualizuj wartość.\n"
-                                 "- Jeśli wartość jest prawidłowa, usuń lub zmień ograniczenie \"długość minimalna\" "
-                                 "w schemacie.\n"
-                                 "- Jeśli ten błąd powinien być ignorowany, wyłącz sprawdzanie \"długości minimalnej\" "
-                                 "w walidatorze.",
-    'maximum-length-constraint': "- Jeśli ta wartość nie jest poprawna, zaktualizuj wartość.\n"
-                                 "- Jeśli wartość jest prawidłowa, usuń lub zmień ograniczenie \"długość maksymalna\" "
-                                 "w schemacie.\n"
-                                 "- Jeśli błąd ten powinien zostać zignorowany, wyłącz sprawdzanie ograniczenia "
-                                 "\"długości maksymalnej\" w walidatorze.",
+    'extra-value': "Sprawdź, czy dane zawierają dodatkowy przecinek między wartościami w tym wierszu.",
+    'missing-value': "- Uzupełnij brakującą wartość,\n"
+                     "- sprawdź, czy w danych nie brakuje przecinka między wartościami w tym wierszu.",
+    'schema-error': "Sprawdź, czy schemat wskazany do walidacji jest aktualny.",
+    'non-matching-header': "Zmień nazwę nagłówka w źródle danych lub nazwę pola w schemacie.",
+    'extra-header': "Usuń dodatkową kolumnę ze źródła danych lub dodaj brakujące pole do schematu.",
+    'missing-header': "Dodaj brakującą kolumnę do źródła danych lub usuń nadmiarowe pole ze schematu.",
+    'type-or-format-error': "- Zaktualizuj wartość, jeśli nie jest poprawna,\n"
+                            "- jeśli ta wartość jest prawidłowa, dostosuj typ i/lub format.",
+    'required-constraint': "- Zaktualizuj wartość, jeśli nie jest poprawna,\n"
+                           "- jeśli ta wartość jest prawidłowa, usuń ograniczenie “required” ze schematu.",
+    'pattern-constraint': "- Zaktualizuj wartość, jeśli nie jest poprawna,\n"
+                          "- jeśli ta wartość jest prawidłowa, usuń lub zmień ograniczenie “pattern” w schemacie.",
+    'unique-constraint': "- Zaktualizuj wartość, jeśli nie jest poprawna,\n"
+                         "- jeśli ta wartość jest prawidłowa (wartości w tej kolumnie nie są unikalne), "
+                         "usuń ograniczenie “unique” w schemacie.",
+    'enumerable-constraint': "- Zaktualizuj wartość, jeśli nie jest poprawna,\n"
+                             "- jeśli ta wartość jest prawidłowa, usuń lub zmień wymaganie \"enum\" w schemacie.",
+    'minimum-constraint': "- Zaktualizuj wartość, jeśli nie jest poprawna,\n"
+                          "- jeśli ta wartość jest prawidłowa, usuń lub zmień wymaganie \"minimum\" w schemacie.",
+    'maximum-constraint': "- Zaktualizuj wartość, jeśli nie jest poprawna,\n"
+                          "- jeśli ta wartość jest prawidłowa, usuń lub zmień wymaganie \"maximum\" w schemacie.",
+    'minimum-length-constraint': "- zaktualizuj wartość, jeśli nie jest poprawna,\n"
+                                 "- jeśli ta wartość jest prawidłowa, usuń lub zmień wymaganie \"minimumLength\""
+                                 " w schemacie.",
+    'maximum-length-constraint': "- zaktualizuj wartość, jeśli nie jest poprawna,\n"
+                                 "- jeśli ta wartość jest prawidłowa, usuń lub zmień wymaganie \"maximumLength\""
+                                 "w schemacie.",
 
     'FileNotFoundError': "Sprawdź czy plik istnieje we wskazanej lokalizacji.",
     'connection-error': "Spróbuj ponownie później.",
@@ -88,7 +75,15 @@ recommendations = {
     'InvalidSchema': "Sprawdź czy podany link jest poprawnie wpisany.",
     'InvalidUrl': "Sprawdź czy podany link jest poprawnie wpisany.",
     'InvalidContentType': 'Sprawdź poprawność adresu url',
-
+    'MissingContentType': 'Sprawdź czy nagłówek Content-Type jest zwracany',
+    'UnsupportedContentType': 'Sprawdź poprawność adresu url',
+    'longitude-error': "Długość geograficzna powinna być z zakresu od -180 do 180.\n"
+                       "Popraw wartości w kolumnie wskazanej jako długość geograficzna.",
+    'latitude-error': "Szerokość geograficzna powinna być z zakresu od -90 do 90.\n"
+                      "Popraw wartości w kolumnie wskazanej jako szerokość geograficzna.",
+    'illegal_argument_exception': "Niepoprawna wartość",
+    'es-index-error': "Zmień typ kolumny {} na [Dane tekstowe].",
+    'ExtractUAddressError': "Sprawdź poprawność adresu uniwersalnego",
     None: ""
 }
 
@@ -112,10 +107,19 @@ messages = {
     "connection-aborted": "Połączenie zostało przerwane w trakcie walidacji.",
     'ReadTimeout': 'Limit czasu odczytu został przekroczony',
     'SSLError': "Weryfikacja certyfikatu SSL nie powiodła się.",
+    'EmptyDocument': "Dokument jest pusty.",
     'InvalidSchema': "Niepoprawny protokół w podanym adresie URL.",
     'InvalidUrl': "Niepoprawny adres URL.",
     'InvalidResponseCode': "Nieprawidłowy kod odpowiedzi",
-    'InvalidContentType': 'Nieobsługiwany typ',
+    'InvalidContentType': "Niepoprawna wartość w nagłówku odpowiedzi: 'content-type = {}'",
+    'MissingContentType': "Brak nagłówka Content-Type w odpowiedzi",
+    'UnsupportedContentType': 'Nieobsługiwany typ: {}',
     'failed-new-connection': "Nie można ustanowić nowego połączenia. Nazwa lub usługa nieznana.",
+    'longitude-error': "Długość geograficzna nie jest z zakresu -180 do 180",
+    'latitude-error': "Szerokość geograficzna nie jest z zakresu od -90 do 90",
+    'illegal_argument_exception': "Niepoprawna wartość",
+    'es-index-error': "Błąd indeksacji. Wartości z kolumny {} nie mogą być typu {}.",
+    'ExtractUAddressError': "Błąd przetwarzania adresu uniwersalnego: {}",
+
     None: ""
 }

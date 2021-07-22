@@ -1,88 +1,101 @@
 # -*- coding: utf-8 -*-
+from functools import partial
+
 import falcon
 from django.apps import apps
-from elasticsearch_dsl import Q
+from elasticsearch_dsl.query import Q
 
-from mcod.articles.depricated.schemas import ArticlesList
-from mcod.articles.depricated.serializers import ArticlesSerializer, ArticlesMeta
-from mcod.articles.documents import ArticleDoc
+from mcod.articles.deserializers import ArticleApiRequest, ArticleApiSearchRequest
+from mcod.articles.documents import ArticleDocumentActive
+from mcod.articles.serializers import ArticleApiResponse
+from mcod.core.api.handlers import SearchHdlr, RetrieveOneHdlr
 from mcod.core.api.hooks import login_optional
-from mcod.core.api.views import BaseView
+from mcod.core.api.views import JsonAPIView
 from mcod.core.versioning import versioned
-from mcod.datasets.depricated.schemas import DatasetsList
-from mcod.datasets.depricated.serializers import DatasetSerializer, DatasetsMeta
-from mcod.datasets.documents import DatasetsDoc
-from mcod.following.handlers import RetrieveOneFollowHandler, FollowingSearchHandler
-from mcod.lib.handlers import SearchHandler
+from mcod.datasets.deserializers import DatasetApiSearchRequest
+from mcod.datasets.documents import DatasetDocumentActive
+from mcod.datasets.serializers import DatasetApiResponse
 
 
-class ArticlesView(BaseView):
+class ArticlesView(JsonAPIView):
     @falcon.before(login_optional)
     @versioned
     def on_get(self, request, response, *args, **kwargs):
-        self.handle(request, response, self.GET_1_0, *args, **kwargs)
+        """
+        ---
+        doc_template: docs/articles/articles_view.yml
+        """
+        self.handle(request, response, self.GET, *args, **kwargs)
 
     @falcon.before(login_optional)
     @on_get.version('1.0')
     def on_get(self, request, response, *args, **kwargs):
-        self.handle(request, response, self.GET_1_0, *args, **kwargs)
+        self.handle(request, response, self.GET, *args, **kwargs)
 
-    class GET_1_0(FollowingSearchHandler):
-        meta_serializer = ArticlesMeta()
-        deserializer_schema = ArticlesList()
-        serializer_schema = ArticlesSerializer(many=True)
-        search_document = ArticleDoc()
-
-        def _queryset(self, cleaned, *args, **kwargs):
-            qs = super()._queryset(cleaned, *args, **kwargs)
-            return qs.filter('match', status='published')
+    class GET(SearchHdlr):
+        deserializer_schema = partial(ArticleApiSearchRequest, many=False)
+        serializer_schema = partial(ArticleApiResponse, many=True)
+        search_document = ArticleDocumentActive()
 
 
-class ArticleView(BaseView):
+class ArticleView(JsonAPIView):
     @falcon.before(login_optional)
     @versioned
     def on_get(self, request, response, *args, **kwargs):
-        self.handle(request, response, self.GET_1_0, *args, **kwargs)
+        """
+        ---
+        doc_template: docs/articles/article_view.yml
+        """
+        self.handle(request, response, self.GET, *args, **kwargs)
 
     @falcon.before(login_optional)
     @on_get.version('1.0')
     def on_get(self, request, response, *args, **kwargs):
-        self.handle(request, response, self.GET_1_0, *args, **kwargs)
+        self.handle(request, response, self.GET, *args, **kwargs)
 
-    class GET_1_0(RetrieveOneFollowHandler):
+    class GET(RetrieveOneHdlr):
+        deserializer_schema = partial(ArticleApiRequest, many=False)
         database_model = apps.get_model('articles', 'Article')
-        serializer_schema = ArticlesSerializer(many=False)
+        serializer_schema = partial(ArticleApiResponse, many=False)
 
-        def resource_clean(self, request, id, *args, **kwargs):
-            model = self.database_model
-            try:
-                if request.user.is_superuser:
-                    return model.objects.get(pk=id, status__in=["published", 'draft'])
-                return model.objects.get(pk=id, status="published")
-            except model.DoesNotExist:
-                raise falcon.HTTPNotFound
+        def _get_instance(self, id, *args, **kwargs):
+            instance = getattr(self, '_cached_instance', None)
+            if not instance:
+                model = self.database_model
+                try:
+                    usr = getattr(self.request, 'user', None)
+                    if usr and usr.is_superuser:
+                        self._cached_instance = model.objects.get(pk=id, status__in=["published", 'draft'])
+                    else:
+                        self._cached_instance = model.objects.get(pk=id, status='published')
+                except model.DoesNotExist:
+                    raise falcon.HTTPNotFound
+            return self._cached_instance
 
 
-class ArticleDatasetsView(BaseView):
+class ArticleDatasetsView(JsonAPIView):
     @falcon.before(login_optional)
     @versioned
     def on_get(self, request, response, *args, **kwargs):
-        self.handle(request, response, self.GET_1_0, *args, **kwargs)
+        """
+        ---
+        doc_template: docs/articles/article_datasets_view.yml
+        """
+        self.handle(request, response, self.GET, *args, **kwargs)
 
     @falcon.before(login_optional)
     @on_get.version('1.0')
     def on_get(self, request, response, *args, **kwargs):
-        self.handle(request, response, self.GET_1_0, *args, **kwargs)
+        self.handle(request, response, self.GET, *args, **kwargs)
 
-    class GET_1_0(SearchHandler):
-        meta_serializer = DatasetsMeta()
-        deserializer_schema = DatasetsList()
-        serializer_schema = DatasetSerializer(many=True, include_data=('institution',))
-        search_document = DatasetsDoc()
+    class GET(SearchHdlr):
+        deserializer_schema = partial(DatasetApiSearchRequest, many=False)
+        serializer_schema = partial(DatasetApiResponse, many=True)
+        search_document = DatasetDocumentActive()
+        include_default = ['institution']
 
-        def _queryset(self, cleaned, *args, **kwargs):
-            qs = super()._queryset(cleaned, *args, **kwargs)
-            if 'id' in kwargs:
-                qs = qs.query("nested", path="articles",
-                              query=Q("term", **{'articles.id': kwargs['id']}))
-            return qs
+        def _queryset_extra(self, queryset, id=None, **kwargs):
+            if id:
+                queryset = queryset.query("nested", path="articles",
+                                          query=Q("term", **{'articles.id': id}))
+            return queryset.filter('term', status='published')

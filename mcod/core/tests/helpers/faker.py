@@ -37,7 +37,7 @@ class FakerSchema(object):
                     data[field_name] = self._generate_single_fake(field.schema, root=root, runs=runs)
             else:
                 if isinstance(field, f.List):
-                    if hasattr(field, 'container') and not isinstance(field.container, f.Dict):
+                    if hasattr(field, 'inner') and not isinstance(field.inner, f.Dict):
                         data[field_name] = [self.get_faker_type(field.metadata['faker_type']) for v in range(10)]
                     else:
                         data[field_name] = []

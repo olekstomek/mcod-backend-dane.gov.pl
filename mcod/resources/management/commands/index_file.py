@@ -28,13 +28,15 @@ class Command(BaseCommand):
             settings.CELERY_TASK_ALWAYS_EAGER = True
 
         pks = (int(pk) for pk in options['pks'].split(','))
-        query = Resource.objects.filter(pk__in=pks, file__isnull=False, type='file')
+        query = Resource.objects.filter(
+            pk__in=pks,
+            type='file',
+            format__in=('csv', 'tsv', 'xls', 'xlsx', 'ods', 'shp')).exclude(file=None).exclude(file='')
 
         progress_bar = self.tqdm(desc="Indexing", total=query.count())
 
         for res in query:
-            if res.format in ('csv', 'tsv', 'xls', 'xlsx', 'ods') and res.file:
-                process_resource_file_data_task.delay(res.id)
+            process_resource_file_data_task.delay(res.id, update_verification_date=False)
             progress_bar.update(1)
 
         print('Done.')

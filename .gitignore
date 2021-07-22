@@ -19,7 +19,7 @@ __pycache__
 *.retry
 
 celerybeat-schedule.*
-
+celerybeat-schedule
 .vagrant/
 .vault-*
 
@@ -242,6 +242,8 @@ DerivedData/
 *.perspectivev3
 !default.perspectivev3
 
+*.code-workspace
+
 .cache
 .pytest_cache
 requirements.txt
@@ -257,7 +259,11 @@ frontend/
 !vagrant/ansible/roles/frontend
 /test/
 
-logs/
-wiki/
-docs/
+/venv
+/.venv
+.env
 
+/sandbox/
+requeststest
+
+.ipynb_checkpoints/

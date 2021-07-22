@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-05-10 14:44+0200\n"
+"POT-Creation-Date: 2021-04-16 15:06+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -20,434 +20,729 @@ msgstr ""
 "%100<12 || n%100>14) ? 1 : n!=1 && (n%10>=0 && n%10<=1) || (n%10>=5 && n"
 "%10<=9) || (n%100>=12 && n%100<=14) ? 2 : 3);\n"
 
-#: mcod/alerts/admin.py:16 mcod/alerts/admin.py:124
-msgid "Display"
-msgstr "Wyświetlanie"
+msgid "Sessions"
+msgstr "Sesje"
 
-#: mcod/alerts/admin.py:58
-msgid "Start date cannot be greater than finish date."
-msgstr "Data rozpoczęcia nie może być większa od daty zakończenia."
+msgid "Delete selected courses"
+msgstr "Usuń wybrane kursy"
 
-#: mcod/alerts/admin.py:66
-msgid "Finish date cannot be in the past."
-msgstr "Data zakończenia nie może być w przeszłości."
+msgid "End date"
+msgstr "Data zakończenia"
 
-#: mcod/alerts/admin.py:111 mcod/applications/admin.py:80
-#: mcod/articles/admin.py:65 mcod/categories/admin.py:42
-#: mcod/datasets/admin.py:345 mcod/organizations/admin.py:167
-#: mcod/resources/admin.py:96 mcod/resources/admin.py:104
-#: mcod/users/admin.py:120 mcod/users/admin.py:133
-msgid "General"
-msgstr "Ogólne"
+msgid "Number of sessions"
+msgstr "Liczba sesji"
 
-#: mcod/alerts/apps.py:7 mcod/alerts/models.py:64 mcod/settings/base.py:302
-msgid "Alerts"
-msgstr "Komunikaty"
-
-#: mcod/alerts/models.py:14 mcod/settings/base.py:262
-#: mcod/watchers/models.py:31
-msgid "Active"
-msgstr "Aktywny"
-
-#: mcod/alerts/models.py:15 mcod/core/db/models.py:21
-#: mcod/resources/models.py:62 mcod/tags/models.py:21
-msgid "Draft"
-msgstr "Szkic"
-
-#: mcod/alerts/models.py:19
-msgid "Ongoing"
-msgstr "W trakcie"
-
-#: mcod/alerts/models.py:20 mcod/datasets/models.py:27
-msgid "Not applicable"
-msgstr "Nie dotyczy"
-
-#: mcod/alerts/models.py:21
-msgid "Finished"
-msgstr "Zakończony"
-
-#: mcod/alerts/models.py:22
-msgid "Waiting"
-msgstr "Oczekujący"
-
-#: mcod/alerts/models.py:28 mcod/applications/forms.py:14
-#: mcod/applications/models.py:35 mcod/articles/forms.py:11
-#: mcod/articles/models.py:97 mcod/categories/models.py:32
-#: mcod/datasets/forms.py:18 mcod/datasets/models.py:50
-#: mcod/datasets/models.py:106 mcod/licenses/models.py:28
-#: mcod/organizations/models.py:36 mcod/organizations/models.py:90
-#: mcod/resources/forms.py:39 mcod/resources/forms.py:77
-#: mcod/templates/docs/tables/description.html:9
-msgid "Title"
-msgstr "Tytuł"
-
-#: mcod/alerts/models.py:29
-msgid "Title of the alert (300 characters max.)"
-msgstr "Tytuł komunikatu (maksymalnie 300 znaków)."
-
-#: mcod/alerts/models.py:31 mcod/articles/models.py:33
-#: mcod/categories/models.py:33 mcod/organizations/forms.py:20
-#: mcod/organizations/forms.py:29 mcod/organizations/models.py:37
-#: mcod/organizations/models.py:190 mcod/resources/forms.py:41
-#: mcod/resources/forms.py:42 mcod/resources/forms.py:79
-#: mcod/resources/forms.py:80 mcod/resources/models.py:448
-#: mcod/templates/mails/data-suggestion.html:30
-#: mcod/templates/mails/data-suggestion.txt:5
-msgid "Description"
-msgstr "Opis"
-
-#: mcod/alerts/models.py:32
-msgid "Description of the alert"
-msgstr "Treść komunikatu"
-
-#: mcod/alerts/models.py:34
 msgid "Start date"
 msgstr "Data rozpoczęcia"
 
-#: mcod/alerts/models.py:35
+msgid "State"
+msgstr "Stan"
+
+msgid "Title of course"
+msgstr "Tytuł kursu"
+
+msgid "Course venue"
+msgstr "Miejsce kursu"
+
+msgid "General"
+msgstr "Ogólne"
+
+msgid "Open Data Academy"
+msgstr "Akademia Otwarte Dane"
+
+#, python-format
+msgid "Invalid choice! Valid are: %(choices)s."
+msgstr "Niepoprawny wybór! Poprawne są: %(choices)s."
+
+msgid "Duplicate values for \"Start date\" are not allowed."
+msgstr "Zduplikowane wartości \"Daty rozpoczęcia\" nie są dozwolone."
+
+msgid "Dates of sessions cannot overlap!"
+msgstr "Daty sesji nie mogą na siebie nachodzić!"
+
+#, python-format
+msgid "Course must contain %d or fewer sessions."
+msgid_plural "Course must contain %d or fewer sessions."
+msgstr[0] "Kurs musi zawierać %d lub mniej sesji."
+msgstr[1] "Kurs musi zawierać %d lub mniej sesji."
+msgstr[2] "Kurs musi zawierać %d lub mniej sesji."
+msgstr[3] "Kurs musi zawierać %d lub mniej sesji."
+
+#, python-format
+msgid "Course must contain at least %d session."
+msgid_plural "Course must contain at least %d session."
+msgstr[0] "Kurs musi zawierać przynajmniej %d sesję."
+msgstr[1] "Kurs musi zawierać przynajmniej %d sesję."
+msgstr[2] "Kurs musi zawierać przynajmniej %d sesję."
+msgstr[3] "Kurs musi zawierać przynajmniej %d sesję."
+
+msgid "title"
+msgstr "nazwa"
+
+msgid "description"
+msgstr "opis"
+
+msgid "venue"
+msgstr "miejsce"
+
+msgid "number of participants"
+msgstr "liczba uczestników"
+
+msgid "schedule file"
+msgstr "plik harmonogram"
+
+msgid "materials file"
+msgstr "plik materiały"
+
+msgid "course"
+msgstr "kurs"
+
+msgid "courses"
+msgstr "kursy"
+
+msgid "Trash (Courses)"
+msgstr "Kosz (Kursy)"
+
+msgctxt "General"
+msgid "academy course module type"
+msgstr "Ogólny"
+
+msgid "Technical"
+msgstr "Techniczny"
+
+msgid "Law"
+msgstr "Prawny"
+
+msgid "Law/Technical"
+msgstr "Prawny/Techniczny"
+
+msgid "Extra"
+msgstr "Dodatkowy"
+
+msgid "Exam"
+msgstr "Egzamin"
+
+msgid "module type"
+msgstr "rodzaj modułu"
+
+msgid "start date"
+msgstr "data rozpoczęcia"
+
+msgid "end date"
+msgstr "data zakończenia"
+
+msgid "number of days"
+msgstr "liczba dni"
+
+msgid "course module"
+msgstr "moduł kursu"
+
+msgid "course modules"
+msgstr "moduły kursu"
+
+msgid "Display"
+msgstr "Wyświetlanie"
+
+msgid "Start date cannot be greater than finish date."
+msgstr "Data rozpoczęcia nie może być większa od daty zakończenia."
+
+msgid "Finish date cannot be in the past."
+msgstr "Data zakończenia nie może być w przeszłości."
+
+msgid "Alerts"
+msgstr "Komunikaty"
+
+msgid "Active"
+msgstr "Aktywny"
+
+msgid "Draft"
+msgstr "Szkic"
+
+msgid "Ongoing"
+msgstr "W trakcie"
+
+msgid "Not applicable"
+msgstr "Nie dotyczy"
+
+msgid "Finished"
+msgstr "Zakończony"
+
+msgid "Waiting"
+msgstr "Oczekujący"
+
+msgid "Title"
+msgstr "Tytuł"
+
+msgid "Title of the alert (300 characters max.)"
+msgstr "Tytuł komunikatu (maksymalnie 300 znaków)."
+
+msgid "Description"
+msgstr "Opis"
+
+msgid "Description of the alert"
+msgstr "Treść komunikatu"
+
 msgid "Date and time from which the message should be displayed"
 msgstr "Data i czas rozpoczęcia wyświetlania komunikatu."
 
-#: mcod/alerts/models.py:37
 msgid "Finish date"
 msgstr "Data zakończenia"
 
-#: mcod/alerts/models.py:38
 msgid "Date and time until which the message should be displayed"
 msgstr "Data i czas zakończenia wyświetlania kominikatu."
 
-#: mcod/alerts/models.py:46 mcod/applications/models.py:66
-#: mcod/articles/models.py:41 mcod/articles/models.py:127
-#: mcod/categories/models.py:45 mcod/datasets/models.py:84
-#: mcod/datasets/models.py:107 mcod/organizations/models.py:72
-#: mcod/resources/models.py:467 mcod/tags/models.py:55
 msgid "Created by"
 msgstr "Utworzone przez"
 
-#: mcod/alerts/models.py:56 mcod/applications/models.py:76
-#: mcod/articles/models.py:50 mcod/articles/models.py:136
-#: mcod/categories/models.py:54 mcod/datasets/models.py:93
-#: mcod/datasets/models.py:108 mcod/organizations/models.py:81
-#: mcod/resources/models.py:476 mcod/tags/models.py:64
 msgid "Modified by"
 msgstr "Zmodyfikowane przez"
 
-#: mcod/alerts/models.py:63
+msgid "acc: Alert"
+msgstr "komunikat"
+
 msgid "Alert"
 msgstr "Komunikat"
 
-#: mcod/applications/admin.py:55 mcod/applications/admin.py:83
-#: mcod/applications/models.py:50 mcod/articles/models.py:117
-#: mcod/datasets/apps.py:9 mcod/datasets/models.py:196
-#: mcod/organizations/admin.py:173 mcod/settings/base.py:280
-#: mcod/settings/base.py:294
-msgid "Datasets"
-msgstr "Zbiory danych"
-
-#: mcod/applications/admin.py:82 mcod/articles/admin.py:53
-#: mcod/articles/admin.py:67 mcod/articles/models.py:112
-#: mcod/datasets/admin.py:348 mcod/tags/apps.py:9 mcod/tags/models.py:85
-#: mcod/templates/docs/tables/description.html:17
 msgid "Tags"
 msgstr "Słowa kluczowe"
 
-#: mcod/applications/admin.py:110 mcod/organizations/admin.py:157
+msgid "Datasets"
+msgstr "Zbiory danych"
+
 msgid "Logo"
 msgstr ""
 
-#: mcod/applications/apps.py:9 mcod/applications/models.py:121
-#: mcod/settings/base.py:283
-msgid "Applications"
-msgstr "Aplikacje"
+msgid "Illustrative graphics"
+msgstr "Grafika ilustracyjna"
 
-#: mcod/applications/forms.py:19 mcod/applications/forms.py:20
-#: mcod/applications/models.py:36 mcod/articles/forms.py:15
-#: mcod/articles/forms.py:16 mcod/articles/models.py:98
-#: mcod/datasets/forms.py:31 mcod/datasets/forms.py:42
-#: mcod/datasets/models.py:53 mcod/datasets/models.py:106
-msgid "Notes"
-msgstr "Opis"
-
-#: mcod/applications/forms.py:24
-msgid "datasets"
-msgstr "zbiory"
-
-#: mcod/applications/forms.py:25 mcod/datasets/models.py:195
-#: mcod/resources/models.py:451 mcod/templates/docs/tables/description.html:10
-msgid "Dataset"
-msgstr "Zbiór danych"
-
-#: mcod/applications/models.py:37 mcod/articles/models.py:105
-msgid "Author"
-msgstr "Autor"
-
-#: mcod/applications/models.py:38
-msgid "App URL"
-msgstr "Adres URL aplikacji"
-
-#: mcod/applications/models.py:41 mcod/categories/models.py:37
-#: mcod/organizations/models.py:40
-msgid "Image URL"
-msgstr "Adres URL obrazu"
-
-#: mcod/applications/models.py:56 mcod/datasets/models.py:74
-#: mcod/tags/models.py:84
-msgid "Tag"
-msgstr "Słowo kluczowe"
-
-#: mcod/applications/models.py:107
-msgid "acc: Application"
-msgstr "aplikację"
-
-#: mcod/applications/models.py:120
-msgid "Application"
-msgstr "Aplikacja"
-
-#: mcod/applications/models.py:148 mcod/applications/models.py:149
-#: mcod/articles/models.py:173 mcod/articles/models.py:174
-#: mcod/categories/models.py:123 mcod/categories/models.py:124
-#: mcod/datasets/models.py:239 mcod/datasets/models.py:240
-#: mcod/organizations/models.py:225 mcod/organizations/models.py:226
-#: mcod/resources/models.py:697 mcod/resources/models.py:698
-msgid "Trash"
-msgstr "Kosz"
-
-#: mcod/articles/admin.py:92
 msgid "Preview"
 msgstr "Podgląd"
 
-#: mcod/articles/admin.py:95
 msgid "Preview link"
 msgstr "Link podglądu"
 
-#: mcod/articles/apps.py:9 mcod/articles/models.py:164
-#: mcod/settings/base.py:285
+msgid "Delete selected application proposals"
+msgstr "Usuń wybrane propozycje aplikacji"
+
+msgid "Datasets being used to build application"
+msgstr "Zbiory danych które zostały wykorzystane do budowy aplikacji"
+
+msgid "External public data used"
+msgstr "Wykorzystane dane publiczne spoza portalu"
+
+msgid "Application creation task was launched!"
+msgstr "Zadanie utworzenia aplikacji zostało uruchomione!"
+
+msgid "Applications"
+msgstr "Aplikacje"
+
+msgid "This field is required"
+msgstr "To pole jest obowiązkowe"
+
+msgid "Notes"
+msgstr "Opis"
+
+msgid "datasets"
+msgstr "zbiory"
+
+msgid "Dataset"
+msgstr "Zbiór danych"
+
+msgid "External datasets"
+msgstr "Zewnętrzne zbiory danych"
+
+msgid "Application author"
+msgstr "Autor aplikacji"
+
+msgid "Decision made"
+msgstr "Podjęta decyzja"
+
+msgid "Application notes"
+msgstr "Opis aplikacji"
+
+msgid "Application name"
+msgstr "Nazwa aplikacji"
+
+msgid "Application link / Application info page address"
+msgstr "Link do aplikacji / Adres strony z informacją o aplikacji"
+
+msgid "First"
+msgstr "Pierwsza"
+
+msgid "Second"
+msgstr "Druga"
+
+msgid "Third"
+msgstr "Trzecia"
+
+msgid "Fourth"
+msgstr "Czwarta"
+
+msgid "Author"
+msgstr "Autor"
+
+msgid "App URL"
+msgstr "Adres URL aplikacji"
+
+msgid "external datasets"
+msgstr "zewnętrzne zbiory danych"
+
+msgid "Proposal accepted"
+msgstr "Propozycja przyjęta"
+
+msgid "Proposal rejected"
+msgstr "Propozycja odrzucona"
+
+msgid "applicant email"
+msgstr "e-mail zgłaszającego"
+
+msgid "image URL"
+msgstr "adres URL obrazu"
+
+msgid "illustrative graphics"
+msgstr "grafika ilustracyjna"
+
+msgid "keywords"
+msgstr "słowa kluczowe"
+
+msgid "report date"
+msgstr "data zgłoszenia"
+
+msgid "decision"
+msgstr "decyzja"
+
+msgid "decision date"
+msgstr "data decyzji"
+
+msgid "comment"
+msgstr "komentarz"
+
+msgid "application"
+msgstr "aplikacja"
+
+msgid "created by"
+msgstr "utworzone przez"
+
+msgid "modified by"
+msgstr "zmodyfikowane przez"
+
+msgid "Application Proposal"
+msgstr "Propozycja aplikacji"
+
+msgid "Application Proposals"
+msgstr "Propozycje aplikacji"
+
+msgid "acc: Application proposal"
+msgstr "propozycję aplikacji"
+
+msgid "Application Proposal Trash"
+msgstr "Propozycja aplikacji - Kosz"
+
+msgid "Application Proposals Trash"
+msgstr "Propozycje aplikacji - Kosz"
+
+msgid "Image URL"
+msgstr "Adres URL obrazu"
+
+msgid "illustrative graphics alternative text"
+msgstr "Tekst zastępczy grafiki ilustracyjnej"
+
+msgid "Alternative text"
+msgstr "Tekst zastępczy"
+
+msgid "Tag"
+msgstr "Słowo kluczowe"
+
+msgid "Positioning on the main page"
+msgstr "Kolejność na stronie głównej"
+
+msgid "acc: Application"
+msgstr "aplikację"
+
+msgid "Application"
+msgstr "Aplikacja"
+
+msgid "Trash"
+msgstr "Kosz"
+
 msgid "Articles"
 msgstr "Baza wiedzy"
 
-#: mcod/articles/models.py:32 mcod/tags/models.py:47
-msgid "name"
-msgstr "nazwa"
-
-#: mcod/articles/models.py:66
-msgid "Article Category"
-msgstr "Kategoria artykułu"
-
-#: mcod/articles/models.py:67
-msgid "Article Categories"
-msgstr "Kategorie artykyłu"
-
-#: mcod/articles/models.py:99 mcod/articles/models.py:101
-#: mcod/datasets/models.py:55 mcod/datasets/models.py:57
-msgid "License ID"
-msgstr "Identyfikator licencji"
-
-#: mcod/articles/models.py:108 mcod/categories/models.py:82
-#: mcod/datasets/models.py:70 mcod/datasets/models.py:107
-#: mcod/templates/docs/tables/description.html:11
-msgid "Category"
-msgstr "Kategoria"
-
-#: mcod/articles/models.py:142
-msgid "acc: Article"
-msgstr "artykuł"
-
-#: mcod/articles/models.py:163
 msgid "Article"
 msgstr "Artykuł"
 
-#: mcod/categories/apps.py:9 mcod/categories/models.py:83
+msgid "Knowledge base"
+msgstr ""
+
+msgid "Not listed"
+msgstr ""
+
+msgid "name"
+msgstr "nazwa"
+
+msgid "type"
+msgstr "typ"
+
+msgid "Article Category"
+msgstr "Kategoria artykułu"
+
+msgid "Article Categories"
+msgstr "Kategorie artykyłu"
+
+msgid "License ID"
+msgstr "Identyfikator licencji"
+
+msgid "Category"
+msgstr "Kategoria"
+
+msgid "acc: Article"
+msgstr "artykuł"
+
 msgid "Categories"
 msgstr "Kategorie"
 
-#: mcod/categories/models.py:34
+msgid "Code"
+msgstr "Kod"
+
 msgid "Color"
 msgstr "Kolor"
 
-#: mcod/categories/models.py:60
 msgid "acc: Category"
 msgstr "kategorię"
 
-#: mcod/core/api/fields.py:22
+#, fuzzy
+#| msgid "Date"
+msgid "Date from"
+msgstr "Data"
+
+#, fuzzy
+#| msgid "Date"
+msgid "Date to"
+msgstr "Data"
+
+msgid "Link title"
+msgstr "Tytuł linku"
+
+msgid "The page title as you'd like it to be seen by the public"
+msgstr ""
+
+msgid "page title"
+msgstr "tytuł strony"
+
+msgid ""
+"Optional. 'Search Engine Friendly' title. This will appear at the top of the "
+"browser window."
+msgstr ""
+
+#, fuzzy
+#| msgid "error description"
+msgid "search description"
+msgstr "opis błędu"
+
+msgid ""
+"Alternative text should be as descriptive and short as possible (max 150 "
+"chars)."
+msgstr ""
+"Tekst zastępczy powinien być tak opisowy i krótki jak to możliwe (do 150 "
+"znaków)."
+
+msgid "image"
+msgstr ""
+
+msgid "images"
+msgstr ""
+
+msgid "Tytuł"
+msgstr ""
+
+msgid "default value"
+msgstr "stare wartości"
+
+msgid "Default value. Comma separated values supported for checkboxes."
+msgstr ""
+
+msgid "help text"
+msgstr ""
+
+#, fuzzy
+#| msgid "Format"
+msgid "Form data"
+msgstr "Format"
+
+msgid "Submit time"
+msgstr ""
+
+#, fuzzy
+#| msgid "submission"
+msgid "form submission"
+msgstr "potwierdzenie wysyłki"
+
+#, fuzzy
+#| msgid "submissions"
+msgid "form submissions"
+msgstr "potwierdzenia wysyłki"
+
+#, fuzzy
+#| msgid "address"
+msgid "to address"
+msgstr "adres"
+
+msgid ""
+"Optional - form submissions will be emailed to these addresses. Separate "
+"multiple addresses by comma."
+msgstr ""
+
+#, fuzzy
+#| msgid "address"
+msgid "from address"
+msgstr "adres"
+
+msgid "subject"
+msgstr ""
+
+#, python-format
+msgid "One submission has been deleted."
+msgid_plural "%(count)d submissions have been deleted."
+msgstr[0] ""
+msgstr[1] ""
+msgstr[2] ""
+msgstr[3] ""
+
+msgid "Ankiety"
+msgstr ""
+
+msgid "Edit"
+msgstr "Edytuj"
+
+#, python-format
+msgid "Edit '%(title)s'"
+msgstr ""
+
+msgid "View draft"
+msgstr ""
+
+#, python-format
+msgid "Preview draft version of '%(title)s'"
+msgstr ""
+
+#, fuzzy
+#| msgid "View on site"
+msgid "View live"
+msgstr "Zobacz na stronie"
+
+#, python-format
+msgid "View live version of '%(title)s'"
+msgstr ""
+
+msgid "Add child page"
+msgstr ""
+
+#, python-format
+msgid "Add a child page to '%(title)s' "
+msgstr ""
+
+msgid "More"
+msgstr ""
+
+#, python-format
+msgid "View more options for '%(title)s'"
+msgstr ""
+
+msgid "Polish"
+msgstr "Polski"
+
+msgid "English"
+msgstr "Angielski"
+
+#, python-format
+msgid "Select %s"
+msgstr "Wybierz %s"
+
+#, python-format
+msgid "Select %s to change"
+msgstr "Wybierz %s do zmiany"
+
+#, python-format
+msgid "Select %s to view"
+msgstr "Wybierz %s do obejrzenia"
+
 msgid "Missing data for required field."
 msgstr "Brak danych w wymaganym polu."
 
-#: mcod/core/api/fields.py:23
 msgid "Field may not be null."
 msgstr "Pole nie może być puste."
 
-#: mcod/core/api/fields.py:24
 msgid "Invalid value."
 msgstr "Niepoprawna wartość."
 
-#: mcod/core/api/fields.py:388
 msgid "Invalid type."
 msgstr "Niepoprawny typ."
 
-#: mcod/core/api/fields.py:423
 msgid "Not a valid list."
 msgstr "Nieprawidłowa lista."
 
-#: mcod/core/api/fields.py:436
 msgid "Not a valid mapping type."
 msgstr "Niepoprawny typ mapowania"
 
-#: mcod/core/api/fields.py:451
 msgid "Not a valid string."
 msgstr "Niepoprawny string."
 
-#: mcod/core/api/fields.py:452
 msgid "Not a valid utf-8 string."
 msgstr "Niepoprawny utf-8 string."
 
-#: mcod/core/api/fields.py:453
 msgid "Multiple values are not allowed."
 msgstr "Wiele wartości nie jest dozwolonych"
 
-#: mcod/core/api/fields.py:465
-msgid "Cannot format string with given data."
-msgstr ""
-
-#: mcod/core/api/fields.py:471
 msgid "Not a valid UUID."
 msgstr "Niepoprawny UUID."
 
-#: mcod/core/api/fields.py:483
 msgid "Not a valid URL."
 msgstr "Niepoprawny adres URL."
 
-#: mcod/core/api/fields.py:494
 msgid "Not a valid email address."
 msgstr "Nieważny adres email."
 
-#: mcod/core/api/fields.py:506
 msgid "Not a valid integer."
 msgstr "Niepoprawna liczba całkowita."
 
-#: mcod/core/api/fields.py:527 mcod/core/api/fields.py:539
 msgid "Special numeric values (nan or infinity) are not permitted."
 msgstr ""
 "Specjalne wartości numeryczne (jak nan czy nieskończoność) są niedozwolone."
 
-#: mcod/core/api/fields.py:552
 msgid "Not a valid boolean."
 msgstr "Niepoprawna wartość logiczna."
 
-#: mcod/core/api/fields.py:564
 msgid "Not a valid time."
 msgstr "Niepoprawna wartość czasu."
 
-#: mcod/core/api/fields.py:565
 #, python-brace-format
 msgid "\"{input}\" cannot be formatted as a time."
 msgstr "\"{input}\" nie może być sformatowana jako czas."
 
-#: mcod/core/api/fields.py:571
 msgid "Not a valid date."
 msgstr "Niepoprawna wartość daty."
 
-#: mcod/core/api/fields.py:572
 #, python-brace-format
 msgid "\"{input}\" cannot be formatted as a date."
 msgstr "\"{input}\" nie może być sformatowana jako data."
 
-#: mcod/core/api/fields.py:603
 #, python-brace-format
 msgid "Not a valid {obj_type}."
 msgstr "Nieprawidłowy {obj_type}."
 
-#: mcod/core/api/fields.py:604
 #, python-brace-format
 msgid "\"{input}\" cannot be formatted as a {obj_type}."
 msgstr "\"{input}\" nie może być sformatowana jako {obj_type}."
 
-#: mcod/core/api/fields.py:617
 msgid "Not a valid period of time."
 msgstr "Niepoprawny okres czasu."
 
-#: mcod/core/api/fields.py:618
 msgid "{input!r} cannot be formatted as a timedelta."
 msgstr "{input!r} nie może być sformatowana jako delta czasu."
 
-#: mcod/core/api/hooks.py:21 mcod/lib/triggers.py:64
+msgid "malformed query string"
+msgstr "źle sformułowane zapytanie"
+
+msgid "Additional permissions are required!"
+msgstr "Wymagane są dodatkowe uprawnienia!"
+
+msgid "Missing token"
+msgstr "Brakujący token"
+
 msgid "Missing authorization header"
 msgstr "Brak Nagłówka Autoryzacji"
 
-#: mcod/core/api/hooks.py:28 mcod/lib/triggers.py:71
+msgid "Invalid token"
+msgstr "Niepoprawny token!"
+
 msgid "Invalid authorization header"
 msgstr "Niepoprawny Nagłówek Autoryzacji"
 
-#: mcod/core/api/hooks.py:36 mcod/core/api/hooks.py:42 mcod/lib/triggers.py:79
-#: mcod/lib/triggers.py:85
 msgid "Incorrect login data"
 msgstr "Niepoprawne dane logowania"
 
-#: mcod/core/api/hooks.py:49 mcod/lib/triggers.py:92
 msgid "Cannot login"
 msgstr "Nie można się zalogować"
 
-#: mcod/core/api/hooks.py:56 mcod/lib/triggers.py:99 mcod/users/api/views.py:75
 msgid "Account is blocked"
 msgstr "Konto jest zablokowane"
 
-#: mcod/core/api/hooks.py:63 mcod/lib/triggers.py:106
-#: mcod/users/api/views.py:82
 msgid "Email address not confirmed"
 msgstr "Adres email nie został potwierdzony"
 
-#: mcod/core/api/schemas.py:142
+msgid "Referer checking failed - no Referer."
+msgstr "Nagłówek Referer nie został wysłany."
+
+#, python-format
+msgid "Referer checking failed - %s does not match any trusted origins."
+msgstr "Wartość nagłówka Referer %s nie pasuje do żadnej z zaufanych."
+
+msgid "Referer checking failed - Referer is malformed."
+msgstr "Wartość nagłówka Referer jest źle sformułowana."
+
+msgid "Referer checking failed - Referer is insecure while host is secure."
+msgstr "Referer jest niebezpieczny, gdy host jest bezpieczny."
+
+msgid "CSRF token missing or incorrect."
+msgstr "Token CSRF nie został poprawnie wprowadzony."
+
+msgid "'{}' profile is not supported"
+msgstr "profil '{}' nie jest wspierany"
+
 msgid "Invalid page number"
 msgstr "Niepoprawny numer strony"
 
-#: mcod/core/api/schemas.py:150
 msgid "Invalid page size"
 msgstr "Niepoprawny rozmiar strony."
 
-#: mcod/core/db/models.py:20 mcod/resources/models.py:61 mcod/tags/models.py:20
 msgid "Published"
 msgstr "Opublikowany"
 
-#: mcod/datasets/admin.py:259
+msgid "{} - trash"
+msgstr "{} - kosz"
+
+msgid "Tabular data validation status"
+msgstr "Status walidacji danych"
+
+msgid "File validation status"
+msgstr "Status walidacji pliku"
+
+msgid "Link validation status"
+msgstr "Status walidacji linku"
+
 msgid "Filter by institution name"
 msgstr "Filtruj według nazwy instytucji"
 
-#: mcod/datasets/admin.py:347
 msgid "Conditions"
 msgstr "Warunki"
 
-#: mcod/datasets/admin.py:349 mcod/resources/apps.py:9
-#: mcod/resources/models.py:688 mcod/settings/base.py:281
-#: mcod/settings/base.py:293
 msgid "Resources"
 msgstr "Zasoby"
 
-#: mcod/datasets/depricated/schemas.py:133
-msgid "Comment must be at least 3 characters long"
-msgstr "Komentarz musi mieć przynajmniej 3 znaki"
-
-#: mcod/datasets/forms.py:16
-msgid "e.g. the name of the data set"
-msgstr "na przykład nazwa zestawu danych"
-
-#: mcod/datasets/forms.py:25 mcod/datasets/forms.py:36
-msgid "Some information about the data being added"
-msgstr "Niektóre informacje o dodawanych danych"
-
-#: mcod/datasets/forms.py:46 mcod/datasets/models.py:68
-#: mcod/datasets/models.py:106
 msgid "Update frequency"
 msgstr "Częstotliwość aktualizacji"
 
-#: mcod/datasets/forms.py:54
+msgid "Available categories"
+msgstr "Dostępne kategorie"
+
+msgid "Selected categories"
+msgstr "Wybrane kategorie"
+
+msgid "Comment must be at least 3 characters long"
+msgstr "Komentarz musi mieć przynajmniej 3 znaki"
+
+msgid "e.g. the name of the data set"
+msgstr "na przykład nazwa zestawu danych"
+
+msgid "Some information about the data being added"
+msgstr "Niektóre informacje o dodawanych danych"
+
 msgid "Source"
 msgstr "Źródło"
 
-#: mcod/datasets/forms.py:58 mcod/datasets/models.py:67
-#: mcod/resources/models.py:494
 msgid "Customfields"
 msgstr "Pola niestandardowe"
 
-#: mcod/datasets/forms.py:67
 msgid ""
 "The recipient should inform about the date, time of completion and obtaining "
 "information from the obliged entity"
@@ -455,48 +750,65 @@ msgstr ""
 "Odbiorca powinien poinformować o źródle, czasie wytworzenia i pozyskania "
 "informacji od podmiotu zobowiązanego"
 
-#: mcod/datasets/forms.py:74
 msgid ""
 "The recipient should inform about the processing of the information when it "
 "modifies it"
 msgstr ""
-"Odbiorca powinien poinformować o przetworzeniu informacji ponownie "
-"wykorzystywanej"
+"Odbiorca powinien poinformować o przetworzeniu informacji, gdy ją jakkolwiek "
+"modyfikuje"
 
-#: mcod/datasets/forms.py:79
 msgid "The scope of the provider's responsibility for the information provided"
 msgstr "Zakres odpowiedzialności dostawcy za przekazywane informacje"
 
-#: mcod/datasets/forms.py:85
 msgid ""
 "Conditions for using public information that meets the characteristics of "
 "the work or constitute a database (Article 13 paragraph 2 of the Act on the "
 "re-use of public sector information)"
 msgstr ""
-"Warunki korzystania z informacji publicznych spełniających cechy utworu lub "
-"stanowiących bazę danych (art. 13 ust. 2 ustawy o ponownym wykorzystywaniu "
-"informacji sektora publicznego) "
+"Warunki wykorzystywania informacji sektora publicznego spełniających cechy "
+"utworu lub stanowiących bazę danych (art. 13 ust. 2 ustawy o ponownym "
+"wykorzystywaniu informacji sektora publicznego)"
 
-#: mcod/datasets/forms.py:94
+msgid ""
+"Conditions for using public sector information containing personal data "
+"(Article 14 paragraph 1 point 4 of the Act on the re-use of public Sector "
+"Information)"
+msgstr ""
+"Warunki wykorzystywania informacji sektora publicznego zawierającej dane "
+"osobowe (art. 14 ust. 1 pkt 4 ustawy o ponownym wykorzystywaniu informacji "
+"sektora publicznego)"
+
 msgid ""
 "If you select a draft, the status of all published resources belonging to "
 "that set will be changed to a draft"
 msgstr ""
 
-#: mcod/datasets/forms.py:119 mcod/resources/forms.py:64
+msgid ""
+"Allowed file extensions: jpg, gif, png. For better readability, we "
+"recommend .png files with a transparent background"
+msgstr ""
+"Dopuszczalne typy plików: jpg, gif, png. Ze względu na lepszą czytelność "
+"zalecamy plik .png z przezroczystym tłem"
+
 msgid "Availability date"
 msgstr "Data udostępnienia"
 
-#: mcod/datasets/forms.py:120 mcod/resources/forms.py:65
 msgid "Modification date"
 msgstr "Data modyfikacji"
 
-#: mcod/datasets/forms.py:121 mcod/datasets/models.py:98
-#: mcod/resources/forms.py:66 mcod/resources/models.py:502
 msgid "Update date"
 msgstr "Data aktualizacji"
 
-#: mcod/datasets/forms.py:137
+msgid "Text area is filled, license must be selected"
+msgstr "Uzupełniono pole tekstowe, należy wybrać licencję"
+
+msgid ""
+"Chosen conditions for re-use mean that they contain personal data. Please "
+"contact the administrator at kontakt@dane.gov.pl."
+msgstr ""
+"Wybrane warunki ponownego wykorzystania danych oznaczają, że zawierają one "
+"dane osobowe. Skontaktuj się z administratorem portalu kontakt@dane.gov.pl"
+
 msgid ""
 "You can't publish this dataset, because his organization has the status of a "
 "draft Please set status to draft or set status to publish for organization: "
@@ -504,7 +816,6 @@ msgstr ""
 "Nie można opublikowac zbioru, ponieważ organizacja do której należy ma "
 "status szkic.Ustaw status szkic lub zmień opublikuj organizację: "
 
-#: mcod/datasets/forms.py:167
 msgid ""
 "You can't restore this dataset, because it's organization is still removed. "
 "Please first restore organization: "
@@ -512,164 +823,188 @@ msgstr ""
 "Nie można przywrócić tego zbioru, ponieważ organizacja do której przynależy "
 "jest nadal w koszu.Przywróć najpierw organizację: "
 
-#: mcod/datasets/models.py:28
 msgid "yearly"
 msgstr "rocznie"
 
-#: mcod/datasets/models.py:29
 msgid "every half year"
 msgstr "co pół roku"
 
-#: mcod/datasets/models.py:30
 msgid "quarterly"
 msgstr "kwartalnie"
 
-#: mcod/datasets/models.py:31
 msgid "monthly"
 msgstr "miesięcznie"
 
-#: mcod/datasets/models.py:32
 msgid "weekly"
 msgstr "co tydzień"
 
-#: mcod/datasets/models.py:33
 msgid "daily"
 msgstr "codziennie"
 
-#: mcod/datasets/models.py:37
-msgid "application"
-msgstr "aplikacja"
-
-#: mcod/datasets/models.py:38 mcod/resources/models.py:520
 msgid "dataset"
 msgstr "zbiór danych"
 
-#: mcod/datasets/models.py:39
 msgid "article"
 msgstr "artykuł"
 
-#: mcod/datasets/models.py:51
+msgid "external identifier"
+msgstr "zewnętrzny identyfikator"
+
+msgid "external identifier of dataset taken during import process (optional)"
+msgstr ""
+"zewnętrzny identyfikator zbioru pobrany podczas procesu importu (opcjonalny)"
+
 msgid "Version"
 msgstr "Wersja"
 
-#: mcod/datasets/models.py:52 mcod/datasets/models.py:106
 msgid "Url"
 msgstr "Url"
 
-#: mcod/datasets/models.py:66 mcod/datasets/models.py:106
-#: mcod/organizations/models.py:194 mcod/users/models.py:192
 msgid "Institution"
 msgstr "Instytucja"
 
-#: mcod/datasets/models.py:106 mcod/organizations/models.py:90
-#: mcod/resources/models.py:511
-msgid "id"
+msgid "source"
+msgstr "źródło"
+
+msgid "download counter"
+msgstr "licznik pobrań"
+
+msgid "Controlled Vocabularies"
 msgstr ""
 
-#: mcod/datasets/models.py:107
-msgid "Status"
-msgstr "Status"
-
-#: mcod/datasets/models.py:107
-msgid "Conditions for re-use"
-msgstr "Warunki ponownego użycia"
-
-#: mcod/datasets/models.py:107 mcod/resources/models.py:523
-msgid "created"
-msgstr "utworzony"
-
-#: mcod/datasets/models.py:108 mcod/datasets/models.py:166
-#: mcod/datasets/models.py:192 mcod/resources/models.py:525
 msgid "modified"
 msgstr "zmodyfikowany"
 
-#: mcod/datasets/models.py:108
-msgid "The number of followers"
-msgstr "Liczba obserwujących"
-
-#: mcod/datasets/models.py:184
 msgid "acc: Dataset"
 msgstr "zbiór danych"
 
-#: mcod/following/handlers.py:83
-msgid "resource already followed"
-msgstr "zasób jest już obserwowany"
+msgid "id"
+msgstr ""
 
-#: mcod/following/handlers.py:117
-msgid "resource is not followed"
-msgstr "zasób nie jest obserwowany"
+msgid "uuid"
+msgstr ""
 
-#: mcod/histories/apps.py:7 mcod/histories/models.py:31
-msgid "Histories"
-msgstr "Historie"
+msgid "notes"
+msgstr "opis"
 
-#: mcod/histories/models.py:19
-msgid "table name"
-msgstr "nazwa tabeli"
+msgid "url"
+msgstr ""
 
-#: mcod/histories/models.py:20
-msgid "row id"
-msgstr "identyfikator wiersza"
+msgid "Status"
+msgstr "Status"
 
-#: mcod/histories/models.py:21
-msgid "action"
-msgstr "akcja"
+msgid "Conditions for re-use"
+msgstr "Warunki ponownego użycia"
 
-#: mcod/histories/models.py:22
-msgid "old value"
-msgstr "stare wartości"
+msgid "created_by"
+msgstr "utworzony przez"
 
-#: mcod/histories/models.py:23
-msgid "new value"
-msgstr "nowe wartości"
+msgid "created"
+msgstr "utworzony"
 
-#: mcod/histories/models.py:24 mcod/templates/admin/object_history.html:24
-#: mcod/users/models.py:99 mcod/users/models.py:201 mcod/users/models.py:229
-msgid "User"
-msgstr "Użytkownik"
+msgid "modified_by"
+msgstr "zmodyfikowany przez"
 
-#: mcod/histories/models.py:25
-msgid "Change timestamp"
-msgstr "Data zmiany"
+msgid "The number of followers"
+msgstr "Liczba obserwujących"
 
-#: mcod/histories/models.py:26
-#: mcod/templates/admin/resources/task-inline-list.html:13
-msgid "message"
+#, python-format
+msgid " (version %(version)s)"
+msgstr " (wersja %(version)s)"
+
+#, python-format
+msgid "On the data set %(title)s%(version)s [%(url)s] was posted a comment:"
+msgstr "Do zbioru %(title)s%(version)s [%(url)s] została zgłoszona uwaga:"
+
+#, python-format
+msgid "A comment was posted on the data set %(title)s%(version)s"
+msgstr "Zgłoszono uwagę do zbioru %(title)s%(version)s"
+
+msgid "Delete selected elements"
+msgstr "Usuń zaznaczone elementy"
+
+msgid "creation date"
+msgstr "data utworzenia"
+
+msgctxt "masculine"
+msgid "created by"
+msgstr "utworzony przez"
+
+msgid "communique"
 msgstr "komunikat"
 
-#: mcod/histories/models.py:30 mcod/lib/admin_mixins.py:78
-#: mcod/lib/admin_mixins.py:83 mcod/templates/admin/change_form.html:107
-#: mcod/templates/admin/object_history.html:10
-#: mcod/templates/admin/resources/change_form.html:135
-msgid "History"
-msgstr "Historia"
+msgid "Portal guide"
+msgstr "Przewodnik po portalu"
 
-#: mcod/histories/models.py:76
-msgid "Differences"
-msgstr "Różnice"
+msgid "Name of course (PL)"
+msgstr "Nazwa kursu (PL)"
 
-#: mcod/histories/models.py:84
-msgid "acc: History"
-msgstr "historię"
+msgid "Name of course (EN)"
+msgstr "Nazwa kursu (EN)"
 
-#: mcod/lib/admin_mixins.py:50
-#, python-format
-msgid "Change history: %s"
-msgstr "Zmień historie: %s"
+msgid "Title (PL)"
+msgstr "Tytuł (PL)"
 
-#: mcod/lib/admin_mixins.py:117
-msgid "Translation ({lang_code.upper()})"
-msgstr "Tłumaczenie ({lang_code.upper()})"
+msgid "Title (EN)"
+msgstr "Tytuł (EN)"
 
-#: mcod/lib/errors.py:49
-msgid "Field value error"
-msgstr "Błąd wartości pola"
+msgid "Content"
+msgstr "Treść"
 
-#: mcod/lib/forms/fields.py:137
-msgid "Internal number cannot be given without the main number"
-msgstr "Numer wewnętrzny może być podany wyłącznie z numerem głównym"
+msgid "Display at"
+msgstr "Wyświetlanie wg elementu"
 
-#: mcod/lib/hacks/goodtables/spec.py:5
+msgid "guide"
+msgstr "kurs"
+
+msgid "guides"
+msgstr "kursy"
+
+msgid "Trash (Guides)"
+msgstr "Kosz (Kursy)"
+
+msgid "top"
+msgstr "góra"
+
+msgid "bottom"
+msgstr "dół"
+
+msgid "left"
+msgstr "lewo"
+
+msgid "right"
+msgstr "prawo"
+
+msgid "content"
+msgstr "treść"
+
+msgid "route"
+msgstr "ścieżka"
+
+msgid "css selector"
+msgstr "znacznik css"
+
+msgid "position"
+msgstr "pozycja"
+
+msgid "order"
+msgstr "kolejność"
+
+msgid "optional communique"
+msgstr "komunikat opcjonalny"
+
+msgid "clicking is required"
+msgstr "wymagane kliknięcie"
+
+msgid "element is expandable"
+msgstr "element jest rozwijalny"
+
+msgid "guide item"
+msgstr "pozycja przewodnika"
+
+msgid "guide items"
+msgstr "pozycje przewodnika"
+
 #, python-brace-format
 msgid ""
 "A column in the header row is should be provided.\n"
@@ -681,16 +1016,13 @@ msgid ""
 "{validator}."
 msgstr ""
 
-#: mcod/lib/hacks/goodtables/spec.py:16
 #, python-brace-format
 msgid "Header in column {column_number} is blank"
-msgstr "Nagłówek w kolumnie {column_number} jest pusty"
+msgstr "Puste pole nagłówka kolumny {column_number} (Blank Header)."
 
-#: mcod/lib/hacks/goodtables/spec.py:17
 msgid "Blank Header"
 msgstr "Pusty nagłówek"
 
-#: mcod/lib/hacks/goodtables/spec.py:21
 #, python-brace-format
 msgid ""
 "This row is empty. A row should contain at least one value.\n"
@@ -700,16 +1032,13 @@ msgid ""
 " - If this error should be ignored disable `blank-row` check in {validator}."
 msgstr ""
 
-#: mcod/lib/hacks/goodtables/spec.py:29
 #, python-brace-format
 msgid "Row {row_number} is completely blank"
 msgstr "Wiersz {row_number} jest całkowicie pusty"
 
-#: mcod/lib/hacks/goodtables/spec.py:30
 msgid "Blank Row"
 msgstr "Pusty wiersz"
 
-#: mcod/lib/hacks/goodtables/spec.py:34
 #, python-brace-format
 msgid ""
 "Two columns in the header row have the same value. Column names should be "
@@ -722,20 +1051,17 @@ msgid ""
 "{validator}."
 msgstr ""
 
-#: mcod/lib/hacks/goodtables/spec.py:49
 #, python-brace-format
 msgid ""
 "Header in column {column_number} is duplicated to header in column(s) "
 "{column_numbers}"
 msgstr ""
 "Nagłówek w kolumnie {column_number} jest zduplikowany z nagłówkami w "
-"kolumnach {column_numbers}"
+"kolumnach {column_numbers} (Duplicate Header)."
 
-#: mcod/lib/hacks/goodtables/spec.py:52
 msgid "Duplicate Header"
 msgstr "Zduplikowany Nagłówek"
 
-#: mcod/lib/hacks/goodtables/spec.py:56
 #, python-brace-format
 msgid ""
 "The exact same data has been seen in another row.\n"
@@ -747,16 +1073,13 @@ msgid ""
 "{validator}."
 msgstr ""
 
-#: mcod/lib/hacks/goodtables/spec.py:67
 #, python-brace-format
 msgid "Row {row_number} is duplicated to row(s) {row_numbers}"
 msgstr "Wiersz {row_number} jest zduplikowany z wierszami {row_numbers}"
 
-#: mcod/lib/hacks/goodtables/spec.py:69
 msgid "Duplicate Row"
 msgstr "Zduplikowany wiersz"
 
-#: mcod/lib/hacks/goodtables/spec.py:73
 #, python-brace-format
 msgid ""
 "Data reading error because of an encoding problem.\n"
@@ -766,19 +1089,16 @@ msgid ""
 " - Set correct encoding in {validator}."
 msgstr ""
 
-#: mcod/lib/hacks/goodtables/spec.py:81
 #, python-brace-format
 msgid ""
 "The data source could not be successfully decoded with {encoding} encoding"
 msgstr ""
 "Źródło danych nie mogło zostać pomyślnie zdekodowane za pomocą kodowania "
-"{encoding}"
+"{encoding} (Encoding Error)."
 
-#: mcod/lib/hacks/goodtables/spec.py:84
 msgid "Encoding Error"
 msgstr ""
 
-#: mcod/lib/hacks/goodtables/spec.py:88
 #, python-brace-format
 msgid ""
 "This field value should be equal to one of the values in the enumeration "
@@ -792,20 +1112,17 @@ msgid ""
 "{validator}."
 msgstr ""
 
-#: mcod/lib/hacks/goodtables/spec.py:106
 #, python-brace-format
 msgid ""
 "The value {value} in row {row_number} and column {column_number} does not "
 "conform to the given enumeration: {constraint}"
 msgstr ""
 "Wartość {value} w wierszu {row_number} i kolumnie {column_number} nie jest "
-"zgodna z podaną enumeracją: {constraint}"
+"zgodna z podaną enumeracją: {constraint} (Enumerable Constraint)."
 
-#: mcod/lib/hacks/goodtables/spec.py:111
 msgid "Enumerable Constraint"
 msgstr "Ograniczenia wartości"
 
-#: mcod/lib/hacks/goodtables/spec.py:115
 #, python-brace-format
 msgid ""
 "The first row of the data source contains header that doesn't exist in the "
@@ -818,16 +1135,15 @@ msgid ""
 "{validator}."
 msgstr ""
 
-#: mcod/lib/hacks/goodtables/spec.py:126
 #, python-brace-format
 msgid "There is an extra header in column {column_number}"
-msgstr "W kolumnie {column_number} znajduje się dodatkowy nagłówek"
+msgstr ""
+"W kolumnie {column_number} w porównaniu ze schematem znajduje się dodatkowy "
+"nagłówek (Extra Header)."
 
-#: mcod/lib/hacks/goodtables/spec.py:128
 msgid "Extra Header"
 msgstr "Dodatkowy nagłówek"
 
-#: mcod/lib/hacks/goodtables/spec.py:132
 #, python-brace-format
 msgid ""
 "This row has more values compared to the header row (the first row in the "
@@ -840,16 +1156,16 @@ msgid ""
 "{validator}."
 msgstr ""
 
-#: mcod/lib/hacks/goodtables/spec.py:145
 #, python-brace-format
 msgid "Row {row_number} has an extra value in column {column_number}"
-msgstr "Wiersz {row_number} ma dodatkową wartość w kolumnie {column_number}"
+msgstr ""
+"Wskazany wiersz ma więcej wartości w porównaniu z wierszem nagłówka "
+"(pierwszy wiersz w źródle danych). Wiersz {row_number} ma dodatkową wartość "
+"w kolumnie {column_number} (Extra Value)."
 
-#: mcod/lib/hacks/goodtables/spec.py:147
 msgid "Extra Value"
 msgstr "Dodatkowa Wartość"
 
-#: mcod/lib/hacks/goodtables/spec.py:151
 #, python-brace-format
 msgid ""
 "Data reading error because of incorrect format.\n"
@@ -859,17 +1175,16 @@ msgid ""
 " - Set correct format in {validator}."
 msgstr ""
 
-#: mcod/lib/hacks/goodtables/spec.py:160
 msgid ""
 "The data source is in an unknown format; no tabular data can be extracted"
 msgstr ""
-"Źródło danych ma nieznany format; nie można wyodrębnić danych tabelarycznych"
+"Źródło danych ma niewłaściwy format i nie można wyodrębnić danych "
+"tabelarycznych - serwer deklaruje inną zawartość pliku, niż podany format "
+"pliku (Format Error)."
 
-#: mcod/lib/hacks/goodtables/spec.py:163
 msgid "Format Error"
 msgstr "Błąd Formatu"
 
-#: mcod/lib/hacks/goodtables/spec.py:167
 msgid ""
 "Data reading error because of HTTP error.\n"
 "\n"
@@ -877,17 +1192,16 @@ msgid ""
 " - Fix url link if it's not correct."
 msgstr ""
 
-#: mcod/lib/hacks/goodtables/spec.py:173
 #, python-brace-format
 msgid ""
 "The data source returned an HTTP error with a status code of {status_code}"
-msgstr "Źródło danych zwróciło błąd HTTP ze statusem {status_code}"
+msgstr ""
+"Błąd odczytu danych z powodu błędu komunikacji HTTP (HTTP Error "
+"{status_code})."
 
-#: mcod/lib/hacks/goodtables/spec.py:175
 msgid "HTTP Error"
 msgstr "Bląd HTTP"
 
-#: mcod/lib/hacks/goodtables/spec.py:179
 msgid ""
 "Data reading error because of IO error.\n"
 "\n"
@@ -895,16 +1209,13 @@ msgid ""
 " - Fix path if it's not correct."
 msgstr ""
 
-#: mcod/lib/hacks/goodtables/spec.py:184
 #, python-brace-format
 msgid "The data source returned an IO Error of type {error_type}"
-msgstr "Źródło danych zwróciło błąd IO typu {error_type}"
+msgstr "Błąd dostępu do pliku (błąd IO typu {error_type})"
 
-#: mcod/lib/hacks/goodtables/spec.py:186
 msgid "IO Error"
 msgstr ""
 
-#: mcod/lib/hacks/goodtables/spec.py:190
 #, python-brace-format
 msgid ""
 "This field value should be less or equal than constraint value.\n"
@@ -917,20 +1228,18 @@ msgid ""
 "{validator}."
 msgstr ""
 
-#: mcod/lib/hacks/goodtables/spec.py:205
 #, python-brace-format
 msgid ""
 "The value {value} in row {row_number} and column {column_number} does not "
 "conform to the maximum constraint of {constraint}"
 msgstr ""
 "Wartość {value} w wierszu {row_number} i kolumnie {column_number} nie jest "
-"zgodna z ograniczeniem -  wartość maksymalna {constraint}"
+"zgodna z określonym w schemacie wymaganiem wartość maksymalna {constraint} "
+"(Maximum Constraint)."
 
-#: mcod/lib/hacks/goodtables/spec.py:210
 msgid "Maximum Constraint"
 msgstr "Ograniczenie maksimum"
 
-#: mcod/lib/hacks/goodtables/spec.py:214
 #, python-brace-format
 msgid ""
 "A length of this field value should be less or equal than schema constraint "
@@ -944,20 +1253,18 @@ msgid ""
 "in {validator}."
 msgstr ""
 
-#: mcod/lib/hacks/goodtables/spec.py:237
 #, python-brace-format
 msgid ""
 "The value {value} in row {row_number} and column {column_number} does not "
 "conform to the maximum length constraint of {constraint}"
 msgstr ""
 "Wartość {value} w wierszu {row_number} i kolumnie {column_number} nie jest "
-"zgodna z ograniczeniem - długość maksymalna {constraint}"
+"zgodna z określonym w schemacie wymaganiem długość maksymalna {constraint} "
+"(Maximum Length Constraint)."
 
-#: mcod/lib/hacks/goodtables/spec.py:243
 msgid "Maximum Length Constraint"
 msgstr "Ograniczenia maksymalnej długości"
 
-#: mcod/lib/hacks/goodtables/spec.py:247
 #, python-brace-format
 msgid ""
 "This field value should be greater or equal than constraint value.\n"
@@ -970,20 +1277,18 @@ msgid ""
 "{validator}."
 msgstr ""
 
-#: mcod/lib/hacks/goodtables/spec.py:262
 #, python-brace-format
 msgid ""
 "The value {value} in row {row_number} and column {column_number} does not "
 "conform to the minimum constraint of {constraint}"
 msgstr ""
 "Wartość {value} w wierszu {row_number} i kolumnie {column_number} nie jest "
-"zgodna z ograniczeniem - wartość minimalna {constraint}"
+"zgodna z określonym w schemacie wymaganiem wartość minimalna {constraint} "
+"(Minimum Constraint)."
 
-#: mcod/lib/hacks/goodtables/spec.py:267
 msgid "Minimum Constraint"
 msgstr "Ograniczenie minimum"
 
-#: mcod/lib/hacks/goodtables/spec.py:271
 #, python-brace-format
 msgid ""
 "A length of this field value should be greater or equal than schema "
@@ -997,20 +1302,18 @@ msgid ""
 "in {validator}."
 msgstr ""
 
-#: mcod/lib/hacks/goodtables/spec.py:294
 #, python-brace-format
 msgid ""
 "The value {value} in row {row_number} and column {column_number} does not "
 "conform to the minimum length constraint of {constraint}"
 msgstr ""
 "Wartość {value} w wierszu {row_number} i kolumnie {column_number} nie jest "
-"zgodna z ograniczeniem -  długość minimalna {constraint}"
+"zgodna z określonym w schemacie wymaganiem długość minimalna {constraint} "
+"(Minimum Length Constraint)."
 
-#: mcod/lib/hacks/goodtables/spec.py:300
 msgid "Minimum Length Constraint"
 msgstr "Ograniczenia minimalnej długości"
 
-#: mcod/lib/hacks/goodtables/spec.py:304
 #, python-brace-format
 msgid ""
 "Based on the schema there should be a header that is missing in the first "
@@ -1023,16 +1326,15 @@ msgid ""
 "{validator}."
 msgstr ""
 
-#: mcod/lib/hacks/goodtables/spec.py:317
 #, python-brace-format
 msgid "There is a missing header in column {column_number}"
-msgstr "Brakuje nagłówka w kolumnie {column_number}"
+msgstr ""
+"W pierwszym wierszu źródła danych brakuje nagłówka kolumny {column_number}, "
+"który istnieje w schemacie (Missing Header)."
 
-#: mcod/lib/hacks/goodtables/spec.py:319
 msgid "Missing Header"
 msgstr "Brak Nagłówka"
 
-#: mcod/lib/hacks/goodtables/spec.py:323
 #, python-brace-format
 msgid ""
 "This row has less values compared to the header row (the first row in the "
@@ -1045,16 +1347,15 @@ msgid ""
 "{validator}."
 msgstr ""
 
-#: mcod/lib/hacks/goodtables/spec.py:337
 #, python-brace-format
 msgid "Row {row_number} has a missing value in column {column_number}"
-msgstr "Wiersz {row_number} ma brakującą wartość w kolumnie {column_number}"
+msgstr ""
+"Wiersz {row_number} ma brakującą wartość w kolumnie {column_number} (Missing "
+"Value)."
 
-#: mcod/lib/hacks/goodtables/spec.py:339
 msgid "Missing Value"
 msgstr "Brakująca wartość"
 
-#: mcod/lib/hacks/goodtables/spec.py:343
 #, python-brace-format
 msgid ""
 "One of the data source headers doesn't match the field name defined in the "
@@ -1066,20 +1367,17 @@ msgid ""
 "{validator}."
 msgstr ""
 
-#: mcod/lib/hacks/goodtables/spec.py:357
 #, python-brace-format
 msgid ""
 "Header in column {column_number} doesn't match field name {field_name} in "
 "the schema"
 msgstr ""
 "Nagłówek w kolumnie {column_number} nie pasuje do nazwy pola {field_name} w "
-"schemacie"
+"schemacie (Non-Matching Header)"
 
-#: mcod/lib/hacks/goodtables/spec.py:361
 msgid "Non-Matching Header"
 msgstr "Niewłaściwy nagłówek"
 
-#: mcod/lib/hacks/goodtables/spec.py:365
 #, python-brace-format
 msgid ""
 "This field value should conform to constraint pattern.\n"
@@ -1092,20 +1390,17 @@ msgid ""
 "{validator}."
 msgstr ""
 
-#: mcod/lib/hacks/goodtables/spec.py:380
 #, python-brace-format
 msgid ""
 "The value {value} in row {row_number} and column {column_number} does not "
 "conform to the pattern constraint of {constraint}"
 msgstr ""
 "Wartość {value} w wierszu {row_number} i kolumnie {column_number} nie jest "
-"zgodna z ograniczeniem - wzorzec {constraint}"
+"zgodna ze wzorcem {constraint} (Pattern Constraint)."
 
-#: mcod/lib/hacks/goodtables/spec.py:385
 msgid "Pattern Constraint"
 msgstr ""
 
-#: mcod/lib/hacks/goodtables/spec.py:389
 #, python-brace-format
 msgid ""
 "This field is a required field, but it contains no value.\n"
@@ -1118,19 +1413,16 @@ msgid ""
 "{validator}."
 msgstr ""
 
-#: mcod/lib/hacks/goodtables/spec.py:406
 #, python-brace-format
 msgid ""
 "Column {column_number} is a required field, but row {row_number} has no value"
 msgstr ""
-"Kolumna {column_number} jest polem wymaganym, ale wiersz {row_number} nie ma "
-"wartości"
+"Kolumna {column_number} jest polem wymaganym, ale w wierszu {row_number} nie "
+"ma wartości (Required Constraint)."
 
-#: mcod/lib/hacks/goodtables/spec.py:409
 msgid "Required Constraint"
 msgstr ""
 
-#: mcod/lib/hacks/goodtables/spec.py:413
 #, python-brace-format
 msgid ""
 "Provided schema is not valid.\n"
@@ -1140,16 +1432,13 @@ msgid ""
 " - If this error should be ignored disable schema checks in {validator}."
 msgstr ""
 
-#: mcod/lib/hacks/goodtables/spec.py:421
 #, python-brace-format
 msgid "Table Schema error: {error_message}"
-msgstr "Błąd schematu tabeli: {error_message}"
+msgstr "Błąd schematu tabeli: {error_message} (Table Schema Error)."
 
-#: mcod/lib/hacks/goodtables/spec.py:422
 msgid "Table Schema Error"
 msgstr "Błąd schematu tabeli"
 
-#: mcod/lib/hacks/goodtables/spec.py:426
 #, python-brace-format
 msgid ""
 "Data reading error because of incorrect scheme.\n"
@@ -1159,18 +1448,13 @@ msgid ""
 " - Set correct scheme in {validator}."
 msgstr ""
 
-#: mcod/lib/hacks/goodtables/spec.py:434
 msgid ""
 "The data source is in an unknown scheme; no tabular data can be extracted"
-msgstr ""
-"Źródło danych znajduje się w nieznanym schemacie; nie można wyodrębnić "
-"danych tabelarycznych"
+msgstr "Brak możliwości określenia struktury dokumentu (Scheme Error)."
 
-#: mcod/lib/hacks/goodtables/spec.py:437
 msgid "Scheme Error"
 msgstr "Błąd schemy"
 
-#: mcod/lib/hacks/goodtables/spec.py:441
 #, python-brace-format
 msgid ""
 "Data reading error because of not supported or inconsistent contents.\n"
@@ -1180,19 +1464,16 @@ msgid ""
 " - Set correct source settings in {validator}."
 msgstr ""
 
-#: mcod/lib/hacks/goodtables/spec.py:451
 msgid ""
 "The data source has not supported or has inconsistent contents; no tabular "
 "data can be extracted"
 msgstr ""
-"Źródło danych ma nie obsługiwaną lub niespójną zawartość; nie można "
-"wyodrębnić danych tabelarycznych"
+"Plik danych ma nieczytelną zawartość i nie można wyodrębnić danych "
+"tabelarycznych (Source Error)."
 
-#: mcod/lib/hacks/goodtables/spec.py:454
 msgid "Source Error"
 msgstr "Błąd Źródła"
 
-#: mcod/lib/hacks/goodtables/spec.py:458
 #, python-brace-format
 msgid ""
 "The value does not match the schema type and format for this field.\n"
@@ -1204,20 +1485,17 @@ msgid ""
 "{validator}. In this case all schema checks for row values will be ignored."
 msgstr ""
 
-#: mcod/lib/hacks/goodtables/spec.py:477
 #, python-brace-format
 msgid ""
 "The value {value} in row {row_number} and column {column_number} is not type "
 "{field_type} and format {field_format}"
 msgstr ""
 "Wartość {value} w wierszu {row_number} i kolumnie {column_number} nie jest "
-"typem {field_type} i formatem {field_format}"
+"typem {field_type} lub formatem {field_format} (Type or Format Error)."
 
-#: mcod/lib/hacks/goodtables/spec.py:482
 msgid "Type or Format Error"
 msgstr ""
 
-#: mcod/lib/hacks/goodtables/spec.py:486
 #, python-brace-format
 msgid ""
 "This field is a unique field but it contains a value that has been used in "
@@ -1231,69 +1509,637 @@ msgid ""
 "{validator}."
 msgstr ""
 
-#: mcod/lib/hacks/goodtables/spec.py:503
 #, python-brace-format
 msgid ""
 "Rows {row_numbers} has unique constraint violation in column {column_number}"
 msgstr ""
-"Wiersze {row_numbers} mają  naruszenie ograniczenia unikalności w kolumnie "
-"{column_number}"
+"Wiersze {row_numbers} mają naruszone wymagania unikalności w kolumnie "
+"{column_number} (Unique Constraint) – wskazane elementy zgodnie ze schematem "
+"powinny być unikalne."
 
-#: mcod/lib/hacks/goodtables/spec.py:506
 msgid "Unique Constraint"
 msgstr "Unikalne ograniczenie"
 
-#: mcod/lib/hashers.py:66
+msgid "More than year"
+msgstr "Ponad rok"
+
+msgid "Error description"
+msgstr "Opis błędu"
+
+msgid "Start"
+msgstr ""
+
+msgid "Result"
+msgstr "Wynik"
+
+#, python-brace-format
+msgid "The data source \"{obj}\" was added successfully."
+msgstr "Źródło danych \"{obj}\" zostało pomyślnie dodane."
+
+#, python-brace-format
+msgid ""
+"The data source \"{obj}\" was added successfully. You may add another data "
+"source below."
+msgstr ""
+"Żródło danych \"{obj}\" zostało pomyślnie dodane. Możesz dodać kolejne "
+"źródło danych poniżej."
+
+#, python-brace-format
+msgid "The data source \"{obj}\" was changed successfully."
+msgstr "Żródło danych \"{obj}\" zostało pomyślnie zmienione."
+
+#, python-brace-format
+msgid ""
+"The data source \"{obj}\" was changed successfully. You may edit it again "
+"below."
+msgstr ""
+"Źródło danych \"{obj}\" zostało pomyślnie zmienione. Możesz edytować je "
+"ponownie poniżej."
+
+#, python-brace-format
+msgid ""
+"The data source \"{obj}\" was added successfully. You may edit it again "
+"below."
+msgstr ""
+"Źródło danych \"{obj}\" zostało pomyślnie dodane. Możesz edytować je "
+"ponownie poniżej."
+
+#, python-brace-format
+msgid ""
+"The data source \"{obj}\" was changed successfully. You may add another "
+"{name} below."
+msgstr ""
+"Żródło danych \"{obj}\" zostało pomyślnie zmienione. Możesz dodać kolejne "
+"{name} poniżej."
+
+msgid "Delete selected data sources"
+msgstr "Usuń wybrane źródła danych"
+
+msgid "Imports"
+msgstr "Importy"
+
+msgid "Type"
+msgstr "Typ"
+
+msgid "Last import"
+msgstr "Ostatni import"
+
+msgid "Import data task was launched!"
+msgstr "Zadanie importu danych zostało uruchomione!"
+
+msgid "Data Sources"
+msgstr "Źródła danych"
+
+msgid "Description (PL)"
+msgstr "Opis (PL)"
+
+msgid "List of emails separated by a comma"
+msgstr "Lista maili rozdzielonych przecinkiem"
+
+msgid "This field is required."
+msgstr "To pole jest obowiązkowe."
+
+msgid "This field is required!"
+msgstr "To pole jest obowiązkowe!"
+
+msgid "every day"
+msgstr "codziennie"
+
+msgid "every week"
+msgstr "co tydzień"
+
+msgid "every month"
+msgstr "co miesiąc"
+
+msgid "every quarter"
+msgstr "co kwartał"
+
+msgid "OK - partial import"
+msgstr "OK - import częściowy"
+
+msgid "Error"
+msgstr "Błąd"
+
+msgid "active"
+msgstr "aktywny"
+
+msgid "inactive"
+msgstr "nieaktywny"
+
+msgid "frequency"
+msgstr "częstotliwość"
+
+msgid "status"
+msgstr ""
+
+msgid "data use rules"
+msgstr "warunki ponownego wykorzystania danych"
+
+msgid "Default type for newly created institutions"
+msgstr "Domyślny typ dla nowych instytucji"
+
+msgid "source type"
+msgstr "typ źródła"
+
+msgid "e-mail"
+msgstr ""
+
+msgid "last activation date"
+msgstr "data ostatniej aktywacji"
+
+msgid "category"
+msgstr "kategoria"
+
+msgid "last import status"
+msgstr "status ostatniego importu"
+
+msgid "last import timestamp"
+msgstr "data ostatniego importu"
+
+msgid "portal url"
+msgstr "URL (adres portalu)"
+
+msgid "api url"
+msgstr "API (adres API)"
+
+msgid "XML url"
+msgstr ""
+
+msgid "source hash"
+msgstr "hash źródła"
+
+msgid "Sparql query"
+msgstr "Zapytanie SPARQL"
+
+msgid "data source"
+msgstr "źródło danych"
+
+msgid "data sources"
+msgstr "źródła danych"
+
+msgid "Inaccessible API!"
+msgstr "Niedostępne API!"
+
+msgid "Data source for this institution already exists!"
+msgstr "Źródło danych dla tej instytucji już istnieje!"
+
+#, python-format
+msgid "Remote hash not found in %(url)s location!"
+msgstr "Nie znaleziono skrótu hash w lokalizacji %(url)s!"
+
+msgid "Trash (Data Sources)"
+msgstr "Kosz (źródła danych)"
+
+msgid "start"
+msgstr "początek"
+
+msgid "end"
+msgstr "koniec"
+
+msgid "error description"
+msgstr "opis błędu"
+
+msgid "number of rejected datasets"
+msgstr "liczba odrzuconych zbiorów danych"
+
+msgid "number of imported datasets"
+msgstr "liczba zaimportowanych zbiorów danych"
+
+msgid "number of created datasets"
+msgstr "liczba utworzonych zbiorów danych"
+
+msgid "number of updated datasets"
+msgstr "liczba zmodyfikowanych zbiorów danych"
+
+msgid "number of deleted datasets"
+msgstr "liczba usuniętych zbiorów danych"
+
+msgid "number of imported resources"
+msgstr "liczba zaimportowanych zasobów"
+
+msgid "number of created resources"
+msgstr "liczba utworzonych zasobów"
+
+msgid "number of updated resources"
+msgstr "liczba zmodyfikowanych zasobów"
+
+msgid "number of deleted resources"
+msgstr "liczba usuniętych zasobów"
+
+msgid "Is report email sent?"
+msgstr "Czy wysłano raport mailowy?"
+
+msgid "data source import"
+msgstr "import źródła danych"
+
+msgid "data source imports"
+msgstr "importy źródła danych"
+
+#, python-format
+msgid "Unsupported format: %(format)s."
+msgstr "Nieobsługiwany format: %(format)s."
+
+msgid "intIdent value for related dataset is also required!"
+msgstr "Wartość intIdent dla powiązanego zbioru jest także wymagana!"
+
+#, python-format
+msgid ""
+"Resource with id: %(r_id)s, dataset's id: %(d_id)s and institution \"%(ins)s"
+"\" was not found."
+msgstr ""
+"Zasób z id: %(r_id)s, id zbioru: %(d_id)s i instytucji \"%(ins)s\" nie "
+"został znaleziony."
+
+#, python-format
+msgid "Dataset with id: %(d_id)s and institution: \"%(ins)s\" was not found."
+msgstr ""
+"Zbiór z id: %(d_id)s dla instytucji: \"%(ins)s\" nie został znaleziony."
+
+msgid ""
+"Field 'dbOrCopyrightedLicenseChosen' is required if field 'dbOrCopyrighted' "
+"is provided."
+msgstr ""
+"Pole 'dbOrCopyrightedLicenseChosen' jest wymagane jeżeli pole "
+"'dbOrCopyrighted' jest wypełnione."
+
+msgid ""
+"Field 'dbOrCopyrighted' is required if field 'dbOrCopyrightedLicenseChosen' "
+"is provided."
+msgstr ""
+"Pole 'dbOrCopyrighted' jest wymagane jeżeli pole "
+"'dbOrCopyrightedLicenseChosen' jest wypełnione."
+
+msgid "Checking of file name"
+msgstr "Sprawdzanie nazwy pliku"
+
+msgid "Fetching of HTTP headers"
+msgstr "Pobieranie nagłówków HTTP"
+
+msgid "Checking of content type"
+msgstr "Sprawdzanie typu zawartości"
+
+msgid "Checking of MD5 file"
+msgstr "Sprawdzanie pliku MD5"
+
+msgid "Downloading of xml file"
+msgstr "Pobieranie pliku xml"
+
+msgid "Validation of MD5"
+msgstr "Walidacja MD5"
+
+msgid "Validation of xml file"
+msgstr "Walidacja pliku xml"
+
+msgid "Datasets & Resources Import Report"
+msgstr "Raport importu zbiorów danych i zasobów"
+
+msgid "DATASETS & RESOURCES IMPORT REPORT"
+msgstr "RAPORT IMPORTU ZBIORÓW DANYCH I ZASOBÓW"
+
+#, python-format
+msgid "%(url)s: invalid response code: %(code)s (%(reason)s)"
+msgstr "%(url)s: niewłaściwy kod odpowiedzi: %(code)s (%(reason)s)"
+
+#, python-format
+msgid "\"%(value)s\" is not valid MD5 hash!"
+msgstr "\"%(value)s\" nie jest poprawnym skrótem MD5!"
+
+msgid "External resource is not available!"
+msgstr "Zewnętrzny zasób jest niedostępny!"
+
+#, python-format
+msgid ""
+"Invalid Content-Type header: '%(content_type)s'. Content-Type must contain "
+"'text/xml' or 'application/xml'!"
+msgstr ""
+"Niepoprawny nagłówek Content-Type: '%(content_type)s'. Content-Type musi "
+"zawierać 'text/xml' lub 'application/xml'!"
+
+#, python-format
+msgid "Invalid file name: %(filename)s!"
+msgstr "Niepoprawna nazwa pliku: %(filename)s!"
+
+msgid "Remote MD5 hash is not valid!"
+msgstr "Zdalny skrót MD5 nie jest poprawny!"
+
+msgid "Histories"
+msgstr "Historie"
+
+msgid "table name"
+msgstr "nazwa tabeli"
+
+msgid "row id"
+msgstr "identyfikator wiersza"
+
+msgid "action"
+msgstr "akcja"
+
+msgid "old value"
+msgstr "stare wartości"
+
+msgid "new value"
+msgstr "nowe wartości"
+
+msgid "User"
+msgstr "Użytkownik"
+
+msgid "Change timestamp"
+msgstr "Data zmiany"
+
+msgid "message"
+msgstr "komunikat"
+
+msgid "History"
+msgstr "Historia"
+
+msgid "Differences"
+msgstr "Różnice"
+
+msgid "acc: History"
+msgstr "historię"
+
+msgid "Analysis can have only one report assigned"
+msgstr "Analiza może mieć załączony tylko jeden raport"
+
+msgid "Laboratory"
+msgstr "Laboratorium"
+
+msgid "Analysis"
+msgstr "Analiza"
+
+msgid "Research"
+msgstr "Badanie"
+
+msgid "Event type"
+msgstr "Rodzaj obiektu"
+
+msgid "Execution date"
+msgstr "Data wykonania"
+
+msgid "acc: Event"
+msgstr "obiekt"
+
+msgid "Event"
+msgstr "Obiekt"
+
+msgid "Events"
+msgstr "Obiekty"
+
+msgid "Report Link"
+msgstr "Link do raportu"
+
+msgid "File"
+msgstr "Plik"
+
+msgid "Report"
+msgstr "Raport"
+
+msgid "Reports"
+msgstr "Raporty"
+
+msgid "Decision taken"
+msgstr "Decyzja podjęta"
+
+msgid "Decision not taken"
+msgstr "Decyzja niepodjęta"
+
+#, python-brace-format
+msgid "Successfully restored objects: {}"
+msgstr "Pomyślnie przywróconych elementów: {}"
+
+msgid "Restore selected objects"
+msgstr "Przywróć wybrane elementy"
+
+#, python-format
+msgid "Add %s - trash"
+msgstr "Dodaj %s - kosz"
+
+#, python-format
+msgid "Change %s - trash"
+msgstr "Zmień %s - kosz"
+
+#, python-format
+msgid "View %s - trash"
+msgstr "Obejrzyj %s - kosz"
+
+#, python-format
+msgid "Change history: %s"
+msgstr "Zmień historie: %s"
+
+msgid "Translation ({lang_code.upper()})"
+msgstr "Tłumaczenie ({lang_code.upper()})"
+
+#, python-brace-format
+msgid "The {name} \"{obj}\" was added successfully."
+msgstr "{name} \"{obj}\" został pomyślnie dodany."
+
+msgctxt "The {name} \"{obj}\" was added successfully."
+msgid "feminine"
+msgstr "{name} \"{obj}\" została pomyślnie dodana."
+
+msgctxt "The {name} \"{obj}\" was added successfully."
+msgid "neuter"
+msgstr "{name} \"{obj}\" zostało pomyślnie dodane."
+
+#, python-brace-format
+msgid ""
+"The {name} \"{obj}\" was added successfully. You may add another {name} "
+"below."
+msgstr ""
+"{name} \"{obj}\" został pomyślnie dodany. Możesz dodać kolejny {name} "
+"poniżej."
+
+msgctxt ""
+"The {name} \"{obj}\" was added successfully. You may add another {name} "
+"below."
+msgid "feminine"
+msgstr ""
+"{name} \"{obj}\" została pomyślnie dodana. Możesz dodać kolejną {name} "
+"poniżej."
+
+msgctxt ""
+"The {name} \"{obj}\" was added successfully. You may add another {name} "
+"below."
+msgid "neuter"
+msgstr ""
+"{name} \"{obj}\" zostało pomyślnie dodane. Możesz dodać kolejne {name} "
+"poniżej."
+
+#, python-brace-format
+msgid "The {name} \"{obj}\" was changed successfully."
+msgstr "{name} \"{obj}\" został pomyślnie zmieniony."
+
+msgctxt "The {name} \"{obj}\" was changed successfully."
+msgid "feminine"
+msgstr "{name} \"{obj}\" została pomyślnie zmieniona."
+
+msgctxt "The {name} \"{obj}\" was changed successfully."
+msgid "neuter"
+msgstr "{name} \"{obj}\" zostało pomyślnie zmienione."
+
+#, python-brace-format
+msgid ""
+"The {name} \"{obj}\" was changed successfully. You may edit it again below."
+msgstr ""
+"{name} \"{obj}\" został pomyślnie zmieniony. Możesz edytować go ponownie "
+"poniżej."
+
+msgctxt ""
+"The {name} \"{obj}\" was changed successfully. You may edit it again below."
+msgid "feminine"
+msgstr ""
+"{name} \"{obj}\" została pomyślnie zmieniona. Możesz edytować ją ponownie "
+"poniżej."
+
+msgctxt ""
+"The {name} \"{obj}\" was changed successfully. You may edit it again below."
+msgid "neuter"
+msgstr ""
+"{name} \"{obj}\" zostało pomyślnie zmienione. Możesz edytować je ponownie "
+"poniżej."
+
+#, python-brace-format
+msgid ""
+"The {name} \"{obj}\" was added successfully. You may edit it again below."
+msgstr ""
+"{name} \"{obj}\" został pomyślnie dodany. Możesz edytować go ponownie "
+"poniżej."
+
+msgctxt ""
+"The {name} \"{obj}\" was added successfully. You may edit it again below."
+msgid "feminine"
+msgstr ""
+"{name} \"{obj}\" została pomyślnie dodana. Możesz edytować ją ponownie "
+"poniżej."
+
+msgctxt ""
+"The {name} \"{obj}\" was added successfully. You may edit it again below."
+msgid "neuter"
+msgstr ""
+"{name} \"{obj}\" zostało pomyślnie dodane. Możesz edytować je ponownie "
+"poniżej."
+
+#, python-brace-format
+msgid ""
+"The {name} \"{obj}\" was changed successfully. You may add another {name} "
+"below."
+msgstr ""
+"{name} \"{obj}\" został pomyślnie zmieniony. Możesz dodać kolejny {name} "
+"poniżej."
+
+msgctxt ""
+"The {name} \"{obj}\" was changed successfully. You may add another {name} "
+"below."
+msgid "feminine"
+msgstr ""
+"{name} \"{obj}\" została pomyślnie zmieniona. Możesz dodać kolejną {name} "
+"poniżej."
+
+msgctxt ""
+"The {name} \"{obj}\" was changed successfully. You may add another {name} "
+"below."
+msgid "neuter"
+msgstr ""
+"{name} \"{obj}\" zostało pomyślnie zmienione. Możesz dodać kolejne {name} "
+"poniżej."
+
+#, python-format
+msgid "The %(name)s \"%(obj)s\" was deleted successfully."
+msgstr "%(name)s \"%(obj)s\" usuniety pomyślnie."
+
+msgctxt "The %(name)s \"%(obj)s\" was deleted successfully."
+msgid "feminine"
+msgstr "%(name)s \"%(obj)s\" usunięta pomyślnie."
+
+msgctxt "The %(name)s \"%(obj)s\" was deleted successfully."
+msgid "neuter"
+msgstr "%(name)s \"%(obj)s\" usunięte pomyślnie."
+
+msgid "You may edit it again below."
+msgstr "Poniżej możesz ponownie edytować."
+
+msgid "Correct Validation"
+msgstr "Poprawna walidacja"
+
+msgid "Validation in progress"
+msgstr "Walidacja w toku"
+
+msgid "Validation failed"
+msgstr "Błąd walidacji"
+
+msgid "No validation"
+msgstr "Brak walidacji"
+
+msgid "Ordered by"
+msgstr "Zlecone przez"
+
+msgid "PENDING"
+msgstr "W oczekiwaniu"
+
+#, python-format
+msgid "Add %s"
+msgstr "Dodaj %s"
+
+#, python-format
+msgid "Change %s"
+msgstr "Zmień %s"
+
+#, python-format
+msgid "View %s"
+msgstr "Obejrzyj %s"
+
+msgid "The requested resource could not be found"
+msgstr ""
+
+msgid "Field value error"
+msgstr "Błąd wartości pola"
+
+#, fuzzy
+#| msgid "Field value error"
+msgid "Field error"
+msgstr "Błąd wartości pola"
+
+msgid "Internal number cannot be given without the main number"
+msgstr "Numer wewnętrzny może być podany wyłącznie z numerem głównym"
+
 msgid "algorithm"
 msgstr "algorytm"
 
-#: mcod/lib/hashers.py:67
 msgid "iterations"
 msgstr "iteracje"
 
-#: mcod/lib/hashers.py:68
 msgid "salt"
 msgstr "sól"
 
-#: mcod/lib/hashers.py:69
 msgid "hash"
 msgstr ""
 
-#: mcod/lib/jwt.py:16
 msgid "Missing Authorization Header"
 msgstr "Brak Nagłówka Autoryzacji"
 
-#: mcod/lib/jwt.py:25
 msgid "Invalid Authorization Header"
-msgstr "Niepopranwy Nagłówek Autoryzacji"
+msgstr "Niepoprawny Nagłówek Autoryzacji"
 
-#: mcod/lib/jwt.py:31
 msgid "Invalid Authorization Header: Token Missing"
-msgstr "Niepopranwy Nagłówek Autoryzacji: brak Tokenu"
+msgstr "Niepoprawny Nagłówek Autoryzacji: brak Tokenu"
 
-#: mcod/lib/jwt.py:37
 msgid "Invalid Authorization Header: Contains extra content"
 msgstr "Niepoprawny Nagłówek Autoryzacji: Nadmiarowa zawartość"
 
-#: mcod/lib/middleware.py:81
 msgid ""
 "Your account data is incomplete. Full name and phone number must be given"
 msgstr ""
 "Dane konta są niekompletne. Nazwisko i numer telefonu muszą być podane."
 
-#: mcod/lib/password_validators.py:11
 msgid "Password must contain at least one digit."
 msgstr "Hasło musi zawierać przynajmniej jedną cyfrę."
 
-#: mcod/lib/password_validators.py:15
 msgid "Password must contain at least one upper and one lower letter."
 msgstr "Hasło musi zawierać przynajmniej jedną dużą i jedną mała literę."
 
-#: mcod/lib/password_validators.py:18
 msgid "Password must contain at least one special character."
 msgstr "Hasło musi zawierać przynajmniej jeden znak specjalny."
 
-#: mcod/lib/password_validators.py:22
 msgid ""
 "Your password must contain at least: one digit, one special char, one upper "
 "and one lower letter"
@@ -1301,192 +2147,457 @@ msgstr ""
 "Twoje hasło musi zawierać przynajmniej: jedną cyfrę, jeden znak specjalny, "
 "jedną dużą i jedną małą literę"
 
-#: mcod/lib/schemas.py:23
 msgid "Page number must be greater then 0"
 msgstr "Numer strony musi być większy niż 0"
 
-#: mcod/lib/schemas.py:28
 msgid "Page size must be greater then 0"
 msgstr "Rozmiar strony musi być większy niż 0"
 
-#: mcod/lib/schemas.py:30 mcod/lib/schemas.py:59
 msgid "Max page size is 100"
 msgstr "Maksymalny rozmiar strony to 100"
 
-#: mcod/lib/schemas.py:52
 msgid "Page must be greater then 1"
 msgstr "Strona musi być większa niż 1"
 
-#: mcod/lib/schemas.py:57
 msgid "Page size mus be greater then 0"
 msgstr "Wielkość strony musi być większa niż 0"
 
-#: mcod/licenses/apps.py:9 mcod/licenses/models.py:47
 msgid "Licenses"
 msgstr "Licencje"
 
-#: mcod/licenses/models.py:27
 msgid "Name"
 msgstr "Nazwa"
 
-#: mcod/licenses/models.py:29
 msgid "URL"
 msgstr "URL"
 
-#: mcod/licenses/models.py:43
 msgid "acc: License"
 msgstr "licencję"
 
-#: mcod/licenses/models.py:46
 msgid "License"
 msgstr "Licencja"
 
-#: mcod/organizations/admin.py:169 mcod/templates/admin/base_site.html:21
+msgid "Delete selected newsletters"
+msgstr "Usuń wybrane newslettery"
+
+msgid "Title of newsletter"
+msgstr "Tytuł newslettera"
+
+msgid "No active subscriptions."
+msgstr "Brak aktywnych subskrypcji."
+
+msgid "Select only unsent newsletters."
+msgstr "Zaznacz tylko niewysłane newslettery."
+
+msgid "Selected newsletters were successfully sent."
+msgstr "Zaznaczone newslettery zostały pomyślnie wysłane."
+
+msgid "Send newsletter now"
+msgstr "Wyślij newsletter teraz"
+
+msgid "Delete selected subscriptions"
+msgstr "Usuń wybrane subskrypcje"
+
+msgid "Newsletter"
+msgstr ""
+
+msgid "E-mail address you entered is not valid"
+msgstr "Niepoprawny adres poczty elektronicznej"
+
+msgid "polish"
+msgstr "polski"
+
+msgid "english"
+msgstr "angielski"
+
+msgid "user"
+msgstr "użytkownik"
+
+msgid "language"
+msgstr "język"
+
+msgid "email"
+msgstr ""
+
+msgid "activation code"
+msgstr "kod aktywacyjny"
+
+msgid "is active?"
+msgstr "czy aktywna?"
+
+msgid "is personal data processing accepted?"
+msgstr "czy zakceptowane przetwarzanie danych osobowych?"
+
+msgid "is personal data gathering accepted?"
+msgstr "czy potwierdzona znajomość informacji o przetwarzaniu danych?"
+
+msgid "subscribe date"
+msgstr "data włączenia subskrypcji"
+
+msgid "subscription"
+msgstr "subskrypcja"
+
+msgid "subscriptions"
+msgstr "subskrypcje"
+
+msgid "The newsletter subscription is active."
+msgstr "Subskrypcja newslettera jest aktywna."
+
+#, python-format
+msgid ""
+"You will receive an activation link to the e-mail address \"%(email)s\"."
+msgstr "Na podany adres e-mail \"%(email)s\" otrzymasz link aktywacyjny."
+
+msgid "Awaits"
+msgstr "Oczekuje"
+
+msgid "Sent"
+msgstr "Wysłano"
+
+msgid "language version"
+msgstr "wersja językowa"
+
+msgid "planned sending date"
+msgstr "planowany termin rozesłania"
+
+msgid "sending date"
+msgstr "data i godzina rozesłania"
+
+msgid "file"
+msgstr "plik"
+
+msgid "newsletter"
+msgstr ""
+
+msgid "newsletters"
+msgstr "newslettery"
+
+msgid "Planned sending date must be in future!"
+msgstr "Planowana data wysłania musi dotyczyć przyszłości!"
+
+msgid "This date must be in future!"
+msgstr "Ta data musi dotyczyć przyszłości!"
+
+msgid "This is not html file!"
+msgstr "To nie jest plik html!"
+
+msgid "Resignation link in html is required <a href=\"#\">Resign</a>!"
+msgstr ""
+"Link rezygnacyjny w pliku html jest wymagany: <a href=\"#\">Rezygnacja</a>!"
+
+msgid "submission"
+msgstr "potwierdzenie wysyłki"
+
+msgid "submissions"
+msgstr "potwierdzenia wysyłki"
+
+msgid "Your email address was removed from our mailing list"
+msgstr "Twój adres email został usunięty z naszej listy mailingowej"
+
+msgid "Activating the newsletter of dane.gov.pl portal"
+msgstr "Aktywacja newslettera portalu dane.gov.pl"
+
+msgid "Dear Sir or Madam,"
+msgstr "Szanowni Państwo,"
+
+msgid ""
+"Thank you for your interest in the newsletter of dane.gov.pl. To confirm the "
+"subscription, click the link:"
+msgstr ""
+"dziękujemy za zainteresowanie newsletterem portalu dane.gov.pl. Aby "
+"potwierdzić zamówienie newslettera kliknij link:"
+
+msgid "The link above will be active for 24 hours."
+msgstr "Link będzie aktywny przez 24 godziny."
+
+msgid "The message has been generated automatically."
+msgstr "Wiadomość została wygenerowana automatycznie."
+
+msgid "Please do not reply."
+msgstr "Prosimy na nią nie odpowiadać."
+
+msgid "Download images"
+msgstr "Pobierz obrazy"
+
+msgid "The message has been generated automatically. Please do not reply."
+msgstr ""
+"Wiadomość została wygenerowana automatycznie. Prosimy na nią nie odpowiadać."
+
+msgid "Invalid action!"
+msgstr "Błędna akcja!"
+
+msgid "Email address already exists"
+msgstr "Adres poczty elektronicznej już istnieje"
+
+msgid "Your newsletter subsciption awaits for confirmation"
+msgstr "Twoja subskrypcja newslettera oczekuje na potwierdzenie"
+
+msgid "Link is out of date"
+msgstr "Link jest nieaktualny"
+
+msgid "The activation link has expired"
+msgstr "Link aktywacyjny wygasł"
+
 msgid "Contact"
 msgstr "Kontakt"
 
-#: mcod/organizations/admin.py:172 mcod/organizations/admin.py:226
-#: mcod/organizations/admin.py:282 mcod/organizations/forms.py:42
-#: mcod/organizations/forms.py:45 mcod/settings/base.py:287
-#: mcod/users/apps.py:6 mcod/users/models.py:100
 msgid "Users"
 msgstr "Użytkownicy"
 
-#: mcod/organizations/admin.py:209 mcod/organizations/admin.py:265
 msgid "Contact details"
 msgstr "Kontakt"
 
-#: mcod/organizations/apps.py:9 mcod/organizations/models.py:195
-#: mcod/settings/base.py:282 mcod/settings/base.py:295 mcod/users/admin.py:121
-#: mcod/users/admin.py:136
 msgid "Institutions"
 msgstr "Instytucje"
 
-#: mcod/organizations/forms.py:17 mcod/organizations/forms.py:26
 msgid "Some information about the institution"
 msgstr "Niektóre informacje o instytucji"
 
-#: mcod/organizations/forms.py:32 mcod/users/forms.py:17
-#: mcod/users/models.py:63
 msgid "Phone number"
-msgstr "Numer telefonu"
+msgstr "Nr telefonu"
 
-#: mcod/organizations/forms.py:33
 msgid "Fax number"
 msgstr "Numer faksu"
 
-#: mcod/organizations/forms.py:34 mcod/organizations/forms.py:35
-#: mcod/organizations/models.py:51 mcod/organizations/models.py:61
-#: mcod/users/forms.py:18 mcod/users/models.py:65
 msgid "int."
 msgstr "wew."
 
-#: mcod/organizations/forms.py:48 mcod/organizations/models.py:41
 msgid "Postal code"
 msgstr "Kod pocztowy"
 
-#: mcod/organizations/forms.py:50 mcod/organizations/models.py:62
-#: mcod/templates/docs/tables/description.html:70
 msgid "Website"
 msgstr "Strona internetowa"
 
-#: mcod/organizations/forms.py:55
 msgid ""
 "If you select a draft, the status of all published datasets belonging to "
 "this institution will be changed to a draft.Also all resources of those "
 "datasets will be change to a draft"
 msgstr ""
 
-#: mcod/organizations/forms.py:73
-msgid "That value is already taken"
-msgstr "Ta wartość jest już użyta."
-
-#: mcod/organizations/models.py:24
-msgid "Local goverment"
+msgid "Local government"
 msgstr "Administracją samorządowa"
 
-#: mcod/organizations/models.py:25
-msgid "Public goverment"
+msgid "Public government"
 msgstr "Administracja rządowa"
 
-#: mcod/organizations/models.py:26
+msgid "Private entities"
+msgstr "Podmioty prywatne"
+
 msgid "Other"
 msgstr "Inne"
 
-#: mcod/organizations/models.py:42
 msgid "City"
 msgstr "Miasto"
 
-#: mcod/organizations/models.py:43
 msgid "Street type"
 msgstr "Rodzaj ulicy"
 
-#: mcod/organizations/models.py:44
 msgid "Street"
 msgstr "Ulica"
 
-#: mcod/organizations/models.py:45
 msgid "Street number"
 msgstr "Numer ulicy"
 
-#: mcod/organizations/models.py:46
 msgid "Flat number"
 msgstr "Numer mieszkania"
 
-#: mcod/organizations/models.py:48
-#: mcod/templates/docs/tables/description.html:75 mcod/users/models.py:60
-#: mcod/users/models.py:192
 msgid "Email"
 msgstr "Email"
 
-#: mcod/organizations/models.py:49
 msgid "EPUAP"
 msgstr "EPUAP"
 
-#: mcod/organizations/models.py:50
-#: mcod/templates/docs/tables/description.html:83
 msgid "Fax"
 msgstr "Faks"
 
-#: mcod/organizations/models.py:57 mcod/organizations/models.py:90
 msgid "Institution type"
 msgstr "Rodzaj instytucji"
 
-#: mcod/organizations/models.py:59
 msgid "REGON"
 msgstr "REGON"
 
-#: mcod/organizations/models.py:60
-#: mcod/templates/docs/tables/description.html:81
 msgid "Phone"
 msgstr "Telefon"
 
-#: mcod/organizations/models.py:90
-msgid "The number of datasets"
-msgstr "Liczba zbiorów danych"
+msgid "Abbreviation"
+msgstr "Skrót"
 
-#: mcod/organizations/models.py:142
 msgid "acc: Institution"
-msgstr "Instytucję"
+msgstr "instytucję"
 
-#: mcod/organizations/models.py:170 mcod/organizations/models.py:181
 msgid " int. "
 msgstr " wew. "
 
-#: mcod/reports/admin.py:23 mcod/reports/models.py:18 mcod/reports/models.py:74
-msgid "Ordered by"
-msgstr "Zlecone przez"
+msgid "ID"
+msgstr ""
 
-#: mcod/reports/admin.py:52 mcod/reports/admin.py:117
+msgid "The number of datasets"
+msgstr "Liczba zbiorów danych"
+
+msgid "Hide table"
+msgstr "Ukryj tabelę"
+
+msgid "View table"
+msgstr "Pokaż tabelę"
+
+msgid "Number"
+msgstr "Liczba"
+
+msgid "Pan"
+msgstr "Przesuń"
+
+msgid "Zoom"
+msgstr "Przybliż/Oddal"
+
+msgid "Save"
+msgstr "Zapisz"
+
+msgid "Reset"
+msgstr "Przywróć domyślny widok"
+
+msgid "Hover"
+msgstr "Pokaż szczegóły"
+
+msgid "Period"
+msgstr "Okres"
+
+msgid "**Add to dashboard:**"
+msgstr "**Dodaj do pulpitu:**"
+
+msgid "Entry"
+msgstr "Pozycja"
+
+msgid "None"
+msgstr "Brak"
+
+msgid "Percent"
+msgstr "Procent"
+
+msgid "Web Site"
+msgstr "Strona internetowa"
+
+msgid "Number of data"
+msgstr "Liczba danych"
+
+msgid "Percent od data"
+msgstr "Procent danych"
+
+msgid "Downloads"
+msgstr "Liczba pobrań"
+
+msgid "Views"
+msgstr "Liczba wyświetleń"
+
+msgid "Openness level"
+msgstr "Stopień otwartości"
+
+msgid "Level {}"
+msgstr "Stopień {}"
+
+msgid "File format"
+msgstr "Format pliku"
+
+msgid "Category name"
+msgstr "Nazwa kategorii"
+
+msgid "Number of datasets"
+msgstr "Liczba zbiorów danych"
+
+msgid "Number of uses"
+msgstr "Liczba użyć"
+
+msgid "Searched keyword"
+msgstr "Wyszukiwana fraza"
+
+msgid "Number of searches"
+msgstr "Liczba wyszukiwań"
+
+msgid "Number of datasets added"
+msgstr "Liczba nowych zbiorów danych"
+
+msgid "Most downloaded datasets"
+msgstr "Zbiory danych z największą liczbą pobrań"
+
+msgid "Most viewed datasets"
+msgstr "Najbardziej popularne zbiory danych"
+
+msgid "Datasets openess rating"
+msgstr "Liczba danych w podziale na stopień otwartości"
+
+msgid "Top file formats"
+msgstr "Najbardziej popularne formaty"
+
+msgid "Top themes"
+msgstr "Najczęściej używane kategorie"
+
+msgid "Top tags"
+msgstr "Najczęściej używane słowa kluczowe"
+
+msgid "Top keywords"
+msgstr "Najczęściej wyszukiwane słowa"
+
+msgid "Views of datasets"
+msgstr "Liczba wyświetleń zbiorów danych"
+
+msgid "Downloads of datasets"
+msgstr "Liczba pobrań zbiorów danych"
+
+msgid "Providers"
+msgstr "Dostawcy"
+
+msgid "Type of data"
+msgstr "Typ danych"
+
+msgid "No data type was selected"
+msgstr "Nie wybrano żadnego typu danych"
+
+#, python-brace-format
+msgid "{0} of {1} data types"
+msgstr "{0} z {1} typów danych"
+
+msgid "Month"
+msgstr "Miesiąc"
+
+msgid "Quarter"
+msgstr "Kwartał"
+
+msgid "Year"
+msgstr "Rok"
+
+msgid "Visualization type"
+msgstr "Rodzaj wizualizacji"
+
+msgid "No type of visualization has been selected"
+msgstr "Nie wybrano żadnego rodzaju wizualizacji"
+
+#, python-brace-format
+msgid "{0} of {1} visualization types"
+msgstr "{0} z {1} rodzajów wizualizacji"
+
+msgid "Table"
+msgstr "Tabela"
+
+msgid "Map"
+msgstr "Mapa"
+
+msgid "Chart"
+msgstr "Wykres"
+
+msgid "No visualization"
+msgstr "Brak wizualizacji"
+
+msgid "Way of presentation"
+msgstr "Sposób prezentacji"
+
+msgid "Unauthorized"
+msgstr ""
+
 msgid "Generated report file"
 msgstr "Wygenerowany plik raportu"
 
-#: mcod/reports/admin.py:60 mcod/reports/admin.py:125
-#: mcod/templates/docs/tables/description.html:30
 msgid "File size"
 msgstr "Rozmiar pliku"
 
-#: mcod/reports/admin.py:147
 msgid ""
 "The task of generating the report has been commissioned. The report may "
 "appear with a delay ..."
@@ -1494,111 +2605,152 @@ msgstr ""
 "Zadanie wygenerowania raportu zostało zlecone. Raport może pojawić się z "
 "opóźnieniem..."
 
-#: mcod/reports/admin.py:161
 msgid "Task for CSV generation queued"
 msgstr "Tworzenie pliku CSV dodane do kolejki zadań"
 
-#: mcod/reports/admin.py:164 mcod/reports/admin.py:172
 msgid "Export selected to CSV"
 msgstr "Eksportuj zaznaczone do CSV"
 
-#: mcod/reports/apps.py:7 mcod/reports/models.py:35
-msgid "Reports"
-msgstr "Raporty"
-
-#: mcod/reports/models.py:27
 msgid "Task"
 msgstr "Zadanie"
 
-#: mcod/reports/models.py:31 mcod/reports/models.py:67
 msgid "File path"
 msgstr "Ścieżka pliku"
 
-#: mcod/reports/models.py:34
-msgid "Report"
-msgstr "Raport"
+msgid "acc: Monitoring report"
+msgstr "zgłoszenia"
 
-#: mcod/reports/models.py:41
+msgid "Monitoring"
+msgstr "Zgłoszenia"
+
+msgid "acc: User report"
+msgstr "raport użytkownika"
+
 msgid "User report"
 msgstr "Raport użytkowników"
 
-#: mcod/reports/models.py:42
 msgid "User reports"
 msgstr "Raporty użytkowników"
 
-#: mcod/reports/models.py:48
+msgid "acc: Resource report"
+msgstr "raport zasobów"
+
 msgid "Reource report"
 msgstr "Raport zasobu"
 
-#: mcod/reports/models.py:49
 msgid "Resource reports"
 msgstr "Raporty zasobów"
 
-#: mcod/reports/models.py:55
+msgid "acc: Dataset report"
+msgstr "raport zbioru danych"
+
 msgid "Dataset report"
 msgstr "Raport zbioru danych"
 
-#: mcod/reports/models.py:56
 msgid "Dataset reports"
 msgstr "Raporty zbiorów danych"
 
-#: mcod/reports/models.py:62
+msgid "acc: Institution report"
+msgstr "raport instytucji"
+
 msgid "Institution report"
 msgstr "Raport instytucji"
 
-#: mcod/reports/models.py:63
 msgid "Institution reports"
 msgstr "Raporty Instytucji"
 
-#: mcod/reports/models.py:81
+msgid "acc: Daily report"
+msgstr "zbiorczy raport dzienny"
+
 msgid "Summary daily report"
 msgstr "Zbiorczy raport dzienny"
 
-#: mcod/reports/models.py:82
 msgid "Summary daily reports"
 msgstr "Zbiorcze raporty dzienne"
 
-#: mcod/resources/admin.py:31
 msgid "Filter by dataset name"
 msgstr "Filtruj według nazwy zbioru"
 
-#: mcod/resources/admin.py:53
 msgid "Link status"
 msgstr "Status linku"
 
-#: mcod/resources/admin.py:59
 msgid "File status"
 msgstr "Status pliku"
 
-#: mcod/resources/admin.py:65
 msgid "TabularView"
 msgstr "Widok tabelaryczny"
 
-#: mcod/resources/admin.py:98
+#, python-brace-format
+msgid ""
+"During the verification of column \"{colname}\" with the \"{rule}\" rule no "
+"errors detected"
+msgstr ""
+"Podczas weryfikacji kolumny \"{colname}\" regułą \"{rule}\" nie wykryto "
+"błędów"
+
+#, python-brace-format
+msgid "Verification of column \"{colname}\" by the rule \"{rule}\" failed"
+msgstr "Weryfikacja kolumny \"{colname}\" regułą \"{rule}\" nie powiodła się"
+
 msgid "File validation"
 msgstr "Walidacja pliku"
 
-#: mcod/resources/admin.py:99
 msgid "Link validation"
 msgstr "Walidacja linku"
 
-#: mcod/resources/admin.py:100
 msgid "Data validation"
 msgstr "Walidacja danych"
 
-#: mcod/resources/admin.py:308
-msgid "Actualization date"
-msgstr "Data aktualizacji"
+msgid "Change of type"
+msgstr "Zmiana typu"
 
-#: mcod/resources/admin.py:355
+msgid "Quality verification"
+msgstr "Weryfikacja jakości"
+
+msgid "Maps and plots"
+msgstr "Mapy i wykresy"
+
 msgid "Resource with this id does not exists"
 msgstr "Zasób z tym id nie istnieje"
 
-#: mcod/resources/admin.py:358
 msgid "Task for resource revalidation queued"
 msgstr "Ponowna walidacja dodana do kolejki zadań"
 
-#: mcod/resources/forms.py:49
+msgid "Data type changed"
+msgstr "Zmieniono typ danych"
+
+msgid "Map definition saved"
+msgstr "Zapisano definicję mapy"
+
+msgid "Selected items {} come from different map data sets."
+msgstr "Wybrane elementy {} pochodzą z różnych zestawów danych mapowych."
+
+msgid " Redefine the map by selecting items from only one map data set."
+msgstr ""
+" Ponów definiowanie mapy wybierając elementy z tylko jednego zestawu danych "
+"mapowych."
+
+msgid "The map data set is incomplete."
+msgstr "Zestaw danych mapowych jest niekompletny"
+
+msgid "Missing elements: {} for the map data set: {}."
+msgstr "Brak elementów: {} dla zestawu danych mapowych: {}."
+
+msgid " Redefine the map by selecting the selected items."
+msgstr " Ponów definiowanie mapy wybierając wskazane elementy."
+
+msgid "Longitude should be a number"
+msgstr "Długość geograficzna powinna być liczbą"
+
+msgid "Latitude should be a number"
+msgstr "Szerokość geograficzna powinna być liczbą"
+
+msgid "Special Signs"
+msgstr "Znaki umowne"
+
+msgid "special signs"
+msgstr "znaki umowne"
+
 msgid ""
 "You can't set status of this resource to published, because it's dataset is "
 "still a draft. You should first published that dataset: "
@@ -1607,16 +2759,15 @@ msgstr ""
 "którego przynalezy ma status szkic. Aby zmienić status należy najpierw "
 "opublikować zbiór: "
 
-#: mcod/resources/forms.py:71
+msgid "Do not allow user charts to be created"
+msgstr "Nie zezwalaj na tworzenie wykresów przez użytkownika"
+
 msgid "Data source"
 msgstr "Źródło danych"
 
-#: mcod/resources/forms.py:72 mcod/resources/models.py:161
-#: mcod/resources/models.py:437 mcod/resources/models.py:490
-msgid "File"
-msgstr "Plik"
+msgid "Data date"
+msgstr "Dane na dzień"
 
-#: mcod/resources/forms.py:106
 msgid ""
 "You can't set status of this resource to published, because it's dataset is "
 "still a draft. Set status of this resource to draft or set stauts to "
@@ -1626,7 +2777,10 @@ msgstr ""
 "którego przynalezy ma status szkic. Pozostaw status szkic lub zmień status "
 "zbioru: "
 
-#: mcod/resources/forms.py:143
+#, python-format
+msgid "Invalid file extension: %(ext)s."
+msgstr "Niepoprawne rozszerzenie pliku: %(ext)s."
+
 msgid ""
 "You can't restore this resource, because it's dataset is still removed. "
 "Please first restore dataset: "
@@ -1634,293 +2788,743 @@ msgstr ""
 "Nie możesz przywrócic tego zasobu, ponieważ zbiór do którego przynalezy "
 "nadal jest w koszu.Przywróć najpierw zbiór: "
 
-#: mcod/resources/models.py:130 mcod/resources/utils.py:21
+msgid "File does not exist"
+msgstr "Plik nie istnieje"
+
+msgid "Invalid file type"
+msgstr "Niepoprawny typ pliku."
+
 #, python-format
 msgid "File %s does not exist, please upload it again"
 msgstr "Plik %s nie istnieje, proszę załaduj go ponownie"
 
-#: mcod/resources/models.py:162
-msgid "Web Site"
-msgstr "Strona internetowa"
-
-#: mcod/resources/models.py:163
 msgid "API"
 msgstr "API"
 
-#: mcod/resources/models.py:309
-msgid "File does not exist"
-msgstr "Plik nie istnieje"
+msgid "API - change"
+msgstr "API - zmiana"
 
-#: mcod/resources/models.py:312
-msgid "Invalid file type"
-msgstr "Niepoprawny typ pliku."
+msgid "external identifier of resource taken during import process (optional)"
+msgstr ""
+"zewnętrzny identyfikator zasobu pobrany podczas procesu importu (opcjonalny)"
 
-#: mcod/resources/models.py:440
+msgid "availability"
+msgstr "dostępność"
+
 msgid "Packed file"
 msgstr "Spakowany plik"
 
-#: mcod/resources/models.py:443 mcod/templates/docs/tables/description.html:27
+msgid "File as CSV"
+msgstr "Plik jako CSV"
+
+msgid "File mimetype"
+msgstr "Typ MIME pliku"
+
 msgid "File info"
 msgstr "Informacje o pliku"
 
-#: mcod/resources/models.py:445 mcod/templates/docs/tables/description.html:31
 msgid "File encoding"
 msgstr "Kodowanie pliku"
 
-#: mcod/resources/models.py:446 mcod/resources/models.py:495
 msgid "Resource Link"
 msgstr "Link do zasobu"
 
-#: mcod/resources/models.py:447 mcod/resources/models.py:513
-msgid "title"
-msgstr "nazwa"
-
-#: mcod/resources/models.py:449
 msgid "Position"
 msgstr "Pozycja"
 
-#: mcod/resources/models.py:453 mcod/resources/models.py:493
 msgid "Format"
 msgstr "Format"
 
-#: mcod/resources/models.py:456
-msgid "Type"
-msgstr "Typ"
+msgid "Mark resource as API"
+msgstr "Oznacz zasób jako API"
 
-#: mcod/resources/models.py:458
 msgid "Openness score"
 msgstr "Ranking otwartości"
 
-#: mcod/resources/models.py:479 mcod/resources/models.py:483
-#: mcod/resources/models.py:486
 msgid "Download Tasks"
 msgstr ""
 
-#: mcod/resources/models.py:492
+msgid "link tasks last status"
+msgstr "ostatni status walidacji linku"
+
+msgid "file tasks last status"
+msgstr "ostatni status walidacji pliku"
+
+msgid "data tasks last status"
+msgstr "ostatni status walidacji danych tabelarycznych"
+
 msgid "Data type"
 msgstr "Typ danych"
 
-#: mcod/resources/models.py:498
 msgid "Tabular view"
 msgstr "Widok tabelaryczny"
 
-#: mcod/resources/models.py:500
-msgid "Data date"
-msgstr "Data danych"
+msgid "has chart?"
+msgstr "ma wykres?"
 
-#: mcod/resources/models.py:512
-msgid "uuid"
-msgstr ""
+msgid "has map?"
+msgstr "ma mapę?"
 
-#: mcod/resources/models.py:514
-msgid "description"
-msgstr "opis"
+msgid "has table?"
+msgstr "ma tabelę?"
 
-#: mcod/resources/models.py:515
-msgid "link"
-msgstr ""
+msgid "is chart creation blocked?"
+msgstr "tworzenie wykresu zablokowane?"
 
-#: mcod/resources/models.py:516
-msgid "link_is_valid"
-msgstr "link jest poprawny"
-
-#: mcod/resources/models.py:517
-msgid "file_is_valid"
-msgstr "plik jest poprawny"
-
-#: mcod/resources/models.py:518
-msgid "data_is_valid"
-msgstr "dane są poprawne"
-
-#: mcod/resources/models.py:519
-msgid "format"
-msgstr "format"
-
-#: mcod/resources/models.py:521
-msgid "status"
-msgstr "status"
-
-#: mcod/resources/models.py:522
-msgid "created_by"
-msgstr "utworzony przez"
-
-#: mcod/resources/models.py:524
-msgid "modified_by"
-msgstr "zmodyfikowany przez"
-
-#: mcod/resources/models.py:526
-msgid "type"
-msgstr "typ"
-
-#: mcod/resources/models.py:527
-msgid "openness_score"
-msgstr "ranking otwartości"
-
-#: mcod/resources/models.py:528
-msgid "views_count"
-msgstr "licznik odwiedzin"
-
-#: mcod/resources/models.py:529
-msgid "downloads_count"
-msgstr "licznik pobrań"
-
-#: mcod/resources/models.py:642
 msgid "acc: Resource"
 msgstr "zasób"
 
-#: mcod/resources/models.py:687
 msgid "Resource"
 msgstr "Zasób"
 
-#: mcod/resources/utils.py:13
-#, python-format
-msgid "Resource with id %s does not exist"
-msgstr "Zasób z id %s nie istnieje"
+msgid "link"
+msgstr ""
 
-#: mcod/resources/utils.py:16
-#, python-format
-msgid "No file attached to resource with id %s"
-msgstr "Brak załączonego pliku do zasobu z id %s"
+msgid "link_tasks_last_status"
+msgstr ""
 
-#: mcod/searchhistories/apps.py:7 mcod/searchhistories/models.py:18
+msgid "file_tasks_last_status"
+msgstr ""
+
+msgid "data_tasks_last_status"
+msgstr ""
+
+msgid "format"
+msgstr "format"
+
+msgid "openness_score"
+msgstr "ranking otwartości"
+
+msgid "views_count"
+msgstr "licznik odwiedzin"
+
+msgid "downloads_count"
+msgstr "licznik pobrań"
+
+msgid "Dataset URL"
+msgstr "URL zbioru"
+
+msgid "Dataset created"
+msgstr "Data udostępnienia zbioru"
+
+msgid "Dataset verified"
+msgstr "Data aktualizacji zbioru"
+
+msgid "Dataset views count"
+msgstr "Liczba wyświetleń zbioru"
+
+msgid "Dataset downloads count"
+msgstr "Liczba pobrań zbioru"
+
+msgid "Terms of use"
+msgstr "Warunki wykorzystywania"
+
+msgid "Organization URL"
+msgstr "URL dostawcy"
+
+msgid "Organization created"
+msgstr "Data utworzenia dostawcy"
+
+msgid "Organization modified"
+msgstr "Data aktualizacji dostawcy"
+
+msgid "Resource URL"
+msgstr "URL danych"
+
+msgid "Resource title"
+msgstr "Tytuł danych"
+
+msgid "Resource description"
+msgstr "Opis danych"
+
+msgid "Resource created"
+msgstr "Data udostępnienia danych"
+
+msgid "Resource views count"
+msgstr "Liczba wyświetleń danych"
+
+msgid "Resource downloads count"
+msgstr "Liczba pobrań danych"
+
+msgid "YES"
+msgstr "TAK"
+
+msgid "NO"
+msgstr "NIE"
+
+msgid ""
+"This dataset is public information, it can be reused under the following "
+"conditions: "
+msgstr ""
+"Ten zbiór danych jest informacją publiczną, może być ponownie wykorzystywany "
+"pod poniższymi warunkami:"
+
+#, python-format
+msgid "A comment was posted on the resource %(title)s"
+msgstr "Zgłoszono uwagę do zasobu %(title)s"
+
+msgid "label"
+msgstr "etykieta"
+
+msgid "geographical coordinates"
+msgstr ""
+
+msgid "universal address"
+msgstr "adres uniwersalny"
+
+msgid "address"
+msgstr "adres"
+
+msgid "No permission to define chart"
+msgstr "Brak uprawnień do definiowania wykresu"
+
+msgid "Schedules"
+msgstr "Harmonogramy"
+
+msgid "You cannot set new_end_date if end_date is not set yet!"
+msgstr ""
+"Nie można ustawić nowej daty zakończenia przed ustawieniem daty zakończenia!"
+
+#, python-format
+msgid "Invalid value! Possible values: %(values)s"
+msgstr "Niepoprawna wartość! Możliwe wartości: %(values)s"
+
+msgid ""
+"is_openness_score_increased or is_quality_improved is required if value of "
+"is_new is False!"
+msgstr ""
+"is_openness_score_increased lub is_quality_improved są wymagane jeśli "
+"wartość is_new to False!"
+
+#, python-format
+msgid "Unsupported recommendation state. Supported are: %(states)s"
+msgstr "Nieobsługiwany typ rekomendacji. Obsługiwane są: %(states)s"
+
+#, python-format
+msgid "Unsupported notification type. Supported are: %(types)s"
+msgstr "Nieobsługiwany typ notyfikacji. Obsługiwane są: %(types)s"
+
+msgid "User schedule's readiness state cannot be changed!"
+msgstr "Nie można zmienić statusu gotowości harmonogramu!"
+
+msgid "Yes"
+msgstr "Tak"
+
+msgid "No"
+msgstr "Nie"
+
+#, python-brace-format
+msgid "{author} new comment "
+msgstr "Nowy komentarz {author}"
+
+msgid "The end of planning date was added/changed"
+msgstr "Data zakończenia planowania została wprowadzona/zmieniona"
+
+msgid "7 days until end of planning"
+msgstr "7 dni do zakończenia planowania"
+
+msgid "The end of planning date has passed"
+msgstr "Minęła data zakończenia planowania"
+
+msgid "The new end of planning date was added/changed"
+msgstr "Nowa data zakończenia planowania została wprowadzona/zmieniona"
+
+msgid "The new end of planning date has passed"
+msgstr "Minęła nowa data zakończenia planowania"
+
+msgid "Planned"
+msgstr "Planowanie"
+
+msgid "Implemented"
+msgstr "Realizacja"
+
+msgid "Archived"
+msgstr "Archiwum"
+
+msgid "period name"
+msgstr "nazwa okresu"
+
+msgid "new end date"
+msgstr "nowa data zakończenia"
+
+msgid "schedule link"
+msgstr "link do harmonogramu"
+
+msgid "is blocked?"
+msgstr "zablokowany?"
+
+msgid "schedule"
+msgstr "harmonogram"
+
+msgid "schedules"
+msgstr "harmonogramy"
+
+#, python-format
+msgid "No recommendation for \"%(email)s\""
+msgstr "Brak rekomendacji dla \"%(email)s\""
+
+#, python-format
+msgid "Data sharing schedule on %(period)s"
+msgstr "Harmonogram otwierania danych na %(period)s"
+
+msgid "is ready?"
+msgstr "gotowy?"
+
+msgid "assign schedule as ready"
+msgstr "oznacz harmonogram jako gotowy"
+
+msgid "user schedule"
+msgstr "harmonogram użytkownika"
+
+msgid "user schedules"
+msgstr "harmonogramy użytkownika"
+
+msgid "WMS service"
+msgstr "usługa WMS"
+
+msgid "awaits"
+msgstr "oczekuje na rekomendację"
+
+msgid "recommended"
+msgstr "rekomendowane"
+
+msgid "not recommended"
+msgstr "nierekomendowane"
+
+msgid "institution"
+msgstr "instytucja"
+
+msgid "institution unit"
+msgstr "jednostka podległa/nadzorowana"
+
+msgid "dataset title"
+msgstr "zasoby danych"
+
+msgid "is new?"
+msgstr "nowy zasób?"
+
+msgid "is openness score increased?"
+msgstr "wyższy poziom otwartości?"
+
+msgid "is quality improved?"
+msgstr "poprawiona jakość?"
+
+msgid "recommendation state"
+msgstr "stan rekomendacji"
+
+msgid "recommendation notes"
+msgstr "opis rekomendacji"
+
+msgid "is resource added?"
+msgstr "czy zasób dodany?"
+
+msgid "is resource added notes"
+msgstr "czy zasób dodany - komentarz"
+
+msgid "resource link"
+msgstr "link do zasobu"
+
+msgid "user schedule item"
+msgstr "pozycja w harmonogramie użytkownika"
+
+msgid "user schedule items"
+msgstr "pozycje w harmonogramie użytkownika"
+
+msgid "text"
+msgstr "tekst"
+
+msgid "comments"
+msgstr "komentarze"
+
+msgid "Notification was sent"
+msgstr "Powiadomienie zostało wysłane"
+
+#, python-format
+msgid "The entered phrase should be at least %(limit)s characters long"
+msgstr "Wpisana fraza musi zawierać przynajmniej %(limit)s znaki"
+
+#, python-format
+msgid "The entered phrase should be at most %(limit)s characters long"
+msgstr "Wpisana fraza musi zawierać nie więcej niż %(limit)s znaki"
+
+msgid "Advanced option should take one of values: "
+msgstr "Opcja advanced musi przyjmować jedną z wartości: "
+
+#, python-format
+msgid "Unsupported format. Supported are: %(formats)s"
+msgstr "Nieobsługiwany format. Obsługiwane są: %(formats)s."
+
+msgid "Invalid suggestion size"
+msgstr "Niepoprawny rozmiar podpowiedzi"
+
+msgid "Invalid maximum list length"
+msgstr ""
+
+#, python-brace-format
+msgid "The entered model - {model}, is not supported"
+msgstr ""
+
+msgid "advanced option should take one of values: any, all, exact, synonyms"
+msgstr ""
+
+msgid "Bad request"
+msgstr "Błędne zapytanie"
+
 msgid "Search Histories"
 msgstr "Historie Wyszukiwania"
 
-#: mcod/searchhistories/models.py:17
 msgid "Search history"
 msgstr "Historie Wyszukiwania"
 
-#: mcod/settings/base.py:228
-msgid "Polish"
-msgstr "Polski"
-
-#: mcod/settings/base.py:229
-msgid "English"
-msgstr "Angielski"
-
-#: mcod/settings/base.py:263
 msgid "Pending"
 msgstr "W oczekiwaniu"
 
-#: mcod/settings/base.py:264
 msgid "Blocked"
 msgstr "Zablokowany"
 
-#: mcod/settings/base.py:270
 msgid "Open Data - Administration Panel"
 msgstr "Otwarte Dane - Panel Administracyjny"
 
-#: mcod/settings/base.py:289
+msgid "Data suggestions"
+msgstr "Propozycje nowych danych"
+
 msgid "CSV Reports"
 msgstr "Raporty CSV"
 
-#: mcod/settings/base.py:292
 msgid "Users reports"
 msgstr "Raporty użytkowników"
 
-#: mcod/settings/base.py:296
 msgid "Daily Reports"
 msgstr "Dzienne Raporty"
 
-#: mcod/settings/base.py:308
-msgid "Config"
+msgctxt "Dashboard"
+msgid "Dashboard"
+msgstr "Pulpit"
+
+msgid "Open Data Lab"
+msgstr "Laboratorium Otwarte Dane"
+
+msgid "Configuration"
+msgstr "Konfiguracja"
+
+msgid "Numeric"
+msgstr "Pole numeryczne"
+
+msgid "Universal address"
+msgstr "Adres uniwersalny"
+
+msgid "PNA code"
+msgstr "Kod PNA"
+
+msgid "Address feature"
+msgstr "Cecha adresu"
+
+msgid "Field of logical values"
+msgstr "Pole wartości logicznych"
+
+msgid "Integer"
+msgstr "Liczba całkowita"
+
+msgid "Float"
+msgstr "Liczba zmiennoprzecinkowa"
+
+msgid "String"
+msgstr "Dane tekstowe"
+
+msgid "Logic value (True/False)"
+msgstr "Wartość logiczna (Prawda/Fałsz)"
+
+msgid "Date"
+msgstr "Data"
+
+msgid "Time"
+msgstr "Czas"
+
+msgid "DateTime"
+msgstr "DataCzas"
+
+msgid "Any type"
+msgstr "Dowolny typ"
+
+msgid "Label"
+msgstr "Etykieta"
+
+msgid "Describes the presented data. Required item."
+msgstr "Opisuje prezentowane dane. Element wymagany."
+
+msgid "Longitude"
+msgstr "Długość geograficzna"
+
+msgid "Latitude"
+msgstr "Szerokość geograficzna"
+
+msgid "Place"
+msgstr "Miejscowość"
+
+msgid "House number"
+msgstr "Numer domu"
+
+msgid "Częstotliwość aktualizacji zbioru wg DCAT-AP"
 msgstr ""
 
-#: mcod/suggestions/tasks.py:26 mcod/suggestions/tests/test_models.py:27
-#: mcod/templates/mails/data-suggestion.html:7
-#: mcod/templates/mails/data-suggestion.html:17
-#: mcod/templates/mails/data-suggestion.txt:3
+msgid "Delete selected special signs"
+msgstr "Usuń wybrane znaki umowne"
+
+msgid "symbol"
+msgstr ""
+
+msgid "special sign"
+msgstr "znak umowny"
+
+msgid "Trash (Special Signs)"
+msgstr "Kosz (Znaki umowne)"
+
+msgid "text of comment"
+msgstr "treść uwagi"
+
+msgid "Data provider"
+msgstr "Dostawca danych"
+
+msgid "editor e-mail"
+msgstr "e-mail edytora"
+
+msgid "comment reported for dataset"
+msgstr "uwaga zgłoszona do zbioru danych"
+
+msgid "Data description"
+msgstr "Opis danych"
+
+msgid "Create accepted dataset suggestion task was launched!"
+msgstr ""
+"Zadanie utworzenia zaakceptowanej propozycji nowych danych zostało "
+"uruchomione!"
+
+msgid "comment reported for data"
+msgstr "uwaga zgłoszona do danych"
+
+msgid "Suggestions"
+msgstr "Zgłoszenia"
+
+msgid "Name of data responsible institution"
+msgstr "Nazwa instytucji odpowiedzialnej za dane"
+
+msgid ""
+"If you wish to publish accepted dataset submission for all user, this "
+"submission must have \"published\" status"
+msgstr ""
+"Jeżeli chcesz opublikować propozycję nowych danych dla wszystkich "
+"użytkowników to propozycja musi posiadać status \"Opublikowany\""
+
+msgid "Title, type, domain od propossed data"
+msgstr "Nazwa, rodzaj, dziedzina proponowanych danych"
+
+msgid "Institution name"
+msgstr "Nazwa instytucji"
+
+msgid "Link to data"
+msgstr "Czy znalazłeś te dane w innym miejscu? Jeśli tak, podaj link"
+
+msgid "provide potential data use"
+msgstr "podaj potencjalne możliwości wykorzystania danych"
+
+msgid "Comment"
+msgstr "Komentarz"
+
+msgid "Submission date"
+msgstr "Data zgłoszenia"
+
+msgid "Decision date"
+msgstr "Data decyzji"
+
+msgid "Dataset submission"
+msgstr "Propozycja nowych danych"
+
+msgid "Dataset submissions"
+msgstr "Propozycje nowych danych"
+
+msgid "reported by"
+msgstr "zgłoszone przez"
+
+msgid "accepted dataset submission"
+msgstr "zaakceptowana propozycja nowych danych"
+
+msgid "acc: Dataset submission"
+msgstr "propozycję nowych danych"
+
+msgid "proposal active"
+msgstr "propozycja aktywna"
+
+msgid "publish for all users"
+msgstr "Opublikuj dla wszystkich użytkowników"
+
+msgid "acc: Accepted dataset submission"
+msgstr "zaakceptowaną propozycję nowych danych"
+
+msgid "Accepted dataset submission"
+msgstr "Zaakceptowana propozycja nowych danych"
+
+msgid "Accepted dataset submissions"
+msgstr "Zaakceptowane propozycje nowych danych"
+
+msgid "Dataset submission - Trash"
+msgstr "Propozycja nowych danych - Kosz"
+
+msgid "Dataset submissions - Trash"
+msgstr "Propozycje nowych danych - Kosz"
+
+msgid "Accepted dataset submission - Trash"
+msgstr "Zaakceptowana propozycja nowych danych - Kosz"
+
+msgid "Accepted dataset submissions - Trash"
+msgstr "Zaakceptowane propozycje nowych danych - Kosz"
+
+msgid "Comment accepted"
+msgstr "Uwaga przyjęta"
+
+msgid "Comment rejected"
+msgstr "Uwaga odrzucona"
+
+msgid "data provider error"
+msgstr "błąd dostawcy"
+
+msgid "user error"
+msgstr "błąd użytkownika"
+
+msgid "portal error"
+msgstr "błąd portalu"
+
+msgid "other error"
+msgstr "inne"
+
+msgid "Dataset comment"
+msgstr "Uwaga do zbioru danych"
+
+msgid "Dataset comments"
+msgstr "Uwagi do zbiorów danych"
+
+msgid "acc: Dataset comment"
+msgstr "uwagę do zbioru danych"
+
+msgid "Dataset Comment - Trash"
+msgstr "Uwaga do zbioru danych - Kosz"
+
+msgid "Dataset Comments - Trash"
+msgstr "Uwagi do zbiorów danych - Kosz"
+
+msgid "resource"
+msgstr "zasób"
+
+msgid "Resource comment"
+msgstr "Uwaga do danych"
+
+msgid "Resource comments"
+msgstr "Uwagi do danych"
+
+msgid "acc: Resource comment"
+msgstr "uwagę do danych"
+
+msgid "Resource Comment - Trash"
+msgstr "Uwaga do danych - Kosz"
+
+msgid "Resource Comments - Trash"
+msgstr "Uwagi do danych - Kosz"
+
+msgid "Like"
+msgstr ""
+
+msgid "Dislike"
+msgstr ""
+
+msgid "Feedback"
+msgstr ""
+
 msgid "Resource demand reported"
 msgstr "Zgłoszono zapotrzebowanie na zasoby"
 
-#: mcod/tags/models.py:73
-msgid "acc: Tag"
-msgstr "słowa kluczowego"
+#, python-brace-format
+msgid ""
+"On the accepted dataset submission {title} [{url}] was posted a comment:"
+msgstr ""
+"Do propozycji nowych danych {title} [{url}] został zgłoszony komentarz:"
 
-#: mcod/templates/admin/app_index.html:8 mcod/templates/admin/base.html:109
-#: mcod/templates/admin/change_form.html:63
-#: mcod/templates/admin/constance/change_list.html:44
-#: mcod/templates/admin/menu.html:10 mcod/templates/admin/object_history.html:6
-#: mcod/templates/admin/resources/change_form.html:73
+#, python-brace-format
+msgid "A comment was posted on the accepted dataset submission {title}"
+msgstr "Został dodany komentarz do propozycji nowych danych {title}"
+
+msgid "Valid values are 'plus' and 'minus'"
+msgstr ""
+
+msgid "Tag already exists for specified language."
+msgstr "Tag już istnieje dla wybranego języka."
+
+msgid "acc: Tag"
+msgstr "słowo kluczowe"
+
+msgid "Run the selected action"
+msgstr "Wykonaj wybraną akcję"
+
+msgid "Go"
+msgstr "Wykonaj"
+
+msgid "Click here to select the objects across all pages"
+msgstr "Kliknij by wybrać obiekty na wszystkich stronach"
+
+#, python-format
+msgid "Select all %(total_count)s %(lowercase_module_name)s"
+msgstr "Wybierz wszystkie %(total_count)s %(lowercase_module_name)s"
+
+msgid "Clear selection"
+msgstr "Wyczyść wybór"
+
 msgid "Home"
 msgstr "Strona główna"
 
-#: mcod/templates/admin/app_index.html:11
-#: mcod/templates/admin/change_list.html:19
-#: mcod/templates/admin/reports/package_summary_change_list.html:10
 #, python-format
 msgid "%(name)s"
 msgstr "%(name)s"
 
-#: mcod/templates/admin/base.html:75
 msgid "Welcome,"
 msgstr "Witamy,"
 
-#: mcod/templates/admin/base.html:84
 msgid "Documentation"
 msgstr "Dokumentacja"
 
-#: mcod/templates/admin/base.html:87
 msgid "Change password"
 msgstr "Zmień hasło"
 
-#: mcod/templates/admin/base.html:89
 msgid "Log out"
 msgstr "Wyloguj"
 
-#: mcod/templates/admin/base_site.html:10
 msgid "Django site admin"
 msgstr "Administrator systemu Django"
 
-#: mcod/templates/admin/base_site.html:13
 msgid "Django administration"
 msgstr "Administracja Django"
 
-#: mcod/templates/admin/base_site.html:20
 msgid "Home page"
 msgstr "Strona główna"
 
-#: mcod/templates/admin/base_site.html:22
 msgid "Guide for data providers"
 msgstr "Przewodnik dla dostawców danych"
 
-#: mcod/templates/admin/base_site.html:26
 msgid "Maintened by"
 msgstr "Serwis prowadzony przez"
 
-#: mcod/templates/admin/base_site.html:26
 msgid "Ministry of Diginal Affairs"
 msgstr "Ministerstwo Cyfryzacji"
 
-#: mcod/templates/admin/change_form.html:23
-#: mcod/templates/admin/constance/change_list.html:22
-#: mcod/templates/admin/resources/change_form.html:23
 msgid "You have unsaved changes"
 msgstr "Masz niezapisane zmiany"
 
-#: mcod/templates/admin/change_form.html:52
-#: mcod/templates/admin/change_form.html:78
-#: mcod/templates/admin/change_form.html:120 mcod/templates/admin/index.html:51
-#: mcod/templates/admin/resources/change_form.html:62
-#: mcod/templates/admin/resources/change_form.html:88
 msgid "Add"
 msgstr "Dodaj"
 
-#: mcod/templates/admin/change_form.html:101
-#: mcod/templates/admin/resources/change_form.html:129
 msgid "tools"
 msgstr "narzędzia"
 
-#: mcod/templates/admin/change_form.html:112
-#: mcod/templates/admin/datasets/inline-new.html:13
-#: mcod/templates/admin/edit_inline/tabular.html:36
-#: mcod/templates/admin/resources/change_form.html:140
-#: mcod/templates/admin/resources/inline-new.html:13
-#: mcod/templates/nesting/admin/inlines/stacked.html:35
 msgid "View on site"
 msgstr "Zobacz na stronie"
 
-#: mcod/templates/admin/change_form.html:121
 #, fuzzy, python-format
 #| msgid ""
 #| "Add\n"
@@ -1933,9 +3537,6 @@ msgstr ""
 "Dodaj\n"
 " %(name)s"
 
-#: mcod/templates/admin/change_form.html:153
-#: mcod/templates/admin/constance/change_list.html:78
-#: mcod/templates/admin/resources/change_form.html:179
 #, fuzzy
 #| msgid "Please correct the error below."
 msgid "Please correct the error below."
@@ -1945,24 +3546,18 @@ msgstr[1] "Proszę popraw poniższy błąd"
 msgstr[2] "Proszę popraw poniższy błąd"
 msgstr[3] "Proszę popraw poniższy błąd"
 
-#: mcod/templates/admin/change_form.html:154
-#: mcod/templates/admin/resources/change_form.html:180
 msgid "Please correct the errors below."
-msgstr "Prosze popraw poniższe błędy"
+msgstr "Proszę, popraw poniższe błędy."
 
-#: mcod/templates/admin/change_list.html:8
 msgid "Search"
 msgstr "Szukaj"
 
-#: mcod/templates/admin/change_list.html:37
 msgid "Nothing found"
 msgstr "Nic nie znaleziono"
 
-#: mcod/templates/admin/change_list.html:39
 msgid "Reset search and filters"
 msgstr "Wyczyść wyszukiwanie i filtry"
 
-#: mcod/templates/admin/change_list.html:41
 #, python-format
 msgid ""
 "%(name_plural)s are not\n"
@@ -1971,46 +3566,23 @@ msgstr ""
 "%(name_plural)s nie są\n"
 "                    jeszcze utworzone"
 
-#: mcod/templates/admin/change_list.html:45
 #, python-format
 msgid "Add %(name)s"
 msgstr "Dodaj %(name)s"
 
-#: mcod/templates/admin/constance/change_list.html:62
-#: mcod/templates/admin/submit_line.html:5
-msgid "Save"
-msgstr "Zapisz"
-
-#: mcod/templates/admin/datasets/inline-list.html:6
 msgid "Datasets list"
 msgstr "Lista zbiorów danych"
 
-#: mcod/templates/admin/datasets/inline-list.html:67
-#: mcod/templates/admin/resources/inline-list.html:91
-msgid "Edit"
-msgstr "Edytuj"
-
-#: mcod/templates/admin/datasets/inline-list.html:127
-#: mcod/templates/admin/datasets/inline-new.html:72
-#: mcod/templates/admin/resources/inline-list.html:152
-#: mcod/templates/admin/resources/inline-new.html:72
-#: mcod/templates/nesting/admin/inlines/stacked.html:70
 #, python-format
 msgid "Add another %(verbose_name)s"
 msgstr "Dodaj %(verbose_name)s"
 
-#: mcod/templates/admin/datasets/inline-list.html:130
-#: mcod/templates/admin/datasets/inline-new.html:75
-#: mcod/templates/admin/resources/inline-list.html:155
-#: mcod/templates/admin/resources/inline-new.html:75
 msgid "Remove"
 msgstr "Usuń"
 
-#: mcod/templates/admin/datasets/licences/custom_include.html:3
 msgid "Conditions for reusing information in this set"
 msgstr "Warunki ponownego wykorzystywania informacji w tym zbiorze"
 
-#: mcod/templates/admin/datasets/licences/custom_include.html:5
 msgid ""
 "Public information is made available for re-use without conditions. There "
 "are exceptions listed\n"
@@ -2023,7 +3595,6 @@ msgstr ""
 "zachęcamy, aby ich nie stosować. Jeżeli masz istotne uzasadnienie i musisz "
 "określić warunki, to mogą być one następujące:"
 
-#: mcod/templates/admin/delete_confirmation.html:7
 #, python-format
 msgid ""
 "Deleting the %(object_name)s '%(escaped_object)s' would result\n"
@@ -2032,29 +3603,22 @@ msgid ""
 "            objects:"
 msgstr ""
 
-#: mcod/templates/admin/delete_confirmation.html:16
 #, python-format
 msgid ""
 "Deleting the %(object_name)s '%(escaped_object)s' would\n"
 "            require deleting the following protected related objects:"
 msgstr ""
 
-#: mcod/templates/admin/delete_confirmation.html:24
 #, python-format
 msgid "Are you sure you want to delete the \"%(escaped_object)s\"? "
 msgstr "Czy na pewno chcesz usunąć \"%(escaped_object)s\"?"
 
-#: mcod/templates/admin/delete_confirmation.html:33
-#: mcod/templates/admin/delete_selected_confirmation.html:32
 msgid "Yes, I'm sure"
 msgstr "Tak, potwierdzam."
 
-#: mcod/templates/admin/delete_confirmation.html:34
-#: mcod/templates/admin/delete_selected_confirmation.html:33
 msgid "No, take me back"
 msgstr "Nie, wróć"
 
-#: mcod/templates/admin/delete_selected_confirmation.html:7
 #, python-format
 msgid ""
 "Deleting the selected %(objects_name)s would result in deleting related "
@@ -2062,86 +3626,101 @@ msgid ""
 "types of objects:"
 msgstr ""
 
-#: mcod/templates/admin/delete_selected_confirmation.html:14
 #, python-format
 msgid ""
 "Deleting the selected %(objects_name)s would require deleting the following "
 "protected related objects:"
 msgstr ""
 
-#: mcod/templates/admin/delete_selected_confirmation.html:21
 msgid "Are you sure you want to delete the objects?: "
 msgstr "Czy na pewno chcesz usunąć obiekty: "
 
-#: mcod/templates/admin/edit_inline/tabular.html:20
+msgid ""
+"All existing datasets and resources imported from this source will be "
+"deleted also."
+msgstr ""
+"Wszystkie istniejące zbiory danych i zasoby zaimportowane z tego żródła "
+"zostaną również usunięte."
+
 msgid "Delete?"
 msgstr "Usunąć?"
 
-#: mcod/templates/admin/edit_inline/tabular.html:34
-#: mcod/templates/admin/index.html:43
-#: mcod/templates/admin/object_history.html:23
-#: mcod/templates/nesting/admin/inlines/stacked.html:33
 msgid "Change"
 msgstr "Zmiana"
 
-#: mcod/templates/admin/edit_inline/tabular.html:34
 msgid "View"
 msgstr "Zobacz"
 
-#: mcod/templates/admin/forms/widgets/resources/switcher.html:7
+msgid "Check correctness of file"
+msgstr "Sprawdź poprawność pliku"
+
 msgid "File from disk"
 msgstr "Plik z dysku"
 
-#: mcod/templates/admin/forms/widgets/resources/switcher.html:11
 msgid "URL address"
 msgstr "Adres URL"
 
-#: mcod/templates/admin/index.html:18
+msgid "Select a page item"
+msgstr "Zaznacz element strony"
+
+msgid "Add next element"
+msgstr "Dodaj kolejny element"
+
+msgid "XML validation was unsuccessful!"
+msgstr "Walidacja XML zakończona niepowodzeniem!"
+
+msgid "Step"
+msgstr "Krok"
+
+msgid "of"
+msgstr "z"
+
+msgid "Awaiting..."
+msgstr "Oczekiwanie..."
+
+msgid "XML Validation successful!"
+msgstr "Walidacja XML zakończona sukcesem!"
+
+msgid "XML Validation"
+msgstr "Walidacja XML"
+
+msgid "Close"
+msgstr "Zamknij"
+
 msgid "Active alerts"
 msgstr "Komunikaty"
 
-#: mcod/templates/admin/index.html:34
 #, python-format
 msgid "Models available in the %(name)s application."
 msgstr "Modele dostepne w aplikacji %(name)s"
 
-#: mcod/templates/admin/index.html:63
 msgid "You don't have permission to edit anything."
 msgstr "Nie masz uprawnień do edycji czegokolwiek."
 
-#: mcod/templates/admin/index.html:72
 msgid "My Actions"
 msgstr "Moje operacje"
 
-#: mcod/templates/admin/index.html:77
 msgid "None available"
 msgstr "Nic nie jest dostępne"
 
-#: mcod/templates/admin/index.html:86
 msgid "added"
 msgstr "dodany"
 
-#: mcod/templates/admin/index.html:87
 msgid "changed"
 msgstr "zmieniony"
 
-#: mcod/templates/admin/index.html:88
 msgid "deleted"
 msgstr "usunięty"
 
-#: mcod/templates/admin/index.html:94
 msgid "Unknown content"
 msgstr "Nierozpoznana zawartość"
 
-#: mcod/templates/admin/object_history.html:22
 msgid "Action"
 msgstr "Czynność"
 
-#: mcod/templates/admin/object_history.html:25
 msgid "Date/time"
 msgstr "Data/czas"
 
-#: mcod/templates/admin/object_history.html:40
 msgid ""
 "This object doesn't have a change history. It probably wasn't added via this "
 "admin site."
@@ -2149,19 +3728,18 @@ msgstr ""
 "Ten obiekt nie posiada historii zmian. Prawdopodobnie nie został dodany za "
 "pomocą strony administratora."
 
-#: mcod/templates/admin/reports/change_list.html:6
+msgid "Show all"
+msgstr ""
+
 msgid "Generate report"
 msgstr "Generuj raport"
 
-#: mcod/templates/admin/resources/change_form.html:110
 msgid "Copy to new <br>resource"
 msgstr "Kopiuj do nowego <br>zasobu"
 
-#: mcod/templates/admin/resources/change_form.html:118
 msgid "Revalidate"
 msgstr "Ponowna walidacja"
 
-#: mcod/templates/admin/resources/change_form.html:148
 #, python-format
 msgid ""
 "Add\n"
@@ -2170,412 +3748,312 @@ msgstr ""
 "Dodaj\n"
 " %(name)s"
 
-#: mcod/templates/admin/resources/inline-list.html:9
+msgid "unavailable tab - the resource does not have a tabular view"
+msgstr "zakładka niedostępna – zasób nie posiada widoku tabelarycznego"
+
 msgid "Resources list"
 msgstr "Zasoby"
 
-#: mcod/templates/admin/resources/task-inline-list.html:6
+msgid "During the verification of column "
+msgstr "Podczas weryfikacji kolumny"
+
+msgid " with the rule "
+msgstr " regułą "
+
+msgid " detected errors (max 5)'"
+msgstr " wykryto błędy (wyświetlane jest nie więcej niż 5)"
+
+msgid "Row number"
+msgstr "Numer wiersza"
+
+msgid "Invalid value"
+msgstr "Błędna wartość"
+
 msgid "Tasks list"
 msgstr "Lista zadań"
 
-#: mcod/templates/admin/resources/task-inline-list.html:11
-#, fuzzy
-#| msgid "status"
-msgid "status "
-msgstr "status"
-
-#: mcod/templates/admin/resources/task-inline-list.html:12
 msgid "date done"
 msgstr "data wykonania"
 
-#: mcod/templates/admin/resources/task-inline-list.html:14
 msgid "recommendation"
 msgstr "zalecenie"
 
-#: mcod/templates/admin/submit_line.html:9
+#, python-format
+msgid ""
+"The selected convention mark %(obj)s is used in the resources below. A\n"
+"    convention mark can only be removed if it is not used on any resource."
+msgstr ""
+"Wybrany znak umowny %(obj)s jest wykorzystywany w zasobach poniżej. Znak "
+"umowny można usunąć tylko wtedy gdy nie jest wykorzystywany w żadnym zasobie."
+
 msgid "Save and continue editing"
 msgstr "Zapisz i kontynuuj edycję"
 
-#: mcod/templates/admin/submit_line.html:13
 msgid "Save and add another"
 msgstr "Zapisz i dodaj kolejny"
 
-#: mcod/templates/admin/submit_line.html:17
 msgid "Save as new"
 msgstr "Zapisz jako nowy"
 
-#: mcod/templates/admin/submit_line.html:20
-msgid "Close"
-msgstr "Zamknij"
-
-#: mcod/templates/admin/submit_line.html:26
 msgid "Delete"
 msgstr "Usunąć?"
 
-#: mcod/templates/admin/submit_line.html:32
 msgid "Cancel"
 msgstr "Anuluj"
 
-#: mcod/templates/dal_admin_filters/autocomplete-filter.html:3
-#: mcod/templates/rangefilter/date_filter.html:2
+msgid "Confirm change"
+msgstr "Potwierdź zmianę"
+
+msgid "Confirm add"
+msgstr "Potwierdź dodanie"
+
 #, python-format
 msgid " By %(filter_title)s "
 msgstr " Przez  %(filter_title)s "
 
-#: mcod/templates/docs/generic/fields/number_term_field.html:5
-#: mcod/templates/docs/generic/fields/string_term_field.html:5
 msgid "Filter instances by"
 msgstr ""
 
-#: mcod/templates/docs/generic/fields/number_term_field.html:8
-#: mcod/templates/docs/generic/fields/string_term_field.html:8
-#: mcod/templates/docs/resources/fields/openness_score.html:8
 msgid "This field provides following filters:"
 msgstr ""
 
-#: mcod/templates/docs/generic/fields/number_term_field.html:20
-#: mcod/templates/docs/generic/fields/number_term_field.html:29
-#: mcod/templates/docs/generic/fields/number_term_field.html:37
-#: mcod/templates/docs/generic/fields/number_term_field.html:44
-#: mcod/templates/docs/generic/fields/number_term_field.html:51
-#: mcod/templates/docs/generic/fields/string_term_field.html:20
-#: mcod/templates/docs/generic/fields/string_term_field.html:29
-#: mcod/templates/docs/generic/fields/string_term_field.html:37
-#: mcod/templates/docs/generic/fields/string_term_field.html:44
-#: mcod/templates/docs/generic/fields/string_term_field.html:51
-#: mcod/templates/docs/resources/fields/openness_score.html:20
-#: mcod/templates/docs/resources/fields/openness_score.html:29
-#: mcod/templates/docs/resources/fields/openness_score.html:37
-#: mcod/templates/docs/resources/fields/openness_score.html:44
-#: mcod/templates/docs/resources/fields/openness_score.html:51
 msgid "filters instances in which "
 msgstr ""
 
-#: mcod/templates/docs/generic/fields/number_term_field.html:20
-#: mcod/templates/docs/generic/fields/string_term_field.html:20
-#: mcod/templates/docs/resources/fields/openness_score.html:20
 msgid "matches to the provided value."
 msgstr ""
 
-#: mcod/templates/docs/generic/fields/number_term_field.html:21
-#: mcod/templates/docs/generic/fields/string_match_field.html:21
-#: mcod/templates/docs/generic/fields/string_term_field.html:21
-#: mcod/templates/docs/resources/fields/dataset.html:18
-#: mcod/templates/docs/resources/fields/dataset.html:76
-#: mcod/templates/docs/resources/fields/openness_score.html:21
 msgid "Note, that this is default filter for this field."
 msgstr ""
 
-#: mcod/templates/docs/generic/fields/number_term_field.html:29
-#: mcod/templates/docs/generic/fields/string_term_field.html:29
-#: mcod/templates/docs/resources/fields/openness_score.html:29
 msgid "matches to any of the provided values."
 msgstr ""
 
-#: mcod/templates/docs/generic/fields/number_term_field.html:37
-#: mcod/templates/docs/resources/fields/openness_score.html:37
 msgid "is is greater than the provided value."
 msgstr ""
 
-#: mcod/templates/docs/generic/fields/number_term_field.html:44
-#: mcod/templates/docs/resources/fields/openness_score.html:44
 msgid "is greater than or equal to the provided value."
 msgstr ""
 
-#: mcod/templates/docs/generic/fields/number_term_field.html:51
-#: mcod/templates/docs/resources/fields/openness_score.html:51
 msgid "is lower than the provided value."
 msgstr ""
 
-#: mcod/templates/docs/generic/fields/number_term_field.html:58
-#: mcod/templates/docs/resources/fields/openness_score.html:58
 msgid "filters instances that have "
 msgstr ""
 
-#: mcod/templates/docs/generic/fields/number_term_field.html:58
-#: mcod/templates/docs/resources/fields/openness_score.html:58
 msgid "that is lower than or equal to the provided value."
 msgstr ""
 
-#: mcod/templates/docs/generic/fields/query_field.html:4
 msgid "Allows searching for the provided value in multiple fields."
 msgstr ""
 
-#: mcod/templates/docs/generic/fields/sort_field.html:5
 msgid "Sort instances by following fields in ascending or descending direction"
 msgstr ""
 
-#: mcod/templates/docs/generic/fields/string_match_field.html:5
-#: mcod/templates/docs/resources/fields/openness_score.html:5
 msgid "Search instances by"
 msgstr "Wyszkujak instancje według"
 
-#: mcod/templates/docs/generic/fields/string_match_field.html:8
 msgid "This field provides the following queries:"
 msgstr ""
 
-#: mcod/templates/docs/generic/fields/string_match_field.html:20
 msgid "searches for instances in which"
 msgstr ""
 
-#: mcod/templates/docs/generic/fields/string_match_field.html:20
 msgid "matches the provided value."
 msgstr ""
 
-#: mcod/templates/docs/generic/fields/string_match_field.html:31
-#: mcod/templates/docs/generic/fields/string_match_field.html:38
 msgid "searches for instances in which "
 msgstr ""
 
-#: mcod/templates/docs/generic/fields/string_match_field.html:31
 msgid "matches the provided phrase."
 msgstr ""
 
-#: mcod/templates/docs/generic/fields/string_match_field.html:38
 msgid "starts with the  provided phrase."
 msgstr ""
 
-#: mcod/templates/docs/generic/fields/string_match_field.html:45
-#: mcod/templates/docs/resources/fields/dataset.html:98
 msgid "searches for instances that matches the provided query string."
 msgstr ""
 
-#: mcod/templates/docs/generic/fields/string_term_field.html:37
 msgid "starts with the provided value."
 msgstr ""
 
-#: mcod/templates/docs/generic/fields/string_term_field.html:44
 msgid "endswith the provided value."
 msgstr ""
 
-#: mcod/templates/docs/generic/fields/string_term_field.html:51
 msgid "contains the provided value."
 msgstr ""
 
-#: mcod/templates/docs/resources/fields/dataset.html:4
 msgid ""
 "Search resources by dataset's ID (dataset[id]) or title (dataset[title])"
 msgstr ""
 
-#: mcod/templates/docs/resources/fields/dataset.html:5
 msgid "The dataset[id] field provides the following filters:"
 msgstr ""
 
-#: mcod/templates/docs/resources/fields/dataset.html:17
 msgid ""
 "filters instances in which ID of the dataset matches to the provided value."
 msgstr ""
 
-#: mcod/templates/docs/resources/fields/dataset.html:26
 msgid ""
 "filters instances in which ID of the dataset matches to any of the provided "
 "values."
 msgstr ""
 
-#: mcod/templates/docs/resources/fields/dataset.html:34
 msgid ""
 "filters instances in which ID of the dataset is is greater than the provided "
 "value."
 msgstr ""
 
-#: mcod/templates/docs/resources/fields/dataset.html:41
 msgid ""
 "filters instances in which ID of the dataset is greater than or equal to the "
 "provided value."
 msgstr ""
 
-#: mcod/templates/docs/resources/fields/dataset.html:48
 msgid ""
 "filters instances in which ID of the dataset is lower than the provided "
 "value."
 msgstr ""
 
-#: mcod/templates/docs/resources/fields/dataset.html:55
 msgid ""
 "filters instances that have ID of the dataset that is lower than or equal to "
 "the provided value."
 msgstr ""
 
-#: mcod/templates/docs/resources/fields/dataset.html:63
 msgid "The dataset[title] field provides the following queries:"
 msgstr ""
 
-#: mcod/templates/docs/resources/fields/dataset.html:75
 msgid ""
 "searches for instances in which title of the dataset matches the provided "
 "value."
 msgstr ""
 
-#: mcod/templates/docs/resources/fields/dataset.html:84
 msgid ""
 "searches for instances in which title of the dataset matches the provided "
 "phrase."
 msgstr ""
 
-#: mcod/templates/docs/resources/fields/dataset.html:91
 msgid ""
 "searches for instances in which title of the dataset starts with the  "
 "provided phrase."
 msgstr ""
 
-#: mcod/templates/docs/tables/description.html:6
 msgid "Specification"
 msgstr "Specyfikacja"
 
-#: mcod/templates/docs/tables/description.html:7
 msgid "General info"
 msgstr "Podstawowe informacje"
 
-#: mcod/templates/docs/tables/description.html:13
-msgid "Dataset URL"
-msgstr "URL zbioru"
-
-#: mcod/templates/docs/tables/description.html:20
 msgid "Original resource URL"
 msgstr "URL oryginału"
 
-#: mcod/templates/docs/tables/description.html:23
 msgid "Created at"
 msgstr "Data utworzenia"
 
-#: mcod/templates/docs/tables/description.html:24
 msgid "Modified at"
 msgstr "Data modyfikacji"
 
-#: mcod/templates/docs/tables/description.html:29
-msgid "File format"
-msgstr "Format pliku"
-
-#: mcod/templates/docs/tables/description.html:32
 msgid "Download URL"
 msgstr "URL pliku (do pobrania)"
 
-#: mcod/templates/docs/tables/description.html:36
 msgid "Columns mapping"
 msgstr "Mapowanie kolumn"
 
-#: mcod/templates/docs/tables/description.html:41
 msgid "Column name"
 msgstr "Nazwa kolumny"
 
-#: mcod/templates/docs/tables/description.html:42
 msgid "Header (in file)"
 msgstr "Nagłówek (w pliku)"
 
-#: mcod/templates/docs/tables/description.html:56
 msgid "Dataset description"
 msgstr "Opis zbioru"
 
-#: mcod/templates/docs/tables/description.html:59
 msgid "For more more informations go"
 msgstr "W celu uzyskania dalszych informacji udaj się"
 
-#: mcod/templates/docs/tables/description.html:60
 msgid "here"
 msgstr "tu"
 
-#: mcod/templates/docs/tables/description.html:64
-msgid "Data provider"
-msgstr "Dostawca danych"
-
-#: mcod/templates/docs/tables/description.html:65
 msgid "This data was provided by the"
 msgstr "Te dane zostały dostarczone przez"
 
-#: mcod/templates/docs/tables/description.html:79
 msgid "Address"
 msgstr "Adres"
 
-#: mcod/templates/docs/tables/description.html:85
 msgid "Regon"
 msgstr "Regon"
 
-#: mcod/templates/docs/tables/fields/query_string.html:4
 msgid ""
 "The \"q\" param is for search. For a better understanding of how it works, "
 "see the examples below."
 msgstr ""
 
-#: mcod/templates/docs/tables/fields/query_string.html:6
 msgid "Searching in specific fields"
 msgstr ""
 
-#: mcod/templates/docs/tables/fields/query_string.html:7
 msgid "The query can run against one or multiple fields."
 msgstr ""
 
-#: mcod/templates/docs/tables/fields/query_string.html:8
-#: mcod/templates/docs/tables/fields/query_string.html:15
-#: mcod/templates/docs/tables/fields/query_string.html:24
-#: mcod/templates/docs/tables/fields/query_string.html:32
-#: mcod/templates/docs/tables/fields/query_string.html:39
-#: mcod/templates/docs/tables/fields/query_string.html:66
 msgid "Example:"
 msgstr ""
 
-#: mcod/templates/docs/tables/fields/query_string.html:13
 msgid "Searching in all fields"
 msgstr ""
 
-#: mcod/templates/docs/tables/fields/query_string.html:20
 msgid "Wildcards"
 msgstr ""
 
-#: mcod/templates/docs/tables/fields/query_string.html:30
 msgid "Regular expressions"
 msgstr ""
 
-#: mcod/templates/docs/tables/fields/query_string.html:36
 msgid "Fuzziness"
 msgstr ""
 
-#: mcod/templates/docs/tables/fields/query_string.html:54
 msgid "Proximity searches"
 msgstr ""
 
-#: mcod/templates/docs/tables/fields/query_string.html:62
 msgid "Ranges"
 msgstr "Zasięgi"
 
-#: mcod/templates/docs/tables/fields/query_string.html:68
 msgid "Boosting"
 msgstr ""
 
-#: mcod/templates/docs/tables/fields/query_string.html:70
 msgid "Boolean operators"
 msgstr ""
 
-#: mcod/templates/docs/tables/fields/query_string.html:72
 msgid "Grouping"
 msgstr ""
 
-#: mcod/templates/docs/tables/fields/query_string.html:74
 msgid "Reserved characters"
 msgstr ""
 
-#: mcod/templates/mails/confirm-registration.html:7
+msgid "Sincerely,"
+msgstr "Z poważaniem,"
+
+msgid "The Open Data Data Administrators team"
+msgstr "Zespół administratorów portalu Otwarte Dane"
+
+msgid "The message was generated automatically, please do not reply to it."
+msgstr ""
+"Wiadomość została wygenerowana automatycznie, prosimy na nią nie odpowiadać."
+
+msgid "A comment was posted on the accepted dataset submission"
+msgstr "Został dodany komentarz do propozycji nowych danych"
+
+msgid "A COMMENT WAS POSTED ON THE ACCEPTED DATASET SUBMISSION"
+msgstr "ZOSTAŁ DODANY KOMENTARZ DO PROPOZYCJI NOWYCH DANYCH"
+
 msgid "Registration confirmation"
 msgstr "Potwierdzenie rejestracji"
 
-#: mcod/templates/mails/confirm-registration.html:24
-#: mcod/templates/mails/confirm-registration.txt:2
-#: mcod/templates/mails/password-reset.html:39
-#: mcod/templates/mails/password-reset.txt:3
 msgid "Dear user of the open data portal (dane.gov.pl)"
 msgstr "Szanowny użytkowniku portalu Otwarte Dane (dane.gov.pl)"
 
-#: mcod/templates/mails/confirm-registration.html:39
-#: mcod/templates/mails/confirm-registration.txt:4
 msgid "Thank you for creating an account."
 msgstr "Dziękujemy za założenie konta."
 
-#: mcod/templates/mails/confirm-registration.html:40
-#: mcod/templates/mails/confirm-registration.txt:5
 msgid "If you did not create an account, please ignore this message. "
 msgstr "Jeśli to nie Ty założyłeś konto prosimy o zignorowanie tej wiadomości."
 
-#: mcod/templates/mails/confirm-registration.html:41
-#: mcod/templates/mails/confirm-registration.txt:6
 msgid ""
 "In order to complete the registration process, click (or copy and paste in "
 "the address field of the web browser) into the link below."
@@ -2583,56 +4061,12 @@ msgstr ""
 "W celu dokończenia procesu rejestracji kliknij (lub skopiuj i wklej w pole "
 "adres przeglądarki internetowej) poniższy link."
 
-#: mcod/templates/mails/confirm-registration.html:56
-#: mcod/templates/mails/confirm-registration.txt:10
-#: mcod/templates/mails/data-suggestion.html:43
-#: mcod/templates/mails/password-reset.html:62
-#: mcod/templates/mails/password-reset.txt:12
-#: mcod/templates/mails/propose-application.html:123
-#: mcod/templates/mails/report-dataset-comment-test.html:55
-#: mcod/templates/mails/report-dataset-comment.html:52
-#: mcod/templates/mails/report-resource-comment-test.html:55
-#: mcod/templates/mails/report-resource-comment.html:52
-msgid "Sincerely,"
-msgstr "Z poważaniem,"
-
-#: mcod/templates/mails/confirm-registration.html:57
-#: mcod/templates/mails/confirm-registration.txt:11
-#: mcod/templates/mails/data-suggestion.html:44
-#: mcod/templates/mails/password-reset.html:63
-#: mcod/templates/mails/password-reset.txt:13
-#: mcod/templates/mails/propose-application.html:124
-#: mcod/templates/mails/report-dataset-comment-test.html:56
-#: mcod/templates/mails/report-dataset-comment.html:53
-#: mcod/templates/mails/report-resource-comment-test.html:56
-#: mcod/templates/mails/report-resource-comment.html:53
-msgid "The Open Data Data Administrators team"
-msgstr "Zespół administratorów portalu Otwarte Dane"
-
-#: mcod/templates/mails/confirm-registration.html:75
-#: mcod/templates/mails/confirm-registration.txt:13
-#: mcod/templates/mails/data-suggestion.html:54
-#: mcod/templates/mails/password-reset.html:72
-#: mcod/templates/mails/password-reset.txt:15
-#: mcod/templates/mails/propose-application.html:134
-#: mcod/templates/mails/report-dataset-comment-test.html:65
-#: mcod/templates/mails/report-dataset-comment.html:62
-#: mcod/templates/mails/report-resource-comment-test.html:65
-#: mcod/templates/mails/report-resource-comment.html:62
-msgid "The message was generated automatically, please do not reply to it."
-msgstr ""
-"Wiadomość została wygenerowana automatycznie, proszę na nią nie odpowiadać."
-
-#: mcod/templates/mails/password-reset.html:8
 msgid "Password reset"
 msgstr "Reset hasła"
 
-#: mcod/templates/mails/password-reset.html:25
 msgid "PASSWORD RESET TO THE SERVICE OPEN DATA"
 msgstr "RESET HASŁA DO SERWISU OTWARTE DANE"
 
-#: mcod/templates/mails/password-reset.html:40
-#: mcod/templates/mails/password-reset.txt:4
 msgid ""
 "We have received a request to reset the password for your Account "
 "established on the Portal."
@@ -2640,8 +4074,6 @@ msgstr ""
 "Otrzymaliśmy żądanie zresetowania hasła do Twojego Konta założonego w "
 "Portalu."
 
-#: mcod/templates/mails/password-reset.html:41
-#: mcod/templates/mails/password-reset.txt:5
 msgid ""
 "Click (or copy and paste in the web browser's address field) the link below "
 "to change yours password."
@@ -2649,8 +4081,6 @@ msgstr ""
 "Kliknij (lub skopiuj i wklej w pole adres przeglądarki internetowej) link "
 "poniżej by zmienić swoje hasło."
 
-#: mcod/templates/mails/password-reset.html:52
-#: mcod/templates/mails/password-reset.txt:9
 msgid ""
 "If you do not want to reset your password, simply ignore this message - "
 "probably by accident someone has entered your email address."
@@ -2658,53 +4088,33 @@ msgstr ""
 "Jeśli nie chcesz zresetować hasła, po prostu zignoruj tę wiadomość – "
 "prawdopodobnie ktoś przypadkowo wpisał Twój adres e-mail."
 
-#: mcod/templates/mails/password-reset.html:53
-#: mcod/templates/mails/password-reset.txt:10
 msgid ""
 "The link will expire in 48 hours. The password can be reset at any time. "
 "Just go to the site login on the portal and request a new password reset "
 "link."
 msgstr ""
 "Link wygaśnie w ciągu 48 godzin. Hasło może zostać zresetowane w dowolnej "
-"chwiliWystarczy zalogowac się do portalu i wysłać zlecenie wtysłania nowego "
-"linku do resetu hasła."
+"chwili. Proszę skorzystać z funkcji “Reset hasła” dostępnej na portalu "
+"podczas logowania."
 
-#: mcod/templates/mails/report-dataset-comment-test.html:8
-#: mcod/templates/mails/report-dataset-comment.html:8
 msgid "A comment was posted on the data set"
 msgstr "Została zgłoszona uwaga do zbioru"
 
-#: mcod/templates/mails/report-dataset-comment-test.html:25
-#: mcod/templates/mails/report-dataset-comment.html:25
 msgid "A COMMENT WAS POSTED ON THE DATA SET"
 msgstr "ZOSTAŁA ZGŁOSZONA UWAGA DO ZBIORU"
 
-#: mcod/templates/mails/report-dataset-comment-test.html:39
-#: mcod/templates/mails/report-resource-comment-test.html:39
-msgid "addressees:"
+msgid "addresses:"
+msgstr "adresaci:"
+
+msgid "recipients"
 msgstr "adresaci"
 
-#: mcod/templates/mails/report-dataset-comment-test.html:42
-#: mcod/templates/mails/report-dataset-comment.html:39
-#, python-format
-msgid ""
-"On the data set %(title)s (version %(version)s) [%(url)s] was posted a "
-"comment:"
-msgstr ""
-"Do zbioru %(title)s (wersja %(version)s) [%(url)s] została zgłoszona uwaga"
-
-#: mcod/templates/mails/report-resource-comment-test.html:8
-#: mcod/templates/mails/report-resource-comment.html:8
 msgid "A comment was posted on the resource"
 msgstr "Została zgłoszona uwaga do zasobu"
 
-#: mcod/templates/mails/report-resource-comment-test.html:25
-#: mcod/templates/mails/report-resource-comment.html:25
 msgid "A COMMENT WAS POSTED ON THE RESOURCE"
 msgstr "ZOSTAŁA ZGŁOSZONA UWAGA DO ZASOBU"
 
-#: mcod/templates/mails/report-resource-comment-test.html:42
-#: mcod/templates/mails/report-resource-comment.html:39
 #, python-format
 msgid ""
 "One the resource %(title)s from data set %(dataset_title)s [%(url)s] was "
@@ -2713,86 +4123,221 @@ msgstr ""
 "Do zasobu %(title)s ze zbioru %(dataset_title)s [%(url)s] została zgłoszona "
 "uwaga "
 
-#: mcod/tools/apps.py:7
+msgid "Report of activity of observed objects on the dane.gov.pl portal"
+msgstr "Raport aktywności obserwowanych obiektów na portalu dane.gov.pl"
+
+msgid "Changes made on the date:"
+msgstr "Zmiany dokonane w dniu:"
+
+msgid "Activity hour"
+msgstr "Godzina aktywności"
+
+msgid "Type of activity"
+msgstr "Rodzaj aktywności"
+
+msgid ""
+"If you wish to unsubscribe from receiving e-mail notifications, please use "
+"the \"Disable e-mail notifications\" button. This function is available on "
+"the data.gov.pl portal in the \"My account\" section, \"Observed\" tab."
+msgstr ""
+"Jeżeli chcesz zrezygnować z otrzymywania powiadomień za pośrednictwem poczty "
+"elektronicznej użyj przycisku \"Wyłącz powiadomienia e-mail\". Funkcja ta "
+"jest dostępna na portalu dane.gov.pl w sekcji \"Moje konto\", w zakładce "
+"\"Obserwowane\". "
+
+msgid "The message was generated automatically."
+msgstr "Ta wiadomość została wygenerowana automatycznie."
+
+msgid "Please do not reply to it."
+msgstr "Prosimy na nią nie odpowiadać."
+
+msgid "Lista ankiet"
+msgstr ""
+
+#, python-format
+msgid "Lista odpowiedzi dla ankiety %(form_title)s"
+msgstr ""
+
+#, python-format
+msgid "Odpowiedzi dla ankiety <span>%(form_title)s</span>"
+msgstr ""
+
+msgid "Pobierz wyniki"
+msgstr ""
+
+#, python-format
+msgid "Nie ma żadnych odpowiedzi dla ankiety '%(title)s'."
+msgstr ""
+
+msgid "Tytuł ankiety"
+msgstr ""
+
+msgid "Liczba odpowiedzi"
+msgstr ""
+
+msgid "Nie zostały jeszcze utworzone żadne ankiety."
+msgstr ""
+
+msgid "The data cannot be displayed correctly. Change the data type."
+msgstr "Dane nie mogą być poprawnie wyświetlone. Zmień typ danych."
+
+msgid "Add verification rule"
+msgstr "Dodaj regułę weryfikacji"
+
+msgid "Columns headers"
+msgstr "Nazwa kolumny"
+
+msgid "Verify rules"
+msgstr "Weryfikuj reguły"
+
+msgid "Column number"
+msgstr "Numer kolumny"
+
+msgid "Change type"
+msgstr "Zmień typ"
+
+msgid "Save the map definition"
+msgstr "Zapisz definicję mapy"
+
+msgid "Map preview"
+msgstr "Podgląd mapy"
+
+msgid "Chart definition and preview"
+msgstr "Definiowanie i podgląd wykresu"
+
 msgid "Tools"
 msgstr "Narzędzia"
 
-#: mcod/users/admin.py:33 mcod/users/admin.py:79
+msgid "choose roles"
+msgstr "wybierz role"
+
+msgid "Editor"
+msgstr "Edytor"
+
+msgid "Official"
+msgstr "Urzędnik"
+
+msgid "Agent"
+msgstr "Pełnomocnik"
+
+msgid "Admin"
+msgstr "Administrator"
+
+msgid "AOD admin"
+msgstr "Administrator AOD"
+
+msgid "LOD admin"
+msgstr "Administrator LOD"
+
+msgid "Confirm user change"
+msgstr "Potwierdź zmianę użytkownika"
+
+msgid "Available institutions"
+msgstr "Dostępne instytucje"
+
+msgid "Selected institutions"
+msgstr "Wybrane instytucje"
+
+msgid "extra agents"
+msgstr "dodatkowi pełnomocnicy"
+
+msgid "Admin AOD"
+msgstr "Administrator AOD"
+
+msgid "Admin LOD"
+msgstr "Administrator LOD"
+
 msgid "Personal info"
 msgstr "Informacje personalne"
 
-#: mcod/users/admin.py:44 mcod/users/admin.py:90
-msgid "Permisions"
+msgid "Permissions"
 msgstr "Uprawnienia"
 
-#: mcod/users/admin.py:56 mcod/users/admin.py:102 mcod/users/forms.py:15
-#: mcod/users/models.py:75
-msgid "Organizations"
-msgstr "Organizacje"
+msgid "Add files"
+msgstr "Dodaj pliki"
 
-#: mcod/users/api/views.py:60 mcod/users/api/views.py:91
-msgid "Invalid email or password"
-msgstr "Niepoprawny email lub hasło"
+msgid "Delete selected meetings"
+msgstr "Usuń wybrane spotkania"
 
-#: mcod/users/api/views.py:68
-msgid "Account is not available"
-msgstr "Konto nie jest dostępne"
+msgid "meeting name"
+msgstr "nazwa spotkania"
 
-#: mcod/users/api/views.py:117
-msgid "This e-mail is already used"
-msgstr "Podany e-mail jest już zarejestrowany w systemie"
+msgid "meeting venue"
+msgstr "miejsce spotkania"
 
-#: mcod/users/api/views.py:148 mcod/users/api/views.py:220
-#: mcod/users/api/views.py:352
-msgid "Email cannot be send"
-msgstr "Email nie może być wysłany"
+msgid "duration hours"
+msgstr "godziny trwania"
 
-#: mcod/users/api/views.py:196 mcod/users/api/views.py:333
-msgid "Account not found"
-msgstr "Nie znaleziono konta"
+msgid "Add meeting members"
+msgstr "Dodaj osoby do spotkania"
 
-#: mcod/users/api/views.py:243 mcod/users/api/views.py:305
-msgid "Expired token"
-msgstr "Przeterminowany token"
+msgid "members"
+msgstr "osoby"
 
-#: mcod/users/api/views.py:270
-msgid "Wrong password"
-msgstr "Niepoprawne hasło"
+msgid "Agents list"
+msgstr "Lista pełnomocników"
 
-#: mcod/users/api/views.py:280 mcod/users/depricated/schemas.py:64
-#: mcod/users/depricated/schemas.py:137
+msgid "Agents added to meeting"
+msgstr "Dodani pełnomocnicy do spotkania"
+
 msgid "Passwords not match"
 msgstr "Hasła nie pasują"
 
-#: mcod/users/depricated/schemas.py:79 mcod/users/forms.py:50
 msgid "Account for this email already exist"
 msgstr "Konto powiązane z tym adresem email już istnieje"
 
-#: mcod/users/depricated/serializers.py:28
+msgid "Full name"
+msgstr "Imię i nazwisko"
+
+msgid "Official phone"
+msgstr "telefon służbowy"
+
+msgid "Role"
+msgstr "Rola"
+
 msgid "Invalid user state."
 msgstr "Niepoprawny status użytkownika."
 
-#: mcod/users/forms.py:14
-msgid "organizations"
-msgstr "organizacje"
+msgid "Meeting name"
+msgstr "Nazwa spotkania"
 
-#: mcod/users/forms.py:36
+msgid "New permissions"
+msgstr "Nowe uprawnienia"
+
+msgid "Copy from agent"
+msgstr "Kopiuj pełnomocnika"
+
+msgid "(Select of agent is required)"
+msgstr "(Wybór pełnomocnika jest wymagany)"
+
+msgid "(Select of institution is required)"
+msgstr "(Wybór instytucji jest wymagany)"
+
+msgid ""
+"(Select of institution is not required. Lack of choice makes possible to "
+"login to admin panel also.)"
+msgstr ""
+"(Wybór instytucji nie jest wymagany. Brak wyboru instytucji oznacza jedynie "
+"dostęp do panelu administracyjnego)"
+
+msgid "Organization selection for an agent is obligatory!"
+msgstr "Wybór organizacji dla pełnomocnika jest obligatoryjny!"
+
+msgid "Selected institution must be on selected institutions list!"
+msgstr "Wybrana instutucja musi być na liście Wybranych instytucji!"
+
 msgid "The two password fields didn't match."
 msgstr "Hasła nie pasują"
 
-#: mcod/users/forms.py:38 mcod/users/forms.py:74 mcod/users/models.py:61
 msgid "Password"
 msgstr "Hasło"
 
-#: mcod/users/forms.py:39
 msgid "Password confirmation"
 msgstr "Potwierdzenie hasła"
 
-#: mcod/users/forms.py:40
 msgid "Enter the same password as above, for verification."
 msgstr "Wprowadź identyczne hasło jak powyżej w celu weryfikacji."
 
-#: mcod/users/forms.py:76
 msgid ""
 "Raw passwords are not stored, so there is no way to see this user's "
 "password, but you can change the password using <a href=\"../password/"
@@ -2802,27 +4347,26 @@ msgstr ""
 "użytkownika. Możesz jednak zmienić to hasło używając <a href=\"../password/"
 "\">tego formularza</a>."
 
-#: mcod/users/models.py:22
+msgid "You should confirm your email before logging in."
+msgstr "Musisz najpierw potwierdzić swój adres email."
+
+msgid "This user is blocked, please contact the administrators."
+msgstr "Ten użytkownik jest zablokowany, skontaktuj się z administracją."
+
 msgid "Email validation token"
 msgstr "Token walidacyjny emaila"
 
-#: mcod/users/models.py:23
 msgid "Password reset token"
 msgstr "Token resetu hasła"
 
-#: mcod/users/models.py:62
-msgid "Full name"
-msgstr "Imię i nazwisko"
+#, fuzzy
+#| msgid "Password reset token"
+msgid "Charts preview token"
+msgstr "Token resetu hasła"
 
-#: mcod/users/models.py:66 mcod/users/models.py:199
-msgid "Editor"
-msgstr "Edytor"
-
-#: mcod/users/models.py:67
 msgid "Admin status"
 msgstr "Status administratora"
 
-#: mcod/users/models.py:68
 msgid ""
 "Designates that this user has all permissions without explicitly assigning "
 "them."
@@ -2830,298 +4374,171 @@ msgstr ""
 "Wyznacza, że ten użytkownik ma wszystkie uprawnienia bez jawnego "
 "przypisywania ich."
 
-#: mcod/users/models.py:71 mcod/users/models.py:192
-msgid "State"
-msgstr "Stan"
+msgid "agent"
+msgstr "pełnomocnik"
 
-#: mcod/users/models.py:73
 msgid "Email confirmation date"
 msgstr "Data potwierdzenia adresu e-mail"
 
-#: mcod/users/models.py:78
+msgid "Organizations"
+msgstr "Organizacje"
+
+msgid "main organization of agent"
+msgstr "główna instytucja pełnomocnika"
+
+msgid "extra agent of"
+msgstr "dodatkowy pełnomocnik dla"
+
 msgid "Followed applications"
 msgstr "Obserwowane aplikacje"
 
-#: mcod/users/models.py:83
 msgid "Followed articles"
 msgstr "Obserwowane artykuły"
 
-#: mcod/users/models.py:88
 msgid "Followed datasets"
 msgstr "Obserwowane zbiory danych"
 
-#: mcod/users/models.py:185
+msgid "Enable daily email report of changes in subscribed objects"
+msgstr ""
+
+msgid "RODO & privacy policy accepted"
+msgstr ""
+
+msgid "User language"
+msgstr "język"
+
+msgid ""
+"Designates whether this user should be treated as active. Unselect this "
+"instead of deleting accounts."
+msgstr ""
+
+msgid "Favorite charts"
+msgstr ""
+
 msgid "acc: User"
 msgstr "użytkownika"
 
-#: mcod/users/models.py:192
-msgid "ID"
-msgstr ""
-
-#: mcod/users/models.py:192
-msgid "Full Name"
-msgstr "Imię i nazwisko"
-
-#: mcod/users/models.py:192
-msgid "Official phone"
-msgstr "telefon służbowy"
-
-#: mcod/users/models.py:192
-msgid "Role"
-msgstr "Rola"
-
-#: mcod/users/models.py:197
-msgid "Admin"
-msgstr "Administrator"
-
-#: mcod/users/models.py:231 mcod/users/models.py:237
 msgid "Token"
 msgstr "Token"
 
-#: mcod/users/models.py:232
 msgid "Token type"
 msgstr "Typ tokenu"
 
-#: mcod/users/models.py:234
 msgid "Expiration date"
 msgstr "Data ważności"
 
-#: mcod/users/models.py:238
 msgid "Tokens"
 msgstr "Tokeny"
 
-#: mcod/watchers/api/deserializers.py:41
-msgid "Unsupported object name"
+msgctxt "Planned"
+msgid "meeting state"
+msgstr "Planowane"
+
+msgctxt "Finished"
+msgid "meeting state"
+msgstr "Zakończone"
+
+msgid "agenda"
 msgstr ""
 
-#: mcod/watchers/api/deserializers.py:94
-#: mcod/watchers/api/schemas/request.py:43
-#, fuzzy
-#| msgid "Invalid file type"
+msgid "meeting date"
+msgstr "data spotkania"
+
+msgid "start time"
+msgstr "godzina rozpoczęcia"
+
+msgid "end time"
+msgstr "godzina zakończenia"
+
+msgid "meeting"
+msgstr "spotkanie pełnomocników"
+
+msgid "meetings"
+msgstr "spotkania pełnomocników"
+
+msgid "meeting file"
+msgstr "plik"
+
+msgid "meeting files"
+msgstr "pliki"
+
+msgid "Trash (Meeting)"
+msgstr "Kosz (Spotkanie pełnomocników)"
+
+msgid "Trash (Meetings)"
+msgstr "Kosz (Spotkania pełnomocników)"
+
+msgid "Institution1"
+msgstr "Instytucja1"
+
+msgid "Institution2"
+msgstr "Instytucja2"
+
+msgid "Extra agent"
+msgstr "Dodatkowy pełnomocnik"
+
+msgid "Last login date"
+msgstr "Data ostatniego logowania"
+
+msgid "Invalid email or password"
+msgstr "Niepoprawny email lub hasło"
+
+msgid "Account is not available"
+msgstr "Konto nie jest dostępne"
+
+msgid "This e-mail is already used"
+msgstr "Podany e-mail jest już zarejestrowany w systemie"
+
+msgid "Email cannot be sent"
+msgstr "Email nie może być wysłany"
+
+msgid "Account not found"
+msgstr "Nie znaleziono konta"
+
+msgid "Expired token"
+msgstr "Przeterminowany token"
+
+msgid "Wrong password"
+msgstr "Niepoprawne hasło"
+
+msgid "Unsupported object name"
+msgstr "Nieobsługiwany typ obiektu"
+
+msgid "Invalid url address"
+msgstr "Niepoprawny adres url"
+
 msgid "Invalid notification type"
-msgstr "Niepoprawny typ pliku."
+msgstr "Niepoprawny typ notifikacji"
 
-#: mcod/watchers/api/deserializers.py:97
-#: mcod/watchers/api/schemas/request.py:46
-#, fuzzy
-#| msgid "Invalid authorization header"
 msgid "Invalid notification status"
-msgstr "Niepoprawny Nagłówek Autoryzacji"
+msgstr "Niepoprawny status notyfikacji"
 
-#: mcod/watchers/models.py:32
-#, fuzzy
-#| msgid "Cancel"
 msgid "Canceled"
-msgstr "Anuluj"
+msgstr "Skasowany"
 
-#, fuzzy
-#~| msgid "Description"
-#~ msgid " Description "
-#~ msgstr "Opis"
+msgid "Object republished"
+msgstr "Objekt opublikowany ponownie"
 
-#~ msgid "Slug"
-#~ msgstr "Slug"
+msgid "Object withdrawaled"
+msgstr "Obiekt został wycofany z publikacji"
 
-#~ msgid "Server error"
-#~ msgstr "Błąd servera"
+msgid "Object updated"
+msgstr "Obiekt został zmieniony"
 
-#~ msgid "(no message)"
-#~ msgstr "(brak komunikatu)"
+msgid "Related object publicated"
+msgstr "Obiekt został opublikowany"
 
-#~ msgid "date of release"
-#~ msgstr "data udostępnienia"
+msgid "Related object updated"
+msgstr "Obiekt zależny został zmieniony"
 
-#~ msgid "Translation (EN)"
-#~ msgstr "Tłumaczenie (EN)"
+msgid "Related object republished"
+msgstr "Obiekt zależny został ponownie zaktualizowany"
 
-#~ msgid "Date of release"
-#~ msgstr "Data udostępnienia"
+msgid "Related object withdrawaled"
+msgstr "Obiekt zależny został wycowany z publikacji"
 
-#~ msgid "Date of modification"
-#~ msgstr "Data modyfikacji"
+msgid "Results incresed"
+msgstr "Liczba wyników wzrosła"
 
-#~ msgid "Data of actualization"
-#~ msgstr "Data aktualizacji"
-
-#, fuzzy
-#~| msgid "Actualization date"
-#~ msgid "Actualized date"
-#~ msgstr "Data aktualizacji"
-
-#~ msgid "Date of addition"
-#~ msgstr "Data dodania"
-
-#~ msgid "Daily resource report"
-#~ msgstr "Dzienny raport zasobów"
-
-#~ msgid "Daily resource reports"
-#~ msgstr "Dzienne raporty zasobów"
-
-#~ msgid "Do"
-#~ msgstr "Wykonaj"
-
-#~ msgid "Manual"
-#~ msgstr "Instrukcja"
-
-#~ msgid "Your editor user data is incomplete. Missing fields: %s"
-#~ msgstr "Twoje dane edytora są niekompletne. Brakujące pola: %s"
-
-#~ msgid "official_phone"
-#~ msgstr "telefon służbowy"
-
-#~ msgid "official_position"
-#~ msgstr "stanowisko"
-
-#~ msgid "Extra info"
-#~ msgstr "Dodatkowe informacje"
-
-#~ msgid "institutions"
-#~ msgstr "instytucje"
-
-#~ msgid "Go"
-#~ msgstr "Idź"
-
-#~ msgid "True"
-#~ msgstr "Tak"
-
-#~ msgid "False"
-#~ msgstr "Nie"
-
-#~ msgid "Not a valid number."
-#~ msgstr "Niepoprawna liczba."
-
-#~ msgid "Not a valid datetime."
-#~ msgstr "Niepoprawna data i czas."
-
-#~ msgid "\"{input}\" cannot be formatted as a datetime."
-#~ msgstr "\"{input}\" nie może być sformatowana jako data i czas."
-
-#~ msgid "Invalid data format for base64 encoding."
-#~ msgstr "Niepoprawny format danch dla kodwania Base64"
-
-#~ msgid "Too long data."
-#~ msgstr "Zbyt duże dane."
-
-#~ msgid "Invalid input type."
-#~ msgstr "Niepoprawny format danych."
-
-#~ msgid "Application logo"
-#~ msgstr "Logo aplikacji"
-
-#~ msgid "Is my dataset"
-#~ msgstr "Mój zbiór"
-
-#~ msgid "Is external"
-#~ msgstr "Zewnętrzny url zasobu"
-
-#~ msgid "Resource type"
-#~ msgstr "Typ zasobu"
-
-#~ msgid ""
-#~ "The recipient should include a copy of the information in the originally "
-#~ "obtained form by providing the processed information"
-#~ msgstr ""
-#~ "Odbiorca powinien zawrzeć kopię informacji w pierwotnie pozyskanej formie "
-#~ "udostępniając przetworzoną informację"
-
-#~ msgid "Followed users"
-#~ msgstr "Obserwowani użytkownicy"
-
-#~ msgid "Confirm deletion"
-#~ msgstr "Potwierdż usunięcie"
-
-#~ msgid "German"
-#~ msgstr "Niemiecki"
-
-#~ msgid "Russian"
-#~ msgstr "Rosyjski"
-
-#~ msgid "acc: Organization"
-#~ msgstr "organizację"
-
-#~ msgid "API works!"
-#~ msgstr "API działa!"
-
-#~ msgid "acc: Counter"
-#~ msgstr "licznik"
-
-#~ msgid "Wrong checksum for the National Business Register Number (REGON)"
-#~ msgstr "Zła suma kontrolna dla numeru REGON"
-
-#~ msgid "status changed"
-#~ msgstr "Zmieniono status"
-
-#~ msgid "Archived"
-#~ msgstr "Zarchiwizowany"
-
-#~ msgid "language"
-#~ msgstr "język"
-
-#~ msgid "Postal Code"
-#~ msgstr "kod pocztowy"
-
-#~ msgid "Private"
-#~ msgstr "Prywatny"
-
-#~ msgid "Metadata modified"
-#~ msgstr "Zmieniono metadane"
-
-#~ msgid "Creator user"
-#~ msgstr "Autor"
-
-#~ msgid "Extras"
-#~ msgstr "Dodatki"
-
-#~ msgid "Approval status"
-#~ msgstr "Status zatwierdzenia"
-
-#~ msgid "Openness score reason"
-#~ msgstr "Uzasadnienie wyniku otwartości"
-
-#~ msgid "Openness coefficient"
-#~ msgstr "Współczynnik otwartości"
-
-#~ msgid "Openness coefficients"
-#~ msgstr "Współczynniki otwarcia"
-
-#~ msgid "Package summary"
-#~ msgstr "Podsumowanie pakietu"
-
-#~ msgid "Packages summary"
-#~ msgstr "Podsumowanie pakietów"
-
-#~ msgid "External URL"
-#~ msgstr "Zewnętrzny URL"
-
-#~ msgid "System infos"
-#~ msgstr "Informacje o systemie"
-
-#~ msgid "Key"
-#~ msgstr "Klawisz"
-
-#~ msgid "System info"
-#~ msgstr "Informacja o systemie"
-
-#~ msgid "Api key"
-#~ msgstr "Klucz API"
-
-#~ msgid "Reset key"
-#~ msgstr "Przycisk reset"
-
-#~ msgid "Activity streams email notification"
-#~ msgstr "E-maile z powiadomieniem dotyczącym strumieni aktywności"
-
-#~ msgid "Activity stream last viewed"
-#~ msgstr "Ostatnio oglądany strumień aktywności"
-
-#~ msgid "Email last sent"
-#~ msgstr "Email ostatnio wysłany"
-
-#~ msgid "Dashboard"
-#~ msgstr "Deska rozdzielcza"
-
-#~ msgid "Dashboards"
-#~ msgstr "Pulpity nawigacyjne"
-
-#~ msgid "User following dataset"
-#~ msgstr "Użytkownik następujący po zestawie danych"
+msgid "Results decresed"
+msgstr "Liczba wyników zmalała"

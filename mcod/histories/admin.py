@@ -1,9 +1,11 @@
 from django.contrib import admin
+
 from mcod.histories.models import History
+from mcod.lib.admin_mixins import MCODAdminMixin
 
 
 @admin.register(History)
-class HistoryAdmin(admin.ModelAdmin):
+class HistoryAdmin(MCODAdminMixin, admin.ModelAdmin):
     list_display = ['id', 'action', 'table_name', 'row_id', 'message']
     list_filter = ['action', 'table_name']
     search_fields = ['row_id']

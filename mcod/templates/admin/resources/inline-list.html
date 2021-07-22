@@ -1,4 +1,4 @@
-{% load i18n admin_static admin_modify suit_tags admin_urls suit_list %}
+{% load i18n static admin_modify suit_tags admin_urls suit_list %}
 
 
 
@@ -6,7 +6,7 @@
   <div class="tabular inline-related {% if forloop.last %}last-related{% endif %}">
 {{ inline_admin_formset.formset.management_form }}
 <fieldset class="module">
-   <h2>{% trans 'Resources list' %}</h2>
+   <h2>{% block title %}{% trans 'Resources list' %}{% endblock %}</h2>
    {{ inline_admin_formset.formset.non_form_errors }}
 
     <div class="" id="resource_pagination">
@@ -16,7 +16,7 @@
             {% endif %}
         {% endwith %}
     </div>
-
+    {% block pagination_js %}
     <!-- Following javaScript is required if you have tabs,
          otherwise you can remove this JS code -->
     <script type="text/javascript">
@@ -29,7 +29,7 @@
             });
         }(Suit.$));
     </script>
-
+   {% endblock pagination_js %}
    <table class="table table-bordered table-condensed table-striped">
      <thead><tr>
      {% for field in inline_admin_formset.fields %}
@@ -87,8 +87,10 @@
         {% endfor %}
           {% if '1.8'|django_version_gte and inline_admin_form.model_admin.show_change_link and inline_admin_form.model_admin.has_registered_model %}
             <td class="text-center">
-              {% if inline_admin_form.original %}
+              {% if inline_admin_form.original and not inline_admin_form.original.is_imported %}
                 <p><a href="{% url inline_admin_form.model_admin.opts|admin_urlname:'change' inline_admin_form.original.pk|admin_urlquote %}" class="inlinechangelink">{% trans "Edit" %}</a></p>
+              {% else %}
+                -
               {% endif %}
             </td>{% endif %}
         {% if inline_admin_formset.formset.can_delete %}

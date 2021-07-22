@@ -1,5 +1,5 @@
 {% extends "admin/base_site.html" %}
-{% load i18n admin_static admin_modify suit_tags core_tags admin_urls %}
+{% load i18n static admin_modify suit_tags core_tags admin_urls %}
 {% load url from suit_compat %}
 
 
@@ -50,6 +50,10 @@
 </ul>
 {% endblock %}
 
+{% block content_title %}
+    <h2 class="content-title">{% trans "Configuration" %}</h2>
+{% endblock %}
+
 {% block content %}
   <div id="content-main" class="inner-two-columns">
 
@@ -59,7 +63,7 @@
 
         <div class="box save-box">
           <div class="submit-row clearfix">
-            <button type="submit" class="btn btn-high btn-info" name="_save">{% trans 'Save' %}</button>
+            <button type="submit" class="btn btn-high btn-success" name="_save">{% trans 'Save' %}</button>
           </div>
         </div>
 
@@ -72,7 +76,7 @@
         {% csrf_token %}{% block form_top %}{% endblock %}
         {% for field in form.hidden_fields %}{{ field }}{% endfor %}
 
-        <div class="tab-content tab-content-main">
+        <div>
           {% if form.errors %}
             <div class="alert alert-error">
               {% blocktrans count counter=form.errors|length %}Please correct the error below.{% plural %} Please correct the errors below.{% endblocktrans %}

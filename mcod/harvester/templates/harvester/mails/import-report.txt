@@ -1,0 +1,31 @@
+{% load i18n core_tags %}
+{%  trans "DATASETS & RESOURCES IMPORT REPORT" %}: {{ obj.datasource.title }}
+
+{% get_verbose_field_name obj "start" %}: {{ obj.start }}
+
+{% get_verbose_field_name obj "end" %}: {{ obj.end }}
+
+{% get_verbose_field_name obj "status" %}: {{ obj.get_status_display }}
+
+{% if obj.error_desc %}
+{% get_verbose_field_name obj "error_desc" %}: {{ obj.error_desc }}
+{% endif %}
+
+{% get_verbose_field_name obj "datasets_count" %}: {{ obj.datasets_count }}
+
+{% get_verbose_field_name obj "datasets_created_count" %}: {{ obj.datasets_created_count }}
+
+{% get_verbose_field_name obj "datasets_updated_count" %}: {{ obj.datasets_updated_count }}
+
+{% get_verbose_field_name obj "datasets_deleted_count" %}: {{ obj.datasets_deleted_count }}
+
+{% get_verbose_field_name obj "resources_count" %}: {{ obj.resources_count }}
+
+{% get_verbose_field_name obj "resources_created_count" %}: {{ obj.resources_created_count }}
+
+{% get_verbose_field_name obj "resources_updated_count" %}: {{ obj.resources_updated_count }}
+
+{% get_verbose_field_name obj "resources_deleted_count" %}: {{ obj.resources_deleted_count }}
+
+
+{% include 'mails/_footer.txt' %}

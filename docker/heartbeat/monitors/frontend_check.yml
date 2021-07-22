@@ -1,5 +1,0 @@
-- type: http
-  schedule: '@every 20s'
-  urls:
-    - "${FRONTEND_URL}"
-  check.response.status: 200

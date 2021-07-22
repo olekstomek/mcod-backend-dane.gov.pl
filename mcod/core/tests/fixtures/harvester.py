@@ -1,0 +1,155 @@
+import datetime
+import json
+import os
+from collections import OrderedDict
+
+import pytest
+import pytz
+import xmlschema
+from rdflib import URIRef, ConjunctiveGraph, Literal, RDF, XSD
+from django.conf import settings
+
+from mcod.harvester.utils import get_xml_schema_path
+from mcod.core.api.rdf.profiles.dcat_ap import VOCABULARIES
+import mcod.core.api.rdf.namespaces as ns
+
+
+@pytest.fixture
+def harvester_decoded_xml_1_2_data():
+    full_path = os.path.join(settings.TEST_SAMPLES_PATH, 'harvester_example1.2.xml')
+    with open(full_path, 'r') as xml_file:
+        xml_schema_version = '1.2'
+        xml_schema_path = get_xml_schema_path(xml_schema_version)
+        xml_schema = xmlschema.XMLSchema(xml_schema_path)
+        data = xml_schema.to_dict(xml_file)
+        data['xsd_schema_version'] = xml_schema_version
+    return list(data['dataset'])
+
+
+@pytest.fixture
+def harvester_xml_expected_data():
+    data = [OrderedDict([
+        ('ext_ident', 'zbior_extId_1'), ('status', 'published'), ('title_pl', 'Zbiór danych - nowy scheme CC0 1.0'),
+        ('title_en', 'Zbiór danych - Testy nowych tagów i kategorii - EN'),
+        ('notes_pl', 'Opis w wersji PL - opis testowy do testow UAT'),
+        ('notes_en', 'ENGLISH DATASET DESCRIPTION - UAT PHASE TEST'),
+        ('url', 'https://www.youtube.com/'), ('update_frequency', 'monthly'), ('license_chosen', 1),
+        ('license_condition_db_or_copyrighted', 'Warunek wymagany'), ('license_condition_modification', False),
+        ('license_condition_personal_data', None), ('license_condition_responsibilities', None),
+        ('license_condition_source', False), ('modified', datetime.datetime(2021, 1, 1, 0, 0, tzinfo=pytz.utc)),
+        ('categories', ['TRAN', 'ECON']),
+        ('resources', [OrderedDict([
+            ('ext_ident', 'zasob_extId_zasob_1'), ('status', 'published'),
+            ('link', 'https://b5c408e20be5.ngrok.io/XLSX.xlsx'), ('title_pl', 'ZASOB csv REMOTE'),
+            ('title_en', 'ENGLISH TITLE - RESOURCE 1'),
+            ('description_pl', 'Opis zasobu opublikowane z XMLA - aktualizacja'),
+            ('description_en', 'English description of first resource'), ('availability', 'remote'),
+            ('data_date', datetime.date(2021, 10, 10)),
+            ('modified', datetime.datetime(2020, 12, 8, 0, 0, tzinfo=pytz.utc))
+        ]), OrderedDict([
+            ('ext_ident', 'zasob_extId_zasob_2'), ('status', 'published'),
+            ('link', 'https://a9dd10d13dd2.ngrok.io/XLSX.xlsx'), ('title_pl', 'ZASOB CSV LOCAL'),
+            ('title_en', 'ENGLISH TITLE - RESOURCE 2'), ('description_pl', 'Opis zasobu opublikowane z XMLA'),
+            ('description_en', 'English description of second resource'), ('availability', 'local'),
+            ('data_date', datetime.date(2020, 10, 10)), ('modified',
+                                                         datetime.datetime(2020, 1, 1, 0, 0, tzinfo=pytz.utc))
+        ])]),
+        ('tags', [OrderedDict([('lang', 'pl'), ('name', '2028_tagPL')])])])]
+    return data
+
+
+@pytest.fixture
+def harvester_ckan_data():
+    full_path = os.path.join(settings.TEST_SAMPLES_PATH, 'harvester_ckan_example.json')
+    with open(full_path, 'r') as json_file:
+        data = json.load(json_file)
+    return data['result']
+
+
+@pytest.fixture
+def harvester_ckan_expected_data():
+    local_timezone = pytz.timezone('Europe/Warsaw')
+    return OrderedDict(
+        [('license_id', 'cc-by'),
+            ('created', datetime.datetime(2020, 5, 27, 15, 44, 27, 733583).astimezone(local_timezone)),
+            ('modified', datetime.datetime(2021, 4, 15, 8, 30, 11, 613188).astimezone(local_timezone)),
+            ('slug', 'ilosci-odebranych-odpadow-z-podzialem-na-sektory'), ('notes', 'Wartości w tonach'),
+            ('ext_ident', '512cb875-6c54-482f-b11e-69d8c7989fc8'),
+            ('organization',
+                OrderedDict([
+                    ('description', ''), ('title', 'Wydział Środowiska'), ('slug', 'wydzial-srodowiska'),
+                    ('created', datetime.datetime(2020, 5, 27, 17, 41, 22, 430168).astimezone(local_timezone)),
+                    ('uuid', 'b97080cc-858d-4763-a751-4b54bf3fb0f0'),
+                    ('image_name', 'http://otwartedane.gdynia.pl/portal/img/c/gdynia3.png')])),
+            ('resources',
+                [OrderedDict([
+                    ('title', 'Ilości odebranych odpadów z podziałem na sektory'), ('format', 'csv'),
+                    ('modified', datetime.datetime(2021, 4, 15, 8, 30, 11, 533597).astimezone(local_timezone)),
+                    ('created', datetime.datetime(2020, 5, 27, 15, 44, 38, 387593).astimezone(local_timezone)),
+                    ('ext_ident', '6db2e083-72b8-4f92-a6ab-678fc8461865'),
+                    ('link', 'http://otwartedane.gdynia.pl/pl/dataset/512cb875-6c54-482f-b11e-69d8c7989fc8/'
+                             'resource/6db2e083-72b8-4f92-a6ab-678fc8461865/download/odpady.csv'),
+                    ('description', '##Sektory:')])]),
+            ('tags', []), ('title', 'Ilości odebranych odpadów z podziałem na sektory')])
+
+
+def get_example_triple_data():
+    example_base_uri = 'http://example-uri.com'
+    resource_uri = f'{example_base_uri}/distribution/999'
+    resource_ref = URIRef(resource_uri)
+    vocab = VOCABULARIES
+    created = datetime.datetime(2021, 1, 1, 12, 0, 0, 0, tzinfo=pytz.utc)
+    modified = datetime.datetime(2021, 1, 1, 13, 0, 0, 0, tzinfo=pytz.utc)
+    dataset_uri = f'{example_base_uri}/dataset/1'
+    dataset_ref = URIRef(dataset_uri)
+    return [
+        # Dataset
+        (dataset_ref, RDF.type, ns.DCAT.Dataset),
+        (dataset_ref, ns.DCT.identifier, Literal('1')),
+        (dataset_ref, ns.DCT.title, Literal('Dataset title')),
+        (dataset_ref, ns.DCT.description, Literal('DESCRIPTION')),
+        (dataset_ref, ns.DCT.issued, Literal(created, datatype=XSD.dateTime)),
+        (dataset_ref, ns.DCT.modified, Literal(modified, datatype=XSD.dateTime)),
+        (dataset_ref, ns.DCAT.theme, URIRef(f'{vocab["theme"]}GOV')),
+        (dataset_ref, ns.DCAT.theme, URIRef(f'{vocab["theme"]}ECON')),
+        (dataset_ref, ns.DCT.accrualPeriodicity, URIRef(f'{vocab["frequency"]}MONTHLY')),
+        (dataset_ref, ns.DCAT.keyword, Literal('jakis tag', lang='pl')),
+        (dataset_ref, ns.DCAT.keyword, Literal('tagggg', lang='en')),
+        (dataset_ref, ns.DCAT.distribution, resource_ref),
+        # Distribution
+        (resource_ref, RDF.type, ns.DCAT.Distribution),
+        (resource_ref, ns.DCT.identifier, Literal('999')),
+        (resource_ref, ns.DCT.title, Literal('Distribution title')),
+        (resource_ref, ns.DCT.description, Literal('Some distribution description')),
+        (resource_ref, ns.DCT.issued, Literal(created, datatype=XSD.dateTime)),
+        (resource_ref, ns.DCT.modified, Literal(modified, datatype=XSD.dateTime)),
+        (resource_ref, ns.DCT['format'], URIRef(f'{vocab["file-type"]}xlsx')),
+        (resource_ref, ns.DCAT.accessURL, resource_ref),
+        (resource_ref, ns.DCT.license, Literal('CC_BY_SA_4.0'))
+    ]
+
+
+@pytest.fixture
+def harvester_dcat_data():
+    graph = ConjunctiveGraph()
+    example_triples = get_example_triple_data()
+    for triple in example_triples:
+        graph.add(triple)
+    return graph
+
+
+@pytest.fixture
+def harvester_dcat_expected_data():
+    return OrderedDict([
+        ('ext_ident', '1'), ('title_pl', 'Dataset title'), ('title_en', None), ('notes_pl', 'DESCRIPTION'),
+        ('notes_en', None), ('created', datetime.datetime(2021, 1, 1, 12, 0, tzinfo=pytz.utc)),
+        ('modified', datetime.datetime(2021, 1, 1, 13, 0, tzinfo=pytz.utc)),
+        ('tags',
+         [OrderedDict([('name', 'jakis tag'), ('lang', 'pl')]), OrderedDict([('name', 'tagggg'), ('lang', 'en')])]),
+        ('resources', [OrderedDict([
+            ('ext_ident', '999'), ('title_pl', 'Distribution title'), ('title_en', None),
+            ('description_pl', 'Some distribution description'),
+            ('description_en', None), ('created', datetime.datetime(2021, 1, 1, 12, 0, tzinfo=pytz.utc)),
+            ('modified', datetime.datetime(2021, 1, 1, 13, 0, tzinfo=pytz.utc)),
+            ('link', 'http://example-uri.com/distribution/999'), ('format', 'xlsx'), ('file_mimetype', None)])]),
+        ('categories', ['GOV', 'ECON']), ('update_frequency', None), ('license_chosen', 'CC_BY_SA_4.0')])

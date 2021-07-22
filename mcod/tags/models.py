@@ -6,13 +6,14 @@ from django.db import models
 from django.dispatch import receiver
 from django.utils.translation import gettext_lazy as _
 from model_utils import FieldTracker
-from model_utils.managers import SoftDeletableManager
 from modeltrans.fields import TranslationField
 
+from mcod import settings
 from mcod.core.api.search import signals as search_signals
-from mcod.core.db.managers import DeletedManager
-from mcod.core.db.models import ExtendedModel
+from mcod.core.api.rdf import signals as rdf_signals
+from mcod.core.db.models import BaseExtendedModel
 from mcod.tags.signals import update_related_datasets, update_related_articles, update_related_applications
+
 
 User = get_user_model()
 
@@ -24,7 +25,7 @@ STATUS_CHOICES = [
 signal_logger = logging.getLogger('signals')
 
 
-class Tag(ExtendedModel):
+class Tag(BaseExtendedModel):
     SIGNALS_MAP = {
         'updated': (update_related_datasets,
                     update_related_articles,
@@ -43,8 +44,8 @@ class Tag(ExtendedModel):
                     update_related_applications
                     ),
     }
-
-    name = models.CharField(unique=True, max_length=100, verbose_name=_("name"))
+    name = models.CharField(max_length=100, verbose_name=_("name"))
+    language = models.CharField(max_length=2, choices=settings.LANGUAGES, default='', verbose_name=_("language"), db_index=True)
 
     created_by = models.ForeignKey(
         User,
@@ -66,7 +67,8 @@ class Tag(ExtendedModel):
     )
 
     def __str__(self):
-        return self.name
+        en_name = getattr(self, 'name_en', '') or ''
+        return self.name or en_name
 
     @classmethod
     def accusative_case(cls):
@@ -76,9 +78,7 @@ class Tag(ExtendedModel):
     tracker = FieldTracker()
     slugify_field = 'name'
 
-    raw = models.Manager()
-    objects = SoftDeletableManager()
-    deleted = DeletedManager()
+    objects = models.Manager()
 
     class Meta:
         verbose_name = _("Tag")
@@ -86,11 +86,27 @@ class Tag(ExtendedModel):
         db_table = 'tag'
         default_manager_name = "objects"
         indexes = [GinIndex(fields=["i18n"]), ]
+        unique_together = ('name', 'language')
+
+    @property
+    def translations_dict(self):
+        return {lang: getattr(self, f'name_{lang}', '') or '' for lang in settings.MODELTRANS_AVAILABLE_LANGUAGES}
+
+    @property
+    def to_dict(self):
+        return {
+            'name': self.name,
+            'language': self.language,
+        }
+
+    @property
+    def language_readonly(self):
+        return self.language
 
 
 @receiver(update_related_datasets, sender=Tag)
 def update_tag_in_datasets(sender, instance, *args, **kwargs):
-    signal_logger.info(
+    signal_logger.debug(
         'Updating related datasets',
         extra={
             'sender': '{}.{}'.format(sender._meta.model_name, sender._meta.object_name),
@@ -102,11 +118,12 @@ def update_tag_in_datasets(sender, instance, *args, **kwargs):
     )
     for dataset in instance.datasets.all():
         search_signals.update_document.send(dataset._meta.model, dataset)
+        rdf_signals.update_graph.send(dataset._meta.model, dataset)
 
 
 @receiver(update_related_articles, sender=Tag)
 def update_tag_in_articles(sender, instance, *args, **kwargs):
-    signal_logger.info(
+    signal_logger.debug(
         'Updating related articles',
         extra={
             'sender': '{}.{}'.format(sender._meta.model_name, sender._meta.object_name),
@@ -122,7 +139,7 @@ def update_tag_in_articles(sender, instance, *args, **kwargs):
 
 @receiver(update_related_applications, sender=Tag)
 def update_tag_in_applications(sender, instance, *args, **kwargs):
-    signal_logger.info(
+    signal_logger.debug(
         'Updating related applications',
         extra={
             'sender': '{}.{}'.format(sender._meta.model_name, sender._meta.object_name),

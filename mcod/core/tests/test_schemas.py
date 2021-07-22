@@ -60,9 +60,9 @@ class TestListSchema(object):
                         {"range": {'filtered_field': {"lte": "10"}}}
                     ],
                     'should': [
-                        {'match': {'title': {'fuzziness': 2, 'fuzzy_transpositions': True, 'query': 'abc'}}},
-                        {'match': {'title': {'fuzziness': 2, 'fuzzy_transpositions': True, 'query': 'ghi'}}},
-                        {'match': {'body': {'fuzziness': 2, 'fuzzy_transpositions': True, 'query': 'ghi'}}}
+                        {'match': {'title': {'fuzziness': 'AUTO', 'fuzzy_transpositions': True, 'query': 'abc'}}},
+                        {'match': {'title': {'fuzziness': 'AUTO', 'fuzzy_transpositions': True, 'query': 'ghi'}}},
+                        {'match': {'body': {'fuzziness': 'AUTO', 'fuzzy_transpositions': True, 'query': 'ghi'}}}
                     ]
                 },
             }
@@ -95,7 +95,7 @@ class TestListSchema(object):
 
         schema = SomeSchema()
         context = {'sort': 'title'}
-        valid_query = {'query': {'match_all': {}}, 'sort': ['title.sort']}
+        valid_query = {'sort': ['title.sort']}
         qs = schema.prepare_queryset(es_dsl_queryset, context).to_dict()
         assert qs == valid_query
 
@@ -112,7 +112,6 @@ class TestListSchema(object):
         context = {'facet': ['somefield']}
 
         valid_query = {
-            'query': {'match_all': {}},
             'aggs': {
                 '_filter_somefield': {
                     'aggs': {
@@ -146,7 +145,6 @@ class TestListSchema(object):
         schema = SomeSchema()
         context = {'highlight': ['somefield']}
         valid_query = {
-            'query': {'match_all': {}},
             'highlight': {
                 'fields': {
                     'somefield': {
@@ -199,7 +197,7 @@ class TestListSchema(object):
             'query': {
                 'bool': {
                     'should': [
-                        {'match': {'body': {'fuzziness': 2, 'fuzzy_transpositions': True, 'query': 'ghi'}}}
+                        {'match': {'body': {'fuzziness': 'AUTO', 'fuzzy_transpositions': True, 'query': 'ghi'}}}
                     ]
                 }
             },
@@ -241,7 +239,6 @@ class TestListSchema(object):
     #     }
     #
     #     valid_query = {
-    #         'query': {'match_all': {}},
     #         "suggest": {
     #             'sugg': {
     #                 "text": 'ble',

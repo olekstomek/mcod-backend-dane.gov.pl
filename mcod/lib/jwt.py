@@ -67,23 +67,23 @@ def decode_jwt_token(auth_header):
     return payload
 
 
-def get_auth_header(email, system_role, session_key, now=None, exp_delta=None):
-    auth_token = get_auth_token(email, system_role, session_key, now=now, exp_delta=exp_delta)
+def get_auth_header(user, session_key, now=None, exp_delta=None):
+    auth_token = get_auth_token(user, session_key, now=now, exp_delta=exp_delta)
 
     return '{header_prefix} {auth_token}'.format(
         header_prefix=settings.JWT_HEADER_PREFIX, auth_token=auth_token
     )
 
 
-def get_auth_token(email, system_role, session_key, now=None, exp_delta=None):
+def get_auth_token(user, session_key, now=None, exp_delta=None):
     if not now:
         now = datetime.utcnow()
 
     payload = {
         'user': {
             'session_key': session_key,
-            'email': email,
-            'role': system_role
+            'email': user.email,
+            'roles': user.system_roles,
         }
     }
 

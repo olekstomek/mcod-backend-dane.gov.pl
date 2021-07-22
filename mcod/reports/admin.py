@@ -6,13 +6,23 @@ from django.contrib import admin, messages
 from django.http.response import HttpResponseRedirect
 from django.urls import path, reverse
 from django.utils.safestring import mark_safe
-from django.utils.translation import gettext_lazy as _
+from django.utils.html import format_html
 from django.utils.timezone import now
+from django.utils.translation import gettext_lazy as _
 from rangefilter.filter import DateRangeFilter
 
 from mcod.core.utils import sizeof_fmt
-from mcod.reports.models import Report, UserReport, ResourceReport, DatasetReport, OrganizationReport, \
-    SummaryDailyReport
+from mcod.lib.admin_mixins import OrderedByDisplayAdminMixin, TaskStatusLabelAdminMixin,\
+    DynamicAdminListDisplayMixin, MCODAdminMixin
+from mcod.reports.models import (
+    DatasetReport,
+    MonitoringReport,
+    OrganizationReport,
+    Report,
+    ResourceReport,
+    SummaryDailyReport,
+    UserReport,
+)
 from mcod.reports.tasks import generate_csv, create_daily_resources_report
 
 
@@ -25,7 +35,8 @@ class UserFilter(AutocompleteFilter):
     }
 
 
-class ReportsAdmin(admin.ModelAdmin):
+class ReportsAdmin(DynamicAdminListDisplayMixin, OrderedByDisplayAdminMixin, TaskStatusLabelAdminMixin,
+                   MCODAdminMixin, admin.ModelAdmin):
     model = Report
     list_display = ('file_name', 'file_size', 'ordered_by', 'created', 'status')
     list_filter = (('created', DateRangeFilter), UserFilter)
@@ -36,7 +47,7 @@ class ReportsAdmin(admin.ModelAdmin):
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
-        return qs.filter(model=self.app_model)
+        return qs.filter(model__in=self.app_models) if hasattr(self, 'app_models') else qs
 
     def has_add_permission(self, request, obj=None):
         return False
@@ -56,18 +67,36 @@ class ReportsAdmin(admin.ModelAdmin):
     def file_size(self, obj):
         try:
             if not obj.file:
-                return f"-"
+                return "-"
             file_path = os.path.join(settings.ROOT_DIR, obj.file.strip('/'))
             return sizeof_fmt(os.path.getsize(file_path))
         except Exception:
-            return f"({_('unknown')})"
+            return format_html(f'<span class="unknown">({_("unknown")})</span>')
 
     file_size.short_description = _("File size")
+
+    def status_label(self, obj):
+        return super().status_label(obj)
+
+    status_label.short_description = _('status')
+    status_label.admin_order_field = None
+
+
+class MonitoringReportsAdmin(ReportsAdmin):
+    app_models = [
+        'applications.ApplicationProposal',
+        'suggestions.DatasetSubmission',
+        'suggestions.DatasetComment',
+        'suggestions.ResourceComment',
+    ]
+
+    class Media:
+        pass
 
 
 @admin.register(UserReport)
 class UserReportsAdmin(ReportsAdmin):
-    app_model = 'users.User'
+    app_models = ['users.User']
 
     class Media:
         pass
@@ -75,7 +104,7 @@ class UserReportsAdmin(ReportsAdmin):
 
 @admin.register(ResourceReport)
 class ResourceReportsAdmin(ReportsAdmin):
-    app_model = 'resources.Resource'
+    app_models = ['resources.Resource']
 
     class Media:
         pass
@@ -83,7 +112,7 @@ class ResourceReportsAdmin(ReportsAdmin):
 
 @admin.register(DatasetReport)
 class DatasetReportsAdmin(ReportsAdmin):
-    app_model = 'datasets.Dataset'
+    app_models = ['datasets.Dataset']
 
     class Media:
         pass
@@ -91,14 +120,15 @@ class DatasetReportsAdmin(ReportsAdmin):
 
 @admin.register(OrganizationReport)
 class OrganizationReportsAdmin(ReportsAdmin):
-    app_model = 'organizations.Organization'
+    app_models = ['organizations.Organization']
 
     class Media:
         pass
 
 
 @admin.register(SummaryDailyReport)
-class DailyResourceReportsAdmin(admin.ModelAdmin):
+class DailyResourceReportsAdmin(DynamicAdminListDisplayMixin, OrderedByDisplayAdminMixin,
+                                TaskStatusLabelAdminMixin, MCODAdminMixin, admin.ModelAdmin):
     model = Report
     list_display = ('file_name', 'file_size', 'ordered_by', 'created', 'status')
     list_filter = (('created', DateRangeFilter), UserFilter)
@@ -123,9 +153,9 @@ class DailyResourceReportsAdmin(admin.ModelAdmin):
 
     def file_size(self, obj):
         try:
-            return sizeof_fmt(os.path.getsize(os.path.join(settings.MEDIA_ROOT, obj.file))) if obj.file else f"-"
+            return sizeof_fmt(os.path.getsize(os.path.join(settings.MEDIA_ROOT, obj.file))) if obj.file else "-"
         except FileNotFoundError:
-            return f"({_('unknown')})"
+            return format_html(f'<span class="unknown">({_("unknown")})</span>')
 
     file_size.short_description = _("File size")
 
@@ -173,3 +203,6 @@ class ExportCsvMixin(object):
                 'export_to_csv': (export_to_csv, 'export_to_csv', _("Export selected to CSV"))
             })
         return actions
+
+
+admin.site.register(MonitoringReport, MonitoringReportsAdmin)

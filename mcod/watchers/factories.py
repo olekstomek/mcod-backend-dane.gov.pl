@@ -1,15 +1,15 @@
 import factory
 
+from mcod.core.registries import factories_registry
 from mcod.users.factories import UserFactory
 from mcod.watchers import models
 
-_WATCHER_TYPES = [i[0] for i in models.WATCHER_TYPES]
 _NOTIFICATION_TYPES = [i[0] for i in models.NOTIFICATION_TYPES]
 _NOTIFICATION_STATUS_CHOICES = [i[0] for i in models.NOTIFICATION_STATUS_CHOICES]
 
 
-class WatcherFactory(factory.django.DjangoModelFactory):
-    watcher_type = factory.Faker('random_element', elements=_WATCHER_TYPES)
+class ModelWatcherFactory(factory.django.DjangoModelFactory):
+    watcher_type = 'model'
     object_name = factory.Sequence(lambda n: "object_%s" % n)
     object_ident = factory.Sequence(lambda n: "object_id_%s" % n)
     ref_field = 'modified'
@@ -19,17 +19,38 @@ class WatcherFactory(factory.django.DjangoModelFactory):
         model = models.Watcher
 
 
+class SearchQueryWatcherFactory(ModelWatcherFactory):
+    watcher_type = 'search_query'
+
+    class Meta:
+        model = models.Watcher
+
+
 class SubscriptionFactory(factory.django.DjangoModelFactory):
-    watcher = factory.SubFactory(WatcherFactory)
+    watcher = factory.SubFactory(ModelWatcherFactory)
     user = factory.SubFactory(UserFactory)
     name = factory.Faker('sentence', nb_words=6)
-    enable_notifications = factory.Faker(bool)
 
     class Meta:
         model = models.Subscription
+        django_get_or_create = ('name',)
+
+    @classmethod
+    def _create(cls, model_class, *args, user=None, data=None, force_id=None, **kwargs):
+        manager = cls._get_manager(model_class)
+        return manager.create_from_data(user, data, force_id=force_id)
 
 
 class NotificationFactory(factory.django.DjangoModelFactory):
-    subscription = factory.SubFactory(SubscriptionFactory)
+    # subscription = factory.SubFactory(SubscriptionFactory)
     notification_type = factory.Faker('random_element', elements=_NOTIFICATION_TYPES)
     status = factory.Faker('random_element', elements=_NOTIFICATION_STATUS_CHOICES)
+
+    class Meta:
+        model = models.Notification
+
+
+factories_registry.register('model watcher', ModelWatcherFactory)
+factories_registry.register('search query watcher', SearchQueryWatcherFactory)
+factories_registry.register('subscription', SubscriptionFactory)
+factories_registry.register('notification', NotificationFactory)

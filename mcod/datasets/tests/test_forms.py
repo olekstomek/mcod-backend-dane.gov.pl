@@ -6,6 +6,7 @@ from namedlist import namedlist
 from mcod.datasets.forms import DatasetForm
 from mcod.datasets.models import Dataset
 from mcod.lib.helpers import change_namedlist
+from mcod.unleash import is_enabled
 
 fields = [
     'slug',
@@ -16,12 +17,13 @@ fields = [
     'organization',
     'customfields',
     'license_condition_db_or_copyrighted',
+    'license_condition_personal_data',
     'license_condition_modification',
     'license_condition_original',
     'license_condition_responsibilities',
     'license_condition_source',
     'update_frequency',
-    'category',
+    'legacy_category',
     'status',
     'validity'
 ]
@@ -37,12 +39,13 @@ empty = entry(
     organization=None,
     customfields=None,
     license_condition_db_or_copyrighted=None,
+    license_condition_personal_data=None,
     license_condition_modification=None,
     license_condition_original=None,
     license_condition_responsibilities=None,
     license_condition_source=None,
     update_frequency=None,
-    category=None,
+    legacy_category=None,
     status=None,
     validity=False,
 )
@@ -60,7 +63,6 @@ minimal = change_namedlist(empty, {
 })
 
 
-@pytest.mark.django_db
 class TestDatasetFormValidity:
     """
     """
@@ -85,7 +87,7 @@ class TestDatasetFormValidity:
             # change_namedlist(minimal, {'title': 'too long name', 'slug': "T" * 601, 'validity': True}),
             # category
             #   wrong category
-            change_namedlist(minimal, {'category': 'xxx', 'validity': False}),
+            change_namedlist(minimal, {'legacy_category': 'xxx', 'validity': False}),
             # status               *   choices
             #   No status choice
             change_namedlist(minimal, {'title': 'no status', 'status': None, 'validity': False}),
@@ -108,35 +110,43 @@ class TestDatasetFormValidity:
                                    organization,
                                    customfields,
                                    license_condition_db_or_copyrighted,
+                                   license_condition_personal_data,
                                    license_condition_modification,
                                    license_condition_original,
                                    license_condition_responsibilities,
                                    license_condition_source,
                                    update_frequency,
-                                   category,
+                                   legacy_category,
                                    status,
                                    validity,
-                                   valid_organization,
-                                   valid_tag
+                                   institution,
+                                   tag,
+                                   tag_pl
                                    ):
-        form = DatasetForm(data={
+        data = {
             "slug": slug,
             "title": title,
             "url": url,
             "notes": notes,
             "license_id": license_id,
-            "organization": valid_organization.id,
+            "organization": institution.id,
             "customfields": customfields,
             "license_condition_db_or_copyrighted": license_condition_db_or_copyrighted,
+            "license_condition_personal_data": license_condition_personal_data,
             "license_condition_modification": license_condition_modification,
             "license_condition_original": license_condition_original,
             "license_condition_responsibilities": license_condition_responsibilities,
             "license_condition_source": license_condition_source,
             "update_frequency": update_frequency,
-            "category": category,
+            "category": legacy_category,
             "status": status,
-            "tags": [valid_tag.id, ],
-        })
+        }
+        if is_enabled('S18_new_tags.be'):
+            data['tags_pl'] = [tag_pl.id]
+        else:
+            data['tags'] = [tag.id]
+
+        form = DatasetForm(data=data)
         assert form.is_valid() is validity
 
         if validity and title != "no name":
@@ -147,36 +157,73 @@ class TestDatasetFormValidity:
         #         form.save()
         #     # assert "'slug'" in str(e.value)
 
-    def test_dataset_form_add_tags(self, valid_tag, valid_organization):
-        form = DatasetForm(data={
+    def test_dataset_form_add_tags(self, tag, tag_pl, tag_en, institution):
+        data = {
             'title': "Test add tag",
             'slug': "test-add-tag",
             'status': 'published',
-            'organization': valid_organization.id,
+            'organization': institution.id,
             'notes': "notes",
             "update_frequency": "weekly",
             'url': "http://cos.tam.pl",
-            'tags': [valid_tag]
-        })
+        }
+        if is_enabled('S18_new_tags.be'):
+            data['tags_pl'] = [tag_pl]
+            data['tags_en'] = [tag_en]
+        else:
+            data['tags'] = [tag]
+
+        form = DatasetForm(data=data)
         assert form.is_valid()
         form.save()
-        ap = Dataset.objects.last()
-        assert ap.slug == "test-add-tag"
-        assert valid_tag in ap.tags.all()
+        dataset = Dataset.objects.last()
+        assert dataset.slug == "test-add-tag"
 
-    def test_metadata_modified_is_not_null(self, valid_organization, valid_tag):
+        if is_enabled('S18_new_tags.be'):
+            assert tag_pl in dataset.tags.all()
+            assert tag_en in dataset.tags.all()
+        else:
+            assert tag in dataset.tags.all()
+
+    def test_dataset_form_add_categories(self, categories, tag, tag_pl, institution):
+        data = {
+            'title': "Test add categories",
+            'slug': "test-add-categories",
+            'status': 'published',
+            'organization': institution.id,
+            'notes': "notes",
+            "update_frequency": "weekly",
+            'url': "http://cos.tam.pl",
+            'categories': [category.id for category in categories]
+        }
+        if is_enabled('S18_new_tags.be'):
+            data['tags_pl'] = [tag_pl]
+        else:
+            data['tags'] = [tag]
+
+        form = DatasetForm(data=data)
+        assert form.is_valid()
+        form.save()
+        dataset = Dataset.objects.last()
+        assert all(category in dataset.categories.all() for category in categories)
+
+    def test_metadata_modified_is_not_null(self, institution, tag, tag_pl):
         data = {
             'title': "test metadata_modified title",
             'slug': "Test",
             'notes': 'dataset notes',
-            'organization': valid_organization.id,
+            'organization': institution.id,
             'url': 'http://cos.tam.pl',
             'update_frequency': "weekly",
             'license_id': "other-pd",
             'status': 'published',
             'validity': True,
-            'tags': [valid_tag.id]
         }
+        if is_enabled('S18_new_tags.be'):
+            data['tags_pl'] = [tag_pl.id]
+        else:
+            data['tags'] = [tag.id]
+
         form = DatasetForm(data=data)
         assert form.is_valid()
         form.save()
@@ -184,21 +231,43 @@ class TestDatasetFormValidity:
         assert last_ds.title == data['title']
         assert isinstance(last_ds.modified, datetime.datetime)
 
-    def test_add_valid_category(self, valid_organization, valid_category, valid_tag):
-        form = DatasetForm(data={
+    def test_add_category(self, institution, legacy_category, tag, tag_pl):
+        data = {
             'title': "Test add tag",
             'slug': "test-add-tag",
             'status': 'published',
-            'organization': valid_organization.id,
+            'organization': institution.id,
             'notes': "notes",
             "update_frequency": "weekly",
             'url': "http://cos.tam.pl",
-            'category': valid_category.id,
-            'tags': [valid_tag.id]
-        })
+            'category': legacy_category.id,
+        }
+        if is_enabled('S18_new_tags.be'):
+            data['tags_pl'] = [tag_pl.id]
+        else:
+            data['tags'] = [tag.id]
+
+        form = DatasetForm(data=data)
         form.is_valid()
         assert form.is_valid()
         form.save()
         d = Dataset.objects.last()
         assert d.slug == 'test-add-tag'
-        assert d.category == valid_category
+        assert d.category == legacy_category
+
+    def test_is_valid_upload_image(self, institution, tag, tag_pl, small_image):
+        data = {
+            'title': "Test add tag",
+            'slug': "test-add-tag",
+            'status': 'published',
+            'organization': institution.id,
+            'notes': "notes",
+            "update_frequency": "weekly",
+            'url': "http://cos.tam.pl",
+        }
+        if is_enabled('S18_new_tags.be'):
+            data['tags_pl'] = [tag_pl.id]
+        else:
+            data['tags'] = [tag.id]
+        form = DatasetForm(data=data, files={'image': small_image})
+        assert form.is_valid()

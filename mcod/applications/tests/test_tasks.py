@@ -1,13 +1,13 @@
-import pytest
 import os
+
+from django.utils.translation import get_language
 
 from mcod import settings
 from mcod.applications.tasks import send_application_proposal
 
 
-@pytest.mark.django_db
 class TestApplicationsTaks(object):
-    def test_sending_application_proposal(self, dataset_list):
+    def test_sending_application_proposal(self, datasets):
         image_b64 = [
             "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAAElBMVEUAAAAAAACAgAC9vb3AwAD/",
             "/8AMUnRBAAAAAXRSTlMAQObYZgAAAEhJREFUeNqlzoEJwCAMRFETzv1XbvLlboEGmvIfIh6matd8",
@@ -19,7 +19,7 @@ class TestApplicationsTaks(object):
             notes="Nieszczególnie\nciekawy\nopis\naplikacji",
             applicant_email="anyone@anywhere.any",
             url="http://www.anywhere.any",
-            datasets=[ds.id for ds in dataset_list[:2]],
+            datasets=[ds.id for ds in datasets[:2]],
             image=''.join(image_b64)
         )
         status = send_application_proposal(app_proposal)
@@ -43,9 +43,8 @@ class TestApplicationsTaks(object):
             for key in ('title', 'applicant_email', 'url'):
                 assert app_proposal[key] in plain
                 assert app_proposal[key] in html
-
-            for ds in dataset_list[:2]:
-                ds_api_url = f"{settings.BASE_URL}/dataset/{ds.id}"
+            for ds in datasets[:2]:
+                ds_api_url = f"{settings.BASE_URL}/{get_language()}/dataset/{ds.id}"
                 assert ds_api_url in plain
                 assert ds_api_url in html
 

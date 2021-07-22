@@ -68,8 +68,7 @@ def versioned(method):
 
             @functools.wraps(m)
             def w(self, req, resp, *args, **kwargs):
-                api_ver = kwargs.get('api_ver', req.api_version)
-                _m = method.get_version(api_ver)
+                _m = method.get_version(req.api_version)
                 return _m(self, req, resp, *args, **kwargs)
 
             w.get_version = _get_version

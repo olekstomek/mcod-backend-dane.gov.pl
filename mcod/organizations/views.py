@@ -4,28 +4,27 @@ from functools import partial
 import falcon
 from dal import autocomplete
 from django.apps import apps
+from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404
+from django.views import View
 from elasticsearch_dsl import Q
 
-from mcod.core.api.handlers import SearchHdlr, RetrieveOneHdlr
+from mcod.core.api.handlers import SearchHdlr, RetrieveOneHdlr, SubscriptionSearchHdlr
 from mcod.core.api.hooks import login_optional
-from mcod.core.api.views import BaseView
+from mcod.core.api.views import JsonAPIView
 from mcod.core.versioning import versioned
-from mcod.datasets.depricated.schemas import DatasetsList
-from mcod.datasets.depricated.serializers import DatasetSerializer, DatasetsMeta
 from mcod.datasets.deserializers import DatasetApiSearchRequest
-from mcod.datasets.documents import DatasetsDoc
+from mcod.datasets.documents import DatasetDocumentActive
 from mcod.datasets.serializers import DatasetApiResponse
-from mcod.following.handlers import FollowingSearchHandler
-from mcod.lib.handlers import SearchHandler, RetrieveOneHandler
-from mcod.organizations.depricated.schemas import InstitutionsList
-from mcod.organizations.depricated.serializers import InstitutionsSerializer, InstitutionsMeta
 from mcod.organizations.deserializers import InstitutionApiRequest, InstitutionApiSearchRequest
-from mcod.organizations.documents import InstitutionDoc
+from mcod.organizations.documents import InstitutionDocumentActive
 from mcod.organizations.models import Organization
 from mcod.organizations.serializers import InstitutionApiResponse
 
 
-class InstitutionSearchView(BaseView):
+class InstitutionSearchView(JsonAPIView):
+    @falcon.before(login_optional)
     @versioned
     def on_get(self, request, response, *args, **kwargs):
         """
@@ -34,26 +33,18 @@ class InstitutionSearchView(BaseView):
         """
         self.handle(request, response, self.GET, *args, **kwargs)
 
+    @falcon.before(login_optional)
     @on_get.version('1.0')
     def on_get(self, request, response, *args, **kwargs):
-        self.handle(request, response, self.GET_1_0, *args, **kwargs)
+        self.handle(request, response, self.GET, *args, **kwargs)
 
-    class GET(SearchHdlr):
+    class GET(SubscriptionSearchHdlr):
         deserializer_schema = partial(InstitutionApiSearchRequest, many=False)
         serializer_schema = partial(InstitutionApiResponse, many=True)
-        search_document = InstitutionDoc()
-
-        def _queryset_extra(self, queryset, **kwargs):
-            return queryset.filter('term', status=Organization.STATUS.published)
-
-    class GET_1_0(SearchHandler):
-        meta_serializer = InstitutionsMeta()
-        deserializer_schema = InstitutionsList()
-        serializer_schema = InstitutionsSerializer(many=True)
-        search_document = InstitutionDoc()
+        search_document = InstitutionDocumentActive()
 
 
-class InstitutionApiView(BaseView):
+class InstitutionApiView(JsonAPIView):
     @falcon.before(login_optional)
     @versioned
     def on_get(self, request, response, *args, **kwargs):
@@ -66,36 +57,16 @@ class InstitutionApiView(BaseView):
     @falcon.before(login_optional)
     @on_get.version('1.0')
     def on_get(self, request, response, *args, **kwargs):
-        self.handle(request, response, self.GET_1_0, *args, **kwargs)
+        self.handle(request, response, self.GET, *args, **kwargs)
 
     class GET(RetrieveOneHdlr):
         deserializer_schema = partial(InstitutionApiRequest, many=False)
         database_model = apps.get_model('organizations', 'Organization')
         serializer_schema = partial(InstitutionApiResponse, many=False)
-
-        def _get_instance(self, id, *args, **kwargs):
-            instance = getattr(self, '_cached_instance', None)
-            if not instance:
-                model = self.database_model
-                try:
-                    self._cached_instance = model.objects.get(pk=id, status='published')
-                except model.DoesNotExist:
-                    raise falcon.HTTPNotFound
-            return self._cached_instance
-
-    class GET_1_0(RetrieveOneHandler):
-        database_model = apps.get_model('organizations', 'Organization')
-        serializer_schema = InstitutionsSerializer(many=False, include_data=('datasets',))
-
-        def _clean(self, request, id, *args, **kwargs):
-            model = self.database_model
-            try:
-                return model.objects.get(pk=id, status="published")
-            except model.DoesNotExist:
-                raise falcon.HTTPNotFound
+        include_default = ['dataset']
 
 
-class InstitutionDatasetSearchApiView(BaseView):
+class InstitutionDatasetSearchApiView(JsonAPIView):
     @falcon.before(login_optional)
     @versioned
     def on_get(self, request, response, *args, **kwargs):
@@ -108,31 +79,18 @@ class InstitutionDatasetSearchApiView(BaseView):
     @falcon.before(login_optional)
     @on_get.version('1.0')
     def on_get(self, request, response, *args, **kwargs):
-        self.handle(request, response, self.GET_1_0, *args, **kwargs)
+        self.handle(request, response, self.GET, *args, **kwargs)
 
     class GET(SearchHdlr):
         deserializer_schema = partial(DatasetApiSearchRequest, many=False)
         serializer_schema = partial(DatasetApiResponse, many=True)
-        search_document = DatasetsDoc()
+        search_document = DatasetDocumentActive()
 
         def _queryset_extra(self, queryset, id=None, **kwargs):
             if id:
                 queryset = queryset.query("nested", path="institution",
                                           query=Q("term", **{'institution.id': id}))
             return queryset.filter('term', status='published')
-
-    class GET_1_0(FollowingSearchHandler):
-        meta_serializer = DatasetsMeta()
-        deserializer_schema = DatasetsList()
-        serializer_schema = DatasetSerializer(many=True)
-        search_document = DatasetsDoc()
-
-        def _queryset(self, cleaned, *args, **kwargs):
-            qs = super()._queryset(cleaned, *args, **kwargs)
-            if 'id' in kwargs:
-                qs = qs.query("nested", path="institution",
-                              query=Q("term", **{'institution.id': kwargs['id']}))
-            return qs
 
 
 class InstitutionAutocompleteAdminView(autocomplete.Select2QuerySetView):
@@ -152,3 +110,15 @@ class InstitutionAutocompleteAdminView(autocomplete.Select2QuerySetView):
             qs = qs.filter(title__icontains=self.q)
 
         return qs
+
+
+class InstitutionTypeAdminView(PermissionRequiredMixin, View):
+    http_method_names = ['get']
+
+    def has_permission(self):
+        return self.request.user.is_staff or self.request.user.is_superuser
+
+    def get(self, request, *args, **kwargs):
+        organization_id = request.GET.get('organization_id')
+        organization = get_object_or_404(Organization, id=organization_id)
+        return JsonResponse({'institution_type': organization.institution_type})

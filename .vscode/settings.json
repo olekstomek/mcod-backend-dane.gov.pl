@@ -1,0 +1,28 @@
+{
+  //"files.autoSave": "afterDelay",
+  "python.pythonPath": "venv/bin/python",
+  "python.linting.lintOnSave": true,
+  "python.linting.pylintEnabled": false,
+  "python.linting.pylintUseMinimalCheckers": false,
+  "python.linting.flake8Enabled": true,
+  "python.linting.flake8Args": [
+    "--max-line-length=130",
+    "--max-complexity=10",
+    "--exclude=.git,__pycache__,.tox,.eggs,*.egg,mcod/settings/*.py,migrations/*.py"
+  ],
+  "python.testing.unittestEnabled": false,
+  "python.testing.nosetestsEnabled": false,
+  "python.testing.pytestEnabled": true,
+  "python.testing.pytestArgs": [
+    "mcod",
+    "--reuse-db",
+    "--ds=mcod.settings.test",
+    "-n5"
+  ],
+  "python.terminal.activateEnvInCurrentTerminal": true,
+  "debug.console.closeOnEnd": true,
+  "debug.console.fontSize": 10,
+  "debug.inlineValues": true,
+  "editor.formatOnSave": true,
+  "jupyter.jupyterServerType": "local"
+}

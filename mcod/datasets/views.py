@@ -1,141 +1,138 @@
 # -*- coding: utf-8 -*-
-from collections import namedtuple
 from functools import partial
-from uuid import uuid4
 
 import falcon
 from dal import autocomplete
 from django.apps import apps
-from elasticsearch_dsl import Q
+from elasticsearch_dsl import Q, A
+from django.conf import settings
+from django.utils.translation import get_language
 
-from mcod.core.api.handlers import SearchHdlr, RetrieveOneHdlr, CreateOneHdlr
+from mcod.core.api.handlers import (
+    BaseHdlr, SearchHdlr, RetrieveOneHdlr, CreateOneHdlr,
+    SubscriptionSearchHdlr, ShaclMixin
+)
 from mcod.core.api.hooks import login_optional
-from mcod.core.api.views import BaseView
+from mcod.core.api.views import JsonAPIView, RDFView, BaseView
 from mcod.core.versioning import versioned
-from mcod.datasets.depricated.schemas import DatasetsList
-from mcod.datasets.depricated.serializers import DatasetSerializer, DatasetsMeta
-from mcod.datasets.deserializers import DatasetApiRequest, DatasetApiSearchRequest, CreateCommentRequest
-from mcod.datasets.documents import DatasetsDoc
+from mcod.datasets.deserializers import (
+    DatasetApiRequest,
+    DatasetApiSearchRequest,
+    CreateCommentRequest,
+    CatalogRdfApiRequest
+)
+from mcod.datasets.documents import DatasetDocumentActive
+from mcod.datasets.handlers import DatasetResourcesMetadataViewHandler
 from mcod.datasets.models import Dataset
-from mcod.datasets.serializers import DatasetApiResponse, CommentApiResponse
-from mcod.datasets.tasks import send_dataset_comment
-from mcod.following.handlers import RetrieveOneFollowHandler, FollowingSearchHandler
-from mcod.lib.handlers import SearchHandler
-from mcod.resources.depricated.schemas import ResourcesList
-from mcod.resources.depricated.serializers import ResourceSerializer, ResourcesMeta
+from mcod.datasets.serializers import DatasetApiResponse, CommentApiResponse, DatasetRDFResponseSchema
 from mcod.resources.deserializers import ResourceApiSearchRequest
-from mcod.resources.documents import ResourceDoc
+from mcod.resources.documents import ResourceDocumentActive
 from mcod.resources.serializers import ResourceApiResponse
 
 
-class DatasetSearchView(BaseView):
+class DatasetSearchView(JsonAPIView):
     @falcon.before(login_optional)
     @versioned
     def on_get(self, request, response, *args, **kwargs):
         """
         ---
         doc_template: docs/datasets/datasets_view.yml
-
         """
         self.handle(request, response, self.GET, *args, **kwargs)
 
     @falcon.before(login_optional)
     @on_get.version('1.0')
     def on_get(self, request, response, *args, **kwargs):
-        self.handle(request, response, self.GET_1_0, *args, **kwargs)
+        self.handle(request, response, self.GET, *args, **kwargs)
 
-    class GET_1_0(FollowingSearchHandler):
-        meta_serializer = DatasetsMeta()
-        deserializer_schema = DatasetsList()
-        serializer_schema = DatasetSerializer(many=True, include_data=('institution',))
-        search_document = DatasetsDoc()
-
-        def _queryset(self, cleaned, *args, **kwargs):
-            qs = super()._queryset(cleaned, *args, **kwargs)
-            return qs.filter('match', status=Dataset.STATUS.published)
-
-    class GET(SearchHdlr):
+    class GET(SubscriptionSearchHdlr):
         deserializer_schema = partial(DatasetApiSearchRequest, many=False)
         serializer_schema = partial(DatasetApiResponse, many=True)
-        search_document = DatasetsDoc()
-
-        def _queryset_extra(self, queryset, **kwargs):
-            return queryset.filter('match', status=Dataset.STATUS.published)
+        search_document = DatasetDocumentActive()
+        include_default = ['institution']
 
 
-class DatasetApiView(BaseView):
+class DatasetApiView(JsonAPIView):
     @versioned
     @falcon.before(login_optional)
     def on_get(self, request, response, *args, **kwargs):
         """
         ---
         doc_template: docs/datasets/dataset_view.yml
-
         """
         self.handle(request, response, self.GET, *args, **kwargs)
 
     @falcon.before(login_optional)
     @on_get.version('1.0')
     def on_get(self, request, response, *args, **kwargs):
-        self.handle(request, response, self.GET_1_0, *args, **kwargs)
+        self.handle(request, response, self.GET, *args, **kwargs)
 
     class GET(RetrieveOneHdlr):
         deserializer_schema = partial(DatasetApiRequest)
         database_model = apps.get_model('datasets', 'Dataset')
         serializer_schema = partial(DatasetApiResponse, many=False)
+        include_default = ['institution', 'resource']
 
-        def _get_instance(self, id, *args, **kwargs):
-            instance = getattr(self, '_cached_instance', None)
-            if not instance:
-                model = self.database_model
-                try:
-                    self._cached_instance = model.objects.get(pk=id, status=Dataset.STATUS.published)
-                except model.DoesNotExist:
-                    raise falcon.HTTPNotFound
-            return self._cached_instance
 
-    class GET_1_0(RetrieveOneFollowHandler):
+class CatalogRDFView(RDFView):
+    def on_get(self, request, response, *args, **kwargs):
+        self.handle(request, response, self.GET, *args, **kwargs)
+
+    class GET(ShaclMixin, SearchHdlr):
+        deserializer_schema = partial(CatalogRdfApiRequest, many=False)
+        serializer_schema = partial(DatasetRDFResponseSchema, many=True)
+        search_document = DatasetDocumentActive()
+
+        def _queryset_extra(self, queryset, *args, **kwargs):
+            queryset.aggs.metric('catalog_modified', A('max', field='last_modified_resource'))
+            return queryset
+
+        def serialize(self, *args, **kwargs):
+            cleaned = getattr(self.request.context, 'cleaned_data', {})
+            if self.use_rdf_db():
+                store = self.get_sparql_store()
+                return store.get_catalog(**cleaned)
+            result = self._get_data(cleaned, *args, **kwargs)
+            self.serializer.context['datasource'] = 'es'
+            return self.serializer.dump(result)
+
+
+class DatasetRDFView(RDFView):
+    def on_get(self, request, response, *args, **kwargs):
+        self.handle(request, response, self.GET, *args, **kwargs)
+
+    class GET(ShaclMixin, RetrieveOneHdlr):
+        deserializer_schema = partial(DatasetApiRequest)
         database_model = apps.get_model('datasets', 'Dataset')
-        serializer_schema = DatasetSerializer(many=False, include_data=('institution', 'resources'))
+        serializer_schema = partial(DatasetRDFResponseSchema, many=False)
 
-        def _clean(self, request, id, *args, **kwargs):
-            if hasattr(self, 'resource_clean'):
-                obj = self.resource_clean(request, id, *args, **kwargs)
-            else:
-                obj = super()._clean(request, id, *args, **kwargs)
-
-            res = {
-                'resource': obj,
-                'follower': request.user
-            }
-            return res
-
-        def resource_clean(self, request, id, *args, **kwargs):
-            model = self.database_model
-            try:
-                return model.objects.get(pk=id, status=Dataset.STATUS.published)
-            except model.DoesNotExist:
-                raise falcon.HTTPNotFound
+        def serialize(self, *args, **kwargs):
+            if self.use_rdf_db():
+                store = self.get_sparql_store()
+                return store.get_dataset_graph(**kwargs)
+            cleaned = getattr(self.request.context, 'cleaned_data', {})
+            dataset = self._get_data(cleaned, *args, **kwargs)
+            self.serializer.context['datasource'] = 'db'
+            return self.serializer.dump(dataset)
 
 
-class DatasetResourceSearchApiView(BaseView):
+class DatasetResourceSearchApiView(JsonAPIView):
     @versioned
     def on_get(self, request, response, *args, **kwargs):
         """
         ---
         doc_template: docs/datasets/dataset_resources_view.yml
-
         """
         self.handle(request, response, self.GET, *args, **kwargs)
 
     @on_get.version('1.0')
     def on_get(self, request, response, *args, **kwargs):
-        self.handle(request, response, self.GET_1_0, *args, **kwargs)
+        self.handle(request, response, self.GET, *args, **kwargs)
 
     class GET(SearchHdlr):
         deserializer_schema = partial(ResourceApiSearchRequest, many=False)
         serializer_schema = partial(ResourceApiResponse, many=True)
-        search_document = ResourceDoc()
+        search_document = ResourceDocumentActive()
 
         def _queryset_extra(self, queryset, id=None, **kwargs):
             if id:
@@ -143,38 +140,22 @@ class DatasetResourceSearchApiView(BaseView):
                                           query=Q("term", **{'dataset.id': id}))
             return queryset.filter('term', status=Dataset.STATUS.published)
 
-    class GET_1_0(SearchHandler):
-        meta_serializer = ResourcesMeta()
-        deserializer_schema = ResourcesList()
-        serializer_schema = ResourceSerializer(many=True)
-        search_document = ResourceDoc()
 
-        def _queryset(self, cleaned, *args, **kwargs):
-            qs = super()._queryset(cleaned, *args, **kwargs)
-            if 'id' in kwargs:
-                qs = qs.query(
-                    "nested", path="dataset",
-                    query=Q("term", **{'dataset.id': kwargs['id']})
-                ).filter('term', status=Dataset.STATUS.published)
-            return qs
-
-
-class DatasetCommentSearchApiView(BaseView):
+class DatasetCommentsView(JsonAPIView):
     def on_post(self, request, response, *args, **kwargs):
         self.handle_post(request, response, self.POST, *args, **kwargs)
 
     class POST(CreateOneHdlr):
-        deserializer_schema = partial(CreateCommentRequest)
+        deserializer_schema = CreateCommentRequest
         serializer_schema = partial(CommentApiResponse, many=False)
         database_model = apps.get_model('datasets', 'Dataset')
 
         def _get_resource(self, id, *args, **kwargs):
             instance = getattr(self, '_cached_resource', None)
             if not instance:
-                model = self.database_model
                 try:
                     self._cached_resource = self.database_model.objects.get(pk=id, status="published")
-                except model.DoesNotExist:
+                except self.database_model.DoesNotExist:
                     raise falcon.HTTPNotFound
             return self._cached_resource
 
@@ -184,14 +165,9 @@ class DatasetCommentSearchApiView(BaseView):
             return cleaned
 
         def _get_data(self, cleaned, id, *args, **kwargs):
-            attrs = cleaned['data']['attributes']
-            send_dataset_comment.s(id, attrs['comment']).apply_async(countdown=1)
-            result = namedtuple('Comment', ['id', 'comment', 'dataset'])(
-                str(uuid4()),
-                attrs['comment'],
-                self._get_resource(id, *args, **kwargs)
-            )
-            return result
+            data = cleaned['data']['attributes']
+            model = apps.get_model('suggestions.DatasetComment')
+            self.response.context.data = model.objects.create(dataset_id=id, **data)
 
 
 class DatasetAutocompleteAdminView(autocomplete.Select2QuerySetView):
@@ -211,3 +187,31 @@ class DatasetAutocompleteAdminView(autocomplete.Select2QuerySetView):
             qs = qs.filter(title__icontains=self.q)
 
         return qs
+
+
+class DatasetResourcesMetadataCsvView(BaseView):
+
+    def on_get(self, request, response, *args, **kwargs):
+        self.handle(request, response, self.GET, *args, **kwargs)
+
+    class GET(DatasetResourcesMetadataViewHandler):
+
+        def _get_queryset(self, cleaned, *args, **kwargs):
+            return self.database_model.objects.filter(dataset_id=kwargs['id'])
+
+    def on_get_catalog(self, request, response, *args, **kwargs):
+        self.handle(request, response, self.GETCatalog, *args, **kwargs)
+
+    class GETCatalog(BaseHdlr):
+
+        def serialize(self, *args, **kwargs):
+            try:
+                with open(f'{settings.DATASET_CSV_CATALOG_MEDIA_ROOT}/{get_language()}/katalog.csv', 'rb') as f:
+                    catalog_file = f.read()
+            except FileNotFoundError:
+                raise falcon.HTTPNotFound
+            self.response.downloadable_as = 'katalog.csv'
+            return catalog_file
+
+    def set_content_type(self, resp, **kwargs):
+        return settings.EXPORT_FORMAT_TO_MIMETYPE['csv']

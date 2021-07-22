@@ -4,7 +4,7 @@ import json
 import falcon
 from django.core.exceptions import ImproperlyConfigured
 from django.db.models import Model
-from elasticsearch_dsl.document import DocType
+from elasticsearch_dsl.document import Document
 
 from mcod.lib.encoders import DateTimeToISOEncoder
 
@@ -100,7 +100,7 @@ class UpdateView(BaseApiView):
 
 class SearchView(RetrieveView):
     def verify_GET_class(self):
-        if not (hasattr(self.GET, 'search_document') and isinstance(self.GET.search_document, DocType)):
+        if not (hasattr(self.GET, 'search_document') and isinstance(self.GET.search_document, Document)):
             raise ImproperlyConfigured(
                 'Wrong or missing document object'
             )

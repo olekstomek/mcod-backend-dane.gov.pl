@@ -6,31 +6,42 @@ from django.contrib.auth import get_user_model
 from django.contrib.postgres.indexes import GinIndex
 from django.db import models
 from django.dispatch import receiver
-from django.urls import reverse, NoReverseMatch
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 from model_utils import FieldTracker
-from model_utils.managers import SoftDeletableManager
 from modeltrans.fields import TranslationField
 
 from mcod.core import signals as core_signals
 from mcod.core import storages
 from mcod.core.api.search import signals as search_signals
-from mcod.core.db.managers import DeletedManager
-from mcod.core.db.models import ExtendedModel, update_watcher
+from mcod.core.api.rdf import signals as rdf_signals
+from mcod.core.db.models import ExtendedModel, update_watcher, TrashModelBase
+from mcod.organizations.managers import OrganizationManager, OrganizationDeletedManager
 from mcod.organizations.signals import remove_related_datasets
 
+
 User = get_user_model()
-INSTITUTION_TYPE_CHOICES = (('local', _('Local goverment')),
-                            ('state', _('Public goverment')),
-                            ('other', _('Other')),)
 
 signal_logger = logging.getLogger('signals')
 
 
 class Organization(ExtendedModel):
+    INSTITUTION_TYPE_PRIVATE = 'private'
+    INSTITUTION_TYPE_CHOICES = (
+        ('local', _('Local government')),
+        ('state', _('Public government')),
+        (INSTITUTION_TYPE_PRIVATE, _('Private entities')),
+        ('other', _('Other')),
+    )
     SIGNALS_MAP = {
-        'removed': (remove_related_datasets, search_signals.remove_document_with_related, core_signals.notify_removed),
+        'updated': (rdf_signals.update_graph_with_related,
+                    search_signals.update_document_with_related, core_signals.notify_updated),
+        'published': (rdf_signals.create_graph,
+                      search_signals.update_document_with_related, core_signals.notify_published),
+        'restored': (rdf_signals.create_graph,
+                     search_signals.update_document_with_related, core_signals.notify_restored),
+        'removed': (rdf_signals.delete_graph, remove_related_datasets,
+                    search_signals.remove_document_with_related, core_signals.notify_removed),
     }
 
     title = models.CharField(max_length=100, verbose_name=_('Title'))
@@ -60,6 +71,7 @@ class Organization(ExtendedModel):
     tel = models.CharField(max_length=50, null=True, verbose_name=_("Phone"))
     tel_internal = models.CharField(max_length=20, null=True, blank=True, verbose_name=_('int.'))
     website = models.CharField(max_length=200, null=True, verbose_name=_("Website"))
+    abbreviation = models.CharField(max_length=30, null=True, verbose_name=_("Abbreviation"))
 
     i18n = TranslationField(fields=('title', 'description', 'slug'))
 
@@ -87,20 +99,21 @@ class Organization(ExtendedModel):
             return self.title
         return self.slug
 
-    def get_url_path(self):
-        if self.id:
-            try:
-                return reverse("admin:applications_application_change", kwargs={"object_id": self.id})
-            except NoReverseMatch:
-                return ""
-        return ""
+    @property
+    def frontend_url(self):
+        return f'/institution/{self.ident}'
+
+    @property
+    def frontend_absolute_url(self):
+        return self._get_absolute_url(self.frontend_url)
 
     @property
     def image_url(self):
-        try:
-            return self.image.url
-        except ValueError:
-            return ''
+        return self.image.url if self.image else ''
+
+    @property
+    def image_absolute_url(self):
+        return self._get_absolute_url(self.image_url, use_lang=False) if self.image_url else ''
 
     @property
     def short_description(self):
@@ -110,8 +123,21 @@ class Organization(ExtendedModel):
         return clean_text
 
     @property
-    def api_url(self):
-        return '/institutions/{}'.format(self.id)
+    def ckan_datasources(self):
+        return list(set([x.source for x in self.published_datasets if x.source and x.source.is_ckan]))
+
+    @property
+    def datasources(self):
+        return list(set([x.source for x in self.published_datasets if x.source]))
+
+    @property
+    def sources(self):
+        _sources = [{'title': x.title, 'url': x.url, 'source_type': x.source_type} for x in self.datasources]
+        return sorted(_sources, key=lambda x: x['title'])
+
+    @property
+    def api_url_base(self):
+        return 'institutions'
 
     @property
     def description_html(self):
@@ -128,6 +154,14 @@ class Organization(ExtendedModel):
     @property
     def published_datasets(self):
         return self.datasets.filter(status='published')
+
+    @property
+    def published_datasets_count(self):
+        return self.published_datasets.count()
+
+    @property
+    def published_resources_count(self):
+        return sum([x.published_resources_count for x in self.published_datasets])
 
     @property
     def address_display(self):
@@ -165,8 +199,8 @@ class Organization(ExtendedModel):
         return _(' int. ').join(i.strip() for i in [fax, self.fax_internal] if i)
 
     raw = models.Manager()
-    objects = SoftDeletableManager()
-    deleted = DeletedManager()
+    objects = OrganizationManager()
+    deleted = OrganizationDeletedManager()
 
     tracker = FieldTracker()
     slugify_field = 'title'
@@ -183,7 +217,7 @@ class Organization(ExtendedModel):
 
 @receiver(remove_related_datasets, sender=Organization)
 def remove_datasets_after_organization_removed(sender, instance, *args, **kwargs):
-    signal_logger.info(
+    signal_logger.debug(
         'Removing related datasets',
         extra={
             'sender': '{}.{}'.format(sender._meta.model_name, sender._meta.object_name),
@@ -195,7 +229,8 @@ def remove_datasets_after_organization_removed(sender, instance, *args, **kwargs
     )
 
     if instance.is_removed:
-        instance.datasets.all().delete()
+        for dataset in instance.datasets.all():
+            dataset.delete()
 
     elif instance.status == sender.STATUS.draft:
         for dataset in instance.datasets.all():
@@ -203,7 +238,7 @@ def remove_datasets_after_organization_removed(sender, instance, *args, **kwargs
             dataset.save()
 
 
-class OrganizationTrash(Organization):
+class OrganizationTrash(Organization, metaclass=TrashModelBase):
     class Meta:
         proxy = True
         verbose_name = _("Trash")

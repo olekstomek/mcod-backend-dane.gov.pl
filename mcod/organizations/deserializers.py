@@ -4,13 +4,29 @@ from mcod.core.api.search import fields as search_fields
 
 
 class InstitutionApiAggregations(ExtSchema):
-    term = search_fields.TermsAggregationField(
+    date_histogram = search_fields.DateHistogramAggregationField(
+        aggs={
+            'by_modified': {
+                'field': 'modified',
+                'size': 500
+            },
+            'by_created': {
+                'field': 'created',
+                'size': 500
+            },
+            'by_verified': {
+                'field': 'verified',
+                'size': 500
+            }
+        }
+    )
+    terms = search_fields.TermsAggregationField(
         aggs={
             'by_city': {
                 'field': 'city',
                 'size': 500,
             },
-            'by_instytution_type': {
+            'by_institution_type': {
                 'field': 'institution_type',
                 'size': 10
             }
@@ -59,6 +75,7 @@ class InstitutionApiSearchRequest(ListingSchema):
                                       )
     org_type = search_fields.FilterField(StringTermSchema,
                                          data_key='type',
+                                         query_field='institution_type',
                                          doc_template='docs/generic/fields/string_term_field.html',
                                          doc_base_url='/institutions',
                                          doc_field_name='type'
@@ -66,7 +83,7 @@ class InstitutionApiSearchRequest(ListingSchema):
     tel = search_fields.FilterField(StringTermSchema,
                                     doc_template='docs/generic/fields/string_term_field.html',
                                     doc_base_url='/institutions',
-                                    doc_field_name='tel'
+                                    doc_field_name='tel',
                                     )
     fax = search_fields.FilterField(StringTermSchema,
                                     doc_template='docs/generic/fields/string_term_field.html',
@@ -96,7 +113,7 @@ class InstitutionApiSearchRequest(ListingSchema):
                                             )
 
     q = search_fields.MultiMatchField(
-        query_fields=['title^4', 'description^2'],
+        query_fields={'title': ['title^4'], 'description': ['description^2']},
         nested_query_fields={'datasets': ['title', ]},
         doc_template='docs/generic/fields/query_field.html',
         doc_base_url='/institutions',
@@ -110,11 +127,14 @@ class InstitutionApiSearchRequest(ListingSchema):
             'modified': 'modified',
             'created': 'created'
         },
-        doc_template='docs/generic/fields/sort_field.html',
         doc_base_url='/institutions',
-        doc_field_name='sort'
     )
     facet = search_fields.FacetField(InstitutionApiAggregations)
+    include = search_fields.StringField(
+        data_key='include',
+        description='Allow the client to customize which related resources should be returned in included section.',
+        allowEmptyValue=True,
+    )
 
     class Meta:
         strict = True
@@ -124,6 +144,11 @@ class InstitutionApiSearchRequest(ListingSchema):
 class InstitutionApiRequest(CommonSchema):
     id = search_fields.NumberField(
         _in='path', description='Institution ID', example='44', required=True
+    )
+    include = search_fields.StringField(
+        data_key='include',
+        description='Allow the client to customize which related resources should be returned in included section.',
+        allowEmptyValue=True,
     )
 
     class Meta:

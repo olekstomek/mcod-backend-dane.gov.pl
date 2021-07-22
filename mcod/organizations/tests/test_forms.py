@@ -69,7 +69,6 @@ minimal = change_namedlist(empty, {
 validity_false = change_namedlist(minimal, {'validity': False})
 
 
-@pytest.mark.django_db
 class TestOrganizationFormValidity:
     """
     * - Not null fields:
@@ -221,7 +220,7 @@ class TestOrganizationFormValidity:
         last_ds = Organization.objects.last()
         assert last_ds.title == data['title']
 
-    def test_save_add_users_to_existing_organization(self, valid_organization, editor_user):
+    def test_save_add_users_to_existing_organization(self, institution, active_editor):
         data = {
             'title': "Organization title",
             'slug': "organization-title-2",
@@ -239,17 +238,17 @@ class TestOrganizationFormValidity:
             'regon': "123456785",
             'website': "http://test.pl",
             'status': 'draft',
-            'users': [editor_user.id, ]
+            'users': [active_editor.id, ]
         }
 
-        assert editor_user not in valid_organization.users.all()
-        form = OrganizationForm(data=data, instance=valid_organization)
+        assert active_editor not in institution.users.all()
+        form = OrganizationForm(data=data, instance=institution)
         assert form.instance.pk
         assert form.is_valid()
         saved_org = form.save(commit=False)
-        assert editor_user in saved_org.users.all()
+        assert active_editor in saved_org.users.all()
 
-    def test_create_organization_and_add_users(self, editor_user):
+    def test_create_organization_and_add_users(self, active_editor):
         data = {
             'title': "Organization title",
             'slug': "organization-title-10",
@@ -267,15 +266,15 @@ class TestOrganizationFormValidity:
             'regon': "123456785",
             'website': "http://test.pl",
             'status': 'draft',
-            'users': [editor_user.id, ]
+            'users': [active_editor.id, ]
         }
 
         form = OrganizationForm(data=data)
         assert form.is_valid()
         saved_org = form.save()
-        assert editor_user in saved_org.users.all()
+        assert active_editor in saved_org.users.all()
 
-    def test_add_users_to_unsaved_organization(self, editor_user):
+    def test_add_users_to_unsaved_organization(self, active_editor):
         data = {
             'title': "Organization title",
             'slug': "organization-title",
@@ -293,7 +292,7 @@ class TestOrganizationFormValidity:
             'regon': "123456785",
             'website': "http://test.pl",
             'status': 'draft',
-            'users': [editor_user.id, ]
+            'users': [active_editor.id, ]
         }
 
         form = OrganizationForm(data=data)

@@ -1,193 +1,199 @@
 import pytest
-from falcon import HTTP_OK, HTTP_CREATED
-from falcon import testing
+from pytest_bdd import scenarios
+from falcon import HTTP_OK
+from django.utils.translation import gettext_lazy as _
 
-from mcod.api import app
-from mcod.core.tests.helpers.elasticsearch import ElasticCleanHelper
 from mcod.datasets.models import Dataset
-from mcod.resources.models import Resource
+from mcod.datasets.serializers import _UPDATE_FREQUENCY
+from mcod.unleash import is_enabled
 
 
-@pytest.fixture
-def client14():
-    return testing.TestClient(app, headers={
-        'X-API-VERSION': '1.4',
-        'Accept-Language': 'pl'
-    })
+scenarios('features/dataset_comment.feature')
+scenarios('features/dataset_details_admin.feature')
+scenarios('features/dataset_resources_list_api.feature')
+scenarios('features/datasets_list_admin.feature')
+scenarios('features/datasets_list_api.feature', example_converters=dict(field_value=int))
+if is_enabled('S23_csv_metadata.be'):
+    scenarios('features/dataset_resources_download_csv_api.feature')
 
 
-@pytest.mark.django_db
-def test_dates_in_list_views_api14(valid_dataset, valid_resource, client14):
+@pytest.mark.elasticsearch
+def test_dates_in_list_views_api14(dataset, client14):
     resp = client14.simulate_get('/datasets')
     assert HTTP_OK == resp.status
-    assert valid_dataset.id
+    assert dataset.id
     for d_name in ['created', 'modified', 'verified']:
         assert d_name in resp.json['data'][0]['attributes']
 
 
-@pytest.mark.django_db
-def test_dates_in_detail_views_api14(valid_dataset, client14):
-    _rid = valid_dataset.id
+@pytest.mark.elasticsearch
+def test_dates_in_detail_views_api14(dataset, client14):
+    _rid = dataset.id
     resp = client14.simulate_get('/datasets/{}/'.format(_rid))
     assert HTTP_OK == resp.status
     for d_name in ['created', 'modified', 'verified']:
         assert d_name in resp.json['data']['attributes']
 
-    assert resp.json['data']['attributes']['modified'] == valid_dataset.modified.strftime("%Y-%m-%dT%H:%M:%SZ")
-    assert resp.json['data']['attributes']['created'] == valid_dataset.created.strftime("%Y-%m-%dT%H:%M:%SZ")
-    assert resp.json['data']['attributes']['verified'] == valid_dataset.created.strftime("%Y-%m-%dT%H:%M:%SZ")
+    assert resp.json['data']['attributes']['modified'] == dataset.modified.strftime("%Y-%m-%dT%H:%M:%SZ")
+    assert resp.json['data']['attributes']['created'] == dataset.created.strftime("%Y-%m-%dT%H:%M:%SZ")
+    assert resp.json['data']['attributes']['verified'] == dataset.created.strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
-@pytest.mark.django_db
-def test_data_date_with_resource_views_api14(valid_dataset, valid_resource, client14):
-    id_ = valid_dataset.id
-    valid_resource.revalidate()
+@pytest.mark.elasticsearch
+def test_data_date_with_resource_views_api14(dataset_with_resources, client14):
+    dataset = dataset_with_resources
+    resource = dataset.resources.first()
+    id_ = dataset.id
+    resource.revalidate()
+    assert set(dataset.types) == set([r.type for r in dataset.resources.all()])
 
     resp = client14.simulate_get('/datasets/{}/'.format(id_))
     assert HTTP_OK == resp.status
     for d_name in ['created', 'modified', 'verified']:
         assert d_name in resp.json['data']['attributes']
 
-    rs = Resource.objects.get(pk=valid_resource.id)
-    assert resp.json['data']['attributes']['modified'] == valid_dataset.modified.strftime("%Y-%m-%dT%H:%M:%SZ")
-    assert resp.json['data']['attributes']['created'] == valid_dataset.created.strftime("%Y-%m-%dT%H:%M:%SZ")
-    assert resp.json['data']['attributes']['verified'] == rs.verified.strftime("%Y-%m-%dT%H:%M:%SZ")
+    assert resp.json['data']['attributes']['modified'] == dataset.modified.strftime("%Y-%m-%dT%H:%M:%SZ")
+    assert resp.json['data']['attributes']['created'] == dataset.created.strftime("%Y-%m-%dT%H:%M:%SZ")
+    assert resp.json['data']['attributes']['verified'] == dataset.resources.last().created.strftime(
+        "%Y-%m-%dT%H:%M:%SZ")
 
 
-@pytest.mark.django_db
-def test_dates_in_list_views_api14_in_path(valid_dataset, valid_resource, client14):
+@pytest.mark.elasticsearch
+def test_dates_in_list_views_api14_in_path(dataset, resource, client14):
     resp = client14.simulate_get('/1.4/datasets/')
     assert HTTP_OK == resp.status
-    assert valid_dataset.id
+    assert dataset.id
     for d_name in ['created', 'modified', 'verified']:
         assert d_name in resp.json['data'][0]['attributes']
 
 
-@pytest.mark.django_db
-def test_dates_in_detail_views_api14_in_path(valid_dataset, client14):
-    _rid = valid_dataset.id
+@pytest.mark.elasticsearch
+def test_dates_in_detail_views_api14_in_path(dataset, client14):
+    _rid = dataset.id
     resp = client14.simulate_get('/1.4/datasets/{}/'.format(_rid))
     assert HTTP_OK == resp.status
     for d_name in ['created', 'modified', 'verified']:
         assert d_name in resp.json['data']['attributes']
 
-    assert resp.json['data']['attributes']['modified'] == valid_dataset.modified.strftime("%Y-%m-%dT%H:%M:%SZ")
-    assert resp.json['data']['attributes']['created'] == valid_dataset.created.strftime("%Y-%m-%dT%H:%M:%SZ")
-    assert resp.json['data']['attributes']['verified'] == valid_dataset.verified.strftime("%Y-%m-%dT%H:%M:%SZ")
+    assert resp.json['data']['attributes']['modified'] == dataset.modified.strftime("%Y-%m-%dT%H:%M:%SZ")
+    assert resp.json['data']['attributes']['created'] == dataset.created.strftime("%Y-%m-%dT%H:%M:%SZ")
+    assert resp.json['data']['attributes']['verified'] == dataset.verified.strftime("%Y-%m-%dT%H:%M:%SZ")
     assert resp.json.get("jsonapi")
 
 
-@pytest.mark.django_db
-def test_datasets_dates_in_list_views(valid_dataset, client):
+@pytest.mark.elasticsearch
+def test_datasets_dates_in_list_views(dataset, client):
     resp = client.simulate_get('/datasets/')
     assert HTTP_OK == resp.status
     for d_name in ['created', 'modified', 'verified']:
         assert d_name in resp.json['data'][0]['attributes']
 
 
-@pytest.mark.django_db
-def test_dataset_dates_in_detail_views(valid_dataset, valid_resource, client):
-    _id = valid_dataset.id
-    valid_resource.revalidate()
+@pytest.mark.elasticsearch
+def test_dataset_dates_in_detail_views(dataset, resource, client):
+    _id = dataset.id
+    resource.revalidate()
     resp = client.simulate_get('/datasets/{}/'.format(_id))
 
     assert HTTP_OK == resp.status
     for d_name in ['created', 'modified', 'verified']:
         assert d_name in resp.json['data']['attributes']
 
-    ds = Dataset.objects.get(pk=valid_dataset.id)
-    assert resp.json['data']['attributes']['modified'] == str(valid_dataset.modified)
-    assert resp.json['data']['attributes']['created'] == str(valid_dataset.created)
-    assert resp.json['data']['attributes']['verified'] == str(ds.verified)
+    ds = Dataset.objects.get(pk=dataset.id)
+    assert resp.json['data']['attributes']['modified'] == dataset.modified.strftime('%Y-%m-%dT%H:%M:%SZ')
+    assert resp.json['data']['attributes']['created'] == dataset.created.strftime('%Y-%m-%dT%H:%M:%SZ')
+    assert resp.json['data']['attributes']['verified'] == ds.verified.strftime('%Y-%m-%dT%H:%M:%SZ')
 
 
-@pytest.mark.django_db
-def test_datasets_dates_in_list_views_api_1_0_in_path(valid_dataset, client):
+@pytest.mark.elasticsearch
+def test_datasets_dates_in_list_views_api_1_0_in_path(dataset, client):
     resp = client.simulate_get('/1.0/datasets/')
     assert HTTP_OK == resp.status
     for d_name in ['created', 'modified', 'verified']:
         assert d_name in resp.json['data'][0]['attributes']
 
 
-@pytest.mark.django_db
-def test_dataset_dates_in_detail_views_api_1_0_in_path(valid_dataset, valid_resource, client):
-    _id = valid_dataset.id
-    valid_resource.revalidate()
+@pytest.mark.elasticsearch
+def test_dataset_dates_in_detail_views_api_1_0_in_path(dataset, resource, client):
+    _id = dataset.id
+    resource.revalidate()
     resp = client.simulate_get('/1.0/datasets/{}/'.format(_id))
 
     assert HTTP_OK == resp.status
     for d_name in ['created', 'modified', 'verified']:
         assert d_name in resp.json['data']['attributes']
 
-    ds = Dataset.objects.get(pk=valid_dataset.id)
-    assert resp.json['data']['attributes']['modified'] == str(valid_dataset.modified)
-    assert resp.json['data']['attributes']['created'] == str(valid_dataset.created)
-    assert resp.json['data']['attributes']['verified'] == str(ds.verified)
+    ds = Dataset.objects.get(pk=dataset.id)
+    assert resp.json['data']['attributes']['modified'] == dataset.modified.strftime('%Y-%m-%dT%H:%M:%SZ')
+    assert resp.json['data']['attributes']['created'] == dataset.created.strftime('%Y-%m-%dT%H:%M:%SZ')
+    assert resp.json['data']['attributes']['verified'] == ds.verified.strftime('%Y-%m-%dT%H:%M:%SZ')
 
 
-@pytest.mark.django_db
-def test_dataset_reportcomment(valid_dataset, client14):
-    resp = client14.simulate_post(
-        path=f'/datasets/{valid_dataset.id}/comments',
-        json={
-            'data':
-                {
-                    'type': 'comment',
-                    'attributes':
-                        {
-                            'comment': "123"
-                        }
-                }
-        }
+@pytest.mark.elasticsearch
+def test_dataset_update_frequency_in_detail_views_api_1_0(dataset, client):
+    resp = client.simulate_get('/1.0/datasets/{}/'.format(dataset.id))
+    assert HTTP_OK == resp.status
+    assert resp.json['data']['attributes']['update_frequency'] == _(_UPDATE_FREQUENCY[dataset.update_frequency])
+
+
+@pytest.mark.elasticsearch
+def test_dataset_update_frequency_in_detail_views_api_1_4(dataset, client):
+    resp = client.simulate_get('/1.4/datasets/{}/'.format(dataset.id))
+    assert HTTP_OK == resp.status
+    assert resp.json['data']['attributes']['update_frequency'] == _(_UPDATE_FREQUENCY[dataset.update_frequency])
+
+
+@pytest.mark.elasticsearch
+def test_slug_in_organization_link_datasets_list(dataset, client):
+    resp = client.simulate_get('/1.4/datasets/')
+    assert HTTP_OK == resp.status
+    assert resp.json['data'][0]['relationships']['institution']['links']['related'].endswith(
+        f"{dataset.institution.id},{dataset.institution.slug}"
     )
 
-    assert resp.status == HTTP_CREATED
+
+@pytest.mark.elasticsearch
+def test_slug_in_organization_link_dataset_details(dataset, client):
+    resp = client.simulate_get(f'/1.4/datasets/{dataset.id}')
+    assert HTTP_OK == resp.status
+    assert resp.json['data']['relationships']['institution']['links']['related'].endswith(
+        f"{dataset.institution.id},{dataset.institution.slug}"
+    )
 
 
-@pytest.mark.django_db
-class TestInstitutionsRelation(ElasticCleanHelper):
+@pytest.mark.elasticsearch
+def test_datasets_routes(dataset, client):
+    paths = [
+        "/1.4/datasets",
+        f'/1.4/datasets/{dataset.id}',
+        f'/1.4/datasets/{dataset.id},{dataset.slug}',
+        f'/1.4/datasets/{dataset.id}/resources',
+        f'/1.4/datasets/{dataset.id},{dataset.slug}/resources',
+    ]
 
-    def test_slug_in_organization_link_datasets_list(self, valid_dataset, valid_organization, client14):
-        resp = client14.simulate_get('/datasets/')
-        assert HTTP_OK == resp.status
-        assert resp.json['data'][0]['relationships']['institution']['links']['related'].endswith(
-            f"{valid_organization.id},{valid_organization.slug}"
-        )
-
-    def test_slug_in_organization_link_dataset_details(self, valid_dataset, valid_organization, client14):
-        resp = client14.simulate_get(f'/datasets/{valid_dataset.id}')
-        assert HTTP_OK == resp.status
-        assert resp.json['data']['relationships']['institution']['links']['related'].endswith(
-            f"{valid_organization.id},{valid_organization.slug}"
-        )
+    for p in paths:
+        resp = client.simulate_get(p)
+        assert resp.status == HTTP_OK
 
 
-@pytest.mark.django_db
-class TestDatasetsAPIRoutes(ElasticCleanHelper):
-
-    def test_datasets_routes(self, valid_dataset, client14):
-        paths = [
-            "/datasets",
-            f'/datasets/{valid_dataset.id}',
-            f'/datasets/{valid_dataset.id},{valid_dataset.slug}',
-            f'/datasets/{valid_dataset.id}/resources',
-            f'/datasets/{valid_dataset.id},{valid_dataset.slug}/resources',
-        ]
-
-        for p in paths:
-            resp = client14.simulate_get(p)
-            assert resp.status == HTTP_OK
+@pytest.mark.elasticsearch
+def test_response_datasets_list_slug_in_link(dataset, client14):
+    resp = client14.simulate_get('/datasets/')
+    assert HTTP_OK == resp.status
+    assert f"{dataset.id},{dataset.slug}" in resp.json['data'][0]['links']['self']
 
 
-@pytest.mark.django_db
-class TestDatasetsAPISlugInResponses(ElasticCleanHelper):
+@pytest.mark.elasticsearch
+def test_response_dataset_details_slug_in_link(dataset, client14):
+    resp = client14.simulate_get(f'/datasets/{dataset.id}')
+    assert HTTP_OK == resp.status
+    assert f"{dataset.id},{dataset.slug}" in resp.json['data']['links']['self']
 
-    def test_response_datasets_list_slug_in_link(self, valid_dataset, client14):
-        resp = client14.simulate_get('/datasets/')
-        assert HTTP_OK == resp.status
-        assert f"{valid_dataset.id},{valid_dataset.slug}" in resp.json['data'][0]['links']['self']
 
-    def test_response_dataset_details_slug_in_link(self, valid_dataset, client14):
-        resp = client14.simulate_get(f'/datasets/{valid_dataset.id}')
-        assert HTTP_OK == resp.status
-        assert f"{valid_dataset.id},{valid_dataset.slug}" in resp.json['data']['links']['self']
+@pytest.mark.elasticsearch
+def test_response_dataset_image_uri_in_details(dataset, client, small_image):
+    dataset.image = small_image
+    dataset.save()
+    resp = client.simulate_get('/1.4/datasets/{}/'.format(dataset.id))
+    assert HTTP_OK == resp.status
+    assert resp.json['data']['attributes']['image_url'] == f'/media/images/datasets/{dataset.image.name}'

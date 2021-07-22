@@ -1,4 +1,4 @@
-{% load i18n admin_static admin_modify suit_tags core_tags admin_urls %}
+{% load i18n static admin_modify suit_tags core_tags admin_urls %}
 {% load url from suit_compat %}
 
 <div class="btn-group" data-toggle="buttons-radio">
@@ -13,21 +13,18 @@
     <input type="{{ widget.type }}" name="{{ widget.name }}"{% if widget.value != None %}
            value="{{ widget.value|stringformat:'s' }}"{% endif %}{% include "django/forms/widgets/attrs.html" %}
            class="js-switcher"/>
-
 </div>
 
 <script>
     (function ($) {
         $(document).ready(function () {
-
-
-            var file_field = null;
-            var data_date_field = null;
-            var url_field = null;
-            var switcher = null;
-            var root = null;
-            var file_switch = null;
-            var url_switch = null;
+            let file_field = null;
+            let data_date_field = null;
+            let url_field = null;
+            let switcher = null;
+            let root = null;
+            let file_switch = null;
+            let url_switch = null;
 
             $('body').on('form-ready', function (event, form) {
                 root = form;
@@ -38,24 +35,24 @@
                 data_date_field = form.find("[type=text][id$=\"data_date\"]").closest('.field-data_date')
 
                 url_switch.on('click', function (ev) {
-                    file_field.hide();
-                    data_date_field.hide();
-                    url_field.show();
+                    inline_form = $(ev.target).closest('fieldset.module');
+                    inline_form.find('.field-file').hide();
+                    inline_form.find('.field-data_date').hide();
+                    inline_form.find('.field-link').show();
                     switcher.val('link');
                 });
 
                 file_switch.on('click', function (ev) {
-                    url_field.hide();
-                    file_field.show();
-                    data_date_field.show();
+                    inline_form = $(ev.target).closest('fieldset.module');
+                    inline_form.find('.field-link').hide();
+                    inline_form.find('.field-file').show();
+                    inline_form.find('.field-data_date').show();
                     switcher.val('file');
                 });
-
-
+                
                 $('body').trigger('switcher-ready', [root, switcher]);
             });
-
-
+            
             $('body').on('file-field-rendered', function (ev, field) {
                 file_field = field;
                 setup_switcher();
@@ -66,20 +63,15 @@
                 setup_switcher();
             });
 
-            $('body').on('switch-to-file', function (ev) {
-
-
-            });
-
-            var setup_switcher = function () {
+            let setup_switcher = function () {
                 if (root && switcher && file_field && url_field) {
                     current_value = switcher.val();
-                    if (!current_value) current_value = 'file';
+                    if (!current_value)
+                        current_value = 'file';
                     sw = root.find('.js-switch-to-' + current_value);
                     sw.trigger('click');
                 }
             };
-
         });
     }(django.jQuery));
 </script>

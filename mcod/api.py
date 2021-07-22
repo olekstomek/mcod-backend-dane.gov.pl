@@ -1,28 +1,55 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import logging
-
+import os
+import json
 import django
 import elasticapm
+from functools import partial
 import falcon
 from elasticapm.conf import setup_logging
 from elasticapm.handlers.logging import LoggingHandler
 from falcon import DEFAULT_MEDIA_TYPE
-from falcon import media
+from falcon.media import JSONHandler
 from falcon.request import Request
 from falcon.response import Response
+from falcon_caching import Cache as BaseCache
+from falcon_limiter import Limiter
 from webargs import falconparser
 
 from mcod import settings
 from mcod.core.api import middlewares
+from mcod.core.api.converters import ExportFormatConverter, RDFFormatConverter
+from mcod.core.api.media import ExportHandler, RDFHandler, SparqlHandler
+from mcod.core.api.utils.json_encoders import APIEncoder
 from mcod.core.api.apm import get_client, get_data_from_request
-from mcod.lib.errors import error_serializer, error_handler, error_422_handler, error_500_handler
+from mcod.lib.errors import error_serializer, error_handler, error_404_handler, error_422_handler, error_500_handler
+from mcod.unleash import is_enabled
 
 logger = logging.getLogger("elasticapm.errors.client")
+mcod_logger = logging.getLogger('mcod')
+
+jsonapi_handler = JSONHandler(
+    dumps=partial(json.dumps, cls=APIEncoder)
+)
 
 extra_handlers = {
-    'application/vnd.api+json': media.JSONHandler()
+    # JSON:API
+    'application/vnd.api+json': jsonapi_handler,
+    'application/vnd.api+json; ext=bulk': jsonapi_handler,
+    # other
+    'text/csv': ExportHandler(),
+    'text/tsv': ExportHandler(),
+    'text/tab-separated-values': ExportHandler(),
+    'application/vnd.ms-excel': ExportHandler(),
+    'application/sparql-results+json': SparqlHandler(),
+    'application/sparql-results+xml': SparqlHandler(),
 }
+
+
+extra_handlers.update(
+    {mt: RDFHandler() for mt in set(settings.RDF_FORMAT_TO_MIMETYPE.values())}
+)
 
 
 class ApiApp(falcon.API):
@@ -50,7 +77,16 @@ class ApiApp(falcon.API):
 
     def add_routes(self, routes):
         for route in routes:
-            self.add_route(*route)
+            try:
+                suffix = route[2]
+                self.add_route(*route[:2], suffix=suffix)
+            except IndexError:
+                self.add_route(*route)
+
+    def add_suffixed_routes(self, suffixed_routes):
+        for suffix, routes in suffixed_routes.items():
+            for route in routes:
+                self.add_route(*route, suffix=suffix)
 
     def _handle_exception(self, req, resp, exc, params):
         if self.apm_client:
@@ -67,23 +103,69 @@ class ApiApp(falcon.API):
         return super()._handle_exception(req, resp, exc, params)
 
 
+class Cache(BaseCache):
+
+    @property
+    def middleware(self):
+        return middlewares.FalconCacheMiddleware(self.cache, self.config)
+
+
+app_cache = Cache(config={
+    'CACHE_EVICTION_STRATEGY': 'time-based',
+    'CACHE_TYPE': 'simple',
+})  # https://falcon-caching.readthedocs.io/en/stable/
+
+
+def get_limiter_key(req, resp, resource, params):
+    key = req.access_route[-2] if len(req.access_route) > 1 else req.remote_addr
+    mcod_logger.debug(f'Falcon-Limiter key: {key}')
+    return key
+
+
+limiter = Limiter(
+    key_func=get_limiter_key,
+    default_limits=settings.FALCON_LIMITER_DEFAULT_LIMITS,
+    config={
+        'RATELIMIT_KEY_PREFIX': 'falcon-limiter',
+        'RATELIMIT_STORAGE_URL': settings.REDIS_URL,
+    }
+)
+
+
 def get_api_app():
     from mcod.routes import routes
-    app = ApiApp(middleware=[
+
+    os.environ.setdefault("COMPONENT", "api")
+
+    _middlewares = [
+        middlewares.ContentTypeMiddleware(),
         middlewares.DebugMiddleware(),
         middlewares.LocaleMiddleware(),
         middlewares.ApiVersionMiddleware(),
         middlewares.CounterMiddleware(),
         middlewares.SearchHistoryMiddleware(),
-    ])
+    ]
 
+    if settings.ENABLE_CSRF:
+        _middlewares.append(middlewares.CsrfMiddleware())
+    if settings.FALCON_LIMITER_ENABLED:
+        _middlewares.append(limiter.middleware)
+    if settings.ENABLE_FALCON_CACHING and is_enabled('S15_guides.be'):
+        _middlewares.append(app_cache.middleware)
+
+    app = ApiApp(middleware=_middlewares)
+
+    app.router_options.converters['export_format'] = ExportFormatConverter
+    app.router_options.converters['rdf_format'] = RDFFormatConverter
     app.add_error_handler(Exception, error_500_handler)
     app.add_error_handler(falcon.HTTPError, error_handler)
+    app.add_error_handler(falcon.HTTPNotFound, error_404_handler)
     app.add_error_handler(falcon.HTTPInternalServerError, error_500_handler)
     app.add_error_handler(falconparser.HTTPError, error_422_handler)
     app.add_error_handler(falcon.HTTPUnprocessableEntity, error_422_handler)
     app.set_error_serializer(error_serializer)
     app.add_routes(routes)
+    app.add_sink(lambda req, resp: setattr(resp, 'media', {'data': None}), '/ping')
     app.add_static_route(settings.STATIC_URL, settings.STATIC_ROOT)
     app.add_static_route(settings.MEDIA_URL, settings.MEDIA_ROOT)
     app.req_options.strip_url_path_trailing_slash = True

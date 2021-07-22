@@ -1,0 +1,168 @@
+stages:
+  - prepare
+  - test
+  - build
+  - release
+
+variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip-${CI_COMMIT_REF_SLUG}"
+  PIP_DEFAULT_TIMEOUT: 1800
+  PYTHONDONTWRITEBYTECODE: 1
+  FF_NETWORK_PER_BUILD: 1
+  REGISTRY_PATH: registry.dane.gov.pl/mcod/backend
+
+cache:
+  paths:
+    - .cache
+
+prepare-images:
+  stage: prepare
+  script:
+    - docker build -f docker/elasticsearch/Dockerfile -t $REGISTRY_PATH/elasticsearch:6.7.0-mcod-1 .
+    - docker build -f docker/postgres/Dockerfile -t $REGISTRY_PATH/postgresql:10-mcod .
+    - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN registry.dane.gov.pl
+    - docker push $REGISTRY_PATH/elasticsearch:6.7.0-mcod-1
+    - docker push $REGISTRY_PATH/postgresql:10-mcod
+  except:
+    - tags
+    - master
+    - schedules
+  tags:
+    - shell
+
+test:
+  stage: test
+  image: python:3.8.6
+  variables:
+    ENVIRONMENT: test
+    ENABLE_VAULT_HELPERS: "no"
+    DEBUG: "yes"
+    ALLOWED_HOSTS: "*"
+    BASE_URL: http://test.mcod
+    API_URL: http://api.test.mcod
+    ADMIN_URL: http://admin.test.mcod
+    CMS_URL: http://cms.test.mcod
+    POSTGRES_PASSWORD: mcod
+    POSTGRES_USER: mcod
+    POSTGRES_DB: mcod
+    POSTGRES_PORT: 5432
+    POSTGRES_HOST_TYPE: docker
+    POSTGRES_HOST: postgres
+    REDIS_URL: redis://redis:6379
+    ELASTICSEARCH_HOSTS: elasticsearch:9200
+    RABBITMQ_HOST: rabbitmq:5672
+    PYTEST_ADDOPTS: "--reuse-db --ds=mcod.settings.test -n5"
+    ES_JAVA_OPTS: "-Xms2048m -Xmx2048m"
+    EMAIL_HOST: example.com
+    EMAIL_PORT: 25
+    EMAIL_USE_TLS: 0
+    EMAIL_HOST_USER: test@example.com
+    EMAIL_HOST_PASSWORD: password
+    SPARQL_USER: admin
+    ADMIN_PASSWORD: Britenet.1
+    FUSEKI_DATASET_1: ds
+    FUSEKI_URL: http://fuseki:3030
+  services:
+    - name: redis:3.2
+      alias: redis
+    - name: rabbitmq:3.8-management
+      alias: rabbitmq
+    - name: stain/jena-fuseki:3.14.0
+      alias: fuseki
+    - name: $REGISTRY_PATH/elasticsearch:6.7.0-mcod-1
+      alias: elasticsearch
+      command:
+        [
+          "bin/elasticsearch",
+          "-Expack.security.enabled=false",
+          "-Ediscovery.type=single-node",
+          "-Eindex.store.type=niofs",
+          "-Ebootstrap.memory_lock=true",
+        ]
+    - name: $REGISTRY_PATH/postgresql:10-mcod
+      alias: postgres
+  before_script:
+    - apt-get update && apt-get install -y --allow-unauthenticated gettext libarchive13 libmagickwand-dev libmagickcore-6.q16-3-extra
+    - find . | grep -E "(__pycache__|\.pyc|\.pyo$)" | xargs rm -rf || true
+    - python3 -m venv venv
+    - source venv/bin/activate
+    - pip install tox
+  script:
+    - tox
+  except:
+    - tags
+    - master
+    - schedules
+  tags:
+    - docker
+
+build-devel:
+  stage: build
+  only:
+    - devel
+  script:
+    - docker build --build-arg REQ_FILE=requirements-common.txt -f docker/app/Dockerfile -t $REGISTRY_PATH/backend:devel .
+    - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN registry.dane.gov.pl
+    - docker push $REGISTRY_PATH/backend:devel
+  tags:
+    - shell
+
+build-master:
+  stage: build
+  only:
+    - master
+  script:
+    - docker build --build-arg REQ_FILE=requirements-common.txt -f docker/app/Dockerfile -t $REGISTRY_PATH/backend:master .
+    - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN registry.dane.gov.pl
+    - docker push $REGISTRY_PATH/backend:master
+  tags:
+    - shell
+
+release-prod:
+  stage: release
+  before_script:
+    - export API_VERSION=$(changelog current)
+    - cat CHANGELOG.md
+  script:
+    - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN registry.dane.gov.pl
+    - docker tag $REGISTRY_PATH/backend:master $REGISTRY_PATH/backend:master-$API_VERSION
+    - docker tag $REGISTRY_PATH/backend:master $REGISTRY_PATH/backend:master-prod-latest
+    - docker push $REGISTRY_PATH/backend:master-$API_VERSION
+    - docker push $REGISTRY_PATH/backend:master-prod-latest
+  except:
+    - devel
+    - schedules
+  only:
+    - master
+    - tags
+  when: manual
+  tags:
+    - shell
+
+merge-to-master:on-schedule:
+  stage: release
+  script:
+    - merge-backend
+  only:
+    - schedules
+  tags:
+    - schedules
+
+publish-code:
+  stage: release
+  before_script:
+    - export API_VERSION=$(changelog current)
+  script:
+    - git archive --output backend_$API_VERSION.zip -9 HEAD
+    - docker build --build-arg API_VERSION=$API_VERSION -f docker/code-repo/Dockerfile -t $REGISTRY_PATH/backend-archive:master .
+    - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN registry.dane.gov.pl
+    - docker push $REGISTRY_PATH/backend-archive:master
+  except:
+    - devel
+    - schedules
+  only:
+    - master
+    - tags
+  when: manual
+  tags:
+    - shell

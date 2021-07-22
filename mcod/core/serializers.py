@@ -1,26 +1,7 @@
-from collections import OrderedDict, defaultdict
-
-from django.apps import apps
-from marshmallow.compat import with_metaclass
 from marshmallow.schema import SchemaOpts, BaseSchema, SchemaMeta
 
-
-class SerializerRegistry:
-    def __init__(self):
-        self._serializers = defaultdict(OrderedDict)
-
-    def register(self, serializer_cls):
-        _name = serializer_cls.opts.model_name
-        if _name:
-            _app, _model = _name.split('.')
-            model = apps.get_model(_app, _model)
-            self._serializers[model] = serializer_cls
-
-    def get_serializer(self, model):
-        return self._serializers.get(model)
-
-
-csv_serializers_registry = SerializerRegistry()
+from mcod.core.api import fields
+from mcod.core.registries import csv_serializers_registry
 
 
 class CSVSchemaMeta(SchemaMeta):
@@ -30,12 +11,32 @@ class CSVSchemaMeta(SchemaMeta):
         return klass
 
 
-class CSVSerializerOpts(SchemaOpts):
+class ModelSchemaOpts(SchemaOpts):
     def __init__(self, meta, **kwargs):
         SchemaOpts.__init__(self, meta, **kwargs)
         self.model_name = getattr(meta, 'model', None)
 
 
-class CSVSerializer(with_metaclass(CSVSchemaMeta, BaseSchema)):
+class RDFSchema(BaseSchema, metaclass=SchemaMeta):
     __doc__ = BaseSchema.__doc__
-    OPTIONS_CLASS = CSVSerializerOpts
+    OPTIONS_CLASS = ModelSchemaOpts
+
+
+class CSVSerializer(BaseSchema, metaclass=CSVSchemaMeta):
+    __doc__ = BaseSchema.__doc__
+    OPTIONS_CLASS = ModelSchemaOpts
+
+    def get_csv_headers(self):
+        result = []
+        for field_name, field in self.fields.items():
+            header = field.data_key or field_name
+            result.append(header)
+        return result
+
+
+class ListWithoutNoneStrElement(fields.List):
+    @fields.after_serialize
+    def remove_none(self, value=None):
+        if isinstance(value, list) and 'none' in value:
+            return []
+        return value

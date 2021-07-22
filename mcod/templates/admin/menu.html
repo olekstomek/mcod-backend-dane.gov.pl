@@ -2,7 +2,7 @@
 {% load i18n core_tags %}
 {% load url from suit_compat %}
 
-<div class="left-nav" id="left-nav">
+<div class="{% is_unleash_enabled "S21_admin_ui_changes.be" as ui_changes %}{% if ui_changes %}od-{% endif %}left-nav" id="left-nav">
   <ul>
     {% block menu_home %}
       {% url 'admin:index' as index_url %}

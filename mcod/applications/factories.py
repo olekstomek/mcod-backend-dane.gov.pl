@@ -1,13 +1,16 @@
 import factory
 
 from mcod.applications import models
+from mcod.core.registries import factories_registry
 
 
 class ApplicationFactory(factory.django.DjangoModelFactory):
     title = factory.Faker('text', max_nb_chars=80, locale='pl_PL')
+    title_en = factory.Faker('text', max_nb_chars=80)
     notes = factory.Faker('paragraph', nb_sentences=5, locale='pl_PL')
     author = factory.Faker('name')
     url = factory.Faker('url')
+    views_count = factory.Faker('random_int', min=0, max=500)
     image = factory.django.ImageField(color='blue')
 
     @factory.post_generation
@@ -30,3 +33,7 @@ class ApplicationFactory(factory.django.DjangoModelFactory):
 
     class Meta:
         model = models.Application
+        django_get_or_create = ('title',)
+
+
+factories_registry.register('application', ApplicationFactory)

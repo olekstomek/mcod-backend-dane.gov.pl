@@ -1,5 +1,5 @@
 {% extends "admin/base_site.html" %}
-{% load i18n admin_static admin_list admin_urls admin_modify suit_list suit_tags core_tags %}
+{% load i18n static admin_list admin_urls admin_modify suit_list suit_tags core_tags %}
 {% load url from suit_compat %}
 
 {% block extrahead %}{{ block.super }}
@@ -98,6 +98,7 @@
 
                 {% block object-tools %}
                     {% if change %}{% if not is_popup %}
+                        {% if not original.is_imported %}
                         <h4 class="italic-title">{% trans 'tools'|capfirst %}</h4>
                         <ul class="box menu-box">
                             {% block object-tools-items %}
@@ -116,8 +117,7 @@
                                 {% if has_add_permission %}
                                     <li>
                                         <a href="{% url opts|admin_urlname:'add' %}">
-                                            <i class="icon-plus-sign icon-alpha75"></i>
-                                            {% blocktrans %}Add{% endblocktrans %}
+                                            <i class="icon-plus-sign icon-alpha75"></i>{% blocktrans %}Add{% endblocktrans %}
                                             {% blocktrans with block.super|to_accusative:original as name %}
                                                 {{ name }}
                                             {% endblocktrans %}
@@ -128,6 +128,7 @@
 
                             {% endblock %}
                         </ul>
+                        {% endif %}
                     {% endif %}{% endif %}
 
                 {% endblock %}
@@ -145,7 +146,7 @@
                         </ul>
                     {% endif %}
                 {% endblock %}
-                <div class="tab-content tab-content-main">
+                <div class="{% if adminform.model_admin.suit_form_tabs %} tab-content tab-content-main {% endif %}">
                     {% if is_popup %}
                         <input type="hidden" name="_popup" value="1"/>{% endif %}
                     {% if errors %}

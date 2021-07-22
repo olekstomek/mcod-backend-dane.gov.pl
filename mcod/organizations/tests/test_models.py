@@ -9,7 +9,6 @@ from mcod.datasets.models import Dataset
 from mcod.organizations.models import Organization
 
 
-@pytest.mark.django_db
 class TestOrganizationModel:
 
     def test_organization_create(self):
@@ -52,30 +51,23 @@ class TestOrganizationModel:
         assert "'regon'" in e
         assert "'website'" in e
 
-    # def test_name_uniqness(self, valid_organization):
+    # def test_name_uniqness(self, institution):
     #     org = Organization()
-    #     org.slug = valid_organization.slug
+    #     org.slug = institution.slug
     #     with pytest.raises(ValidationError) as e:
     #         org.full_clean()
     #
     #     assert "'slug': " in str(e.value)
 
-    def test_str(self, valid_organization):
-        valid_organization.name = 'test-name'
-        valid_organization.title = 'Title'
-        assert 'Title' == str(valid_organization)
+    def test_str(self, institution):
+        institution.name = 'test-name'
+        institution.title = 'Title'
+        assert 'Title' == str(institution)
 
-    def test_str_no_title(self, valid_organization):
-        valid_organization.slug = 'test-name'
-        valid_organization.title = ''
-        assert 'test-name' == str(valid_organization)
-
-    def test_get_url_path(self, valid_organization):
-        assert f'/applications/application/{valid_organization.id}/change/' == valid_organization.get_url_path()
-
-    def test_get_url_path_no_reverse(self):
-        org = Organization()
-        assert '' == org.get_url_path()
+    def test_str_no_title(self, institution):
+        institution.slug = 'test-name'
+        institution.title = ''
+        assert 'test-name' == str(institution)
 
     def test_short_description(self):
         org = Organization()
@@ -87,51 +79,55 @@ class TestOrganizationModel:
         org.description = None
         assert '' == org.short_description
 
-    def test_image_url_and_path(self, valid_organization):
-        assert not valid_organization.image
-        valid_organization.image = SimpleUploadedFile("somefile.jpg", b"""1px""")
-        valid_organization.save()
-        assert valid_organization.image
+    def test_image_url_and_path(self, institution):
+        institution.image = SimpleUploadedFile("somefile.jpg", b"""1px""")
+        institution.save()
+        assert institution.image
         date_folder = date.today().isoformat().replace('-', '')
-        image_name = valid_organization.image.name
-        assert valid_organization.image.url == f"/media/images/organizations/{image_name}"
-        assert valid_organization.image.path == f"{settings.IMAGES_MEDIA_ROOT}/organizations/{image_name}"
-        assert date_folder in valid_organization.image.url
-        assert date_folder in valid_organization.image.path
+        image_name = institution.image.name
+        assert institution.image.url == f"/media/images/organizations/{image_name}"
+        assert institution.image.path == f"{settings.IMAGES_MEDIA_ROOT}/organizations/{image_name}"
+        assert date_folder in institution.image.url
+        assert date_folder in institution.image.path
 
-    def test_organizations_datasets_count(self, valid_organization, valid_dataset):
-        assert valid_organization.datasets_count == 1
+    def test_organizations_datasets_count(self, institution_with_datasets):
+        assert institution_with_datasets.datasets_count == 2
 
-    def test_delete_organizations_also_delete_his_datasets(self, valid_organization, valid_dataset):
-        assert valid_dataset in valid_organization.datasets.all()
-        valid_organization.delete()
-        assert valid_dataset not in Dataset.objects.all()
-        assert valid_dataset in Dataset.deleted.all()
+    def test_delete_organizations_also_delete_his_datasets(self, institution_with_datasets):
+        datasets = list(institution_with_datasets.datasets.all())
+        institution_with_datasets.delete()
+        for dataset in datasets:
+            assert dataset not in Dataset.objects.all()
+            assert dataset in Dataset.deleted.all()
 
-    def test_changing_organization_to_draft_also_set_draft_for_his_datasets(self, valid_organization, valid_dataset):
-        assert valid_dataset in valid_organization.datasets.all()
-        assert valid_organization.status == 'published'
-        assert valid_organization.datasets.all().first().status == 'published'
+    def test_changing_organization_to_draft_also_set_draft_for_his_datasets(self, institution_with_datasets):
+        assert institution_with_datasets.status == 'published'
+        assert institution_with_datasets.datasets.first().status == 'published'
 
-        valid_organization.status = 'draft'
-        valid_organization.save()
+        institution_with_datasets.status = 'draft'
+        institution_with_datasets.save()
 
-        assert valid_organization.status == 'draft'
-        assert valid_organization.datasets.all().first().status == 'draft'
+        assert institution_with_datasets.status == 'draft'
+        assert institution_with_datasets.datasets.first().status == 'draft'
 
-    def test_changing_organization_to_published_didnt_publish_his_datasets(self, valid_organization, valid_dataset):
-        assert valid_dataset in valid_organization.datasets.all()
-        assert valid_organization.status == 'published'
-        assert valid_organization.datasets.all().first().status == 'published'
+    def test_changing_organization_to_published_didnt_publish_his_datasets(self, institution_with_datasets):
+        institution = institution_with_datasets
+        assert institution.status == 'published'
+        assert institution.datasets.first().status == 'published'
 
-        valid_organization.status = 'draft'
-        valid_organization.save()
+        institution.status = 'draft'
+        institution.save()
 
-        assert valid_organization.status == 'draft'
-        assert valid_organization.datasets.all().first().status == 'draft'
+        assert institution.status == 'draft'
+        assert institution.datasets.first().status == 'draft'
 
-        valid_organization.status = 'published'
-        valid_organization.save()
+        institution.status = 'published'
+        institution.save()
 
-        assert valid_organization.status == 'published'
-        assert valid_organization.datasets.all().first().status == 'draft'
+        assert institution.status == 'published'
+        assert institution.datasets.first().status == 'draft'
+
+    def test_image_absolute_url_without_lang(self, institution):
+        institution.image = SimpleUploadedFile("somefile.jpg", b"""1px""")
+        institution.save()
+        assert institution.image_absolute_url == f'{settings.BASE_URL}{institution.image.url}'

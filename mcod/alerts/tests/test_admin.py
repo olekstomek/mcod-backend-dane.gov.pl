@@ -8,10 +8,10 @@
 #
 #
 # @given("I'm logged as an admin user")
-# def login(live_server, admin_user, selenium):
+# def login(live_server, admin, selenium):
 #     selenium.get(live_server.url)
-#     selenium.find_element_by_id("id_username").send_keys(admin_user.email)
-#     selenium.find_element_by_id("id_password").send_keys('Britenet.1')
+#     selenium.find_element_by_id("id_username").send_keys(admin.email)
+#     selenium.find_element_by_id("id_password").send_keys('12345.Abcde')
 #     selenium.find_element_by_css_selector("input[type='submit']").click()
 #     WebDriverWait(selenium, 2).until(lambda s: s.find_element_by_xpath('//*[@id="site-name"]/a[2]'))
 #     assert selenium.find_element_by_xpath('//*[@id="site-name"]/a[2]').text == "Otwarte Dane"

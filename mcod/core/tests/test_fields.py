@@ -79,45 +79,45 @@ class TestFilteringFilterField(object):
     @pytest.mark.parametrize(
         ', '.join(['lookup', 'context', 'valid_query']),
         [(
-                [constants.LOOKUP_FILTER_EXISTS, ],
-                {'exists': 'True'},
-                {'query': {'exists': {'field': test_field_name}}}
+            [constants.LOOKUP_FILTER_EXISTS, ],
+            {'exists': 'True'},
+            {'query': {'exists': {'field': test_field_name}}}
         ), (
-                [constants.LOOKUP_FILTER_EXISTS, ],
-                {'exists': 'False'},
-                {'query': {'bool': {'must_not': [{'exists': {'field': test_field_name}}]}}}
+            [constants.LOOKUP_FILTER_EXISTS, ],
+            {'exists': 'False'},
+            {'query': {'bool': {'must_not': [{'exists': {'field': test_field_name}}]}}}
         ), (
-                [constants.LOOKUP_FILTER_TERM, ],
-                {'term': 'Blabla'},
-                {'query': {'term': {test_field_name: "Blabla"}}},
+            [constants.LOOKUP_FILTER_TERM, ],
+            {'term': 'Blabla'},
+            {'query': {'term': {test_field_name: "Blabla"}}},
         ), (
-                [constants.LOOKUP_FILTER_TERMS],
-                {'terms': ['one', 'two', 'three']},
-                {'query': {'terms': {test_field_name: ['one', 'two', 'three']}}}
+            [constants.LOOKUP_FILTER_TERMS],
+            {'terms': ['one', 'two', 'three']},
+            {'query': {'terms': {test_field_name: ['one', 'two', 'three']}}}
         ), (
-                [constants.LOOKUP_FILTER_PREFIX],
-                {'prefix': 'pre'},
-                {"query": {"prefix": {test_field_name: "pre"}}}
+            [constants.LOOKUP_FILTER_PREFIX],
+            {'prefix': 'pre'},
+            {"query": {"prefix": {test_field_name: "pre"}}}
         ), (
-                [constants.LOOKUP_FILTER_WILDCARD],
-                {'wildcard': 'abc*ef?hij'},
-                {"query": {"wildcard": {test_field_name: "abc*ef?hij"}}}
+            [constants.LOOKUP_FILTER_WILDCARD],
+            {'wildcard': 'abc*ef?hij'},
+            {"query": {"wildcard": {test_field_name: "abc*ef?hij"}}}
         ), (
-                [constants.LOOKUP_QUERY_CONTAINS],
-                {'contains': 'abc'},
-                {"query": {"wildcard": {test_field_name: "*abc*"}}}
+            [constants.LOOKUP_QUERY_CONTAINS],
+            {'contains': 'abc'},
+            {"query": {"wildcard": {test_field_name: "*abc*"}}}
         ), (
-                [constants.LOOKUP_QUERY_STARTSWITH],
-                {'startswith': 'pre'},
-                {"query": {"prefix": {test_field_name: "pre"}}}
+            [constants.LOOKUP_QUERY_STARTSWITH],
+            {'startswith': 'pre'},
+            {"query": {"prefix": {test_field_name: "pre"}}}
         ), (
-                [constants.LOOKUP_QUERY_ENDSWITH],
-                {'endswith': 'ing'},
-                {"query": {"wildcard": {test_field_name: "*ing"}}}
+            [constants.LOOKUP_QUERY_ENDSWITH],
+            {'endswith': 'ing'},
+            {"query": {"wildcard": {test_field_name: "*ing"}}}
         ), (
-                [constants.LOOKUP_QUERY_EXCLUDE],
-                {'exclude': 'not_wanted'},
-                {"query": {'bool': {'must_not': [{'term': {test_field_name: 'not_wanted'}}]}}}
+            [constants.LOOKUP_QUERY_EXCLUDE],
+            {'exclude': 'not_wanted'},
+            {"query": {'bool': {'must_not': [{'term': {test_field_name: 'not_wanted'}}]}}}
         )]
     )
     def test_single_queryset(self, lookup, context, valid_query, es_dsl_queryset):
@@ -174,21 +174,21 @@ class TestFilteringFilterField(object):
     @pytest.mark.parametrize(
         ', '.join(['lookup', 'context', 'valid_query']),
         [(
-                [constants.LOOKUP_QUERY_GT],
-                {'gt': '100'},
-                {"range": {test_field_name: {"gt": "100"}}}
+            [constants.LOOKUP_QUERY_GT],
+            {'gt': '100'},
+            {"range": {test_field_name: {"gt": "100"}}}
         ), (
-                [constants.LOOKUP_QUERY_GTE],
-                {'gte': '16'},
-                {"range": {test_field_name: {"gte": "16"}}}
+            [constants.LOOKUP_QUERY_GTE],
+            {'gte': '16'},
+            {"range": {test_field_name: {"gte": "16"}}}
         ), (
-                [constants.LOOKUP_QUERY_LT],
-                {'lt': '10'},
-                {"range": {test_field_name: {"lt": "10"}}}
+            [constants.LOOKUP_QUERY_LT],
+            {'lt': '10'},
+            {"range": {test_field_name: {"lt": "10"}}}
         ), (
-                [constants.LOOKUP_QUERY_LTE],
-                {'lte': '10'},
-                {"range": {test_field_name: {"lte": "10"}}}
+            [constants.LOOKUP_QUERY_LTE],
+            {'lte': '10'},
+            {"range": {test_field_name: {"lte": "10"}}}
         )
         ]
     )
@@ -204,21 +204,21 @@ class TestFilteringFilterField(object):
     @pytest.mark.parametrize(
         ', '.join(['lookup', 'context', 'valid_query']),
         [(
-                [constants.LOOKUP_FILTER_RANGE],
-                {'range': '16|67|2.0'},
-                {test_field_name: {"gte": "16", "lte": "67", "boost": "2.0"}}
+            [constants.LOOKUP_FILTER_RANGE],
+            {'range': '16|67|2.0'},
+            {test_field_name: {"gte": "16", "lte": "67", "boost": "2.0"}}
         ), (
-                [constants.LOOKUP_FILTER_RANGE],
-                {'range': '16|67'},
-                {test_field_name: {"gte": "16", "lte": "67"}}
+            [constants.LOOKUP_FILTER_RANGE],
+            {'range': '16|67'},
+            {test_field_name: {"gte": "16", "lte": "67"}}
         ), (
-                [constants.LOOKUP_FILTER_RANGE],
-                {'range': '16'},
-                {test_field_name: {"gte": "16"}}
+            [constants.LOOKUP_FILTER_RANGE],
+            {'range': '16'},
+            {test_field_name: {"gte": "16"}}
         ), (
-                [constants.LOOKUP_FILTER_RANGE],
-                {'range': 'now|2200-12-31'},
-                {test_field_name: {"gte": "now", "lte": "2200-12-31"}}
+            [constants.LOOKUP_FILTER_RANGE],
+            {'range': 'now|2200-12-31'},
+            {test_field_name: {"gte": "now", "lte": "2200-12-31"}}
         )
         ]
     )
@@ -235,16 +235,16 @@ class TestFilteringFilterField(object):
         ', '.join(['lookups', 'context', 'valid_query']),
         [
             (
-                    [constants.LOOKUP_QUERY_GT, constants.LOOKUP_QUERY_LT],
-                    {'lt': 'Something', 'gt': 'anything'},
-                    [{'range': {test_field_name: {'lt': 'Something'}}},
-                     {'range': {test_field_name: {'gt': 'anything'}}}]
+                [constants.LOOKUP_QUERY_GT, constants.LOOKUP_QUERY_LT],
+                {'lt': 'Something', 'gt': 'anything'},
+                [{'range': {test_field_name: {'lt': 'Something'}}},
+                 {'range': {test_field_name: {'gt': 'anything'}}}]
             ),
             (
-                    [constants.LOOKUP_QUERY_GTE, constants.LOOKUP_QUERY_LTE],
-                    {'gte': "10", 'lte': "80"},
-                    [{"range": {test_field_name: {"gte": "10"}}},
-                     {"range": {test_field_name: {"lte": "80"}}}]
+                [constants.LOOKUP_QUERY_GTE, constants.LOOKUP_QUERY_LTE],
+                {'gte': "10", 'lte': "80"},
+                [{"range": {test_field_name: {"gte": "10"}}},
+                 {"range": {test_field_name: {"lte": "80"}}}]
             ),
         ]
     )
@@ -261,8 +261,8 @@ class TestFilteringFilterField(object):
         ', '.join(['lookups', 'context']),
         [
             (
-                    [constants.LOOKUP_FILTER_EXISTS, ],
-                    {'exists': 'IdontKnow', 'invalid': 'field'},
+                [constants.LOOKUP_FILTER_EXISTS, ],
+                {'exists': 'IdontKnow', 'invalid': 'field'},
             ),
         ]
     )
@@ -273,7 +273,7 @@ class TestFilteringFilterField(object):
         )
 
         qs = fld.prepare_queryset(es_dsl_queryset, context)
-        assert qs.to_dict() == {'query': {'match_all': {}}}
+        assert qs.to_dict() == {}
 
 
 class TestNestedFilteringField(object):
@@ -283,10 +283,10 @@ class TestNestedFilteringField(object):
         ', '.join(['path', 'lookups', 'context', 'valid_query']),
         [
             (
-                    'subobject',
-                    [constants.LOOKUP_FILTER_EXISTS, ],
-                    {'exists': 'True'},
-                    {'path': 'subobject', 'query': {'exists': {'field': test_field_name}}}
+                'subobject',
+                [constants.LOOKUP_FILTER_EXISTS, ],
+                {'exists': 'True'},
+                {'path': 'subobject', 'query': {'exists': {'field': test_field_name}}}
             ),
         ]
     )
@@ -307,20 +307,20 @@ class TestIdsSearchField(object):
     @pytest.mark.parametrize(
         ', '.join(['context', 'valid_ids']),
         [(
-                ["1"],
-                {'1', }
+            ["1"],
+            {'1', }
         ), (
-                ["123", "45"],
-                {'123', "45"}
+            ["123", "45"],
+            {'123', "45"}
         ), (
-                ["1|2|3"],
-                {'1', '3', '2'}
+            ["1|2|3"],
+            {'1', '3', '2'}
         ), (
-                ["1|2|3", "4|3"],
-                {'1', '2', '4', '3'}
+            ["1|2|3", "4|3"],
+            {'1', '2', '4', '3'}
         ), (
-                ["1|2|3", "45||3|", "2|45|5"],
-                {'1', '2', '3', '45', '5'}
+            ["1|2|3", "45||3|", "2|45|5"],
+            {'1', '2', '3', '45', '5'}
         ),
         ]
     )
@@ -349,16 +349,15 @@ class TestSuggesterFilterField(object):
         qs = fld.apply_suggester_term(es_dsl_queryset, self.text).to_dict()
 
         assert {
-                   "query": {"match_all": {}},
-                   "suggest": {
-                       self.test_field_name: {
-                           "text": self.text,
-                           "term": {
-                               "field": self.suggest_field
-                           }
-                       }
-                   }
-               } == qs
+            "suggest": {
+                self.test_field_name: {
+                    "text": self.text,
+                    "term": {
+                        "field": self.suggest_field
+                    }
+                }
+            }
+        } == qs
 
     def test_apply_suggester_phrase(self, es_dsl_queryset):
         fld = SuggesterFilterField(field=self.suggest_field)
@@ -366,56 +365,55 @@ class TestSuggesterFilterField(object):
 
         qs = fld.apply_suggester_phrase(es_dsl_queryset, self.text).to_dict()
         assert {
-                   "query": {"match_all": {}},
-                   "suggest": {
-                       self.test_field_name: {
-                           "text": self.text,
-                           "phrase": {
-                               "field": self.suggest_field
-                           }
-                       }
-                   }
-               } == qs
+            "suggest": {
+                self.test_field_name: {
+                    "text": self.text,
+                    "phrase": {
+                        "field": self.suggest_field
+                    }
+                }
+            }
+        } == qs
 
     @pytest.mark.parametrize(
         ', '.join(['suggesters', 'context', 'suggest_dict']),
         [(
-                [],
-                {'None': ""},
-                {}
+            [],
+            {'None': ""},
+            {}
         ), (
-                [constants.SUGGESTER_TERM],
-                {'term': text},
-                {"suggest": {test_field_name: {"text": text, "term": {"field": suggest_field}}}}
+            [constants.SUGGESTER_TERM],
+            {'term': text},
+            {"suggest": {test_field_name: {"text": text, "term": {"field": suggest_field}}}}
         ), (
-                [constants.SUGGESTER_PHRASE],
-                {'phrase': text},
-                {"suggest": {test_field_name: {"text": text, "phrase": {"field": suggest_field}}}}
+            [constants.SUGGESTER_PHRASE],
+            {'phrase': text},
+            {"suggest": {test_field_name: {"text": text, "phrase": {"field": suggest_field}}}}
         ), (
-                [constants.SUGGESTER_COMPLETION],
-                {'completion': text},
-                {"suggest": {test_field_name: {"text": text, "completion": {"field": suggest_field}}}}
+            [constants.SUGGESTER_COMPLETION],
+            {'completion': text},
+            {"suggest": {test_field_name: {"text": text, "completion": {"field": suggest_field}}}}
         ), (
-                [constants.SUGGESTER_COMPLETION],
-                {'phrase': text},
-                {}
+            [constants.SUGGESTER_COMPLETION],
+            {'phrase': text},
+            {}
         ), (
-                [
-                    constants.SUGGESTER_PHRASE,
-                    constants.SUGGESTER_COMPLETION,
-                    constants.SUGGESTER_TERM,
-                ],
-                {'term': text, 'phrase': text, 'completion': text},
-                {
-                    "suggest": {
-                        test_field_name: {
-                            "text": text,
-                            "completion": {
-                                "field": suggest_field
-                            }
+            [
+                constants.SUGGESTER_PHRASE,
+                constants.SUGGESTER_COMPLETION,
+                constants.SUGGESTER_TERM,
+            ],
+            {'term': text, 'phrase': text, 'completion': text},
+            {
+                "suggest": {
+                    test_field_name: {
+                        "text": text,
+                        "completion": {
+                            "field": suggest_field
                         }
                     }
                 }
+            }
         ),
         ]
     )
@@ -424,7 +422,7 @@ class TestSuggesterFilterField(object):
         fld.name = self.test_field_name
 
         qs = fld.prepare_queryset(es_dsl_queryset, context).to_dict()
-        valid_query = {'query': {"match_all": {}}}
+        valid_query = {}
         valid_query.update(suggest_dict)
         assert qs == valid_query
 
@@ -434,45 +432,44 @@ class TestSuggesterFilterField(object):
 
         qs = fld.apply_suggester_completion(es_dsl_queryset, self.text).to_dict()
         assert {
-                   "query": {"match_all": {}},
-                   "suggest": {
-                       self.test_field_name: {
-                           "text": self.text,
-                           "completion": {
-                               "field": self.suggest_field
-                           }
-                       }
-                   }
-               } == qs
+            "suggest": {
+                self.test_field_name: {
+                    "text": self.text,
+                    "completion": {
+                        "field": self.suggest_field
+                    }
+                }
+            }
+        } == qs
 
 
 class TestSearchFilterField(object):
     @pytest.mark.parametrize(
         ', '.join(['search_fields', 'context', 'valid_query']),
         [(
-                ["title"],
-                ["something"],
-                [{'match': {"title": {'fuzziness': 2, 'fuzzy_transpositions': True, 'query': "something"}}}]
+            ["title"],
+            ["something"],
+            [{'match': {"title": {'fuzziness': 'AUTO', 'fuzzy_transpositions': True, 'query': "something"}}}]
         ), (
-                ["title", "other_field"],
-                ["title|something"],
-                [{'match': {"title": {'fuzziness': 2, 'fuzzy_transpositions': True, 'query': "something"}}}]
+            ["title", "other_field"],
+            ["title|something"],
+            [{'match': {"title": {'fuzziness': 'AUTO', 'fuzzy_transpositions': True, 'query': "something"}}}]
         ), (
-                ["title", "description"],
-                ["something"],
-                [{'match': {"title": {'fuzziness': 2, 'fuzzy_transpositions': True, 'query': "something"}}},
-                 {'match': {"description": {'fuzziness': 2, 'fuzzy_transpositions': True, 'query': "something"}}}]
+            ["title", "description"],
+            ["something"],
+            [{'match': {"title": {'fuzziness': 'AUTO', 'fuzzy_transpositions': True, 'query': "something"}}},
+             {'match': {"description": {'fuzziness': 'AUTO', 'fuzzy_transpositions': True, 'query': "something"}}}]
         ), (
-                ["title", "description"],
-                ["title|something", "description|anything"],
-                [{'match': {"title": {'fuzziness': 2, 'fuzzy_transpositions': True, 'query': "something"}}},
-                 {'match': {"description": {'fuzziness': 2, 'fuzzy_transpositions': True, 'query': "anything"}}}]
+            ["title", "description"],
+            ["title|something", "description|anything"],
+            [{'match': {"title": {'fuzziness': 'AUTO', 'fuzzy_transpositions': True, 'query': "something"}}},
+             {'match': {"description": {'fuzziness': 'AUTO', 'fuzzy_transpositions': True, 'query': "anything"}}}]
         ), (
-                ["title", "description"],
-                ["title|something", "anything"],
-                [{'match': {"title": {'fuzziness': 2, 'fuzzy_transpositions': True, 'query': "something"}}},
-                 {'match': {"title": {'fuzziness': 2, 'fuzzy_transpositions': True, 'query': "anything"}}},
-                 {'match': {"description": {'fuzziness': 2, 'fuzzy_transpositions': True, 'query': "anything"}}}]
+            ["title", "description"],
+            ["title|something", "anything"],
+            [{'match': {"title": {'fuzziness': 'AUTO', 'fuzzy_transpositions': True, 'query': "something"}}},
+             {'match': {"title": {'fuzziness': 'AUTO', 'fuzzy_transpositions': True, 'query': "anything"}}},
+             {'match': {"description": {'fuzziness': 'AUTO', 'fuzzy_transpositions': True, 'query': "anything"}}}]
         ),
         ]
     )
@@ -489,77 +486,77 @@ class TestFacetedFilterField(object):
     @pytest.mark.parametrize(
         ', '.join(['facets', 'context', 'aggs_query']),
         [(
-                None,
-                ['date'],
-                {}
+            None,
+            ['date'],
+            {}
         ), (
-                {
-                    'status': TermsFacet(field='status'),
-                    'date': DateHistogramFacet(field='date', interval='year'),
-                    'range': RangeFacet(field='height',
-                                        ranges=[("few", (None, 2)), ("lots", (2, None))])
-                },
-                ['unknown'],
-                {}
+            {
+                'status': TermsFacet(field='status'),
+                'date': DateHistogramFacet(field='date', interval='year'),
+                'range': RangeFacet(field='height',
+                                    ranges=[("few", (None, 2)), ("lots", (2, None))])
+            },
+            ['unknown'],
+            {}
         ), (
-                {'status': TermsFacet(field='status')},
-                ['status'],
-                {
-                    'aggs': {
-                        '_filter_status': {
-                            'filter': {'match_all': {}},  # TODO czy match_all jest tu potrzebny?
-                            'aggs': {
-                                'status': {
-                                    'terms': {
-                                        'field': 'status'
-                                    }
+            {'status': TermsFacet(field='status')},
+            ['status'],
+            {
+                'aggs': {
+                    '_filter_status': {
+                        'aggs': {
+                            'status': {
+                                'terms': {
+                                    'field': 'status'
                                 }
                             }
-                        }
+                        },
+                        'filter': {'match_all': {}}
                     }
                 }
+            }
         ), (
-                {'date': DateHistogramFacet(field='date', interval='year')},
-                ['date'],
-                {
-                    'aggs': {
-                        '_filter_date': {
-                            'aggs': {
-                                'date': {
-                                    'date_histogram': {
-                                        'field': 'date',
-                                        'interval': 'year',
-                                        'min_doc_count': 0
-                                    }
+            {'date': DateHistogramFacet(field='date', interval='year')},
+            ['date'],
+            {
+                'aggs': {
+                    '_filter_date': {
+                        'aggs': {
+                            'date': {
+                                'date_histogram': {
+                                    'field': 'date',
+                                    'interval': 'year',
+                                    'min_doc_count': 0
                                 }
-                            },
-                            'filter': {'match_all': {}}
-                        }
-                    },
-                }
+                            }
+                        },
+                        'filter': {'match_all': {}}
+                    }
+                },
+            }
         ), (
-                {'range': RangeFacet(field='height',
-                                     ranges=[("few", (None, 2)), ("lots", (2, None))])},
-                ['range'],
-                {
-                    'aggs': {
-                        '_filter_range': {
-                            'aggs': {
+            {'range': RangeFacet(field='height',
+                                 ranges=[("few", (None, 2)), ("lots", (2, None))])},
+            ['range'],
+            {
+                'aggs': {
+                    '_filter_range': {
+                        'aggs': {
+                            'range': {
                                 'range': {
-                                    'range': {
-                                        'field': 'height',
-                                        'keyed': False,
-                                        'ranges': [
-                                            {'key': 'few', 'to': 2},
-                                            {'key': 'lots', 'from': 2}
-                                        ]
-                                    }
+                                    'field': 'height',
+                                    'keyed': False,
+                                    'ranges': [
+                                        {'key': 'few', 'to': 2},
+                                        {'key': 'lots', 'from': 2}
+                                    ]
                                 }
-                            },
-                            'filter': {'match_all': {}}
-                        }
+                            }
+                        },
+                        'filter': {'match_all': {}}
                     }
                 }
+            }
         )])
     def test_queryset(self, facets, context, aggs_query, es_dsl_queryset):
         fld = FacetedFilterField(
@@ -567,11 +564,12 @@ class TestFacetedFilterField(object):
             field_name=self.test_field_name
         )
 
-        valid_query = {'query': {"match_all": {}}}
+        valid_query = {}
         valid_query.update(aggs_query)
 
         qs = fld.prepare_queryset(es_dsl_queryset, context)
-        assert qs.to_dict() == valid_query
+        ret = qs.to_dict()
+        assert ret == valid_query
 
 
 class TestOrderingFilterField(object):
@@ -581,26 +579,26 @@ class TestOrderingFilterField(object):
         ', '.join(['ordering_fields', 'default_ordering', 'context', 'valid_query']),
         [
             (
-                    {"id": "id"},
-                    ["id"],
-                    ['id'],
-                    ["id"]
+                {"id": "id"},
+                ["id"],
+                ['id'],
+                ["id"]
             ),
             (
-                    {"id": "id", "title": "title.sort"},
-                    ["id"],
-                    ["-title"],
-                    [{"title.sort": {"order": "desc"}}]
+                {"id": "id", "title": "title.sort"},
+                ["id"],
+                ["-title"],
+                [{"title.sort": {"order": "desc"}}]
             ),
             (
-                    {"id": "id", "date": None, "title": "title.sort"},
-                    ["_score"],
-                    ["-date", "title", "_score", "-wrong_field_name"],
-                    [
-                        {"date": {"order": "desc"}},
-                        "title.sort",
-                        "_score",
-                    ]
+                {"id": "id", "date": None, "title": "title.sort"},
+                ["_score"],
+                ["-date", "title", "_score", "-wrong_field_name"],
+                [
+                    {"date": {"order": "desc"}},
+                    "title.sort",
+                    "_score",
+                ]
             ),
         ]
     )
@@ -610,7 +608,7 @@ class TestOrderingFilterField(object):
                                   default_ordering=default_ordering)
 
         qs = fld.prepare_queryset(es_dsl_queryset, context).to_dict()
-        assert qs == {'query': {"match_all": {}}, "sort": valid_query}
+        assert qs == {"sort": valid_query}
 
 
 class TestHighlightBackend(object):
@@ -620,72 +618,72 @@ class TestHighlightBackend(object):
         ', '.join(['highlight_fields', 'context', 'highlight_query']),
         [
             (
-                    {
-                        'anything': {
-                            'enabled': True
-                        }
-                    },
-                    ["anything"],
-                    {'highlight': {'fields': {'anything': {}}}}
+                {
+                    'anything': {
+                        'enabled': True
+                    }
+                },
+                ["anything"],
+                {'highlight': {'fields': {'anything': {}}}}
             ),
             (
-                    {
-                        'anything': {
-                            'enabled': True
-                        }
-                    },
-                    ["none"],
-                    {}
+                {
+                    'anything': {
+                        'enabled': True
+                    }
+                },
+                ["none"],
+                {}
             ),
             (
-                    {
-                        '_all': {
-                            'options': {'pre_tags': ['-+*'], 'post_tags': ['*+-']},
-                        },
-                        'title': {
-                            'enabled': True
-                        },
-                        'description': {
-                            'enabled': False
-                        },
+                {
+                    '_all': {
+                        'options': {'pre_tags': ['-+*'], 'post_tags': ['*+-']},
                     },
-                    ["title", "description"],
-                    {
-                        'highlight': {
-                            'fields': {
-                                '_all': {'pre_tags': ['-+*'], 'post_tags': ['*+-']},
-                                'title': {}
-                            }
+                    'title': {
+                        'enabled': True
+                    },
+                    'description': {
+                        'enabled': False
+                    },
+                },
+                ["title", "description"],
+                {
+                    'highlight': {
+                        'fields': {
+                            '_all': {'pre_tags': ['-+*'], 'post_tags': ['*+-']},
+                            'title': {}
                         }
                     }
+                }
             ),
             (
-                    {
-                        'title': {
-                            'enabled': True,
-                            "options": {'pre_tags': ['<em>'], 'post_tags': ['</em>']},
-                        },
-                        'description': {
-                            "options": {'pre_tags': ['/*'], 'post_tags': ['*/']},
-                            'enabled': True
-                        },
+                {
+                    'title': {
+                        'enabled': True,
+                        "options": {'pre_tags': ['<em>'], 'post_tags': ['</em>']},
                     },
-                    ["title", "description"],
-                    {
-                        'highlight': {
-                            'fields': {
-                                'title': {'pre_tags': ['<em>'], 'post_tags': ['</em>']},
-                                'description': {'pre_tags': ['/*'], 'post_tags': ['*/']},
-                            }
+                    'description': {
+                        "options": {'pre_tags': ['/*'], 'post_tags': ['*/']},
+                        'enabled': True
+                    },
+                },
+                ["title", "description"],
+                {
+                    'highlight': {
+                        'fields': {
+                            'title': {'pre_tags': ['<em>'], 'post_tags': ['</em>']},
+                            'description': {'pre_tags': ['/*'], 'post_tags': ['*/']},
                         }
                     }
+                }
             ),
         ]
     )
     def test_queryset(self, highlight_fields, context, highlight_query, es_dsl_queryset):
         fld = HighlightBackend(highlight_fields=highlight_fields)
 
-        valid_query = {'query': {"match_all": {}}}
+        valid_query = {}
         valid_query.update(highlight_query)
 
         qs = fld.prepare_queryset(es_dsl_queryset, context).to_dict()

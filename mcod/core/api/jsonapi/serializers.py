@@ -1,18 +1,55 @@
 from collections.abc import Sequence
 
+from django.apps import apps
 from django.core import paginator
-from django.db.models import QuerySet
+from django.db.models import QuerySet, Manager
 from django.utils.timezone import now
 from django.utils.translation import get_language
-from elasticsearch_dsl import InnerDoc, AttrList
+from elasticsearch_dsl import (
+    AttrList,
+    AttrDict,
+    response as es_response
+)
 from marshmallow import pre_dump
 from marshmallow.schema import SchemaOpts
 from querystring_parser import builder
 
+from mcod import settings
 from mcod.core.api import schemas, fields
-from mcod.core.serializers import SerializerRegistry
+from mcod.core.registries import object_attrs_registry
+from mcod.core.utils import setpathattr, complete_invalid_xml
 
-object_attrs_registry = SerializerRegistry()
+
+class ErrorSource(schemas.ExtSchema):
+    pointer = fields.String()
+    parameter = fields.String()
+
+
+class ErrorMeta(schemas.ExtSchema):
+    traceback = fields.String()
+
+
+class ErrorSchema(schemas.ExtSchema):
+    id = fields.String()
+    status = fields.String()
+    code = fields.String()
+    title = fields.String()
+    detail = fields.String()
+    meta = fields.Nested(ErrorMeta, many=False)
+    source = fields.Nested(ErrorSource)
+
+    class Meta:
+        strict = True
+        ordered = True
+
+
+class ErrorsSchema(schemas.ExtSchema):
+    jsonapi = fields.Raw(default={'version': '1.0'})
+    errors = fields.Nested(ErrorSchema, many=True)
+
+    class Meta:
+        strict = True
+        ordered = True
 
 
 class RelationshipData(schemas.ExtSchema):
@@ -34,7 +71,7 @@ class Relationship(schemas.ExtSchema):
     meta = fields.Nested(RelationshipMeta, many=False)
 
     @pre_dump
-    def prepare_data(self, data):
+    def prepare_data(self, data, **kwargs):
         object_url = self.context.get('object_url', None) or self.api_url
         url_template = self.context.get('url_template') or None
         res = {}
@@ -50,13 +87,13 @@ class Relationship(schemas.ExtSchema):
                 'count': len(data)
             }
         else:
-            ident = getattr(data, 'id', None) or getattr(data.meta, 'id')
+            id = getattr(data, 'id', None) or getattr(data.meta, 'id')
             slug = getattr(data, 'slug', None)
-            if isinstance(slug, InnerDoc):
+            if isinstance(slug, AttrDict):
                 lang = get_language()
                 slug = slug[lang]
-            if slug:
-                ident = '{},{}'.format(ident, slug)
+            ident = '{},{}'.format(id, slug) if slug else id
+
             if url_template:
                 related_url = url_template.format(
                     api_url=self.api_url, object_url=object_url, ident=ident
@@ -65,10 +102,28 @@ class Relationship(schemas.ExtSchema):
                     'related': related_url
                 }
             res['data'] = {
-                'id': ident,
+                'id': id,
                 '_type': self.context['_type']
             }
 
+        return res
+
+
+class DataRelationship(Relationship):
+    data = fields.Nested(RelationshipData, many=True)
+
+    @pre_dump
+    def prepare_data(self, data, **kwargs):
+        res = super().prepare_data(data, **kwargs)
+        show_data = self.context.get('show_data', False)
+        if show_data:
+            _type = self.context['_type']
+            for item in data:
+                if isinstance(item, dict):
+                    item.update({'_type': _type})
+                else:
+                    setattr(item, '_type', _type)
+            res['data'] = data
         return res
 
 
@@ -82,8 +137,8 @@ class Relationships(schemas.ExtSchema):
                          partial=partial, unknown=unknown)
 
         for field_name, field in self.fields.items():
-            field._schema.context = dict(self.context)
-            field._schema.context.update(field.metadata)
+            field.schema.context = dict(self.context)
+            field.schema.context.update(field.metadata)
             field.many = False
 
 
@@ -135,8 +190,6 @@ class Object(schemas.ExtSchema):
     links = fields.Nested(ObjectLinks, name='links')
     _type = fields.String(required=True, data_key='type')
 
-    # meta = fields.Nested(ObjectMeta)
-
     def __init__(
             self, only=None, exclude=(), many=False, context=None,
             load_only=(), dump_only=(), partial=False, unknown=None,
@@ -163,28 +216,32 @@ class Object(schemas.ExtSchema):
                          partial=partial, unknown=unknown)
 
     @pre_dump(pass_many=False)
-    def prepare_data(self, data):
-        ident = getattr(data, 'id', None) or getattr(data.meta, 'id')
+    def prepare_data(self, data, **kwargs):
+        id = getattr(data, 'id', None) or getattr(data.meta, 'id')
         slug = getattr(data, 'slug', None)
-        if isinstance(slug, InnerDoc):
+        if isinstance(slug, AttrDict):
             lang = get_language()
             slug = slug[lang]
-        if slug:
-            ident = '{},{}'.format(ident, slug)
+
+        ident = '{},{}'.format(id, slug) if slug else str(id)
 
         res = dict(
             attributes=data,
-            id=str(ident),
+            id=str(id),
             _type=self.opts.attrs_schema.opts.object_type
         )
-        object_url = self.opts.attrs_schema.opts.url_template.format(
-            api_url=self.api_url,
-            ident=ident,
-            data=data
-        )
-        res['links'] = {
-            'self': object_url
-        }
+        if hasattr(self.opts.attrs_schema, 'self_api_url'):
+            object_url = self.opts.attrs_schema.self_api_url(data)
+        else:
+            object_url = self.opts.attrs_schema.opts.url_template.format(
+                api_url=self.api_url,
+                ident=ident,
+                data=data
+            )
+        if object_url:
+            res['links'] = {
+                'self': object_url
+            }
 
         if 'meta' in self._declared_fields:
             res['meta'] = data
@@ -193,10 +250,13 @@ class Object(schemas.ExtSchema):
             relationships = {}
             for name, field in self.fields['relationships'].schema.fields.items():
                 _name = field.attribute or name
-                field._schema.context.update(object_url=object_url)
+                field.schema.context.update(object_url=object_url)
                 value = getattr(data, _name, None)
-                if value:
+                if isinstance(value, Manager):
+                    value = value.values()
+                if value or field.required:
                     relationships[_name] = value
+                    relationships['object_url'] = object_url
             if relationships:
                 res['relationships'] = relationships
         return res
@@ -209,7 +269,17 @@ class TopLevelMeta(schemas.ExtSchema):
     count = fields.Integer()
     relative_uri = fields.String()
     aggregations = fields.Raw()
+    subscription_url = fields.String()
     server_time = fields.DateTime(default=now)
+    notifications = fields.Raw()
+
+    @pre_dump
+    def do_something(self, data, **kwargs):
+        request = self.context['request']
+        user = getattr(request, 'user', None)
+        if user and user.is_authenticated:
+            data['notifications'] = user.get_unread_notifications()
+        return data
 
 
 class TopLevelLinks(schemas.ExtSchema):
@@ -225,6 +295,7 @@ class TopLevelOpts(SchemaOpts):
         SchemaOpts.__init__(self, meta, **kwargs)
         self.attrs_schema = getattr(meta, 'attrs_schema', None)
         self.aggs_schema = getattr(meta, 'aggs_schema', None)
+        self.data_schema = getattr(meta, 'data_schema', None)
 
         # self.errors_schema = getattr(meta, 'errors_schema', ResponseErrors)
         self.meta_schema = getattr(meta, 'meta_schema', TopLevelMeta)
@@ -234,6 +305,8 @@ class TopLevelOpts(SchemaOpts):
 
         if self.attrs_schema and not issubclass(self.attrs_schema, ObjectAttrs):
             raise Exception("{} must be a subclass of ObjectAttrs".format(self.attrs_schema))
+        if self.data_schema and not issubclass(self.data_schema, schemas.ExtSchema):
+            raise Exception("{} must be a subclass of {}".format(self.data_schema, schemas.ExtSchema.__name__))
         if self.meta_schema and not issubclass(self.meta_schema, TopLevelMeta):
             raise Exception("{} must be a subclass of Meta".format(self.meta_schema))
         if self.aggs_schema:
@@ -246,15 +319,40 @@ class TopLevelOpts(SchemaOpts):
 
 class Aggregation(schemas.ExtSchema):
     id = fields.String(attribute='key')
-    title = fields.String()
+    title = fields.String(attribute='key_as_string')
     doc_count = fields.Integer()
 
     @pre_dump(pass_many=True)
-    def prepare_data(self, data, many):
+    def prepare_data(self, data, many, **kwargs):
         if many:
             for item in data:
                 item['title'] = str(item.key).upper()
             return data
+
+
+class ExtAggregation(schemas.ExtSchema):
+    id = fields.String()
+    title = fields.String()
+    doc_count = fields.Integer()
+
+    @pre_dump(pass_many=True)
+    def prepare_data(self, data, **kwargs):
+        _meta_cls = getattr(self, 'Meta')
+        if _meta_cls:
+            model_str = getattr(_meta_cls, 'model')
+            field_name = getattr(_meta_cls, 'title_field', 'name')
+            if model_str:
+                model = apps.get_model(model_str)
+                _data = {item['key']: item['doc_count'] for item in data}
+                data = []
+                for item in model.objects.filter(pk__in=_data.keys()).values('id', field_name):
+                    data.append({
+                        'id': item['id'],
+                        'title': item[field_name],
+                        'doc_count': _data[item['id']]
+                    })
+
+        return data
 
 
 class TopLevel(schemas.ExtSchema):
@@ -268,13 +366,14 @@ class TopLevel(schemas.ExtSchema):
             self, only=None, exclude=(), many=False, context=None,
             load_only=(), dump_only=(), partial=False, unknown=None,
     ):
-        data_cls = type(
+        data_cls = self.opts.data_schema or type(
             '{}Data'.format(self.__class__.__name__),
             (Object,), {}
         )
-        setattr(data_cls.opts, 'attrs_schema', self.opts.attrs_schema)
+        if self.opts.attrs_schema:
+            setattr(data_cls.opts, 'attrs_schema', self.opts.attrs_schema)
 
-        self._declared_fields['data'] = fields.Nested(data_cls, name='data', many=many)
+        self._declared_fields['data'] = fields.Nested(data_cls, name='data', many=many, allow_none=True)
 
         if self.opts.meta_schema:
             if self.opts.aggs_schema:
@@ -296,16 +395,22 @@ class TopLevel(schemas.ExtSchema):
                          partial=partial, unknown=unknown)
 
     @pre_dump
-    def prepare_top_level(self, c):
+    def prepare_top_level(self, c, **kwargs):
+
         def _get_page_link(page_number):
             cleaned_data['page'] = page_number
-            return '{}{}?{}'.format(request.prefix, request.path, builder.build(cleaned_data))
+            return '{}{}?{}'.format(settings.API_URL, request.path, builder.build(cleaned_data))
 
-        c.data = getattr(c, 'data', {})
+        c.data = c.data if hasattr(c, 'data') else None
+        if not c.data and self.context['is_listing']:
+            if isinstance(c.data, es_response.Response):
+                c.data.hits = []
+            else:
+                c.data = []
         request = self.context['request']
         c.meta = getattr(c, 'meta', {})
         c.links = getattr(c, 'links', {})
-        cleaned_data = dict(request.context.cleaned_data)
+        cleaned_data = dict(getattr(request.context, 'cleaned_data', {}))
 
         c.meta.update({
             'language': request.language,
@@ -314,15 +419,12 @@ class TopLevel(schemas.ExtSchema):
             'relative_uri': request.relative_uri,
         })
 
-        c.links['self'] = request.uri
+        c.links['self'] = request.uri.replace(request.forwarded_prefix, settings.API_URL)
 
         if self.context['is_listing']:
-            c.meta['aggregations'] = getattr(c.data, 'aggregations', {}) or {}
-            if isinstance(c.data, paginator.Page):
-                items_count = c.data.paginator.count
-            else:
-                items_count = c.data.hits.total \
-                    if hasattr(c.data, 'hits') else 0
+            data = getattr(c, 'data', {})
+            c.meta['aggregations'] = self.get_aggregations(data)
+            items_count = self._get_items_count(data)
             c.meta['count'] = items_count
             page, per_page = cleaned_data.get('page', 1), cleaned_data.get('per_page', 20)
             c.links['self'] = _get_page_link(page)
@@ -338,3 +440,70 @@ class TopLevel(schemas.ExtSchema):
                 if page * per_page < max_count:
                     c.links['next'] = _get_page_link(page + 1)
         return c
+
+    @staticmethod
+    def _get_items_count(data):
+        if isinstance(data, paginator.Page):
+            return data.paginator.count
+        elif isinstance(data, list):
+            return len(data)
+        return data.hits.total if hasattr(data, 'hits') else 0
+
+    def get_aggregations(self, data):
+        return getattr(data, 'aggregations', {}) or {}
+
+
+class SubscriptionQueryAttrs(ObjectAttrs):
+    title = fields.String()
+
+    class Meta:
+        object_type = 'query'
+
+
+class SubscriptionQueryLinks(RelationshipLinks):
+    related = fields.String(required=True, data_key='self')
+
+
+class SubscriptionQuerySchema(Object):
+    links = fields.Nested(SubscriptionQueryLinks, required=True, many=False)
+
+    class Meta:
+        attrs_schema = SubscriptionQueryAttrs
+
+    @pre_dump
+    def prepare_data(self, data, **kwargs):
+        return {
+            'attributes': {
+                'title': data.name,
+            },
+            'id': str(data.watcher.object_ident),
+            '_type': 'query',
+            'links': {
+                'related': data.watcher.object_ident
+            },
+        }
+
+
+class HighlightObjectMixin:
+    @staticmethod
+    def remove_cut_tags(phrase):
+        begin, end = None, None
+
+        open_tag_pos, close_tag_pos = phrase.find('<'), phrase.find('>')
+        if open_tag_pos > close_tag_pos:
+            begin = close_tag_pos + 1
+
+        open_tag_pos, close_tag_pos = phrase.rfind('<'), phrase.rfind('>')
+        if open_tag_pos > close_tag_pos:
+            end = open_tag_pos
+
+        return phrase[begin:end]
+
+    @pre_dump
+    def replace_highlighted(self, data, **kwargs):
+        if hasattr(data, 'meta') and hasattr(data.meta, 'highlight'):
+            hl = data.meta.highlight
+            for _field, hits in hl._d_.items():
+                field = _field.replace('_exact', '').replace('_synonyms', '')
+                setpathattr(data, field, "…".join(complete_invalid_xml(self.remove_cut_tags(hit)) for hit in hits))
+        return data

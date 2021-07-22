@@ -55,9 +55,9 @@ class SearchHistoriesList(List):
     sort = fields.OrderingFilterField(
         ordering_fields={
             "id": "id",
-            "query_sentence": "query_sentence",
+            "query_sentence": "query_sentence_keyword",
             "modified": "modified",
-            "user": "user"
+            "user": "user.id"
         }
     )
 

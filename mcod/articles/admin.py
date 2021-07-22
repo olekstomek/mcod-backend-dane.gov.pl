@@ -2,17 +2,23 @@ from django.conf import settings
 from django.contrib import admin
 from django.utils.safestring import mark_safe
 from django.utils.text import slugify
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext_lazy as _, get_language
 
 from mcod.articles.forms import ArticleForm
 from mcod.articles.models import Article, ArticleTrash
-from mcod.lib.admin_mixins import TrashMixin, HistoryMixin, LangFieldsOnlyMixin
+from mcod.lib.admin_mixins import (
+    TrashMixin, HistoryMixin, LangFieldsOnlyMixin,
+    SoftDeleteMixin, CreatedByDisplayAdminMixin, StatusLabelAdminMixin,
+    DynamicAdminListDisplayMixin, MCODAdminMixin
+)
+from mcod.unleash import is_enabled
 
 
 @admin.register(Article)
-class ArticleAdmin(HistoryMixin, LangFieldsOnlyMixin, admin.ModelAdmin):
+class ArticleAdmin(DynamicAdminListDisplayMixin, CreatedByDisplayAdminMixin, StatusLabelAdminMixin, SoftDeleteMixin,
+                   HistoryMixin, LangFieldsOnlyMixin, MCODAdminMixin, admin.ModelAdmin):
     actions_on_top = True
-    autocomplete_fields = ['tags', 'license']
+    autocomplete_fields = ['tags']
     prepopulated_fields = {"slug": ("title",)}
     fieldsets = (
         (
@@ -49,21 +55,12 @@ class ArticleAdmin(HistoryMixin, LangFieldsOnlyMixin, admin.ModelAdmin):
                 )
             }
         ),
-        (
-            _("Tags"),
-            {
-                'classes': ('suit-tab', 'suit-tab-tags',),
-                'fields': (
-                    "tags",
-                )
-            }
-        ),
 
     )
     readonly_fields = ['preview_link']
     suit_form_tabs = (
         ('general', _('General')),
-        *LangFieldsOnlyMixin.get_traslations_tabs(),
+        *LangFieldsOnlyMixin.get_translations_tabs(),
         ('tags', _('Tags')),
     )
 
@@ -80,7 +77,27 @@ class ArticleAdmin(HistoryMixin, LangFieldsOnlyMixin, admin.ModelAdmin):
     form = ArticleForm
 
     def get_fieldsets(self, request, obj=None):
-        return self.fieldsets + tuple(self.get_translations_fieldsets())
+        if is_enabled('S18_new_tags.be'):
+            tags_tab_fields = ('tags_pl', 'tags_en')
+        else:
+            tags_tab_fields = ('tags', )
+
+        tags_fieldset = (
+            (
+                _("Tags"),
+                {
+                    'classes': ('suit-tab', 'suit-tab-tags',),
+                    'fields': tags_tab_fields,
+                }
+            ),
+        )
+        return self.fieldsets + tags_fieldset + tuple(self.get_translations_fieldsets())
+
+    def get_form(self, request, obj=None, **kwargs):
+        form = super().get_form(request, obj, **kwargs)
+        if is_enabled('S18_new_tags.be'):
+            form.recreate_tags_widgets(request=request, db_field=Article.tags.field, admin_site=self.admin_site)
+        return form
 
     def get_queryset(self, request):
         qs = Article.objects.all()
@@ -88,7 +105,7 @@ class ArticleAdmin(HistoryMixin, LangFieldsOnlyMixin, admin.ModelAdmin):
         return qs
 
     def preview_link(self, obj):
-        url = f"{settings.BASE_URL}/knowledge-base/preview/{obj.id}"
+        url = f"{settings.BASE_URL}/{get_language()}/knowledge-base/preview/{obj.id}"
         return mark_safe('<a href="%s" class="btn" target="_blank">%s</a>' % (url, _("Preview")))
 
     preview_link.allow_tags = True
@@ -111,6 +128,12 @@ class ArticleAdmin(HistoryMixin, LangFieldsOnlyMixin, admin.ModelAdmin):
 class ArticleTrashAdmin(TrashMixin):
     list_display = ['title', 'author']
     search_fields = ['title', 'author']
+
+    if is_enabled('S18_new_tags.be'):
+        tags_fields = ('tags_list_pl', 'tags_list_en')
+    else:
+        tags_fields = ('tags',)
+
     fields = [
         'title',
         'author',
@@ -118,7 +141,7 @@ class ArticleTrashAdmin(TrashMixin):
         'notes',
         'slug',
         'status',
-        'tags',
+        *tags_fields,
         'license_id',
         'is_removed'
     ]
@@ -129,9 +152,17 @@ class ArticleTrashAdmin(TrashMixin):
         'notes',
         'slug',
         'status',
-        'tags',
+        *tags_fields,
         'license_id'
     ]
+
+    def tags_list_pl(self, instance):
+        return instance.tags_as_str(lang='pl')
+    tags_list_pl.short_description = _('Tags') + ' (PL)'
+
+    def tags_list_en(self, instance):
+        return instance.tags_as_str(lang='en')
+    tags_list_en.short_description = _('Tags') + ' (EN)'
 
 # @admin.register(ArticleCategory)
 # class ArticleCategoryAdmin(LangFieldsOnlyMixin, admin.ModelAdmin):

@@ -1,7 +1,0 @@
-- module: logstash
-  metricsets:
-    - node
-    - node_stats
-  period: 10s
-  hosts: ["mcod-logstash:9600"]
-

@@ -3,6 +3,9 @@ from celery.utils.log import get_task_logger
 from django.apps import apps
 from django_elasticsearch_dsl.registries import registry
 
+# from mcod.core.db.elastic import update_common_doc
+from mcod.core.db.elastic import ProxyDocumentRegistry
+
 logger = get_task_logger('index_tasks')
 
 
@@ -55,8 +58,9 @@ def update_related_task(app_label, object_name, pk_set):
 
 @shared_task
 def delete_document_task(app_label, object_name, instance_id):
-    instance = _instance(app_label, object_name, instance_id)
-    registry.delete(instance, raise_on_error=False)
+    model = apps.get_model(app_label, object_name)
+    registry_proxy = ProxyDocumentRegistry(registry)
+    registry_proxy.delete_documents_by_model_and_id(model, instance_id, raise_on_error=False)
     return {
         'app': app_label,
         'model': object_name,
@@ -65,11 +69,16 @@ def delete_document_task(app_label, object_name, instance_id):
 
 
 @shared_task
-def delete_with_related_task(app_label, object_name, instance_id):
-    instance = _instance(app_label, object_name, instance_id)
-    registry.delete_related(instance)
-    registry.delete(instance, raise_on_error=False)
+def delete_with_related_task(related_instances_data, app_label, object_name, instance_id):
+    for data in related_instances_data:
+        instance = _instance(**data)
+        registry.update(instance)
+
+    model = apps.get_model(app_label, object_name)
+    registry_proxy = ProxyDocumentRegistry(registry)
+    registry_proxy.delete_documents_by_model_and_id(model, instance_id, raise_on_error=False)
     return {
+        'related_instances_data': related_instances_data,
         'app': app_label,
         'model': object_name,
         'instance_id': instance_id
@@ -79,7 +88,7 @@ def delete_with_related_task(app_label, object_name, instance_id):
 @shared_task
 def delete_related_documents_task(app_label, object_name, instance_id):
     instance = _instance(app_label, object_name, instance_id)
-    registry.delete_related(instance)
+    registry.update_related(instance)
     return {
         'app': app_label,
         'model': object_name,
