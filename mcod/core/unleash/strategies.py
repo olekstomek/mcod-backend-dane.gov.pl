@@ -5,7 +5,7 @@ class EnvironmentName(Strategy):
     def load_provisioning(self) -> list:
         return [x.strip() for x in self.parameters["envNames"].split(',')]
 
-    def __call__(self, context: dict = None) -> bool:
+    def apply(self, context: dict = None) -> bool:
         return_value = False
 
         if "envName" in context.keys():

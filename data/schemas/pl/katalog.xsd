@@ -185,7 +185,7 @@
     </xs:simpleType>
     <xs:simpleType name="organizationTypeType">
         <xs:restriction base="xs:string">
-            <xs:enumeration value="Administracją samorządowa"/>
+            <xs:enumeration value="Administracja samorządowa"/>
             <xs:enumeration value="Administracja rządowa"/>
             <xs:enumeration value="Podmioty prywatne"/>
             <xs:enumeration value="Inne"/>

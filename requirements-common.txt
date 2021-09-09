@@ -1,5 +1,5 @@
 wheel==0.35.1
-unleashclient==2.6.0
+unleashclient==4.4.1
 pyyaml==5.1
 ipython==7.5
 lxml==4.6.2

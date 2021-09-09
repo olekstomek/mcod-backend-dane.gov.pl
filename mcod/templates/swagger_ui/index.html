@@ -3,96 +3,122 @@
 <!-- HTML for static distribution bundle build -->
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
+  <head>
+    <meta charset="UTF-8" />
     <title>dane.gov.pl api</title>
-    <link href="https://fonts.googleapis.com/css?family=Roboto:400,700" rel="stylesheet">
-        <link rel="stylesheet" type="text/css" href="{% static 'swagger_ui/swagger-ui.css' %}">
+    <link
+      href="https://fonts.googleapis.com/css?family=Roboto:400,700"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="{% static 'swagger_ui/swagger-ui.css' %}"
+    />
     {% if custom_css %}
-        <link rel="stylesheet" type="text/css" href="{% static 'swagger_ui/' %}{{ custom_css }}">
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="{% static 'swagger_ui/' %}{{ custom_css }}"
+    />
     {% endif %}
-    <link rel="icon" type="image/png" href="{% static 'swagger_ui/favicon-32x32.png' %}" sizes="32x32"/>
-    <link rel="icon" type="image/png" href="{% static 'swagger_ui/favicon-16x16.png' %}" sizes="16x16"/>
+    <link
+      rel="icon"
+      type="image/png"
+      href="{% static 'swagger_ui/favicon-32x32.png' %}"
+      sizes="32x32"
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      href="{% static 'swagger_ui/favicon-16x16.png' %}"
+      sizes="16x16"
+    />
     <style>
-        html {
-            box-sizing: border-box;
-            overflow: -moz-scrollbars-vertical;
-            overflow-y: scroll;
-        }
+      html {
+        box-sizing: border-box;
+        overflow: -moz-scrollbars-vertical;
+        overflow-y: scroll;
+      }
 
-        *,
-        *:before,
-        *:after {
-            box-sizing: inherit;
-        }
+      *,
+      *:before,
+      *:after {
+        box-sizing: inherit;
+      }
 
-        body {
-            margin: 0;
-            background: #fafafa;
-        }
+      body {
+        margin: 0;
+        background: #fafafa;
+      }
     </style>
-</head>
+  </head>
 
-<body>
-<div id="swagger-ui"></div>
+  <body>
+    <div id="swagger-ui"></div>
 
-<script src="{% static 'swagger_ui/swagger-ui-bundle.js' %}"></script>
-<script src="{% static 'swagger_ui/swagger-ui-standalone-preset.js' %}"></script>
-<script>
-    window.onload = function () {
-        const HideEmptyTagsPlugin = () => {
-            return {
-                statePlugins: {
-                    spec: {
-                        wrapSelectors: {
-                            taggedOperations: (ori) => (...args) => {
-                                return ori(...args)
-                                    .filter(tagMeta => tagMeta.get("operations") && tagMeta.get("operations").size > 0)
-                            }
-                        }
-                    }
-                }
-            }
-        };
-        // Begin Swagger UI call region
-        const ui = SwaggerUIBundle({
-            urls: {{ spec_urls|safe }},
-            dom_id: '#swagger-ui',
-            deepLinking: true,
-            presets: [
-                SwaggerUIBundle.presets.apis,
-                SwaggerUIStandalonePreset
-            ],
-            plugins: [
-                {#/SwaggerUIBundle.plugins.Topbar,#}
-                SwaggerUIBundle.plugins.DownloadUrl,
-                HideEmptyTagsPlugin
-            ],
-            layout: "StandaloneLayout"
-        });
-        // End Swagger UI call region
-        window.ui = ui;
+    <script src="{% static 'swagger_ui/swagger-ui-bundle.js' %}"></script>
+    <script src="{% static 'swagger_ui/swagger-ui-standalone-preset.js' %}"></script>
+    <script>
+      window.onload = function () {
+          const HideEmptyTagsPlugin = () => {
+              return {
+                  statePlugins: {
+                      spec: {
+                          wrapSelectors: {
+                              taggedOperations: (ori) => (...args) => {
+                                  return ori(...args)
+                                      .filter(tagMeta => tagMeta.get("operations") && tagMeta.get("operations").size > 0)
+                              }
+                          }
+                      }
+                  }
+              }
+          };
+          // Begin Swagger UI call region
+          const ui = SwaggerUIBundle({
+              urls: {{ spec_urls|safe }},
+              dom_id: '#swagger-ui',
+              deepLinking: true,
+              validatorUrl: null,
+              presets: [
+                  SwaggerUIBundle.presets.apis,
+                  SwaggerUIStandalonePreset
+              ],
+              plugins: [
+                  {#/SwaggerUIBundle.plugins.Topbar,#}
+                  SwaggerUIBundle.plugins.DownloadUrl,
+                  HideEmptyTagsPlugin
+              ],
+              layout: "StandaloneLayout"
+          });
+          // End Swagger UI call region
+          window.ui = ui;
 
-        topbar = document.getElementsByClassName('topbar-wrapper')[0];
-        span = topbar.getElementsByTagName('span')[0]
-        span.parentNode.removeChild(span);
-        img = topbar.getElementsByTagName('img')[0];
-        img.src = '/static/images/logo-175x50.png';
-        img.alt = 'Otwarte Dane';
-        img.height = 50;
-        img.width = 175;
-    }
-</script>
-<footer class="swagger-ui swagger-container">
-    <div class="wrapper">
+          topbar = document.getElementsByClassName('topbar-wrapper')[0];
+          span = topbar.getElementsByTagName('span')[0]
+          span.parentNode.removeChild(span);
+          img = topbar.getElementsByTagName('img')[0];
+          img.src = '/static/images/logo-175x50-white.png';
+          img.alt = 'Otwarte Dane';
+          img.height = 50;
+          img.width = 175;
+      }
+    </script>
+    <footer class="swagger-ui swagger-container">
+      <div class="wrapper">
         <section class="block col-12 footer">
-            <div>
-                Maintened by the <a href="https://www.gov.pl/cyfryzacja" target="_blank">Ministry of Digital Affairs of
-                the Republic of Poland</a>.
-                Created with <a href="https://swagger.io/tools/swagger-ui/" target="_blank">Swagger UI</a>.
-            </div>
+          <div>
+            Maintened by the
+            <a href="https://www.gov.pl/cyfryzacja" target="_blank"
+              >Ministry of Digital Affairs of the Republic of Poland</a
+            >. Created with
+            <a href="https://swagger.io/tools/swagger-ui/" target="_blank"
+              >Swagger UI</a
+            >.
+          </div>
         </section>
-    </div>
-</footer>
-</body>
+      </div>
+    </footer>
+  </body>
 </html>

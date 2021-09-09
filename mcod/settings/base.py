@@ -1495,5 +1495,5 @@ CSV_CATALOG_BATCH_SIZE = env('CSV_CATALOG_BATCH_SIZE', default=20000)
 DISCOURSE_FORUM_ENABLED = env('DISCOURSE_FORUM_ENABLED', default=True)
 
 SPARQL_ENDPOINTS = {
-    'kronika': 'http://kronik.gov.pl'  # TODO: update with valid api url
+    'kronika': 'https://pubapi.tst.kronika.gov.pl/ontology/sparql/departments'  # TODO: update with valid api url
 }

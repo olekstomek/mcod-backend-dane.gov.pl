@@ -2431,7 +2431,7 @@ msgstr ""
 "zasoby tych zbiorów zostaną zmienione na szkic"
 
 msgid "Local government"
-msgstr "Administracją samorządowa"
+msgstr "Administracja samorządowa"
 
 msgid "Public government"
 msgstr "Administracja rządowa"

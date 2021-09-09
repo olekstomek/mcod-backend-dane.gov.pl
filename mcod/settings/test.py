@@ -168,3 +168,7 @@ ES_PL_SYN_FILTER_KWARGS = {
 FALCON_LIMITER_ENABLED = False
 
 DISCOURSE_FORUM_ENABLED = False
+
+SPARQL_ENDPOINTS = {
+    'kronika': 'http://kronik.gov.pl'  # TODO: update with valid api url
+}
