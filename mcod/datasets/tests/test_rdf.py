@@ -4,7 +4,7 @@ import pytest
 from falcon import HTTP_OK, HTTP_BAD_REQUEST
 from pyshacl import validate as shacl_validate
 from pytest_bdd import scenarios
-from rdflib import URIRef, Literal, RDF, XSD, BNode, SH
+from rdflib import URIRef, Literal, XSD, BNode, SH
 
 from mcod import settings
 import mcod.core.api.rdf.namespaces as ns
@@ -110,7 +110,7 @@ def is_dcat_ap_conformant(rdf_content, ignore_warnings=False):
 def get_pagination_dcat_ap_triples():
     pagination_ref = BNode('PagedCollection')
     triples = [
-        (pagination_ref, RDF.type, ns.HYDRA.PagedCollection),
+        (pagination_ref, ns.RDF.type, ns.HYDRA.PagedCollection),
         (pagination_ref, ns.HYDRA.totalItems, Literal(1)),
         (pagination_ref, ns.HYDRA.itemsPerPage, Literal(20)),
     ]
@@ -119,7 +119,7 @@ def get_pagination_dcat_ap_triples():
 
 def get_vcard_kind_dcat_ap_triples(vcard_kind_ref, config):
     triples = [
-        (vcard_kind_ref, RDF.type, ns.VCARD.Kind),
+        (vcard_kind_ref, ns.RDF.type, ns.VCARD.Kind),
         (vcard_kind_ref, ns.VCARD.fn, Literal(config.DATASET__CONTACT_POINT__FN, datatype=XSD.string)),
         (vcard_kind_ref, ns.VCARD.hasEmail, URIRef(config.DATASET__CONTACT_POINT__HAS_EMAIL)),
     ]
@@ -149,7 +149,7 @@ def get_catalog_dcat_ap_triples(dataset, config):
     homepage_ref = URIRef(settings.BASE_URL)
 
     triples = [
-        (catalog_ref, RDF.type, ns.DCAT.Catalog),
+        (catalog_ref, ns.RDF.type, ns.DCAT.Catalog),
 
         (catalog_ref, ns.DCT.title, Literal(config.CATALOG__TITLE_PL, lang='pl')),
         (catalog_ref, ns.DCT.title, Literal(config.CATALOG__TITLE_EN, lang='en')),
@@ -163,38 +163,38 @@ def get_catalog_dcat_ap_triples(dataset, config):
         (catalog_ref, ns.DCAT.dataset, dataset_ref),
 
         (catalog_ref, ns.DCT.language, pl_language_ref),
-        (pl_language_ref, RDF.type, ns.DCT.LinguisticSystem),
+        (pl_language_ref, ns.RDF.type, ns.DCT.LinguisticSystem),
         (pl_language_ref, ns.SKOS.inScheme, URIRef(vocab["language"].rstrip('/'))),
 
         (catalog_ref, ns.DCT.language, en_language_ref),
-        (en_language_ref, RDF.type, ns.DCT.LinguisticSystem),
+        (en_language_ref, ns.RDF.type, ns.DCT.LinguisticSystem),
         (en_language_ref, ns.SKOS.inScheme, URIRef(vocab["language"].rstrip('/'))),
 
         (catalog_ref, ns.DCT.spatial, spatial_ref),
-        (spatial_ref, RDF.type, ns.DCT.Location),
+        (spatial_ref, ns.RDF.type, ns.DCT.Location),
         (spatial_ref, ns.SKOS.inScheme, spatial_scheme_ref),
 
         (catalog_ref, ns.DCT.publisher, agent_ref),
-        (agent_ref, RDF.type, ns.FOAF.Agent),
+        (agent_ref, ns.RDF.type, ns.FOAF.Agent),
         (agent_ref, ns.FOAF.name, Literal(config.CATALOG__PUBLISHER__NAME_PL, lang="pl")),
         (agent_ref, ns.FOAF.name, Literal(config.CATALOG__PUBLISHER__NAME_EN, lang="en")),
         (agent_ref, ns.FOAF.mbox, Literal(config.CATALOG__PUBLISHER__EMAIL)),
         (agent_ref, ns.FOAF.homepage, URIRef(config.CATALOG__PUBLISHER__HOMEPAGE)),
         (agent_ref, ns.DCT.type, agent_type_ref),
-        (agent_type_ref, RDF.type, ns.SKOS.Concept),
+        (agent_type_ref, ns.RDF.type, ns.SKOS.Concept),
         (agent_type_ref, ns.SKOS.inScheme, agent_type_scheme_ref),
         (agent_type_ref, ns.SKOS.prefLabel, Literal('Organ krajowy', lang='pl')),
         (agent_type_ref, ns.SKOS.prefLabel, Literal('National authority', lang='en')),
-        (agent_type_scheme_ref, RDF.type, ns.SKOS.ConceptScheme),
+        (agent_type_scheme_ref, ns.RDF.type, ns.SKOS.ConceptScheme),
         (agent_type_scheme_ref, ns.DCT.title, Literal('Publisher Type', lang='en')),
 
         (catalog_ref, ns.DCAT.themeTaxonomy, theme_taxonomy_ref),
-        (theme_taxonomy_ref, RDF.type, ns.SKOS.ConceptScheme),
+        (theme_taxonomy_ref, ns.RDF.type, ns.SKOS.ConceptScheme),
         (theme_taxonomy_ref, ns.DCT.title, Literal('Kategoria danych', lang='pl')),
         (theme_taxonomy_ref, ns.DCT.title, Literal('Data theme', lang='en')),
 
         (catalog_ref, ns.FOAF.homepage, homepage_ref),
-        (homepage_ref, RDF.type, ns.FOAF.Document),
+        (homepage_ref, ns.RDF.type, ns.FOAF.Document),
     ]
     return triples
 
@@ -206,7 +206,7 @@ def get_catalog_schemaorg_triples(dataset, config):
     triples = [
         (catalog_ref, ns.SCHEMA.dataset, dataset_ref),
 
-        (catalog_ref, RDF.type, ns.SCHEMA.DataCatalog),
+        (catalog_ref, ns.RDF.type, ns.SCHEMA.DataCatalog),
         (catalog_ref, ns.SCHEMA.inLanguage, Literal('pl')),
         (catalog_ref, ns.SCHEMA.inLanguage, Literal('en')),
         (catalog_ref, ns.SCHEMA.name, Literal(config.CATALOG__TITLE_PL, lang='pl')),
@@ -246,11 +246,11 @@ def get_dataset_dcat_ap_triples(dataset, config):
         theme_taxonomy_ref = URIRef(vocab["theme"].rstrip('/'))
         categories_triples.extend([
             (dataset_ref, ns.DCAT.theme, category_ref),
-            (category_ref, RDF.type, ns.SKOS.Concept),
+            (category_ref, ns.RDF.type, ns.SKOS.Concept),
             (category_ref, ns.SKOS.inScheme, theme_taxonomy_ref),
             (category_ref, ns.SKOS.prefLabel, Literal(category.title, lang='pl')),
             (category_ref, ns.SKOS.prefLabel, Literal(category.title, lang='en')),
-            (theme_taxonomy_ref, RDF.type, ns.SKOS.ConceptScheme),
+            (theme_taxonomy_ref, ns.RDF.type, ns.SKOS.ConceptScheme),
             (theme_taxonomy_ref, ns.DCT.title, Literal('Kategoria danych', lang='pl')),
             (theme_taxonomy_ref, ns.DCT.title, Literal('Data theme', lang='en')),
         ])
@@ -261,29 +261,29 @@ def get_dataset_dcat_ap_triples(dataset, config):
         accrual_periodicity_ref = URIRef(f'{vocab["frequency"]}{accrual_periodicity}')
         accrual_periodicity_triples = [
             (dataset_ref, ns.DCT.accrualPeriodicity, accrual_periodicity_ref),
-            (accrual_periodicity_ref, RDF.type, ns.DCT.Frequency),
+            (accrual_periodicity_ref, ns.RDF.type, ns.DCT.Frequency),
             (accrual_periodicity_ref, ns.SKOS.inScheme, URIRef(vocab["frequency"].rstrip('/'))),
         ]
 
     format_ref = URIRef(f'{vocab["file-type"]}{resource.format.upper()}')
     format_triples = [
         (resource_ref, ns.DCT['format'], format_ref),
-        (format_ref, RDF.type, ns.DCT.MediaTypeOrExtent),
+        (format_ref, ns.RDF.type, ns.DCT.MediaTypeOrExtent),
         (format_ref, ns.SKOS.inScheme, URIRef(vocab["file-type"].rstrip('/'))),
     ]
 
     media_type_ref = URIRef(f'{vocab["media-type"]}{resource.file_mimetype}')
     media_type_triples = [
         (resource_ref, ns.DCAT.mediaType, media_type_ref),
-        (media_type_ref, RDF.type, ns.DCT.MediaType),
+        (media_type_ref, ns.RDF.type, ns.DCT.MediaType),
     ]
 
     pl_language_ref = URIRef(f'{vocab["language"]}POL')
     en_language_ref = URIRef(f'{vocab["language"]}ENG')
     languages_metadata_triples = [
-        (pl_language_ref, RDF.type, ns.DCT.LinguisticSystem),
+        (pl_language_ref, ns.RDF.type, ns.DCT.LinguisticSystem),
         (pl_language_ref, ns.SKOS.inScheme, URIRef(vocab["language"].rstrip('/'))),
-        (en_language_ref, RDF.type, ns.DCT.LinguisticSystem),
+        (en_language_ref, ns.RDF.type, ns.DCT.LinguisticSystem),
         (en_language_ref, ns.SKOS.inScheme, URIRef(vocab["language"].rstrip('/'))),
     ]
 
@@ -291,10 +291,10 @@ def get_dataset_dcat_ap_triples(dataset, config):
     status_scheme_ref = URIRef(vocab["status"])
     status_triples = [
         (resource_ref, ns.ADMS.status, status_ref),
-        (status_ref, RDF.type, ns.SKOS.Concept),
+        (status_ref, ns.RDF.type, ns.SKOS.Concept),
         (status_ref, ns.SKOS.inScheme, status_scheme_ref),
         (status_ref, ns.SKOS.prefLabel, Literal('Completed', lang='en')),
-        (status_scheme_ref, RDF.type, ns.SKOS.ConceptScheme),
+        (status_scheme_ref, ns.RDF.type, ns.SKOS.ConceptScheme),
         (status_scheme_ref, ns.DCT.title, Literal('Status', lang='en')),
     ]
 
@@ -302,8 +302,8 @@ def get_dataset_dcat_ap_triples(dataset, config):
         # DATASET
         (dataset_ref, ns.DCAT.distribution, resource_ref),
         (dataset_ref, ns.DCT.publisher, organization_ref),
-        (dataset_ref, RDF.type, ns.DCAT.Dataset),
-        (dataset_ref, RDF.type, ns.FOAF.Document),
+        (dataset_ref, ns.RDF.type, ns.DCAT.Dataset),
+        (dataset_ref, ns.RDF.type, ns.FOAF.Document),
         (dataset_ref, ns.DCT.language, pl_language_ref),
         (dataset_ref, ns.DCT.language, en_language_ref),
         (dataset_ref, ns.DCT.identifier, Literal(dataset_uri)),
@@ -320,7 +320,7 @@ def get_dataset_dcat_ap_triples(dataset, config):
         *categories_triples,
 
         # RESOURCE
-        (resource_ref, RDF.type, ns.DCAT.Distribution),
+        (resource_ref, ns.RDF.type, ns.DCAT.Distribution),
         (resource_ref, ns.DCT.language, pl_language_ref),
         (resource_ref, ns.DCT.language, en_language_ref),
         (resource_ref, ns.DCT.title, Literal(resource.title_pl or resource.title, lang='pl')),
@@ -338,7 +338,7 @@ def get_dataset_dcat_ap_triples(dataset, config):
         license_triple,
 
         # ORGANIZATION
-        (organization_ref, RDF.type, ns.FOAF.Agent),
+        (organization_ref, ns.RDF.type, ns.FOAF.Agent),
         (organization_ref, ns.FOAF.mbox, Literal(organization.email)),
         (organization_ref, ns.FOAF.name, Literal(organization.title_pl or organization.title, lang='pl')),
         (organization_ref, ns.FOAF.name, Literal(organization.title_en or organization.title, lang='en')),
@@ -369,7 +369,7 @@ def get_dataset_schemaorg_triples(dataset):
         # DATASET
         (dataset_ref, ns.SCHEMA.distribution, resource_ref),
         (dataset_ref, ns.SCHEMA.creator, organization_ref),
-        (dataset_ref, RDF.type, ns.SCHEMA.Dataset),
+        (dataset_ref, ns.RDF.type, ns.SCHEMA.Dataset),
         (dataset_ref, ns.SCHEMA.inLanguage, Literal('pl')),
         (dataset_ref, ns.SCHEMA.inLanguage, Literal('en')),
         (dataset_ref, ns.SCHEMA.url, Literal(dataset_uri)),
@@ -386,7 +386,7 @@ def get_dataset_schemaorg_triples(dataset):
         *dataset_license_triples,
 
         # RESOURCE
-        (resource_ref, RDF.type, ns.SCHEMA.DataDownload),
+        (resource_ref, ns.RDF.type, ns.SCHEMA.DataDownload),
         (resource_ref, ns.SCHEMA.inLanguage, Literal('pl')),
         (resource_ref, ns.SCHEMA.inLanguage, Literal('en')),
         (resource_ref, ns.SCHEMA.name, Literal(resource.title_pl or resource.title, lang='pl')),
@@ -402,7 +402,7 @@ def get_dataset_schemaorg_triples(dataset):
         resource_license_triple,
 
         # ORGANIZATION
-        (organization_ref, RDF.type, ns.SCHEMA.Organization),
+        (organization_ref, ns.RDF.type, ns.SCHEMA.Organization),
         (organization_ref, ns.SCHEMA.name, Literal(organization.title_pl or organization.title, lang='pl')),
         (organization_ref, ns.SCHEMA.name, Literal(organization.title_en or organization.title, lang='en')),
     ]

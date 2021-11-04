@@ -12,3 +12,4 @@ class LaboratoryConfig(ExtendedAppMixin, AppConfig):
         from mcod.laboratory.models import LabEvent, LabEventTrash
         self.connect_core_signals(LabEvent)
         self.connect_core_signals(LabEventTrash)
+        self.connect_history(LabEvent)

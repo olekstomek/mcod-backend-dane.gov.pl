@@ -1,4 +1,4 @@
-from rdflib.namespace import Namespace, SKOS
+from rdflib.namespace import Namespace, SKOS, RDF
 
 
 DCT = Namespace("http://purl.org/dc/terms/")
@@ -28,4 +28,5 @@ NAMESPACES = {
     'owl': OWL,
     'spdx': SPDX,
     'hydra': HYDRA,
+    'rdf': RDF
 }

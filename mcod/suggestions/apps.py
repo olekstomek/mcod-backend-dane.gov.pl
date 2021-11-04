@@ -12,8 +12,17 @@ class SuggestionsConfig(ExtendedAppMixin, AppConfig):
         from mcod.suggestions.models import (
             AcceptedDatasetSubmission,
             AcceptedDatasetSubmissionTrash,
+            DatasetComment,
+            DatasetSubmission,
+            ResourceComment,
             SubmissionFeedback
         )
         self.connect_core_signals(AcceptedDatasetSubmission)
         self.connect_core_signals(AcceptedDatasetSubmissionTrash)
         self.connect_core_signals(SubmissionFeedback)
+        self.connect_history(
+            AcceptedDatasetSubmission,
+            DatasetComment,
+            DatasetSubmission,
+            ResourceComment,
+        )

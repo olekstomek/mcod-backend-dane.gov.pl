@@ -11,3 +11,4 @@ class SpecialSignsConfig(ExtendedAppMixin, AppConfig):
     def ready(self):
         from mcod.special_signs.models import SpecialSign
         self.connect_core_signals(SpecialSign)
+        self.connect_history(SpecialSign)

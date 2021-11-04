@@ -51,6 +51,7 @@ RUN chmod +x /usr/local/bin/start-django
 COPY ./docker/app/start-celery.sh /usr/local/bin/start-celery
 RUN chmod +x /usr/local/bin/start-celery
 
+RUN pip install -I 'setuptools<58'
 RUN pip install -r requirements-common.txt
 
 RUN python manage.py compilemessages --settings mcod.settings.test -v 3

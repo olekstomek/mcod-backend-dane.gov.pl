@@ -19,6 +19,7 @@ from mcod.datasets.serializers import (
     SourceSchema,
     LicenseAggregation,
     UpdateFrequencyAggregation,
+    HighValueDataAggregation
 )
 from mcod.lib.serializers import TranslatedStr, KeywordsList
 from mcod.organizations.serializers import DataSourceAttr
@@ -160,6 +161,10 @@ class CommonObjectApiAggregations(ExtSchema):
     by_update_frequency = fields.Nested(UpdateFrequencyAggregation,
                                         many=True,
                                         attribute='_filter_by_update_frequency.by_update_frequency.buckets')
+
+    by_has_high_value_data = fields.Nested(HighValueDataAggregation,
+                                           many=True,
+                                           attribute='_filter_by_has_high_value_data.by_has_high_value_data.buckets')
 
 
 class CommonObjectApiMetaSchema(TopLevelMeta):

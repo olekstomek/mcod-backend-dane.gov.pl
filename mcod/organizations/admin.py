@@ -1,5 +1,6 @@
 import nested_admin
 from django.contrib import admin
+from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils.text import slugify
@@ -22,10 +23,9 @@ from mcod.users.models import User
 
 class ChangeDatasetStacked(AdminListMixin, nested_admin.NestedStackedInline, ObjectPermissionsStackedInline):
     template = 'admin/datasets/inline-list.html'
-    show_change_link = True
 
     fields = [
-        "title",
+        "_title",
         "modified",
         'organization',
         'categories_list',
@@ -34,7 +34,7 @@ class ChangeDatasetStacked(AdminListMixin, nested_admin.NestedStackedInline, Obj
     sortable = 'modified'
 
     readonly_fields = [
-        "title",
+        "_title",
         "modified",
         'organization',
         'categories_list',
@@ -83,6 +83,11 @@ class ChangeDatasetStacked(AdminListMixin, nested_admin.NestedStackedInline, Obj
 
     def _get_form_for_get_fields(self, request, obj=None):
         return self.get_formset(request, obj, fields=None).form
+
+    def _title(self, obj):
+        return mark_safe(
+            '<a href="{}">{}</a>'.format(reverse('admin:datasets_dataset_change', args=[obj.id]), obj.title))
+    _title.short_description = _("title")
 
 
 class AddDatasetStacked(AdminListMixin, nested_admin.NestedStackedInline, ObjectPermissionsStackedInline):

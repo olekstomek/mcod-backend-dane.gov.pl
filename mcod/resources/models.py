@@ -38,8 +38,10 @@ from modeltrans.fields import TranslationField
 
 from mcod.core import signals as core_signals
 from mcod.core import storages
-from mcod.core.api.search import signals as search_signals
 from mcod.core.api.rdf import signals as rdf_signals
+from mcod.core.api.rdf.tasks import update_graph_task
+from mcod.core.api.search import signals as search_signals
+from mcod.core.api.search.tasks import update_with_related_task
 from mcod.core.db.managers import TrashManager
 from mcod.core.db.models import ExtendedModel, update_watcher, TrashModelBase
 from mcod.core.utils import sizeof_fmt
@@ -48,16 +50,17 @@ from mcod.datasets.models import Dataset
 from mcod.lib.data_rules import painless_body
 from mcod.resources.archives import is_archive_file
 from mcod.resources.error_mappings import recommendations, messages
-from mcod.resources.file_validation import get_file_info
+from mcod.resources.file_validation import analyze_file, check_support, get_file_info
 from mcod.resources.indexed_data import ShpData, TabularData
+from mcod.resources.link_validation import check_link_status, download_file
 from mcod.resources.managers import ChartManager, ResourceManager
 from mcod.resources.score_computation import get_score
 from mcod.resources.signals import revalidate_resource, update_chart_resource
 from mcod.resources.tasks import process_resource_from_url_task, process_resource_file_task, \
     process_resource_file_data_task, validate_link
 from mcod.unleash import is_enabled
-
 from mcod.watchers.tasks import update_model_watcher_task
+
 
 User = get_user_model()
 
@@ -414,6 +417,10 @@ class Resource(ExtendedModel):
         return self.dataset.update_frequency
 
     @property
+    def has_high_value_data(self):
+        return self.dataset.has_high_value_data
+
+    @property
     def type_as_str(self):
         if self.type == RESOURCE_TYPE_API and self.forced_api_type:
             return RESOURCE_TYPE_API_CHANGE_LABEL
@@ -471,7 +478,10 @@ class Resource(ExtendedModel):
         if self.dataset.source:
             emails.extend(self.dataset.source.emails_list)
         else:
-            if self.modified_by:
+            if (self.dataset.update_notification_recipient_email and
+                    is_enabled('S36_dataset_resource_comment_recipient.be')):
+                emails.append(self.dataset.update_notification_recipient_email)
+            elif self.modified_by:
                 emails.append(self.modified_by.email)
             else:
                 emails.extend(user.email for user in self.dataset.organization.users.all())
@@ -591,7 +601,11 @@ class Resource(ExtendedModel):
 
     @property
     def file_basename(self):
-        return os.path.basename(self.file.name) if self.file else None
+        return self._get_basename(self.file.name) if self.file else None
+
+    @property
+    def file_extension(self):
+        return os.path.splitext(self.file.name)[1] if self.file else None
 
     @property
     def file_size(self):
@@ -620,7 +634,7 @@ class Resource(ExtendedModel):
             'csv' if self.csv_file else None,
             'json-ld' if self.jsonld_file else None,
         ]
-        return [format for format in items if format]
+        return [item for item in items if item]
 
     @property
     def converted_formats_str(self):
@@ -797,8 +811,8 @@ class Resource(ExtendedModel):
         format_ = format_ or self.format
         if self.csv_file:
             format_ = 'csv'
-        if self.jsonld_file and is_enabled('S27_csv_to_jsonld.be'):
-            format_ = 'jsonld'
+        if format_ == 'jsonstat':
+            format_ = 'json'
         if format_ is None:
             return 0
         return get_score(self, format_)
@@ -900,12 +914,14 @@ class Resource(ExtendedModel):
     @property
     def computed_downloads_count(self):
         return ResourceDownloadCounter.objects.filter(
-            resource_id=self.pk).aggregate(count_sum=Sum('count'))['count_sum'] or 0
+            resource_id=self.pk).aggregate(count_sum=Sum('count'))['count_sum'] or 0\
+            if is_enabled('S16_new_date_counters.be') else self.downloads_count
 
     @property
     def computed_views_count(self):
         return ResourceViewCounter.objects.filter(
-            resource_id=self.pk).aggregate(count_sum=Sum('count'))['count_sum'] or 0
+            resource_id=self.pk).aggregate(count_sum=Sum('count'))['count_sum'] or 0\
+            if is_enabled('S16_new_date_counters.be') else self.views_count
 
     @cached_property
     def data_special_signs(self):
@@ -921,6 +937,9 @@ class Resource(ExtendedModel):
         ResourceRDF = namedtuple('ResourceRDF', ['data'])
         obj = ResourceRDF(self)
         return _schema(many=False).dump(obj)
+
+    def analyze_file(self):
+        return analyze_file(self.file.file.name)
 
     def as_sparql_create_query(self):
         g = self.to_rdf_graph()
@@ -945,6 +964,15 @@ class Resource(ExtendedModel):
             queryset = queryset.union(private)
         queryset = queryset.order_by('-is_default', 'name')
         return self._get_page(queryset, **kwargs)
+
+    def check_link_status(self):
+        return check_link_status(self.link, self.type)
+
+    def check_support(self):
+        return check_support(self.format, self.file_mimetype)
+
+    def download_file(self):
+        return download_file(self.link, self.forced_file_type)
 
     def _get_page(self, queryset, page=1, per_page=20, **kwargs):
         paginator = Paginator(queryset, per_page)
@@ -1154,7 +1182,8 @@ def process_resource(sender, instance, *args, **kwargs):
     changed_forced_file_type = instance.tracker.has_changed('forced_file_type')
     previous_forced_file_type = instance.tracker.previous('forced_file_type')
     if any([instance.tracker.has_changed('link'), instance.tracker.has_changed('availability'),
-            (changed_forced_file_type and previous_forced_file_type is not None)]):
+            (changed_forced_file_type and previous_forced_file_type is not None),
+            (instance.link and not instance.is_link_internal and instance.state_restored)]):
         process_resource_from_url_task.s(instance.id).apply_async(countdown=2)
     elif instance.tracker.has_changed('file') or instance.state_restored:
         process_resource_file_task.s(instance.id).apply_async(countdown=2)
@@ -1281,14 +1310,24 @@ def update_resource(task_id, **kwargs):  # noqa: C901
 
 
 @task_postrun.connect(sender=validate_link)
+def validate_link_task_postrun_handler(sender, task_id, task, signal, **kwargs):
+    update_resource(task_id, update_link_tasks_last_status=True, **kwargs)
+
+
 @task_postrun.connect(sender=process_resource_from_url_task)
 def process_resource_from_url_task_postrun_handler(sender, task_id, task, signal, **kwargs):
     update_resource(task_id, update_link_tasks_last_status=True, **kwargs)
+    resource_id = int(kwargs['args'][0])
+    update_with_related_task.s('resources', 'Resource', resource_id).apply_async()
+    update_graph_task.s('resources', 'Resource', resource_id).apply_async(countdown=1)
 
 
 @task_postrun.connect(sender=process_resource_file_task)
 def process_resource_file_task_postrun_handler(sender, task_id, task, signal, **kwargs):
     update_resource(task_id, update_file_tasks_last_status=True, **kwargs)
+    resource_id = int(kwargs['args'][0])
+    update_with_related_task.s('resources', 'Resource', resource_id).apply_async()
+    update_graph_task.s('resources', 'Resource', resource_id).apply_async(countdown=1)
 
 
 @task_postrun.connect(sender=process_resource_file_data_task)

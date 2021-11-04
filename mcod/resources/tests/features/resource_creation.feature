@@ -47,3 +47,8 @@ Feature: Resource from link creation
     And admin's page /resources/resource/add/ is requested
     Then admin's response status code is 200
     And admin's response page contains required id="id_title"></textarea><span class="help-inline"><ul class="errorlist"><li>To pole jest obowiązkowe.</li></ul>
+
+  Scenario: Restored draft api resource doesnt validate local file
+    Given draft remote file resource of api type with id 998
+    Then set status published on resource with id 998
+    And resource with id 998 attributes are equal {"file_tasks_last_status": "", "link_tasks_last_status": "SUCCESS", "type": "api"}

@@ -6,7 +6,6 @@ import logging
 from constance import config
 from django.apps import apps
 from django.conf import settings
-
 from django.contrib.postgres.fields import JSONField
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin, Permission
 from django.contrib.sessions.backends.cache import KEY_PREFIX
@@ -25,6 +24,7 @@ from django.utils.translation import gettext_lazy as _, override, pgettext_lazy,
 from modeltrans.fields import TranslationField
 from model_utils import FieldTracker
 from model_utils.models import TimeStampedModel
+
 
 from mcod.core import storages
 from mcod.core.api.search.tasks import update_document_task
@@ -763,9 +763,15 @@ class Meeting(ExtendedModel):
         return self.files.order_by('id')
 
 
+def meeting_file_path(instance, filename):
+    return f'{instance.uuid}/{filename}'
+
+
 class MeetingFile(ExtendedModel):
-    file = models.FileField(verbose_name=_('file'), storage=storages.get_storage('meetings'), max_length=2000)
-    meeting = models.ForeignKey(to=Meeting, on_delete=models.DO_NOTHING, related_name='files')
+    file = models.FileField(
+        verbose_name=_('file'), storage=storages.get_storage('meetings'), max_length=2000,
+        upload_to=meeting_file_path)
+    meeting = models.ForeignKey(Meeting, on_delete=models.DO_NOTHING, related_name='files')
 
     objects = MeetingFileManager()
     trash = MeetingFileTrashManager()
@@ -778,7 +784,7 @@ class MeetingFile(ExtendedModel):
 
     @property
     def name(self):
-        return self.file.name
+        return self._get_basename(self.file.name)
 
     def __str__(self):
         return self.name

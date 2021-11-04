@@ -87,7 +87,7 @@ class TestDownloadFile:
 
     def test_throw_invalid_url(self):
         try:
-            download_file('www.brokenlink', False)
+            download_file('www.brokenlink')
             raise pytest.fail('No exception occurred. Expected: InvalidUrl')
         except InvalidUrl as err:
             assert err.args[0] == 'Invalid url address: www.brokenlink'
@@ -98,7 +98,7 @@ class TestDownloadFile:
         headers = {'Content-Type': 'application/json'}
         mock_request.get(self.url, headers=headers, status_code=504)
         try:
-            download_file(self.url, False)
+            download_file(self.url)
             raise pytest.fail('No exception occurred. Expected: InvalidResponseCode')
         except InvalidResponseCode as err:
             assert err.args[0] == 'Invalid response code: 504'
@@ -109,7 +109,7 @@ class TestDownloadFile:
         headers = {'Content-Type': 'application/text/json'}
         mock_request.get(self.url, headers=headers)
         try:
-            download_file(self.url, False)
+            download_file(self.url)
             raise pytest.fail('No exception occurred. Expected: InvalidContentType')
         except InvalidContentType as err:
             assert err.args[0] == 'application/text/json'
@@ -120,7 +120,7 @@ class TestDownloadFile:
         headers = {'Content-Type': 'video/mp4'}
         mock_request.get(self.url, headers=headers)
         try:
-            download_file(self.url, False)
+            download_file(self.url)
             raise pytest.fail('No exception occurred. Expected: UnsupportedContentType')
         except UnsupportedContentType as err:
             assert err.args[0] == 'Unsupported type: video/mp4'
@@ -131,7 +131,7 @@ class TestDownloadFile:
         headers = {}
         mock_request.get(self.url, headers=headers)
         try:
-            download_file(self.url, False)
+            download_file(self.url)
             raise pytest.fail('No exception occurred. Expected: MissingContentType')
         except MissingContentType as err:
             assert err.args == ()
@@ -141,7 +141,7 @@ class TestDownloadFile:
         mock_request = kwargs['mock_request']
         headers = {'Content-Type': 'text/html', 'Content-Disposition': 'attachment; filename=example_file.html'}
         mock_request.get(self.url, headers=headers, content=b'')
-        res_type, res_details = download_file(self.url, False)
+        res_type, res_details = download_file(self.url)
         assert res_details['filename'] == 'example_file.html'
 
     @requests_mock.Mocker(kw='mock_request')
@@ -150,7 +150,7 @@ class TestDownloadFile:
         headers = {'Content-Type': 'application/octetstream',
                    'Content-Disposition': 'attachment; filename=example_file.doc'}
         mock_request.get(self.url, headers=headers, content=b'')
-        res_type, res_details = download_file(self.url, False)
+        res_type, res_details = download_file(self.url)
         assert res_details['format'] == 'doc'
 
 
@@ -178,6 +178,10 @@ class TestResourceTypeDiscovery:
 
     def test__get_resource_type_recognize_json_as_api(self, json_resource_response):
         resource_type = _get_resource_type(json_resource_response)
+        assert resource_type == 'api'
+
+    def test__get_resource_type_recognize_jsonstat_as_api(self, jsonstat_resource_response):
+        resource_type = _get_resource_type(jsonstat_resource_response)
         assert resource_type == 'api'
 
     def test__get_resource_type_recognize_html_as_web(self, html_resource_response):

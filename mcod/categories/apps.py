@@ -12,3 +12,4 @@ class CategoriesConfig(ExtendedAppMixin, AppConfig):
         from mcod.categories.models import Category, CategoryTrash
         self.connect_core_signals(Category)
         self.connect_core_signals(CategoryTrash)
+        self.connect_history(Category)

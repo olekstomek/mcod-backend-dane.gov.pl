@@ -7,6 +7,7 @@
    {{ inline_admin_formset.formset.non_form_errors }}
    <table class="table table-bordered table-condensed table-striped">
      <thead><tr>
+      {% if '1.7'|django_version_gt and inline_admin_formset.formset.can_delete %}<th class="text-center"><i class="fas fa-trash-alt"></i></th>{% endif %}
      {% for field in inline_admin_formset.fields %}
        {% if not field.widget.is_hidden %}
          <th{% if forloop.first %} colspan="1"{% endif %}{% if field.required %} class="required"{% endif %}>{{ field.label|capfirst }}
@@ -15,7 +16,6 @@
        {% endif %}
      {% endfor %}
      {% if inline_admin_formset.opts.show_change_link and inline_admin_formset.opts.has_registered_model %}<th class="text-center"><i class="fas fa-edit"></i></th>{% endif %}
-     {% if '1.7'|django_version_gt and inline_admin_formset.formset.can_delete %}<th class="text-center"><i class="fas fa-trash-alt"></i></th>{% endif %}
      </tr></thead>
 
      <tbody>
@@ -25,7 +25,9 @@
         {% endif %}
         <tr class="form-row {% cycle "row1" "row2" %} {% if inline_admin_form.original or inline_admin_form.show_url %}has_original{% endif %}{% if forloop.last %} empty-form{% endif %}"
              id="{{ inline_admin_formset.formset.prefix }}-{% if not forloop.last %}{{ forloop.counter0 }}{% else %}empty{% endif %}">
-
+        {% if inline_admin_formset.formset.can_delete %}
+          <td class="delete">{% if inline_admin_form.original %}{{ inline_admin_form.deletion_field.field }}{% endif %}</td>
+        {% endif %}
         {% for fieldset in inline_admin_form %}
           {% for line in fieldset %}
             {% for field in line %}
@@ -67,9 +69,6 @@
                 <p><a href="{% url inline_admin_form.model_admin.opts|admin_urlname:'change' inline_admin_form.original.pk|admin_urlquote %}" class="inlinechangelink">{% trans "Edit" %}</a></p>
               {% endif %}
             </td>{% endif %}
-        {% if inline_admin_formset.formset.can_delete %}
-          <td class="delete">{% if inline_admin_form.original %}{{ inline_admin_form.deletion_field.field }}{% endif %}</td>
-        {% endif %}
         </tr>
      {% endfor %}
      </tbody>
@@ -141,4 +140,3 @@
     });
 //})(django.jQuery);
 </script>
-

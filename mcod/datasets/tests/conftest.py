@@ -1,11 +1,6 @@
-import pytest
-
-from pytest_bdd import given, then, parsers
+from pytest_bdd import given, then
 from mcod.core.tests.fixtures import *  # noqa
 from mcod.datasets.documents import DatasetDocument
-from mcod.resources.models import Resource
-from mcod.resources.file_validation import analyze_resource_file
-from mcod.resources.archives import UnsupportedArchiveError
 
 
 @then('datasets list in response is sorted by <sort>')
@@ -19,24 +14,6 @@ def datasets_list_in_response_is_sorted_by(context, sort):
     items = [int(x['id']) for x in data]
     sorted_items = [x.id for x in _sorted]
     assert items == sorted_items
-
-
-@then(parsers.parse('file is validated and result is {resource_file_format}'))
-def file_format(validated_file, resource_file_format):
-    extension, file_info, encoding, path, file_mimetype = analyze_resource_file(validated_file)
-    assert extension == resource_file_format
-
-
-@then(parsers.parse('file is validated and UnsupportedArchiveError is raised'))
-def file_validation_exception(validated_file):
-    with pytest.raises(UnsupportedArchiveError):
-        analyze_resource_file(validated_file)
-
-
-@then(parsers.parse('resource field {r_field} is {r_value}'))
-def resource_field_value_is(context, r_field, r_value):
-    resource = Resource.objects.latest('id')
-    assert getattr(resource, r_field) == r_value
 
 
 @given('dataset with tabular resource')

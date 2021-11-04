@@ -20,9 +20,9 @@ class TestDatasetUpdateReminder:
     ])
     def test_update_reminder_is_sent(self, update_freq, date_delay, reldelta, dataset_with_resource, admin):
         ds = dataset_with_resource
+        ds.title = 'Test wysyłki notyfikacji dot. aktualizacji zbioru'
         ds.update_frequency = update_freq
         ds.modified_by = admin
-        ds.title = 'Testowy tytuł\r zbioru.\n'
         ds.save()
         first_res = ds.resources.all()[0]
         first_res.data_date = date.today() + relativedelta(days=date_delay) - reldelta
@@ -30,7 +30,7 @@ class TestDatasetUpdateReminder:
         first_res.save()
         send_dataset_update_reminder()
         assert len(mail.outbox) == 1
-        assert mail.outbox[0].subject == ds.title.replace('\n', '').replace('\r', '')
+        assert mail.outbox[0].subject == 'Test wysyłki notyfikacji dot. aktualizacji zbioru'
         assert 'Przypomnienie o aktualizacji Zbioru danych' in mail.outbox[0].body
         assert mail.outbox[0].to == [admin.email]
 
@@ -59,10 +59,10 @@ class TestDatasetUpdateReminder:
     @override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend')
     def test_update_reminder_sent_to_notification_recipient_if_set(self, dataset_with_resource, admin):
         ds = dataset_with_resource
+        ds.title = 'Test wysyłki notyfikacji dot. aktualizacji zbioru'
         ds.update_frequency = 'weekly'
         ds.modified_by = admin
         ds.update_notification_recipient_email = 'test-recipient@test.com'
-        ds.title = 'Testowy tytuł\r zbioru.\n'
         ds.save()
         first_res = ds.resources.all()[0]
         first_res.data_date = date.today() + relativedelta(days=1) - relativedelta(days=7)
@@ -70,6 +70,6 @@ class TestDatasetUpdateReminder:
         first_res.save()
         send_dataset_update_reminder()
         assert len(mail.outbox) == 1
-        assert mail.outbox[0].subject == ds.title.replace('\n', '').replace('\r', '')
+        assert mail.outbox[0].subject == 'Test wysyłki notyfikacji dot. aktualizacji zbioru'
         assert mail.outbox[0].to == ['test-recipient@test.com']
         assert mail.outbox[0].to != [admin.email]

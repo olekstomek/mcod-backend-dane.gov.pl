@@ -40,6 +40,7 @@ from mcod.core.db.managers import TrashManager
 from mcod.core.db.models import ExtendedModel, update_watcher, TrashModelBase
 from mcod.core.managers import SoftDeletableManager
 
+
 User = get_user_model()
 
 signal_logger = logging.getLogger('signals')

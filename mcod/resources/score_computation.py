@@ -1,4 +1,3 @@
-import csv
 import json
 from io import BytesIO
 from urllib.parse import urlparse
@@ -6,7 +5,6 @@ from xml.etree import ElementTree
 
 import requests
 from requests.exceptions import RequestException
-from csvwlib import CSVWConverter
 from rdflib import URIRef, ConjunctiveGraph
 
 from mcod import settings
@@ -73,8 +71,9 @@ class OpennessScoreCalculator:
     def contains_linked_data(self, graph):
         # TODO zastanowić się kiedy plik zawiera dane zlinkowane
         for subject, predicate, object_ in graph:
-            if isinstance(object_, URIRef) and not str(predicate).startswith(
-                    'http://www.w3.org/1999/02/22-rdf-syntax-ns#'):
+            if isinstance(object_, URIRef) and not (
+                    str(predicate).startswith('http://www.w3.org/1999/02/22-rdf-syntax-ns#') or
+                    str(object_).startswith(settings.API_URL)):
                 return True
         return False
 
@@ -87,65 +86,17 @@ class CSVScoreCalculator(OpennessScoreCalculator):
         if not is_enabled('S29_new_csv_openness_score.be'):
             return super().get_score(resource, format_)
 
-        is_originally_csv = resource.file and resource.format == 'csv'
-
-        csv_file = resource.file if is_originally_csv else resource.csv_file
-        csv_url = resource.file_url if is_originally_csv else resource.csv_file_url
-        if csv_url:
-            csv_url = resource._get_absolute_url(urlparse(csv_url).path, base_url=settings.API_URL_INTERNAL, use_lang=False)
-
-        metadata_url = getattr(resource, 'csv_file_metadata_url', None)
-        if is_originally_csv:
-            metadata_url = getattr(resource, 'file_metadata_url', None)
-        if metadata_url:
-            metadata_url = resource._get_absolute_url(
-                urlparse(metadata_url).path, base_url=settings.API_URL_INTERNAL, use_lang=False)
-
         score = self.default_score
-        if csv_file and self.is_compatible_to_rfc_4180(csv_file.path) and self.is_convertable_to_json_ld(csv_url, metadata_url):
+        if resource.jsonld_file:
             score = 4
-            graph = CSVWConverter.to_rdf(csv_url, metadata_url)
+            with open(resource.jsonld_file.path, 'rb') as outfile:
+                jsonld_data = outfile.read()
+            graph = ConjunctiveGraph()
+            graph.parse(data=jsonld_data, format='json-ld')
             if self.contains_linked_data(graph):
                 score = 5
 
         return score
-
-    def is_convertable_to_json_ld(self, csv_url, metadata_url):
-        try:
-            CSVWConverter.to_rdf(csv_url, metadata_url, format='json-ld')
-            return True
-        except Exception:
-            return False
-
-    def is_compatible_to_rfc_4180(self, file_path):
-        try:
-            with open(file_path, newline='') as file:
-                sample = file.read(10000)
-                sniffer = csv.Sniffer()
-                dialect = sniffer.sniff(sample)
-
-                conditions = [
-                    dialect.lineterminator == '\r\n',
-                    dialect.delimiter == ',',
-                    dialect.quotechar == '"',
-                    sniffer.has_header(sample),
-                ]
-
-                if not all(conditions):
-                    return False
-
-                file.seek(0)
-                reader = csv.reader(file, dialect)
-                row = next(reader)
-
-                headers = [cell.strip() for cell in row]
-                are_all_headers_nonempty = all(headers)
-                are_all_headers_unique = len(headers) == len(set(headers))
-
-                return are_all_headers_nonempty and are_all_headers_unique
-
-        except Exception:
-            return False
 
 
 @register_score_calculator('json')
@@ -188,10 +139,7 @@ class JSONScoreCalculator(OpennessScoreCalculator):
 
     def validate_score_level_5(self, context):
         rdf_graph = context['rdf_graph']
-        q = 'ASK WHERE {?s ?p ?o . FILTER(isURI(?o) && str(?p)' \
-            ' != "http://www.w3.org/1999/02/22-rdf-syntax-ns#type" )}'
-        res = rdf_graph.query(q)
-        if not res.askAnswer:
+        if not self.contains_linked_data(rdf_graph):
             raise ScoreValidationError
 
     def get_score(self, resource, format_):

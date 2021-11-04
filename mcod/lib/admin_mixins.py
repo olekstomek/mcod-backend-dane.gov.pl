@@ -4,6 +4,7 @@ from urllib.parse import quote as urlquote
 from django.contrib import admin, messages
 from django.contrib.admin.utils import quote, unquote
 from django.contrib.admin.templatetags.admin_urls import add_preserved_filters
+from django.contrib.admin.views.main import ChangeList
 from django.core.exceptions import PermissionDenied
 from django.http import HttpResponseRedirect
 from django.template.response import TemplateResponse
@@ -16,9 +17,30 @@ from modeltrans.translator import get_i18n_field
 from modeltrans.utils import get_language
 
 from mcod import settings
-from mcod.core.admin import MCODChangeList, MCODTrashChangeList
-from mcod.histories.models import History
+from mcod.histories.models import History, LogEntry
 from mcod.tags.views import TagAutocompleteJsonView
+from mcod.unleash import is_enabled
+
+
+class MCODChangeList(ChangeList):
+
+    def __init__(self, request, *args, **kwargs):
+        super().__init__(request, *args, **kwargs)
+        if hasattr(self.model, 'accusative_case'):
+            if self.is_popup:
+                title = gettext('Select %s')
+            elif self.model_admin.has_change_permission(request):
+                title = gettext('Select %s to change')
+            else:
+                title = gettext('Select %s to view')
+            self.title = title % self.model.accusative_case()
+
+
+class MCODTrashChangeList(ChangeList):
+
+    def __init__(self, request, *args, **kwargs):
+        super().__init__(request, *args, **kwargs)
+        self.title = self.model._meta.verbose_name_plural.capitalize()
 
 
 class TagAutocompleteMixin:
@@ -136,6 +158,13 @@ class HistoryMixin(object):
 
     is_history_other = False
     is_history_with_unknown_user_rows = False
+    new_history = is_enabled('S30_new_history.be')
+
+    def get_history(self, obj):
+        queryset = LogEntry.objects.get_for_object(obj)
+        if not self.is_history_with_unknown_user_rows:
+            queryset = queryset.exclude(actor_id=1)
+        return queryset
 
     def get_history_action_list(self, table_name, obj):
         if self.is_history_other:
@@ -174,7 +203,8 @@ class HistoryMixin(object):
         # Then get the history for this object.
         opts = model._meta
         app_label = opts.app_label
-        action_list = (x for x in self.get_history_action_list(opts.db_table, obj) if x.difference != "{}")
+        action_list = self.get_history(obj) if self.new_history else (
+            x for x in self.get_history_action_list(opts.db_table, obj) if x.difference != "{}")
         context = dict(
             self.admin_site.each_context(request),
             title=_('Change history: %s') % obj,

@@ -13,7 +13,8 @@ from mcod.core.api.schemas import (
     ListTermsSchema,
     NumberTermSchema,
     StringTermSchema,
-    StringMatchSchema
+    StringMatchSchema,
+    BooleanTermSchema
 )
 from mcod.core.api.search import fields
 from mcod.datasets.deserializers import (
@@ -98,6 +99,10 @@ class DataAggregations(ExtSchema):
             },
             'by_update_frequency': {
                 'field': 'update_frequency',
+                'size': 100
+            },
+            'by_has_high_value_data': {
+                'field': 'has_high_value_data',
                 'size': 100
             },
         }
@@ -223,6 +228,13 @@ class ApiSearchRequest(ListingSchema):
         doc_base_url='/search',
         doc_field_name='update_frequency'
     )
+    has_high_value_data = fields.FilterField(
+        BooleanTermSchema,
+        query_field='has_high_value_data',
+        doc_template='docs/generic/fields/boolean_term_field.html',
+        doc_base_url='/search',
+        doc_field_name='has_high_value_data'
+    )
 
     @validates('q')
     def validate_q(self, queries, down_limit=2, up_limit=3000):
@@ -257,7 +269,8 @@ class SparqlRequestAttrs(ObjectAttrs):
     external_sparql_endpoint = core_fields.Str(
         validate=validate.OneOf(choices=SPARQL_ENDPOINTS,
                                 error=_('Unsupported SPARQL endpoint value. Supported values are: {providers}').format(
-                                    providers=', '.join(SPARQL_ENDPOINTS))))
+                                    providers=', '.join(SPARQL_ENDPOINTS))),
+        allow_none=True)
 
     class Meta:
         strict = True

@@ -1,10 +1,12 @@
+from io import BytesIO
+
 import factory
 from django.utils.text import slugify
 from faker import Faker
 
 from mcod.core.registries import factories_registry
 from mcod.users import models
-from mcod.users.models import Meeting
+from mcod.users.models import Meeting, MeetingFile
 
 fake = Faker('pl_PL')
 
@@ -115,6 +117,18 @@ class MeetingFactory(factory.django.DjangoModelFactory):
         model = Meeting
 
 
+def get_meeting_file():
+    return BytesIO(b'Hello world!')
+
+
+class MeetingFileFactory(factory.django.DjangoModelFactory):
+    meeting = factory.SubFactory(MeetingFactory)
+    file = factory.django.FileField(from_func=get_meeting_file, filename='meeting_file.txt')
+
+    class Meta:
+        model = MeetingFile
+
+
 factories_registry.register('active user', UserFactory)
 factories_registry.register('pending user', PendingUserFactory)
 factories_registry.register('inactive user', InactiveUserFactory)
@@ -127,3 +141,4 @@ factories_registry.register('agent user', AgentFactory)
 factories_registry.register('academy admin', AcademyAdminFactory)
 factories_registry.register('laboratory admin', LaboratoryAdminFactory)
 factories_registry.register('meeting', MeetingFactory)
+factories_registry.register('meeting file', MeetingFileFactory)

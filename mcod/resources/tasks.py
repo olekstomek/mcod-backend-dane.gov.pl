@@ -1,6 +1,6 @@
 import json
 import logging
-import os
+import requests
 from copy import deepcopy
 
 from celery import shared_task
@@ -12,11 +12,7 @@ from django.template.loader import render_to_string
 from django.utils import translation
 from django.utils.translation import ugettext_lazy as _
 
-from mcod.core.api.search.tasks import update_with_related_task
-from mcod.core.api.rdf.tasks import update_graph_task
-from mcod.resources.file_validation import analyze_resource_file
 from mcod.resources.indexed_data import FileEncodingValidationError
-from mcod.resources.link_validation import download_file, check_link_status
 
 logger = logging.getLogger('mcod')
 
@@ -30,7 +26,7 @@ def process_resource_from_url_task(resource_id, update_file=True, **kwargs):
         return {}
 
     if update_file:
-        resource_type, options = download_file(resource.link, resource.forced_file_type)
+        resource_type, options = resource.download_file()
         if resource_type == 'website' and resource.forced_api_type:
             logger.debug("Resource of type 'website' forced into type 'api'!")
             resource_type = 'api'
@@ -68,8 +64,6 @@ def process_resource_from_url_task(resource_id, update_file=True, **kwargs):
         result['path'] = resource.file.path
         result['url'] = resource.file_url
 
-    update_with_related_task.s('resources', 'Resource', resource.id).apply_async()
-    update_graph_task.s('resources', 'Resource', resource.id).apply_async(countdown=1)
     return json.dumps(result)
 
 
@@ -78,14 +72,10 @@ def process_resource_file_task(resource_id, update_link=True, **kwargs):
     Resource = apps.get_model('resources', 'Resource')
 
     resource = Resource.raw.get(id=resource_id)
-    format, file_info, file_encoding, p, file_mimetype = analyze_resource_file(resource.file.file.name)
-
-    _file_name = os.path.basename(resource.file.name)
-    _file_base, _file_ext = os.path.splitext(_file_name)
-    if not _file_ext and format:
-        _file_name = f'{_file_name}.{format}'
+    format, file_info, file_encoding, p, file_mimetype, analyze_exc = resource.analyze_file()
+    if not resource.file_extension and format:
         Resource.raw.filter(pk=resource_id).update(
-            file=resource.save_file(resource.file, _file_name)
+            file=resource.save_file(resource.file, f'{resource.file_basename}.{format}')
         )
         resource = Resource.raw.get(id=resource_id)
 
@@ -100,18 +90,18 @@ def process_resource_file_task(resource_id, update_link=True, **kwargs):
     )
 
     resource = Resource.raw.get(id=resource_id)
+    resource.check_support()
 
     if resource.format == 'csv' and resource.file_encoding is None:
         raise FileEncodingValidationError(
             [{'code': 'unknown-encoding', 'message': 'Nie udało się wykryć kodowania pliku.'}])
 
+    if analyze_exc:
+        raise analyze_exc
     process_resource_file_data_task.s(resource_id, **kwargs).apply_async(countdown=2)
     if update_link:
         process_resource_from_url_task.s(resource_id, update_file=False, **kwargs).apply_async(
             countdown=2)
-
-    update_with_related_task.s('resources', 'Resource', resource_id).apply_async()
-    update_graph_task.s('resources', 'Resource', resource.id).apply_async(countdown=1)
 
     return json.dumps({
         'uuid': str(resource.uuid),
@@ -252,10 +242,41 @@ def validate_link(resource_id):
     Resource = apps.get_model('resources', 'Resource')
     resource = Resource.raw.get(id=resource_id)
     logger.debug(f'Validating link of resource with id {resource_id}')
-    check_link_status(resource.link, resource.type)
+    resource.check_link_status()
     return {
         'uuid': str(resource.uuid),
         'link': resource.link,
         'format': resource.format,
         'type': resource.type
+    }
+
+
+@shared_task
+def check_link_protocol(resource_id, link, title, organization_title):
+    logger.debug(f'Checking link {link} of resource with id {resource_id}')
+    https_link = link.replace('http://', 'https://')
+    change_required = False
+    try:
+        response = requests.get(link, allow_redirects=True, timeout=30, stream=True)
+        returns_https = response.url.startswith('https')
+    except Exception:
+        returns_https = False
+    if not returns_https:
+        try:
+            response = requests.get(https_link, allow_redirects=True, timeout=30, stream=True)
+            response.raise_for_status()
+            change_required = True
+        except Exception:
+            pass
+    if returns_https:
+        https_status = 'TAK'
+    elif not returns_https and change_required:
+        https_status = 'Wymagana poprawa'
+    else:
+        https_status = 'NIE'
+    return {
+        'Https': https_status,
+        'Id': resource_id,
+        'Nazwa': title,
+        'Instytucja': organization_title
     }

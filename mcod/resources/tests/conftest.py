@@ -4,8 +4,6 @@ from pytest_bdd import given, parsers, then
 
 from mcod.core.tests.fixtures import *  # noqa
 from mcod.core.tests.fixtures.bdd.common import prepare_file
-from mcod.resources.archives import UnsupportedArchiveError
-from mcod.resources.file_validation import analyze_resource_file
 from mcod.resources.models import Resource
 
 
@@ -51,24 +49,6 @@ def no_data_resource(dataset):
     resource.dataset = dataset
     resource.save()
     return resource
-
-
-@then(parsers.parse('file is validated and result is {resource_file_format}'))
-def file_format(validated_file, resource_file_format):
-    extension, file_info, encoding, path, file_mimetype = analyze_resource_file(validated_file)
-    assert extension == resource_file_format
-
-
-@then(parsers.parse('file is validated and UnsupportedArchiveError is raised'))
-def file_validation_exception(validated_file):
-    with pytest.raises(UnsupportedArchiveError):
-        analyze_resource_file(validated_file)
-
-
-@then(parsers.parse('resource field {r_field} is {r_value}'))
-def resource_field_value_is(context, r_field, r_value):
-    resource = Resource.objects.latest('id')
-    assert getattr(resource, r_field) == r_value
 
 
 @then(parsers.parse('all list items should be of type {item_type}'))

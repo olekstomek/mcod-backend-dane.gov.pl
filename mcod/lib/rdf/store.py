@@ -111,11 +111,11 @@ def get_sparql_store(readonly=False, return_format='xml', external_sparql_endpoi
             'method': 'POST',
             'returnFormat': return_format,
         }
-        external_endpoint_url = settings.SPARQL_ENDPOINTS[external_sparql_endpoint] if\
+        external_endpoint_details = settings.SPARQL_ENDPOINTS[external_sparql_endpoint] if\
             external_sparql_endpoint and settings.SPARQL_ENDPOINTS.get(external_sparql_endpoint) else None
-        if external_endpoint_url:
+        if external_endpoint_details:
             params.pop('auth')
-            params['endpoint'] = external_endpoint_url
+            params.update(**external_endpoint_details)
         return SPARQLStore(**params)
 
     params = {

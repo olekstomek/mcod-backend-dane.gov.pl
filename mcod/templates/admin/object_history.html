@@ -28,7 +28,7 @@
         <tbody>
         {% for action in action_list %}
         <tr>
-            <th scope="row">{{ action.action }}</th>
+            <th scope="row">{{ action.action_display }}</th>
             <td>{{ action.diff_prettified }}</td>
             <td>{% if action.user.id == 1 %}- {% else %}
                 {{ action.user.get_username }}{% if action.user.get_full_name %} ({{ action.user.get_full_name }}){% endif %}

@@ -12,3 +12,4 @@ class AcademyConfig(ExtendedAppMixin, AppConfig):
         from mcod.academy.models import Course, CourseTrash
         self.connect_core_signals(Course)
         self.connect_core_signals(CourseTrash)
+        self.connect_history(Course)

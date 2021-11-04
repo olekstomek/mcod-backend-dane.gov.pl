@@ -37,7 +37,7 @@ test:
   variables:
     ENVIRONMENT: test
     ENABLE_VAULT_HELPERS: "no"
-    DEBUG: "yes"
+    TEST_DEBUG: "yes"
     ALLOWED_HOSTS: "*"
     BASE_URL: http://test.mcod
     API_URL: http://api.test.mcod
@@ -87,9 +87,13 @@ test:
     - find . | grep -E "(__pycache__|\.pyc|\.pyo$)" | xargs rm -rf || true
     - python3 -m venv venv
     - source venv/bin/activate
+    - pip install --upgrade pip
     - pip install tox
   script:
     - tox
+  artifacts:
+    reports:
+      cobertura: coverage.xml
   except:
     - tags
     - master

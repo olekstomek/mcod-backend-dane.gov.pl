@@ -132,6 +132,13 @@ class StringTermSchema(ExtSchema):
         default_field = 'term'
 
 
+class BooleanTermSchema(ExtSchema):
+    term = fields.TermField(example="true")
+
+    class Meta:
+        default_field = 'term'
+
+
 class StringMatchSchema(ExtSchema):
     prefix = fields.MatchPhrasePrefixField(example='lorem ipsum')
     phrase = fields.MatchPhraseField(example='lorem ips')

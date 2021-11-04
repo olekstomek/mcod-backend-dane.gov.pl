@@ -9,6 +9,11 @@ class Schema(ma.Schema):
         ordered = True
 
 
+class ServiceUrlSerializer(Schema):
+    name = ma.fields.Str()
+    url = ma.fields.Url()
+
+
 class SubscriptionsAggregationSerializer(Schema):
     datasets = ma.fields.Integer()
     queries = ma.fields.Integer()
@@ -53,6 +58,8 @@ class DashboardAggregationsSerializer(Schema):
     subscriptions = ma.fields.Nested(SubscriptionsAggregationSerializer)
     suggestions = ma.fields.Nested(SuggestionsAggregationSerializer)
     fav_charts = ma.fields.Raw()
+    analytical_tools = ma.fields.Nested(ServiceUrlSerializer, many=True)
+    cms_url = ma.fields.Url()
 
 
 class DashboardMetaSerializer(Schema):

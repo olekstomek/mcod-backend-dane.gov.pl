@@ -82,7 +82,7 @@ class TestResourceModel(object):
             Resource.trash.get(id=resource.id)
 
     def test_file_url_and_path(self, resource, mocker):
-        mocker.patch('mcod.resources.tasks.download_file', return_value=('file', {}))
+        mocker.patch('mcod.resources.link_validation.download_file', return_value=('file', {}))
         resource.file = SimpleUploadedFile("somefile.jpg", b"""1px""")
         resource.save()
         assert resource.file

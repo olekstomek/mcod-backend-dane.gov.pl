@@ -7,7 +7,13 @@ from pytest_bdd import parsers
 
 from mcod.core.caches import flush_sessions
 from mcod.core.registries import factories_registry
-from mcod.users.factories import UserFactory, AdminFactory, EditorFactory
+from mcod.users.factories import (
+    AdminFactory,
+    EditorFactory,
+    MeetingFactory,
+    MeetingFileFactory,
+    UserFactory,
+)
 from mcod.users.models import User
 from mcod.newsletter.models import Subscription
 from mcod.organizations.models import Organization
@@ -419,3 +425,12 @@ def generic_user_with_data(object_type, user_data, context, admin_context):
     user_data = json.loads(user_data)
     user = admin_context.admin.user = context.user = factory_(**user_data)
     DjangoClient().force_login(user)
+
+
+@given(parsers.parse('meeting with id {meeting_id:d} and {number:d} files'))
+@given('meetings with id <meeting_id> and <number> files')
+def meeting_with_files(meeting_id, number):
+    obj = MeetingFactory(id=meeting_id)
+    MeetingFileFactory.create_batch(int(number), meeting=obj)
+    obj.save()
+    return obj

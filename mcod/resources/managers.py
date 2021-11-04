@@ -1,4 +1,5 @@
 from django.apps import apps
+from django.conf import settings
 from django.db.models import Count, Q, Prefetch
 from mcod.core.managers import SoftDeletableQuerySet, SoftDeletableManager
 
@@ -67,3 +68,7 @@ class ResourceManager(SoftDeletableManager):
 
     def with_metadata(self):
         return super().get_queryset().with_metadata()
+
+    def with_ext_http_links_only(self):
+        return super().get_queryset().filter(link__startswith='http://').exclude(
+            Q(link__startswith=settings.API_URL) | Q(link__startswith=settings.BASE_URL))

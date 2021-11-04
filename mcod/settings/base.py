@@ -42,7 +42,7 @@ NOTEBOOK_ARGUMENTS = [
     '--config', 'mcod/settings/jupyter_config.py'
 ]
 
-DEBUG = env('DEBUG', default='no') in ('yes', 1, 'true')
+DEBUG = env('DEBUG', default='no') in ('yes', 1, 'true') or env('TEST_DEBUG', default='no') in ('yes', 1, 'true')
 
 SECRET_KEY = env('DJANGO_SECRET_KEY', default='xb2rTZ57yOY9iCdqR7W+UAWnU')
 
@@ -99,6 +99,7 @@ INSTALLED_APPS = [
     'notifications',
     'django_admin_multiple_choice_list_filter',
     # 'bokeh.server.django',
+    'auditlog',
 
     # Our apps
     'mcod.core',
@@ -144,7 +145,8 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'mcod.lib.middleware.PostgresConfMiddleware',
     'mcod.lib.middleware.APIAuthTokenMiddleware',
-    'mcod.lib.middleware.ComplementUserDataMiddleware'
+    'mcod.lib.middleware.ComplementUserDataMiddleware',
+    'auditlog.middleware.AuditlogMiddleware',
 ]
 
 ROOT_URLCONF = 'mcod.urls'
@@ -231,7 +233,7 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 DEBUG_EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
 EMAIL_HOST = env('EMAIL_HOST', default='')
 EMAIL_PORT = env('EMAIL_PORT', default=465)
-EMAIL_USE_SSL = True if env('EMAIL_USE_SSL', default='yes') in ('yes', '1', 'true') else False
+EMAIL_USE_SSL = env('EMAIL_USE_SSL', default='yes') in ('yes', '1', 'true')
 EMAIL_HOST_USER = env('EMAIL_HOST_USER', default='')
 EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD', default='')
 DATA_UPLOAD_MAX_NUMBER_FIELDS = env('DATA_UPLOAD_MAX_NUMBER_FIELDS', default=10000)
@@ -437,7 +439,7 @@ SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 SESSION_CACHE_ALIAS = "sessions"
 SESSION_COOKIE_PREFIX = env('SESSION_COOKIE_PREFIX', default=None)
 SESSION_COOKIE_DOMAIN = env('SESSION_COOKIE_DOMAIN', default='dane.gov.pl')
-SESSION_COOKIE_SECURE = True if env('SESSION_COOKIE_SECURE', default='yes') in ('yes', '1', 'true') else False
+SESSION_COOKIE_SECURE = env('SESSION_COOKIE_SECURE', default='yes') in ('yes', '1', 'true')
 SESSION_COOKIE_AGE = env('SESSION_COOKIE_AGE', default=14400)  # 4h
 SESSION_COOKIE_HTTPONLY = False
 SESSION_COOKIE_SAMESITE = "Lax"
@@ -698,6 +700,7 @@ ELASTICSEARCH_INDEX_NAMES = OrderedDict({
     "resources": "resources",
     "searchhistories": "searchhistories",
     "histories": "histories",
+    "logentries": "logentries",
     "lab_events": "lab_events",
     "accepted_dataset_submissions": "accepted_dataset_submissions",
     "meetings": "meetings",
@@ -765,6 +768,7 @@ CELERY_TASK_ROUTES = {
     'mcod.harvester.tasks.import_data_task': {'queue': 'harvester'},
     'mcod.harvester.tasks.validate_xml_url_task': {'queue': 'harvester'},
     'mcod.histories.tasks.index_history': {'queue': 'periodic'},
+    'mcod.histories.tasks.index_logentries': {'queue': 'periodic'},
     'mcod.datasets.tasks.send_dataset_comment': {'queue': 'notifications'},
     'mcod.newsletter.tasks.remove_inactive_subscription': {'queue': 'newsletter'},
     'mcod.newsletter.tasks.send_newsletter': {'queue': 'newsletter'},
@@ -1049,7 +1053,9 @@ SUPPORTED_CONTENT_TYPES = [
     ('application', 'csv', ('csv',), 3, {4, 5}),
     ('application', 'epub+zip', ('epub',), 1),
     ('application', 'excel', ('xls',), 2),
+    ('application', 'geo+json', ('geojson',), 3, {4, 5}),
     ('application', 'gml+xml', ('xml',), 3, {4, 5}),
+    ('application', 'gpx+xml', ('gpx',), 3, {4, 5}),
     ('application', 'json', ('json',), 3, {4, 5}),
     ('application', 'mspowerpoint', ('ppt', 'pot', 'ppa', 'pps', 'pwz'), 1),
     ('application', 'msword', ('doc', 'docx', 'dot', 'wiz'), 1),
@@ -1059,6 +1065,8 @@ SUPPORTED_CONTENT_TYPES = [
     ('application', 'rtf', ('rtf',), 1),
     ('application', 'shapefile', ('shp',), 3, {4, 5}),
     ('application', 'vnd.api+json', ('json',), 3, {4, 5}),
+    ('application', 'vnd.geo+json', ('geojson',), 3, {4, 5}),
+    ('application', 'vnd.google-earth.kml+xml', ('kml',), 3, {4, 5}),
     ('application', 'vnd.ms-excel', ('xls', 'xlsx', 'xlb'), 2),
     ('application', 'vnd.ms-excel.12', ('xls', 'xlsx', 'xlb'), 2),
     ('application', 'vnd.ms-excel.sheet.macroEnabled.12', ('xls', 'xlsx', 'xlb'), 2),
@@ -1084,6 +1092,8 @@ SUPPORTED_CONTENT_TYPES = [
     ('application', 'x-tex', ('tex',), 3),
     ('application', 'x-texinfo', ('texi', 'texinfo',), 3),
     ('application', 'x-dbf', ('dbf',), 3),
+    ('application', 'x-grib', ('grib', 'grib2',), 2),
+    ('application', 'netcdf', ('nc',), 2),
     ('image', 'bmp', ('bmp',), 1),
     ('image', 'gif', ('gif',), 2),
     ('image', 'jpeg', ('jpeg', 'jpg', 'jpe'), 1),
@@ -1124,6 +1134,10 @@ COUNTED_VIEWS = ['applications', 'articles', 'resources']
 SEARCH_PATH = '/search'
 
 JSONAPI_SCHEMA_PATH = str(DATA_DIR.path('jsonapi.config.json'))
+JSONSTAT_SCHEMA_PATH = str(DATA_DIR.path('json_stat_schema_2_0.json'))
+JSONSTAT_V1_ALLOWED = env('JSONSTAT_V1_ALLOWED', default='yes') in ('yes', '1', 'true')
+GPX_11_SCHEMA_PATH = str(DATA_DIR.path('gpx_xsd_1_1.xsd'))
+GPX_10_SCHEMA_PATH = str(DATA_DIR.path('gpx_xsd_1_0.xsd'))
 
 DATE_BASE_FORMATS = ['yyyy-MM-dd', 'yyyy-MM-dd HH:mm', 'yyyy-MM-dd HH:mm:ss', 'yyyy-MM-dd HH:mm:ss.SSSSSS',
                      "yyyy-MM-dd'T'HH:mm:ss.SSSSSS", 'yyyy.MM.dd', 'yyyy.MM.dd HH:mm', 'yyyy.MM.dd HH:mm:ss',
@@ -1495,5 +1509,13 @@ CSV_CATALOG_BATCH_SIZE = env('CSV_CATALOG_BATCH_SIZE', default=20000)
 DISCOURSE_FORUM_ENABLED = env('DISCOURSE_FORUM_ENABLED', default=True)
 
 SPARQL_ENDPOINTS = {
-    'kronika': 'https://pubapi.tst.kronika.gov.pl/ontology/sparql/departments'  # TODO: update with valid api url
+    'kronika': {'endpoint': env('KRONIKA_SPARQL_URL', default='http://kronika.mcod.local'),
+                'headers': {'host': 'public-api.k8s'}}  # TODO: update with valid api url
+}
+METABASE_URL = env('METABASE_URL', default='http://metabase.mcod.local')
+KIBANA_URL = env('KIBANA_URL', default='http://kibana.mcod.local')
+ZABBIX_API = {
+    'user': env('ZABBIX_API_USER', default='user'),
+    'password': env('ZABBIX_API_PASSWORD', default=''),
+    'url': env('ZABBIX_API_URL', default='http://zabbix.mcod.local')
 }

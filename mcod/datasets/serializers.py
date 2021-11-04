@@ -279,6 +279,20 @@ class UpdateFrequencyAggregation(schemas.ExtSchema):
         return data
 
 
+class HighValueDataAggregation(schemas.ExtSchema):
+    id = fields.String(attribute='key_as_string')
+    title = fields.String()
+    doc_count = fields.Integer()
+
+    @ma.pre_dump(pass_many=True)
+    def prepare_data(self, data, many, **kwargs):
+        val_dict = {0: _('No'), 1: _('Yes')}
+        if many:
+            for item in data:
+                item['title'] = val_dict.get(item.key)
+        return data
+
+
 class DatasetApiAggregations(ExtSchema):
     by_created = fields.Nested(
         Aggregation,
@@ -395,12 +409,10 @@ class DatasetApiAttrs(ObjectAttrs, HighlightObjectMixin):
     update_frequency = TransUpdateFreqField()
     views_count =\
         fields.Function(
-            lambda obj: obj.computed_views_count if is_enabled('S16_new_date_counters.be') and
-            hasattr(obj, 'computed_views_count') else obj.views_count)
+            lambda obj: obj.computed_views_count if is_enabled('S16_new_date_counters.be') else obj.views_count)
     downloads_count =\
         fields.Function(
-            lambda obj: obj.computed_downloads_count if is_enabled('S16_new_date_counters.be') and
-            hasattr(obj, 'computed_downloads_count') else obj.downloads_count)
+            lambda obj: obj.computed_downloads_count if is_enabled('S16_new_date_counters.be') else obj.downloads_count)
     url = fields.String()
     followed = fields.Boolean()
     modified = fields.DateTime()
@@ -411,6 +423,8 @@ class DatasetApiAttrs(ObjectAttrs, HighlightObjectMixin):
     source = fields.Nested(SourceSchema)
     image_url = fields.Str()
     image_alt = TranslatedStr()
+    if is_enabled('S35_high_value_data.be'):
+        has_high_value_data = fields.Boolean()
 
     class Meta:
         relationships_schema = DatasetApiRelationships
@@ -476,8 +490,8 @@ class DatasetXMLSerializer(ExtSchema):
     update_frequency = TransUpdateFreqField()
     created = fields.DateTime()
     verified = fields.DateTime()
-    dataset_views_count = fields.Method('get_views_count', data_key='views_count')
-    dataset_downloads_count = fields.Method('get_downloads_count', data_key='downloads_count')
+    views_count = fields.Int(attribute='computed_views_count')
+    downloads_count = fields.Int(attribute='computed_downloads_count')
     published_resources_count = fields.Int(attribute='published_resources__count')
     license = fields.Str(attribute='license_name')
     conditions = fields.Method('get_conditions')
@@ -485,16 +499,6 @@ class DatasetXMLSerializer(ExtSchema):
     resources = fields.Method('get_resources')
 
     source = fields.Nested(SourceXMLSchema)
-
-    def get_views_count(self, dataset):
-        if is_enabled('S16_new_date_counters.be') and hasattr(dataset, 'computed_views_count'):
-            return dataset.computed_views_count
-        return dataset.views_count
-
-    def get_downloads_count(self, dataset):
-        if is_enabled('S16_new_date_counters.be') and hasattr(dataset, 'computed_downloads_count'):
-            return dataset.computed_downloads_count
-        return dataset.downloads_count
 
     def get_conditions(self, dataset):
         conditions = _('This dataset is public information, it can be reused under the following conditions: ')
@@ -528,15 +532,8 @@ class DatasetResourcesCSVSerializer(CSVSerializer):
     dataset_update_frequency = fields.Str(attribute='frequency_display', data_key=_('Update frequency'))
     dataset_created = fields.DateTime(attribute='created', data_key=_('Dataset created'), format='iso8601')
     dataset_verified = fields.DateTime(attribute='verified', data_key=_('Dataset verified'), format='iso8601')
-    dataset_views_count = fields.Function(
-        lambda obj: obj.computed_views_count if
-        is_enabled('S16_new_date_counters.be') and hasattr(obj, 'computed_views_count') else
-        obj.views_count, data_key=_("Dataset views count"), default=None)
-    dataset_downloads_count = fields.Function(
-        lambda obj: obj.computed_downloads_count if
-        is_enabled('S16_new_date_counters.be') and hasattr(obj, 'computed_downloads_count') else
-        obj.downloads_count,
-        data_key=_('Dataset downloads count'), default=None)
+    views_count = fields.Int(attribute='computed_views_count', data_key=_("Dataset views count"))
+    downloads_count = fields.Int(attribute='computed_downloads_count', data_key=_('Dataset downloads count'))
     dataset_resources_count = fields.Int(attribute='published_resources__count', data_key=_('Number of data'))
     dataset_conditions = fields.Method('get_dataset_conditions', data_key=_('Terms of use'))
     dataset_license = fields.Str(attribute='license_name', data_key=_('License'))

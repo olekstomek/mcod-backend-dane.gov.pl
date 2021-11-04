@@ -3,7 +3,7 @@ import json
 from django_elasticsearch_dsl import fields
 from django_elasticsearch_dsl.registries import registry
 
-from mcod.histories.models import History
+from mcod.histories.models import History, LogEntry
 from mcod import settings as mcs
 from mcod.core.db.elastic import Document
 
@@ -35,3 +35,28 @@ class HistoriesDoc(Document):
 
     def get_queryset(self):
         return super().get_queryset().exclude(table_name="user")
+
+
+@registry.register_document
+class LogEntryDoc(Document):
+    table_name = fields.TextField()
+    row_id = fields.IntegerField()
+    action_name = fields.TextField()
+    id = fields.IntegerField()
+    difference = fields.TextField()
+    change_user_id = fields.IntegerField()
+    change_timestamp = fields.DateField()
+    message = fields.TextField()
+
+    class Index:
+        name = mcs.ELASTICSEARCH_INDEX_NAMES['logentries']
+        settings = {
+            'number_of_shards': 3,
+            'number_of_replicas': 1
+        }
+
+    class Django:
+        model = LogEntry
+
+    def get_queryset(self):
+        return super().get_queryset().exclude(content_type__model='user')

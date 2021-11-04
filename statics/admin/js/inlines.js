@@ -39,6 +39,69 @@ function start_inline($) {
         var totalForms = $("#id_" + options.prefix + "-TOTAL_FORMS").prop("autocomplete", "off");
         var nextIndex = parseInt(totalForms.val(), 10);
         var maxForms = $("#id_" + options.prefix + "-MAX_NUM_FORMS").prop("autocomplete", "off");
+        var minForms = $("#id_" + options.prefix + "-MIN_NUM_FORMS").prop("autocomplete", "off");
+        var addInlineDeleteButton = function(row) {
+            if (row.is("tr")) {
+                // If the forms are laid out in table rows, insert
+                // the remove button into the last table cell:
+                row.children(":last").append('<div><a class="' + options.deleteCssClass + '" href="#">' + options.deleteText + "</a></div>");
+            } else if (row.is("ul") || row.is("ol")) {
+                // If they're laid out as an ordered/unordered list,
+                // insert an <li> after the last list item:
+                row.append('<li><a class="' + options.deleteCssClass + '" href="#">' + options.deleteText + "</a></li>");
+            } else {
+                // Otherwise, just insert the remove button as the
+                // last child element of the form's container:
+                row.children(":first").append('<span><a class="' + options.deleteCssClass + '" href="#">' + options.deleteText + "</a></span>");
+            }
+            // Add delete handler for each row.
+            row.find("a." + options.deleteCssClass).on('click', inlineDeleteHandler.bind(this));
+        };
+
+        var inlineDeleteHandler = function(e1) {
+            e1.preventDefault();
+            var deleteButton = $(e1.target);
+            var row = deleteButton.closest('.' + options.formCssClass);
+            var inlineGroup = row.closest('.inline-group');
+            // Remove the parent form containing this button:
+            row.remove();
+            nextIndex -= 1;
+            // If a post-delete callback was provided, call it with the deleted form:
+            if (options.removed) {
+                options.removed(row);
+            }
+            $(document).trigger('formset:removed', [row, options.prefix]);
+            // Update the TOTAL_FORMS form count.
+            var forms = $("." + options.formCssClass);
+            $("#id_" + options.prefix + "-TOTAL_FORMS").val(forms.length);
+            // Show add button again once we drop below max
+            if ((maxForms.val() === '') || (maxForms.val() - forms.length) > 0) {
+                addButton.parent().show();
+            }
+            if ((minForms.val() !== '') && (minForms.val() - totalForms.val()) >= 0) {
+                inlineGroup.find('.inline-deletelink').hide();
+            } else {
+                inlineGroup.find('.inline-deletelink').show();
+            }
+            toggleDeleteButtonVisibility(inlineGroup);
+            // Also, update names and ids for all remaining form controls
+            // so they remain in sequence:
+            var i, formCount;
+            var updateElementCallback = function () {
+                updateElementIndex(this, options.prefix, i);
+            };
+            for (i = 0, formCount = forms.length; i < formCount; i++) {
+                updateElementIndex($(forms).get(i), options.prefix, i);
+                $(forms.get(i)).find("*").each(updateElementCallback);
+            }
+        }
+        var toggleDeleteButtonVisibility = function(inlineGroup) {
+            if ((minForms.val() !== '') && (minForms.val() - totalForms.val()) >= 0) {
+                inlineGroup.find('.inline-deletelink').hide();
+            } else {
+                inlineGroup.find('.inline-deletelink').show();
+            }
+        };
         // only show the add button if we are allowed to add more items,
         // note that max_num = None translates to a blank string.
         var showAddButton = maxForms.val() === '' || (maxForms.val() - totalForms.val()) > 0;
@@ -63,6 +126,10 @@ function start_inline($) {
             if (!showAddButton) {
                 $("."+options.addCssClass).hide();
             }
+            $this.filter('.' + options.formCssClass + ':not(.has_original):not(.' + options.emptyCssClass + ')').each(function() {
+                addInlineDeleteButton($(this));
+            });
+            toggleDeleteButtonVisibility($this);
             addButton.click(function (e) {
                 e.preventDefault();
                 var template = $("#" + options.prefix + "-empty");
@@ -70,19 +137,7 @@ function start_inline($) {
                 row.removeClass(options.emptyCssClass)
                     .addClass(options.formCssClass)
                     .attr("id", options.prefix + "-" + nextIndex);
-                if (row.is("tr")) {
-                    // If the forms are laid out in table rows, insert
-                    // the remove button into the last table cell:
-                    row.children(":last").append('<div><a class="' + options.deleteCssClass + '" href="#">' + options.deleteText + "</a></div>");
-                } else if (row.is("ul") || row.is("ol")) {
-                    // If they're laid out as an ordered/unordered list,
-                    // insert an <li> after the last list item:
-                    row.append('<li><a class="' + options.deleteCssClass + '" href="#">' + options.deleteText + "</a></li>");
-                } else {
-                    // Otherwise, just insert the remove button as the
-                    // last child element of the form's container:
-                    row.children(":first").append('<span><a class="' + options.deleteCssClass + '" href="#">' + options.deleteText + "</a></span>");
-                }
+                addInlineDeleteButton(row);
                 row.find("*").each(function () {
                     updateElementIndex(this, options.prefix, totalForms.val());
                 });
@@ -95,35 +150,7 @@ function start_inline($) {
                 if ((maxForms.val() !== '') && (maxForms.val() - totalForms.val()) <= 0) {
                     addButton.parent().hide();
                 }
-                // The delete button of each row triggers a bunch of other things
-                row.find("a." + options.deleteCssClass).click(function (e1) {
-                    e1.preventDefault();
-                    // Remove the parent form containing this button:
-                    row.remove();
-                    nextIndex -= 1;
-                    // If a post-delete callback was provided, call it with the deleted form:
-                    if (options.removed) {
-                        options.removed(row);
-                    }
-                    $(document).trigger('formset:removed', [row, options.prefix]);
-                    // Update the TOTAL_FORMS form count.
-                    var forms = $("." + options.formCssClass);
-                    $("#id_" + options.prefix + "-TOTAL_FORMS").val(forms.length);
-                    // Show add button again once we drop below max
-                    if ((maxForms.val() === '') || (maxForms.val() - forms.length) > 0) {
-                        addButton.parent().show();
-                    }
-                    // Also, update names and ids for all remaining form controls
-                    // so they remain in sequence:
-                    var i, formCount;
-                    var updateElementCallback = function () {
-                        updateElementIndex(this, options.prefix, i);
-                    };
-                    for (i = 0, formCount = forms.length; i < formCount; i++) {
-                        updateElementIndex($(forms).get(i), options.prefix, i);
-                        $(forms.get(i)).find("*").each(updateElementCallback);
-                    }
-                });
+                toggleDeleteButtonVisibility(row.closest('.inline-group'));
                 // If a post-add callback was supplied, call it with the added form:
                 if (options.added) {
                     options.added(row);
@@ -314,6 +341,3 @@ function start_inline_loader() {
 $(document).ready(function () {
     start_inline_loader();
 })
-
-
-

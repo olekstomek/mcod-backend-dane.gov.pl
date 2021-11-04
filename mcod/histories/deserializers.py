@@ -1,5 +1,11 @@
 from mcod.core.api.search import fields as search_fields
-from mcod.core.api.schemas import CommonSchema, DateTermSchema, ListingSchema, NumberTermSchema, StringMatchSchema
+from mcod.core.api.schemas import (
+    CommonSchema,
+    DateTermSchema,
+    ListingSchema,
+    NumberTermSchema,
+    StringMatchSchema,
+)
 
 
 class HistoryApiRequest(CommonSchema):
@@ -70,3 +76,14 @@ class HistoryApiSearchRequest(ListingSchema):
     class Meta:
         strict = True
         ordered = True
+
+
+class LogEntryApiSearchRequest(HistoryApiSearchRequest):
+    action = search_fields.FilterField(
+        StringMatchSchema,
+        doc_template='docs/generic/fields/string_match_field.html',
+        doc_base_url='/histories',
+        doc_field_name='action',
+        query_field='action_name',
+    )
+    q = search_fields.MultiMatchField(extra_fields=['table_name', 'action_name'])

@@ -6,7 +6,14 @@ from mimeparse import parse_mime_type
 from mcod import settings
 from mcod.resources import guess
 from mcod.resources.archives import UnsupportedArchiveError, is_archive_file, ArchiveReader
-from mcod.resources.geo import are_shapefiles, analyze_shapefile, is_geotiff, has_geotiff_files
+from mcod.resources.geo import (
+    analyze_shapefile,
+    are_shapefiles,
+    check_geodata,
+    is_json_stat_path,
+    has_geotiff_files,
+)
+from mcod.resources.meteo import check_meteo_data
 from mcod.unleash import is_enabled
 
 logger = logging.getLogger('mcod')
@@ -103,7 +110,8 @@ def file_format_from_content_type(content_type, family=None, extension=None):
     return content_item[2][0]
 
 
-def check_support(ext, content_type):
+def check_support(ext, file_mimetype):
+    content_type = file_mimetype.split('/')[-1]
     if _is_office_file(ext, content_type):
         return
     try:
@@ -125,10 +133,11 @@ def get_file_info(path):
     return parse_mime_type(result)
 
 
-def analyze_resource_file(path, extension=None):
+def analyze_file(path, extension=None):  # noqa: C901
     logger.debug(f"analyze_resource_file({path}, {extension})")
     family, content_type, options = get_file_info(path)
     extracted = None
+    analyze_exc = None
     if is_archive_file(content_type):
         extracted = ArchiveReader(path)
         if len(extracted) == 1:
@@ -145,11 +154,15 @@ def analyze_resource_file(path, extension=None):
                 family = 'image'
                 content_type = 'tiff;application=geotiff'
 
-    if is_enabled('S29_geotiff_file_support.be') and is_geotiff(path):
-        content_type += ';application=geotiff'
+    try:
+        content_type, family = check_geodata(path, content_type, family)
+    except Exception as exc:
+        analyze_exc = Exception(
+            [{'code': 'geodata-error', 'message': 'Błąd podczas analizy pliku: {}.'.format(exc.message)}])
+    file_info = magic.from_file(path)
+    content_type = check_meteo_data(content_type, path, file_info)
     file_mimetype = f'{family}/{content_type}'
     logger.debug(f"  parsed mimetype: {file_mimetype});{options}")
-    file_info = magic.from_file(path)
     logger.debug(f"  file info: {file_info}")
     encoding = options.get('charset', 'unknown')
     logger.debug(f"  encoding: {encoding}")
@@ -163,9 +176,9 @@ def analyze_resource_file(path, extension=None):
 
     logger.debug(f'  finally: extension = {extension}, file_info = {file_info}, encoding = {encoding}')
 
-    check_support(extension, content_type)
-
+    if extension == 'json' and is_enabled('S35_jsonstat.be') and is_json_stat_path(path):
+        extension = 'jsonstat'
     if extracted:
         extracted.cleanup()
 
-    return extension, file_info, encoding, path, file_mimetype
+    return extension, file_info, encoding, path, file_mimetype, analyze_exc

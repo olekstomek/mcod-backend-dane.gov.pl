@@ -81,6 +81,11 @@ class StatsPanel(param.Parameterized):
         self.toggle_widget.link(self, callbacks={'value': self.table_toggle_callback})
         self.fav_chart_1_widget.link(self, callbacks={'value': partial(self.fav_chart_callback, 1)})
         self.fav_chart_2_widget.link(self, callbacks={'value': partial(self.fav_chart_callback, 2)})
+
+        code = {'value': 'target.disabled = true;'}
+        self.fav_chart_1_widget.jslink(self.fav_chart_2_widget, code=code)
+        self.fav_chart_2_widget.jslink(self.fav_chart_1_widget, code=code)
+
         if self.fav_charts_widget:
             self._setup_fav_chart_widgets(self.fav_charts_widget.value)
         if common_dependencies:
@@ -115,10 +120,20 @@ class StatsPanel(param.Parameterized):
     def _setup_fav_chart_widgets(self, data):
         ident = self.__class__.__name__
         data = json.loads(data)
-        slot_1 = data.get('slot-1', {})
-        self.fav_chart_1_widget.value = True if slot_1 and slot_1.get('ident') == ident else False
-        slot_2 = data.get('slot-2', {})
-        self.fav_chart_2_widget.value = True if slot_2 and slot_2.get('ident') == ident else False
+        slot1 = data.get('slot-1', {})
+        is_slot1_checked = bool(slot1 and slot1.get('ident') == ident)
+        slot2 = data.get('slot-2', {})
+        is_slot2_checked = bool(slot2 and slot2.get('ident') == ident)
+        self.fav_chart_1_widget.value = is_slot1_checked
+        self.fav_chart_2_widget.value = is_slot2_checked
+
+        if not is_slot1_checked and is_slot2_checked:
+            self.fav_chart_1_widget.disabled = True
+        if is_slot1_checked and not is_slot2_checked:
+            self.fav_chart_2_widget.disabled = True
+        if not is_slot1_checked and not is_slot2_checked:
+            self.fav_chart_1_widget.disabled = False
+            self.fav_chart_2_widget.disabled = False
 
     @staticmethod
     def fav_chart_callback(slot, target, event):

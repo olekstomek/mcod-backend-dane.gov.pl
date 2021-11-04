@@ -2,8 +2,7 @@
 Feature: Meetings list API
   Scenario Outline: Test meetings list endpoint is not accessible for active user
     Given logged active user
-    When api request method is GET
-    And api request language is <lang_code>
+    When api request language is <lang_code>
     And api request path is /meetings
     Then send api request and fetch the response
     And api's response status code is 403
@@ -16,23 +15,20 @@ Feature: Meetings list API
 
   Scenario: Test meetings list endpoint is accessible by superuser
     Given logged admin user
-    When api request method is GET
-    And api request path is /meetings
+    When api request path is /meetings
     Then send api request and fetch the response
     And api's response status code is 200
 
   Scenario: Test courses list endpoint is accessible by agent user
     Given logged agent user
-    When api request method is GET
-    And api request path is /meetings
+    When api request path is /meetings
     Then send api request and fetch the response
     And api's response status code is 200
 
   Scenario: Test courses list endpoint returns required data
     Given course with id 999
     And logged official user
-    When api request method is GET
-    And api request language is en
+    When api request language is en
     And api request path is /courses?id=999
     Then send api request and fetch the response
     And api's response status code is 200
@@ -41,8 +37,7 @@ Feature: Meetings list API
 
   Scenario: Test meetings list endpoint returns error if invalid state parameter is used
     Given logged agent user
-    When api request method is GET
-    And api request language is pl
+    When api request language is pl
     And api request path is /meetings
     And api request param state is invalid
     Then send api request and fetch the response
@@ -51,8 +46,7 @@ Feature: Meetings list API
 
   Scenario Outline: Test meetings list endpoint can be filtered by list of states
     Given logged admin user
-    When api request method is GET
-    And api request language is pl
+    When api request language is pl
     And api request path is <request_path>
     Then send api request and fetch the response
     And api's response status code is 200
@@ -61,3 +55,11 @@ Feature: Meetings list API
     | request_path                            |
     | /meetings?state=finished,planned        |
     | /meetings?state[terms]=finished,planned |
+
+  Scenario: Two different meeting files can have the same file names
+    Given logged admin user
+    And meeting with id 999 and 2 files
+    When api request path is /meetings
+    Then send api request and fetch the response
+    And api's response body field data/[0]/attributes/materials/[0]/name is meeting_file.txt
+    And api's response body field data/[0]/attributes/materials/[1]/name is meeting_file.txt

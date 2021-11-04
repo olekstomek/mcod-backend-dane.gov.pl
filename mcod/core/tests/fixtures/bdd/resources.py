@@ -17,9 +17,12 @@ from pytest_bdd import parsers
 from mcod import settings
 from mcod.core.tests.fixtures.bdd.common import copyfile, prepare_file
 from mcod.counters.factories import ResourceViewCounterFactory, ResourceDownloadCounterFactory
+from mcod.counters.lib import Counter
 from mcod.datasets.factories import DatasetFactory
 from mcod.harvester.factories import DataSourceFactory
+from mcod.resources.archives import UnsupportedArchiveError
 from mcod.resources.factories import ChartFactory, ResourceFactory, TaskResultFactory
+from mcod.resources.file_validation import analyze_file, check_support
 from mcod.unleash import is_enabled
 
 
@@ -562,6 +565,15 @@ def json_resource_response(file_json, **kwargs):
 
 
 @pytest.fixture
+@requests_mock.Mocker(kw='mock_request')
+def jsonstat_resource_response(file_jsonstat, **kwargs):
+    headers = {
+        'Content-Type': 'application/json'
+    }
+    return get_mock_response(kwargs['mock_request'], file_jsonstat.name, headers)
+
+
+@pytest.fixture
 def shapefile_world():
     return [prepare_file('TM_WORLD_BORDERS-0.3.%s' % ext) for ext in ('shp', 'shx', 'prj', 'dbf')]
 
@@ -586,3 +598,68 @@ def resource_with_id_and_filename(filename, dataset, obj_id):
             data_date=datetime.today(),
             status='published'
         )
+
+
+@given(parsers.parse('draft remote file resource of api type with id {obj_id}'))
+@given('draft remote file resource of api type with id <obj_id>')
+def draft_remote_file_resource(obj_id, httpserver):
+    httpserver.serve_content(
+        content=get_json_file().read(),
+        headers={
+            'content-type': 'application/json'
+        },
+    )
+    kwargs = {
+        'id': obj_id,
+        'link': httpserver.url,
+        'status': 'draft'
+    }
+    return ResourceFactory.create(**kwargs)
+
+
+@then(parsers.parse('resource with id {obj_id} attributes are equal {expected_attr_vals}'))
+@then('resource with id <obj_id> attributes are equal <expected_attr_vals>')
+def resource_with_id_attr_is_equal(obj_id, expected_attr_vals):
+    expected_vals = json.loads(expected_attr_vals)
+    model = apps.get_model('resources', 'resource')
+    obj = model.objects.get(pk=obj_id)
+    actual_vals = {expected_attr: getattr(obj, expected_attr) for expected_attr in expected_vals.keys()}
+    assert actual_vals == expected_vals, 'Expected values: {}, Actual values: {}'.format(expected_vals, actual_vals)
+
+
+@then(parsers.parse('resource field {r_field} is {r_value}'))
+def resource_field_value_is(context, r_field, r_value):
+    model = apps.get_model('resources', 'resource')
+    resource = model.objects.latest('id')
+    assert getattr(resource, r_field) == r_value
+
+
+@then(parsers.parse('file is validated and result is {file_format}'))
+@then('file is validated and result is <file_format>')
+def file_format(validated_file, file_format):
+    extension, file_info, encoding, path, file_mimetype, exc = analyze_file(validated_file)
+    assert extension == file_format
+
+
+@then(parsers.parse('file is validated and result mimetype is {mimetype}'))
+@then('file is validated and result mimetype is <mimetype>')
+def file_mimetype(validated_file, mimetype):
+    extension, file_info, encoding, path, file_mimetype, exc = analyze_file(validated_file)
+    assert file_mimetype == mimetype
+
+
+@then(parsers.parse('file is validated and UnsupportedArchiveError is raised'))
+def file_validation_exception(validated_file):
+    with pytest.raises(UnsupportedArchiveError) as e:
+        extension, file_info, file_encoding, path, file_mimetype, exc = analyze_file(validated_file)
+        check_support(extension, file_mimetype)
+        assert str(e.value) == 'archives-are-not-supported'
+
+
+@given(parsers.parse('resource with id {res_id} is viewed and counter incrementing task is executed'))
+def resourced_is_visited_and_counter_incremented(res_id):
+    import time
+    counter = Counter()
+    counter.incr_view_count('resources', res_id)
+    counter.save_counters()
+    time.sleep(1)  # time for indexing in ES

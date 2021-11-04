@@ -8,7 +8,7 @@ ARCHIVE_CONTENT_TYPES = {
     'x-bzip', 'bzip2', 'x-bzip2', 'x-tar', 'x-zip-compressed', 'zip'
 }
 
-ARCHIVE_EXTENSIONS = {'gz', 'rar', '7zip', 'bz', 'bz2', 'tar', 'zip'}
+ARCHIVE_EXTENSIONS = {'gz', 'rar', '7z', 'bz', 'bz2', 'tar', 'zip'}
 
 
 class UnsupportedArchiveError(Exception):
@@ -36,7 +36,7 @@ class ArchiveReader(object):
             for entry in arch:
                 entry_path = self._get_entry_path(entry)
                 if entry.isdir:
-                    os.makedirs(os.path.join(root_dir, entry_path))
+                    os.makedirs(os.path.join(root_dir, entry_path), exist_ok=True)
                 else:
                     path, extr_file = os.path.split(entry_path)
                     if path and not os.path.isdir(os.path.join(root_dir, path)):

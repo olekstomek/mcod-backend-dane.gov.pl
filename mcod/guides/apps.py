@@ -9,8 +9,8 @@ class GuidesConfig(ExtendedAppMixin, AppConfig):
     verbose_name = _('Portal guide')
 
     def ready(self):
-        pass
-        # from mcod.guides.models import Guide, GuideTrash, Step
+        from mcod.guides.models import Guide, GuideItem
+        self.connect_history(Guide, GuideItem)
         # self.connect_core_signals(Guide)
         # self.connect_core_signals(GuideTrash)
         # self.connect_core_signals(Step)

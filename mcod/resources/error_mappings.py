@@ -85,6 +85,7 @@ recommendations = {
     'illegal_argument_exception': "Niepoprawna wartość",
     'es-index-error': "Zmień typ kolumny {} na [Dane tekstowe].",
     'ExtractUAddressError': "Sprawdź poprawność adresu uniwersalnego",
+    'geodata-error': 'Sprawdź czy struktura pliku z danymi geograficznymi jest poprawna.',
     None: ""
 }
 

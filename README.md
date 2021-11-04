@@ -111,9 +111,13 @@ Uruchomienie usługi jest niezbędne, jeżeli zamierzamy korzystać z zadań asy
 
     $ docker-compose exec mcod-admin python manage.py search_index --rebuild
 
-### Ponowna walidacja zasobu
+### Ponowna walidacja zasobów o danych identyfikatorach <id_1,...,id_N>
 
-    $ docker-compose exec mcod-admin python manage.py validate_resources --pks <id_1,...,id_N>
+    $ docker-compose exec mcod-admin python manage.py validate_resources --where 'id in (<id_1,...,id_N>)'
+
+### Ponowna walidacja zasobu o danym identyfikatorze <id>
+
+    $ docker-compose exec mcod-admin python manage.py validate_resources --where id=<id>
 
 ### Zaindeksowanie pliku zasobu (wygenerowanie danych tabelarycznych)
 

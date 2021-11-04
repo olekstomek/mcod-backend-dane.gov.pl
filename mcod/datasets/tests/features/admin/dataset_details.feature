@@ -3,14 +3,24 @@ Feature: Dataset details
 
   Scenario: Imported dataset is not editable
     Given dataset for data {"id": 999} imported from ckan named Test Source with url http://example.com
-    When admin's request method is GET
-    And admin's page /datasets/dataset/999/change/ is requested
+    When admin's page /datasets/dataset/999/change/ is requested
     Then admin's response page is not editable
+
+  Scenario: Imported dataset's history page is available for admin
+    Given dataset for data {"id": 999} imported from ckan named Test Source with url http://example.com
+    When admin's page /datasets/dataset/999/history/ is requested
+    Then admin's response status code is 200
+
+  Scenario: Imported dataset's history page is available for editor
+    Given institution with id 999
+    And admin's request logged editor user created with params {"id": 999, "organizations": [999]}
+    And dataset for data {"id": 999, "organization_id": 999} imported from ckan named Test Source with url http://example.com
+    When admin's page /datasets/dataset/999/history/ is requested
+    Then admin's response status code is 200
 
   Scenario: Dataset resources tab has pagination
     Given dataset with id 999 and 2 resources
-    When admin's request method is GET
-    And admin's page /datasets/dataset/999/change/ is requested
+    When admin's page /datasets/dataset/999/change/ is requested
     Then admin's response page contains pagination-block
 
   Scenario: Dataset creation automatically creates slug from title
@@ -68,22 +78,19 @@ Feature: Dataset details
 
   Scenario: Imported dataset is correctly displayed in trash for admin
     Given dataset for data {"id": 999, "is_removed": true} imported from ckan named Test Source with url http://example.com
-    When admin's request method is GET
-    And admin's page /datasets/datasettrash/999/change/ is requested
+    When admin's page /datasets/datasettrash/999/change/ is requested
     Then admin's response page is not editable
 
   Scenario: Removed dataset is correctly displayed in trash for editor
     Given logged editor user
     And dataset created with params {"id": 999, "is_removed": true}
-    When admin's request method is GET
-    And admin's page /datasets/datasettrash/999/change/ is requested
+    When admin's page /datasets/datasettrash/999/change/ is requested
     Then admin's response page is not editable
 
   Scenario Outline: Dataset details page is properly displayed even if pagination param is invalid
     Given dataset with id 999
     And resource created with params {"id": 998, "title": "dataset resources pagination test", "dataset_id": 999}
-    When admin's request method is GET
-    And admin's page <page_url> is requested
+    When admin's page <page_url> is requested
     Then admin's response page contains dataset resources pagination test
     Examples:
     | page_url                            |
@@ -95,8 +102,7 @@ Feature: Dataset details
     Given logged editor user
     And dataset with id 999
     And resource created with params {"id": 998, "title": "dataset with resources test", "dataset_id": 999}
-    When admin's request method is GET
-    And admin's page /datasets/dataset/999/change is requested
+    When admin's page /datasets/dataset/999/change is requested
     Then admin's response page contains dataset with resources test
 
   Scenario: Notification mail is updated after dataset edition by editor
@@ -118,3 +124,9 @@ Feature: Dataset details
     And admin's request posted dataset data is {"update_notification_recipient_email": "temp@dane.gov.pl", "organization": [999], "tags_pl": [998]}
     And admin's page /datasets/dataset/1001/change/ is requested
     Then datasets.Dataset with id 1001 contains data {"update_notification_recipient_email": "temp@dane.gov.pl"}
+
+  Scenario: Resource title on inline list redirects to resource admin edit page
+    Given dataset with id 999
+    And resource created with params {"id": 998, "title": "Title as link", "dataset_id": 999}
+    When admin's page /datasets/dataset/999/change/#resources is requested
+    Then admin's response page contains <a href="/resources/resource/998/change/">Title as link</a>

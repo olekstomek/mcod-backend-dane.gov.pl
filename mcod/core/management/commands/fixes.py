@@ -3,12 +3,13 @@ import os
 from pathlib import Path
 
 from django.core.management.base import BaseCommand, CommandError
-from django.db.models import F
+from django.db.models import F, Q
 
 from mcod import settings
 from mcod.articles.models import ArticleCategory
 from mcod.cms.models import FormPageSubmission
 from mcod.cms.models.formpage import Formset
+from mcod.core.api.search.tasks import update_with_related_task
 from mcod.datasets.models import Dataset
 from mcod.reports.models import Report
 from mcod.resources.models import Resource
@@ -160,6 +161,14 @@ class Command(BaseCommand):
             dest='action',
             const='reports-id-column',
             help='Changes column name in reports from ID to id',
+        )
+
+        parser.add_argument(
+            '--resources-openness-score',
+            action='store_const',
+            dest='action',
+            const='resources-openness-score',
+            help='Recompute openness score for resources with fifth degree',
         )
 
     def fix_resources(self):
@@ -566,6 +575,27 @@ class Command(BaseCommand):
             print(f"converting report {report.id} with file {report.file}")
             fix_id_column(filepath)
 
+    def fix_resources_openness_score(self):
+        res_to_update = []
+        resources = Resource.objects.filter(
+            Q(openness_score=5) | (Q(openness_score=3, jsonld_file__isnull=False) & ~Q(jsonld_file=''))
+        )
+        self.stdout.write('Found {} resources to recompute openness score'.format(resources.count()))
+        for resource in resources:
+            try:
+                self.stdout.write('Recomputing openness score for res with id {}'.format(resource.pk))
+                resource.openness_score = resource.get_openness_score()
+                res_to_update.append(resource)
+            except Exception as err:
+                self.stdout.write(
+                    'Error while recomputing openness score for res with id {}: {}'.format(resource.pk, err)
+                )
+        self.stdout.write('Updating resources score in db and ES.')
+        Resource.objects.bulk_update(res_to_update, ['openness_score'])
+        for res in res_to_update:
+            update_with_related_task.s('resources', 'Resource', res.id).apply_async(
+                countdown=2)
+
     def handle(self, *args, **options):
         if not options['action']:
             raise CommandError(
@@ -574,7 +604,8 @@ class Command(BaseCommand):
                 "'--resourcedatadate', '--resourcesformats', '--migratefollowings', '--setverified', "
                 "'--resources-links', '--resources-validation-results', '--resources-has-table-has-map', "
                 "'--submissions-to-new-format', '--submissions-to-old-format', "
-                "'--submissions-formdata-save', '--submissions-formdata-load', '--reports-id-column'."
+                "'--submissions-formdata-save', '--submissions-formdata-load', '--reports-id-column',"
+                " '--resources-openness-score'."
             )
         action = options['action']
 
@@ -595,6 +626,7 @@ class Command(BaseCommand):
             'submissions-formdata-save': self.save_form_page_submissions_form_data_to_file,
             'submissions-formdata-load': self.load_form_page_submissions_form_data_from_file,
             'reports-id-column': self.fix_reports_id_column,
+            'resources-openness-score': self.fix_resources_openness_score
         }
         if action == 'all':
             self.fix_searchhistories()

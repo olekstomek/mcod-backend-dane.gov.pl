@@ -15,4 +15,5 @@ class ArticlesConfig(ExtendedAppMixin, AppConfig):
         self.connect_core_signals(ArticleCategory)
         self.connect_m2m_signal(Article.datasets.through)
         self.connect_m2m_signal(Article.tags.through)
+        self.connect_history(Article, ArticleCategory)
         # self.connect_common_index_signals(Article)

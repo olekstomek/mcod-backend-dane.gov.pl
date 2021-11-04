@@ -1,4 +1,5 @@
 import logging
+import os
 import uuid
 from functools import partial
 
@@ -61,6 +62,9 @@ class BaseExtendedModel(AdminMixin, ApiMixin, StatusModel, TimeStampedModel):
     published_at = MonitorField(monitor='status', when=['published', ])
 
     views_count = models.PositiveIntegerField(default=0)
+
+    def _get_basename(self, name):
+        return os.path.basename(name)
 
     def _get_translated_field_dict(self, field_name):
         _i18n = self._meta.get_field('i18n')

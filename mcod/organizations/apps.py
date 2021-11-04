@@ -12,4 +12,5 @@ class OrganizationsConfig(ExtendedAppMixin, AppConfig):
         from mcod.organizations.models import Organization, OrganizationTrash
         self.connect_core_signals(Organization)
         self.connect_core_signals(OrganizationTrash)
+        self.connect_history(Organization)
         # self.connect_common_index_signals(Organization)

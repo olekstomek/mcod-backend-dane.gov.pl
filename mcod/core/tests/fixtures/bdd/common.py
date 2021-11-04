@@ -28,6 +28,11 @@ def prepare_file(filename):
     return dst
 
 
+def prepare_dbf_file(filename):
+    dbf_path = os.path.join(settings.DATA_DIR, 'dbf_examples')
+    return os.path.join(dbf_path, filename)
+
+
 def create_object(obj_type, obj_id, is_removed=False, status='published', **kwargs):
     _factory = factories_registry.get_factory(obj_type)
     kwargs['pk'] = obj_id

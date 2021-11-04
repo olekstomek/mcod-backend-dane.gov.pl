@@ -56,6 +56,7 @@ from mcod.users.serializers import (
     VerifyEmailApiResponse,
 )
 from mcod.watchers.models import Subscription
+from mcod.unleash import is_enabled
 
 
 User = get_user_model()
@@ -263,6 +264,11 @@ class DashboardView(JsonAPIView):
             result.update({
                 'fav_charts': self._get_fav_charts_aggregations(user)
             })
+            if user.is_superuser and is_enabled('S35_dashboard_services_url.be'):
+                result.update({
+                    'analytical_tools': self._get_analytical_tools(),
+                    'cms_url': settings.CMS_URL
+                })
             return result
 
         @staticmethod
@@ -328,6 +334,10 @@ class DashboardView(JsonAPIView):
                     _default[key]['thumb_url'] = f'{settings.BASE_URL}/pn-apps/charts/{key}.png'
 
             return _default
+
+        @staticmethod
+        def _get_analytical_tools():
+            return [{'name': 'Kibana', 'url': settings.KIBANA_URL}, {'name': 'Metabase', 'url': settings.METABASE_URL}]
 
 
 class LogoutView(JsonAPIView):

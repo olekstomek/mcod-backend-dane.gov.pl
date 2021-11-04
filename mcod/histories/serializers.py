@@ -40,3 +40,37 @@ class HistoryApiAttrs(ObjectAttrs):
 class HistoryApiResponse(TopLevel):
     class Meta:
         attrs_schema = HistoryApiAttrs
+
+
+class LogEntryApiAttrs(ObjectAttrs):
+    action = fields.Str(attribute='action_name')
+    change_timestamp = fields.DateTime()
+    change_user_id = fields.Str()
+    difference = fields.Method('get_difference')
+    message = fields.Str()
+    new_value = fields.Method('get_new_value')
+    row_id = fields.Int()
+    table_name = fields.Str()
+
+    class Meta:
+        strict = True
+        ordered = True
+        object_type = 'history'
+        api_path = '/histories'
+        url_template = '{api_url}/histories/{ident}'
+        model = 'histories.LogEntry'
+
+    def get_difference(self, obj):
+        return json.loads(obj.difference)
+
+    def get_new_value(self, obj):
+        difference = obj.difference if isinstance(obj.difference, dict) else json.loads(obj.difference)
+        new_value = {}
+        for field_name, diffs in difference.items():
+            new_value[field_name] = diffs[1]
+        return new_value
+
+
+class LogEntryApiResponse(TopLevel):
+    class Meta:
+        attrs_schema = LogEntryApiAttrs

@@ -29,6 +29,8 @@ from mcod.core.db.models import ExtendedModel, update_watcher, TrashModelBase
 from mcod.counters.models import ResourceDownloadCounter, ResourceViewCounter
 from mcod.datasets.signals import remove_related_resources
 from mcod.core.storages import get_storage
+from mcod.unleash import is_enabled
+
 
 signal_logger = logging.getLogger('signals')
 
@@ -209,6 +211,7 @@ class Dataset(ExtendedModel):
     )
     image_alt = models.CharField(max_length=255, blank=True, verbose_name=_('Alternative text'))
     dcat_vocabularies = JSONField(blank=True, null=True, verbose_name=_("Controlled Vocabularies"))
+    has_high_value_data = models.BooleanField(verbose_name=_('Has high value data'), default=False)
 
     def __str__(self):
         return self.title
@@ -231,7 +234,9 @@ class Dataset(ExtendedModel):
         if self.source:
             emails.extend(self.source.emails_list)
         else:
-            if self.modified_by:
+            if self.update_notification_recipient_email and is_enabled('S36_dataset_resource_comment_recipient.be'):
+                emails.append(self.update_notification_recipient_email)
+            elif self.modified_by:
                 emails.append(self.modified_by.email)
             else:
                 emails.extend(user.email for user in self.organization.users.all())
@@ -394,12 +399,14 @@ class Dataset(ExtendedModel):
     @property
     def computed_downloads_count(self):
         return ResourceDownloadCounter.objects.filter(
-            resource__dataset_id=self.pk).aggregate(count_sum=Sum('count'))['count_sum'] or 0
+            resource__dataset_id=self.pk).aggregate(count_sum=Sum('count'))['count_sum'] or 0\
+            if is_enabled('S16_new_date_counters.be') else self.downloads_count
 
     @property
     def computed_views_count(self):
         return ResourceViewCounter.objects.filter(
-            resource__dataset_id=self.pk).aggregate(count_sum=Sum('count'))['count_sum'] or 0
+            resource__dataset_id=self.pk).aggregate(count_sum=Sum('count'))['count_sum'] or 0\
+            if is_enabled('S16_new_date_counters.be') else self.views_count
 
     def to_rdf_graph(self):
         schema = self.get_rdf_serializer_schema()

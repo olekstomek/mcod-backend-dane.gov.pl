@@ -2,13 +2,18 @@ from django.contrib import admin
 from django.utils.translation import gettext_lazy as _
 
 from mcod import settings
-from mcod.lib.admin_mixins import TagAutocompleteMixin, LangFieldsOnlyMixin, MCODAdminMixin
+from mcod.lib.admin_mixins import (
+    HistoryMixin,
+    LangFieldsOnlyMixin,
+    MCODAdminMixin,
+    TagAutocompleteMixin,
+)
 from mcod.tags.forms import TagForm
 from mcod.tags.models import Tag
 
 
 @admin.register(Tag)
-class TagAdmin(TagAutocompleteMixin, LangFieldsOnlyMixin, MCODAdminMixin, admin.ModelAdmin):
+class TagAdmin(TagAutocompleteMixin, LangFieldsOnlyMixin, MCODAdminMixin, HistoryMixin, admin.ModelAdmin):
     search_fields = ['name']
 
     fields = ('name', 'language')

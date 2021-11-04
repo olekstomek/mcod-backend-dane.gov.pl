@@ -151,9 +151,31 @@ def append_report_task(sender, task_id, task, signal, **kwargs):
         logger.error(f"reports.task: exception on append_report_task:\n{e}")
 
 
+@shared_task
+def create_link_protocol_report_task(resources):
+    logger.debug('Creating resource link protocol report.')
+    app_name = 'resources'
+    file_name_postfix = now().strftime('%Y%m%d%H%M%S.%s')
+    file_name = f'http_protocol_resources_{file_name_postfix}.csv'
+    reports_path = os.path.join(settings.REPORTS_MEDIA_ROOT, app_name)
+    os.makedirs(reports_path, exist_ok=True)
+
+    file_path = os.path.join(reports_path, file_name)
+    file_url_path = f'{settings.REPORTS_MEDIA}/{app_name}/{file_name}'
+    with open(file_path, 'w') as f:
+        w = csv.DictWriter(f, ['Id', 'Nazwa', 'Https', 'Instytucja'])
+        w.writeheader()
+        w.writerows(resources)
+    return json.dumps({
+        'file': file_url_path,
+        'model': 'resources.Resource'
+    })
+
+
 @task_success.connect(sender=link_validation_success_callback)
 @task_success.connect(sender=link_validation_error_callback)
 @task_success.connect(sender=create_no_resource_dataset_report)
+@task_success.connect(sender=create_link_protocol_report_task)
 def generating_monthly_report_success(sender, result, **kwargs):
     try:
         result_dict = json.loads(result)
@@ -204,6 +226,7 @@ def generating_report_success(sender, result, **kwargs):
 @task_failure.connect(sender=generate_csv)
 @task_failure.connect(sender=create_no_resource_dataset_report)
 @task_failure.connect(sender=validate_resources_links)
+@task_failure.connect(sender=create_link_protocol_report_task)
 def generating_report_failure(sender, task_id, exception, args, traceback, einfo, signal, **kwargs):
     logger.debug(f"generating report failed with:\n{exception}")
     try:

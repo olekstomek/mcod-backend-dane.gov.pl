@@ -114,31 +114,6 @@
                 el.name = el.name.replace(id_regex, replacement);
             }
         };
-
-        $('.djn-inline-form.djn-item').not('.has_original').each(function(i, row) {
-            row = $(row);
-            $('body').trigger('form-ready', [row]);
-            row.find('h3').append('<span><a class="inline-deletelink" href="#">{% trans "Remove" %}</a></span>');
-
-            row.find("a.inline-deletelink").click(function (e1) {
-                e1.preventDefault();
-                row.remove();
-                let forms = $('.'+formCssClass);
-                let maxForms = $("#id_" + prefix + "-MAX_NUM_FORMS").prop("autocomplete", "off");
-                $("#id_" + prefix + "-TOTAL_FORMS").val(forms.length);
-                if ((maxForms.val() === '') || (maxForms.val() - forms.length) > 0) {
-                    $('div.add-row').show();
-                }
-                let i, formCount;
-                let updateElementCallback = function () {
-                    updateElementIndex(this, prefix, i);
-                };
-                for (i = 0, formCount = forms.length; i < formCount; i++) {
-                    updateElementIndex($(forms).get(i), prefix, i);
-                    $(forms.get(i)).find("*").each(updateElementCallback);
-                }
-            });
-         });
     });
 })(django.jQuery);
 </script>

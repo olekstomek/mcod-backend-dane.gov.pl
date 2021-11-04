@@ -14,6 +14,7 @@ from mcod import settings
 from mcod.resources.archives import ARCHIVE_CONTENT_TYPES
 from mcod.resources import guess
 from mcod.resources.file_validation import file_format_from_content_type
+from mcod.resources.geo import is_json_stat
 from mcod.unleash import is_enabled
 
 
@@ -93,7 +94,7 @@ def simplified_url(url):
     return url.replace('http://', '').replace('https://', '').replace('www.', '').rstrip('/')
 
 
-def download_file(url, force_file_type, allowed_content_types=None):  # noqa: C901
+def download_file(url, forced_file_type=False, allowed_content_types=None):  # noqa: C901
     logger.debug(f"download_file({url}, {allowed_content_types})")
     try:
         URLValidator()(url)
@@ -122,7 +123,7 @@ def download_file(url, force_file_type, allowed_content_types=None):  # noqa: C9
 
     try:
         resource_type = _get_resource_type(response)
-        if is_enabled('S27_forced_file_type.be') and resource_type == 'api' and force_file_type:
+        if is_enabled('S27_forced_file_type.be') and resource_type == 'api' and forced_file_type:
             logger.debug('Forcing file type')
             resource_type = 'file'
     except Exception as exc:
@@ -131,6 +132,7 @@ def download_file(url, force_file_type, allowed_content_types=None):  # noqa: C9
         raise exc
     logger.debug(f'  resource_type: {resource_type}')
 
+    content = BytesIO(response.content)
     if resource_type == 'file':
         content_disposition = response.headers.get('Content-Disposition', None)
         logger.debug(f'  content_disposition: {content_disposition}')
@@ -157,9 +159,7 @@ def download_file(url, force_file_type, allowed_content_types=None):  # noqa: C9
 
         format = file_format_from_content_type(content_type, family=family, extension=format)
         logger.debug(f'  format:{format} - from content type (file)')
-
-        content = BytesIO(response.content)
-        return resource_type, {
+        options = {
             'filename': filename,
             'format': format,
             'content': content
@@ -167,18 +167,14 @@ def download_file(url, force_file_type, allowed_content_types=None):  # noqa: C9
     else:
         format = file_format_from_content_type(content_type, family)
         logger.debug(f'  format: {format} - from content type (web/api)')
-        if resource_type == 'api':
-            return resource_type, {
-                'format': format
-            }
-        else:
-            if response.history and all((
-                    response.history[-1].status_code == 301,
-                    simplified_url(response.url) != simplified_url(url))):
-                raise InvalidResponseCode('Resource location has been moved!')
-            return resource_type, {
-                'format': format
-            }
+        if resource_type != 'api' and response.history and all((
+                response.history[-1].status_code == 301,
+                simplified_url(response.url) != simplified_url(url))):
+            raise InvalidResponseCode('Resource location has been moved!')
+        options = {'format': format}
+    if format == 'json' and is_enabled('S35_jsonstat.be') and is_json_stat(content):
+        options['format'] = 'jsonstat'
+    return resource_type, options
 
 
 def check_link_status(url, resource_type):

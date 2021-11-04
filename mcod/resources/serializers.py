@@ -89,13 +89,11 @@ class ResourceApiAttrs(ObjectAttrs, HighlightObjectMixin):
     visualization_types = ListWithoutNoneStrElement(fields.Str())
     downloads_count =\
         fields.Function(
-            lambda obj: obj.computed_downloads_count if is_enabled('S16_new_date_counters.be') and
-            hasattr(obj, 'computed_downloads_count') else obj.downloads_count)
+            lambda obj: obj.computed_downloads_count if is_enabled('S16_new_date_counters.be') else obj.downloads_count)
     openness_score = fields.Integer()
     views_count =\
         fields.Function(
-            lambda obj: obj.computed_views_count if is_enabled('S16_new_date_counters.be') and
-            hasattr(obj, 'computed_views_count') else obj.views_count)
+            lambda obj: obj.computed_views_count if is_enabled('S16_new_date_counters.be') else obj.views_count)
     modified = fields.DateTime()
     created = fields.DateTime()
     verified = fields.DateTime()
@@ -114,6 +112,8 @@ class ResourceApiAttrs(ObjectAttrs, HighlightObjectMixin):
     data_special_signs = fields.Nested(SpecialSignSchema, data_key='special_signs', many=True)
     if is_enabled('S24_named_charts.be'):
         is_chart_creation_blocked = fields.Bool()
+    if is_enabled('S35_high_value_data.be'):
+        has_high_value_data = fields.Boolean()
 
     class Meta:
         relationships_schema = ResourceApiRelationships
@@ -366,12 +366,8 @@ class ResourceCSVSchema(CSVSerializer):
     modified = fields.DateTime(data_key=_("modified"), default=None)
     resource_type = fields.Str(attribute='type', data_key=_("type"), default='')
     openness_score = fields.Int(data_key=_("openness_score"), default=None)
-    views_count = fields.Function(
-        lambda obj: obj.computed_views_count if is_enabled('S16_new_date_counters.be') and
-        hasattr(obj, 'computed_views_count') else obj.views_count, data_key=_("views_count"), default=None)
-    downloads_count = fields.Function(
-        lambda obj: obj.computed_downloads_count if is_enabled('S16_new_date_counters.be') and
-        hasattr(obj, 'computed_downloads_count') else obj.downloads_count, data_key=_("downloads_count"), default=None)
+    views_count = fields.Int(attribute='computed_views_count', data_key=_("views_count"), default=None)
+    downloads_count = fields.Int(attribute='computed_downloads_count', data_key=_("downloads_count"), default=None)
 
     class Meta:
         ordered = True
@@ -443,8 +439,8 @@ class ResourceXMLSerializer(schemas.ExtSchema):
     description = TranslatedStr()
     openness_score = fields.Integer()
     format = fields.Str()
-    resource_views_count = fields.Method('get_views_count', data_key='views_count')
-    resource_downloads_count = fields.Method('get_downloads_count', data_key='downloads_count')
+    views_count = fields.Int(attribute='computed_views_count')
+    downloads_count = fields.Int(attribute='computed_downloads_count')
     created = fields.DateTime(format='iso8601')
     data_date = fields.Date()
     type = fields.Function(lambda resource: resource.get_type_display())
@@ -453,16 +449,6 @@ class ResourceXMLSerializer(schemas.ExtSchema):
     visualization_types = ListWithoutNoneStrElement(fields.Str())
     download_url = fields.Str()
     data_special_signs = fields.Nested(SpecialSignSchema, data_key='special_signs', many=True)
-
-    def get_views_count(self, resource):
-        if is_enabled('S16_new_date_counters.be') and hasattr(resource, 'computed_views_count'):
-            return resource.computed_views_count
-        return resource.views_count
-
-    def get_downloads_count(self, resource):
-        if is_enabled('S16_new_date_counters.be') and hasattr(resource, 'computed_downloads_count'):
-            return resource.computed_downloads_count
-        return resource.downloads_count
 
 
 class ResourceCSVMetadataSerializer(schemas.ExtSchema):
@@ -475,14 +461,9 @@ class ResourceCSVMetadataSerializer(schemas.ExtSchema):
     resource_type = fields.Function(lambda obj: obj.get_type_display(), data_key=_('Type'))
     format = fields.Str(data_key=_('File format'), default='')
     file_size = fields.Function(lambda obj: sizeof_fmt(obj.file_size) if obj.file_size else '', data_key=_('File size'))
-    views_count = fields.Function(
-        lambda obj: obj.computed_views_count if
-        is_enabled('S16_new_date_counters.be') and hasattr(obj, 'computed_views_count') else
-        obj.views_count, data_key=_("Resource views count"), default='')
-    downloads_count = fields.Function(
-        lambda obj: obj.computed_downloads_count if
-        is_enabled('S16_new_date_counters.be') and hasattr(obj, 'computed_downloads_count') else
-        obj.downloads_count, data_key=_("Resource downloads count"), default='')
+    views_count = fields.Int(attribute='computed_views_count', data_key=_("Resource views count"))
+    downloads_count = fields.Int(attribute='computed_downloads_count',
+                                 data_key=_("Resource downloads count"))
     has_table = fields.Function(lambda obj: _('YES') if obj.has_table else _('NO'), data_key=_('Table'))
     has_chart = fields.Function(lambda obj: _('YES') if obj.has_chart else _('NO'), data_key=_('Map'))
     has_map = fields.Function(lambda obj: _('YES') if obj.has_map else _('NO'), data_key=_('Chart'))

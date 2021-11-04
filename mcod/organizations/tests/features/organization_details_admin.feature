@@ -23,3 +23,9 @@ Feature: Organization details page in admin panel
     And admin's page /organizations/organization/add/ is requested
     Then admin's response status code is 200
     And admin's response page contains <label class="required" for="id_datasets-2-0-tags_pl">Słowa kluczowe (PL):<span>(pole wymagane)</span></label></div><div class="controls"><div class="inline error errors">
+
+    Scenario: Dataset title on inline list redirects to dataset admin edit page
+    Given dataset with id 998 and title Title as link ds and institution 999
+    When admin's request method is GET
+    And admin's page /organizations/organization/999/change/#datasets is requested
+    Then admin's response page contains <a href="/datasets/dataset/998/change/">Title as link ds</a>

@@ -1,7 +1,8 @@
+import re
+
 from django.contrib import messages
 from django.db import connection
 from django.shortcuts import redirect
-from django.urls import reverse
 from django.utils.deprecation import MiddlewareMixin
 from django.utils.translation import gettext_lazy as _
 from mcod.lib.jwt import get_auth_token
@@ -55,10 +56,12 @@ class ComplementUserDataMiddleware:
             if request.user.is_normal_staff and not request.user.has_complete_staff_data:
                 allowed_paths = {
                     request.user.admin_change_url,
-                    reverse('admin:logout'),
+                    '/logout/',
                     '/pn-apps/stats/',
+                    r'/pn-apps/charts/slot-\d+.png',
                 }
-                if request.path not in allowed_paths:
+                allowed_paths_pattern = '|'.join(allowed_paths)
+                if not re.match(allowed_paths_pattern, request.path):
                     messages.add_message(request, messages.ERROR,
                                          _('Your account data is incomplete. Full name and phone number must be given'))
                     return redirect(request.user.admin_change_url)

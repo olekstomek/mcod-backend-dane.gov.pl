@@ -10,11 +10,16 @@ from django.utils.translation import gettext_lazy as _
 from django.utils.safestring import mark_safe
 from django_admin_multiple_choice_list_filter.list_filters import MultipleChoiceListFilter
 
-from mcod.core.admin import MCODChangeList
 from mcod.lib.admin_mixins import (
-    ActionsMixin, CRUDMessageMixin, HistoryMixin, TrashMixin,
-    StateStatusLabelAdminMixin, DynamicAdminListDisplayMixin,
-    SoftDeleteMixin)
+    ActionsMixin,
+    CRUDMessageMixin,
+    DynamicAdminListDisplayMixin,
+    HistoryMixin,
+    MCODChangeList,
+    SoftDeleteMixin,
+    StateStatusLabelAdminMixin,
+    TrashMixin,
+)
 from mcod.reports.admin import ExportCsvMixin
 from mcod.users.forms import MeetingForm, UserCreationForm, UserChangeForm, FilteredSelectMultipleCustom
 from mcod.users.models import ACADEMY_PERMS_CODENAMES, LABS_PERMS_CODENAMES, User, Meeting, MeetingFile, MeetingTrash

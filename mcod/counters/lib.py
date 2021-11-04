@@ -119,30 +119,31 @@ class Counter:
         new_dataset_counts = \
             updated_counters.values('resource__dataset_id').annotate(**annotation).values(
                 'resource__dataset_id', annotation_label)
+        es_oper_attr = f'computed_{oper}'
         for res in new_resource_counts:
             self.views_es_actions['resources'].append({
                 '_op_type': 'update',
-                '_index': view,
-                '_type': view[:-1],
+                '_index': settings.ELASTICSEARCH_INDEX_NAMES[view],
+                '_type': 'doc',
                 '_id': res['resource_id'],
-                'doc': {oper: res[annotation_label]}
+                'doc': {es_oper_attr: res[annotation_label]}
             })
         for dataset in new_dataset_counts:
             try:
                 self.views_es_actions['datasets'].append({
                     '_op_type': 'update',
-                    '_index': 'datasets',
-                    '_type': 'dataset',
+                    '_index': settings.ELASTICSEARCH_INDEX_NAMES['datasets'],
+                    '_type': 'doc',
                     '_id': dataset['resource__dataset_id'],
-                    'doc': {oper: dataset[annotation_label]}
+                    'doc': {es_oper_attr: dataset[annotation_label]}
                 })
             except KeyError:
                 self.views_es_actions['datasets'] = [{
                     '_op_type': 'update',
-                    '_index': 'datasets',
-                    '_type': 'dataset',
+                    '_index': settings.ELASTICSEARCH_INDEX_NAMES['datasets'],
+                    '_type': 'doc',
                     '_id': dataset['resource__dataset_id'],
-                    'doc': {oper: dataset[annotation_label]}
+                    'doc': {es_oper_attr: dataset[annotation_label]}
                 }]
 
     def save_es_actions(self, datasets_updates):
@@ -152,16 +153,16 @@ class Counter:
             try:
                 self.views_es_actions['datasets'].append({
                     '_op_type': 'update',
-                    '_index': 'datasets',
-                    '_type': 'dataset',
+                    '_index': settings.ELASTICSEARCH_INDEX_NAMES['datasets'],
+                    '_type': 'doc',
                     '_id': dataset_id,
                     'doc': data
                 })
             except KeyError:
                 self.views_es_actions['datasets'] = [{
                     '_op_type': 'update',
-                    '_index': 'datasets',
-                    '_type': 'dataset',
+                    '_index': settings.ELASTICSEARCH_INDEX_NAMES['datasets'],
+                    '_type': 'doc',
                     '_id': dataset_id,
                     'doc': data
                 }]
@@ -179,8 +180,8 @@ class Counter:
     def add_es_action(self, view, obj, oper, counter, incr_val, datasets_updates):
         self.views_es_actions[view].append({
             '_op_type': 'update',
-            '_index': view,
-            '_type': view[:-1],
+            '_index': settings.ELASTICSEARCH_INDEX_NAMES[view],
+            '_type': 'doc',
             '_id': obj.pk,
             'doc': {oper: counter}
         })

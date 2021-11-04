@@ -177,3 +177,15 @@ Feature: Resources list API
     And api's response body field data/[0]/attributes/jsonld_file_size is not None
     And api's response body field data/[0]/attributes/jsonld_download_url is not None
     And api's response body field data/[0]/attributes/openness_score is 4
+
+
+   Scenario: Test incrementing resource views count updates data in ES
+    Given dataset with id 999
+    And resource created with params {"id": 998, "slug": "test-rdf", "dataset_id": 999, "views_count": 0, "status": "published"}
+    And resource with id 998 is viewed and counter incrementing task is executed
+    When api request method is GET
+    And api request header x-api-version is 1.0
+    And api request path is /1.4/datasets/999/resources/
+    And send api request and fetch the response
+    Then api's response status code is 200
+    And api's response body field /data/0/attributes/views_count is 1

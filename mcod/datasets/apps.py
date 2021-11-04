@@ -17,3 +17,4 @@ class DatasetsConfig(ExtendedAppMixin, AppConfig):
         self.connect_m2m_signal(Dataset.tags.through)
         self.connect_m2m_signal(Dataset.categories.through)
         rsr.register(DatasetRDFResponseSchema)
+        self.connect_history(Dataset)

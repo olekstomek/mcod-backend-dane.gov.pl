@@ -20,6 +20,7 @@ from mcod.lib.widgets import (
 from mcod.resources.archives import ARCHIVE_EXTENSIONS
 from mcod.resources.models import Resource, supported_formats_choices
 from mcod.special_signs.models import SpecialSign
+from mcod.unleash import is_enabled
 
 
 SUPPORTED_FILE_EXTENSIONS = [f'.{x[0]}' for x in supported_formats_choices()]
@@ -288,9 +289,19 @@ class AddResourceForm(ResourceForm, LinkOrFileUploadForm):
         file = self.cleaned_data.get('file')
         if file:
             _name, ext = os.path.splitext(file.name)
-            if ext.lower() not in SUPPORTED_FILE_EXTENSIONS:
+            supported_extensions = [x for x in SUPPORTED_FILE_EXTENSIONS if x not in self.flagged_extensions]
+            if ext.lower() not in supported_extensions:
                 self.add_error('file', _('Invalid file extension: %(ext)s.') % {'ext': ext or '-'})
         return file
+
+    @property
+    def flagged_extensions(self):
+        flagged_extensions = []
+        if not is_enabled('S36_meteo_data_formats.be'):
+            flagged_extensions.extend(['.nc', '.grib', '.grib2'])
+        if not is_enabled('S35_gpx_validation.be'):
+            flagged_extensions.append('.gpx')
+        return flagged_extensions
 
 
 class TrashResourceForm(forms.ModelForm):

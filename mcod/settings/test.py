@@ -43,6 +43,7 @@ def get_es_index_names():
         "institutions": "test-institutions-{}".format(index_prefix),
         "resources": "test-resources-{}".format(index_prefix),
         "histories": "test-histories-{}".format(index_prefix),
+        "logentries": "test-logentries-{}".format(index_prefix),
         "searchhistories": "test-searchhistories-{}".format(index_prefix),
         "accepted_dataset_submissions": "test-accepted_dataset_submissions-{}".format(index_prefix),
         "meetings": "test-meetings-{}".format(index_prefix),
@@ -170,5 +171,5 @@ FALCON_LIMITER_ENABLED = False
 DISCOURSE_FORUM_ENABLED = False
 
 SPARQL_ENDPOINTS = {
-    'kronika': 'http://kronik.gov.pl'  # TODO: update with valid api url
+    'kronika': {'endpoint': 'http://kronik.gov.pl', 'headers': {'host': 'public-api.k8s'}}
 }

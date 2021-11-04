@@ -1,11 +1,20 @@
+import logging
 import string
 
+import ijson
 import requests
 import shapefile
-from mcod import settings
+import xmlschema
+from lxml import etree
 from pyproj import CRS, Transformer
 from requests.auth import HTTPBasicAuth
 from tifffile import TiffFile
+
+from mcod import settings
+from mcod.lib.jsonstat import validate as jsonstat_validate
+from mcod.unleash import is_enabled
+
+logger = logging.getLogger('mcod')
 
 
 class ExtractUAddressError(Exception):
@@ -35,6 +44,69 @@ def is_geotiff(path):
     return path is not None and '.tif' in path and TiffFile(path).is_geotiff
 
 
+def is_geojson(path):
+    with open(path) as fp:
+        try:
+            parser = ijson.parse(fp)
+            data = {}
+            top_keys = ['coordinates', 'features', 'geometry', 'geometries']
+            for prefix, event, value in parser:
+                if (prefix, event) == ('type', 'string'):
+                    data['type'] = value
+                elif (prefix, event) == ('', 'map_key') and value in top_keys:
+                    data[value] = True
+            gtype = data.get('type')
+            geo_types = ['LineString', 'MultiLineString', 'MultiPoint', 'MultiPolygon', 'Point', 'Polygon']
+            return any([
+                gtype in geo_types and 'coordinates' in data,
+                gtype == 'Feature' and 'geometry' in data,
+                gtype == 'FeatureCollection' and 'features' in data,
+                gtype == 'GeometryCollection' and 'geometries' in data,
+            ])
+        except Exception as exc:
+            logger.debug('Exception during geojson validation: {}'.format(exc))
+    return False
+
+
+def is_gpx(path, content_type):
+    return path is not None and content_type == 'xml' and is_valid_gpx(path)
+
+
+def is_kml(path, content_type):
+    if content_type == 'xml' and path.endswith('.kml'):
+        try:
+            xsd_path = 'http://schemas.opengis.net/kml/2.2.0/ogckml22.xsd'
+            schema = xmlschema.XMLSchema(xsd_path)
+            schema.validate(path)
+            return True
+        except Exception as exc:
+            logger.debug('Exception during KML file validation: {}'.format(exc))
+            raise exc
+    return False
+
+
+def is_valid_gpx(file_path):
+    try:
+        parsed_xml = etree.parse(file_path)
+        root = parsed_xml.getroot()
+        version = root.get('version')
+        if version == '1.1':
+            schema_path = settings.GPX_11_SCHEMA_PATH
+        elif version == '1.0':
+            schema_path = settings.GPX_10_SCHEMA_PATH
+        else:
+            schema_path = None
+        if not schema_path or not root.tag.endswith('gpx'):
+            return False
+        gpx_schema_doc = etree.parse(schema_path)
+        gpx_schema = etree.XMLSchema(gpx_schema_doc)
+        gpx_schema.assertValid(parsed_xml)
+        return True
+    except Exception as exc:
+        logger.debug('Exception during gpx validation: {}'.format(exc))
+        return False
+
+
 def has_geotiff_files(files):
     base_tiff_files = {_cut_extension(f)[-1]: f for f in files if _cut_extension(f)[-1] in ['tiff', 'tif', 'tfw']}
     try:
@@ -42,6 +114,19 @@ def has_geotiff_files(files):
     except KeyError:
         tif_file = base_tiff_files.get('tiff')
     return ('tfw' in base_tiff_files and tif_file is not None) or is_geotiff(tif_file)
+
+
+def is_json_stat(data):
+    try:
+        return jsonstat_validate(data.read())
+    except Exception as exc:
+        logger.debug('Exception during JSON-stat validation: {}'.format(exc))
+        return False
+
+
+def is_json_stat_path(path):
+    with open(path) as fp:
+        return is_json_stat(fp)
 
 
 def analyze_shapefile(files):
@@ -193,3 +278,18 @@ def extract_coords_from_uaddress(uaddress):
         return transformer_CS92.transform(*uaddress.split('|')[5:7])[::-1]
     except Exception:
         raise ExtractUAddressError(uaddress)
+
+
+def check_geodata(path, content_type, family):
+    if is_enabled('S29_geotiff_file_support.be') and is_geotiff(path):
+        content_type += ';application=geotiff'
+    if is_enabled('S35_geojson.be') and content_type in ('json', 'plain') and is_geojson(path):
+        family = 'application'
+        content_type = 'geo+json'
+    if is_enabled('S35_gpx_validation.be') and is_gpx(path, content_type):
+        family = 'application'
+        content_type = 'gpx+xml'
+    if is_enabled('S36_kml.be') and is_kml(path, content_type):
+        family = 'application'
+        content_type = 'vnd.google-earth.kml+xml'
+    return content_type, family

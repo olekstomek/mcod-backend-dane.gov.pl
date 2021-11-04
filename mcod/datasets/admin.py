@@ -4,7 +4,9 @@ from django.contrib.admin.options import InlineModelAdmin
 from django.contrib.admin.views.main import ChangeList
 from django.core.paginator import EmptyPage, InvalidPage, Paginator
 from django.db.models import Subquery, OuterRef
+from django.urls import reverse
 from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 from django_celery_results.models import TaskResult
 
@@ -80,10 +82,9 @@ class PaginationInline(admin.TabularInline):
 class ChangeResourceStacked(DynamicAdminListDisplayMixin, ModifiedByDisplayAdminMixin, StatusLabelAdminMixin,
                             AdminListMixin, PaginationInline):
     template = 'admin/resources/inline-list.html'
-    show_change_link = True
 
     fields = (
-        'title',
+        '_title',
         'type',
         'formats',
         'link_status',
@@ -176,6 +177,11 @@ class ChangeResourceStacked(DynamicAdminListDisplayMixin, ModifiedByDisplayAdmin
 
     def get_readonly_fields(self, request, obj=None):
         return self.get_fields(request, obj)
+
+    def _title(self, obj):
+        return mark_safe(
+            '<a href="{}">{}</a>'.format(reverse('admin:resources_resource_change', args=[obj.id]), obj.title))
+    _title.short_description = _("title")
 
 
 class AddResourceStacked(InlineModelAdmin):
@@ -322,6 +328,8 @@ class DatasetAdmin(DynamicAdminListDisplayMixin, CreatedByDisplayAdminMixin, Sta
         general_fields = ["notes", "url", "image", "image_alt", "dataset_logo", "customfields", update_frequency_field,
                           *frequency_fields, 'organization']
         general_fields += ['categories_list'] if obj and obj.is_imported else ['categories']
+        if is_enabled('S35_high_value_data.be'):
+            general_fields += ['has_high_value_data']
         general_fields += ['status', 'created_by', 'created', 'modified', 'verified']
         license_fields = (
             "license_condition_source",
@@ -424,6 +432,9 @@ class DatasetAdmin(DynamicAdminListDisplayMixin, CreatedByDisplayAdminMixin, Sta
         if request.user.is_superuser:
             return queryset
         return queryset.filter(organization_id__in=request.user.organizations.all())
+
+    def has_history_permission(self, request, obj):
+        return request.user.is_superuser or request.user.is_editor_of_organization(obj.organization)
 
     def dataset_logo(self, obj):
         return obj.dataset_logo or '-'

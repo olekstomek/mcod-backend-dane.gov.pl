@@ -1,25 +1,46 @@
 Feature: File validation
 
-  Scenario: Validation of docx file
-    Given I have docx file
-    Then file is validated and result is docx
+  Scenario Outline: Validation of various file types
+    Given I have file <file_type>
+    Then file is validated and result is <file_format>
+    Examples:
+    | file_type                 | file_format |
+    | docx                      | docx        |
+    | geojson                   | geojson     |
+    | geojson without extension | geojson     |
+    | json with geojson content | geojson     |
+    | ods                       | ods         |
+    | xlsx                      | xlsx        |
+    | zip with one csv          | csv         |
+    | tar.gz with one csv       | csv         |
+    | shapefile arch            | shp         |
+    | gpx                       | gpx         |
+    | grib                      | grib        |
+    | hdf_netcdf                | nc          |
+    | binary_netcdf             | nc          |
+    | cp1251.dbf                | dbf         |
+    | dbase_03.dbf              | dbf         |
+    | dbase_30.dbf              | dbf         |
+    | dbase_31.dbf              | dbf         |
+    | dbase_83.dbf              | dbf         |
+    | dbase_83_missing_memo.dbf | dbf         |
+    | dbase_8b.dbf              | dbf         |
+    | dbase_f5.dbf              | dbf         |
+    | kml                       | kml         |
 
-  Scenario: Validation of ods file
-    Given I have ods file
-    Then file is validated and result is ods
-
-  Scenario: Validation of xlsx file
-    Given I have xlsx file
-    Then file is validated and result is xlsx
-
-  Scenario: Validation of rar with many files
-    Given I have rar with many files
+  Scenario Outline: Validation of rar with many files
+    Given I have file <file_type>
     Then file is validated and UnsupportedArchiveError is raised
+    Examples:
+    | file_type           |
+    | rar with many files |
+    | zip with many files |
 
-  Scenario: Validation of zip with one file
-    Given I have zip with one csv file
-    Then file is validated and result is csv
-
-  Scenario: Validation of zip with many files
-    Given I have zip with many files
-    Then file is validated and UnsupportedArchiveError is raised
+  Scenario Outline: Validation of various file mimetypes
+    Given I have file <file_type>
+    Then file is validated and result mimetype is <mimetype>
+    Examples:
+    | file_type       | mimetype           |
+    | grib            | application/x-grib |
+    | hdf_netcdf      | application/netcdf |
+    | binary_netcdf   | application/netcdf |

@@ -18,6 +18,13 @@ class ExtendedAppMixin:
         from mcod.core.db.models import BaseExtendedModel
         models.signals.m2m_changed.connect(BaseExtendedModel.on_m2m_changed, sender=sender)
 
+    def connect_history(self, *senders):
+        from auditlog.registry import auditlog
+        from mcod.unleash import is_enabled
+        if is_enabled('S30_new_history.be'):
+            for sender in senders:
+                auditlog.register(sender)
+
 
 class CoreConfig(AppConfig):
     name = 'mcod.core'

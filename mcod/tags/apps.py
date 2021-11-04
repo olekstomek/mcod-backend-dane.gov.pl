@@ -11,3 +11,4 @@ class TagsConfig(ExtendedAppMixin, AppConfig):
     def ready(self):
         from mcod.tags.models import Tag
         self.connect_core_signals(Tag)
+        self.connect_history(Tag)

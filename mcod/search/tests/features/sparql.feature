@@ -68,6 +68,7 @@ Feature: Sparql API endpoint
     | object_type | req_data                                                                                                      | resp_body_field              | resp_body_value                  |
     # SELECT
     | sparql      | {"q": "SELECT * WHERE { ?s ?p ?o . } LIMIT 1", "format": "application/rdf+xml"}                               | data/attributes/content_type | application/rdf+xml             |
+    | sparql      | {"q": "SELECT * WHERE { ?s ?p ?o . } LIMIT 1", "format": "application/rdf+xml", "external_sparql_endpoint": null}                               | data/attributes/content_type | application/rdf+xml             |
     | sparql      | {"q": "SELECT * WHERE { ?s ?p ?o . } LIMIT 1", "format": "application/sparql-results+xml"}                    | data/attributes/content_type | application/sparql-results+xml  |
     | sparql      | {"q": "SELECT * WHERE { ?s ?p ?o . } LIMIT 1", "format": "application/sparql-results+json"}                   | data/attributes/content_type | application/sparql-results+json |
     | sparql      | {"q": "SELECT * WHERE { ?s ?p ?o . } LIMIT 1", "format": "text/csv"}                                          | data/attributes/content_type | text/csv                        |

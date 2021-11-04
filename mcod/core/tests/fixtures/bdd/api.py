@@ -97,6 +97,9 @@ def api_request_data(context, object_type, req_data):
         'comment': {
             'text': 'Test comment',
         },
+        'dataset_comment': {
+            "comment": "Test comment",
+        },
         'notification': {
         },
         'register': {},
@@ -131,7 +134,7 @@ def api_request_data(context, object_type, req_data):
     }
     data = default_data.get(object_type, {})
     data.update(extra)
-    object_type = 'comment' if object_type == 'resource_comment' else object_type
+    object_type = 'comment' if object_type in ['dataset_comment', 'resource_comment'] else object_type
     object_type = 'schedule' if object_type == 'schedule_state' else object_type
     object_type = 'user_schedule_item' if object_type in [
         'user_schedule_item_admin', 'user_schedule_item_agent'] else object_type

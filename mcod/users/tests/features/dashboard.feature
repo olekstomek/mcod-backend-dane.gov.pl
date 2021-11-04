@@ -150,3 +150,29 @@ Feature: Dashboard view
 #    | user_type  |
 #    | admin user |
 #    | agent user |
+
+  Scenario: Analytical tools and cms url are visible for admin
+    Given logged admin user
+    When api request method is GET
+    And api request path is /auth/user/dashboard
+    And send api request and fetch the response
+    Then api's response status code is 200
+    And api's response body has field /meta/aggregations/analytical_tools
+    And api's response body has field /meta/aggregations/cms_url
+
+  Scenario Outline: Analytical tools and cms url are not visible for non admin user
+    Given logged <user_type>
+    When api request method is GET
+    And api request path is /auth/user/dashboard
+    And send api request and fetch the response
+    Then api's response status code is 200
+    And api's response body has no field /meta/aggregations/analytical_tools
+    And api's response body has no field /meta/aggregations/cms_url
+
+    Examples:
+    | user_type        |
+    | editor user      |
+    | agent user       |
+    | active user      |
+    | laboratory admin |
+    | academy admin    |

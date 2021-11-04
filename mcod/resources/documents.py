@@ -84,6 +84,9 @@ class ResourceDocument(ExtendedDocument):
 
     license_code = fields.IntegerField()
     update_frequency = fields.KeywordField()
+    computed_downloads_count = fields.IntegerField()
+    computed_views_count = fields.IntegerField()
+    has_high_value_data = fields.BooleanField()
 
     class Index:
         name = mcs.ELASTICSEARCH_INDEX_NAMES['resources']

@@ -9,7 +9,8 @@ class ApplicationsConfig(ExtendedAppMixin, AppConfig):
     verbose_name = _('Applications')
 
     def ready(self):
-        from mcod.applications.models import Application, ApplicationTrash
+        from mcod.applications.models import Application, ApplicationProposal, ApplicationTrash
         self.connect_core_signals(Application)
         self.connect_core_signals(ApplicationTrash)
         self.connect_m2m_signal(Application.datasets.through)
+        self.connect_history(Application, ApplicationProposal)

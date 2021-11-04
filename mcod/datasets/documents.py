@@ -25,8 +25,8 @@ def datasets_field(**kwargs):
         'notes': TranslatedTextField('notes'),
         'category': fields.KeywordField(attr='category.title'),
         'formats': fields.KeywordField(attr='formats', multi=True),
-        'downloads_count': fields.IntegerField(attr='downloads_count'),
-        'views_count': fields.IntegerField(attr='views_count'),
+        'downloads_count': fields.IntegerField(attr='computed_downloads_count'),
+        'views_count': fields.IntegerField(attr='computed_views_count'),
         'openness_scores': fields.IntegerField(attr='openness_scores'),
         'modified': fields.DateField(),
         'slug': TranslatedKeywordField('slug'),
@@ -120,6 +120,9 @@ class DatasetDocument(ExtendedDocument):
     last_modified_resource = fields.DateField(attr='last_modified_resource')
 
     license_code = fields.IntegerField()
+    computed_downloads_count = fields.IntegerField()
+    computed_views_count = fields.IntegerField()
+    has_high_value_data = fields.BooleanField()
 
     class Index:
         name = mcs.ELASTICSEARCH_INDEX_NAMES['datasets']

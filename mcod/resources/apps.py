@@ -17,3 +17,4 @@ class ResourcesConfig(ExtendedAppMixin, AppConfig):
         self.connect_core_signals(Chart)
         self.connect_m2m_signal(Resource.special_signs.through)
         rsr.register(ResourceRDFResponseSchema)
+        self.connect_history(Resource, Chart)

@@ -1,16 +1,17 @@
 import csv
+import json
 import logging
 import re
 from datetime import datetime
 from decimal import Decimal, ROUND_HALF_UP
 
 from dateutil import rrule, relativedelta
-from django_tqdm import BaseCommand
 from django.conf import settings
+from django_tqdm import BaseCommand
 
 from mcod.counters.models import ResourceDownloadCounter, ResourceViewCounter
-from mcod.resources.models import Resource
 from mcod.reports.models import SummaryDailyReport
+from mcod.resources.models import Resource
 
 logger = logging.getLogger('mcod')
 
@@ -24,35 +25,42 @@ class Command(BaseCommand):
             help='Path to api logs containing request data.'
         )
 
+        parser.add_argument(
+            '--published_history_file_path',
+            nargs='+',
+            help='Path to file with publish history of all resources.'
+        )
+
     def handle(self, *args, **options):
         res_data = {}
         for log_path in options['log_paths']:
             self.read_from_log_history(log_path, res_data)
         self.read_from_report_files(res_data)
+        self.remove_invalid_ids(res_data)
         res_q = Resource.orig.values('pk', 'published_at')
-        res_published_dates = {r['pk']: r['published_at'].date() for r in res_q}
+        res_published_dates = {str(r['pk']): r['published_at'].date() for r in res_q}
 
         rvc_count_views = 0
         rdc_count_downloads = 0
+        with open(options['published_history_file_path'][0], 'r') as json_file:
+            history_published_dates = json.load(json_file)
         for res_id, res_details in res_data.items():
             if Resource.orig.filter(pk=res_id).exists():
                 logger.debug('Started computing counters for resource with id: ', res_id)
                 rvc_list = []
                 rdc_list = []
-                start_date = res_published_dates.get(res_id, datetime(2018, 9, 1).date())
+                try:
+                    start_date = self.get_start_date(res_published_dates, history_published_dates, res_id)
+                except IndexError:
+                    continue
                 dates_list = list(res_details.keys())
                 dates_list.sort()
                 end_date = dates_list[-1]
                 sorted_entries = []
                 for timestamp in rrule.rrule(freq=rrule.DAILY, dtstart=start_date, until=end_date):
                     dt = timestamp.date()
-                    if dt == start_date and dt not in res_details:
-                        init_val = 0
-                    else:
-                        init_val = None
-                    if dt == start_date and dt in res_details and res_details[dt]['summary_views'] is None:
-                        res_details['summary_views'] = res_details['views']
-                        res_details['summary_downloads'] = res_details['downloads']
+                    init_val = self.get_init_val(dt, start_date, res_details)
+                    self.initialize_start_date_values(dt, start_date, res_details)
                     sorted_entries.append(
                         dict(date=dt,
                              **res_details.get(dt, {'summary_views': init_val, 'summary_downloads': init_val,
@@ -60,10 +68,8 @@ class Command(BaseCommand):
                 data_gaps = self.find_summary_data_gaps(sorted_entries)
                 self.fill_summary_data_gaps(sorted_entries, data_gaps)
                 for i in range(len(sorted_entries) - 1, -1, -1):
-                    views_count = sorted_entries[i]['summary_views'] - sorted_entries[i - 1]['summary_views'] if i > 0 else\
-                        sorted_entries[i]['summary_views']
-                    downloads_count = sorted_entries[i]['summary_downloads'] - sorted_entries[i - 1]['summary_downloads'] \
-                        if i > 0 else sorted_entries[i]['summary_downloads']
+                    views_count = self.get_count_value(sorted_entries, i, 'summary_views')
+                    downloads_count = self.get_count_value(sorted_entries, i, 'summary_downloads')
                     if views_count > 0:
                         rvc_list.append(ResourceViewCounter(
                             timestamp=sorted_entries[i]['date'], resource_id=res_id, count=views_count))
@@ -77,6 +83,36 @@ class Command(BaseCommand):
                 ResourceDownloadCounter.objects.bulk_create(rdc_list)
         logger.debug('Total created views count:', rvc_count_views)
         logger.debug('Total created downloads count:', rdc_count_downloads)
+
+    def get_start_date(self, res_published_dates, history_published_dates, res_id,):
+        fallback_published_date = res_published_dates.get(res_id, datetime(2019, 5, 31).date())
+        resource_published_dates = history_published_dates.get(
+            res_id, {fallback_published_date.strftime('%Y-%m-%d'): 1})
+        all_history_dates = [(datetime.strptime(publish_date, '%Y-%m-%d').date(), publish_value) for
+                             publish_date, publish_value in resource_published_dates.items()]
+        all_history_dates.sort(key=lambda x: x[0])
+        publish_dates_lst = [history_entry[0] for history_entry in all_history_dates if history_entry[1] == 1]
+        return publish_dates_lst[0]
+
+    def get_init_val(self, dt, start_date, res_details):
+        return 0 if dt == start_date and dt not in res_details else None
+
+    def initialize_start_date_values(self, dt, start_date, res_details):
+        if dt == start_date and dt in res_details and res_details[dt]['summary_views'] is None:
+            res_details[dt]['summary_views'] = res_details[dt]['views'] if \
+                res_details[dt]['views'] is not None else 0
+            res_details[dt]['summary_downloads'] = res_details[dt]['downloads'] if \
+                res_details[dt]['downloads'] is not None else 0
+
+    def remove_invalid_ids(self, res_data):
+        invalid_ids = []
+        for res_id in res_data.keys():
+            try:
+                int(res_id)
+            except ValueError:
+                invalid_ids.append(res_id)
+        for inv_id in invalid_ids:
+            res_data.pop(inv_id)
 
     def read_from_report_files(self, res_data):
         directory_path = settings.ROOT_DIR
@@ -94,11 +130,13 @@ class Command(BaseCommand):
                 if 'formaty_po_konwersji' in headers:
                     views_index = 10
                     downloads_index = 11
+                    check_data_range = range(9, 13)
                 else:
                     views_index = 9
                     downloads_index = 10
+                    check_data_range = range(8, 12)
                 for row in report_reader:
-                    try:
+                    if self.has_valid_row_data(row, check_data_range):
                         res_id = row[0]
                         views_count = int(row[views_index])
                         downloads_count = int(row[downloads_index])
@@ -111,17 +149,21 @@ class Command(BaseCommand):
                             res_data[res_id] = {counters_date: {
                                 'summary_views': views_count, 'summary_downloads': downloads_count,
                                 'views': None, 'downloads': None}}
-                    except (IndexError, ValueError):
-                        pass
+
+    def has_valid_row_data(self, row, check_data_range):
+        try:
+            return bool([int(row[i]) for i in check_data_range])
+        except (IndexError, ValueError):
+            return False
 
     def read_from_log_history(self, log_path, res_data):
         logger.debug('Reading data from log file:', log_path)
         overall_views_count = 0
         overall_downloads_count = 0
         views_regex = r'(\[(?P<date>\d\d\/\w+\/\d\d\d\d)(\:\d\d){3}\s\+\d{4}\]\s\"GET(?!.*\b(?:media)\b)[^\"]+' \
-                      r'/resources/(?P<res_id>\d+)(,[-a-zA-Z0-9_]+)?/?\sHTTP)'
+                      r'/resources/(?P<res_id>\d+)(,[-a-zA-Z0-9_]+)?/?\sHTTP/\d\.\d\"\s[^4]\d\d)'
         downloads_regex = r'\[(?P<date>\d\d\/\w+\/\d\d\d\d)(\:\d\d){3}\s\+\d{4}\]\s\"GET[^\"]+' \
-                          r'/resources/(?P<res_id>\d+)(,[-a-zA-Z0-9_]+)?/(file|csv|jsonld)/?\sHTTP'
+                          r'/resources/(?P<res_id>\d+)(,[-a-zA-Z0-9_]+)?/(file|csv|jsonld)/?\sHTTP/\d\.\d\"\s3\d\d'
         max_size = 1024 * 1024 * 512
         found_lines = 0
         found_views_lines = 0
@@ -189,11 +231,13 @@ class Command(BaseCommand):
                     gap_start_downloads_count, gap_end_downloads_count, 'downloads',
                     sliced_entries, sorted_entries, gap_start)
                 for i in range(gap[1] - 1, gap_start - 1, -1):
+                    new_summary_view = sorted_entries[i + 1]['summary_views'] - sorted_entries[i + 1]['views']
                     sorted_entries[i]['summary_views'] =\
-                        sorted_entries[i + 1]['summary_views'] - sorted_entries[i + 1]['views']
-                    sorted_entries[i]['summary_downloads'] =\
-                        sorted_entries[i + 1]['summary_downloads'] - sorted_entries[i + 1][
+                        new_summary_view if new_summary_view > 0 else sorted_entries[i + 1]['summary_views']
+                    new_summary_downloads = sorted_entries[i + 1]['summary_downloads'] - sorted_entries[i + 1][
                         'downloads']
+                    sorted_entries[i]['summary_downloads'] = new_summary_downloads if\
+                        new_summary_downloads > 0 else sorted_entries[i + 1]['summary_downloads']
             elif gap_end_views_count is None and gap_start_views_count is not None:
                 for i in range(gap_start, gap[1] + 1):
                     current_views = sorted_entries[i]['views'] if sorted_entries[i]['views'] is not None else 0
@@ -213,6 +257,7 @@ class Command(BaseCommand):
             slice_profile = [1 / len(sliced_entries) for _ in range(count_of_entries)]
         else:
             slice_profile = [slice_value / slice_values_sum for slice_value in slice_values]
+        gap_end_count = max(gap_end_count, gap_start_count)
         slice_summary_diff = gap_end_count - gap_start_count
         if slice_summary_diff != slice_values_sum:
             result_values = self.compute_profiled_values(slice_summary_diff, slice_profile)
@@ -239,3 +284,11 @@ class Command(BaseCommand):
                 new_profiled_values.append(changed_profiled_val)
             profiled_result_values = new_profiled_values
         return profiled_result_values
+
+    def get_count_value(self, sorted_entries, i, count_type):
+        if i > 0:
+            count_value = sorted_entries[i][count_type] - sorted_entries[i - 1][count_type]
+        else:
+            count_value = sorted_entries[i][count_type] if\
+                sorted_entries[i + 1][count_type] - sorted_entries[i][count_type] > 0 else 0
+        return count_value

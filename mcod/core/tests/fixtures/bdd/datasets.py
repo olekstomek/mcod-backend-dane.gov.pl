@@ -14,7 +14,7 @@ from pytest_bdd import given, when, then
 from pytest_bdd import parsers
 
 from mcod.categories.factories import CategoryFactory
-from mcod.core.tests.fixtures.bdd.common import prepare_file, copyfile, create_object
+from mcod.core.tests.fixtures.bdd.common import prepare_file, prepare_dbf_file, copyfile, create_object
 from mcod.datasets.factories import DatasetFactory
 from mcod.harvester.factories import DataSourceFactory
 from mcod.resources.factories import ChartFactory, ResourceFactory
@@ -78,6 +78,12 @@ def dataset_with_resources():
 def dataset_with_organization(dataset_id, organization_id):
     organization = create_object('institution', organization_id)
     return create_object('dataset', dataset_id, organization=organization)
+
+
+@given(parsers.parse('dataset with id {dataset_id:d} and title {dataset_title} and institution {organization_id:d}'))
+def dataset_with_title_and_organization(dataset_id, dataset_title, organization_id):
+    organization = create_object('institution', organization_id)
+    return create_object('dataset', dataset_id, title=dataset_title, organization=organization)
 
 
 @given(parsers.parse('dataset with chart as visualization type'))
@@ -290,8 +296,43 @@ def csv2jsonld_jsonld_file():
 
 
 @pytest.fixture
+def example_docx_file():
+    return prepare_file('doc_img.docx')
+
+
+@pytest.fixture
+def example_geojson_file():
+    return prepare_file('example_geojson.geojson')
+
+
+@pytest.fixture
+def example_geojson_file_without_extension():
+    return prepare_file('example_geojson_without_extension')
+
+
+@pytest.fixture
+def example_gpx_file():
+    return prepare_file('run.gpx')
+
+
+@pytest.fixture
+def example_json_file_with_geojson_content():
+    return prepare_file('example_geojson.json')
+
+
+@pytest.fixture
+def example_kml_file():
+    return prepare_file('example_kml.kml')
+
+
+@pytest.fixture
 def example_xls_file():
     return prepare_file('example_xls_file.xls')
+
+
+@pytest.fixture
+def example_xlsx_file():
+    return prepare_file('sheet_img.xlsx')
 
 
 @pytest.fixture
@@ -320,20 +361,8 @@ def multi_file_zip_pack():
 
 
 @pytest.fixture
-def spreedsheet_xlsx_pack():
-    return prepare_file('sheet_img.xlsx')
-
-
-@pytest.fixture
-def document_docx_pack():
-    return prepare_file('doc_img.docx')
-
-
-# @pytest.fixture
-# def shapefile_arch():
-#     return prepare_file('Mexico_and_US_Border.zip')
-#
-#
+def shapefile_arch():
+    return prepare_file('Mexico_and_US_Border.zip')
 
 
 @pytest.fixture
@@ -341,22 +370,49 @@ def example_ods_file():
     return prepare_file('example_ods_file.ods')
 
 
-@given(parsers.parse('I have {file_type}'))
-def validated_file(document_docx_pack, example_ods_file,
-                   spreedsheet_xlsx_pack, multi_file_pack, single_csv_zip,
-                   multi_file_zip_pack, file_type):
-    if file_type == 'docx file':
-        return document_docx_pack
-    elif file_type == 'ods file':
-        return example_ods_file
-    elif file_type == 'xlsx file':
-        return spreedsheet_xlsx_pack
-    elif file_type == 'rar with many files':
-        return multi_file_pack
-    elif file_type == 'zip with one csv file':
-        return single_csv_zip
-    elif file_type == 'zip with many files':
-        return multi_file_zip_pack
+@pytest.fixture
+def example_grib():
+    return prepare_file('example_grib.grib')
+
+
+@pytest.fixture
+def example_hdf_netcdf():
+    return prepare_file('darwin_2012.nc')
+
+
+@pytest.fixture
+def example_binary_netcdf():
+    return prepare_file('madis-maritime.nc')
+
+
+@given(parsers.parse('I have file {file_type}'))
+@given('I have file <file_type>')
+def validated_file(example_docx_file, example_geojson_file, example_geojson_file_without_extension, example_gpx_file,
+                   example_json_file_with_geojson_content, example_kml_file, example_ods_file, example_xlsx_file,
+                   multi_file_pack, single_csv_zip, multi_file_zip_pack, file_type, single_file_pack,
+                   shapefile_arch, example_grib, example_hdf_netcdf, example_binary_netcdf):
+    file_types = {
+        'docx': example_docx_file,
+        'geojson': example_geojson_file,
+        'geojson without extension': example_geojson_file_without_extension,
+        'json with geojson content': example_json_file_with_geojson_content,
+        'kml': example_kml_file,
+        'ods': example_ods_file,
+        'xlsx': example_xlsx_file,
+        'rar with many files': multi_file_pack,
+        'zip with one csv': single_csv_zip,
+        'zip with many files': multi_file_zip_pack,
+        'tar.gz with one csv': single_file_pack,
+        'shapefile arch': shapefile_arch,
+        'gpx': example_gpx_file,
+        'grib': example_grib,
+        'hdf_netcdf': example_hdf_netcdf,
+        'binary_netcdf': example_binary_netcdf
+    }
+    if file_type.endswith('.dbf'):
+        return prepare_dbf_file(file_type)
+    else:
+        return file_types.get(file_type)
 
 
 @given(parsers.parse('dataset with id {dataset_id}, slug {slug} and resources'))
