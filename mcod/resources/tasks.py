@@ -1,6 +1,5 @@
 import json
 import logging
-import requests
 from copy import deepcopy
 
 from celery import shared_task
@@ -13,6 +12,7 @@ from django.utils import translation
 from django.utils.translation import ugettext_lazy as _
 
 from mcod.resources.indexed_data import FileEncodingValidationError
+from mcod.resources.link_validation import check_link_scheme
 
 logger = logging.getLogger('mcod')
 
@@ -252,31 +252,18 @@ def validate_link(resource_id):
 
 
 @shared_task
-def check_link_protocol(resource_id, link, title, organization_title):
+def check_link_protocol(resource_id, link, title, organization_title, resource_type):
     logger.debug(f'Checking link {link} of resource with id {resource_id}')
-    https_link = link.replace('http://', 'https://')
-    change_required = False
-    try:
-        response = requests.get(link, allow_redirects=True, timeout=30, stream=True)
-        returns_https = response.url.startswith('https')
-    except Exception:
-        returns_https = False
-    if not returns_https:
-        try:
-            response = requests.get(https_link, allow_redirects=True, timeout=30, stream=True)
-            response.raise_for_status()
-            change_required = True
-        except Exception:
-            pass
+    returns_https, change_required = check_link_scheme(link)
+    https_status = 'NIE'
     if returns_https:
         https_status = 'TAK'
     elif not returns_https and change_required:
         https_status = 'Wymagana poprawa'
-    else:
-        https_status = 'NIE'
     return {
         'Https': https_status,
         'Id': resource_id,
         'Nazwa': title,
+        'Typ': resource_type,
         'Instytucja': organization_title
     }

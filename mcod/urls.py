@@ -12,6 +12,7 @@ from wagtail.documents.api.v2.views import DocumentsAPIViewSet
 from bokeh.server.django import static_extensions
 from mcod.cms.views import revisions_view
 from mcod.datasets.views import DatasetAutocompleteAdminView
+from mcod.regions.views import RegionsAutocomplete
 from mcod.organizations.views import InstitutionAutocompleteAdminView, InstitutionTypeAdminView
 from mcod.users.views import AdminAutocomplete, CustomAdminLoginView
 from mcod.cms import urls as cms_urls
@@ -65,6 +66,11 @@ else:
             'admin-autocomplete/',
             AdminAutocomplete.as_view(),
             name='admin-autocomplete',
+        ),
+        path(
+            'regions-autocomplete/',
+            RegionsAutocomplete.as_view(),
+            name='regions-autocomplete',
         ),
         path('i18n/', include('django.conf.urls.i18n')),
         path('login/', CustomAdminLoginView.as_view(), name='login'),

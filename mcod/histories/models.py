@@ -7,15 +7,18 @@ from django.utils.safestring import mark_safe
 from pygments import highlight
 from pygments.formatters.html import HtmlFormatter
 from pygments.lexers.data import JsonLexer
-
 from django.contrib.auth import get_user_model
+from django.contrib.contenttypes.models import ContentType
 from django.contrib.postgres.fields import JSONField
-
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 from django.utils.translation import gettext_lazy as _
 from django.db import models
 
 from mcod.core.api.search.helpers import get_document_for_model
-from mcod.histories.managers import HistoryManager
+from mcod.core.api.search.tasks import update_document_task
+from mcod.core.registries import history_registry
+from mcod.histories.managers import HistoryManager, LogEntryManager
 
 
 class History(models.Model):
@@ -65,6 +68,19 @@ class History(models.Model):
         return ddiff
 
     @property
+    def logentry_action(self):
+        if self.action == 'INSERT':
+            return LogEntry.Action.CREATE
+        elif self.action == 'UPDATE':
+            return LogEntry.Action.UPDATE
+        elif self.action == 'DELETE':
+            return LogEntry.Action.DELETE
+
+    @property
+    def logentry_changes(self):
+        return json.dumps(self.new_value, ensure_ascii=False) if self.new_value else ''
+
+    @property
     def user(self):
         users = get_user_model()
         user = users.objects.get(id=self.change_user_id)
@@ -108,6 +124,26 @@ class History(models.Model):
         obj.save()
         return obj.to_dict(include_meta=True)
 
+    def create_log_entry(self):
+        params = history_registry.get_params(self.table_name)
+        if params:
+            content_type = ContentType.objects.get_by_natural_key(*params)
+            obj, created = LogEntry.objects.update_or_create(
+                timestamp=self.change_timestamp,
+                object_id=self.row_id,
+                content_type=content_type,
+                defaults={
+                    'action': self.logentry_action,
+                    'actor_id': self.change_user_id,
+                    'object_pk': str(self.row_id),
+                    'changes': self.logentry_changes,
+                }
+            )
+            obj.timestamp = self.change_timestamp  # https://stackoverflow.com/q/7499767/1845230
+            obj.save(update_fields=['timestamp'])
+            return obj, created
+        return None, False
+
 
 class HistoryIndexSync(models.Model):
     last_indexed = models.DateTimeField()
@@ -115,16 +151,19 @@ class HistoryIndexSync(models.Model):
 
 class LogEntry(BaseLogEntry):
 
+    objects = LogEntryManager()
+
     def __str__(self):
-        return f"{self.id} | {self.get_action_display()} > {self.table_name} > {self.object_id}"
+        return f"{self.id} | {self.action_display} > {self.table_name} > {self.object_id}"
 
     @property
     def action_display(self):
-        return self.get_action_display()
+        return self.get_action_display().upper()
 
     @property
     def action_name(self):
-        return self.action_display.upper()
+        _name = self.action_display
+        return 'INSERT' if _name == 'CREATE' else _name
 
     @property
     def change_timestamp(self):
@@ -172,5 +211,10 @@ class LogEntry(BaseLogEntry):
         proxy = True
 
 
-class LogEntryIndexSync(models.Model):
-    last_indexed = models.DateTimeField()
+@receiver(post_save, sender=LogEntry)
+@receiver(post_save, sender=BaseLogEntry)
+def update_log_entry_handler(sender, instance, *args, **kwargs):
+    update_document_task.s(
+        LogEntry._meta.app_label,
+        LogEntry._meta.object_name,
+        instance.id).apply_async(countdown=1, queue='history')

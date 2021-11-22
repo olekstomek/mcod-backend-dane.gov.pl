@@ -27,6 +27,21 @@ from mcod.unleash import is_enabled
 
 
 @pytest.fixture
+def httpsserver_custom(request):
+    """Custom version of pytest_localserver's httpsserver.
+    See: https://github.com/diazona/pytest-localserver/issues/2#issuecomment-919358939
+    Stronger cert was generated with command:
+        $ openssl req -new -x509 -sha256 -keyout server.pem -out server.pem -nodes
+    """
+    from pytest_localserver import https
+    certificate = os.path.join(settings.TEST_CERTS_PATH, 'server.pem')
+    server = https.SecureContentServer(cert=certificate, key=certificate)
+    server.start()
+    request.addfinalizer(server.stop)
+    return server
+
+
+@pytest.fixture
 def buzzfeed_fakenews_resource(buzzfeed_dataset, buzzfeed_editor, mocker):
     from mcod.resources.models import Resource
     _name = 'buzzfeed-2018-fake-news-1000-lines.csv'
@@ -602,8 +617,8 @@ def resource_with_id_and_filename(filename, dataset, obj_id):
 
 @given(parsers.parse('draft remote file resource of api type with id {obj_id}'))
 @given('draft remote file resource of api type with id <obj_id>')
-def draft_remote_file_resource(obj_id, httpserver):
-    httpserver.serve_content(
+def draft_remote_file_resource(obj_id, httpsserver_custom):
+    httpsserver_custom.serve_content(
         content=get_json_file().read(),
         headers={
             'content-type': 'application/json'
@@ -611,7 +626,7 @@ def draft_remote_file_resource(obj_id, httpserver):
     )
     kwargs = {
         'id': obj_id,
-        'link': httpserver.url,
+        'link': httpsserver_custom.url,
         'status': 'draft'
     }
     return ResourceFactory.create(**kwargs)
@@ -663,3 +678,11 @@ def resourced_is_visited_and_counter_incremented(res_id):
     counter.incr_view_count('resources', res_id)
     counter.save_counters()
     time.sleep(1)  # time for indexing in ES
+
+
+@given(parsers.parse('resource with id {res_id} dataset id {dataset_id} and single main region'))
+def resource_with_region(res_id, dataset_id, main_region, additional_regions):
+    resource = ResourceFactory.create(id=res_id, dataset_id=dataset_id)
+    resource.regions.set([main_region])
+    resource.regions.add(*additional_regions, through_defaults={'is_additional': True})
+    resource.save()

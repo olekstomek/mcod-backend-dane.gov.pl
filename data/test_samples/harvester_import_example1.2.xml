@@ -26,7 +26,7 @@
 		<resources>
 			<resource status="published">
 				<extIdent>zasob_extId_zasob_1</extIdent>
-				<url>http://mock-resource.com.pl/simple.csv</url>
+				<url>https://mock-resource.com.pl/simple.csv</url>
 				<title>
 					<polish>ZASOB csv REMOTE</polish>
 					<english>ENGLISH TITLE - RESOURCE 1</english>
@@ -41,7 +41,7 @@
 			</resource>
 			<resource status="published">
 				<extIdent>zasob_extId_zasob_2</extIdent>
-				<url>http://mock-resource.com.pl/simple.csv</url>
+				<url>https://mock-resource.com.pl/simple.csv</url>
 				<title>
 					<polish>ZASOB CSV LOCAL</polish>
 					<english>ENGLISH TITLE - RESOURCE 2</english>

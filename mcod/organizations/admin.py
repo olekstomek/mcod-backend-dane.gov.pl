@@ -7,7 +7,7 @@ from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 from rules.contrib.admin import ObjectPermissionsModelAdmin, ObjectPermissionsStackedInline
 
-from mcod.datasets.forms import AddDatasetForm, DatasetStackedNoSaveForm
+from mcod.datasets.forms import DatasetForm, DatasetStackedNoSaveForm
 from mcod.datasets.models import Dataset
 from mcod.lib.admin_mixins import (
     AdminListMixin, TrashMixin, HistoryMixin, LangFieldsOnlyMixin, SoftDeleteMixin, StatusLabelAdminMixin,
@@ -96,7 +96,7 @@ class AddDatasetStacked(AdminListMixin, nested_admin.NestedStackedInline, Object
     prepopulated_fields = {"slug": ("title",)}
     model = Dataset
     extra = 0
-    form = AddDatasetForm
+    form = DatasetForm
     suit_classes = 'suit-tab suit-tab-datasets'
     fields = (
         'title',

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-09-27 16:49+0200\n"
+"POT-Creation-Date: 2021-11-04 17:23+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -521,8 +521,6 @@ msgstr ""
 msgid "Preview draft version of '%(title)s'"
 msgstr ""
 
-#, fuzzy
-#| msgid "View on site"
 msgid "View live"
 msgstr "Zobacz na stronie"
 
@@ -550,17 +548,26 @@ msgstr "Polski"
 msgid "English"
 msgstr "Angielski"
 
-#, python-format
-msgid "Select %s"
-msgstr "Wybierz %s"
+msgid "table name"
+msgstr "nazwa tabeli"
 
-#, python-format
-msgid "Select %s to change"
-msgstr "Wybierz %s do zmiany"
+msgid "action"
+msgstr "akcja"
 
-#, python-format
-msgid "Select %s to view"
-msgstr "Wybierz %s do obejrzenia"
+msgid "user"
+msgstr "użytkownik"
+
+msgid "Differences"
+msgstr "Różnice"
+
+msgid "Change timestamp"
+msgstr "Data zmiany"
+
+msgid "row id"
+msgstr "identyfikator wiersza"
+
+msgid "message"
+msgstr "komunikat"
 
 msgid "Missing data for required field."
 msgstr "Brak danych w wymaganym polu."
@@ -899,6 +906,12 @@ msgstr "zbiór danych"
 msgid "The value must be between %(min)s and %(max)s"
 msgstr "Wartość musi być pomiędzy %(min)s a %(max)s"
 
+msgid "No"
+msgstr "Nie"
+
+msgid "Yes"
+msgstr "Tak"
+
 msgid "id"
 msgstr ""
 
@@ -975,10 +988,8 @@ msgstr "Do zbioru %(title)s%(version)s [%(url)s] została zgłoszona uwaga:"
 msgid "A comment was posted on the data set %(title)s%(version)s"
 msgstr "Zgłoszono uwagę do zbioru %(title)s%(version)s"
 
-#, fuzzy
-#| msgid "Documentation"
 msgid "Discourse Integration"
-msgstr "Dokumentacja"
+msgstr "Integracja Discourse"
 
 msgid "Only administrators and agents have access to forum"
 msgstr "Tylko administratorzy i pełnomocnicy mają dostęp do forum"
@@ -1791,6 +1802,9 @@ msgstr "import źródła danych"
 msgid "data source imports"
 msgstr "importy źródła danych"
 
+msgid "Required scheme is https://"
+msgstr "Wymagany format protokołu to https://"
+
 #, python-format
 msgid "Unsupported format: %(format)s."
 msgstr "Nieobsługiwany format: %(format)s."
@@ -1875,15 +1889,6 @@ msgstr "Zdalny skrót MD5 nie jest poprawny!"
 msgid "Histories"
 msgstr "Historie"
 
-msgid "table name"
-msgstr "nazwa tabeli"
-
-msgid "row id"
-msgstr "identyfikator wiersza"
-
-msgid "action"
-msgstr "akcja"
-
 msgid "old value"
 msgstr "stare wartości"
 
@@ -1893,17 +1898,8 @@ msgstr "nowe wartości"
 msgid "User"
 msgstr "Użytkownik"
 
-msgid "Change timestamp"
-msgstr "Data zmiany"
-
-msgid "message"
-msgstr "komunikat"
-
 msgid "History"
 msgstr "Historia"
-
-msgid "Differences"
-msgstr "Różnice"
 
 msgid "acc: History"
 msgstr "historię"
@@ -1946,6 +1942,18 @@ msgstr "Raport"
 
 msgid "Reports"
 msgstr "Raporty"
+
+#, python-format
+msgid "Select %s"
+msgstr "Wybierz %s"
+
+#, python-format
+msgid "Select %s to change"
+msgstr "Wybierz %s do zmiany"
+
+#, python-format
+msgid "Select %s to view"
+msgstr "Wybierz %s do obejrzenia"
 
 msgid "Decision taken"
 msgstr "Decyzja podjęta"
@@ -2153,10 +2161,8 @@ msgstr ""
 msgid "Field value error"
 msgstr "Błąd wartości pola"
 
-#, fuzzy
-#| msgid "Field value error"
 msgid "Field error"
-msgstr "Błąd wartości pola"
+msgstr "Błąd pola"
 
 msgid "Internal number cannot be given without the main number"
 msgstr "Numer wewnętrzny może być podany wyłącznie z numerem głównym"
@@ -2265,9 +2271,6 @@ msgstr "polski"
 
 msgid "english"
 msgstr "angielski"
-
-msgid "user"
-msgstr "użytkownik"
 
 msgid "language"
 msgstr "język"
@@ -2657,6 +2660,30 @@ msgstr "Liczba pobrań zbiorów danych"
 msgid "Unauthorized"
 msgstr ""
 
+msgid "locality"
+msgstr "Miejscowość"
+
+msgid "localadmin"
+msgstr "Gmina"
+
+msgid "county"
+msgstr "Powiat"
+
+msgid "region"
+msgstr "Województwo"
+
+msgid "country"
+msgstr "Kraj"
+
+msgid "Boundary box"
+msgstr "Obszar ograniczający"
+
+msgid "Latitude"
+msgstr "Szerokość geograficzna"
+
+msgid "Longitude"
+msgstr "Długość geograficzna"
+
 msgid "Generated report file"
 msgstr "Wygenerowany plik raportu"
 
@@ -2971,6 +2998,9 @@ msgstr "ma tabelę?"
 msgid "is chart creation blocked?"
 msgstr "tworzenie wykresu zablokowane?"
 
+msgid "Regions"
+msgstr "Regiony"
+
 msgid "acc: Resource"
 msgstr "zasób"
 
@@ -3092,12 +3122,6 @@ msgstr "Nieobsługiwany typ notyfikacji. Obsługiwane są: %(types)s"
 
 msgid "User schedule's readiness state cannot be changed!"
 msgstr "Nie można zmienić statusu gotowości harmonogramu!"
-
-msgid "Yes"
-msgstr "Tak"
-
-msgid "No"
-msgstr "Nie"
 
 #, python-brace-format
 msgid "{author} new comment "
@@ -3240,6 +3264,10 @@ msgstr "Opcja advanced musi przyjmować jedną z wartości: "
 msgid "Unsupported format. Supported are: %(formats)s"
 msgstr "Nieobsługiwany format. Obsługiwane są: %(formats)s."
 
+#, python-format
+msgid "Unsupported SPARQL endpoint value. Supported values are: %(providers)s"
+msgstr "Nieobsługiwana końcówka SPARQL. Obsługiwane są: %(providers)s"
+
 msgid "Invalid suggestion size"
 msgstr "Niepoprawny rozmiar podpowiedzi"
 
@@ -3331,12 +3359,6 @@ msgstr "Etykieta"
 
 msgid "Describes the presented data. Required item."
 msgstr "Opisuje prezentowane dane. Element wymagany."
-
-msgid "Longitude"
-msgstr "Długość geograficzna"
-
-msgid "Latitude"
-msgstr "Szerokość geograficzna"
 
 msgid "Place"
 msgstr "Miejscowość"
@@ -3662,18 +3684,6 @@ msgstr "Usuń"
 
 msgid "Conditions for reusing information in this set"
 msgstr "Warunki ponownego wykorzystywania informacji w tym zbiorze"
-
-msgid ""
-"Public information is made available for re-use without conditions. There "
-"are exceptions listed\n"
-"        below, but we encourage you not to use them. If you have a valid "
-"reason and you need to specify the terms, then\n"
-"        they can be:"
-msgstr ""
-"Informacje publiczne są udostępniane w celu ich ponownego wykorzystywania "
-"bez warunków. Istnieją od tej zasady wymienione poniżej wyjątki, jednak "
-"zachęcamy, aby ich nie stosować. Jeżeli masz istotne uzasadnienie i musisz "
-"określić warunki, to mogą być one następujące:"
 
 #, python-format
 msgid ""
@@ -4152,14 +4162,16 @@ msgid ""
 "We would like to remind you about the upcoming date of updating the data set "
 "<a href=\"%(url)s\" >%(dataset_title)s</a> on the Dane.gov.pl portal."
 msgstr ""
-"Przypominamy o zbliżającym się terminie aktualizacji zbioru danych "
-"<a href=\"%(url)s\" >%(dataset_title)s</a> na portalu Dane.gov.pl."
+"Przypominamy o zbliżającym się terminie aktualizacji zbioru danych <a href="
+"\"%(url)s\" >%(dataset_title)s</a> na portalu Dane.gov.pl."
 
 #, python-format
 msgid ""
+"We would like to remind you about the upcoming date of updating the data set "
+"%(dataset_title)s on the Dane.gov.pl portal."
+msgstr ""
 "Przypominamy o zbliżającym się terminie aktualizacji zbioru danych "
 "%(dataset_title)s na portalu Dane.gov.pl."
-msgstr ""
 
 msgid "Password reset"
 msgstr "Reset hasła"

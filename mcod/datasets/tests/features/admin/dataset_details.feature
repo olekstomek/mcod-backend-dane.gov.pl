@@ -70,11 +70,11 @@ Feature: Dataset details
     And admin's request logged admin user created with params {"id": 999}
     And tag created with params {"id": 999, "name": "Tag1", "language": "pl"}
     When admin's request method is POST
-    And admin's request posted dataset data is {"update_notification_recipient_email": "test@example.com", "notes": "more than 20 characters", "organization": [999], "tags": [999], "tags_pl": [999], "resources-2-TOTAL_FORMS": "1", "resources-2-0-switcher": "link", "resources-2-0-link": "http://test.pl", "resources-2-0-title": "123", "resources-2-0-description": "<p>more than 20 characters</p>", "resources-2-0-status": "published", "resources-2-0-id": "", "resources-2-0-dataset": ""}
+    And admin's request posted dataset data is {"update_notification_recipient_email": "test@example.com", "notes": "more than 20 characters", "organization": [999], "tags": [999], "tags_pl": [999], "resources-2-TOTAL_FORMS": "1", "resources-2-0-switcher": "link", "resources-2-0-link": "https://test.pl", "resources-2-0-title": "123", "resources-2-0-description": "<p>more than 20 characters</p>", "resources-2-0-status": "published", "resources-2-0-id": "", "resources-2-0-dataset": ""}
     And admin's page /datasets/dataset/add/ is requested
     Then admin's response status code is 200
     And admin's response page contains /change/">Test with dataset title</a>" został pomyślnie dodany.
-    And resources.Resource with title 123 contains data {"link": "http://test.pl", "created_by_id": 999, "modified_by_id": 999}
+    And resources.Resource with title 123 contains data {"link": "https://test.pl", "created_by_id": 999, "modified_by_id": 999}
 
   Scenario: Imported dataset is correctly displayed in trash for admin
     Given dataset for data {"id": 999, "is_removed": true} imported from ckan named Test Source with url http://example.com

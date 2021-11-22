@@ -61,14 +61,13 @@ class LogEntryApiAttrs(ObjectAttrs):
         model = 'histories.LogEntry'
 
     def get_difference(self, obj):
-        return json.loads(obj.difference)
+        try:
+            return json.loads(obj.difference)
+        except ValueError:
+            return {}
 
     def get_new_value(self, obj):
-        difference = obj.difference if isinstance(obj.difference, dict) else json.loads(obj.difference)
-        new_value = {}
-        for field_name, diffs in difference.items():
-            new_value[field_name] = diffs[1]
-        return new_value
+        return self.get_difference(obj)
 
 
 class LogEntryApiResponse(TopLevel):

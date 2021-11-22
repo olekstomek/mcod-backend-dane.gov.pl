@@ -2,7 +2,7 @@ import pytest
 import requests_mock
 
 from mcod.resources.link_validation import (
-    check_link_status, InvalidUrl, InvalidResponseCode,
+    check_link_status, InvalidUrl, InvalidResponseCode, InvalidSchema,
     InvalidContentType, UnsupportedContentType, download_file, MissingContentType,
     content_type_from_file_format, filename_from_url,
     _get_resource_type
@@ -83,7 +83,7 @@ class TestCheckLinkStatus:
 
 class TestDownloadFile:
 
-    url = 'http://mocker-test.com'
+    url = 'https://mocker-test.com'
 
     def test_throw_invalid_url(self):
         try:
@@ -91,6 +91,17 @@ class TestDownloadFile:
             raise pytest.fail('No exception occurred. Expected: InvalidUrl')
         except InvalidUrl as err:
             assert err.args[0] == 'Invalid url address: www.brokenlink'
+
+    @requests_mock.Mocker(kw='mock_request')
+    def test_throw_invalid_url_scheme(self, **kwargs):
+        mock_request = kwargs['mock_request']
+        headers = {'Content-Type': 'application/json'}
+        mock_request.get('http://mocker-test.com', headers=headers, status_code=504)
+        try:
+            download_file('http://mocker-test.com')
+            raise pytest.fail('No exception occurred. Expected: InvalidScheme')
+        except InvalidSchema as err:
+            assert err.args[0] == 'Invalid schema!'
 
     @requests_mock.Mocker(kw='mock_request')
     def test_throw_invalid_response_code(self, **kwargs):

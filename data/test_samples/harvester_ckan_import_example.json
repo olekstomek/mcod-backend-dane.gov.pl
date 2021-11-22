@@ -26,7 +26,7 @@
           "description": "##Sektory:",
           "name": "Ilo\u015bci odebranych odpad\u00f3w z podzia\u0142em na sektory",
           "format": "CSV",
-          "url": "http://mock-resource.com.pl/simple.csv",
+          "url": "https://mock-resource.com.pl/simple.csv",
           "datastore_active": true,
           "cache_last_updated": null,
           "package_id": "512cb875-6c54-482f-b11e-69d8c7989fc8",

@@ -92,3 +92,20 @@ Feature: Resource details API
     And api's response body field data/attributes/jsonld_file_size is not None
     And api's response body field data/attributes/jsonld_download_url is not None
     And api's response body field data/attributes/openness_score is 4
+
+  Scenario: Resource without regions has poland shown as region
+    Given resource with id 999
+    When api request method is GET
+    And api request path is /1.4/resources/999/
+    And send api request and fetch the response
+    Then api's response body field data/attributes/regions/0/name is Polska
+    And api's response body field data/attributes/regions/0/region_id is 85633723
+
+  Scenario: Resource's region is returned by api
+    Given dataset with id 998
+    And resource with id 999 dataset id 998 and single main region
+    When api request method is GET
+    And api request path is /1.4/resources/999/
+    And send api request and fetch the response
+    Then api's response body field data/attributes/regions/0/name is Warszawa
+    And api's response body field data/attributes/regions/0/region_id is 101752777

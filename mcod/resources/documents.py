@@ -3,15 +3,18 @@ from django_elasticsearch_dsl import fields
 from django_elasticsearch_dsl.registries import registry
 
 from mcod import settings as mcs
+from mcod.regions.documents import regions_field
 from mcod.harvester.serializers import DataSourceSerializer
 from mcod.lib.search.fields import TranslatedTextField
 from mcod.search.documents import ExtendedDocument
+from mcod.unleash import is_enabled
 
 
 Resource = apps.get_model('resources', 'Resource')
 Dataset = apps.get_model('datasets', 'Dataset')
 TaskResult = apps.get_model('django_celery_results', "TaskResult")
 SpecialSign = apps.get_model('special_signs', 'SpecialSign')
+Region = apps.get_model('regions', 'Region')
 
 
 @registry.register_document
@@ -87,6 +90,8 @@ class ResourceDocument(ExtendedDocument):
     computed_downloads_count = fields.IntegerField()
     computed_views_count = fields.IntegerField()
     has_high_value_data = fields.BooleanField()
+    if is_enabled('S37_resources_admin_region_data.be'):
+        all_regions = regions_field()
 
     class Index:
         name = mcs.ELASTICSEARCH_INDEX_NAMES['resources']

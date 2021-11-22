@@ -42,7 +42,6 @@ passlib==1.7.1
 markdown2==2.3.5
 marshmallow-jsonapi==0.24.0
 json-api-doc==0.7.0
-redis==2.10.6
 astroid==2.4.2
 openapi-spec-validator==0.2.9
 openapi-core==0.7.1
@@ -51,7 +50,7 @@ phonenumbers==8.10.5
 django==2.2.9
 django-constance[database]==2.3.1
 django-elasticsearch-dsl==6.4.2
-django-redis==4.10
+django-redis==5.0.0
 django-suit==0.2.26
 django-model-utils==3.1.2
 django-localflavor==2.1

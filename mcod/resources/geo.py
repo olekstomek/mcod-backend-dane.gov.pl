@@ -73,7 +73,7 @@ def is_gpx(path, content_type):
 
 
 def is_kml(path, content_type):
-    if content_type == 'xml' and path.endswith('.kml'):
+    if content_type == 'xml' and path.lower().endswith('.kml'):
         try:
             xsd_path = 'http://schemas.opengis.net/kml/2.2.0/ogckml22.xsd'
             schema = xmlschema.XMLSchema(xsd_path)
@@ -281,12 +281,12 @@ def extract_coords_from_uaddress(uaddress):
 
 
 def check_geodata(path, content_type, family):
-    if is_enabled('S29_geotiff_file_support.be') and is_geotiff(path):
+    if is_geotiff(path):
         content_type += ';application=geotiff'
     if is_enabled('S35_geojson.be') and content_type in ('json', 'plain') and is_geojson(path):
         family = 'application'
         content_type = 'geo+json'
-    if is_enabled('S35_gpx_validation.be') and is_gpx(path, content_type):
+    if is_gpx(path, content_type):
         family = 'application'
         content_type = 'gpx+xml'
     if is_enabled('S36_kml.be') and is_kml(path, content_type):

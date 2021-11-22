@@ -66,6 +66,7 @@ EMAIL_FILE_PATH = get_email_file_path()
 
 
 TEST_SAMPLES_PATH = str(ROOT_DIR('data/test_samples'))
+TEST_CERTS_PATH = str(ROOT_DIR('data/test_certs'))
 TEST_ROOT = str(ROOT_DIR('test'))
 
 MEDIA_ROOT = str(os.path.join(TEST_ROOT, 'media'))

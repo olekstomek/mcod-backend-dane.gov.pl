@@ -32,7 +32,6 @@ from mcod.suggestions.models import (
     ResourceCommentTrash,
 )
 from mcod.suggestions.tasks import create_accepted_dataset_suggestion_task
-from mcod.unleash import is_enabled
 
 
 class CommentAdminMixin(DynamicAdminListDisplayMixin, DecisionStatusLabelAdminMixin, ActionsMixin,
@@ -264,8 +263,7 @@ class AcceptedDatasetSubmissionAdmin(DynamicAdminListDisplayMixin, LangFieldsOnl
 
     @staticmethod
     def get_readonly_fields(request, obj=None):
-        if (is_enabled('S29_publication_finished.be') and obj and obj.status == 'publication_finished'
-                and not obj.tracker.has_changed('status')):
+        if obj and obj.status == 'publication_finished' and not obj.tracker.has_changed('status'):
             return [
                 'title',
                 'notes',
@@ -291,13 +289,12 @@ class AcceptedDatasetSubmissionAdmin(DynamicAdminListDisplayMixin, LangFieldsOnl
             'comment',
             'decision_date',
             'status',
+            'publication_finished_comment'
         ]
 
-        if is_enabled('S29_publication_finished.be'):
-            fields.append('publication_finished_comment')
-            if obj and obj.status == 'publication_finished' and not obj.tracker.has_changed('status'):
-                fields.insert(-1, 'publication_finished_at')
-                return fields
+        if obj and obj.status == 'publication_finished' and not obj.tracker.has_changed('status'):
+            fields.insert(-1, 'publication_finished_at')
+            return fields
 
         fields += [
             'is_published_for_all',

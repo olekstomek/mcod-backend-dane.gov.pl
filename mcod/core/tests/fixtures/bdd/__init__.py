@@ -21,5 +21,6 @@ from mcod.core.tests.fixtures.bdd.schedules import *  # noqa
 from mcod.core.tests.fixtures.bdd.guides import *  # noqa
 from mcod.core.tests.fixtures.bdd.newsletter import *  # noqa
 from mcod.core.tests.fixtures.bdd.reports import *  # noqa
+from mcod.core.tests.fixtures.bdd.regions import *  # noqa
 from mcod.core.tests.fixtures.bdd.special_signs import *  # noqa
 from mcod.core.tests.fixtures.bdd.suggestions import *  # noqa

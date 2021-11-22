@@ -124,7 +124,7 @@
             <xs:element name="resources" maxOccurs="1" minOccurs="1">
                 <xs:complexType>
                     <xs:annotation>
-                        <xs:documentation>Lista zasobów udostepnianych przez dany zbiór.</xs:documentation>
+                        <xs:documentation>Lista zasobów udostępnianych przez dany zbiór.</xs:documentation>
                     </xs:annotation>
                     <xs:sequence maxOccurs="unbounded" minOccurs="1">
                         <xs:element name="resource" type="resourceType"></xs:element>
@@ -134,7 +134,7 @@
             <xs:element name="tags" type="tagsType" maxOccurs="1" minOccurs="1" />
             <xs:element name="lastUpdateDate" maxOccurs="1" minOccurs="0" type="xs:dateTime">
                 <xs:annotation>
-                    <xs:documentation>Data i czas ostatniej aktualizacji zbioru daych. Domyślną wartością jest dzień importu danych.</xs:documentation>
+                    <xs:documentation>Data i czas ostatniej aktualizacji zbioru danych. Domyślną wartością jest dzień importu danych.</xs:documentation>
                 </xs:annotation>
             </xs:element>
 

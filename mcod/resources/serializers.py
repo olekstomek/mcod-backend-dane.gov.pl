@@ -24,6 +24,7 @@ from mcod.lib.extended_graph import ExtendedGraph
 from mcod.lib.serializers import TranslatedStr
 from mcod.core.api.rdf.schema_mixins import ProfilesMixin
 from mcod.resources.models import Resource
+from mcod.regions.serializers import RegionSchema
 from mcod.watchers.serializers import SubscriptionMixin
 from mcod.unleash import is_enabled
 
@@ -114,6 +115,8 @@ class ResourceApiAttrs(ObjectAttrs, HighlightObjectMixin):
         is_chart_creation_blocked = fields.Bool()
     if is_enabled('S35_high_value_data.be'):
         has_high_value_data = fields.Boolean()
+    if is_enabled('S37_resources_admin_region_data.be'):
+        all_regions = fields.Nested(RegionSchema, many=True, data_key='regions')
 
     class Meta:
         relationships_schema = ResourceApiRelationships

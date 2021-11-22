@@ -150,7 +150,7 @@ def analyze_file(path, extension=None):  # noqa: C901
                 extension = 'shp'
                 content_type = 'shapefile'
                 logger.debug(f"  recognized shapefile {shp_type}, {options}")
-            elif is_enabled('S29_geotiff_file_support.be') and has_geotiff_files(extracted):
+            elif has_geotiff_files(extracted):
                 family = 'image'
                 content_type = 'tiff;application=geotiff'
 

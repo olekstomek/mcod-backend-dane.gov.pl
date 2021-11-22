@@ -40,6 +40,10 @@ class InvalidResponseCode(Exception):
     pass
 
 
+class InvalidSchema(Exception):
+    pass
+
+
 class InvalidContentType(Exception):
     pass
 
@@ -107,6 +111,8 @@ def download_file(url, forced_file_type=False, allowed_content_types=None):  # n
     supported_content_types += ARCHIVE_CONTENT_TYPES
     response = session.get(url, stream=True, allow_redirects=True, verify=False, timeout=180)
 
+    if not response.url.startswith('https') and is_enabled('S37_validate_resource_link_scheme_harvester.be'):
+        raise InvalidSchema('Invalid schema!')
     if response.status_code != 200:
         raise InvalidResponseCode('Invalid response code: %s' % response.status_code)
     if 'Content-Type' not in response.headers:
@@ -123,7 +129,7 @@ def download_file(url, forced_file_type=False, allowed_content_types=None):  # n
 
     try:
         resource_type = _get_resource_type(response)
-        if is_enabled('S27_forced_file_type.be') and resource_type == 'api' and forced_file_type:
+        if resource_type == 'api' and forced_file_type:
             logger.debug('Forcing file type')
             resource_type = 'file'
     except Exception as exc:
@@ -175,6 +181,24 @@ def download_file(url, forced_file_type=False, allowed_content_types=None):  # n
     if format == 'json' and is_enabled('S35_jsonstat.be') and is_json_stat(content):
         options['format'] = 'jsonstat'
     return resource_type, options
+
+
+def check_link_scheme(link):
+    change_required = False
+    try:
+        response = requests.get(link, allow_redirects=True, timeout=30, stream=True)
+        returns_https = response.url.startswith('https')
+    except Exception:
+        returns_https = False
+    if not returns_https:
+        try:
+            response = requests.get(
+                link.replace('http://', 'https://'), allow_redirects=True, timeout=30, stream=True)
+            response.raise_for_status()
+            change_required = True
+        except Exception:
+            pass
+    return returns_https, change_required
 
 
 def check_link_status(url, resource_type):

@@ -130,6 +130,7 @@ INSTALLED_APPS = [
     'mcod.guides',
     'mcod.special_signs',
     'mcod.discourse',
+    'mcod.regions'
 ]
 
 MIDDLEWARE = [
@@ -244,6 +245,7 @@ HARVESTER_XML_VERSION_TO_SCHEMA_PATH = {
     '1.0-rc1': HARVESTER_DATA_DIR.path('xml_import_otwarte_dane_1_0_rc1.xsd').root,
     '1.1': HARVESTER_DATA_DIR.path('xml_import_otwarte_dane_1_1.xsd').root,
     '1.2': HARVESTER_DATA_DIR.path('xml_import_otwarte_dane_1_2.xsd').root,
+    '1.3': HARVESTER_DATA_DIR.path('xml_import_otwarte_dane_1_3.xsd').root,
 }
 
 HARVESTER_IMPORTERS = {
@@ -748,6 +750,7 @@ CELERY_TASK_QUEUES = {
     Queue('notifications'),
     Queue('search_history'),
     Queue('watchers'),
+    Queue('history'),
 }
 
 CELERY_TASK_ROUTES = {
@@ -768,7 +771,7 @@ CELERY_TASK_ROUTES = {
     'mcod.harvester.tasks.import_data_task': {'queue': 'harvester'},
     'mcod.harvester.tasks.validate_xml_url_task': {'queue': 'harvester'},
     'mcod.histories.tasks.index_history': {'queue': 'periodic'},
-    'mcod.histories.tasks.index_logentries': {'queue': 'periodic'},
+    'mcod.histories.tasks.save_history_as_log_entry': {'queue': 'history'},
     'mcod.datasets.tasks.send_dataset_comment': {'queue': 'notifications'},
     'mcod.newsletter.tasks.remove_inactive_subscription': {'queue': 'newsletter'},
     'mcod.newsletter.tasks.send_newsletter': {'queue': 'newsletter'},
@@ -1351,6 +1354,7 @@ WAGTAILADMIN_RICH_TEXT_EDITORS = {
 GEOCODER_URL = env('GEOCODER_URL', default='http://geocoder.mcod.local')
 GEOCODER_USER = env('GEOCODER_USER', default='geouser')
 GEOCODER_PASS = env('GEOCODER_PASS', default='1234')
+PLACEHOLDER_URL = env('PLACEHOLDER_URL', default='http://placeholder.mcod.local')
 
 MAX_TAG_LENGTH = 100
 
@@ -1510,7 +1514,8 @@ DISCOURSE_FORUM_ENABLED = env('DISCOURSE_FORUM_ENABLED', default=True)
 
 SPARQL_ENDPOINTS = {
     'kronika': {'endpoint': env('KRONIKA_SPARQL_URL', default='http://kronika.mcod.local'),
-                'headers': {'host': 'public-api.k8s'}}  # TODO: update with valid api url
+                'headers': {'host': 'public-api.k8s'},
+                'returnFormat': 'json'}
 }
 METABASE_URL = env('METABASE_URL', default='http://metabase.mcod.local')
 KIBANA_URL = env('KIBANA_URL', default='http://kibana.mcod.local')
@@ -1519,3 +1524,5 @@ ZABBIX_API = {
     'password': env('ZABBIX_API_PASSWORD', default=''),
     'url': env('ZABBIX_API_URL', default='http://zabbix.mcod.local')
 }
+
+DEFAULT_REGION_ID = 85633723

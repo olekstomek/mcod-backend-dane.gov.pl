@@ -35,15 +35,23 @@ Feature: Resource from link creation
   Scenario: Resource creation is ok
     Given dataset with id 999
     When admin's request method is POST
-    And admin's request posted resource data is {"title": "test", "description": "more than 20 characters", "switcher": "link", "file": "", "link": "http://test.to.resource.pl/1.xls", "dataset": 999, "data_date": "22.05.2020", "status": "published"}
+    And admin's request posted resource data is {"title": "test", "description": "more than 20 characters", "switcher": "link", "file": "", "link": "https://test.to.resource.pl/1.xls", "dataset": 999, "data_date": "22.05.2020", "status": "published"}
     And admin's page /resources/resource/add/ is requested
     Then admin's response status code is 200
     And admin's response page contains /change/">test</a>" został pomyślnie dodany.
 
+  Scenario: Resource creation fails if provided link starts with http:
+    Given dataset with id 999
+    When admin's request method is POST
+    And admin's request posted resource data is {"title": "test", "description": "more than 20 characters", "switcher": "link", "file": "", "link": "http://test.to.resource.pl/1.xls", "dataset": 999, "data_date": "22.05.2020", "status": "published"}
+    And admin's page /resources/resource/add/ is requested
+    Then admin's response status code is 200
+    And admin's response page contains Wymagany format protokołu to https://
+
   Scenario: Resource creation fails without title in form
     Given dataset with id 999
     When admin's request method is POST
-    And admin's request posted resource data is {"title": "", "description": "Opis zasobu", "switcher": "link", "file": "", "link": "http://test.to.resource.pl/1.xls", "dataset": 999, "data_date": "22.05.2020", "status": "published"}
+    And admin's request posted resource data is {"title": "", "description": "Opis zasobu", "switcher": "link", "file": "", "link": "https://test.to.resource.pl/1.xls", "dataset": 999, "data_date": "22.05.2020", "status": "published"}
     And admin's page /resources/resource/add/ is requested
     Then admin's response status code is 200
     And admin's response page contains required id="id_title"></textarea><span class="help-inline"><ul class="errorlist"><li>To pole jest obowiązkowe.</li></ul>
@@ -52,3 +60,12 @@ Feature: Resource from link creation
     Given draft remote file resource of api type with id 998
     Then set status published on resource with id 998
     And resource with id 998 attributes are equal {"file_tasks_last_status": "", "link_tasks_last_status": "SUCCESS", "type": "api"}
+
+  Scenario: Resource creation with regions is ok and regions are imported from api
+    Given dataset with id 999
+    When admin's request method is POST
+    And admin's request posted resource data is {"title": "test", "description": "more than 20 characters", "switcher": "link", "file": "", "link": "https://test.to.resource.pl/1.xls", "dataset": 999, "data_date": "22.05.2020", "status": "published", "regions": [101752777, 1309742673]}
+    And admin's page with mocked geo api /resources/resource/add/ is requested
+    Then admin's response status code is 200
+    And resource has assigned main and additional regions
+    And admin's response page contains /change/">test</a>" został pomyślnie dodany.

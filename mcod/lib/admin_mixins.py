@@ -168,23 +168,11 @@ class HistoryMixin(object):
 
     def get_history_action_list(self, table_name, obj):
         if self.is_history_other:
-            return self._get_history_other_action_list(table_name, obj)
+            return History.objects.get_history_other(table_name, obj.id, self.is_history_with_unknown_user_rows)
         qs = History.objects.filter(table_name=table_name, row_id=obj.id)
         if not self.is_history_with_unknown_user_rows:
             qs = qs.exclude(change_user_id=1)
         return qs.order_by('-change_timestamp')
-
-    def _get_history_other_action_list(self, table_name, obj):
-        sql = ('SELECT "id", "table_name", "row_id", "action", "old_value", "new_value", "change_user_id", '
-               '"change_timestamp", "message" '
-               'FROM "history_other" '
-               'WHERE (%(user)s"row_id" = %(id)s AND "table_name" = \'%(table_name)s\') '
-               'ORDER BY "change_timestamp" DESC') % {
-            'user': '' if self.is_history_with_unknown_user_rows else 'NOT ("change_user_id" = 1) AND ',
-            'id': obj.id,
-            'table_name': table_name,
-        }
-        return History.objects.raw(sql)
 
     def has_history_permission(self, request, obj):
         return self.has_change_permission(request, obj)

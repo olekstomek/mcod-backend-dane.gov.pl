@@ -64,6 +64,7 @@ def create_resource_for_link(
 scenarios(
     'features/file_validation.feature',
     'features/resource_creation.feature',
+    'features/resource_change.feature',
     'features/resource_openness.feature',
     'features/resource_details_admin.feature',
     'features/resources_list_admin.feature',

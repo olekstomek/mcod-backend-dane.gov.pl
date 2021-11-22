@@ -64,7 +64,7 @@ test:
     FUSEKI_DATASET_1: ds
     FUSEKI_URL: http://fuseki:3030
   services:
-    - name: redis:3.2
+    - name: redis:6.2
       alias: redis
     - name: rabbitmq:3.8-management
       alias: rabbitmq

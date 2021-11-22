@@ -1,5 +1,5 @@
 import io
-
+import hashlib
 import pytest
 from falcon import HTTP_OK, HTTP_BAD_REQUEST
 from pyshacl import validate as shacl_validate
@@ -123,6 +123,12 @@ def get_vcard_kind_dcat_ap_triples(vcard_kind_ref, config):
         (vcard_kind_ref, ns.VCARD.fn, Literal(config.DATASET__CONTACT_POINT__FN, datatype=XSD.string)),
         (vcard_kind_ref, ns.VCARD.hasEmail, URIRef(config.DATASET__CONTACT_POINT__HAS_EMAIL)),
     ]
+    return triples
+
+
+def get_spatial_triples(spatial_ref):
+    triples = [(spatial_ref, ns.RDF.type, ns.DCT.Location),
+               (spatial_ref, ns.DCT.identifier, URIRef('http://sws.geonames.org/798544/'))]
     return triples
 
 
@@ -280,6 +286,9 @@ def get_dataset_dcat_ap_triples(dataset, config):
 
     pl_language_ref = URIRef(f'{vocab["language"]}POL')
     en_language_ref = URIRef(f'{vocab["language"]}ENG')
+    geo_spatial_ref = BNode('DCTLocation' +
+                            hashlib.sha256('http://sws.geonames.org/798544/'.encode('utf-8')).hexdigest())
+    spatial_triples = get_spatial_triples(geo_spatial_ref)
     languages_metadata_triples = [
         (pl_language_ref, ns.RDF.type, ns.DCT.LinguisticSystem),
         (pl_language_ref, ns.SKOS.inScheme, URIRef(vocab["language"].rstrip('/'))),
@@ -317,6 +326,8 @@ def get_dataset_dcat_ap_triples(dataset, config):
         (dataset_ref, ns.OWL.versionInfo, Literal(str(dataset.version))),
         *accrual_periodicity_triples,
         (dataset_ref, ns.DCAT.contactPoint, vcard_kind_ref),
+        (dataset_ref, ns.DCT.spatial, geo_spatial_ref),
+        *spatial_triples,
         *categories_triples,
 
         # RESOURCE

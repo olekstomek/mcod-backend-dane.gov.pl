@@ -95,9 +95,7 @@ input#id_update_notification_frequency {
 }
 
 div.control-group.form-row.field-is_update_notification_enabled,
-div.control-group.form-row.field-update_notification_frequency,
-div.control-group.form-row.field-update_notification_recipient_email,
-div.control-group.form-row.field-update_notification_recipient_email span.help-inline
+div.control-group.form-row.field-update_notification_frequency
 {
-    display: none
+    display: none;
 }

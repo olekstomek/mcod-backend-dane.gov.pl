@@ -1,4 +1,5 @@
 from rdflib.namespace import Namespace, SKOS, RDF
+from rdflib.term import bind
 
 
 DCT = Namespace("http://purl.org/dc/terms/")
@@ -14,6 +15,9 @@ OWL = Namespace('http://www.w3.org/2002/07/owl#')
 SPDX = Namespace('http://spdx.org/rdf/terms#')
 HYDRA = Namespace('http://www.w3.org/ns/hydra/core#')
 
+bind(datatype='http://www.opengis.net/ont/geosparql#asWKT', pythontype=str)
+
+
 NAMESPACES = {
     'dct': DCT,
     'dcat': DCAT,
@@ -28,5 +32,5 @@ NAMESPACES = {
     'owl': OWL,
     'spdx': SPDX,
     'hydra': HYDRA,
-    'rdf': RDF
+    'rdf': RDF,
 }

@@ -10,7 +10,7 @@ from mcod.users.models import User
 def save_searchhistories_task():
     key_pattern = "search_history_user_*"
 
-    con = get_redis_connection("default")
+    con = get_redis_connection()
     keys = con.keys(key_pattern)
 
     for k in keys:

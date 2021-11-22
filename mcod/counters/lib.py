@@ -17,7 +17,7 @@ DOWNLOADS_COUNT_PREFIX = 'downloads_count'
 class Counter:
 
     def __init__(self):
-        self.con = get_redis_connection("default")
+        self.con = get_redis_connection()
         self.date_counter_views = ['resources']
         self.views_es_actions = {view: [] for view in settings.COUNTED_VIEWS}
 

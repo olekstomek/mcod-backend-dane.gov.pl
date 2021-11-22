@@ -83,8 +83,6 @@ class CSVScoreCalculator(OpennessScoreCalculator):
     default_score = 3
 
     def get_score(self, resource, format_):
-        if not is_enabled('S29_new_csv_openness_score.be'):
-            return super().get_score(resource, format_)
 
         score = self.default_score
         if resource.jsonld_file:
@@ -143,10 +141,8 @@ class JSONScoreCalculator(OpennessScoreCalculator):
             raise ScoreValidationError
 
     def get_score(self, resource, format_):
-        if is_enabled('S29_new_json_openness_score'):
-            context = self.get_context(resource)
-            return self.calculate_score(context)
-        return super().get_score(resource, format_)
+        context = self.get_context(resource)
+        return self.calculate_score(context)
 
 
 @register_score_calculator('xml')

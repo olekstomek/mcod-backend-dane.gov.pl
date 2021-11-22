@@ -56,10 +56,3 @@ if is_enabled('S29_send_dataset_update_reminders.be'):
         'options': {'queue': 'periodic'},
         'schedule': crontab(minute=0, hour=6)
     }
-
-if is_enabled('S30_new_history.be'):
-    app.conf.beat_schedule['index_logentries'] = {
-        'task': 'mcod.histories.tasks.index_logentries',
-        'options': {'queue': 'periodic'},
-        'schedule': 180,
-    }

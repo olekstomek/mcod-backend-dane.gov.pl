@@ -59,7 +59,7 @@ Feature: User Login
     And api request posted data is {"data": {"type": "user", "attributes": {"password": "123"}}}
     And send api request and fetch the response
     Then api's response status code is 422
-    And api's response body field errors/[0]/title is Field error
+    And api's response body field errors/[0]/title is Błąd pola
     And api's response body field errors/[0]/detail is Brak danych w wymaganym polu.
     And api's response body field errors/[0]/source/pointer is /data/attributes/email
 
@@ -70,7 +70,7 @@ Feature: User Login
     And api request posted data is {"data": {"type": "user", "attributes": {"email": "test@example.com"}}}
     And send api request and fetch the response
     Then api's response status code is 422
-    And api's response body field errors/[0]/title is Field error
+    And api's response body field errors/[0]/title is Błąd pola
     And api's response body field errors/[0]/detail is Brak danych w wymaganym polu.
     And api's response body field errors/[0]/source/pointer is /data/attributes/password
 
@@ -82,7 +82,7 @@ Feature: User Login
     Then api's response status code is 422
     And api's response body field errors/[0]/code is 422_unprocessable_entity
     And api's response body field errors/[0]/detail is Nieważny adres email.
-    And api's response body field errors/[0]/title is Field error
+    And api's response body field errors/[0]/title is Błąd pola
     And api's response body field errors/[0]/status is 422 Unprocessable Entity
     And api's response body field errors/[0]/source/pointer is /data/attributes/email
 
@@ -116,4 +116,4 @@ Feature: User Login
     And api's response body field errors/[0]/code is 422_unprocessable_entity
     And api's response body field errors/[0]/detail is Brak danych w wymaganym polu.
     And api's response body field errors/[0]/status is 422 Unprocessable Entity
-    And api's response body field errors/[0]/title is Field error
+    And api's response body field errors/[0]/title is Błąd pola

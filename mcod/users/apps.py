@@ -9,7 +9,9 @@ class UsersConfig(ExtendedAppMixin, AppConfig):
     verbose_name = _('Users')
 
     def ready(self):
-        from mcod.users.models import Meeting, MeetingTrash, User
+        from mcod.users.models import (
+            Meeting, MeetingTrash, User, UserFollowingApplication, UserFollowingArticle, UserFollowingDataset,
+        )
         self.connect_core_signals(Meeting)
         self.connect_core_signals(MeetingTrash)
-        self.connect_history(User, Meeting)
+        self.connect_history(Meeting, User, UserFollowingApplication, UserFollowingArticle, UserFollowingDataset)

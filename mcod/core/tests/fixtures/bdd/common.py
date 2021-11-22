@@ -2,16 +2,19 @@ import datetime
 import dpath
 import json
 import os
+import re
 import shutil
 import smtplib
 
 from django.apps import apps
 from django.test import Client
 from django.utils import translation
+import requests_mock
 
 from pytest_bdd import given, parsers, then, when
 
 from mcod import settings
+from mcod.core.api.rdf.namespaces import NAMESPACES
 from mcod.core.registries import factories_registry
 
 
@@ -674,6 +677,14 @@ def admin_response_page_contains(admin_context, contained_value):
     assert contained_value in content, f'Page content should contain phrase: \"{contained_value}\"'
 
 
+@then(parsers.parse('admin\'s response page form contains {contained_value} and {another_value}'))
+@then('admin\'s response page form contains <contained_value> and <another_value>')
+def admin_response_page_contains_values(admin_context, contained_value, another_value):
+    content = admin_context.response.content.decode()
+    assert contained_value in content and another_value in content,\
+        f'Page content should contain phrases: \"{contained_value}\" and \"{another_value}\"'
+
+
 @then(parsers.parse('admin\'s response page not contains {value}'))
 def admin_response_page_not_contains(admin_context, value):
     content = admin_context.response.content.decode()
@@ -693,6 +704,26 @@ def admin_page_is_requested(admin_context, page_url):
     admin_context.response = response
 
 
+@when(parsers.parse('admin\'s page with mocked geo api {page_url} is requested'))
+@when('admin\'s page with mocked geo api <page_url> is requested')
+def admin_page_with_mocked_geo_api_is_requested(admin_context, page_url, main_regions_response,
+                                                additional_regions_response):
+    client = Client()
+    main_reg_expr = re.compile(settings.PLACEHOLDER_URL + r'/parser/findbyid\?ids=\d{9,10}%2C\d{9,10}')
+    additional_reg_expr = re.compile(
+        settings.PLACEHOLDER_URL + r'/parser/findbyid\?ids=\d{8,10}%2C\d{8,10}%2C\d{8,10}%2C\d{8,10}')
+    client.force_login(admin_context.admin.user)
+    translation.activate('pl')
+    if admin_context.admin.method == 'POST':
+        with requests_mock.Mocker(real_http=True) as mock_request:
+            mock_request.get(main_reg_expr, json=main_regions_response)
+            mock_request.get(additional_reg_expr, json=additional_regions_response)
+            response = client.post(page_url, data=getattr(admin_context, 'obj', None), follow=True)
+    else:
+        response = client.get(page_url, follow=True)
+    admin_context.response = response
+
+
 @then(parsers.parse('api\'s response data has length {number:d}'))
 @then('api\'s response data has length <number>')
 def api_response_data_has_length(context, number):
@@ -706,13 +737,19 @@ def api_request_csrf_token(context, mocker):
     mocker.patch('mcod.users.models.send_mail', side_effect=smtplib.SMTPException)
 
 
-@then(parsers.parse('sparql store contains subject {subject}'))
-@then('sparql store contains subject <subject>')
-def sparql_store_contains_subject(sparql_registry, subject):
-    store_query = f'SELECT ?s WHERE {{ GRAPH {sparql_registry.graph_name} {{ ?s ?p ?o . FILTER (?s = {subject}) }} }}'
-    response = sparql_registry.sparql_store.query(store_query)
-    store_subjects = set([resp[0].n3() for resp in response])
-    assert subject in store_subjects
+@then(parsers.parse('sparql store contains {item_type} {item_value}'))
+@then('sparql store contains <item_type> <item_value>')
+def sparql_store_contains_subject(sparql_registry, item_type, item_value):
+    items = {
+        'subject': 's',
+        'predicate': 'p',
+        'object': 'o'
+    }
+    store_query = f'SELECT ?{items[item_type]} WHERE {{ GRAPH {sparql_registry.graph_name}' \
+                  f' {{ ?s ?p ?o . FILTER (?{items[item_type]} = {item_value}) }} }}'
+    response = sparql_registry.sparql_store.query(store_query, initNs=NAMESPACES)
+    store_values = set([resp[0].n3() for resp in response])
+    assert item_value in store_values
 
 
 @then(parsers.parse('sparql store does not contain subject {subject}'))
@@ -732,7 +769,7 @@ def sparql_store_contains_triple(sparql_registry, attributes):
     predicate = parsed_attrs.get('predicate') or '?p'
     object = parsed_attrs.get('object') or '?o'
     store_query = f'ASK WHERE {{ GRAPH {sparql_registry.graph_name} {{ {subject} {predicate} {object} }} }}'
-    response = sparql_registry.sparql_store.query(store_query)
+    response = sparql_registry.sparql_store.query(store_query, initNs=NAMESPACES)
     assert response.askAnswer
 
 

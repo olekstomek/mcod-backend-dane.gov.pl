@@ -97,11 +97,9 @@ class TypeFilter(admin.SimpleListFilter):
     qs_param = '_type'
 
     def lookups(self, request, model_admin):
-        additional_lookups = RESOURCE_FORCED_TYPE if is_enabled('S27_forced_file_type.be') else (
-            RESOURCE_FORCED_TYPE[0],)
         return (
             *RESOURCE_TYPE,
-            *additional_lookups,
+            *RESOURCE_FORCED_TYPE,
         )
 
     def queryset(self, request, queryset):
@@ -384,10 +382,11 @@ class ResourceAdmin(DynamicAdminListDisplayMixin, AddChangeMixin, StatusLabelAdm
         if obj:
             jsonld_file = ['jsonld_file'] if obj.jsonld_file and is_enabled('S27_csv_to_jsonld.be') else []
             special_signs = ['special_signs'] if not obj.is_imported else []
+            regions = ['regions'] if is_enabled('S37_resources_admin_region_data.be') and not obj.is_imported else []
             extra_fields = []
             if obj.type == RESOURCE_TYPE_WEBSITE or obj.forced_api_type:
                 extra_fields = ['forced_api_type']
-            elif is_enabled('S27_forced_file_type.be') and not obj.forced_api_type and (
+            elif not obj.forced_api_type and (
                     obj.type == RESOURCE_TYPE_API or obj.forced_file_type or
                     (obj.type == RESOURCE_TYPE_FILE and obj.tracker.has_changed('forced_file_type'))):
                 extra_fields = ['forced_file_type']
@@ -404,6 +403,7 @@ class ResourceAdmin(DynamicAdminListDisplayMixin, AddChangeMixin, StatusLabelAdm
                 'description',
                 'formats',
                 'dataset',
+                *regions,
                 'data_date',
                 'status',
                 *special_signs,
@@ -433,7 +433,10 @@ class ResourceAdmin(DynamicAdminListDisplayMixin, AddChangeMixin, StatusLabelAdm
                 self.maps_and_plots_fieldset(obj)
             )
         else:
-            fieldsets = tuple(self.add_fieldsets)
+            fieldsets = self.add_fieldsets
+            fieldsets[2][1]['fields'] = ('dataset', 'regions') if is_enabled(
+                'S37_resources_admin_region_data.be') else ('dataset', )
+            fieldsets = tuple(fieldsets)
 
         fieldsets += tuple(self.get_translations_fieldsets())
 
@@ -599,7 +602,8 @@ class ResourceAdmin(DynamicAdminListDisplayMixin, AddChangeMixin, StatusLabelAdm
             obj.save()
             messages.add_message(request, messages.SUCCESS, _('Map definition saved'))
             self.revalidate(request, obj.id)
-
+        elif is_enabled('S39_resource_revalidate.be') and '_continue' in request.POST:
+            self.revalidate(request, obj.id)
         return super().response_change(request, obj)
 
     def _changeform_view(self, request, object_id, form_url, extra_context):

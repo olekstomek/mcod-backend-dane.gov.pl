@@ -1,3 +1,4 @@
+import hashlib
 from functools import partial
 
 from constance import config
@@ -8,6 +9,7 @@ import mcod.core.api.rdf.namespaces as ns
 from mcod import settings
 from mcod.core.api.rdf.profiles.common import RDFClass, RDFNestedField, CATALOG_URL
 from mcod.lib.rdf.rdf_field import RDFField
+from mcod.unleash import is_enabled
 
 VOCABULARIES = {
     'theme': 'http://publications.europa.eu/resource/authority/data-theme/',
@@ -45,6 +47,12 @@ class DCTLinguisticSystem(RDFClass):
 class DCTLocation(RDFClass):
     rdf_type = RDFField(predicate=RDF.type, object=ns.DCT.Location)
     scheme = RDFField(predicate=ns.SKOS.inScheme, object_type=URIRef)
+
+
+class GeonamesDCTLocation(RDFClass):
+    rdf_type = RDFField(predicate=RDF.type, object=ns.DCT.Location)
+    geonames_url = RDFField(predicate=ns.DCT.identifier, object_type=URIRef, required=False)
+    centroid = RDFField(predicate=ns.DCAT.centroid, object_type=partial(Literal, datatype=ns.GSP.asWKT), required=False)
 
 
 class DCTFrequency(RDFClass):
@@ -151,6 +159,8 @@ class DCATDataset(RDFClass):
     update_frequency = RDFNestedField('DCTFrequency', predicate=ns.DCT.accrualPeriodicity)
     language_pl = RDFNestedField('DCTLinguisticSystem', predicate=ns.DCT.language)
     language_en = RDFNestedField('DCTLinguisticSystem', predicate=ns.DCT.language)
+    if is_enabled('S38_dcat_spatial_data.be'):
+        spatial = RDFNestedField('GeonamesDCTLocation', predicate=ns.DCT.spatial, many=True)
 
     identifier = RDFField(predicate=ns.DCT.identifier)
     title_pl = RDFField(predicate=ns.DCT.title, object_type=partial(Literal, lang='pl'))
@@ -217,6 +227,16 @@ class DCATDataset(RDFClass):
         if config.DATASET__CONTACT_POINT__HAS_EMAIL:
             result['email'] = config.DATASET__CONTACT_POINT__HAS_EMAIL
         return result
+
+    def get_spatial_data(self, data):
+        spatial_details = [{'centroid': d['centroid']}
+                           if d['geonames_url'] is None else {'geonames_url': d['geonames_url']}
+                           for d in data['spatial']]
+        return spatial_details
+
+    def get_spatial_subject(self, data):
+        data_str = data.get('geonames_url', data.get('centroid', ''))
+        return BNode('DCTLocation' + hashlib.sha256(data_str.encode('utf-8')).hexdigest())
 
 
 class DCATCatalog(RDFClass):

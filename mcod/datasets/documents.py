@@ -3,10 +3,12 @@ from django_elasticsearch_dsl import fields
 from django_elasticsearch_dsl.registries import registry
 
 from mcod import settings as mcs
+from mcod.regions.documents import regions_field
 from mcod.lib.search.fields import TranslatedTextField, TranslatedKeywordField
 from mcod.users.models import UserFollowingDataset
 from mcod.harvester.serializers import DataSourceSerializer
 from mcod.search.documents import ExtendedDocument
+from mcod.unleash import is_enabled
 
 Dataset = apps.get_model('datasets', 'Dataset')
 Organization = apps.get_model('organizations', 'Organization')
@@ -123,6 +125,8 @@ class DatasetDocument(ExtendedDocument):
     computed_downloads_count = fields.IntegerField()
     computed_views_count = fields.IntegerField()
     has_high_value_data = fields.BooleanField()
+    if is_enabled('S37_resources_admin_region_data.be'):
+        regions = regions_field()
 
     class Index:
         name = mcs.ELASTICSEARCH_INDEX_NAMES['datasets']

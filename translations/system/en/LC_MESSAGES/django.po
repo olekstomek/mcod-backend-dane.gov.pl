@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-06-21 13:25+0200\n"
+"POT-Creation-Date: 2021-10-28 10:54+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -526,16 +526,25 @@ msgstr ""
 msgid "English"
 msgstr ""
 
-#, python-format
-msgid "Select %s"
+msgid "table name"
 msgstr ""
 
-#, python-format
-msgid "Select %s to change"
+msgid "action"
 msgstr ""
 
-#, python-format
-msgid "Select %s to view"
+msgid "user"
+msgstr ""
+
+msgid "Differences"
+msgstr ""
+
+msgid "Change timestamp"
+msgstr ""
+
+msgid "row id"
+msgstr ""
+
+msgid "message"
 msgstr ""
 
 msgid "Missing data for required field."
@@ -667,9 +676,6 @@ msgid "Invalid page size"
 msgstr ""
 
 msgid "Published"
-msgstr ""
-
-msgid "Publication finished"
 msgstr ""
 
 msgid "{} - trash"
@@ -841,6 +847,9 @@ msgstr ""
 msgid "Controlled Vocabularies"
 msgstr ""
 
+msgid "Has high value data"
+msgstr ""
+
 msgid "modified"
 msgstr ""
 
@@ -849,6 +858,12 @@ msgstr ""
 
 #, python-format
 msgid "The value must be between %(min)s and %(max)s"
+msgstr ""
+
+msgid "No"
+msgstr ""
+
+msgid "Yes"
 msgstr ""
 
 msgid "id"
@@ -1686,6 +1701,9 @@ msgstr ""
 msgid "data source imports"
 msgstr ""
 
+msgid "Required scheme is https://"
+msgstr ""
+
 #, python-format
 msgid "Unsupported format: %(format)s."
 msgstr ""
@@ -1761,15 +1779,6 @@ msgstr ""
 msgid "Histories"
 msgstr ""
 
-msgid "table name"
-msgstr ""
-
-msgid "row id"
-msgstr ""
-
-msgid "action"
-msgstr ""
-
 msgid "old value"
 msgstr ""
 
@@ -1779,16 +1788,7 @@ msgstr ""
 msgid "User"
 msgstr ""
 
-msgid "Change timestamp"
-msgstr ""
-
-msgid "message"
-msgstr ""
-
 msgid "History"
-msgstr ""
-
-msgid "Differences"
 msgstr ""
 
 msgid "acc: History"
@@ -1831,6 +1831,18 @@ msgid "Report"
 msgstr ""
 
 msgid "Reports"
+msgstr ""
+
+#, python-format
+msgid "Select %s"
+msgstr ""
+
+#, python-format
+msgid "Select %s to change"
+msgstr ""
+
+#, python-format
+msgid "Select %s to view"
 msgstr ""
 
 msgid "Decision taken"
@@ -2119,9 +2131,6 @@ msgid "polish"
 msgstr ""
 
 msgid "english"
-msgstr ""
-
-msgid "user"
 msgstr ""
 
 msgid "language"
@@ -2821,6 +2830,9 @@ msgstr ""
 msgid "format"
 msgstr ""
 
+msgid "formats after conversion"
+msgstr ""
+
 msgid "openness_score"
 msgstr ""
 
@@ -2912,12 +2924,6 @@ msgid "Unsupported notification type. Supported are: %(types)s"
 msgstr ""
 
 msgid "User schedule's readiness state cannot be changed!"
-msgstr ""
-
-msgid "Yes"
-msgstr ""
-
-msgid "No"
 msgstr ""
 
 #, python-brace-format
@@ -3061,6 +3067,10 @@ msgstr ""
 msgid "Unsupported format. Supported are: %(formats)s"
 msgstr ""
 
+#, python-format
+msgid "Unsupported SPARQL endpoint value. Supported values are: %(providers)s"
+msgstr ""
+
 msgid "Invalid suggestion size"
 msgstr ""
 
@@ -3201,6 +3211,9 @@ msgstr ""
 msgid ""
 "If you wish to publish accepted dataset submission for all user, this "
 "submission must have \"published\" status"
+msgstr ""
+
+msgid "Publication finished"
 msgstr ""
 
 msgid "Title, type, domain od propossed data"
@@ -3463,14 +3476,6 @@ msgid "Remove"
 msgstr ""
 
 msgid "Conditions for reusing information in this set"
-msgstr ""
-
-msgid ""
-"Public information is made available for re-use without conditions. There "
-"are exceptions listed\n"
-"        below, but we encourage you not to use them. If you have a valid "
-"reason and you need to specify the terms, then\n"
-"        they can be:"
 msgstr ""
 
 #, python-format
@@ -3929,6 +3934,21 @@ msgstr ""
 msgid ""
 "In order to complete the registration process, click (or copy and paste in "
 "the address field of the web browser) into the link below."
+msgstr ""
+
+msgid "Reminder about the Data set update"
+msgstr ""
+
+#, python-format
+msgid ""
+"We would like to remind you about the upcoming date of updating the data set "
+"<a href=\"%(url)s\" >%(dataset_title)s</a> on the Dane.gov.pl portal."
+msgstr ""
+
+#, python-format
+msgid ""
+"We would like to remind you about the upcoming date of updating the data set "
+"%(dataset_title)s on the Dane.gov.pl portal."
 msgstr ""
 
 msgid "Password reset"

@@ -29,6 +29,7 @@ from mcod.core.db.models import ExtendedModel, update_watcher, TrashModelBase
 from mcod.counters.models import ResourceDownloadCounter, ResourceViewCounter
 from mcod.datasets.signals import remove_related_resources
 from mcod.core.storages import get_storage
+from mcod.regions.models import Region
 from mcod.unleash import is_enabled
 
 
@@ -432,6 +433,11 @@ class Dataset(ExtendedModel):
     @property
     def dataset_update_notification_recipient(self):
         return self.update_notification_recipient_email or self.modified_by.email
+
+    @property
+    def regions(self):
+        resources_ids = list(self.resources.values_list('pk', flat=True))
+        return Region.objects.filter(resource__pk__in=resources_ids).distinct()
 
     i18n = TranslationField(fields=("title", "notes", "image_alt"))
     objects = DatasetManager()

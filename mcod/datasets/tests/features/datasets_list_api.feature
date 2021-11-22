@@ -172,3 +172,20 @@ Feature: Datasets list API
       | /datasets?created[lt]=2019-01-01                        | 1      |
       | /datasets?created[lt]=2018-01-01                        | 0      |
       | /datasets?created[gt]=2019-01-01&created[lt]=2020-01-01 | 1      |
+
+  Scenario: Related resources regions are assigned to dataset
+    Given dataset with id 998
+    And resource with id 999 dataset id 998 and single main region
+    When api request method is GET
+    And api request path is /1.4/datasets/?id=998
+    And send api request and fetch the response
+    Then api's response body field data/[0]/attributes/regions/[0]/name is Warszawa
+    And api's response body field data/[0]/attributes/regions/[0]/region_id is 101752777
+
+  Scenario: Dataset without regions has poland as assigned region
+    Given dataset with id 999 and 3 resources
+    When api request method is GET
+    And api request path is /1.4/datasets/?id=999
+    And send api request and fetch the response
+    Then api's response body field data/[0]/attributes/regions/[0]/name is Polska
+    And api's response body field data/[0]/attributes/regions/[0]/region_id is 85633723

@@ -2,8 +2,6 @@ import logging
 
 import netCDF4
 
-from mcod.unleash import is_enabled
-
 logger = logging.getLogger('mcod')
 
 
@@ -17,9 +15,8 @@ def is_valid_netcdf(path):
 
 
 def check_meteo_data(content_type, path, file_info):
-    if is_enabled('S36_meteo_data_formats.be'):
-        if content_type in ['x-hdf', 'octet-stream'] and is_valid_netcdf(path):
-            content_type = 'netcdf'
-        elif content_type == 'octet-stream' and 'Gridded binary' in file_info:
-            content_type = 'x-grib'
+    if content_type in ['x-hdf', 'octet-stream'] and is_valid_netcdf(path):
+        content_type = 'netcdf'
+    elif content_type == 'octet-stream' and 'Gridded binary' in file_info:
+        content_type = 'x-grib'
     return content_type

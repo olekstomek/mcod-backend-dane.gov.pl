@@ -20,9 +20,12 @@ class ExtendedAppMixin:
 
     def connect_history(self, *senders):
         from auditlog.registry import auditlog
+        from mcod.core.registries import history_registry
         from mcod.unleash import is_enabled
-        if is_enabled('S30_new_history.be'):
-            for sender in senders:
+        new_history = is_enabled('S30_new_history.be')
+        for sender in senders:
+            history_registry.register(sender)
+            if new_history:
                 auditlog.register(sender)
 
 

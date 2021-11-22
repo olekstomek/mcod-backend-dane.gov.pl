@@ -10,7 +10,10 @@ from mcod.articles.models import ArticleCategory
 from mcod.cms.models import FormPageSubmission
 from mcod.cms.models.formpage import Formset
 from mcod.core.api.search.tasks import update_with_related_task
+from mcod.core.registries import history_registry
 from mcod.datasets.models import Dataset
+from mcod.histories.models import History
+from mcod.histories.tasks import save_history_as_log_entry
 from mcod.reports.models import Report
 from mcod.resources.models import Resource
 from mcod.resources.tasks import (
@@ -71,7 +74,6 @@ class Command(BaseCommand):
             dest='action',
             const='resourcedatadate',
             help='Run fix that set data_date for resources with files'
-
         )
 
         parser.add_argument(
@@ -80,7 +82,14 @@ class Command(BaseCommand):
             dest='action',
             const='migratefollowings',
             help='Copy following to subscriptions'
+        )
 
+        parser.add_argument(
+            '--migratehistory',
+            action='store_const',
+            dest='action',
+            const='migratehistory',
+            help='Migrate history from old to new'
         )
 
         parser.add_argument(
@@ -169,6 +178,17 @@ class Command(BaseCommand):
             dest='action',
             const='resources-openness-score',
             help='Recompute openness score for resources with fifth degree',
+        )
+
+        parser.add_argument('-y, --yes', action='store_true', default=None,
+                            help="Continue without asking confirmation.", dest='yes')
+        parser.add_argument('--history-other', action='store_true', default=False,
+                            help="Migrate history from history_other table.", dest='history_other')
+        parser.add_argument(
+            '--table-name',
+            dest='table_name',
+            default=None,
+            help='Migrates history only for specified table_name.'
         )
 
     def fix_resources(self):
@@ -444,6 +464,29 @@ class Command(BaseCommand):
                 name='dataset-%i' % following.dataset.id
             )
 
+    def fix_history(self, **options):
+        answer = options['yes']
+        table_name = options['table_name']
+        is_other_history = options['history_other']
+        table_names = history_registry.get_table_names()
+        if table_name and table_name not in table_names:
+            raise CommandError(
+                'Invalid table-name param. Should be one of: {}'.format(', '.join(table_names)))
+
+        objs, objs_count = History.objects.to_migrate(table_name, is_other_history)
+
+        if answer is None:
+            self.stdout.write('This action will migrate {} history items.'.format(objs_count))
+            response = input('Are you sure you want to continue? [y/N]: ').lower().strip()
+            answer = response == 'y'
+
+        if answer:
+            for id_ in objs:
+                save_history_as_log_entry.s(id_, is_other_history).apply_async()
+            self.stdout.write('Migrate history delegated to {} Celery tasks.'.format(objs_count))
+        else:
+            self.stdout.write('Aborted.')
+
     def fix_resources_links(self):
         self.stdout.write('Fixing of resources broken links - with . (dot) suffix.')
         counter = 0
@@ -601,9 +644,9 @@ class Command(BaseCommand):
             raise CommandError(
                 "No action specified. Must be one of"
                 " '--all','--searchhistories', '--resources', '--datasets', '--articlecategories', "
-                "'--resourcedatadate', '--resourcesformats', '--migratefollowings', '--setverified', "
-                "'--resources-links', '--resources-validation-results', '--resources-has-table-has-map', "
-                "'--submissions-to-new-format', '--submissions-to-old-format', "
+                "'--resourcedatadate', '--resourcesformats', '--migratefollowings', '--migratehistory', "
+                "'--setverified', '--resources-links', '--resources-validation-results', "
+                "'--resources-has-table-has-map', '--submissions-to-new-format', '--submissions-to-old-format', "
                 "'--submissions-formdata-save', '--submissions-formdata-load', '--reports-id-column',"
                 " '--resources-openness-score'."
             )
@@ -614,6 +657,7 @@ class Command(BaseCommand):
             'datasets': self.fix_datasets,
             'resources-links': self.fix_resources_links,
             'migratefollowings': self.fix_followings,
+            'migratehistory': self.fix_history,
             'resourcedatadate': self.fix_resources_data_date,
             'resources': self.fix_resources,
             'resourcesformats': self.fix_resources_formats,
@@ -633,5 +677,7 @@ class Command(BaseCommand):
             self.fix_datasets()
             self.fix_resources()
             self.fix_article_categories()
+        elif action == 'migratehistory':
+            self.fix_history(**options)
         elif action in actions.keys():
             actions[action]()

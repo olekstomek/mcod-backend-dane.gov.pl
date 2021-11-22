@@ -163,7 +163,7 @@ def create_link_protocol_report_task(resources):
     file_path = os.path.join(reports_path, file_name)
     file_url_path = f'{settings.REPORTS_MEDIA}/{app_name}/{file_name}'
     with open(file_path, 'w') as f:
-        w = csv.DictWriter(f, ['Id', 'Nazwa', 'Https', 'Instytucja'])
+        w = csv.DictWriter(f, ['Id', 'Nazwa', 'Https', 'Instytucja', 'Typ'])
         w.writeheader()
         w.writerows(resources)
     return json.dumps({

@@ -2,6 +2,7 @@ import logging
 import time
 from collections import defaultdict
 
+from auditlog.models import LogEntryManager as BaseLogEntryManager
 from django.core.paginator import Paginator
 from django.db.models import Manager
 
@@ -56,3 +57,58 @@ class HistoryManager(Manager):
             end = time.perf_counter()
             logger.debug('page_nr {}, time {}'.format(page_nr, end - start))
         return d
+
+    def get_history_other(self, table_name=None, row_id=None, with_unknown_user_rows=False, history_id=None):
+        where_items = []
+        if not with_unknown_user_rows:
+            where_items.append('NOT ("change_user_id" = 1)')
+        if row_id:
+            where_items.append(f'"row_id" = {row_id}')
+        if table_name:
+            where_items.append(f'"table_name" = \'{table_name}\'')
+        if history_id:
+            where_items.append(f'"id" = {history_id}')
+        sql = ('SELECT "id", "table_name", "row_id", "action", "old_value", "new_value", "change_user_id", '
+               '"change_timestamp", "message" '
+               'FROM "history_other" %(where)s ORDER BY "change_timestamp" DESC') % {
+            'where': 'WHERE {}'.format(' AND '.join(where_items)) if where_items else '',
+        }
+        return self.raw(sql)
+
+    def get_item(self, history_id, is_history_other):
+        if is_history_other:
+            objs = self.get_history_other(history_id=history_id)
+            obj = objs[0] if objs else None
+        else:
+            obj = self.get_queryset().filter(id=history_id).first()
+        return obj
+
+    def to_migrate(self, table_name, is_other_history=False):
+        if is_other_history:
+            objs = [x.id for x in self.get_history_other(table_name)]
+            return objs, len(objs)
+        query = {'table_name': table_name} if table_name else {}
+        objs = self.get_queryset().filter(**query).order_by('id').values_list('id', flat=True)
+        return objs, objs.count()
+
+
+class LogEntryManager(BaseLogEntryManager):
+
+    def for_admin_panel(self):
+        models = [
+            'application',
+            'article',
+            'article_category',
+            'category',
+            'dataset',
+            'organization',
+            'reports_report',
+            'resource',
+            'tag',
+            'user',
+            'user_following_application',
+            'user_following_article',
+            'user_following_dataset',
+            'user_organization',
+        ]
+        return self.get_queryset().filter(content_type__model__in=models)

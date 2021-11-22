@@ -6,7 +6,7 @@ from mcod.users.models import User
 
 class SearchHistoryTool:
     def __init__(self):
-        self.con = get_redis_connection("default")
+        self.con = get_redis_connection()
 
     def save_histories(self):
         key_pattern = "search_history_user_*"

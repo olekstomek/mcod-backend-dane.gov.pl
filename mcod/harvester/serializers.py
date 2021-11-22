@@ -11,6 +11,7 @@ from mcod.core.api.rdf.profiles.dcat_ap import DCATDatasetDeserializer
 from mcod.datasets.models import Dataset
 from mcod.resources.models import Resource, supported_formats_choices
 from mcod.resources.archives import ARCHIVE_EXTENSIONS
+from mcod.unleash import is_enabled
 
 
 SUPPORTED_RESOURCE_FORMATS = [i[0] for i in supported_formats_choices()]
@@ -67,7 +68,18 @@ class RelationshipSubjectSchema(Schema):
     id = Str()
 
 
-class ResourceSchema(Schema):
+class ResourceMixin:
+
+    @validates_schema
+    def validate_link(self, data, **kwargs):
+        value = data.get('link')
+        if value and "://" in value and is_enabled('S37_validate_resource_link_scheme_harvester.be'):
+            scheme = value.split("://")[0].lower()
+            if scheme != 'https':
+                raise ValidationError(_('Required scheme is https://'), field_name='link')
+
+
+class ResourceSchema(ResourceMixin, Schema):
     mimetype = Str(allow_none=True)
     cache_last_updated = Str(allow_none=True)
     cache_url = Str(allow_none=True)
@@ -188,7 +200,7 @@ class DatasetSchema(Schema):
         unknown = EXCLUDE
 
 
-class XMLResourceSchema(Schema):
+class XMLResourceSchema(ResourceMixin, Schema):
     ext_ident = Str(data_key='extIdent', validate=validate.Length(max=36), required=True)
     int_ident = Int(data_key='intIdent')
     status = Str(data_key='@status', validate=validate.OneOf(choices=['draft', 'published']))
@@ -327,7 +339,7 @@ class XMLDatasetSchema(Schema):
             )
 
 
-class ResourceDCATSchema(Schema):
+class ResourceDCATSchema(ResourceMixin, Schema):
     ext_ident = Str(validate=validate.Length(max=36))
     title_pl = Str()
     title_en = Str(allow_none=True)

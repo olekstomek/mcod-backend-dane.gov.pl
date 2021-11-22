@@ -106,3 +106,14 @@ Feature: Dataset RDF API
     And api's response status code is 200
     And api's json-ld response body with rdf type dcat:Catalog has field dct:language with attribute @id that equals http://publications.europa.eu/resource/authority/language/POL
     And api's json-ld response body with rdf type dcat:Catalog has field dct:language with attribute @id that equals http://publications.europa.eu/resource/authority/language/ENG
+
+  Scenario: Test that RDF api related distribution default region with geonames id is assigned to dataset
+    Given dataset with id 999
+    And resource created with params {"id": 999, "slug": "test-rdf", "dataset_id": 999}
+    When api request method is GET
+    # the next line is added to disable json api validation of response during test.
+    And api request header x-api-version is 1.0
+    And api request path is /catalog/dataset/999
+    Then send api request and fetch the response
+    And api's response status code is 200
+    And api's json-ld response body with rdf type dct:Location has field dct:identifier with attribute @id that equals http://sws.geonames.org/798544/

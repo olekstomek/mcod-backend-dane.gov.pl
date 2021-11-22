@@ -1,7 +1,6 @@
 from django import forms
 from django.utils.translation import ugettext_lazy as _
 
-from mcod.core.db.models import STATUS_CHOICES
 from mcod.suggestions.models import (
     AcceptedDatasetSubmission,
     DatasetComment,
@@ -9,7 +8,6 @@ from mcod.suggestions.models import (
     ResourceComment,
     ACCEPTED_DATASET_SUBMISSION_STATUS_CHOICES_NO_PUBLISHED,
 )
-from mcod.unleash import is_enabled
 
 
 class DatasetCommentForm(forms.ModelForm):
@@ -79,12 +77,9 @@ class AcceptedDatasetSubmissionForm(DatasetSubmissionForm):
             if data is None or data.get('status') == AcceptedDatasetSubmission.STATUS.publication_finished:
                 self.fields['publication_finished_comment'].required = True
 
-        if is_enabled('S29_publication_finished.be') and 'status' in self.fields:
-            if instance and instance.status == 'publication_finished':
-                if not instance.tracker.has_changed('status'):
-                    self.fields['status'].choices = ACCEPTED_DATASET_SUBMISSION_STATUS_CHOICES_NO_PUBLISHED
-        elif 'status' in self.fields:
-            self.fields['status'].choices = STATUS_CHOICES
+        if 'status' in self.fields and instance and instance.status == 'publication_finished' and\
+                not instance.tracker.has_changed('status'):
+            self.fields['status'].choices = ACCEPTED_DATASET_SUBMISSION_STATUS_CHOICES_NO_PUBLISHED
 
     def clean(self):
         cleaned_data = super().clean()

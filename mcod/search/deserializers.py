@@ -267,9 +267,11 @@ class SparqlRequestAttrs(ObjectAttrs):
     page = core_fields.Int()
     per_page = core_fields.Int()
     external_sparql_endpoint = core_fields.Str(
-        validate=validate.OneOf(choices=SPARQL_ENDPOINTS,
-                                error=_('Unsupported SPARQL endpoint value. Supported values are: {providers}').format(
-                                    providers=', '.join(SPARQL_ENDPOINTS))),
+        validate=validate.OneOf(
+            choices=SPARQL_ENDPOINTS,
+            error=_('Unsupported SPARQL endpoint value. Supported values are: %(providers)s') % {
+                'providers': ', '.join(SPARQL_ENDPOINTS)},
+        ),
         allow_none=True)
 
     class Meta:

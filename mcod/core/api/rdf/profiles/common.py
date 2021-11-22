@@ -13,11 +13,12 @@ CATALOG_URL = f'{settings.BASE_URL}/dataset'
 
 
 class RDFNestedField:
-    def __init__(self, class_name, predicate=None, many=False, required=True):
+    def __init__(self, class_name, predicate=None, many=False, required=True, nested_non_bnode=True):
         self.class_name = class_name
         self.predicate = predicate
         self.many = many
         self.required = required
+        self.nested_non_bnode = nested_non_bnode
 
     def make_instance(self, subject):
         rdf_class = RDF_CLASSES[self.class_name]
@@ -138,7 +139,7 @@ class RDFClass(metaclass=RDFMeta):
                         continue
 
                     triples.append((subject, field.predicate, inner_subject))
-                    if include_nested_triples or isinstance(inner_subject, BNode):
+                    if (include_nested_triples and field.nested_non_bnode) or isinstance(inner_subject, BNode):
                         instance = field.make_instance(subject=inner_subject)
                         triples.extend(instance.to_triples(row))
 

@@ -15,6 +15,20 @@ class FactoriesRegistry:
         return self._factories.get(object_name)
 
 
+class HistoryRegistry:
+    def __init__(self):
+        self._table_names = defaultdict(OrderedDict)
+
+    def register(self, model):
+        self._table_names[model._meta.db_table] = (model._meta.app_label, model._meta.model_name)
+
+    def get_params(self, table_name):
+        return self._table_names.get(table_name)
+
+    def get_table_names(self):
+        return sorted(self._table_names.keys())
+
+
 class SerializerRegistry:
     def __init__(self):
         self._serializers = defaultdict(OrderedDict)
@@ -35,3 +49,4 @@ object_attrs_registry = SerializerRegistry()
 rdf_serializers_registry = SerializerRegistry()
 
 factories_registry = FactoriesRegistry()
+history_registry = HistoryRegistry()

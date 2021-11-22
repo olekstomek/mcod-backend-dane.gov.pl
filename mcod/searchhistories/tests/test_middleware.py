@@ -6,7 +6,7 @@ from django_redis import get_redis_connection
 @pytest.mark.redis
 @pytest.mark.elasticsearch
 def test_searchhistories_middleware_set_up_key_in_redis(client, active_editor):
-    redis_con = get_redis_connection('default')
+    redis_con = get_redis_connection()
     keys = [k.decode() for k in redis_con.keys()]
 
     key = f'search_history_user_{active_editor.id}'
@@ -39,7 +39,7 @@ def test_searchhistories_middleware_set_up_key_in_redis(client, active_editor):
 @pytest.mark.redis
 @pytest.mark.elasticsearch
 def test_searchhistories_middleware_ignore_search_without_query(client, active_editor):
-    redis_con = get_redis_connection('default')
+    redis_con = get_redis_connection()
     key = f'search_history_user_{active_editor.id}'
     resp = client.simulate_post(path='/auth/login', json={
         'data': {
@@ -86,6 +86,6 @@ def test_searchhistories_middleware_ignore_suggestion_path(client, active_editor
         headers={'Authorization': f'Bearer {token}'}
     )
     assert HTTP_OK == resp.status
-    redis_con = get_redis_connection('default')
+    redis_con = get_redis_connection()
     keys = [k.decode() for k in redis_con.keys()]
     assert key not in keys

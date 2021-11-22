@@ -59,4 +59,4 @@ class LogEntryDoc(Document):
         model = LogEntry
 
     def get_queryset(self):
-        return super().get_queryset().exclude(content_type__model='user')
+        return LogEntry.objects.for_admin_panel().exclude(content_type__model='user')

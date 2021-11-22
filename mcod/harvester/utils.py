@@ -15,6 +15,7 @@ from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 
 from mcod import settings
+from mcod.unleash import is_enabled
 
 xmlschema.limits.MAX_XML_DEPTH = 100  # https://xmlschema.readthedocs.io/en/latest/usage.html#limit-on-xml-data-depth
 
@@ -115,23 +116,34 @@ def get_xml_schema_version(*, xml_path=None, xml_url=None):
         raise Exception('Nie znaleziono informacji o wersji użytego schematu XSD')
 
     version = version_match.group(1)
-    if version not in settings.HARVESTER_XML_VERSION_TO_SCHEMA_PATH:
+    try:
+        get_xml_schema_path(version)
+    except KeyError:
         raise Exception(f'Niepoprawna wersja schematu XSD: {version}')
 
     return version
 
 
 def get_xml_schema_path(version):
+    if version == '1.3' and not is_enabled('S37_validate_resource_link_scheme_harvester.be'):
+        raise KeyError(version)
     return settings.HARVESTER_XML_VERSION_TO_SCHEMA_PATH[version]
 
 
-def decode_xml(url):
-    xml_schema_version = get_xml_schema_version(xml_url=url)
-    xml_schema_path = get_xml_schema_path(version=xml_schema_version)
-    xml_schema = xmlschema.XMLSchema(xml_schema_path)
-    data = xml_schema.to_dict(url)
-    data['xsd_schema_version'] = xml_schema_version
+def get_xml_schema(version):
+    return xmlschema.XMLSchema(get_xml_schema_path(version))
+
+
+def get_xml_as_dict(source, version):
+    schema = get_xml_schema(version)
+    data = schema.to_dict(source)
+    data['xsd_schema_version'] = version
     return data
+
+
+def decode_xml(url):
+    version = get_xml_schema_version(xml_url=url)
+    return get_xml_as_dict(url, version)
 
 
 def fetch_xml_data(url):
@@ -154,9 +166,7 @@ def mock_data(url):
 
 
 def validate_xml(xml_path, boolean_result=False):
-    xml_schema_version = get_xml_schema_version(xml_path=xml_path)
-    xml_schema_path = get_xml_schema_path(version=xml_schema_version)
-    xml_schema = xmlschema.XMLSchema(xml_schema_path)
+    xml_schema = get_xml_schema(get_xml_schema_version(xml_path=xml_path))
     if boolean_result:
         return xml_schema.is_valid(xml_path)
     try:

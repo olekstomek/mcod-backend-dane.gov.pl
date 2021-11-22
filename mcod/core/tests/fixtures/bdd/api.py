@@ -536,7 +536,7 @@ def api_dcat_response_body_specific_class_field(rdf_type, field_name, identifier
     nodes = context.response.json['@graph']
     selected_node = None
     for node in nodes:
-        if node['@type'] == rdf_type:
+        if node['@type'] == rdf_type or isinstance(node['@type'], list) and rdf_type in node['@type']:
             selected_node = node
             break
 

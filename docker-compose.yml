@@ -31,7 +31,7 @@ services:
 
   mcod-redis:
     container_name: mcod-redis
-    image: redis:3.2
+    image: redis:6.2
     restart: "no"
     volumes:
       - redis_vol:/data

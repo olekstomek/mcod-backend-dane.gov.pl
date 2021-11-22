@@ -1,4 +1,5 @@
 import time
+
 import pytest
 from bs4 import BeautifulSoup
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
@@ -168,6 +169,11 @@ class TestDatasetModel(object):
 
         assert dataset.status == 'draft'
         assert dataset.resources.all().first().status == 'draft'
+
+    def test_dataset_has_unique_regions_from_resources(self, dataset_with_resources, additional_regions):
+        for res in dataset_with_resources.resources.all():
+            res.regions.set(additional_regions)
+        assert dataset_with_resources.regions.count() == 3
 
     # def test_save_with_deleted_status(self, dataset, resource):
     #     assert 'published' == dataset.status

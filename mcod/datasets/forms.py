@@ -98,8 +98,6 @@ class DatasetForm(ModelFormWithKeywords):
 
         if 'update_notification_recipient_email' in self.fields:
             self.fields['update_notification_recipient_email'].required = True
-            self.fields['update_notification_recipient_email'].help_text = (
-                'Uwaga! Adres email zostanie nadpisany adresem edytora, który będzie modyfikował metadane zbioru.')
             if instance and instance.modified_by and not instance.update_notification_recipient_email:
                 self.initial['update_notification_recipient_email'] = instance.modified_by.email
 
@@ -136,6 +134,10 @@ class DatasetForm(ModelFormWithKeywords):
             'license_condition_personal_data',
             'status',
         ]
+        help_texts = {
+            'update_notification_recipient_email': (
+                'Uwaga! Adres email zostanie nadpisany adresem edytora, który będzie modyfikował metadane zbioru.'),
+        }
         labels = {
             'created': _("Availability date"),
             'modified': _("Modification date"),
@@ -183,10 +185,6 @@ class DatasetStackedNoSaveForm(forms.ModelForm):
 
     def save(self, commit=True):
         return super().save(commit=False)
-
-
-class AddDatasetForm(DatasetForm):
-    pass
 
 
 class TrashDatasetForm(forms.ModelForm):

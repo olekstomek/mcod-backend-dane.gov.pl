@@ -5,11 +5,10 @@ from collections import OrderedDict
 
 import pytest
 import pytz
-import xmlschema
 from rdflib import URIRef, ConjunctiveGraph, Literal, RDF, XSD
 from django.conf import settings
 
-from mcod.harvester.utils import get_xml_schema_path
+from mcod.harvester.utils import get_xml_as_dict
 from mcod.core.api.rdf.profiles.dcat_ap import VOCABULARIES
 import mcod.core.api.rdf.namespaces as ns
 
@@ -23,11 +22,7 @@ def harvester_decoded_xml_1_2_data(harvester_decoded_xml_1_2_import_data):
 def harvester_decoded_xml_1_2_import_data():
     full_path = os.path.join(settings.TEST_SAMPLES_PATH, 'harvester_import_example1.2.xml')
     with open(full_path, 'r') as xml_file:
-        xml_schema_version = '1.2'
-        xml_schema_path = get_xml_schema_path(xml_schema_version)
-        xml_schema = xmlschema.XMLSchema(xml_schema_path)
-        data = xml_schema.to_dict(xml_file)
-        data['xsd_schema_version'] = xml_schema_version
+        data = get_xml_as_dict(xml_file, '1.2')
     return data
 
 
@@ -45,7 +40,7 @@ def harvester_xml_expected_data():
         ('categories', ['TRAN', 'ECON']),
         ('resources', [OrderedDict([
             ('ext_ident', 'zasob_extId_zasob_1'), ('status', 'published'),
-            ('link', 'http://mock-resource.com.pl/simple.csv'), ('title_pl', 'ZASOB csv REMOTE'),
+            ('link', 'https://mock-resource.com.pl/simple.csv'), ('title_pl', 'ZASOB csv REMOTE'),
             ('title_en', 'ENGLISH TITLE - RESOURCE 1'),
             ('description_pl', 'Opis zasobu opublikowane z XMLA - aktualizacja'),
             ('description_en', 'English description of first resource'), ('availability', 'remote'),
@@ -53,7 +48,7 @@ def harvester_xml_expected_data():
             ('modified', datetime.datetime(2020, 12, 8, 0, 0, tzinfo=pytz.utc))
         ]), OrderedDict([
             ('ext_ident', 'zasob_extId_zasob_2'), ('status', 'published'),
-            ('link', 'http://mock-resource.com.pl/simple.csv'), ('title_pl', 'ZASOB CSV LOCAL'),
+            ('link', 'https://mock-resource.com.pl/simple.csv'), ('title_pl', 'ZASOB CSV LOCAL'),
             ('title_en', 'ENGLISH TITLE - RESOURCE 2'), ('description_pl', 'Opis zasobu opublikowane z XMLA'),
             ('description_en', 'English description of second resource'), ('availability', 'local'),
             ('data_date', datetime.date(2020, 10, 10)), ('modified',
@@ -92,13 +87,13 @@ def harvester_ckan_expected_data():
                     ('modified', datetime.datetime(2021, 4, 15, 8, 30, 11, 533597).astimezone(local_timezone)),
                     ('created', datetime.datetime(2020, 5, 27, 15, 44, 38, 387593).astimezone(local_timezone)),
                     ('ext_ident', '6db2e083-72b8-4f92-a6ab-678fc8461865'),
-                    ('link', 'http://mock-resource.com.pl/simple.csv'),
+                    ('link', 'https://mock-resource.com.pl/simple.csv'),
                     ('description', '##Sektory:')])]),
             ('tags', []), ('title', 'Ilości odebranych odpadów z podziałem na sektory')])
 
 
 def get_example_triple_data():
-    example_base_uri = 'http://example-uri.com'
+    example_base_uri = 'https://example-uri.com'
     resource_uri = f'{example_base_uri}/distribution/999'
     resource_ref = URIRef(resource_uri)
     vocab = VOCABULARIES
@@ -155,5 +150,5 @@ def harvester_dcat_expected_data():
             ('description_pl', 'Some distribution description'),
             ('description_en', None), ('created', datetime.datetime(2021, 1, 1, 12, 0, tzinfo=pytz.utc)),
             ('modified', datetime.datetime(2021, 1, 1, 13, 0, tzinfo=pytz.utc)),
-            ('link', 'http://example-uri.com/distribution/999'), ('format', 'xlsx'), ('file_mimetype', None)])]),
+            ('link', 'https://example-uri.com/distribution/999'), ('format', 'xlsx'), ('file_mimetype', None)])]),
         ('categories', ['GOV', 'ECON']), ('update_frequency', None), ('license_chosen', 'CC_BY_SA_4.0')])

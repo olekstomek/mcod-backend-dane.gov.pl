@@ -10,6 +10,7 @@ from django.utils.translation import gettext_lazy as _
 from django.contrib.postgres.forms.jsonb import JSONField
 
 from mcod import settings
+from mcod.regions.fields import RegionsMultipleChoiceField
 from mcod.lib.field_validators import ContainsLetterValidator
 from mcod.lib.widgets import (
     CKEditorWidget,
@@ -165,6 +166,8 @@ class ResourceForm(forms.ModelForm):
         queryset=SpecialSign.objects.published(), required=False, label=_('Special Signs'),
         widget=FilteredSelectMultiple(_('special signs'), False),
     )
+    if is_enabled('S37_resources_admin_region_data.be'):
+        regions = RegionsMultipleChoiceField(required=False, label=_('Regions'))
 
 
 class ChangeResourceForm(ResourceForm):
@@ -195,6 +198,8 @@ class ChangeResourceForm(ResourceForm):
             self.fields['tabular_data_schema'].widget.instance = self.instance
             self.fields['data_rules'].widget.instance = self.instance
             self.fields['maps_and_plots'].widget.instance = self.instance
+            if 'regions' in self.fields:
+                self.fields['regions'].choices = self.instance.regions.all().values_list('region_id', 'name')
 
     def clean_status(self):
         dataset = self.instance.dataset
@@ -254,6 +259,15 @@ class LinkOrFileUploadForm(forms.ModelForm):
 class AddResourceForm(ResourceForm, LinkOrFileUploadForm):
     data_date = forms.DateField(initial=today, widget=AdminDateWidget, label=_("Data date"))
     from_resource = forms.ModelChoiceField(queryset=Resource.objects.all(), widget=forms.HiddenInput(), required=False)
+    if is_enabled('S37_validate_resource_link_scheme.be'):
+        link = forms.URLField(
+            widget=ResourceLinkWidget(attrs={'style': 'width: 99%', 'placeholder': 'https://'}))
+
+    def clean_link(self):
+        link = super().clean_link()
+        if link and not link.startswith('https:') and is_enabled('S37_validate_resource_link_scheme.be'):
+            self.add_error('link', _('Required scheme is https://'))
+        return link
 
     def clean_status(self):
         dataset = self.cleaned_data.get('dataset')
@@ -289,19 +303,9 @@ class AddResourceForm(ResourceForm, LinkOrFileUploadForm):
         file = self.cleaned_data.get('file')
         if file:
             _name, ext = os.path.splitext(file.name)
-            supported_extensions = [x for x in SUPPORTED_FILE_EXTENSIONS if x not in self.flagged_extensions]
-            if ext.lower() not in supported_extensions:
+            if ext.lower() not in SUPPORTED_FILE_EXTENSIONS:
                 self.add_error('file', _('Invalid file extension: %(ext)s.') % {'ext': ext or '-'})
         return file
-
-    @property
-    def flagged_extensions(self):
-        flagged_extensions = []
-        if not is_enabled('S36_meteo_data_formats.be'):
-            flagged_extensions.extend(['.nc', '.grib', '.grib2'])
-        if not is_enabled('S35_gpx_validation.be'):
-            flagged_extensions.append('.gpx')
-        return flagged_extensions
 
 
 class TrashResourceForm(forms.ModelForm):

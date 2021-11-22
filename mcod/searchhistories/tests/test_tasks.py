@@ -6,7 +6,7 @@ from django_redis import get_redis_connection
 class TestSearchhistoryTool:
 
     def test_save_searchhistories_task(self, active_editor):
-        redis_con = get_redis_connection("default")
+        redis_con = get_redis_connection()
         redis_con.delete("search_history_user_None")
         keys = [k.decode() for k in redis_con.keys()]
         key = f"search_history_user_{active_editor.id}"
@@ -23,7 +23,7 @@ class TestSearchhistoryTool:
         assert SearchHistory.objects.all().count() == 2
 
     def test_save_searchhistories_task_for_not_existing_user(self, active_editor):
-        redis_con = get_redis_connection("default")
+        redis_con = get_redis_connection()
 
         keys = [k.decode() for k in redis_con.keys()]
         key = f"search_history_user_{active_editor.id + 1000}"
@@ -42,7 +42,7 @@ class TestSearchhistoryTool:
         assert key not in keys
 
     def test_save_searchhistories_task_for_search_with_empty_q(self, active_editor):
-        redis_con = get_redis_connection("default")
+        redis_con = get_redis_connection()
 
         keys = [k.decode() for k in redis_con.keys()]
         key = f"search_history_user_{active_editor.id}"

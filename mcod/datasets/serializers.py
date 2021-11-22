@@ -27,6 +27,7 @@ from mcod.lib.extended_graph import ExtendedGraph
 from mcod.lib.serializers import TranslatedStr, KeywordsList
 from mcod.organizations.serializers import InstitutionXMLSerializer, InstitutionCSVMetadataSerializer
 from mcod.resources.serializers import ResourceRDFMixin, ResourceXMLSerializer, ResourceCSVMetadataSerializer
+from mcod.regions.serializers import RegionSchema, RDFRegionSchema
 from mcod.unleash import is_enabled
 from mcod.watchers.serializers import SubscriptionMixin
 
@@ -124,6 +125,8 @@ class DatasetRDFResponseSchema(ProfilesMixin, RDFResponseSchema):
     categories = ma.fields.Function(categories_dump)
     update_frequency = DcatUpdateFrequencyField()
     license = ma.fields.Function(lambda ds: ds.license_link)
+    if is_enabled('S38_dcat_spatial_data.be'):
+        spatial = ma.fields.Nested(RDFRegionSchema, many=True, attribute='regions')
 
     @staticmethod
     def _from_path(es_resp, path):
@@ -425,6 +428,8 @@ class DatasetApiAttrs(ObjectAttrs, HighlightObjectMixin):
     image_alt = TranslatedStr()
     if is_enabled('S35_high_value_data.be'):
         has_high_value_data = fields.Boolean()
+    if is_enabled('S37_resources_admin_region_data.be'):
+        regions = fields.Nested(RegionSchema, many=True)
 
     class Meta:
         relationships_schema = DatasetApiRelationships

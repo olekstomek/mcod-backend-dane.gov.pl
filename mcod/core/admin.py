@@ -2,13 +2,14 @@ from auditlog.admin import (
     LogEntryAdmin as BaseLogEntryAdmin,
     ResourceTypeFilter as BaseResourceTypeFilter,
 )
-from auditlog.models import LogEntry
+from auditlog.models import LogEntry as BaseLogEntry
 from django.contrib import admin
 from django.contrib.auth.models import Group
 from django.utils import timezone
 from django.utils.formats import localize
 from django.utils.translation import gettext_lazy as _
 
+from mcod.histories.models import LogEntry
 from mcod.lib.admin_mixins import MCODAdminMixin
 
 
@@ -70,10 +71,8 @@ class LogEntryAdmin(MCODAdminMixin, BaseLogEntryAdmin):
         return False
 
     def get_queryset(self, request):
-        qs = super().get_queryset(request)
-        models = ['member', 'application_tag', 'dataset_tag', 'article_tag', 'application_dataset']  # extend later.
-        return qs.exclude(content_type__model__in=models)
+        return LogEntry.objects.for_admin_panel()
 
 
 admin.site.unregister(Group)
-admin.site.unregister(LogEntry)
+admin.site.unregister(BaseLogEntry)

@@ -11,8 +11,17 @@
     {% include 'admin/datasets/licences/licenses_script.html' %}
 
     {% is_unleash_enabled "S29_update_frequency_notifications_pa.be" as S29_update_frequency_notifications_pa %}
-    {% if S29_update_frequency_notifications_pa %}
+    {% is_unleash_enabled "S36_dataset_resource_comment_recipient.be" as S36_dataset_resource_comment_recipient %}
     <script>
+        var $updateNotificationRecipientEmailControlGroup = $("div.control-group.form-row.field-update_notification_recipient_email");
+        var $updateNotificationRecipientEmailHelpInline = $updateNotificationRecipientEmailControlGroup.find('span.help-inline');
+
+        {% if not S36_dataset_resource_comment_recipient %}
+        $updateNotificationRecipientEmailControlGroup.css('display', 'none');
+        $updateNotificationRecipientEmailHelpInline.css('display', 'none');
+        {% endif %}
+
+        {% if S29_update_frequency_notifications_pa %}
         var $updateFrequency = $("div.field-update_frequency");
         var $updateFrequencySelect = $updateFrequency.find('select#id_update_frequency');
         var frequencyNotifications = {
@@ -33,22 +42,24 @@
 
             var $isUpdateNotificationEnabledControlGroup = $("div.control-group.form-row.field-is_update_notification_enabled");
             var $updateNotificationFrequencyControlGroup = $("div.control-group.form-row.field-update_notification_frequency");
-            var $updateNotificationRecipientEmailControlGroup = $("div.control-group.form-row.field-update_notification_recipient_email");
-            var $updateNotificationRecipientEmailHelpInline = $updateNotificationRecipientEmailControlGroup.find('span.help-inline');
 
             function toggleFrequencyFields(updateFrequency, initial=false) {
                 var frequencyNotification = frequencyNotifications[updateFrequency];
                 if (frequencyNotification === undefined) {
                     $isUpdateNotificationEnabledControlGroup.css('display', 'none');
                     $updateNotificationFrequencyControlGroup.css('display', 'none');
+                    {% if not S36_dataset_resource_comment_recipient %}
                     $updateNotificationRecipientEmailControlGroup.css('display', 'none');
+                    {% endif %}
                     if (!initial) {
                         $updateNotificationFrequencyInput.val('');
                     }
                 } else {
                     $isUpdateNotificationEnabledControlGroup.css('display', 'inline');
                     $updateNotificationFrequencyControlGroup.css('display', 'inline');
+                    {% if not S36_dataset_resource_comment_recipient %}
                     $updateNotificationRecipientEmailControlGroup.css('display', 'inline');
+                    {% endif %}
                     if (!initial || $updateNotificationFrequencyInput.val() === '') {
                         $updateNotificationFrequencyInput.val(frequencyNotification.value);
                     }
@@ -90,6 +101,6 @@
                 updateUpdateFrequencyHelp($(this).val());
             });
         {% endif %}
-    </script>
     {% endif %}
+    </script>
 {% endblock extrajs %}

@@ -6,7 +6,6 @@ import os
 import re
 import shutil
 import tempfile
-
 import unicodecsv
 from io import BytesIO
 
@@ -47,6 +46,7 @@ from mcod.core.db.models import ExtendedModel, update_watcher, TrashModelBase
 from mcod.core.utils import sizeof_fmt
 from mcod.counters.models import ResourceDownloadCounter, ResourceViewCounter
 from mcod.datasets.models import Dataset
+from mcod.regions.models import RegionManyToManyField
 from mcod.lib.data_rules import painless_body
 from mcod.resources.archives import is_archive_file
 from mcod.resources.error_mappings import recommendations, messages
@@ -312,7 +312,10 @@ class Resource(ExtendedModel):
             rdf_signals.delete_graph_with_related_update,
             search_signals.remove_document_with_related,
             core_signals.notify_removed
-        )
+        ),
+        'post_m2m_added': (rdf_signals.update_related_graph,),
+        'post_m2m_removed': (rdf_signals.update_related_graph,),
+        'post_m2m_cleaned': (rdf_signals.update_related_graph,)
     }
     ext_ident = models.CharField(
         max_length=36, blank=True, editable=False, verbose_name=_('external identifier'),
@@ -404,6 +407,9 @@ class Resource(ExtendedModel):
     special_signs = models.ManyToManyField(
         'special_signs.SpecialSign', verbose_name=_('special signs'), blank=True,
         related_name='special_signs_resources')
+    regions = RegionManyToManyField(
+        'regions.Region', blank=True, related_name='region_resources',
+        related_query_name='resource', through='regions.ResourceRegion', verbose_name=_('Regions'))
 
     def __str__(self):
         return self.title
@@ -450,7 +456,7 @@ class Resource(ExtendedModel):
     @property
     def is_link_internal(self):
         api_url_old = settings.API_URL.replace('https:', 'http:')
-        return self.link and (self.link.startswith(settings.API_URL) or self.link.startswith(api_url_old))
+        return self.link and self.link.startswith((settings.API_URL, api_url_old))
 
     @property
     def is_imported(self):
@@ -930,6 +936,10 @@ class Resource(ExtendedModel):
     @cached_property
     def special_signs_symbols_list(self):
         return list(self.special_signs.values_list('symbol', flat=True))
+
+    @property
+    def all_regions(self):
+        return self.regions.all()
 
     def to_rdf_graph(self):
         _schema = self.get_rdf_serializer_schema()
