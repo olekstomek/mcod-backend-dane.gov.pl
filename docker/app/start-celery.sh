@@ -9,7 +9,7 @@ sleep_time=3
 
 opts=${CELERY_OPTS}
 concurency=${CELERY_CONCURENCY:-2}
-queues=${CELERY_QUEUES:-default,resources,indexing,periodic,newsletter,notifications,search_history,watchers,harvester,history}
+queues=${CELERY_QUEUES:-default,resources,indexing,indexing_data,periodic,newsletter,notifications,search_history,watchers,harvester,history}
 rabbitmq_host=${RABBITMQ_HOST:-mcod-rabbitmq:5672}
 
 while [ $flag -eq 0 ]; do

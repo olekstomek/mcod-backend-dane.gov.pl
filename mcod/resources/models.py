@@ -56,8 +56,13 @@ from mcod.resources.link_validation import check_link_status, download_file
 from mcod.resources.managers import ChartManager, ResourceManager
 from mcod.resources.score_computation import get_score
 from mcod.resources.signals import revalidate_resource, update_chart_resource
-from mcod.resources.tasks import process_resource_from_url_task, process_resource_file_task, \
-    process_resource_file_data_task, validate_link
+from mcod.resources.tasks import (
+    process_resource_from_url_task,
+    process_resource_file_task,
+    process_resource_file_data_task,
+    update_resource_openness_score_task,
+    validate_link,
+)
 from mcod.unleash import is_enabled
 from mcod.watchers.tasks import update_model_watcher_task
 
@@ -1147,34 +1152,41 @@ def update_chart_resource_handler(sender, instance, *args, **kwargs):
 
 @receiver(pre_save, sender=Resource)
 def preprocess_resource(sender, instance, *args, **kwargs):
-    signal_logger.debug(
-        'Updating openness score',
-        extra={
-            'sender': '{}.{}'.format(sender._meta.model_name, sender._meta.object_name),
-            'instance': '{}.{}'.format(instance._meta.model_name, instance._meta.object_name),
-            'instance_id': instance.id,
-            'signal': 'pre_save'
-        },
-        exc_info=1
-    )
+    if not is_enabled('S40_disable_get_openness_score.be'):
+        signal_logger.debug(
+            'Updating openness score',
+            extra={
+                'sender': '{}.{}'.format(sender._meta.model_name, sender._meta.object_name),
+                'instance': '{}.{}'.format(instance._meta.model_name, instance._meta.object_name),
+                'instance_id': instance.id,
+                'signal': 'pre_save'
+            },
+            exc_info=1
+        )
     if instance.is_imported and instance.created:
         creation_date = instance.created.date()
         if not instance.data_date or instance.data_date < creation_date:
             instance.data_date = creation_date
-    instance.openness_score = instance.get_openness_score()
+    if not is_enabled('S40_disable_get_openness_score.be'):
+        instance.openness_score = instance.get_openness_score()
     instance.has_chart = instance.charts.filter(
         is_removed=False, is_permanently_removed=False, is_default=True).exists()
     instance.type = instance.get_resource_type()
 
 
 @receiver(post_save, sender=Resource)
-def update_dataset_verified(sender, instance, *args, **kwargs):
+def handle_resource_post_save(sender, instance, *args, **kwargs):
     max_created = instance.dataset.resources.filter(status=Dataset.STATUS.published).only("created").aggregate(
         Max('created')).get('created__max')
     if max_created:
         Dataset.objects.filter(pk=instance.dataset.id).update(verified=max_created)  # we don't want signals here
     else:
         Dataset.objects.filter(pk=instance.dataset.id).update(verified=instance.dataset.created)
+    if any([
+        instance.tracker.has_changed('csv_file'),
+        instance.tracker.has_changed('jsonld_file'),
+    ]) and is_enabled('S40_disable_get_openness_score.be'):
+        update_resource_openness_score_task.s(instance.id).apply_async()
 
 
 @receiver(revalidate_resource, sender=Resource)
@@ -1448,3 +1460,10 @@ def process_resource_file_data_task_failure_handler(sender, task_id, exception, 
     result_task.result = json.dumps(result)
     result_task.save()
     update_resource(task_id, **kwargs)
+
+
+@task_postrun.connect(sender=update_resource_openness_score_task)
+def update_resource_openness_score_task_postrun_handler(sender, task_id, task, signal, **kwargs):
+    resource_id = int(kwargs['args'][0])
+    update_with_related_task.s('resources', 'Resource', resource_id).apply_async()
+    update_graph_task.s('resources', 'Resource', resource_id).apply_async(countdown=1)

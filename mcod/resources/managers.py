@@ -53,7 +53,7 @@ class SoftDeletableMetadataQuerySet(SoftDeletableQuerySet):
                            )
         prefetch_tags_pl = Prefetch('dataset__tags', tag_model.objects.filter(language='pl'), to_attr='tags_pl')
         prefetch_tags_en = Prefetch('dataset__tags', tag_model.objects.filter(language='en'), to_attr='tags_en')
-        return self.filter(status='published').annotate(
+        return self.published().annotate(
             resources_count=Count('dataset__resources', filter=res_filter, distinct=True),
             datasets_count=Count('dataset__organization__datasets', filter=dataset_filter, distinct=True),
             organization_resources_count=Count('dataset__organization__datasets__resources',
@@ -62,6 +62,22 @@ class SoftDeletableMetadataQuerySet(SoftDeletableQuerySet):
             'dataset__organization', prefetch_tags_pl, prefetch_tags_en,
             'dataset__categories').order_by('dataset_id', 'id')
 
+    def with_tabular_data(self, **kwargs):
+        formats = ('csv', 'tsv', 'xls', 'xlsx', 'ods', 'shp')
+        query = {
+            'type': 'file',
+        }
+        pks = kwargs.get('pks')
+        if pks:
+            query['pk__in'] = pks
+        return self.by_formats(formats).filter(**query)
+
+    def by_formats(self, formats):
+        return self.filter(file__isnull=False, format__in=formats).exclude(file='')
+
+    def published(self):
+        return self.filter(status='published')
+
 
 class ResourceManager(SoftDeletableManager):
     _queryset_class = SoftDeletableMetadataQuerySet
@@ -69,6 +85,15 @@ class ResourceManager(SoftDeletableManager):
     def with_metadata(self):
         return super().get_queryset().with_metadata()
 
+    def with_tabular_data(self, **kwargs):
+        return super().get_queryset().with_tabular_data(**kwargs)
+
     def with_ext_http_links_only(self):
         return super().get_queryset().filter(link__startswith='http://').exclude(
             Q(link__startswith=settings.API_URL) | Q(link__startswith=settings.BASE_URL))
+
+    def by_formats(self, formats):
+        return super().get_queryset().by_formats(formats)
+
+    def published(self):
+        return super().get_queryset().published()

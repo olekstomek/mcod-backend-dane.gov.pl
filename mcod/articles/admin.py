@@ -1,8 +1,6 @@
-from django.conf import settings
 from django.contrib import admin
-from django.utils.safestring import mark_safe
 from django.utils.text import slugify
-from django.utils.translation import gettext_lazy as _, get_language
+from django.utils.translation import gettext_lazy as _
 
 from mcod.articles.forms import ArticleForm
 from mcod.articles.models import Article, ArticleTrash
@@ -96,11 +94,10 @@ class ArticleAdmin(DynamicAdminListDisplayMixin, CreatedByDisplayAdminMixin, Sta
         return qs
 
     def preview_link(self, obj):
-        url = f"{settings.BASE_URL}/{get_language()}/knowledge-base/preview/{obj.id}"
-        return mark_safe('<a href="%s" class="btn" target="_blank">%s</a>' % (url, _("Preview")))
+        return obj.preview_link
 
     preview_link.allow_tags = True
-    preview_link.short_description = _("Preview link")
+    preview_link.short_description = _('Preview link')
 
     def save_model(self, request, obj, form, change):
         if 'slug' in form.cleaned_data:

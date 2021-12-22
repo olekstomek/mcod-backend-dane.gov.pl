@@ -26,8 +26,14 @@
                 <td><strong>terms</strong></td>
                 <td>{% trans 'filters instances in which ' %} {{ doc_field_name }} {% trans 'matches to any of the provided values.' %}</td>
                 <td>
-                    <a href="{{ settings.API_URL }}{{ doc_base_url }}/?{{ name }}[terms]=application,article">{{ doc_base_url }}/?{{ name }}[terms]=application,article</a><br/>
-                    <a href="{{ settings.API_URL }}{{ doc_base_url }}/?{{ name }}[terms]=application&{{ name }}[terms]=article">{{ doc_base_url }}/?{{ name }}[terms]=application&{{ name }}[terms]=article</a>
+                    {% is_unleash_enabled "S39_showcases.be" as S39_showcases %}
+                    {% if S39_showcases %}
+                        <a href="{{ settings.API_URL }}{{ doc_base_url }}/?{{ name }}[terms]=article,showcase">{{ doc_base_url }}/?{{ name }}[terms]=article,showcase</a><br/>
+                        <a href="{{ settings.API_URL }}{{ doc_base_url }}/?{{ name }}[terms]=article&{{ name }}[terms]=showcase">{{ doc_base_url }}/?{{ name }}[terms]=article&{{ name }}[terms]=showcase</a>
+                    {% else %}
+                        <a href="{{ settings.API_URL }}{{ doc_base_url }}/?{{ name }}[terms]=application,article">{{ doc_base_url }}/?{{ name }}[terms]=application,article</a><br/>
+                        <a href="{{ settings.API_URL }}{{ doc_base_url }}/?{{ name }}[terms]=application&{{ name }}[terms]=article">{{ doc_base_url }}/?{{ name }}[terms]=application&{{ name }}[terms]=article</a>
+                    {% endif %}
                 </td>
             </tr>
             </tbody>

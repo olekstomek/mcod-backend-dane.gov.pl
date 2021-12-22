@@ -17,14 +17,14 @@ class RestApispecResource(ApispecResource):
     def on_get(self, request, response):
         spec = generate_apispec(self.app, rest_spec, start_line=settings.REST_APISPEC_START_LINE)
         response.status = falcon.HTTP_200
-        response.body = json.dumps(spec.to_dict())
+        response.text = json.dumps(spec.to_dict())
 
 
 class RPCApispecResource(ApispecResource):
     def on_get(self, request, response):
         spec = generate_apispec(self.app, rpc_spec, start_line=settings.RPC_APISPEC_START_LINE)
         response.status = falcon.HTTP_200
-        response.body = json.dumps(spec.to_dict())
+        response.text = json.dumps(spec.to_dict())
 
 
 class SwaggerResource(object):
@@ -33,4 +33,4 @@ class SwaggerResource(object):
         # resp.status = 200
         resp.content_type = 'text/html'
         with open(os.path.join(settings.SWAGGER_ROOT, 'index.html'), 'r') as f:
-            resp.body = f.read()
+            resp.text = f.read()

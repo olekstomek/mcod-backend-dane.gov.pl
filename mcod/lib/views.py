@@ -61,7 +61,7 @@ class BaseApiView(metaclass=ApiViewMeta):
     def handle(self, req, resp, handler, *args, **kwargs):
         # TODO: Verify if this cannot be static
         body = handler().run(req, *args, **kwargs)
-        resp.body = self.prepare_body(body)
+        resp.text = self.prepare_body(body)
         resp.status = falcon.HTTP_200
 
     def prepare_body(self, body):

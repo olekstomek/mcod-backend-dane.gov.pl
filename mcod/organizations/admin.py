@@ -2,7 +2,6 @@ import nested_admin
 from django.contrib import admin
 from django.urls import reverse
 from django.utils.html import format_html
-from django.utils.safestring import mark_safe
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 from rules.contrib.admin import ObjectPermissionsModelAdmin, ObjectPermissionsStackedInline
@@ -85,7 +84,7 @@ class ChangeDatasetStacked(AdminListMixin, nested_admin.NestedStackedInline, Obj
         return self.get_formset(request, obj, fields=None).form
 
     def _title(self, obj):
-        return mark_safe(
+        return obj.mark_safe(
             '<a href="{}">{}</a>'.format(reverse('admin:datasets_dataset_change', args=[obj.id]), obj.title))
     _title.short_description = _("title")
 
@@ -181,7 +180,7 @@ class OrganizationAdmin(DynamicAdminListDisplayMixin, StatusLabelAdminMixin, Sof
                 "photo_url": obj.image_absolute_url,
                 "photo_alt": f'Logo instytucji: {obj.title}'
             })
-            return mark_safe(html)
+            return obj.mark_safe(html)
         return ''
 
     get_photo.short_description = _("Logo")

@@ -12,10 +12,12 @@ from mcod.organizations import views as org_views
 from mcod.resources import views as res_views
 from mcod.searchhistories import views as searchhistory_views
 from mcod.tools import views as tools_views
+from mcod.unleash import is_enabled
 from mcod.users import views as user_views
 from mcod.watchers import views as watcher_views
 from mcod.schedules import views as schedules_views
 from mcod.search import views as search_views
+from mcod.showcases import views as showcases_views
 from mcod.suggestions import views as submission_views
 
 
@@ -32,17 +34,17 @@ routes = [
     ('/catalog/spec', core_views.CatalogOpenApiSpec()),
     ('/spec', core_views.OpenApiSpec()),
     ('/spec/{version}', core_views.OpenApiSpec()),
-    ('/doc/', core_views.SwaggerView()),
+    ('/doc', core_views.SwaggerView()),
     # User
     ('/auth/login', user_views.LoginView()),
     ('/auth/logout', user_views.LogoutView()),
     ('/auth/password/reset', user_views.ResetPasswordView()),
-    ('/auth/password/reset/{token:uuid}/', user_views.ConfirmResetPasswordView()),
+    ('/auth/password/reset/{token:uuid}', user_views.ConfirmResetPasswordView()),
     ('/auth/password/change', user_views.ChangePasswordView()),
     ('/auth/user', user_views.AccountView()),
     ('/auth/user/dashboard', user_views.DashboardView()),
     ('/auth/registration', user_views.RegistrationView()),
-    ('/auth/registration/verify-email/{token:uuid}/', user_views.VerifyEmailView()),
+    ('/auth/registration/verify-email/{token:uuid}', user_views.VerifyEmailView()),
     ('/auth/registration/resend-email', user_views.ResendActivationEmailView()),
     ('/auth/subscriptions', watcher_views.SubscriptionsView()),
     ('/auth/subscriptions/{id:int}', watcher_views.SubscriptionView()),
@@ -93,7 +95,7 @@ routes = [
     ('/datasets/{id:int},{slug}/comments', dataset_views.DatasetCommentsView()),
 
     # Resources
-    ('/resources/', res_views.ResourcesView()),
+    ('/resources', res_views.ResourcesView()),
     ('/resources/charts/{chart_id:int}', res_views.ChartView()),  # obsolete endpoint.
     ('/resources/{id:int}/charts', res_views.ChartsView()),
     ('/resources/{id:int},{slug}/charts', res_views.ChartsView()),
@@ -109,12 +111,12 @@ routes = [
     ('/resources/{id:int}/data/{row_id:uuid}', res_views.ResourceTableRowView()),
     ('/resources/{id:int},{slug}/data/{row_id:uuid}', res_views.ResourceTableRowView()),
     # ('/resources/{id:int}/data/{row_id:uuid}', res_views.ResourceTableRowView()),
-    ('/resources/{id:int}/data/spec/', res_views.ResourceTableSpecView()),
-    ('/resources/{id:int},{slug}/data/spec/', res_views.ResourceTableSpecView()),
+    ('/resources/{id:int}/data/spec', res_views.ResourceTableSpecView()),
+    ('/resources/{id:int},{slug}/data/spec', res_views.ResourceTableSpecView()),
     ('/resources/{id:int}/data/spec/{version}', res_views.ResourceTableSpecView()),
     ('/resources/{id:int},{slug}/data/spec/{version}', res_views.ResourceTableSpecView()),
-    ('/resources/{id:int}/data/doc/', res_views.ResourceSwaggerView()),
-    ('/resources/{id:int},{slug}/data/doc/', res_views.ResourceSwaggerView()),
+    ('/resources/{id:int}/data/doc', res_views.ResourceSwaggerView()),
+    ('/resources/{id:int},{slug}/data/doc', res_views.ResourceSwaggerView()),
     ('/resources/{id:int}/geo', res_views.ResourceGeoView()),
     ('/resources/{id:int},{slug}/geo', res_views.ResourceGeoView()),
     ('/resources/{id:int},{slug}/comments', res_views.ResourceCommentsView()),
@@ -132,11 +134,11 @@ routes = [
     ('/resources/{id:int},{slug}/file', res_views.ResourceFileDownloadView()),
 
     # Histories
-    ('/histories/', history_views.HistoriesView()),
+    ('/histories', history_views.HistoriesView()),
     ('/histories/{id:int}', history_views.HistoryView()),
-    ('/searchhistories/', searchhistory_views.SearchHistoriesView()),
+    ('/searchhistories', searchhistory_views.SearchHistoriesView()),
     ('/submissions', submission_views.SubmissionView()),
-    ('/submissions/accepted/', submission_views.AcceptedSubmissionListView()),
+    ('/submissions/accepted', submission_views.AcceptedSubmissionListView()),
     ('/submissions/accepted/{id:int}', submission_views.AcceptedSubmissionDetailView()),
     ('/submissions/accepted/{id:int}/feedback', submission_views.FeedbackDatasetSubmission()),
     ('/submissions/accepted/public', submission_views.AcceptedSubmissionListView(), 'public_submission'),
@@ -212,6 +214,16 @@ routes = [
     ('/guides', guides_views.GuidesView()),
     ('/guides/{id:int}', guides_views.GuideView()),
 ]
+
+if is_enabled('S39_showcases.be'):
+    routes.extend([
+        ('/showcases', showcases_views.ShowcasesApiView()),
+        ('/showcases/{id:int}', showcases_views.ShowcaseApiView()),
+        ('/showcases/{id:int},{slug}', showcases_views.ShowcaseApiView()),
+        ('/showcases/{id:int}/datasets', showcases_views.ShowcaseDatasetsView()),
+        ('/showcases/{id:int},{slug}/datasets', showcases_views.ShowcaseDatasetsView()),
+        ('/showcases/suggest', showcases_views.ShowcaseProposalView()),
+    ])
 
 
 routes.extend(list(map(lambda x: ("/{api_version}" + x[0], *x[1:]), routes)))

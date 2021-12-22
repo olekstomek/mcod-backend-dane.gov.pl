@@ -79,7 +79,7 @@ def test_searchhistories_middleware_ignore_suggestion_path(client, active_editor
     })
 
     token = resp.json['data']['attributes']['token']
-    query_string = 'q=test_phrase&models=application,article,dataset,institution,knowledge_base,resource&per_model=1'
+    query_string = 'q=test_phrase&models=article,dataset,institution,knowledge_base,resource,showcase&per_model=1'
     resp = client.simulate_get(
         '/1.4/search/suggest',
         query_string=query_string,

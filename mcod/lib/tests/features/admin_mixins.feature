@@ -11,7 +11,7 @@
       Examples:
       | object_type      | object_ids  | requested_object_ids | restored_object_ids | unrestored_object_ids |
       | course           | 999,998,997 | 999,998              | 999,998             | 997                   |
-      | application      | 999,998,997 | 999,998              | 999,998             | 997                   |
+      # | application      | 999,998,997 | 999,998              | 999,998             | 997                   |
       | article          | 999,998,997 | 999,998              | 999,998             | 997                   |
       | institution      | 999,998,997 | 999,998              | 999,998             | 997                   |
       | category         | 999,998,997 | 999,998              | 999,998             | 997                   |
@@ -20,6 +20,7 @@
       | resource         | 999,998,997 | 999,998              | 999,998             | 997                   |
       | dataset          | 999,998,997 | 999,998              | 999,998             | 997                   |
       | datasource       | 999,998,997 | 999,998              | 999,998             | 997                   |
+      | showcase         | 999,998,997 | 999,998              | 999,998             | 997                   |
 
     Scenario Outline: Objects cant be restored if their related objects are still removed
       Given removed <object_type> objects with ids <object_ids>

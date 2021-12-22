@@ -23,7 +23,14 @@ from mcod.datasets.serializers import (
 )
 from mcod.lib.serializers import TranslatedStr, KeywordsList
 from mcod.organizations.serializers import DataSourceAttr
+from mcod.regions.serializers import RegionSchema
+from mcod.showcases.serializers import (
+    ShowcaseCategoryAggregation,
+    ShowcasePlatformAggregation,
+    ShowcaseTypeAggregation,
+)
 from mcod.watchers.serializers import SubscriptionMixin
+from mcod.unleash import is_enabled
 
 
 class CommonObjectRelationships(Relationships):
@@ -71,6 +78,8 @@ class CommonObjectApiAttrs(ObjectAttrs, HighlightObjectMixin):
     verified = fields.DateTime()
     categories = fields.Nested(Category, many=True)
     category = fields.Nested(Category)
+    if is_enabled('S35_high_value_data.be'):
+        has_high_value_data = fields.Boolean()
 
     # datasets
     source = fields.Nested(SourceSchema)
@@ -79,12 +88,16 @@ class CommonObjectApiAttrs(ObjectAttrs, HighlightObjectMixin):
     data_date = fields.Date()
     visualization_types = fields.List(fields.Str())
 
-    # applications
+    # applications, showcases
     author = fields.Str()
     illustrative_graphics_alt = TranslatedStr()
     illustrative_graphics_url = fields.Str()
     image_alt = TranslatedStr()
     image_thumb_url = fields.Str()
+    if is_enabled('S39_showcases.be'):
+        showcase_category = fields.Str()
+        showcase_types = fields.List(fields.Str())
+        showcase_platforms = fields.List(fields.Str())
 
     # institutions
     abbreviation = fields.Str()
@@ -98,13 +111,23 @@ class CommonObjectApiAttrs(ObjectAttrs, HighlightObjectMixin):
     # cms pages
     html_url = fields.Str()
 
+    if is_enabled('S39_filter_by_geodata.be'):
+        # regions
+        region_id = fields.Int()
+        hierarchy_label = TranslatedStr()
+        regions = fields.Nested(RegionSchema, many=True)
+
     @staticmethod
     def self_api_url(data):
-        api_url = getattr(settings, 'API_URL', 'https://api.dane.gov.pl')
-        model = data.model
-        obj_id = data.id
-        slug = data['slug'][get_language()]
-        return f'{api_url}/{model}s/{obj_id},{slug}'
+        try:
+            api_url = getattr(settings, 'API_URL', 'https://api.dane.gov.pl')
+            model = data.model
+            obj_id = data.id
+            slug = data['slug'][get_language()]
+            full_url = f'{api_url}/{model}s/{obj_id},{slug}'
+        except AttributeError:
+            full_url = None
+        return full_url
 
     class Meta:
         relationships_schema = CommonObjectRelationships
@@ -115,7 +138,10 @@ class CommonObjectApiAttrs(ObjectAttrs, HighlightObjectMixin):
 class SearchCounterAggregation(ExtSchema):
     datasets = fields.Integer()
     resources = fields.Integer()
-    applications = fields.Integer()
+    if is_enabled('S39_showcases.be'):
+        showcases = fields.Integer()
+    else:
+        applications = fields.Integer()
     institutions = fields.Integer()
     articles = fields.Integer()
     knowledge_base = fields.Integer()
@@ -165,6 +191,18 @@ class CommonObjectApiAggregations(ExtSchema):
     by_has_high_value_data = fields.Nested(HighValueDataAggregation,
                                            many=True,
                                            attribute='_filter_by_has_high_value_data.by_has_high_value_data.buckets')
+    by_showcase_category = fields.Nested(
+        ShowcaseCategoryAggregation,
+        many=True,
+        attribute='_filter_by_showcase_category.by_showcase_category.buckets')
+    by_showcase_types = fields.Nested(
+        ShowcaseTypeAggregation,
+        many=True,
+        attribute='_filter_by_showcase_types.by_showcase_types.buckets')
+    by_showcase_platforms = fields.Nested(
+        ShowcasePlatformAggregation,
+        many=True,
+        attribute='_filter_by_showcase_platforms.by_showcase_platforms.buckets')
 
 
 class CommonObjectApiMetaSchema(TopLevelMeta):

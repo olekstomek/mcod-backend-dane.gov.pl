@@ -1,5 +1,5 @@
 from bokeh.core.properties import List, Either, String, Tuple, Bool, Int
-from bokeh.models.widgets import InputWidget
+from bokeh.models.widgets import InputWidget, RadioButtonGroup
 
 
 class BootstrapSelect(InputWidget):
@@ -21,3 +21,7 @@ class BootstrapSelect(InputWidget):
     none_selected_text = String(default='')
     selected_text_format = String(default='')
     none_results_text = String(default='')
+
+
+class ExtendedRadioButtonGroup(RadioButtonGroup):
+    pass

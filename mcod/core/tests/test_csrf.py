@@ -5,7 +5,7 @@ from unittest.mock import Mock
 import falcon
 import pytest
 from django.utils.translation import gettext as _
-from falcon.response import SimpleCookie
+from falcon.util import http_cookies
 from pytest_bdd import scenario
 
 from mcod import settings
@@ -130,7 +130,7 @@ def test_csrf_middleware(cookie_value, header_value, should_return_error):
     resp.headers = {}
     resp.complete = False
     resp.status = GOOD_STATUS
-    resp.body = GOOD_BODY
+    resp.text = GOOD_BODY
     resource.csrf_exempt = False
 
     middleware = CsrfMiddleware()
@@ -138,11 +138,11 @@ def test_csrf_middleware(cookie_value, header_value, should_return_error):
     middleware.process_resource(req, resp, resource, params)
     if should_return_error:
         assert resp.status == BAD_STATUS, "response status should be %s, is %s" % (BAD_STATUS, resp.status)
-        assert resp.body == BAD_BODY, "response body should be a proper error message"
+        assert resp.text == BAD_BODY, "response body should be a proper error message"
         assert resp.complete, "response should be complete in case of error"
     else:
         assert resp.status == GOOD_STATUS
-        assert resp.body == GOOD_BODY
+        assert resp.text == GOOD_BODY
         assert not resp.complete
 
     middleware.process_response(req, resp, None, None)
@@ -152,7 +152,7 @@ def test_csrf_middleware(cookie_value, header_value, should_return_error):
     for call_args, call_kwargs in resp.append_header.call_args_list:
         assert call_args[0] == "Set-Cookie"
 
-        cookies = SimpleCookie(call_args[1])
+        cookies = http_cookies.SimpleCookie(call_args[1])
         assert cookies.get('mcod_csrf_token', None) is not None
 
         cookie = cookies['mcod_csrf_token']

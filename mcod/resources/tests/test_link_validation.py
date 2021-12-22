@@ -156,10 +156,28 @@ class TestDownloadFile:
         assert res_details['filename'] == 'example_file.html'
 
     @requests_mock.Mocker(kw='mock_request')
+    def test_download_file_filename_from_content_disposition_with_additional_data(self, **kwargs):
+        mock_request = kwargs['mock_request']
+        headers = {'Content-Type': 'text/html',
+                   'Content-Disposition': 'attachment; filename=example_file.html; size=1234'}
+        mock_request.get(self.url, headers=headers, content=b'')
+        res_type, res_details = download_file(self.url)
+        assert res_details['filename'] == 'example_file.html'
+
+    @requests_mock.Mocker(kw='mock_request')
     def test_download_file_is_octetstream(self, **kwargs):
         mock_request = kwargs['mock_request']
         headers = {'Content-Type': 'application/octetstream',
                    'Content-Disposition': 'attachment; filename=example_file.doc'}
+        mock_request.get(self.url, headers=headers, content=b'')
+        res_type, res_details = download_file(self.url)
+        assert res_details['format'] == 'doc'
+
+    @requests_mock.Mocker(kw='mock_request')
+    def test_download_file_is_octetstream_from_content_disposition_with_additional_data(self, **kwargs):
+        mock_request = kwargs['mock_request']
+        headers = {'Content-Type': 'application/octetstream',
+                   'Content-Disposition': 'attachment; filename="example_file.doc"; size=1234'}
         mock_request.get(self.url, headers=headers, content=b'')
         res_type, res_details = download_file(self.url)
         assert res_details['format'] == 'doc'

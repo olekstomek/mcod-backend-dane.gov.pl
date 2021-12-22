@@ -13,6 +13,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from mcod.resources.indexed_data import FileEncodingValidationError
 from mcod.resources.link_validation import check_link_scheme
+from mcod.unleash import is_enabled
 
 logger = logging.getLogger('mcod')
 
@@ -161,13 +162,20 @@ def send_resource_comment(resource_id, comment, lang=None):
         'host': settings.BASE_URL,
         'resource': resource,
         'comment': comment,
+        'test': bool(settings.DEBUG and config.TESTER_EMAIL),
     }
 
     if settings.DEBUG and config.TESTER_EMAIL:
         template_suffix = '-test'
+    if is_enabled('S39_mail_layout.be'):
+        _plain = 'mails/resource-comment.txt'
+        _html = 'mails/resource-comment.html'
+    else:
+        _plain = f'mails/report-resource-comment{template_suffix}.txt'
+        _html = f'mails/report-resource-comment{template_suffix}.html'
     with translation.override('pl'):
-        msg_plain = render_to_string(f'mails/report-resource-comment{template_suffix}.txt', context=context)
-        msg_html = render_to_string(f'mails/report-resource-comment{template_suffix}.html', context=context)
+        msg_plain = render_to_string(_plain, context=context)
+        msg_html = render_to_string(_html, context=context)
         title = resource.title.replace('\n', ' ').replace('\r', '')
         subject = _('A comment was posted on the resource %(title)s') % {'title': title}
         send_mail(
@@ -238,6 +246,18 @@ def update_resource_validation_results_task(resource_id):
 
 
 @shared_task
+def update_resource_openness_score_task(resource_id):
+    resource_model = apps.get_model('resources', 'Resource')
+    resource = resource_model.raw.filter(id=resource_id).first()
+    result = None
+    if resource:
+        openness_score = resource.get_openness_score()
+        if resource.openness_score != openness_score:
+            result = resource_model.raw.filter(id=resource_id).update(openness_score=openness_score)
+    return {'resource_id': resource_id, 'updated': bool(result)}
+
+
+@shared_task
 def validate_link(resource_id):
     Resource = apps.get_model('resources', 'Resource')
     resource = Resource.raw.get(id=resource_id)
@@ -267,3 +287,13 @@ def check_link_protocol(resource_id, link, title, organization_title, resource_t
         'Typ': resource_type,
         'Instytucja': organization_title
     }
+
+
+@shared_task
+def process_resource_data_indexing_task(resource_id):
+    resource_model = apps.get_model('resources', 'Resource')
+    obj = resource_model.objects.with_tabular_data(pks=[resource_id]).first()
+    if obj:
+        success, failed = obj.data.index(force=True)
+        return {'resource_id': resource_id, 'indexed': success, 'failed': failed}
+    return {}

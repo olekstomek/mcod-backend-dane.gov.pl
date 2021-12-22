@@ -91,7 +91,7 @@ class ResourceDocument(ExtendedDocument):
     computed_views_count = fields.IntegerField()
     has_high_value_data = fields.BooleanField()
     if is_enabled('S37_resources_admin_region_data.be'):
-        all_regions = regions_field()
+        regions = regions_field(attr='all_regions')
 
     class Index:
         name = mcs.ELASTICSEARCH_INDEX_NAMES['resources']

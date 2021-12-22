@@ -14,8 +14,8 @@
     Examples:
     | object_type               |                              params| has_trash | can_delete | can_remove_from_db |
     | course                    |                       {"id": 1001} |         1 |          1 |                  0 |
-    | application               |                       {"id": 1001} |         1 |          1 |                  0 |
-    | applicationproposal       |                       {"id": 1001} |         1 |          1 |                  0 |
+#    | application               |                       {"id": 1001} |         1 |          1 |                  0 |
+#    | applicationproposal       |                       {"id": 1001} |         1 |          1 |                  0 |
     | article                   |                       {"id": 1001} |         1 |          1 |                  0 |
     | search history            |                       {"id": 1001} |         0 |          1 |                  1 |
     | institution               |                       {"id": 1001} |         1 |          1 |                  0 |
@@ -44,6 +44,8 @@
     | datasourceimport          |                       {"id": 1001} |         0 |          0 |                  0 |
     | datasource                | {"id": 1001, "status": "inactive"} |         1 |          1 |                  0 |
     | datasource                |   {"id": 1002, "status": "active"} |         1 |          0 |                  0 |
+    | showcase                  |                       {"id": 1001} |         1 |          1 |                  0 |
+    | showcaseproposal          |                       {"id": 1001} |         1 |          1 |                  0 |
 
 
     Scenario Outline: Remove model instances from trash
@@ -59,8 +61,8 @@
     Examples:
     | object_type               |                             params |
     | course                    |                       {"id": 1003} |
-    | application               |                       {"id": 1003} |
-    | applicationproposal       |                       {"id": 1003} |
+#    | application               |                       {"id": 1003} |
+#    | applicationproposal       |                       {"id": 1003} |
     | article                   |                       {"id": 1003} |
     | institution               |                       {"id": 1003} |
     | category                  |                       {"id": 1003} |
@@ -74,3 +76,5 @@
     | datasetcomment            |                       {"id": 1003} |
     | accepteddatasetsubmission |                       {"id": 1003} |
     | datasource                | {"id": 1003, "status": "inactive"} |
+    | showcase                  |                       {"id": 1003} |
+    | showcaseproposal          |                       {"id": 1003} |

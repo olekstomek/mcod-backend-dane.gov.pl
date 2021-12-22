@@ -25,6 +25,7 @@ from mcod.datasets.models import Dataset
 from mcod.reports.models import Report, SummaryDailyReport
 from mcod.resources.models import Resource
 from mcod.resources.tasks import validate_link
+from mcod.showcases.serializers import ShowcaseProposalCSVSerializer
 from mcod.suggestions.serializers import DatasetSubmissionCSVSerializer
 from mcod.unleash import is_enabled
 
@@ -41,6 +42,8 @@ def generate_csv(pks, model_name, user_id, file_name_postfix):
         serializer_cls = ApplicationProposalCSVSerializer
     elif _model == 'DatasetSubmission':  # TODO: how to register it in csr?
         serializer_cls = DatasetSubmissionCSVSerializer
+    elif _model == 'ShowcaseProposal':
+        serializer_cls = ShowcaseProposalCSVSerializer
 
     if not serializer_cls:
         raise Exception('Cound not find serializer for model %s' % model_name)
@@ -152,20 +155,19 @@ def append_report_task(sender, task_id, task, signal, **kwargs):
 
 
 @shared_task
-def create_link_protocol_report_task(resources):
-    logger.debug('Creating resource link protocol report.')
+def create_resources_report_task(data, headers, report_name):
+    logger.debug(f'Creating resource {report_name} report.')
     app_name = 'resources'
     file_name_postfix = now().strftime('%Y%m%d%H%M%S.%s')
-    file_name = f'http_protocol_resources_{file_name_postfix}.csv'
+    file_name = f'{report_name}_{file_name_postfix}.csv'
     reports_path = os.path.join(settings.REPORTS_MEDIA_ROOT, app_name)
     os.makedirs(reports_path, exist_ok=True)
-
     file_path = os.path.join(reports_path, file_name)
     file_url_path = f'{settings.REPORTS_MEDIA}/{app_name}/{file_name}'
     with open(file_path, 'w') as f:
-        w = csv.DictWriter(f, ['Id', 'Nazwa', 'Https', 'Instytucja', 'Typ'])
+        w = csv.DictWriter(f, headers)
         w.writeheader()
-        w.writerows(resources)
+        w.writerows(data)
     return json.dumps({
         'file': file_url_path,
         'model': 'resources.Resource'
@@ -175,7 +177,7 @@ def create_link_protocol_report_task(resources):
 @task_success.connect(sender=link_validation_success_callback)
 @task_success.connect(sender=link_validation_error_callback)
 @task_success.connect(sender=create_no_resource_dataset_report)
-@task_success.connect(sender=create_link_protocol_report_task)
+@task_success.connect(sender=create_resources_report_task)
 def generating_monthly_report_success(sender, result, **kwargs):
     try:
         result_dict = json.loads(result)
@@ -226,7 +228,7 @@ def generating_report_success(sender, result, **kwargs):
 @task_failure.connect(sender=generate_csv)
 @task_failure.connect(sender=create_no_resource_dataset_report)
 @task_failure.connect(sender=validate_resources_links)
-@task_failure.connect(sender=create_link_protocol_report_task)
+@task_failure.connect(sender=create_resources_report_task)
 def generating_report_failure(sender, task_id, exception, args, traceback, einfo, signal, **kwargs):
     logger.debug(f"generating report failed with:\n{exception}")
     try:

@@ -3,7 +3,7 @@ from django.apps import apps
 from django.db.models import F, Case, When, Value, CharField
 from mcod.resources.models import RESOURCE_TYPE
 from mcod.resources.tasks import check_link_protocol
-from mcod.reports.tasks import create_link_protocol_report_task
+from mcod.reports.tasks import create_resources_report_task
 from celery import chord
 
 
@@ -23,5 +23,8 @@ class Command(BaseCommand):
         ).values('resource_id', 'link', 'title', 'organization_title', 'resource_type'))
         self.stdout.write('Analyzing resources link protocol. Found {} resources to check'.format(len(http_resources)))
         subtasks = [check_link_protocol.s(**res_details) for res_details in http_resources]
-        callback = create_link_protocol_report_task.s()
+        callback = create_resources_report_task.s(
+            headers=['Id', 'Nazwa', 'Https', 'Instytucja', 'Typ'],
+            report_name='http_protocol_resources'
+        )
         chord(subtasks, callback).apply_async()

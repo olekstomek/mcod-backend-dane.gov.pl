@@ -148,7 +148,7 @@ def download_file(url, forced_file_type=False, allowed_content_types=None):  # n
             filename = res[0][:100] if res else None
             logger.debug(f'  filename: {filename}')
             if filename:
-                filename = filename.replace('"', '')
+                filename = filename.replace('"', '').split(';')[0]
                 format = filename.split('.')[-1]
                 logger.debug(f'  filename: {filename}, format: {format}')
 

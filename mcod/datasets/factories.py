@@ -57,6 +57,15 @@ class DatasetFactory(factory.django.DjangoModelFactory):
             for resource in extracted:
                 self.resources.add(resource)
 
+    @factory.post_generation
+    def showcases(self, create, extracted, **kwargs):
+        if not create:
+            return
+
+        if extracted:
+            for showcase in extracted:
+                self.showcases.add(showcase)
+
     class Meta:
         model = models.Dataset
         django_get_or_create = ('title',)

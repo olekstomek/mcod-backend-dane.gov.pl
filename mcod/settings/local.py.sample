@@ -44,11 +44,12 @@ FIXTURE_DIRS = [
 MEDIA_ROOT = str(ROOT_DIR('test-data/media'))
 ACADEMY_MEDIA_ROOT = str(ROOT_DIR.path(MEDIA_ROOT, 'academy'))
 IMAGES_MEDIA_ROOT = str(ROOT_DIR.path(MEDIA_ROOT, 'images'))
+LABORATORY_MEDIA_ROOT = str(ROOT_DIR.path(MEDIA_ROOT, 'lab_reports'))
 MEETINGS_MEDIA_ROOT = str(ROOT_DIR.path(MEDIA_ROOT, 'meetings'))
 NEWSLETTER_MEDIA_ROOT = str(ROOT_DIR.path(MEDIA_ROOT, 'newsletter'))
-RESOURCES_MEDIA_ROOT = str(ROOT_DIR.path(MEDIA_ROOT, 'resources'))
 RESOURCES_FILES_TO_REMOVE_ROOT = str(ROOT_DIR.path(MEDIA_ROOT, 'to_be_removed', 'resources'))
-LABORATORY_MEDIA_ROOT = str(ROOT_DIR.path(MEDIA_ROOT, 'lab_reports'))
+RESOURCES_MEDIA_ROOT = str(ROOT_DIR.path(MEDIA_ROOT, 'resources'))
+SHOWCASES_MEDIA_ROOT = str(ROOT_DIR.path(MEDIA_ROOT, 'showcases'))
 
 SESSION_COOKIE_NAME = 'local_sessionid'
 SESSION_COOKIE_DOMAIN = 'mcod.local'

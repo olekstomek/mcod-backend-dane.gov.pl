@@ -8,7 +8,7 @@ urllib3==1.24.1
 Cython==0.29.21
 gunicorn==19.9.0
 psycopg2-binary==2.8.6
-falcon==2.0.0
+falcon==3.0.1
 jsonschema<3.0
 click==7.1.2
 werkzeug==0.15.6
@@ -76,7 +76,7 @@ python-mimeparse==1.6.0
 pyshacl==0.13.2
 pyshp==2.1.0
 more-itertools==7.2.0
-wagtail==2.9.3
+wagtail==2.13.5
 wand==0.5.7
 hypereditor-0.1.0-py3-none-any.whl
 python-dateutil==2.8.1

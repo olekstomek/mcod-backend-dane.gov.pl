@@ -15,14 +15,13 @@ def test_deleted_resource_are_not_shown_in_dataset_resource_inline(dataset_with_
     client = Client()
     client.force_login(admin)
     response = client.get(reverse("admin:datasets_dataset_change", args=[dataset.id]))
-    resource_title_on_page = linebreaksbr(resource.title)
-    assert resource_title_on_page in smart_text(response.content)
+    assert resource.title in smart_text(response.content)
     resource.delete()
     assert resource.is_removed is True
     client = Client()
     client.force_login(admin)
     response = client.get(reverse("admin:datasets_dataset_change", args=[dataset.id]))
-    assert resource_title_on_page not in smart_text(response.content)
+    assert resource.title not in smart_text(response.content)
 
 
 def test_resources_are_also_deleted_after_dataset_delete(db, dataset_with_resources, admin):

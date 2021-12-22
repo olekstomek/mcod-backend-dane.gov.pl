@@ -1,5 +1,4 @@
 from django.contrib import admin, messages
-from django.utils.safestring import mark_safe
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 from modeltrans.translator import get_i18n_field
@@ -22,9 +21,9 @@ from mcod.lib.admin_mixins import (
     MCODAdminMixin
 )
 from mcod.reports.admin import ExportCsvMixin
+from mcod.unleash import is_enabled
 
 
-@admin.register(Application)
 class ApplicationAdmin(DynamicAdminListDisplayMixin, CreatedByDisplayAdminMixin, CRUDMessageMixin, SoftDeleteMixin,
                        HistoryMixin, LangFieldsOnlyMixin, MCODAdminMixin, admin.ModelAdmin):
     actions_on_top = True
@@ -147,7 +146,7 @@ class ApplicationAdmin(DynamicAdminListDisplayMixin, CreatedByDisplayAdminMixin,
     illustrative_graphics_img.short_description = _('Illustrative graphics')
 
     def preview_link(self, obj):
-        return mark_safe('<a href="%s" class="btn" target="_blank">%s</a>' % (obj.frontend_preview_url, _('Preview')))
+        return obj.preview_link
     preview_link.allow_tags = True
     preview_link.short_description = _('Preview link')
 
@@ -163,8 +162,7 @@ class ApplicationAdmin(DynamicAdminListDisplayMixin, CreatedByDisplayAdminMixin,
         super().save_model(request, obj, form, change)
 
 
-@admin.register(ApplicationTrash)
-class TrashApplicationAdmin(HistoryMixin, TrashMixin):
+class ApplicationTrashAdmin(HistoryMixin, TrashMixin):
     list_display = ['title', 'author', 'url']
     search_fields = ['title', 'author', 'url']
 
@@ -300,5 +298,8 @@ class ApplicationProposalTrashAdmin(ApplicationProposalMixin, TrashMixin):
     fields = [x for x in readonly_fields] + ['is_removed']
 
 
-admin.site.register(ApplicationProposal, ApplicationProposalAdmin)
-admin.site.register(ApplicationProposalTrash, ApplicationProposalTrashAdmin)
+if not is_enabled('S39_showcases.be'):
+    admin.site.register(Application, ApplicationAdmin)
+    admin.site.register(ApplicationTrash, ApplicationTrashAdmin)
+    admin.site.register(ApplicationProposal, ApplicationProposalAdmin)
+    admin.site.register(ApplicationProposalTrash, ApplicationProposalTrashAdmin)

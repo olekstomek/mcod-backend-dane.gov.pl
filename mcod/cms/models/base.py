@@ -15,7 +15,7 @@ from rest_framework.exceptions import MethodNotAllowed
 from wagtail.admin.edit_handlers import (FieldPanel, MultiFieldPanel,
                                          ObjectList, TabbedInterface)
 from wagtail.api import APIField
-from wagtail.core.models import Page, PageBase
+from wagtail.core.models import Page, PageBase, PageLogEntry
 from wagtail.core.utils import WAGTAIL_APPEND_SLASH
 from wagtail.documents.models import AbstractDocument
 from wagtail.images.models import AbstractImage, AbstractRendition
@@ -192,8 +192,17 @@ class BasePage(ApiMixin, Page, metaclass=BasePageMeta):
 
         super().full_clean(*args, **kwargs)
 
-    def save_revision(self, user=None, submitted_for_moderation=False, approved_go_live_at=None, changed=True):
-        self.full_clean()
+    def save_revision(self, user=None, submitted_for_moderation=False, approved_go_live_at=None, changed=True,
+                      log_action=False, previous_revision=None, clean=True):
+        # Raise an error if this page is an alias.
+        if self.alias_of_id:
+            raise RuntimeError(
+                "save_revision() was called on an alias page. "
+                "Revisions are not required for alias pages as they are an exact copy of another page."
+            )
+
+        if clean:
+            self.full_clean()
 
         # Create revision
         revision = self.revisions.create(
@@ -219,10 +228,34 @@ class BasePage(ApiMixin, Page, metaclass=BasePageMeta):
             update_fields.append('has_unpublished_changes')
 
         if update_fields:
-            self.save(update_fields=update_fields)
+            # clean=False because the fields we're updating don't need validation
+            self.save(update_fields=update_fields, clean=False)
 
         # Log
         logger.info("Page edited: \"%s\" id=%d revision_id=%d", self.title, self.id, revision.id)
+        if log_action:
+            if not previous_revision:
+                PageLogEntry.objects.log_action(
+                    instance=self,
+                    action=log_action if isinstance(log_action, str) else 'wagtail.edit',
+                    user=user,
+                    revision=revision,
+                    content_changed=changed,
+                )
+            else:
+                PageLogEntry.objects.log_action(
+                    instance=self,
+                    action=log_action if isinstance(log_action, str) else 'wagtail.revert',
+                    user=user,
+                    data={
+                        'revision': {
+                            'id': previous_revision.id,
+                            'created': previous_revision.created_at.strftime("%d %b %Y %H:%M")
+                        }
+                    },
+                    revision=revision,
+                    content_changed=changed,
+                )
 
         if submitted_for_moderation:
             logger.info("Page submitted for moderation: \"%s\" id=%d revision_id=%d", self.title, self.id, revision.id)
@@ -276,22 +309,22 @@ class BasePage(ApiMixin, Page, metaclass=BasePageMeta):
 
     def get_url_parts(self, request=None, skip_root_path=True):
         possible_sites = [
-            (pk, path, url)
-            for pk, path, url in self._get_site_root_paths(request)
+            (pk, path, url, language_code)
+            for pk, path, url, language_code in self._get_site_root_paths(request)
             if self.url_path.startswith(path)
         ]
 
         if not possible_sites:
             return None
 
-        site_id, root_path, root_url = possible_sites[0]
+        site_id, root_path, root_url, language_code = possible_sites[0]
 
         if hasattr(request, 'site'):
-            for site_id, root_path, root_url in possible_sites:
+            for site_id, root_path, root_url, language_code in possible_sites:
                 if site_id == request.site.pk:
                     break
             else:
-                site_id, root_path, root_url = possible_sites[0]
+                site_id, root_path, root_url, language_code = possible_sites[0]
 
         if skip_root_path:
             page_path = self.url_path.replace(root_path, '/')

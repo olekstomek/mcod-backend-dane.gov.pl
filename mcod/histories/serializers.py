@@ -62,9 +62,14 @@ class LogEntryApiAttrs(ObjectAttrs):
 
     def get_difference(self, obj):
         try:
-            return json.loads(obj.difference)
+            data = json.loads(obj.difference)
         except ValueError:
-            return {}
+            data = {}
+        if obj.action_name == 'INSERT':
+            for key, val in data.items():
+                if isinstance(val, list) and len(val) == 2:
+                    data[key] = val[1]
+        return data
 
     def get_new_value(self, obj):
         return self.get_difference(obj)

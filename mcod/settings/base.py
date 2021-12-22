@@ -130,7 +130,8 @@ INSTALLED_APPS = [
     'mcod.guides',
     'mcod.special_signs',
     'mcod.discourse',
-    'mcod.regions'
+    'mcod.regions',
+    'mcod.showcases',
 ]
 
 MIDDLEWARE = [
@@ -281,7 +282,7 @@ HTTP_REQUEST_DEFAULT_PARAMS = {
 
 # pwgen -ny 64
 JWT_SECRET_KEY = env('JWT_SECRET_KEY', default='aes_oo7ooSh8phiayohvah0ZieH3ailahh9ieb6ahthah=hing7AhJu7eexeiHoo')
-JWT_ISS = 'Ministry of Digital Affairs'
+JWT_ISS = 'Chancellery of the Prime Minister'
 JWT_AUD = 'dane.gov.pl'
 JWT_ALGORITHMS = ['HS256', ]
 JWT_VERIFY_CLAIMS = ['signature', 'exp', 'nbf', 'iat']
@@ -349,6 +350,7 @@ MEETINGS_MEDIA_ROOT = str(ROOT_DIR.path(MEDIA_ROOT, 'meetings'))
 NEWSLETTER_MEDIA_ROOT = str(ROOT_DIR.path(MEDIA_ROOT, 'newsletter'))
 RESOURCES_MEDIA_ROOT = str(ROOT_DIR.path(MEDIA_ROOT, 'resources'))
 REPORTS_MEDIA_ROOT = str(ROOT_DIR.path(MEDIA_ROOT, 'reports'))
+SHOWCASES_MEDIA_ROOT = str(ROOT_DIR.path(MEDIA_ROOT, 'showcases'))
 LABORATORY_MEDIA_ROOT = str(ROOT_DIR.path(MEDIA_ROOT, 'lab_reports'))
 RESOURCES_FILES_TO_REMOVE_ROOT = str(ROOT_DIR.path(MEDIA_ROOT, 'to_be_removed', 'resources'))
 DCAT_VOCABULARIES_MEDIA_ROOT = str(ROOT_DIR.path(MEDIA_ROOT, 'dcat', 'vocabularies'))
@@ -359,6 +361,7 @@ ACADEMY_URL = '%s%s' % (MEDIA_URL, 'academy')
 MEETINGS_URL = '%s%s' % (MEDIA_URL, 'meetings')
 NEWSLETTER_URL = '%s%s' % (MEDIA_URL, 'newsletter')
 RESOURCES_URL = '%s%s' % (MEDIA_URL, 'resources')
+SHOWCASES_URL = '%s%s' % (MEDIA_URL, 'showcases')
 IMAGES_URL = '%s%s' % (MEDIA_URL, 'images')
 REPORTS_MEDIA = '%s%s' % (MEDIA_URL, 'reports')
 LABORATORY_URL = '%s%s' % (MEDIA_URL, 'lab_reports')
@@ -500,6 +503,11 @@ SUIT_CONFIG = {
                     'label': _('Applications'),
                     'icon': 'icon-cupe-black'
                 }, {
+                    'model': 'showcases.showcase',
+                    'permissions': 'auth.add_user',
+                    'label': _('Showcases'),
+                    'icon': 'icon-cupe-black'
+                }, {
                     'model': 'articles.article',
                     'label': _('Articles'),
                     'permissions': 'auth.add_user',
@@ -593,6 +601,11 @@ SUIT_CONFIG = {
                     'model': 'applications.applicationproposal',
                     'permissions': 'auth.add_user',
                     'url': '/applications/applicationproposal/?decision=not_taken',
+                },
+                {
+                    'model': 'showcases.showcaseproposal',
+                    'permissions': 'auth.add_user',
+                    'url': '/showcases/showcaseproposal/?decision=not_taken',
                 },
                 {
                     'label': _('Data suggestions'),
@@ -700,13 +713,15 @@ ELASTICSEARCH_INDEX_NAMES = OrderedDict({
     "institutions": "institutions",
     "datasets": "datasets",
     "resources": "resources",
+    "regions": "regions",
     "searchhistories": "searchhistories",
     "histories": "histories",
     "logentries": "logentries",
     "lab_events": "lab_events",
     "accepted_dataset_submissions": "accepted_dataset_submissions",
     "meetings": "meetings",
-    "knowledge_base_pages": "knowledge_base_pages"
+    "knowledge_base_pages": "knowledge_base_pages",
+    "showcases": "showcases",
 })
 
 ELASTICSEARCH_DSL_SIGNAL_PROCESSOR = 'mcod.core.api.search.signals.AsyncSignalProcessor'
@@ -745,6 +760,7 @@ CELERY_TASK_QUEUES = {
     Queue('harvester'),
     Queue('resources'),
     Queue('indexing'),
+    Queue('indexing_data'),
     Queue('periodic'),
     Queue('newsletter'),
     Queue('notifications'),
@@ -759,11 +775,14 @@ CELERY_TASK_ROUTES = {
     'mcod.core.api.search.tasks.delete_document_task': {'queue': 'indexing'},
     'mcod.core.api.search.tasks.delete_with_related_task': {'queue': 'indexing'},
     'mcod.core.api.search.tasks.delete_related_documents_task': {'queue': 'indexing'},
+    'mcod.resources.tasks.process_resource_data_indexing_task': {'queue': 'indexing_data'},
+    'mcod.resources.tasks.check_link_protocol': {'queue': 'periodic'},
     'mcod.resources.tasks.process_resource_from_url_task': {'queue': 'resources'},
     'mcod.resources.tasks.process_resource_file_task': {'queue': 'resources'},
     'mcod.resources.tasks.process_resource_file_data_task': {'queue': 'resources'},
     'mcod.resources.tasks.remove_orphaned_files_task': {'queue': 'resources'},
     'mcod.resources.tasks.update_resource_has_table_has_map_task': {'queue': 'resources'},
+    'mcod.resources.tasks.update_resource_openness_score_task': {'queue': 'resources'},
     'mcod.resources.tasks.update_resource_validation_results_task': {'queue': 'resources'},
     'mcod.resources.tasks.send_resource_comment': {'queue': 'notifications'},
     'mcod.counters.tasks.save_counters': {'queue': 'periodic'},
@@ -777,6 +796,8 @@ CELERY_TASK_ROUTES = {
     'mcod.newsletter.tasks.send_newsletter': {'queue': 'newsletter'},
     'mcod.newsletter.tasks.send_newsletter_mail': {'queue': 'newsletter'},
     'mcod.newsletter.tasks.send_subscription_confirm_mail': {'queue': 'newsletter'},
+
+    'mcod.reports.tasks.create_resources_report_task': {'queue': 'periodic'},
 
     'mcod.schedules.tasks.send_admin_notification_task': {'queue': 'notifications'},
     'mcod.schedules.tasks.send_schedule_notifications_task': {'queue': 'notifications'},
@@ -1483,7 +1504,7 @@ FALCON_CACHING_ENABLED = env('FALCON_CACHING_ENABLED', default='yes') in ('yes',
 FALCON_LIMITER_ENABLED = env('FALCON_LIMITER_ENABLED', default='yes') in ('yes', 1, 'true')
 # https://falcon-limiter.readthedocs.io/en/latest/#rate-limit-string-notation
 FALCON_LIMITER_DEFAULT_LIMITS = env('FALCON_LIMITER_DEFAULT_LIMITS', default='5 per minute,2 per second')
-FALCON_LIMITER_SPARQL_LIMITS = env('FALCON_LIMITER_SPARQL_LIMITS', default='3 per minute,1 per second')
+FALCON_LIMITER_SPARQL_LIMITS = env('FALCON_LIMITER_SPARQL_LIMITS', default='20 per minute,1 per second')
 
 DISCOURSE_HOST = env('DISCOURSE_HOST', default='http://forum.mcod.local')
 DISCOURSE_SYNC_HOST = env('DISCOURSE_SYNC_HOST', default='http://forum.mcod.local')

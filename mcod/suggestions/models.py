@@ -4,6 +4,7 @@ from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from django.forms.models import model_to_dict
 from django.utils import timezone
+from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 from model_utils import FieldTracker, Choices
 from model_utils.fields import MonitorField
@@ -75,6 +76,10 @@ class DatasetSubmissionMixin(ExtendedModel):
 
     def __str__(self):
         return self.title
+
+    @property
+    def data_link_html(self):
+        return mark_safe(f'<a href="{self.data_link}">{self.data_link}</a>') if self.data_link else ''
 
     @property
     def is_accepted(self):

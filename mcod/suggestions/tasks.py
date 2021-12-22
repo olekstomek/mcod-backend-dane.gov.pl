@@ -11,6 +11,9 @@ from django.template.loader import render_to_string
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _, override
 
+from mcod.unleash import is_enabled
+
+
 User = get_user_model()
 logger = logging.getLogger('mcod')
 
@@ -72,12 +75,12 @@ def send_dataset_suggestion_mail_task(obj_id):
     result = None
     if obj:
         conn = get_connection(settings.EMAIL_BACKEND)
-        emails = [config.TESTER_EMAIL] if settings.DEBUG and config.TESTER_EMAIL else [
-            config.CONTACT_MAIL, ]
+        emails = [config.TESTER_EMAIL] if settings.DEBUG and config.TESTER_EMAIL else [config.CONTACT_MAIL]
         context = {'obj': obj, 'host': settings.BASE_URL}
+        tmpl = 'mails/dataset-submission.html' if is_enabled('S39_mail_layout.be') else 'mails/dataset-suggestion.html'
         with override('pl'):
             msg_plain = render_to_string('mails/dataset-suggestion.txt', context)
-            msg_html = render_to_string('mails/dataset-suggestion.html', context)
+            msg_html = render_to_string(tmpl, context)
 
             mail = EmailMultiAlternatives(
                 _('Resource demand reported'),

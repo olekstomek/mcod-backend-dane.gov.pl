@@ -622,6 +622,15 @@ def api_request_post_data(admin_context, data_type, req_post_data):
             "description_en": "",
             "slug_en": "",
         },
+        'showcase': {
+            "category": "app",
+            "license_type": "free",
+            "title": "Showcase title",
+            "slug": "showcase-title",
+            "notes": "opis",
+            "url": "http://test.pl",
+            "status": "published",
+        },
         'user': {
             "email": "",
             "fullname": "",
@@ -778,7 +787,9 @@ def latest_object_attribute_is(obj_type, attr, value):
     _factory = factories_registry.get_factory(obj_type)
     model = _factory._meta.model
     obj = model.raw.latest('id')
-    assert getattr(obj, attr) == value
+    attr_val = getattr(obj, attr)
+    attr_val = str(attr_val) if not isinstance(attr_val, str) else attr_val
+    assert attr_val == value, f'{obj} attribute {attr} should be {value}, but is {attr_val}'
 
 
 @given('removed <object_type> objects with ids <object_ids>')

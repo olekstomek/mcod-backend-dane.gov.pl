@@ -33,7 +33,7 @@ Feature: Newsletter subscriptions
     Then api's response status code is 403
     And api's response body field code is error
     And api's response body field title is Błędna akcja!
-    And api's response body field description is Adres poczty elektronicznej już istnieje
+    And api's response body field description is Adres poczty elektronicznej już istnieje
 
   Scenario: Logged in user can unsubscribe from receiving of newsletter
     Given logged active user with email test@example.com and newsletter subscription enabled with code 119a8339-4400-4783-a048-bc66069b26a4

@@ -75,14 +75,11 @@ class Command(BaseCommand):
         datetime_format = options['datetimeformat']
 
         pks = (int(pk) for pk in options['pks'].split(','))
-        query = Resource.objects.filter(
-            pk__in=pks,
-            type='file',
-            format__in=('csv', 'tsv', 'xls', 'xlsx', 'ods', 'shp')).exclude(file=None).exclude(file='')
+        queryset = Resource.objects.with_tabular_data(pks=pks)
 
-        progress_bar = self.tqdm(desc="Indexing", total=query.count())
+        progress_bar = self.tqdm(desc="Indexing", total=queryset.count())
 
-        for res in query:
+        for res in queryset:
             if res.tabular_data_schema:
                 tabular_data_schema = update_schema(res.tabular_data_schema, date_format, datetime_format)
                 Resource.objects.filter(pk=res.id).update(tabular_data_schema=tabular_data_schema)

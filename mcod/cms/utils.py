@@ -22,3 +22,12 @@ def get_forms_for_user(user):
 def to_i18n_url(url, lang_code):
     scheme, netloc, path, query, fragment = urlsplit(url)
     return urlunsplit((scheme, netloc, f'/{lang_code}{path}', query, fragment))
+
+
+def filter_page_type(queryset, page_models):
+    qs = queryset.none()
+
+    for model in page_models:
+        qs |= queryset.type(model)
+
+    return qs

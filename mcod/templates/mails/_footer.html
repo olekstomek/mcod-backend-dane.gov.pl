@@ -21,9 +21,13 @@
 
 {% endif %}
 <tr style="max-width:580px; padding-top:10px; padding-bottom:10px;">
-    <td style="padding-top:10px; padding-bottom:10px; vertical-align: top;max-width:580px; display:block;text-align:center; ">
-        <p style="text-align:left;font-family: Open Sans Light , Arial, Helvetica, sans-serif;text-decoration:none solid rgb(102, 102, 102);color:rgb(102, 102, 102);line-height:140%;display: block !important;">
-             {% blocktrans %}The message was generated automatically, please do not reply to it.{% endblocktrans %}
+    <td style="padding-top:10px; padding-bottom:10px; vertical-align: top;max-width:580px; display:block;text-align:center;">
+        <p style="text-align:left;font-family: Open Sans Light , Arial, Helvetica, sans-serif;font-size:14px;text-decoration:none solid {{ font_color|default:"rgb(102, 102, 102)" }};color:{{ font_color|default:"rgb(102, 102, 102)" }};line-height:140%;display: block !important;">
+        {% if footer_txt %}
+            {{ footer_txt }}
+        {% else %}
+            {% blocktrans %}The message was generated automatically, please do not reply to it.{% endblocktrans %}
+        {% endif %}
         </p>
     </td>
 </tr>

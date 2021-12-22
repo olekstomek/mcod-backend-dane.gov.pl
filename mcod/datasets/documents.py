@@ -18,6 +18,7 @@ Resource = apps.get_model('resources', 'Resource')
 Article = apps.get_model('articles', 'Article')
 Application = apps.get_model('applications', 'Application')
 DataSource = apps.get_model('harvester', 'DataSource')
+Showcase = apps.get_model('showcases', 'Showcase')
 
 
 def datasets_field(**kwargs):
@@ -116,6 +117,12 @@ class DatasetDocument(ExtendedDocument):
             'title': TranslatedTextField('title')
         }
     )
+    showcases = fields.NestedField(
+        properties={
+            'id': fields.IntegerField(),
+            'title': TranslatedTextField('title')
+        }
+    )
 
     update_frequency = fields.KeywordField()
     users_following = fields.KeywordField(attr='users_following_list', multi=True)
@@ -135,7 +142,16 @@ class DatasetDocument(ExtendedDocument):
 
     class Django:
         model = Dataset
-        related_models = [Organization, Category, Application, Article, Resource, UserFollowingDataset, DataSource]
+        related_models = [
+            Application,
+            Article,
+            Category,
+            DataSource,
+            Organization,
+            Resource,
+            Showcase,
+            UserFollowingDataset,
+        ]
 
     def get_instances_from_related(self, related_instance):
         if isinstance(related_instance, UserFollowingDataset):
@@ -152,6 +168,8 @@ class DatasetDocument(ExtendedDocument):
             return related_instance.datasets.filter(status='published')
         if isinstance(related_instance, DataSource):
             return related_instance.datasource_datasets.filter(status='published')
+        if isinstance(related_instance, Showcase):
+            return related_instance.datasets.filter(status='published')
 
     def prepare_search_date(self, instance):
         return instance.verified

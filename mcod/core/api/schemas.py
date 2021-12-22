@@ -207,6 +207,14 @@ class ListTermsSchema(ExtSchema):
     class Meta:
         default_field = 'terms'
 
+
+class GeoShapeSchema(ExtSchema):
+
+    geo_shape = fields.GeoShapeField()
+
+    class Meta:
+        default_field = 'geo_shape'
+
 #
 # class JsonApiRequestData(ExtSchema):
 #     _type = fields.Str(data_key='type', attribute='type', required=True)

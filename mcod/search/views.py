@@ -28,6 +28,7 @@ from mcod.search.serializers import (
 )
 from mcod import settings
 from mcod.search.utils import get_sparql_limiter_key
+from mcod.unleash import is_enabled
 
 logger = logging.getLogger('mcod')
 
@@ -35,7 +36,6 @@ logger = logging.getLogger('mcod')
 PLURAL_MODEL_NAMES = {
     'dataset': 'datasets',
     'resource': 'resources',
-    'application': 'applications',
     'institution': 'institutions',
     'article': 'articles',
     'knowledge_base': 'knowledge_base',
@@ -43,12 +43,15 @@ PLURAL_MODEL_NAMES = {
     'searchhistory': 'searchhistories',
     'history': 'histories',
 }
+if is_enabled('S39_showcases.be'):
+    PLURAL_MODEL_NAMES['showcase'] = 'showcases'
+else:
+    PLURAL_MODEL_NAMES['application'] = 'applications'
 
 
 ALLOWED_MODELS = [
     'dataset',
     'resource',
-    'application',
     'institution',
     'article',
     'knowledge_base',
@@ -56,6 +59,10 @@ ALLOWED_MODELS = [
     'searchhistory',
     'history'
 ]
+if is_enabled('S39_showcases.be'):
+    ALLOWED_MODELS.append('showcase')
+else:
+    ALLOWED_MODELS.append('application')
 
 
 class NoneVisualizationCleaner:

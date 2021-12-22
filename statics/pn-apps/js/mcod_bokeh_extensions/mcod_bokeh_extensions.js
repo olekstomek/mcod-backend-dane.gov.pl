@@ -41,9 +41,10 @@
     }
   })
 ({
-"0ee310a845": /* index.js */ function _(require, module, exports) {
+"07f0dba833": /* index.js */ function _(require, module, exports) {
     Object.defineProperty(exports, "__esModule", { value: true });
     const bootstrap_select_1 = require("4e0e830bc9") /* ./widgets/bootstrap_select */;
+    const extendedradiobuttongroup_1 = require("62cf04da26") /* ./widgets/extendedradiobuttongroup */;
     const localized_hover_tool_1 = require("65b19704f1") /* ./tools/localized_hover_tool */;
     const localized_pan_tool_1 = require("1f74824544") /* ./tools/localized_pan_tool */;
     const localized_save_tool_1 = require("cf96e53285") /* ./tools/localized_save_tool */;
@@ -52,7 +53,7 @@
     const extendedcolumn_1 = require("ab9995ef6b") /* ./layouts/extendedcolumn */;
     const base_1 = require("@bokehjs/base");
     base_1.register_models({ BootstrapSelect: bootstrap_select_1.BootstrapSelect, LocalizedHoverTool: localized_hover_tool_1.LocalizedHoverTool, LocalizedPanTool: localized_pan_tool_1.LocalizedPanTool,
-        LocalizedSaveTool: localized_save_tool_1.LocalizedSaveTool, LocalizedWheelZoomTool: localized_wheel_zoom_tool_1.LocalizedWheelZoomTool, LocalizedResetTool: localized_reset_tool_1.LocalizedResetTool, ExtendedColumn: extendedcolumn_1.ExtendedColumn });
+        LocalizedSaveTool: localized_save_tool_1.LocalizedSaveTool, LocalizedWheelZoomTool: localized_wheel_zoom_tool_1.LocalizedWheelZoomTool, LocalizedResetTool: localized_reset_tool_1.LocalizedResetTool, ExtendedColumn: extendedcolumn_1.ExtendedColumn, ExtendedRadioButtonGroup: extendedradiobuttongroup_1.ExtendedRadioButtonGroup });
 },
 "4e0e830bc9": /* widgets/bootstrap_select.js */ function _(require, module, exports) {
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -162,6 +163,50 @@
     BootstrapSelect.__name__ = "BootstrapSelect";
     BootstrapSelect.__module__ = "mcod.pn_apps.bokeh.widgets";
     BootstrapSelect.init_BootstrapSelect();
+},
+"62cf04da26": /* widgets/extendedradiobuttongroup.js */ function _(require, module, exports) {
+    Object.defineProperty(exports, "__esModule", { value: true });
+    const tslib_1 = require("tslib");
+    const button_group_1 = require("@bokehjs/models/widgets/button_group");
+    const dom_1 = require("@bokehjs/core/dom");
+    const p = tslib_1.__importStar(require("@bokehjs/core/properties"));
+    const mixins_1 = require("@bokehjs/styles/mixins");
+    class ExtendedRadioButtonGroupView extends button_group_1.ButtonGroupView {
+        render() {
+            super.render();
+            this._buttons.forEach((button) => {
+                button.setAttribute('tabindex', "0");
+            });
+        }
+        change_active(i) {
+            if (this.model.active !== i) {
+                this.model.active = i;
+            }
+        }
+        _update_active() {
+            const { active } = this.model;
+            this._buttons.forEach((button, i) => {
+                dom_1.classes(button).toggle(mixins_1.bk_active, active === i);
+            });
+        }
+    }
+    exports.ExtendedRadioButtonGroupView = ExtendedRadioButtonGroupView;
+    ExtendedRadioButtonGroupView.__name__ = "ExtendedRadioButtonGroupView";
+    class ExtendedRadioButtonGroup extends button_group_1.ButtonGroup {
+        constructor(attrs) {
+            super(attrs);
+        }
+        static init_ExtendedRadioButtonGroup() {
+            this.prototype.default_view = ExtendedRadioButtonGroupView;
+            this.define({
+                active: [p.Any, null],
+            });
+        }
+    }
+    exports.ExtendedRadioButtonGroup = ExtendedRadioButtonGroup;
+    ExtendedRadioButtonGroup.__name__ = "ExtendedRadioButtonGroup";
+    ExtendedRadioButtonGroup.__module__ = "mcod.pn_apps.bokeh.widgets";
+    ExtendedRadioButtonGroup.init_ExtendedRadioButtonGroup();
 },
 "65b19704f1": /* tools/localized_hover_tool.js */ function _(require, module, exports) {
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -329,7 +374,7 @@
     ExtendedColumn.__module__ = "mcod.pn_apps.bokeh.layouts";
     ExtendedColumn.init_ExtendedColumn();
 },
-}, "0ee310a845", {"index":"0ee310a845","widgets/bootstrap_select":"4e0e830bc9","tools/localized_hover_tool":"65b19704f1","tools/localized_pan_tool":"1f74824544","tools/localized_save_tool":"cf96e53285","tools/localized_wheel_zoom_tool":"bc864251f1","tools/localized_reset_tool":"f0a5ee67b8","layouts/extendedcolumn":"ab9995ef6b"}, {});
+}, "07f0dba833", {"index":"07f0dba833","widgets/bootstrap_select":"4e0e830bc9","widgets/extendedradiobuttongroup":"62cf04da26","tools/localized_hover_tool":"65b19704f1","tools/localized_pan_tool":"1f74824544","tools/localized_save_tool":"cf96e53285","tools/localized_wheel_zoom_tool":"bc864251f1","tools/localized_reset_tool":"f0a5ee67b8","layouts/extendedcolumn":"ab9995ef6b"}, {});
 })
 
 //# sourceMappingURL=mcod_bokeh_extensions.js.map

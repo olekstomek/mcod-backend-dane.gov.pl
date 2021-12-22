@@ -127,6 +127,13 @@ class ChartThumbsStorage(BaseFileSystemStorage):
         super().__init__(location=location, base_url=base_url, **kwargs)
 
 
+class ShowcasesStorage(BaseFileSystemStorage):
+    def __init__(self, location=None, base_url=None, **kwargs):
+        location = location or settings.SHOWCASES_MEDIA_ROOT
+        base_url = base_url or '%s' % settings.SHOWCASES_URL
+        super().__init__(location=location, base_url=base_url, **kwargs)
+
+
 AVAILABLE_STORAGES = {
     'applications': ApplicationImagesStorage,
     'organizations': OrganizationImagesStorage,
@@ -141,6 +148,7 @@ AVAILABLE_STORAGES = {
     'datasets': DatasetsImagesStorage,
     'dcat_vocabularies': DCATVocabulariesStorage,
     'chart_thumbs': ChartThumbsStorage,
+    'showcases': ShowcasesStorage,
 }
 
 

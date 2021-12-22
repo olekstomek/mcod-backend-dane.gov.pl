@@ -54,7 +54,7 @@ extra_handlers.update(
 )
 
 
-class ApiApp(falcon.API):
+class ApiApp(falcon.App):
     def __init__(self, media_type=DEFAULT_MEDIA_TYPE,
                  request_type=Request, response_type=Response,
                  middleware=None, router=None,

@@ -79,7 +79,7 @@
         <div>
           {% if form.errors %}
             <div class="alert alert-error">
-              {% blocktrans count counter=form.errors|length %}Please correct the error below.{% plural %} Please correct the errors below.{% endblocktrans %}
+              {% blocktrans count counter=form.errors|length %}Please correct the error below.{% plural %}Please correct the errors below.{% endblocktrans %}
               {{ form.non_field_errors }}
               <ul class="errorlist nonfield">
               {% for field in form.hidden_fields %}{% for error in field.errors %}

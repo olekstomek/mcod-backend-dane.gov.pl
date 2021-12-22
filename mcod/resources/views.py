@@ -394,6 +394,26 @@ class ResourceFileDownloadView(object):
 
         response.status = falcon.HTTP_302
 
+    def on_head(self, request, response, id, *args, **kwargs):
+        try:
+            resource = Resource.objects.get(pk=id, status='published')
+        except Resource.DoesNotExist:
+            raise falcon.HTTPNotFound
+
+        if not resource.type == 'file' or (not resource.file_url and not resource.link):
+            raise falcon.HTTPNotFound
+
+        if resource.is_linked:
+            response.location = resource.link
+        elif self.file_type == 'csv':
+            response.location = resource.csv_file_url
+        elif self.file_type == 'jsonld' and self.is_csv_to_jsonld_enabled:
+            response.location = resource.jsonld_file_url
+        else:
+            response.location = resource.file_url
+
+        response.status = falcon.HTTP_302
+
 
 class ResourceTableSpecView(object):
     def on_get(self, req, resp, id, version=None):
@@ -439,7 +459,7 @@ class ResourceTableSpecView(object):
         spec.path(path='/resources/%s/data' % resource.id, resource=ResourceTableView)
         spec.path(path='/resources/%s/data/{id}' % resource.id, resource=ResourceTableRowView)
 
-        resp.body = json.dumps(spec.to_dict(), cls=DateTimeToISOEncoder)
+        resp.text = json.dumps(spec.to_dict(), cls=DateTimeToISOEncoder)
         resp.status = falcon.HTTP_200
 
 
@@ -465,7 +485,7 @@ class ResourceSwaggerView(object):
 
         response.status = falcon.HTTP_200
         response.content_type = 'text/html'
-        response.body = template.render(context)
+        response.text = template.render(context)
 
 
 class ResourceDownloadCounter(object):
@@ -475,7 +495,7 @@ class ResourceDownloadCounter(object):
             counter.incr_download_count(id)
         resp.status = falcon.HTTP_200
         resp.content_type = 'text/html'
-        resp.body = json.dumps({}, cls=DateTimeToISOEncoder)
+        resp.text = json.dumps({}, cls=DateTimeToISOEncoder)
 
 
 class CHART_POST(CreateOneHdlr):

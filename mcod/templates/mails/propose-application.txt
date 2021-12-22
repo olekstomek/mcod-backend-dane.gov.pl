@@ -9,4 +9,4 @@ Lista zbiorów danych używanych przez aplikację (opcjonalne):
 Lista zbiorów danych zewnętrznych używanych przez aplikację (opcjonalne):
 {{ external_datasets }}
 Słowa kluczowe (opcjonalne):
-{{ keywords }}
+{{ keywords|join:", " }}

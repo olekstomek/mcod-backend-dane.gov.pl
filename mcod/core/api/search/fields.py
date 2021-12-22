@@ -763,6 +763,28 @@ class StringField(ElasticField, fields.String):
 MAX_MAP_RATIO = 2
 
 
+class GeoShapeField(ElasticField, fields.BoundingBox):
+
+    def q(self, value):
+        bbox = self.bbox(value)
+        if bbox:
+            q = Q('geo_shape', **{
+                self.query_field_name: {
+                    "shape": {
+                        "type": "envelope",
+                        "coordinates": [
+                            [bbox.min_lon, bbox.max_lat],
+                            [bbox.max_lon, bbox.min_lat]
+                        ]
+                    },
+                    "relation": "within",
+                }
+            })
+            return q
+        else:
+            return value
+
+
 class BBoxField(ElasticField, fields.BoundingBox):
     @staticmethod
     def bound(min_lon, max_lon, min_lat, max_lat, agg_size):

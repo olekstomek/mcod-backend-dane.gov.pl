@@ -48,6 +48,8 @@ def get_es_index_names():
         "accepted_dataset_submissions": "test-accepted_dataset_submissions-{}".format(index_prefix),
         "meetings": "test-meetings-{}".format(index_prefix),
         "knowledge_base_pages": "test-knowledge_base_pages-{}".format(index_prefix),
+        "regions": "test-regions-{}".format(index_prefix),
+        "showcases": "test-showcases-{}".format(index_prefix),
     }
 
 
@@ -76,6 +78,7 @@ NEWSLETTER_MEDIA_ROOT = str(os.path.join(MEDIA_ROOT, 'newsletter'))
 RESOURCES_MEDIA_ROOT = str(os.path.join(MEDIA_ROOT, 'resources'))
 RESOURCES_FILES_TO_REMOVE_ROOT = str(ROOT_DIR.path(MEDIA_ROOT, 'to_be_removed', 'resources'))
 REPORTS_MEDIA_ROOT = str(os.path.join(MEDIA_ROOT, 'reports'))
+SHOWCASES_MEDIA_ROOT = str(os.path.join(MEDIA_ROOT, 'showcases'))
 DCAT_VOCABULARIES_MEDIA_ROOT = str(ROOT_DIR.path(MEDIA_ROOT, 'resources'))
 METADATA_MEDIA_ROOT = str(ROOT_DIR.path(MEDIA_ROOT, 'datasets', 'catalog'))
 
@@ -99,11 +102,12 @@ CACHES.update({'test': {'BACKEND': 'django.core.cache.backends.locmem.LocMemCach
 # CONSTANCE_DATABASE_CACHE_BACKEND = 'constance'
 
 MEDIA_URL = '/media/'
-RESOURCES_URL = '%s%s' % (MEDIA_URL, 'resources')
+IMAGES_URL = '%s%s' % (MEDIA_URL, 'images')
 MEETINGS_URL = '%s%s' % (MEDIA_URL, 'meetings')
 NEWSLETTER_URL = '%s%s' % (MEDIA_URL, 'newsletter')
-IMAGES_URL = '%s%s' % (MEDIA_URL, 'images')
 REPORTS_MEDIA = '%s%s' % (MEDIA_URL, 'reports')
+RESOURCES_URL = '%s%s' % (MEDIA_URL, 'resources')
+SHOWCASES_URL = '%s%s' % (MEDIA_URL, 'showcases')
 
 CELERY_TASK_ALWAYS_EAGER = True
 CELERY_TASK_DEFAULT_QUEUE = 'mcod'

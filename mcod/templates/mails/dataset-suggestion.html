@@ -18,62 +18,24 @@
                         </td>
                     </tr>
                     <tr style="max-width:580px; padding-top:10px; padding-bottom:10px;">
-                        <td width="580"  align="left" style="padding-top:10px; padding-bottom:10px; max-width:580px; overflow:hidden;" ><img src="{{ host }}{% static "mails/kreska-mail.png" %}" alt="{% trans 'Download images' %}"></td>
+                        <td width="580"  align="left" style="padding-top:10px; padding-bottom:10px; max-width:580px; overflow:hidden;" >
+                            <img src="{{ host }}{% static "mails/kreska-mail.png" %}" alt="{% trans 'Download images' %}">
+                        </td>
                     </tr>
 
                 </table>
 
                 <table border="0" cellspacing="0" cellpadding="0" align="center" style="width:100%;display:block;margin:0 auto;border:#dadada 1px solid;max-width:580px;table-layout:fixed; clear:both;  ">
-                    <tr>
-                        <th width="580" align="left" bgcolor="#f9f9f9">
-                            <p style="padding: 0px 10px 0px 10px; text-align:left;font-family: Open Sans Light , Arial, Helvetica, sans-serif;text-decoration:none solid rgb(102, 102, 102);display: block !important; font-weight:bold; ">{% get_verbose_field_name obj "title" %}</p>
-                        </th>
-                    </tr>
-                    <tr>
-                        <td width="580" align="left">
-                            <p style="padding: 0px 10px 0px 10px; text-align:left;font-family: Open Sans Light , Arial, Helvetica, sans-serif;text-decoration:none solid rgb(102, 102, 102);display: block !important;  ">{{ obj.title|default:"-" }}</p>
-                        </td>
-                    </tr>
-                    <tr>
-                        <th width="580" align="left" bgcolor="#f9f9f9">
-                            <p style="padding: 0px 10px 0px 10px; text-align:left;font-family: Open Sans Light , Arial, Helvetica, sans-serif;text-decoration:none solid rgb(102, 102, 102);display: block !important; font-weight:bold; ">{% get_verbose_field_name obj "notes" %}</p>
-                        </th>
-                    </tr>
-                    <tr>
-                        <td width="580" align="left">
-                            <p style="padding: 0px 10px 0px 10px; text-align:left;font-family: Open Sans Light , Arial, Helvetica, sans-serif;text-decoration:none solid rgb(102, 102, 102);display: block !important;  ">{{ obj.notes|linebreaksbr }}</p>
-                        </td>
-                    </tr>
-                    <tr>
-                        <th width="580" align="left" bgcolor="#f9f9f9">
-                            <p style="padding: 0px 10px 0px 10px; text-align:left;font-family: Open Sans Light , Arial, Helvetica, sans-serif;text-decoration:none solid rgb(102, 102, 102);display: block !important; font-weight:bold; ">{% get_verbose_field_name obj "organization_name" %}</p>
-                        </th>
-                    </tr>
-                    <tr>
-                        <td width="580" align="left">
-                            <p style="padding: 0px 10px 0px 10px; text-align:left;font-family: Open Sans Light , Arial, Helvetica, sans-serif;text-decoration:none solid rgb(102, 102, 102);display: block !important;  ">{{ obj.organization_name|default:"-" }}</p>
-                        </td>
-                    </tr>
-                    <tr>
-                        <th width="580" align="left" bgcolor="#f9f9f9">
-                            <p style="padding: 0px 10px 0px 10px; text-align:left;font-family: Open Sans Light , Arial, Helvetica, sans-serif;text-decoration:none solid rgb(102, 102, 102);display: block !important; font-weight:bold; ">{% get_verbose_field_name obj "data_link" %}</p>
-                        </th>
-                    </tr>
-                    <tr>
-                        <td width="580" align="left">
-                            <p style="padding: 0px 10px 0px 10px; text-align:left;font-family: Open Sans Light , Arial, Helvetica, sans-serif;text-decoration:none solid rgb(102, 102, 102);display: block !important;  ">{{ obj.data_link|default:"-" }}</p>
-                        </td>
-                    </tr>
-                    <tr>
-                        <th width="580" align="left" bgcolor="#f9f9f9">
-                            <p style="padding: 0px 10px 0px 10px; text-align:left;font-family: Open Sans Light , Arial, Helvetica, sans-serif;text-decoration:none solid rgb(102, 102, 102);display: block !important; font-weight:bold; ">{% get_verbose_field_name obj "potential_possibilities" %}</p>
-                        </th>
-                    </tr>
-                    <tr>
-                        <td width="580" align="left">
-                            <p style="padding: 0px 10px 0px 10px; text-align:left;font-family: Open Sans Light , Arial, Helvetica, sans-serif;text-decoration:none solid rgb(102, 102, 102);display: block !important;  ">{{ obj.potential_possibilities|default:"-" }}</p>
-                        </td>
-                    </tr>
+                    {% include 'mails/table-row-label.html' with attr="title" %}
+                    {% include 'mails/table-row-value.html' with val=obj.title %}
+                    {% include 'mails/table-row-label.html' with attr="notes" %}
+                    {% include 'mails/table-row-value.html' with val=obj.notes|linebreaksbr %}
+                    {% include 'mails/table-row-label.html' with attr="organization_name" %}
+                    {% include 'mails/table-row-value.html' with val=obj.organization_name %}
+                    {% include 'mails/table-row-label.html' with attr="data_link" %}
+                    {% include 'mails/table-row-value.html' with val=obj.data_link %}
+                    {% include 'mails/table-row-label.html' with attr="potential_possibilities" %}
+                    {% include 'mails/table-row-value.html' with val=obj.potential_possibilities %}
                 </table>
                 <table border="0" cellspacing="0" cellpadding="0" align="center" style="width:100%;display:block;margin:0 auto;border:none;max-width:580px;table-layout:fixed; clear:both;">
                   {% include 'mails/_footer.html' with strip=True %}

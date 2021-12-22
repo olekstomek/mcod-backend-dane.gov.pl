@@ -6,7 +6,7 @@ from mcod.core.api import fields as core_fields
 from mcod.core.api.jsonapi.deserializers import TopLevel, ObjectAttrs
 from mcod.core.api.schemas import (
     CommonSchema, ExtSchema, ListingSchema, NumberTermSchema, StringTermSchema, StringMatchSchema, ListTermsSchema,
-    DateTermSchema)
+    DateTermSchema, GeoShapeSchema)
 from mcod.core.api.search import fields as search_fields
 
 
@@ -50,6 +50,13 @@ class ResourceFilterSchema(ExtSchema):
 
     class Meta:
         strict = True
+
+
+class RegionsFilterSchema(ExtSchema):
+    id = search_fields.FilterField(NumberTermSchema, search_path='regions', nested_search=True,
+                                   query_field='regions.region_id')
+    bbox = search_fields.FilterField(GeoShapeSchema, search_path='regions',
+                                     nested_search=True, query_field='regions.bbox')
 
 
 class DatasetAggregations(ExtSchema):

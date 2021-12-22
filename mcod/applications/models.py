@@ -2,22 +2,25 @@
 import base64
 import logging
 import os
+from email.mime.image import MIMEImage
 from mimetypes import guess_type, guess_extension
 
+from constance import config
 from django.apps import apps
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.postgres.fields import ArrayField, JSONField
 from django.contrib.postgres.indexes import GinIndex
 from django.core.files.base import ContentFile
+from django.core.mail import get_connection
+from django.core.mail.message import EmailMultiAlternatives
 from django.db import models
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
 from django.forms.models import model_to_dict
-from django.utils import timezone
+from django.template.loader import render_to_string
+from django.utils import timezone, translation
 from django.utils.functional import cached_property
-from django.utils.safestring import mark_safe
-from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 from model_utils import FieldTracker
 from modeltrans.fields import TranslationField
@@ -39,6 +42,7 @@ from mcod.core.api.search import signals as search_signals
 from mcod.core.db.managers import TrashManager
 from mcod.core.db.models import ExtendedModel, update_watcher, TrashModelBase
 from mcod.core.managers import SoftDeletableManager
+from mcod.unleash import is_enabled
 
 
 User = get_user_model()
@@ -195,7 +199,7 @@ class ApplicationMixin(ExtendedModel):
     @property
     def illustrative_graphics_img(self):
         if self.illustrative_graphics_absolute_url:
-            return mark_safe('<a href="%s" target="_blank"><img src="%s" width="%d" alt="" /></a>' % (
+            return self.mark_safe('<a href="%s" target="_blank"><img src="%s" width="%d" alt="" /></a>' % (
                 self.admin_change_url,
                 self.illustrative_graphics_absolute_url,
                 100,
@@ -275,7 +279,7 @@ class ApplicationProposal(ApplicationMixin):
     @property
     def application_logo(self):
         if self.image_absolute_url:
-            return mark_safe('<a href="%s" target="_blank"><img src="%s" width="%d" alt="" /></a>' % (
+            return self.mark_safe('<a href="%s" target="_blank"><img src="%s" width="%d" alt="" /></a>' % (
                 self.admin_change_url,
                 self.image_absolute_url,
                 100,
@@ -284,10 +288,10 @@ class ApplicationProposal(ApplicationMixin):
 
     @property
     def datasets_admin(self):
-        res = ''
-        for obj in self.datasets.order_by('title'):
-            res += '<a href="{}" target="_blank">{}</a><br>'.format(obj.frontend_absolute_url, obj.title)
-        return mark_safe(res)
+        objs = self.datasets.order_by('title')
+        links = [f'<a href="{x.frontend_absolute_url}" target="_blank">{x.title}</a>' for x in objs]
+        res = '<br>'.join(links)
+        return self.mark_safe(res)
 
     @property
     def external_datasets_admin(self):
@@ -297,7 +301,7 @@ class ApplicationProposal(ApplicationMixin):
             title = x.get('title')
             if url:
                 res += '<a href="{}" target="_blank">{}</a><br>'.format(url, title or url)
-        return mark_safe(res)
+        return self.mark_safe(res)
 
     @property
     def is_accepted(self):
@@ -355,7 +359,7 @@ class ApplicationProposal(ApplicationMixin):
         image = data.pop('image', None)
         illustrative_graphics = data.pop('illustrative_graphics', None)
         datasets_ids = data.pop('datasets', [])
-        name = slugify(data['title'])
+        name = cls.slugify(data['title'])
         if image:
             data['image'] = cls.decode_b64_image(image, name)
         if illustrative_graphics:
@@ -383,6 +387,66 @@ class ApplicationProposal(ApplicationMixin):
     @classmethod
     def accusative_case(cls):
         return _("acc: Application proposal")
+
+    @classmethod
+    def send_application_proposal_mail(cls, data):
+        dataset_model = apps.get_model('datasets.Dataset')
+        conn = get_connection(settings.EMAIL_BACKEND)
+
+        title = data['title']
+        img_data = data.get('image')
+        illustrative_graphics = data.get('illustrative_graphics')
+        img_name = cls.slugify(title) if img_data or illustrative_graphics else None
+
+        if img_data:
+            _data = img_data.split(';base64,')[-1].encode('utf-8')
+            image = MIMEImage(base64.b64decode(_data))
+            filename = f"{img_name}.{image.get_content_subtype()}"
+            image.add_header('content-disposition', 'attachment', filename=filename)
+            image.add_header('Content-ID', '<app-logo>')
+
+        if illustrative_graphics:
+            _data = illustrative_graphics.split(';base64,')[-1].encode('utf-8')
+            illustrative_graphics_img = MIMEImage(base64.b64decode(_data))
+            filename = f'{img_name}_illustrative-graphics.{illustrative_graphics_img.get_content_subtype()}'
+            illustrative_graphics_img.add_header('content-disposition', 'attachment', filename=filename)
+            illustrative_graphics_img.add_header('Content-ID', '<illustrative-graphics>')
+
+        datasets = dataset_model.objects.filter(id__in=data.get('datasets', []))
+        data['datasets'] = '\n'.join(ds.frontend_absolute_url for ds in datasets)
+        data['dataset_links'] = '<br />'.join(
+            f"<a href=\"{ds.frontend_absolute_url}\">{ds.title}</a>\n" for ds in datasets)
+
+        external_datasets = data.get('external_datasets', [])
+        data['external_datasets'] = '\n'.join(
+            f"{eds.get('title', '(nienazwany)')}: {eds.get('url', '(nie podano url)')}\n" for eds in external_datasets
+        )
+        data['external_dataset_links'] = '<br />'.join(
+            (f"{eds.get('title')}: <a href=\"{eds.get('url')}\">{eds.get('url')}</a>\n"
+             if 'url' in eds else eds.get('title'))
+            for eds in external_datasets
+        )
+        data['host'] = settings.BASE_URL
+
+        emails = [config.TESTER_EMAIL] if settings.DEBUG and config.TESTER_EMAIL else [config.CONTACT_MAIL]
+        html_template = 'applicationproposal' if is_enabled('S39_mail_layout.be') else 'propose-application'
+        with translation.override('pl'):
+            msg_plain = render_to_string('mails/propose-application.txt', data)
+            msg_html = render_to_string(f'mails/{html_template}.html', data)
+            mail = EmailMultiAlternatives(
+                'Zgłoszono propozycję aplikacji {}'.format(title.replace('\n', ' ').replace('\r', '')),
+                msg_plain,
+                from_email=config.NO_REPLY_EMAIL,
+                to=emails,
+                connection=conn
+            )
+            mail.mixed_subtype = 'related'
+            mail.attach_alternative(msg_html, 'text/html')
+            if img_data:
+                mail.attach(image)
+            if illustrative_graphics:
+                mail.attach(illustrative_graphics_img)
+            mail.send()
 
 
 class ApplicationProposalTrash(ApplicationProposal, metaclass=TrashModelBase):
@@ -505,6 +569,11 @@ class Application(ApplicationMixin):
     def keywords(self):
         return self.tags
 
+    @property
+    def preview_link(self):
+        return self.mark_safe(
+            f'<a href="{self.frontend_preview_url}" class="btn" target="_blank">{_("Preview")}</a>')
+
     @cached_property
     def users_following_list(self):
         return [user.id for user in self.users_following.all()]
@@ -512,7 +581,7 @@ class Application(ApplicationMixin):
     @property
     def application_logo(self):
         if self.image_thumb_absolute_url or self.image_absolute_url:
-            return mark_safe('<a href="%s" target="_blank"><img src="%s" width="%d" alt="%s" /></a>' % (
+            return self.mark_safe('<a href="%s" target="_blank"><img src="%s" width="%d" alt="%s" /></a>' % (
                 self.admin_change_url,
                 self.image_thumb_absolute_url or self.image_absolute_url,
                 100,

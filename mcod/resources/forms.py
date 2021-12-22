@@ -199,7 +199,7 @@ class ChangeResourceForm(ResourceForm):
             self.fields['data_rules'].widget.instance = self.instance
             self.fields['maps_and_plots'].widget.instance = self.instance
             if 'regions' in self.fields:
-                self.fields['regions'].choices = self.instance.regions.all().values_list('region_id', 'name')
+                self.fields['regions'].choices = self.instance.regions.all().values_list('region_id', 'hierarchy_label')
 
     def clean_status(self):
         dataset = self.instance.dataset

@@ -21,10 +21,10 @@ from wagtail.contrib.forms.views import SafePaginateListView
 from wagtail.admin import messages
 from wagtail.admin.forms.search import SearchForm
 from wagtail.admin.modal_workflow import render_modal_workflow
-from wagtail.admin.views.chooser import shared_context, page_models_from_string, can_choose_page, filter_page_type
+from wagtail.admin.views.chooser import shared_context, page_models_from_string, can_choose_page
 
 
-from mcod.cms.utils import get_forms_for_user
+from mcod.cms.utils import get_forms_for_user, filter_page_type
 from mcod.cms.forms import (
     SelectDateForm, TitledExternalLinkChooserForm,
     TitledEmailLinkChooserForm, TitledPhoneLinkChooserForm,

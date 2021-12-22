@@ -20,7 +20,7 @@ def update_content_type(request, response):
 
 
 def error_serializer(req, resp, exc):
-    resp.body = exc.to_json()
+    resp.text = exc.to_json()
     update_content_type(req, resp)
     resp.append_header('Vary', 'Accept')
 
@@ -61,9 +61,9 @@ def error_handler(exc, req, resp, params):
             'code': getattr(exc, 'code') or 'error'
         }
         result = ErrorSchema().dump(exc_data)
-        resp.body = json.dumps(result, cls=LazyEncoder)
+        resp.text = json.dumps(result, cls=LazyEncoder)
     else:
-        resp.body = json.dumps(_prepare_error(exc), cls=LazyEncoder)
+        resp.text = json.dumps(_prepare_error(exc), cls=LazyEncoder)
 
 
 def error_404_handler(exc, req, resp, params):
@@ -77,13 +77,13 @@ def error_404_handler(exc, req, resp, params):
             'code': getattr(exc, 'code') or 'error'
         }
         result = ErrorSchema().dump(exc_data)
-        resp.body = json.dumps(result, cls=LazyEncoder)
+        resp.text = json.dumps(result, cls=LazyEncoder)
     else:
         error_data = {
             'detail': _('The requested resource could not be found')
         }
 
-        resp.body = json.dumps(_prepare_error(exc, error_data=error_data), cls=LazyEncoder)
+        resp.text = json.dumps(_prepare_error(exc, error_data=error_data), cls=LazyEncoder)
 
 
 def error_500_handler(exc, req, resp, params):
@@ -102,7 +102,7 @@ def error_500_handler(exc, req, resp, params):
         if settings.DEBUG:
             exc_data['traceback'] = traceback.format_exc()
         result = ErrorSchema().dump(exc_data)
-        resp.body = json.dumps(result, cls=LazyEncoder)
+        resp.text = json.dumps(result, cls=LazyEncoder)
     else:
         error_data = {
             'status': resp.status,
@@ -114,7 +114,7 @@ def error_500_handler(exc, req, resp, params):
         }
 
         body = _prepare_error(exc, error_data)
-        resp.body = json.dumps(body, cls=LazyEncoder)
+        resp.text = json.dumps(body, cls=LazyEncoder)
 
     if settings.DEBUG and getattr(settings, "CONSOLE_LOG_ERRORS", False):
         logger.exception(exc)
@@ -134,7 +134,7 @@ def error_422_handler(exc, req, resp, params):
             exc_data['errors'] = exc.errors
 
         result = ErrorSchema().dump(exc_data)
-        resp.body = json.dumps(result, cls=LazyEncoder)
+        resp.text = json.dumps(result, cls=LazyEncoder)
     else:
         _exc_code = exc.status.lower().replace(' ', '_')
         _errors = []
@@ -170,4 +170,4 @@ def error_422_handler(exc, req, resp, params):
             'errors': _errors
         })
 
-        resp.body = json.dumps(result, cls=LazyEncoder)
+        resp.text = json.dumps(result, cls=LazyEncoder)

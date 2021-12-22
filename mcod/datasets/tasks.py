@@ -15,6 +15,8 @@ from django.utils.translation import ugettext_lazy as _
 
 from mcod.core.utils import save_as_csv, save_as_xml
 from mcod.datasets.models import Dataset
+from mcod.unleash import is_enabled
+
 
 logger = logging.getLogger('mcod')
 
@@ -48,6 +50,7 @@ def send_dataset_comment(dataset_id, comment, lang=None):
             'dataset': dataset,
             'message': msg,
             'html_message': html_msg,
+            'test': bool(settings.DEBUG and config.TESTER_EMAIL),
         }
 
         if settings.DEBUG and config.TESTER_EMAIL:
@@ -57,8 +60,14 @@ def send_dataset_comment(dataset_id, comment, lang=None):
             'title': title,
             'version': version,
         }
-        msg_plain = render_to_string(f'mails/report-dataset-comment{template_suffix}.txt', context=context)
-        msg_html = render_to_string(f'mails/report-dataset-comment{template_suffix}.html', context=context)
+        if is_enabled('S39_mail_layout.be'):
+            _plain = 'mails/dataset-comment.txt'
+            _html = 'mails/dataset-comment.html'
+        else:
+            _plain = f'mails/report-dataset-comment{template_suffix}.txt'
+            _html = f'mails/report-dataset-comment{template_suffix}.html'
+        msg_plain = render_to_string(_plain, context=context)
+        msg_html = render_to_string(_html, context=context)
 
         send_mail(
             subject,

@@ -162,7 +162,8 @@ publish-code:
     - export API_VERSION=$(changelog current)
   script:
     - git archive --output /gluster/mcod/code/backend_$API_VERSION.zip -9 HEAD
-    - ln -sfn /gluster/mcod/code/backend_$API_VERSION.zip /gluster/mcod/code/backend_latest.zip
+    - cd /gluster/mcod/code
+    - ln -sf backend_$API_VERSION.zip backend_latest.zip
   except:
     - devel
     - schedules

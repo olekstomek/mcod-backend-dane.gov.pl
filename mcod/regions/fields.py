@@ -3,7 +3,8 @@ from django import forms
 
 
 class RegionsMultipleChoiceField(forms.MultipleChoiceField):
-    widget = Select2Multiple(url='regions-autocomplete', attrs={'data-minimum-input-length': 3})
+    widget = Select2Multiple(url='regions-autocomplete',
+                             attrs={'data-minimum-input-length': 3, 'style': 'width: 50%', 'rows': 2})
 
     def validate(self, value):
         """Do not validate choices but check for empty."""

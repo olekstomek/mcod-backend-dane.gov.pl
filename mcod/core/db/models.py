@@ -1,9 +1,11 @@
+import base64
 import logging
 import os
 import uuid
 from functools import partial
 
 from django.conf import settings
+from django.core.files.base import ContentFile
 from django.db import models
 from django.db.models.base import ModelBase
 from django.db.models.deletion import get_candidate_relations_to_delete
@@ -12,6 +14,7 @@ from django.template.defaultfilters import truncatechars
 from django.utils.functional import cached_property
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _, get_language
+from mimetypes import guess_type, guess_extension
 from model_utils import Choices
 from model_utils.models import TimeStampedModel
 from model_utils.models import StatusModel, MonitorField
@@ -308,6 +311,25 @@ class BaseExtendedModel(AdminMixin, ApiMixin, StatusModel, TimeStampedModel):
             state = 'unsupported'
         for _signal in instance.signals_map[state]:
             _signal.send(sender, instance, model, pk_set, state=state)
+
+    @classmethod
+    def decode_b64_image(cls, encoded_img, img_name):
+        data_parts = encoded_img.split(';base64,')
+        img_data = data_parts[-1].encode('utf-8')
+        try:
+            extension = guess_extension(guess_type(encoded_img)[0])
+        except Exception:
+            extension = None
+        name = f'{img_name}{extension}' if extension else img_name
+        try:
+            decoded_img = base64.b64decode(img_data)
+        except Exception:
+            decoded_img = None
+        return ContentFile(decoded_img, name=name) if decoded_img else None
+
+    @classmethod
+    def slugify(cls, value, **kwargs):
+        return slugify(value, **kwargs)
 
     @classmethod
     def without_i18_fields(cls):

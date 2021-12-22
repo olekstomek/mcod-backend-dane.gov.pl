@@ -1,0 +1,6 @@
+{% extends 'mails/proposal-row-value.html' %}
+{% load i18n %}
+
+{% block val %}
+    <img src="{{ image_src }}" style="max-width:580px;" alt="{% trans 'Download images' %}">
+{% endblock %}

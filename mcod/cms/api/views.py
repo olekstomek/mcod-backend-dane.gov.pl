@@ -11,11 +11,12 @@ from rest_framework.exceptions import NotFound, MethodNotAllowed
 from rest_framework.response import Response
 from wagtail.api.v2.views import BaseAPIViewSet, PagesAPIViewSet
 from wagtail.core.models import PageRevision, Page
-from wagtail.api.v2.utils import BadRequestError, filter_page_type, page_models_from_string
+from wagtail.api.v2.utils import BadRequestError, page_models_from_string
 from wagtail.images.api.v2.views import ImagesAPIViewSet
 
 from mcod.cms.api.serializers import CmsPageSerializer
 from mcod.unleash import is_enabled
+from mcod.cms.utils import filter_page_type
 
 
 class ImagesViewSet(ImagesAPIViewSet):
@@ -57,7 +58,8 @@ class CmsPagesViewSet(PagesAPIViewSet):
         'child_of',
         'descendant_of',
         'lang',
-        'rev'
+        'rev',
+        'locale'
     ])
     body_fields = BaseAPIViewSet.body_fields + [
         'title',
@@ -71,7 +73,8 @@ class CmsPagesViewSet(PagesAPIViewSet):
         'search_description',
         'first_published_at',
         'parent',
-        'children'
+        'children',
+        'locale'
     ]
     listing_default_fields = BaseAPIViewSet.listing_default_fields + [
         'title',

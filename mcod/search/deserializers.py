@@ -21,6 +21,7 @@ from mcod.datasets.deserializers import (
     InstitutionFilterSchema,
     CategoryFilterSchema as DatasetCategoryFilterSchema,
     CategoriesFilterSchema as DatasetCategoriesFilterSchema,
+    RegionsFilterSchema
 )
 
 from mcod.search.fields import (
@@ -28,6 +29,7 @@ from mcod.search.fields import (
     get_advanced_options,
     nested_query_with_advanced_opts,
 )
+from mcod.unleash import is_enabled
 
 SPARQL_FORMATS = {
     # europeandataportal format choices: rdflib.SparqlStore valid params.
@@ -104,6 +106,18 @@ class DataAggregations(ExtSchema):
             'by_has_high_value_data': {
                 'field': 'has_high_value_data',
                 'size': 100
+            },
+            'by_showcase_category': {
+                'field': 'showcase_category',
+                'size': 10
+            },
+            'by_showcase_types': {
+                'field': 'showcase_types',
+                'size': 10
+            },
+            'by_showcase_platforms': {
+                'field': 'showcase_platforms',
+                'size': 10
             },
         }
     )
@@ -235,6 +249,29 @@ class ApiSearchRequest(ListingSchema):
         doc_base_url='/search',
         doc_field_name='has_high_value_data'
     )
+    if is_enabled('S39_filter_by_geodata.be'):
+        regions = fields.FilterField(RegionsFilterSchema)
+    if is_enabled('S39_showcases.be'):
+        showcase_category = fields.FilterField(
+            ListTermsSchema,
+            doc_template='docs/generic/fields/string_term_field.html',
+            doc_base_url='/search',
+            doc_field_name='showcase_category',
+        )
+        showcase_types = fields.FilterField(
+            ListTermsSchema,
+            query_field='showcase_types',
+            doc_template='docs/generic/fields/string_term_field.html',
+            doc_base_url='/search',
+            doc_field_name='showcase types'
+        )
+        showcase_platforms = fields.FilterField(
+            ListTermsSchema,
+            query_field='showcase_platforms',
+            doc_template='docs/generic/fields/string_term_field.html',
+            doc_base_url='/search',
+            doc_field_name='showcase platforms'
+        )
 
     @validates('q')
     def validate_q(self, queries, down_limit=2, up_limit=3000):
@@ -301,9 +338,18 @@ class ApiSuggestRequest(CommonSchema):
         description='Maximum length of given suggestion list. By default there is no limit',
         validate=validate.Range(1, 100, error=_("Invalid maximum list length"))
     )
-    _supported_models = {'dataset', 'resource', 'institution', 'article', 'knowledge_base', 'application'}
+    if is_enabled('S39_showcases.be'):
+        _supported_models = {'dataset', 'resource', 'institution', 'article', 'knowledge_base', 'showcase'}
+    else:
+        _supported_models = {'dataset', 'resource', 'institution', 'article', 'knowledge_base', 'application'}
+    _completion_models = {'region'}
     models = fields.StringField()
     advanced = fields.StringField()
+
+    def __init__(self, *args, **kwargs):
+        if is_enabled('S39_filter_by_geodata.be'):
+            self._supported_models.add('region')
+        super(ApiSuggestRequest, self).__init__(*args, **kwargs)
 
     def get_queryset(self, queryset, data):
         phrase = data.get('q')
@@ -318,16 +364,25 @@ class ApiSuggestRequest(CommonSchema):
         lang = get_language()
 
         per_model = data.get('per_model', 1)
-
         ms = MultiSearch(index=settings.ELASTICSEARCH_COMMON_ALIAS_NAME)
 
         for model in models:
-            query = Search(index=settings.ELASTICSEARCH_COMMON_ALIAS_NAME)
-            query = query.filter('term', model=model)
-            query = query.query('bool',
-                                should=[nested_query_with_advanced_opts(phrase, field, lang, op, suffix)
-                                        for field in ('title', 'notes')])
-            query = query.extra(size=per_model)
+            if is_enabled('S39_filter_by_geodata.be') and model in self._completion_models:
+                sug_query = Search(index=f'{model}s')
+                sug_query = sug_query.suggest('title', phrase,
+                                              completion={'field': f'title.{lang}.suggest', 'size': per_model})
+                res = sug_query.execute()
+                suggestions = res.suggest['title'][0]
+                ids = [sug['_id'] for sug in suggestions['options']]
+                query = Search(index=settings.ELASTICSEARCH_COMMON_ALIAS_NAME)
+                query = query.filter('term', model=model).query('ids', values=ids)
+            else:
+                query = Search(index=settings.ELASTICSEARCH_COMMON_ALIAS_NAME)
+                query = query.filter('term', model=model)
+                query = query.query('bool',
+                                    should=[nested_query_with_advanced_opts(phrase, field, lang, op, suffix)
+                                            for field in ('title', 'notes')])
+                query = query.extra(size=per_model)
             ms = ms.add(query)
 
         return ms

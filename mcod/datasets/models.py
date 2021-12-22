@@ -14,11 +14,9 @@ from django.dispatch import receiver
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _, get_language
 from model_utils import FieldTracker
-from django.utils.safestring import mark_safe
 from modeltrans.fields import TranslationField
 
 from mcod import settings
-
 from mcod.datasets.managers import DatasetManager
 from mcod.watchers.tasks import update_model_watcher_task
 from mcod.core import signals as core_signals
@@ -314,7 +312,7 @@ class Dataset(ExtendedModel):
     @property
     def categories_list_as_html(self):
         categories = self.categories.all()
-        return mark_safe('<br>'.join(category.title for category in categories)) if categories else '-'
+        return self.mark_safe('<br>'.join(category.title for category in categories)) if categories else '-'
 
     @property
     def categories_list_str(self):
@@ -389,7 +387,7 @@ class Dataset(ExtendedModel):
     @property
     def dataset_logo(self):
         if self.image_absolute_url:
-            return mark_safe('<a href="%s" target="_blank"><img src="%s" width="%d" alt="%s" /></a>' % (
+            return self.mark_safe('<a href="%s" target="_blank"><img src="%s" width="%d" alt="%s" /></a>' % (
                 self.admin_change_url,
                 self.image_absolute_url,
                 100,

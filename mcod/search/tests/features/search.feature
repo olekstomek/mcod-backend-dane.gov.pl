@@ -67,3 +67,19 @@ Feature: Global Search API
     | institution | {"id": 999, "description": "ins_desc_pl"}    | {"model": "institution", "q": "ins_desc_pl"}  | pl        | title,notes,abbreviation |
     | institution | {"id": 999, "abbreviation": "abbrev"}        | {"model": "institution", "q": "abbrev"}       | en        | title,notes,abbreviation |
     | institution | {"id": 999, "abbreviation": "abbrev"}        | {"model": "institution", "q": "abbrev"}       | pl        | title,notes,abbreviation |
+
+  Scenario Outline: Search filters by regions geodata
+    Given dataset with id 998
+    And resource with id 999 dataset id 998 and single main region
+    And 3 resources
+    When api request method is GET
+    And api request path is <request_path>
+    Then send api request and fetch the response
+    And api's response status code is 200
+    And api's response body field data/[0]/attributes/regions/[0]/name is Warszawa
+    And api's response body field data/[0]/attributes/regions/[0]/region_id is 101752777
+
+      Examples:
+      | request_path                                                                                                    |
+      | /1.4/search/?regions[bbox][geo_shape]=19.259214,53.481806,23.128409,51.013112&model[terms]=resource&per_page=10 |
+      | /1.4/search/?regions[id][terms]=101752777&model[terms]=resource&per_page=10                                     |

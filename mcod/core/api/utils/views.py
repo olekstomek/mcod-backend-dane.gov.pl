@@ -32,13 +32,13 @@ connection = get_connection()
 
 class ClusterHealthView(object):
     def on_get(self, request, response, *args, **kwargs):
-        response.body = json.dumps(connection.cluster.health())
+        response.text = json.dumps(connection.cluster.health())
         response.status = falcon.HTTP_200
 
 
 class ClusterStateView(object):
     def on_get(self, request, response, *args, **kwargs):
-        response.body = json.dumps(connection.cluster.state())
+        response.text = json.dumps(connection.cluster.state())
         response.status = falcon.HTTP_200
 
 
@@ -48,7 +48,7 @@ class ClusterAllocationView(object):
             result = connection.cluster.allocation_explain()
         except RequestError:
             result = {}
-        response.body = json.dumps(result)
+        response.text = json.dumps(result)
         response.status = falcon.HTTP_200
 
 
@@ -85,7 +85,7 @@ class SwaggerView(object):
 
         response.status = falcon.HTTP_200
         response.content_type = 'text/html'
-        response.body = template.render(context)
+        response.text = template.render(context)
 
 
 class OpenApiSpec(object):
@@ -134,7 +134,7 @@ class OpenApiSpec(object):
         spec.path(resource=his_views.HistoriesView)
         spec.path(resource=his_views.HistoryView)
 
-        resp.body = json.dumps(spec.to_dict(), cls=DateTimeToISOEncoder)
+        resp.text = json.dumps(spec.to_dict(), cls=DateTimeToISOEncoder)
         resp.status = falcon.HTTP_200
 
 

@@ -204,7 +204,7 @@ class DebugMiddleware(object):
                 'data': validated
             }
 
-            response.body = json.dumps(body, cls=DateTimeToISOEncoder)
+            response.text = json.dumps(body, cls=DateTimeToISOEncoder)
             response.status = falcon.HTTP_200
             response.content_type = 'application/json'
 
@@ -334,7 +334,7 @@ class CsrfMiddleware:
         Complete request handling pipeline with an appropriate error.
         """
         http_status = falcon.HTTP_403
-        response.body = json.dumps({
+        response.text = json.dumps({
             'errors': [
                 {
                     "title": "CSRF error",

@@ -2,6 +2,7 @@ from collections import namedtuple
 
 from django.db import models
 from django.urls import reverse
+from django.utils.safestring import mark_safe
 
 from mcod.core.api.jsonapi.serializers import Object
 from mcod.core.api.jsonapi.serializers import object_attrs_registry as oar
@@ -15,6 +16,9 @@ class AdminMixin(object):
         if self.id:
             return reverse('admin:%s_%s_change' % (self._meta.app_label, self._meta.model_name), args=(self.id,))
         return ''
+
+    def mark_safe(self, value):
+        return mark_safe(value)
 
 
 class ApiMixin(object):

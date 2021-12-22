@@ -1,19 +1,11 @@
-import base64
 import os
-from email.mime.image import MIMEImage
 from io import BytesIO
 
 from PIL import Image
 from celery import shared_task
-from constance import config
 from django.apps import apps
 from django.conf import settings
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.core.mail import get_connection
-from django.core.mail.message import EmailMultiAlternatives
-from django.template.loader import render_to_string
-from django.utils.text import slugify
-from django.utils import translation
 
 from mcod.core.api.search import signals as search_signals
 
@@ -39,69 +31,11 @@ def create_application_task(app_proposal_id):
 
 
 @shared_task
-def send_application_proposal(app_proposal):
-    from mcod.datasets.models import Dataset
-    conn = get_connection(settings.EMAIL_BACKEND)
-    emails = [config.CONTACT_MAIL, ]
-
-    title = app_proposal["title"]
-    applicant_email = app_proposal.get('applicant_email', '')
-    img_data = app_proposal.get('image')
-    illustrative_graphics = app_proposal.get('illustrative_graphics')
-    img_name = slugify(title) if img_data or illustrative_graphics else None
-
-    if img_data:
-        data = img_data.split(';base64,')[-1].encode('utf-8')
-        image = MIMEImage(base64.b64decode(data))
-        filename = f"{img_name}.{image.get_content_subtype()}"
-        image.add_header('content-disposition', 'attachment', filename=filename)
-        image.add_header('Content-ID', '<app-logo>')
-
-    if illustrative_graphics:
-        data = illustrative_graphics.split(';base64,')[-1].encode('utf-8')
-        illustrative_graphics_img = MIMEImage(base64.b64decode(data))
-        filename = f'{img_name}_illustrative-graphics.{illustrative_graphics_img.get_content_subtype()}'
-        illustrative_graphics_img.add_header('content-disposition', 'attachment', filename=filename)
-        illustrative_graphics_img.add_header('Content-ID', '<illustrative-graphics>')
-
-    datasets = Dataset.objects.filter(id__in=app_proposal.get('datasets', []))
-    app_proposal['datasets'] = '\n'.join(ds.frontend_absolute_url for ds in datasets)
-    app_proposal['dataset_links'] = '<br />'.join(
-        f"<a href=\"{ds.frontend_absolute_url}\">{ds.title}</a>\n" for ds in datasets)
-
-    external_datasets = app_proposal.get('external_datasets', [])
-    app_proposal['external_datasets'] = '\n'.join(
-        f"{eds.get('title', '(nienazwany)')}: {eds.get('url', '(nie podano url)')}\n" for eds in external_datasets
-    )
-    app_proposal['external_dataset_links'] = '<br />'.join(
-        (f"{eds.get('title')}: <a href=\"{eds.get('url')}\">{eds.get('url')}</a>\n"
-         if 'url' in eds else eds.get('title'))
-        for eds in external_datasets
-    )
-    app_proposal['keywords'] = ', '.join(app_proposal.get('keywords', tuple()))
-    app_proposal['host'] = settings.BASE_URL
-
-    if settings.DEBUG and config.TESTER_EMAIL:
-        emails = [config.TESTER_EMAIL]
-
-    with translation.override('pl'):
-        msg_plain = render_to_string('mails/propose-application.txt', app_proposal)
-        msg_html = render_to_string('mails/propose-application.html', app_proposal)
-        mail = EmailMultiAlternatives(
-            'Zgłoszono propozycję aplikacji {}'.format(title.replace('\n', ' ').replace('\r', '')),
-            msg_plain,
-            from_email=config.NO_REPLY_EMAIL,
-            to=emails,
-            connection=conn
-        )
-        mail.mixed_subtype = 'related'
-        mail.attach_alternative(msg_html, 'text/html')
-        if img_data:
-            mail.attach(image)
-        if illustrative_graphics:
-            mail.attach(illustrative_graphics_img)
-        mail.send()
-
+def send_application_proposal(data):
+    model = apps.get_model('applications.ApplicationProposal')
+    model.send_application_proposal_mail(data)
+    title = data['title']
+    applicant_email = data.get('applicant_email', '')
     return {'application_proposed': f'{title} - {applicant_email}'}
 
 

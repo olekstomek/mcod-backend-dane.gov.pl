@@ -4,9 +4,7 @@ from django.contrib.admin.options import InlineModelAdmin
 from django.contrib.admin.views.main import ChangeList
 from django.core.paginator import EmptyPage, InvalidPage, Paginator
 from django.db.models import Subquery, OuterRef
-from django.urls import reverse
 from django.utils.html import format_html
-from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 from django_celery_results.models import TaskResult
 
@@ -179,8 +177,7 @@ class ChangeResourceStacked(DynamicAdminListDisplayMixin, ModifiedByDisplayAdmin
         return self.get_fields(request, obj)
 
     def _title(self, obj):
-        return mark_safe(
-            '<a href="{}">{}</a>'.format(reverse('admin:resources_resource_change', args=[obj.id]), obj.title))
+        return obj.mark_safe(f'<a href="{obj.admin_change_url}">{obj.title}</a>')
     _title.short_description = _("title")
 
 

@@ -66,7 +66,8 @@ def main_region():
         lat=52.237695,
         lng=21.005427,
         bbox=[20.851688, 52.09785, 21.271151, 52.368154],
-        geonames_id=756135
+        geonames_id=756135,
+        hierarchy_label='Warszawa, Gmina Warszawa, pow. Warszawa, woj. Mazowieckie'
     )
 
 

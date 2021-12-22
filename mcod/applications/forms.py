@@ -5,9 +5,9 @@ from django.contrib.postgres.forms.jsonb import JSONField
 from django.utils.translation import gettext_lazy as _
 
 from mcod.applications.models import Application, ApplicationProposal
-from mcod.applications.widgets import ExternalDatasetsWidget
 from mcod.core.db.models import STATUS_CHOICES
 from mcod.datasets.models import Dataset
+from mcod.lib.widgets import ExternalDatasetsWidget
 from mcod.tags.forms import ModelFormWithKeywords
 
 

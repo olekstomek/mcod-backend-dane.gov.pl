@@ -69,7 +69,7 @@ class DropdownLink(Button):
 
 
 @ hooks.register('register_page_listing_buttons')
-def page_listing_buttons(page, page_perms, is_parent=False):
+def page_listing_buttons(page, page_perms, is_parent=False, next_url=None):
     if page_perms.can_edit():
         yield PageListingButton(
             _('Edit'),
@@ -128,6 +128,7 @@ def page_listing_buttons(page, page_perms, is_parent=False):
         page=page,
         page_perms=page_perms,
         is_parent=is_parent,
+        next_url=next_url,
         attrs={
             'target': '_blank', 'rel': 'noopener noreferrer',
             'title': _("View more options for '%(title)s'") % {'title': page.get_admin_display_title()}
@@ -137,7 +138,7 @@ def page_listing_buttons(page, page_perms, is_parent=False):
 
 
 @ hooks.register('register_page_listing_preview_draft_buttons')
-def page_listing_preview_draft_buttons(page, page_perms, is_parent=False):
+def page_listing_preview_draft_buttons(page, page_perms, is_parent=False, next_url=None):
     if page.has_unpublished_changes:
         if not page.url:
             rev = page.revisions.order_by('id').first()
@@ -166,7 +167,7 @@ def page_listing_preview_draft_buttons(page, page_perms, is_parent=False):
 
 
 @ hooks.register('register_page_listing_preview_buttons')
-def page_listing_preview_buttons(page, page_perms, is_parent=False):
+def page_listing_preview_buttons(page, page_perms, is_parent=False, next_url=None):
     if page.live and page.url:
         yield Button(
             _('Polish'),

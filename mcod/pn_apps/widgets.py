@@ -1,17 +1,20 @@
-import param
-import pandas as pd
-import string
 import random
+import string
 from uuid import uuid4
+
+import pandas as pd
+import param
 from bokeh.models.widgets.markups import Div
-from panel.util import as_unicode
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
+from panel.util import as_unicode
 from panel.util import isIn
+from panel.widgets import RadioButtonGroup
 from panel.widgets.base import Widget
 from panel.widgets.select import _MultiSelectBase, SelectBase
 
-from mcod.pn_apps.bokeh.widgets import BootstrapSelect as _BootstrapSelect
+from mcod.pn_apps.bokeh.widgets import BootstrapSelect as _BootstrapSelect, \
+    ExtendedRadioButtonGroup as _BkExtendedRadioButtonGroup
 from mcod.pn_apps.utils import change_theme
 
 
@@ -181,3 +184,7 @@ class TabbedBootstrapTableTemplate(BaseTableTemplate):
         context_data['tabs'] = tabs
         context_data['tab_id'] = str(uuid4())
         return context_data
+
+
+class ExtendedRadioButtonGroup(RadioButtonGroup):
+    _widget_type = _BkExtendedRadioButtonGroup

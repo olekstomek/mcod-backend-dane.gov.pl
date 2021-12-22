@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-10-28 10:54+0200\n"
+"POT-Creation-Date: 2021-12-06 17:27+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -207,9 +207,6 @@ msgid "Logo"
 msgstr ""
 
 msgid "Illustrative graphics"
-msgstr ""
-
-msgid "Preview"
 msgstr ""
 
 msgid "Preview link"
@@ -2514,6 +2511,36 @@ msgstr ""
 msgid "Unauthorized"
 msgstr ""
 
+msgid "Regions"
+msgstr ""
+
+msgid "locality"
+msgstr ""
+
+msgid "localadmin"
+msgstr ""
+
+msgid "county"
+msgstr ""
+
+msgid "region"
+msgstr ""
+
+msgid "country"
+msgstr ""
+
+msgid "Hierarchy label"
+msgstr ""
+
+msgid "Boundary box"
+msgstr ""
+
+msgid "Latitude"
+msgstr ""
+
+msgid "Longitude"
+msgstr ""
+
 msgid "Generated report file"
 msgstr ""
 
@@ -3102,6 +3129,9 @@ msgstr ""
 msgid "Open Data - Administration Panel"
 msgstr ""
 
+msgid "Showcases"
+msgstr ""
+
 msgid "Data suggestions"
 msgstr ""
 
@@ -3163,16 +3193,116 @@ msgstr ""
 msgid "Describes the presented data. Required item."
 msgstr ""
 
-msgid "Longitude"
-msgstr ""
-
-msgid "Latitude"
-msgstr ""
-
 msgid "Place"
 msgstr ""
 
 msgid "House number"
+msgstr ""
+
+msgid "Application type"
+msgstr ""
+
+msgid "Delete selected showcase proposals"
+msgstr ""
+
+msgid "Showcase creation task was launched!"
+msgstr ""
+
+#, python-format
+msgid "Passing at least one of: %(items)s is required!"
+msgstr ""
+
+msgid "link to the application"
+msgstr ""
+
+msgid "At least one url for mobile app (iOS, Android) is required!"
+msgstr ""
+
+msgid "At least one url for desktop app (Windows, Linux, MacOS) is required!"
+msgstr ""
+
+msgid "Mobile Applications"
+msgstr ""
+
+msgid "Desktop Applications"
+msgstr ""
+
+msgid "Portal WWW"
+msgstr ""
+
+msgid "Free App"
+msgstr ""
+
+msgid "Commercial App"
+msgstr ""
+
+msgid "is mobile app?"
+msgstr ""
+
+msgid "is desktop app?"
+msgstr ""
+
+msgid "Apple Store URL"
+msgstr ""
+
+msgid "Google Store URL"
+msgstr ""
+
+msgid "Linux App URL"
+msgstr ""
+
+msgid "MacOS App URL"
+msgstr ""
+
+msgid "Windows App URL"
+msgstr ""
+
+msgid "license type"
+msgstr ""
+
+msgid "Mobile Application"
+msgstr ""
+
+msgid "Desktop Application"
+msgstr ""
+
+msgid "attachement"
+msgstr ""
+
+msgid "showcase"
+msgstr ""
+
+msgid "Showcase Proposal"
+msgstr ""
+
+msgid "Showcase Proposals"
+msgstr ""
+
+msgid "acc: showcase proposal"
+msgstr ""
+
+msgid "Showcase Proposal Trash"
+msgstr ""
+
+msgid "Showcase Proposals Trash"
+msgstr ""
+
+msgid "Showcase"
+msgstr ""
+
+msgid "acc: Showcase"
+msgstr ""
+
+msgid "Showcase Trash"
+msgstr ""
+
+msgid "Showcases Trash"
+msgstr ""
+
+msgid "Desktop App"
+msgstr ""
+
+msgid "Mobile App"
 msgstr ""
 
 msgid "Delete selected special signs"
@@ -3416,7 +3546,7 @@ msgstr ""
 msgid "Maintened by"
 msgstr ""
 
-msgid "Ministry of Diginal Affairs"
+msgid "Chancellery of the Prime Minister"
 msgstr ""
 
 msgid "You have unsaved changes"
@@ -3439,12 +3569,9 @@ msgid ""
 msgstr ""
 
 msgid "Please correct the error below."
-msgid_plural " Please correct the errors below."
+msgid_plural "Please correct the errors below."
 msgstr[0] ""
 msgstr[1] ""
-
-msgid "Please correct the errors below."
-msgstr ""
 
 msgid "Search"
 msgstr ""
@@ -3919,6 +4046,14 @@ msgstr ""
 msgid "A COMMENT WAS POSTED ON THE ACCEPTED DATASET SUBMISSION"
 msgstr ""
 
+msgid ""
+"Wiadomość została wygenerowana automatycznie przez oprogramowanie portalu na "
+"podstawie złożonej przez użytkownika propozycji aplikacji. Prosimy nie "
+"używać funkcji Odpowiedz nadawcy.<br><br>Kontakt z Zespołem portalu Dane.gov."
+"pl: <a href=\"mailto:kontakt@dane.gov.pl\" target=\"_blank\">kontakt@dane."
+"gov.pl</a>"
+msgstr ""
+
 msgid "Registration confirmation"
 msgstr ""
 
@@ -3934,6 +4069,29 @@ msgstr ""
 msgid ""
 "In order to complete the registration process, click (or copy and paste in "
 "the address field of the web browser) into the link below."
+msgstr ""
+
+msgid "A comment was posted on the data set"
+msgstr ""
+
+msgid "A COMMENT WAS POSTED ON THE DATA SET"
+msgstr ""
+
+msgid "addresses:"
+msgstr ""
+
+msgid ""
+"Wiadomość została wygenerowana automatycznie przez oprogramowanie portalu "
+"Dane.gov.pl w wyniku zgłoszenia przez użytkownika uwagi o treści jak wyżej."
+"<br>Prosimy nie używać funkcji Odpowiedz nadawcy.<br><br>Kontakt z Zespołem "
+"portalu Dane.gov.pl: <a href=\"mailto:kontakt@dane.gov.pl\" target=\"_blank"
+"\">kontakt@dane.gov.pl</a>"
+msgstr ""
+
+msgid "recipients"
+msgstr ""
+
+msgid "The message was generated automatically."
 msgstr ""
 
 msgid "Reminder about the Data set update"
@@ -3978,18 +4136,6 @@ msgid ""
 "link."
 msgstr ""
 
-msgid "A comment was posted on the data set"
-msgstr ""
-
-msgid "A COMMENT WAS POSTED ON THE DATA SET"
-msgstr ""
-
-msgid "addresses:"
-msgstr ""
-
-msgid "recipients"
-msgstr ""
-
 msgid "A comment was posted on the resource"
 msgstr ""
 
@@ -4000,6 +4146,20 @@ msgstr ""
 msgid ""
 "One the resource %(title)s from data set %(dataset_title)s [%(url)s] was "
 "posted a comment:"
+msgstr ""
+
+#, python-format
+msgid ""
+"On the resource %(title)s [<a href=\"%(url)s\">%(url)s</a>] from data set "
+"%(dataset_title)s was posted a comment:"
+msgstr ""
+
+msgid ""
+"Wiadomość została wygenerowana automatycznie przez oprogramowanie portalu na "
+"podstawie złożonego przez użytkownika Zgłoszenia propozycji wykorzystania "
+"danych.<br>Prosimy nie używać funkcji Odpowiedz nadawcy.<br><br>Kontakt z "
+"Zespołem portalu Dane.gov.pl: <a href=\"mailto:kontakt@dane.gov.pl\" target="
+"\"_blank\">kontakt@dane.gov.pl</a>"
 msgstr ""
 
 msgid "Report of activity of observed objects on the dane.gov.pl portal"
@@ -4018,9 +4178,6 @@ msgid ""
 "If you wish to unsubscribe from receiving e-mail notifications, please use "
 "the \"Disable e-mail notifications\" button. This function is available on "
 "the data.gov.pl portal in the \"My account\" section, \"Observed\" tab."
-msgstr ""
-
-msgid "The message was generated automatically."
 msgstr ""
 
 msgid "Please do not reply to it."

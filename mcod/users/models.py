@@ -310,6 +310,12 @@ class User(AdminMixin, ApiMixin, AbstractBaseUser, PermissionsMixin, SoftDeletab
         return self._get_absolute_url(self.email_validation_url)
 
     @property
+    def extra_agents_list(self):
+        return self.mark_safe(', '.join(
+            ['<a href="%s" target="_blank">%s</a>' % (
+                x.admin_change_url, x.email) for x in self.extra_agent.order_by('email')]))
+
+    @property
     def password_reset_token(self):
         return self._get_or_create_token(1)
 

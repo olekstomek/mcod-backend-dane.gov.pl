@@ -116,7 +116,7 @@ class ResourceApiAttrs(ObjectAttrs, HighlightObjectMixin):
     if is_enabled('S35_high_value_data.be'):
         has_high_value_data = fields.Boolean()
     if is_enabled('S37_resources_admin_region_data.be'):
-        all_regions = fields.Nested(RegionSchema, many=True, data_key='regions')
+        regions = fields.Method('get_regions')
 
     class Meta:
         relationships_schema = ResourceApiRelationships
@@ -124,6 +124,9 @@ class ResourceApiAttrs(ObjectAttrs, HighlightObjectMixin):
         api_path = 'resources'
         url_template = '{api_url}/resources/{ident}'
         model = 'resources.Resource'
+
+    def get_regions(self, res):
+        return RegionSchema(many=True).dump(getattr(res, 'all_regions', res.regions))
 
 
 class ResourceApiAggregations(ExtSchema):

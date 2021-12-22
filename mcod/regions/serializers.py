@@ -19,6 +19,7 @@ class DefaultRegionMixin:
 class RegionSchema(DefaultRegionMixin, ExtSchema):
     name = TranslatedStr()
     region_id = fields.Str()
+    hierarchy_label = TranslatedStr()
 
 
 class RDFRegionSchema(DefaultRegionMixin, ExtSchema):

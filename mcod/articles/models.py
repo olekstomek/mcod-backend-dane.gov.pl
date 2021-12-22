@@ -169,6 +169,10 @@ class Article(ExtendedModel):
         return self._get_absolute_url(self.frontend_url)
 
     @property
+    def frontend_preview_url(self):
+        return self._get_absolute_url(f'/knowledge-base/preview/{self.id}')
+
+    @property
     def is_knowledge_base(self):
         return bool(self.category.type == 'knowledge_base')
 
@@ -186,6 +190,11 @@ class Article(ExtendedModel):
     @property
     def keywords(self):
         return self.tags
+
+    @property
+    def preview_link(self):
+        return self.mark_safe(
+            f'<a href="{self.frontend_preview_url}" class="btn" target="_blank">{_("Preview")}</a>')
 
     i18n = TranslationField(fields=("title", "notes"))
     tracker = FieldTracker()

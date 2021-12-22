@@ -1,0 +1,28 @@
+Zgłoszono propozycję aplikacji:
+
+E-mail zgłaszającego:
+{{ obj.applicant_email }}
+
+Tytuł aplikacji:
+{{ obj.title }}
+
+Kategoria:
+{{ obj.category_name }}
+
+Autor:
+{{ obj.author }}
+
+Adres url aplikacji:
+{{ obj.url }}
+
+Opis aplikacji:
+{{ obj.notes }}
+
+Lista zbiorów danych używanych przez aplikację (opcjonalne):
+{{ obj.datasets_links_info }}
+
+Lista zbiorów danych zewnętrznych używanych przez aplikację (opcjonalne):
+{{ obj.external_datasets_info }}
+
+Słowa kluczowe (opcjonalne):
+{{ obj.keywords|join:", " }}

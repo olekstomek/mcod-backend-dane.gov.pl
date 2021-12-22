@@ -7,7 +7,6 @@ from django.contrib.auth.admin import UserAdmin, AdminPasswordChangeForm
 from django.core.exceptions import PermissionDenied
 from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
-from django.utils.safestring import mark_safe
 from django_admin_multiple_choice_list_filter.list_filters import MultipleChoiceListFilter
 
 from mcod.lib.admin_mixins import (
@@ -224,12 +223,8 @@ class UserAdmin(DynamicAdminListDisplayMixin, StateStatusLabelAdminMixin, Histor
         form.declared_fields['phone'].required = form.base_fields['fullname'].required = request.user.is_normal_staff
         return form
 
-    @mark_safe
     def extra_agents_list(self, obj):
-        result = ', '.join(
-            ['<a href="%s" target="_blank">%s</a>' % (
-                x.admin_change_url, x.email) for x in obj.extra_agent.order_by('email')])
-        return result or '-'
+        return obj.extra_agents_list or '-'
     extra_agents_list.allow_tags = True
     extra_agents_list.short_description = _('extra agents')
 

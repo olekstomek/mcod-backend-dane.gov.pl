@@ -3,6 +3,7 @@ from django.apps import apps
 from django.conf import settings
 from django.contrib import admin
 from django.http import HttpRequest
+from django.template.defaultfilters import capfirst
 from django.urls import reverse
 from django.utils.encoding import force_text
 from django.utils.safestring import mark_safe
@@ -11,7 +12,6 @@ from django.utils.html import format_html
 from suit.templatetags.suit_menu import get_admin_site, Menu as SuitMenu
 
 from mcod.unleash import is_enabled
-
 
 register = template.Library()
 
@@ -59,7 +59,7 @@ def settings_value(name):
 
 @register.simple_tag
 def get_verbose_field_name(instance, field_name):
-    return instance._meta.get_field(field_name).verbose_name.title()
+    return capfirst(instance._meta.get_field(field_name).verbose_name)
 
 
 @register.simple_tag

@@ -37,7 +37,7 @@ Feature: Course details page in admin panel
     And admin's request posted course data is {"title": "test", "notes": "Opis...", "participants_number": "10", "venue": "Królewska 27", "status": "published"}
     And admin's page /academy/course/add/ is requested
     Then admin's response status code is 200
-    And admin's response page contains Proszę, popraw poniższe błędy.
+    And admin's response page contains Proszę, popraw poniższy błąd.
     And admin's response page contains <ul class="errorlist"><li>Kurs musi zawierać przynajmniej 1 sesję.</li></ul>
 
   Scenario: Course creation fails without title in form

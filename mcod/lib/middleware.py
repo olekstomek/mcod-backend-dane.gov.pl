@@ -52,7 +52,7 @@ class ComplementUserDataMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
-        if request.user and not request.user.is_anonymous:
+        if settings.COMPONENT == 'admin' and request.user and not request.user.is_anonymous:
             if request.user.is_normal_staff and not request.user.has_complete_staff_data:
                 allowed_paths = {
                     request.user.admin_change_url,

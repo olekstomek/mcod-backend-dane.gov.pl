@@ -424,19 +424,19 @@ def fake_client():
         def on_get(self, request, response):
             response.status = falcon.HTTP_200
             response.content_type = falcon.MEDIA_XML
-            response.body = xml_sample
+            response.text = xml_sample
 
     class JsonResource(object):
         def on_get(self, request, response):
             response.status = falcon.HTTP_200
             response.content_type = falcon.MEDIA_JSON
-            response.body = json_sample
+            response.text = json_sample
 
     class JsonapiResource(object):
         def on_get(self, request, response):
             response.status = falcon.HTTP_200
             response.content_type = 'application/vnd.api+json; charset=UTF-8'
-            response.body = json.dumps(jsonapi_sample)
+            response.text = json.dumps(jsonapi_sample)
 
     fake_api = falcon.API()
     fake_api.add_route("/xml", XmlResource())

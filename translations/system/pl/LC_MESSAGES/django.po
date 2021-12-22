@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-11-04 17:23+0100\n"
+"POT-Creation-Date: 2021-12-06 17:27+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -215,9 +215,6 @@ msgstr ""
 msgid "Illustrative graphics"
 msgstr "Grafika ilustracyjna"
 
-msgid "Preview"
-msgstr "Podgląd"
-
 msgid "Preview link"
 msgstr "Link podglądu"
 
@@ -225,7 +222,7 @@ msgid "Delete selected application proposals"
 msgstr "Usuń wybrane propozycje aplikacji"
 
 msgid "Datasets being used to build application"
-msgstr "Zbiory danych które zostały wykorzystane do budowy aplikacji"
+msgstr "Zbiory danych które zostały wykorzystane do budowy"
 
 msgid "External public data used"
 msgstr "Wykorzystane dane publiczne spoza portalu"
@@ -758,7 +755,7 @@ msgid ""
 "that set will be changed to a draft"
 msgstr ""
 "Jeśli wybierzesz szkic, status wszystkich opubilkowanych zasobów należących "
-"do tego zbioru zostanie zmieninony na szkic"
+"do tego zbioru zostanie zmieniony na szkic"
 
 msgid ""
 "Allowed file extensions: jpg, gif, png. For better readability, we "
@@ -790,15 +787,15 @@ msgid ""
 "You can't publish this dataset, because his organization has the status of a "
 "draft Please set status to draft or set status to publish for organization: "
 msgstr ""
-"Nie można opublikowac zbioru, ponieważ organizacja do której należy ma "
-"status szkic.Ustaw status szkic lub zmień opublikuj organizację: "
+"Nie można opublikować zbioru, ponieważ organizacja do której należy ma "
+"status szkic. Ustaw status szkic lub zmień opublikuj organizację: "
 
 msgid ""
 "You can't restore this dataset, because it's organization is still removed. "
 "Please first restore organization: "
 msgstr ""
 "Nie można przywrócić tego zbioru, ponieważ organizacja do której przynależy "
-"jest nadal w koszu.Przywróć najpierw organizację: "
+"jest nadal w koszu. Przywróć najpierw organizację: "
 
 msgid "yearly"
 msgstr "rocznie"
@@ -1274,7 +1271,7 @@ msgstr ""
 "{status_code})."
 
 msgid "HTTP Error"
-msgstr "Bląd HTTP"
+msgstr "Błąd HTTP"
 
 msgid ""
 "Data reading error because of IO error.\n"
@@ -1615,7 +1612,7 @@ msgid ""
 "The data source \"{obj}\" was added successfully. You may add another data "
 "source below."
 msgstr ""
-"Żródło danych \"{obj}\" zostało pomyślnie dodane. Możesz dodać kolejne "
+"Żródło danych \"{obj}\" zostało pomyślnie dodane. Możesz dodać kolejne "
 "źródło danych poniżej."
 
 #, python-brace-format
@@ -1627,7 +1624,7 @@ msgid ""
 "The data source \"{obj}\" was changed successfully. You may edit it again "
 "below."
 msgstr ""
-"Źródło danych \"{obj}\" zostało pomyślnie zmienione. Możesz edytować je "
+"Źródło danych \"{obj}\" zostało pomyślnie zmienione. Możesz edytować je "
 "ponownie poniżej."
 
 #, python-brace-format
@@ -1643,7 +1640,7 @@ msgid ""
 "The data source \"{obj}\" was changed successfully. You may add another "
 "{name} below."
 msgstr ""
-"Żródło danych \"{obj}\" zostało pomyślnie zmienione. Możesz dodać kolejne "
+"Żródło danych \"{obj}\" zostało pomyślnie zmienione. Możesz dodać kolejne "
 "{name} poniżej."
 
 msgid "Delete selected data sources"
@@ -1752,7 +1749,7 @@ msgid "Inaccessible API!"
 msgstr "Niedostępne API!"
 
 msgid "Data source for this institution already exists!"
-msgstr "Źródło danych dla tej instytucji już istnieje!"
+msgstr "Źródło danych dla tej instytucji już istnieje!"
 
 msgid "Trash (Data Sources)"
 msgstr "Kosz (źródła danych)"
@@ -2332,10 +2329,10 @@ msgid "newsletters"
 msgstr "newslettery"
 
 msgid "Planned sending date must be in future!"
-msgstr "Planowana data wysłania musi dotyczyć przyszłości!"
+msgstr "Planowana data wysłania musi dotyczyć przyszłości!"
 
 msgid "This date must be in future!"
-msgstr "Ta data musi dotyczyć przyszłości!"
+msgstr "Ta data musi dotyczyć przyszłości!"
 
 msgid "This is not html file!"
 msgstr "To nie jest plik html!"
@@ -2386,7 +2383,7 @@ msgid "Invalid action!"
 msgstr "Błędna akcja!"
 
 msgid "Email address already exists"
-msgstr "Adres poczty elektronicznej już istnieje"
+msgstr "Adres poczty elektronicznej już istnieje"
 
 msgid "Your newsletter subsciption awaits for confirmation"
 msgstr "Twoja subskrypcja newslettera oczekuje na potwierdzenie"
@@ -2432,7 +2429,7 @@ msgid ""
 "this institution will be changed to a draft.Also all resources of those "
 "datasets will be change to a draft"
 msgstr ""
-"Jeśli wybierzecz szkic, status wszystkich opublikowanych zbiorów danych "
+"Jeśli wybierzesz szkic, status wszystkich opublikowanych zbiorów danych "
 "należących do tej instytucji zostanie zmieniony na szkic. Również wszystkie "
 "zasoby tych zbiorów zostaną zmienione na szkic"
 
@@ -2660,6 +2657,9 @@ msgstr "Liczba pobrań zbiorów danych"
 msgid "Unauthorized"
 msgstr ""
 
+msgid "Regions"
+msgstr "Regiony"
+
 msgid "locality"
 msgstr "Miejscowość"
 
@@ -2674,6 +2674,9 @@ msgstr "Województwo"
 
 msgid "country"
 msgstr "Kraj"
+
+msgid "Hierarchy label"
+msgstr ""
 
 msgid "Boundary box"
 msgstr "Obszar ograniczający"
@@ -2874,7 +2877,7 @@ msgid ""
 "still a draft. You should first published that dataset: "
 msgstr ""
 "Nie można ustawić status opublikowany dla tego zasobu, ponieważ zbiór do "
-"którego przynalezy ma status szkic. Aby zmienić status należy najpierw "
+"którego przynależy ma status szkic. Aby zmienić status należy najpierw "
 "opublikować zbiór: "
 
 msgid "Do not allow user charts to be created"
@@ -2892,7 +2895,7 @@ msgid ""
 "published for that dataset: "
 msgstr ""
 "Nie można ustawić status opublikowany dla tego zasobu, ponieważ zbiór do "
-"którego przynalezy ma status szkic. Pozostaw status szkic lub zmień status "
+"którego przynależy ma status szkic. Pozostaw status szkic lub zmień status "
 "zbioru: "
 
 #, python-format
@@ -2903,8 +2906,8 @@ msgid ""
 "You can't restore this resource, because it's dataset is still removed. "
 "Please first restore dataset: "
 msgstr ""
-"Nie możesz przywrócic tego zasobu, ponieważ zbiór do którego przynalezy "
-"nadal jest w koszu.Przywróć najpierw zbiór: "
+"Nie możesz przywrócić tego zasobu, ponieważ zbiór do którego przynależy "
+"nadal jest w koszu. Przywróć najpierw zbiór: "
 
 msgid "File does not exist"
 msgstr "Plik nie istnieje"
@@ -2997,9 +3000,6 @@ msgstr "ma tabelę?"
 
 msgid "is chart creation blocked?"
 msgstr "tworzenie wykresu zablokowane?"
-
-msgid "Regions"
-msgstr "Regiony"
 
 msgid "acc: Resource"
 msgstr "zasób"
@@ -3299,6 +3299,9 @@ msgstr "Zablokowany"
 msgid "Open Data - Administration Panel"
 msgstr "Otwarte Dane - Panel Administracyjny"
 
+msgid "Showcases"
+msgstr "Innowacje"
+
 msgid "Data suggestions"
 msgstr "Propozycje nowych danych"
 
@@ -3365,6 +3368,115 @@ msgstr "Miejscowość"
 
 msgid "House number"
 msgstr "Numer domu"
+
+msgid "Application type"
+msgstr "Rodzaj aplikacji"
+
+msgid "Delete selected showcase proposals"
+msgstr "Usuń wybrane propozycje innowacji"
+
+msgid "Showcase creation task was launched!"
+msgstr "Zadanie utworzenia innowacji zostało uruchomione!"
+
+#, python-format
+msgid "Passing at least one of: %(items)s is required!"
+msgstr "Przekazanie co najmniej jednego z: %(items)s jest wymagane!"
+
+msgid "link to the application"
+msgstr "link do aplikacji"
+
+msgid "At least one url for mobile app (iOS, Android) is required!"
+msgstr ""
+"Co najmniej jeden link do aplikacji mobilnej (iOS, Android) jest wymagany!"
+
+msgid "At least one url for desktop app (Windows, Linux, MacOS) is required!"
+msgstr ""
+"Co najmniej jeden link do aplikacji desktopowej (Windows, Linux, MacOS) jest "
+"wymagany!"
+
+msgid "Mobile Applications"
+msgstr "Aplikacje mobilne"
+
+msgid "Desktop Applications"
+msgstr "Aplikacje desktopowe"
+
+msgid "Portal WWW"
+msgstr "Portal WWW"
+
+msgid "Free App"
+msgstr "Darmowa aplikacja"
+
+msgid "Commercial App"
+msgstr "Płatna aplikacja"
+
+msgid "is mobile app?"
+msgstr "aplikacja mobilna?"
+
+msgid "is desktop app?"
+msgstr "aplikacja desktopowa?"
+
+msgid "Apple Store URL"
+msgstr "URL do Apple Store"
+
+msgid "Google Store URL"
+msgstr "URL do Google Store"
+
+msgid "Linux App URL"
+msgstr "URL aplikacji Linux"
+
+msgid "MacOS App URL"
+msgstr "URL aplikacji MacOS"
+
+msgid "Windows App URL"
+msgstr "URL aplikacji Windows"
+
+msgid "license type"
+msgstr "rodzaj licencji"
+
+msgid "Mobile Application"
+msgstr "Aplikacja mobilna"
+
+msgid "Desktop Application"
+msgstr "Aplikacja desktopowa"
+
+msgid "attachement"
+msgstr "załącznik"
+
+msgid "showcase"
+msgstr "innowacja"
+
+msgid "Showcase Proposal"
+msgstr "Propozycja innowacji"
+
+msgid "Showcase Proposals"
+msgstr "Propozycje innowacji"
+
+msgid "acc: showcase proposal"
+msgstr "propozycję innowacji"
+
+msgid "Showcase Proposal Trash"
+msgstr "Propozycja innowacji - Kosz"
+
+msgid "Showcase Proposals Trash"
+msgstr "Propozycje innowacji - Kosz"
+
+msgid "Showcase"
+msgstr "Innowacja"
+
+msgid "acc: Showcase"
+msgstr "innowację"
+
+msgid "Showcase Trash"
+msgstr "Innowacja - Kosz"
+
+msgid "Showcases Trash"
+msgstr "Innowacje - Kosz"
+
+msgid "Desktop App"
+msgstr "Desktopowa"
+
+msgid "Mobile App"
+msgstr "Mobilna"
 
 msgid "Delete selected special signs"
 msgstr "Usuń wybrane znaki umowne"
@@ -3612,8 +3724,8 @@ msgstr "Przewodnik dla dostawców danych"
 msgid "Maintened by"
 msgstr "Serwis prowadzony przez"
 
-msgid "Ministry of Diginal Affairs"
-msgstr "Ministerstwo Cyfryzacji"
+msgid "Chancellery of the Prime Minister"
+msgstr "Kancelarię Prezesa Rady Ministrów"
 
 msgid "You have unsaved changes"
 msgstr "Masz niezapisane zmiany"
@@ -3639,17 +3751,12 @@ msgstr ""
 "Dodaj\n"
 " %(name)s"
 
-#, fuzzy
-#| msgid "Please correct the error below."
 msgid "Please correct the error below."
-msgid_plural " Please correct the errors below."
-msgstr[0] "Proszę popraw poniższy błąd"
-msgstr[1] "Proszę popraw poniższy błąd"
-msgstr[2] "Proszę popraw poniższy błąd"
-msgstr[3] "Proszę popraw poniższy błąd"
-
-msgid "Please correct the errors below."
-msgstr "Proszę, popraw poniższe błędy."
+msgid_plural "Please correct the errors below."
+msgstr[0] "Proszę, popraw poniższy błąd."
+msgstr[1] "Proszę, popraw poniższy błąd."
+msgstr[2] "Proszę, popraw poniższe błędy."
+msgstr[3] "Proszę, popraw poniższe błędy."
 
 msgid "Search"
 msgstr "Szukaj"
@@ -3745,7 +3852,7 @@ msgid "View"
 msgstr "Zobacz"
 
 msgid "Check correctness of file"
-msgstr "Sprawdź poprawność pliku"
+msgstr "Sprawdź poprawność pliku"
 
 msgid "File from disk"
 msgstr "Plik z dysku"
@@ -3947,7 +4054,7 @@ msgid "Sort instances by following fields in ascending or descending direction"
 msgstr ""
 
 msgid "Search instances by"
-msgstr "Wyszkujak instancje według"
+msgstr "Wyszkuj instancje według"
 
 msgid "This field provides the following queries:"
 msgstr ""
@@ -4135,6 +4242,14 @@ msgstr "Został dodany komentarz do propozycji nowych danych"
 msgid "A COMMENT WAS POSTED ON THE ACCEPTED DATASET SUBMISSION"
 msgstr "ZOSTAŁ DODANY KOMENTARZ DO PROPOZYCJI NOWYCH DANYCH"
 
+msgid ""
+"Wiadomość została wygenerowana automatycznie przez oprogramowanie portalu na "
+"podstawie złożonej przez użytkownika propozycji aplikacji. Prosimy nie "
+"używać funkcji Odpowiedz nadawcy.<br><br>Kontakt z Zespołem portalu Dane.gov."
+"pl: <a href=\"mailto:kontakt@dane.gov.pl\" target=\"_blank\">kontakt@dane."
+"gov.pl</a>"
+msgstr ""
+
 msgid "Registration confirmation"
 msgstr "Potwierdzenie rejestracji"
 
@@ -4153,6 +4268,29 @@ msgid ""
 msgstr ""
 "W celu dokończenia procesu rejestracji kliknij (lub skopiuj i wklej w pole "
 "adres przeglądarki internetowej) poniższy link."
+
+msgid "A comment was posted on the data set"
+msgstr "Została zgłoszona uwaga do zbioru"
+
+msgid "A COMMENT WAS POSTED ON THE DATA SET"
+msgstr "ZOSTAŁA ZGŁOSZONA UWAGA DO ZBIORU"
+
+msgid "addresses:"
+msgstr "adresaci:"
+
+msgid ""
+"Wiadomość została wygenerowana automatycznie przez oprogramowanie portalu "
+"Dane.gov.pl w wyniku zgłoszenia przez użytkownika uwagi o treści jak wyżej."
+"<br>Prosimy nie używać funkcji Odpowiedz nadawcy.<br><br>Kontakt z Zespołem "
+"portalu Dane.gov.pl: <a href=\"mailto:kontakt@dane.gov.pl\" target=\"_blank"
+"\">kontakt@dane.gov.pl</a>"
+msgstr ""
+
+msgid "recipients"
+msgstr "adresaci"
+
+msgid "The message was generated automatically."
+msgstr "Wiadomość została wygenerowana automatycznie."
 
 msgid "Reminder about the Data set update"
 msgstr "Przypomnienie o aktualizacji Zbioru danych"
@@ -4209,18 +4347,6 @@ msgstr ""
 "chwili. Proszę skorzystać z funkcji “Reset hasła” dostępnej na portalu "
 "podczas logowania."
 
-msgid "A comment was posted on the data set"
-msgstr "Została zgłoszona uwaga do zbioru"
-
-msgid "A COMMENT WAS POSTED ON THE DATA SET"
-msgstr "ZOSTAŁA ZGŁOSZONA UWAGA DO ZBIORU"
-
-msgid "addresses:"
-msgstr "adresaci:"
-
-msgid "recipients"
-msgstr "adresaci"
-
 msgid "A comment was posted on the resource"
 msgstr "Została zgłoszona uwaga do zasobu"
 
@@ -4234,6 +4360,22 @@ msgid ""
 msgstr ""
 "Do zasobu %(title)s ze zbioru %(dataset_title)s [%(url)s] została zgłoszona "
 "uwaga "
+
+#, python-format
+msgid ""
+"On the resource %(title)s [<a href=\"%(url)s\">%(url)s</a>] from data set "
+"%(dataset_title)s was posted a comment:"
+msgstr ""
+"Do zasobu %(title)s [<a href=\"%(url)s\">%(url)s</a>] ze zbioru "
+"%(dataset_title)s została zgłoszona uwaga:"
+
+msgid ""
+"Wiadomość została wygenerowana automatycznie przez oprogramowanie portalu na "
+"podstawie złożonego przez użytkownika Zgłoszenia propozycji wykorzystania "
+"danych.<br>Prosimy nie używać funkcji Odpowiedz nadawcy.<br><br>Kontakt z "
+"Zespołem portalu Dane.gov.pl: <a href=\"mailto:kontakt@dane.gov.pl\" target="
+"\"_blank\">kontakt@dane.gov.pl</a>"
+msgstr ""
 
 msgid "Report of activity of observed objects on the dane.gov.pl portal"
 msgstr "Raport aktywności obserwowanych obiektów na portalu dane.gov.pl"
@@ -4256,9 +4398,6 @@ msgstr ""
 "elektronicznej użyj przycisku \"Wyłącz powiadomienia e-mail\". Funkcja ta "
 "jest dostępna na portalu dane.gov.pl w sekcji \"Moje konto\", w zakładce "
 "\"Obserwowane\". "
-
-msgid "The message was generated automatically."
-msgstr "Ta wiadomość została wygenerowana automatycznie."
 
 msgid "Please do not reply to it."
 msgstr "Prosimy na nią nie odpowiadać."
@@ -4498,7 +4637,7 @@ msgid "Organization selection for an agent is obligatory!"
 msgstr "Wybór organizacji dla pełnomocnika jest obligatoryjny!"
 
 msgid "Selected institution must be on selected institutions list!"
-msgstr "Wybrana instutucja musi być na liście Wybranych instytucji!"
+msgstr "Wybrana instytucja musi być na liście Wybranych instytucji!"
 
 msgid "The two password fields didn't match."
 msgstr "Hasła nie pasują"
@@ -4682,7 +4821,7 @@ msgid "Invalid url address"
 msgstr "Niepoprawny adres url"
 
 msgid "Invalid notification type"
-msgstr "Niepoprawny typ notifikacji"
+msgstr "Niepoprawny typ notyfikacji"
 
 msgid "Invalid notification status"
 msgstr "Niepoprawny status notyfikacji"
@@ -4691,7 +4830,7 @@ msgid "Canceled"
 msgstr "Skasowany"
 
 msgid "Object republished"
-msgstr "Objekt opublikowany ponownie"
+msgstr "Obiekt opublikowany ponownie"
 
 msgid "Object withdrawaled"
 msgstr "Obiekt został wycofany z publikacji"
@@ -4709,7 +4848,7 @@ msgid "Related object republished"
 msgstr "Obiekt zależny został ponownie zaktualizowany"
 
 msgid "Related object withdrawaled"
-msgstr "Obiekt zależny został wycowany z publikacji"
+msgstr "Obiekt zależny został wycofany z publikacji"
 
 msgid "Results incresed"
 msgstr "Liczba wyników wzrosła"

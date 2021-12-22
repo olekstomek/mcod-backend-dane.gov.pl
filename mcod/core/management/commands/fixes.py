@@ -1,9 +1,11 @@
 import json
 import os
+import csv
 from pathlib import Path
 
 from django.core.management.base import BaseCommand, CommandError
 from django.db.models import F, Q
+from django_elasticsearch_dsl.registries import registry
 
 from mcod import settings
 from mcod.articles.models import ArticleCategory
@@ -178,6 +180,14 @@ class Command(BaseCommand):
             dest='action',
             const='resources-openness-score',
             help='Recompute openness score for resources with fifth degree',
+        )
+
+        parser.add_argument(
+            '--resources-links-protocol',
+            action='store_const',
+            dest='action',
+            const='resources-links-protocol',
+            help='Change resources links protocol to https based on protocol report',
         )
 
         parser.add_argument('-y, --yes', action='store_true', default=None,
@@ -639,6 +649,39 @@ class Command(BaseCommand):
             update_with_related_task.s('resources', 'Resource', res.id).apply_async(
                 countdown=2)
 
+    def fix_resources_links_protocol(self):
+        self.stdout.write('Reading resource data from https_protocol_report')
+        latest_report = None
+        try:
+            latest_report = Report.objects.filter(file__contains='http_protocol_resources').latest('created')
+        except Report.DoesNotExist:
+            self.stdout.write('No http_protocol_resources report,'
+                              ' you need to generate report first with: manage.py create_https_protocol_report.')
+        if latest_report:
+            file_path = latest_report.file
+            self.stdout.write(f'Reading data from report: {file_path}')
+            full_path = str(settings.ROOT_DIR) + file_path
+            with open(full_path) as csvfile:
+                report_data = csv.reader(csvfile, delimiter=',')
+                next(report_data, None)
+                resources_ids = [row[0] for row in report_data if 'Wymagana poprawa' in row[2]]
+            self.stdout.write(f'Found {len(resources_ids)} resources to update link protocol.')
+            edited_resources = []
+            resources = Resource.objects.filter(pk__in=resources_ids, link__contains='http://')
+            edited_ids = []
+            for res in resources:
+                old_link = res.link
+                res.link = old_link.replace('http://', 'https://')
+                edited_resources.append(res)
+                edited_ids.append(res.pk)
+            self.stdout.write('Attempting to update resources in db and ES.')
+            Resource.objects.bulk_update(edited_resources, ['link'])
+            docs = registry.get_documents((Resource,))
+            for doc in docs:
+                self.stdout.write(f'Updating document {doc} in ES')
+                doc().update(Resource.objects.filter(pk__in=edited_ids))
+            self.stdout.write(f'Updated {resources.count()} resources.')
+
     def handle(self, *args, **options):
         if not options['action']:
             raise CommandError(
@@ -648,7 +691,7 @@ class Command(BaseCommand):
                 "'--setverified', '--resources-links', '--resources-validation-results', "
                 "'--resources-has-table-has-map', '--submissions-to-new-format', '--submissions-to-old-format', "
                 "'--submissions-formdata-save', '--submissions-formdata-load', '--reports-id-column',"
-                " '--resources-openness-score'."
+                " '--resources-openness-score', '--resources-links-protocol'."
             )
         action = options['action']
 
@@ -670,7 +713,8 @@ class Command(BaseCommand):
             'submissions-formdata-save': self.save_form_page_submissions_form_data_to_file,
             'submissions-formdata-load': self.load_form_page_submissions_form_data_from_file,
             'reports-id-column': self.fix_reports_id_column,
-            'resources-openness-score': self.fix_resources_openness_score
+            'resources-openness-score': self.fix_resources_openness_score,
+            'resources-links-protocol': self.fix_resources_links_protocol
         }
         if action == 'all':
             self.fix_searchhistories()

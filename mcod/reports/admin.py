@@ -24,6 +24,7 @@ from mcod.reports.models import (
     UserReport,
 )
 from mcod.reports.tasks import generate_csv, create_daily_resources_report
+from mcod.unleash import is_enabled
 
 
 class UserFilter(AutocompleteFilter):
@@ -79,6 +80,8 @@ class MonitoringReportsAdmin(ReportsAdmin):
         'suggestions.DatasetComment',
         'suggestions.ResourceComment',
     ]
+    if is_enabled('S39_showcases.be'):
+        app_models.append('showcases.ShowcaseProposal')
 
     class Media:
         pass
