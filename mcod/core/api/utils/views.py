@@ -25,7 +25,9 @@ from mcod.resources import serializers as res_responses
 from mcod.resources import views as res_views
 from mcod.search import views as search_views
 from mcod.search.serializers import CommonObjectResponse
-
+from mcod.showcases import views as showcases_views
+from mcod.showcases.serializers import ShowcaseApiResponse
+from mcod.unleash import is_enabled
 
 connection = get_connection()
 
@@ -89,6 +91,10 @@ class SwaggerView(object):
 
 
 class OpenApiSpec(object):
+
+    showcases_enabled = is_enabled('S39_showcases.be')
+    dataset_showcases_enabled = is_enabled('S42_dataset_showcases.be')
+
     def on_get(self, req, resp, version=None, *args, **kwargs):
         if version and version not in DOC_VERSIONS:
             raise falcon.HTTPBadRequest(description='Invalid version')
@@ -109,6 +115,9 @@ class OpenApiSpec(object):
         spec.components.schema('ResourceTable', schema=res_responses.TableApiResponse, many=True)
         spec.components.schema('ResourceTableRow', schema=res_responses.TableApiResponse, many=False)
         spec.components.schema('Search', schema=CommonObjectResponse, many=True)
+        if self.showcases_enabled:
+            spec.components.schema('Showcases', schema=ShowcaseApiResponse, many=True)
+            spec.components.schema('Showcase', schema=ShowcaseApiResponse, many=False)
         spec.components.schema('Histories', schema=HistoryApiResponse, many=True)
         spec.components.schema('History', schema=HistoryApiResponse, many=False)
 
@@ -124,6 +133,8 @@ class OpenApiSpec(object):
         spec.path(resource=dat_views.DatasetSearchView)
         spec.path(resource=dat_views.DatasetApiView)
         spec.path(resource=dat_views.DatasetResourceSearchApiView)
+        if self.dataset_showcases_enabled:
+            spec.path(resource=showcases_views.DatasetShowcasesApiView)
         spec.path(resource=res_views.ResourcesView)
         spec.path(resource=res_views.ResourceView)
         # spec.path(resource=res_views.ChartsView)
@@ -131,6 +142,9 @@ class OpenApiSpec(object):
         spec.path(resource=res_views.ResourceTableView)
         spec.path(resource=res_views.ResourceTableRowView)
         spec.path(resource=search_views.SearchView)
+        if self.showcases_enabled:
+            spec.path(resource=showcases_views.ShowcasesApiView)
+            spec.path(resource=showcases_views.ShowcaseApiView)
         spec.path(resource=his_views.HistoriesView)
         spec.path(resource=his_views.HistoryView)
 

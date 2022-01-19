@@ -203,6 +203,31 @@ class LogEntry(BaseLogEntry):
     def user(self):
         return self.actor
 
+    def get_changed_value(self, field_name, default_value):
+        changes = json.loads(self.changes)
+        field_value = changes.get(field_name)
+        if field_value is None:
+            val = default_value
+        elif isinstance(field_value, list):
+            val = field_value[1]
+            if field_name == 'is_removed':
+                val = val == 'True'
+        else:
+            val = field_value
+        return val
+
+    @property
+    def is_create(self):
+        return self.action == self.Action.CREATE
+
+    @property
+    def is_update(self):
+        return self.action == self.Action.UPDATE
+
+    @property
+    def is_delete(self):
+        return self.action == self.Action.DELETE
+
     class Meta:
         get_latest_by = 'timestamp'
         ordering = ['-timestamp']

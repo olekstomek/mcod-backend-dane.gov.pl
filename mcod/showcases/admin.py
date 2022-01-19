@@ -46,7 +46,7 @@ class ShowcaseAdmin(DynamicAdminListDisplayMixin, CreatedByDisplayAdminMixin, CR
         'obj_history'
     ]
     list_display_links = ('title',)
-    obj_gender = 'f'
+    obj_gender = 'n'
     search_fields = ['title', 'created_by__email', 'url']
     list_filter = ['status', 'main_page_position']
     list_editable = ['status']
@@ -82,28 +82,13 @@ class ShowcaseAdmin(DynamicAdminListDisplayMixin, CreatedByDisplayAdminMixin, CR
         return form
 
     def get_fieldsets(self, request, obj=None):
-        tab_general_fields = (
-            'notes',
-            'author',
-            'external_datasets',
-            'url',
-            'image',
-            'image_alt',
-            'application_logo',
-            'illustrative_graphics',
-            'illustrative_graphics_alt',
-            'illustrative_graphics_img',
-            'main_page_position',
-            'status',
-        )
-        preview_link = ['preview_link'] if obj else []
         return [
             (
                 None,
                 {
                     'classes': ('suit-tab', 'suit-tab-general',),
                     'fields': (
-                        *preview_link,
+                        'preview_link',
                         'category',
                         'title',
                         'slug',
@@ -130,7 +115,20 @@ class ShowcaseAdmin(DynamicAdminListDisplayMixin, CreatedByDisplayAdminMixin, CR
                 None,
                 {
                     'classes': ('suit-tab', 'suit-tab-general',),
-                    'fields': tab_general_fields,
+                    'fields': (
+                        'notes',
+                        'author',
+                        'external_datasets',
+                        'url',
+                        'image',
+                        'image_alt',
+                        'application_logo',
+                        'illustrative_graphics',
+                        'illustrative_graphics_alt',
+                        'illustrative_graphics_img',
+                        'main_page_position',
+                        'status',
+                    ),
                 }
             ),
             (
@@ -193,22 +191,30 @@ class ShowcaseTrashAdmin(HistoryMixin, TrashMixin):
         'url',
     ]
 
-    readonly_fields = [
-        'category',
-        'title',
-        'author',
-        'datasets',
-        'app_info',
-        'license_type',
-        'image',
-        'notes',
-        'slug',
-        'status',
-        'tags_list_pl',
-        'tags_list_en',
-        'url',
-    ]
-    fields = [x for x in readonly_fields] + ['is_removed']
+    def _get_fields(self, obj=None):
+        app_info = ['app_info'] if obj and obj.is_app else []
+        license_type = ['license_type'] if obj and any([obj.is_www, obj.is_app]) else []
+        return [
+            'category',
+            'title',
+            'author',
+            'datasets',
+            *app_info,
+            *license_type,
+            'image',
+            'notes',
+            'slug',
+            'status',
+            'tags_list_pl',
+            'tags_list_en',
+            'url',
+        ]
+
+    def get_readonly_fields(self, request, obj=None):
+        return self._get_fields(obj=obj)
+
+    def get_fields(self, request, obj=None):
+        return self._get_fields(obj=obj) + ['is_removed']
 
     def app_info(self, obj):
         return obj.app_info
@@ -232,6 +238,10 @@ class ShowcaseProposalMixin(ActionsMixin, CRUDMessageMixin, HistoryMixin,
     obj_gender = 'f'
     ordering = ('-report_date', )
     search_fields = ['title']
+
+    def applicant_email_link(self, obj):
+        return obj.applicant_email_link or '-'
+    applicant_email_link.short_description = _('applicant email')
 
     def application_logo(self, obj):
         return obj.application_logo or '-'
@@ -284,7 +294,7 @@ class ShowcaseProposalAdmin(ShowcaseProposalMixin, ExportCsvMixin, SoftDeleteMix
             'illustrative_graphics_img',
             'datasets_admin',
             'external_datasets_admin',
-            'applicant_email',
+            'applicant_email_link',
             'comment',
             'report_date',
             ('decision', 'decision_date'),
@@ -310,7 +320,7 @@ class ShowcaseProposalAdmin(ShowcaseProposalMixin, ExportCsvMixin, SoftDeleteMix
         'app_info',
         'license_type',
         'notes',
-        'applicant_email',
+        'applicant_email_link',
         'author',
         'application_logo',
         'illustrative_graphics_img',
@@ -341,7 +351,8 @@ class ShowcaseProposalAdmin(ShowcaseProposalMixin, ExportCsvMixin, SoftDeleteMix
         if not obj.id:
             obj.created_by = request.user
         obj.modified_by = request.user
-        create_showcase = obj.tracker.has_changed('decision') and obj.is_accepted and not obj.showcase
+        create_showcase = obj.tracker.has_changed('decision') and obj.is_accepted and (
+            not obj.showcase or obj.showcase.is_permanently_removed)
         super().save_model(request, obj, form, change)
         if create_showcase:
             create_showcase_task.s(obj.id).apply_async(countdown=1)
@@ -350,7 +361,7 @@ class ShowcaseProposalAdmin(ShowcaseProposalMixin, ExportCsvMixin, SoftDeleteMix
 
 class ShowcaseProposalTrashAdmin(ShowcaseProposalMixin, TrashMixin):
 
-    def get_fields(self, request, obj=None):
+    def _get_fields(self, obj=None):
         app_info = ['app_info'] if obj and obj.is_app else []
         license_type = ['license_type'] if obj and any([obj.is_www, obj.is_app]) else []
         return [
@@ -366,33 +377,18 @@ class ShowcaseProposalTrashAdmin(ShowcaseProposalMixin, TrashMixin):
             'illustrative_graphics_img',
             'datasets_admin',
             'external_datasets_admin',
-            'applicant_email',
+            'applicant_email_link',
             'comment',
             'report_date',
             'decision',
             'decision_date',
-            'is_removed',
         ]
 
-    readonly_fields = [
-        'category',
-        'title',
-        'url',
-        'app_info',
-        'license_type',
-        'notes',
-        'keywords',
-        'author',
-        'application_logo',
-        'illustrative_graphics_img',
-        'datasets_admin',
-        'external_datasets_admin',
-        'applicant_email',
-        'comment',
-        'report_date',
-        'decision',
-        'decision_date',
-    ]
+    def get_fields(self, request, obj=None):
+        return self._get_fields(obj=obj) + ['is_removed']
+
+    def get_readonly_fields(self, request, obj=None):
+        return self._get_fields(obj=obj)
 
 
 if is_enabled('S39_showcases.be'):

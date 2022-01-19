@@ -54,7 +54,6 @@ def api_request_method_p(http_method, context):
 
 @when('resource api tabular data endpoint is requested')
 def api_request_endpoint(buzzfeed_fakenews_resource, context):
-    buzzfeed_fakenews_resource.revalidate()
     context.api.path = f'/resources/{buzzfeed_fakenews_resource.id}/data'
 
 
@@ -67,6 +66,11 @@ def api_request_data_endpoint(resource_with_date_and_datetime, context):
 @when(parsers.parse('api request path is {path}'))
 def api_request_path(path, context):
     context.api.path = path
+
+
+@when(parsers.parse('json api validation is skipped'))
+def api_validation_skipped(context):
+    context.api.skip_validation = True
 
 
 @then(parsers.parse('api request path from response is {field}'))
@@ -253,7 +257,7 @@ def api_send_request(context, mocker):
     #     kwargs['json'] = context.obj
 
     resp = TestClient(app).simulate_request(**kwargs)
-    skip_validation = False
+    skip_validation = getattr(context.api, 'skip_validation', False)
     api_version = resp.headers['x-api-version']
     if api_version == '1.0':
         skip_validation = True
@@ -365,7 +369,7 @@ def api_response_list_sorted_by(context, sort, sort_order):
             return obj['attributes'][field]
 
     sorted_items = sorted(items, key=lambda obj: key(obj, sort), reverse=reverse)
-    assert items == sorted_items
+    assert items == sorted_items, f'{items} is not equal {sorted_items}'
 
 
 @then(parsers.parse("api's response {aggregation} aggregation column {column} is {value:d}"))

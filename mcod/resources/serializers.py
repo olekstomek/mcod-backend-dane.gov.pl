@@ -81,6 +81,13 @@ class SpecialSignSchema(ExtSchema):
     description = TranslatedStr()
 
 
+class ResourceFileSchema(ExtSchema):
+    file_size = fields.Integer()
+    download_url = fields.Str()
+    format = fields.Str()
+    openness_score = fields.Integer()
+
+
 class ResourceApiAttrs(ObjectAttrs, HighlightObjectMixin):
     title = TranslatedStr()
     description = TranslatedStr()
@@ -103,20 +110,20 @@ class ResourceApiAttrs(ObjectAttrs, HighlightObjectMixin):
     file_size = fields.Integer()
     csv_file_url = fields.Str()
     csv_file_size = fields.Integer()
-    if is_enabled('S27_csv_to_jsonld.be'):
-        jsonld_file_url = fields.Str()
-        jsonld_file_size = fields.Integer()
-        jsonld_download_url = fields.Str()
+    jsonld_file_url = fields.Str()
+    jsonld_file_size = fields.Integer()
+    jsonld_download_url = fields.Str()
     download_url = fields.Str()
     csv_download_url = fields.Str()
     link = fields.Str()
     data_special_signs = fields.Nested(SpecialSignSchema, data_key='special_signs', many=True)
-    if is_enabled('S24_named_charts.be'):
-        is_chart_creation_blocked = fields.Bool()
+    is_chart_creation_blocked = fields.Bool()
     if is_enabled('S35_high_value_data.be'):
         has_high_value_data = fields.Boolean()
     if is_enabled('S37_resources_admin_region_data.be'):
         regions = fields.Method('get_regions')
+    if is_enabled('S40_new_file_model.be'):
+        files = fields.Method('get_files')
 
     class Meta:
         relationships_schema = ResourceApiRelationships
@@ -127,6 +134,9 @@ class ResourceApiAttrs(ObjectAttrs, HighlightObjectMixin):
 
     def get_regions(self, res):
         return RegionSchema(many=True).dump(getattr(res, 'all_regions', res.regions))
+
+    def get_files(self, res):
+        return ResourceFileSchema(many=True).dump(getattr(res, 'all_files', res.files))
 
 
 class ResourceApiAggregations(ExtSchema):
@@ -187,7 +197,7 @@ class ResourceRDFMixin(ProfilesMixin):
     access_url = ma.fields.Str(attribute='frontend_absolute_url')
     download_url = ma.fields.Str()
     format = ma.fields.Str()
-    file_mimetype = ma.fields.Str()
+    file_mimetype = ma.fields.Str(attribute='main_file_mimetype')
     file_size = ma.fields.Int()
     license = ma.fields.Function(lambda r: r.dataset.license_link)
 
@@ -387,8 +397,7 @@ class ChartApiRelationships(Relationships):
 class ChartApiAttrs(ObjectAttrs):
     chart = fields.Raw()
     is_default = fields.Boolean()
-    if is_enabled('S24_named_charts.be'):
-        name = fields.Str()
+    name = fields.Str()
 
     def get_chart(self, obj):
         return json.dumps(obj.chart)
@@ -398,10 +407,7 @@ class ChartApiAttrs(ObjectAttrs):
         object_type = 'chart'
         api_path = 'chart'
         model = 'resources.Chart'
-        if is_enabled('S24_named_charts.be'):
-            url_template = '{api_url}/resources/{data.resource.ident}/charts/{ident}'
-        else:
-            url_template = '{api_url}/charts/{ident}'
+        url_template = '{api_url}/resources/{data.resource.ident}/charts/{ident}'
 
 
 class ChartApiData(Object):

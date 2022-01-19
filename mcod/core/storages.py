@@ -100,6 +100,14 @@ class DatasetsImagesStorage(BaseFileSystemStorage):
         super().__init__(location=location, base_url=base_url, **kwargs)
 
 
+class DatasetsArchivesStorage(BaseFileSystemStorage):
+    def __init__(self, location=None, base_url=None, **kwargs):
+        archives_path = os.path.join(settings.DATASETS_MEDIA_ROOT, 'archives')
+        location = location or archives_path
+        base_url = base_url or '%s/%s' % (settings.DATASETS_URL, 'archives')
+        super().__init__(location=location, base_url=base_url, **kwargs)
+
+
 class DCATVocabulariesStorage(BaseFileSystemStorage):
 
     def __init__(self, location=None, base_url=None, **kwargs):
@@ -146,6 +154,7 @@ AVAILABLE_STORAGES = {
     'lab_reports': LaboratoryStorage,
     'meetings': MeetingStorage,
     'datasets': DatasetsImagesStorage,
+    'datasets_archives': DatasetsArchivesStorage,
     'dcat_vocabularies': DCATVocabulariesStorage,
     'chart_thumbs': ChartThumbsStorage,
     'showcases': ShowcasesStorage,

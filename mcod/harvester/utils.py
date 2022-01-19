@@ -127,6 +127,8 @@ def get_xml_schema_version(*, xml_path=None, xml_url=None):
 def get_xml_schema_path(version):
     if version == '1.3' and not is_enabled('S37_validate_resource_link_scheme_harvester.be'):
         raise KeyError(version)
+    if version == '1.4' and not is_enabled('S41_xml_harvester_special_signs.be'):
+        raise KeyError(version)
     return settings.HARVESTER_XML_VERSION_TO_SCHEMA_PATH[version]
 
 

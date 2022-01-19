@@ -133,7 +133,9 @@
         // Update input count right before submit
         if ($inputs && $inputs.length) {
             var $last_input = $inputs.last();
-            var selector = $(this).selector;
+            // $(this).selector property was removed in jQuery 3.0, visit: https://api.jquery.com/selector/#selector1
+            //var selector = $(this).selector;
+            var selector = '.suit-sortable';
             $($last_input[0].form).submit(function (e) {
                 var i = 0, value;
                 $(selector).each(function () {

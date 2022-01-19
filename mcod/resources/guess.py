@@ -12,6 +12,7 @@ from tabulator import Stream
 from tabulator.exceptions import FormatError, EncodingError
 from zipfile import BadZipFile
 from mcod import settings
+from mcod.resources.geo import is_json_stat
 
 
 GUESS_FROM_BUFFER = (
@@ -72,22 +73,35 @@ def _csv(path, encoding):
         return None
 
 
-def _json(source, encoding, content_type='application/json'):
+def _json(source, encoding):
     try:
         if isinstance(source, str):
             with open(source, encoding=encoding) as f:
                 json.load(f)
-        else:
-            source.seek(0)
-            json.load(source, encoding=encoding)
-        return 'json'
+        elif isinstance(source, bytes):
+            data = io.BytesIO(source)
+            data.seek(0)
+            json.load(data, encoding=encoding)
+        _format = 'json'
+        # check if valid json is also json-ld.
+        try:
+            graph = rdflib.Graph()
+            graph.parse(source, format='json-ld')
+            if len(graph):
+                _format = 'jsonld'
+        except Exception:
+            pass
+        if _format == 'json' and is_json_stat(source):
+            _format = 'jsonstat'
+        return _format
     except (json.decoder.JSONDecodeError, UnicodeDecodeError):
         return None
 
 
 def _xml(source, encoding):
     try:
-        if not isinstance(source, str):
+        if isinstance(source, bytes):
+            source = io.BytesIO(source)
             source.seek(0)
         etree.parse(source, etree.XMLParser())
         return 'xml'
@@ -99,7 +113,8 @@ def _html(source, encoding):
     try:
         if isinstance(source, str):
             source = open(os.path.realpath(source), 'rb')
-        if isinstance(source, io.IOBase):
+        elif isinstance(source, bytes):
+            source = io.BytesIO(source)
             source.seek(0)
         is_html = bool(BeautifulSoup(source.read(), "html.parser").find('html'))
         return 'html' if is_html else None
@@ -107,35 +122,40 @@ def _html(source, encoding):
         return None
 
 
-def _rdf(source, encoding):
-    _extension = None
+def _rdf(source, encoding, extensions=('rdf', 'n3', 'nt', 'nq', 'trig', 'trix', 'rdfa', 'xml', 'ttl')):
+    ext = None
     if isinstance(source, str):
-        _extension = source.split('.')[-1]
+        ext = source.split('.')[-1]
     else:
         source.seek(0)
-    _format = 'xml' if _extension not in ('rdf', 'n3', 'nt', 'trix', 'rdfa', 'xml') else _extension
+    _format = settings.RDF_FORMAT_TO_MIMETYPE.get(ext) if ext in extensions else 'xml'
     try:
-        _g = rdflib.Graph()
-        _g.parse(source, format=_format)
-        return 'rdf'
+        graph = rdflib.ConjunctiveGraph()
+        graph.parse(source, format=_format)
+        if len(graph):
+            if ext in ('nt', 'nq', 'n3', 'trig', 'trix', 'ttl'):
+                return ext
+            elif ext == 'nquads':
+                return 'nq'
+            elif ext == 'turtle':
+                return 'ttl'
+            return 'rdf'
+        return None
     except (TypeError, rdflib.exceptions.ParserError, xml.sax._exceptions.SAXParseException):
         return None
 
 
 def _jsonapi(source, encoding, content_type=None):
-    if not isinstance(source, str):
-        source.seek(0)
     if _json(source, encoding):
+        if isinstance(source, bytes):
+            source = io.BytesIO(source)
+        elif isinstance(source, str):
+            source = open(os.path.realpath(source))
         try:
-            with open(settings.JSONAPI_SCHEMA_PATH, 'r') as schemafile:
+            with open(settings.JSONAPI_SCHEMA_PATH) as schemafile:
                 schema = json.load(schemafile)
-
-            if isinstance(source, str):
-                source_dict = json.load(open(source, 'r'))
-            else:
-                source.seek(0)
-                source_dict = json.load(source)
-            jsonschema.validate(source_dict, schema)
+            source.seek(0)
+            jsonschema.validate(json.load(source), schema)
             return 'jsonapi'
         except jsonschema.ValidationError:
             pass
@@ -147,25 +167,21 @@ def _openapi(path, encoding, content_type=None):
     pass
 
 
-def api_format(response, encoding):
-    encoding = encoding or 'utf-8'
-    source = io.BytesIO(response.content)
+def api_format(source):
     for func in (_jsonapi, _openapi, _json, _xml):
-        res = func(source, encoding)
+        res = func(source, 'utf-8')
         if res:
             return res
     return None
 
 
-def web_format(source, encoding):
-    if hasattr(source, 'content'):
-        source = io.BytesIO(source.content)
-    return _html(source, encoding)
+def web_format(source):
+    return _html(source, None)
 
 
 def text_file_format(path, encoding):  # noqa: C901
     encoding = encoding or 'utf-8'
-    for func in (_json, _rdf, _html, _xml, _csv):
+    for func in (_rdf, _json, _html, _xml, _csv):
         res = func(path, encoding)
         if res:
             return res

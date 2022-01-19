@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-12-06 17:27+0100\n"
+"POT-Creation-Date: 2021-12-30 18:42+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -730,6 +730,15 @@ msgid ""
 "that set will be changed to a draft"
 msgstr ""
 
+msgid "has high value data"
+msgstr ""
+
+msgid "Yes"
+msgstr ""
+
+msgid "No"
+msgstr ""
+
 msgid ""
 "Allowed file extensions: jpg, gif, png. For better readability, we "
 "recommend .png files with a transparent background"
@@ -855,12 +864,6 @@ msgstr ""
 
 #, python-format
 msgid "The value must be between %(min)s and %(max)s"
-msgstr ""
-
-msgid "No"
-msgstr ""
-
-msgid "Yes"
 msgstr ""
 
 msgid "id"
@@ -1874,6 +1877,9 @@ msgstr ""
 msgid "View %s - trash"
 msgstr ""
 
+msgid "Removed:"
+msgstr ""
+
 #, python-format
 msgid "Change history: %s"
 msgstr ""
@@ -2724,6 +2730,18 @@ msgstr ""
 msgid "Do not allow user charts to be created"
 msgstr ""
 
+msgid "File as CSV"
+msgstr ""
+
+msgid "File as JSON-LD"
+msgstr ""
+
+msgid "File info"
+msgstr ""
+
+msgid "File encoding"
+msgstr ""
+
 msgid "Data source"
 msgstr ""
 
@@ -2773,19 +2791,7 @@ msgstr ""
 msgid "Packed file"
 msgstr ""
 
-msgid "File as CSV"
-msgstr ""
-
-msgid "File as JSON-LD"
-msgstr ""
-
 msgid "File mimetype"
-msgstr ""
-
-msgid "File info"
-msgstr ""
-
-msgid "File encoding"
 msgstr ""
 
 msgid "Resource Link"
@@ -3129,7 +3135,7 @@ msgstr ""
 msgid "Open Data - Administration Panel"
 msgstr ""
 
-msgid "Showcases"
+msgid "PoCoTo"
 msgstr ""
 
 msgid "Data suggestions"
@@ -3227,13 +3233,22 @@ msgstr ""
 msgid "Desktop Applications"
 msgstr ""
 
-msgid "Portal WWW"
+msgctxt "showcase category name"
+msgid "Website"
 msgstr ""
 
 msgid "Free App"
 msgstr ""
 
 msgid "Commercial App"
+msgstr ""
+
+msgctxt "license type"
+msgid "Free"
+msgstr ""
+
+msgctxt "license type"
+msgid "Commercial"
 msgstr ""
 
 msgid "is mobile app?"
@@ -3288,6 +3303,9 @@ msgid "Showcase Proposals Trash"
 msgstr ""
 
 msgid "Showcase"
+msgstr ""
+
+msgid "Showcases"
 msgstr ""
 
 msgid "acc: Showcase"

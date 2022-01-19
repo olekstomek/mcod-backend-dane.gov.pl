@@ -24,12 +24,11 @@ class ExternalDataset(ExtSchema):
 
 class ShowcaseApiRelationships(Relationships):
     datasets = fields.Nested(
-        Relationship, many=False, default=[], _type='dataset', url_template='{object_url}/datasets')
+        Relationship, many=False, default=[], _type='dataset', url_template='{object_url}/datasets', required=True)
     subscription = fields.Nested(
         Relationship, many=False, _type='subscription', url_template='{api_url}/auth/subscriptions/{ident}')
 
-    @pre_dump
-    def prepare_datasets(self, data, **kwargs):
+    def filter_data(self, data, **kwargs):
         if not self.context.get('is_listing', False) and 'datasets' in data:
             data['datasets'] = data['datasets'].filter(status='published')
         return data
@@ -139,7 +138,7 @@ class ShowcaseTypeAggregation(ShowcaseAggregationMixin):
 class ShowcaseProposalCSVSerializer(CSVSerializer):
     id = fields.Int(data_key='id', required=True, example=77)
     category_name = fields.Str(data_key=_('Category'), example='Aplikacja')
-    title = fields.Str(data_key=_('Name'), example='Nazwa innowacji...')
+    title = fields.Str(data_key=_('Name'), example='Propozycja aplikacji')
     notes = fields.Str(data_key=_('Notes'), default='', example='opis...')
     url = fields.Str(data_key=_('App URL'), default='', example='http://example.com')
     author = fields.Str(data_key=_('Author'), default='', example='Jan Kowalski')

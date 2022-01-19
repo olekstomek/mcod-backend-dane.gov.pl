@@ -6,7 +6,7 @@ from mcod.core.apps import ExtendedAppMixin
 
 class ShowcasesConfig(ExtendedAppMixin, AppConfig):
     name = 'mcod.showcases'
-    verbose_name = _('Showcases')
+    verbose_name = _('PoCoTo')
 
     def ready(self):
         from mcod.showcases.models import Showcase, ShowcaseProposal, ShowcaseTrash

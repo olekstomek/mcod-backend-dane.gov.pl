@@ -53,6 +53,7 @@ class ShowcaseForm(ModelFormWithKeywords):
             'desktop_windows_url',
             'desktop_linux_url',
             'desktop_macos_url',
+            'license_type',
             'notes',
             'author',
             'external_datasets',
@@ -84,14 +85,21 @@ class ShowcaseForm(ModelFormWithKeywords):
 
     def clean(self):
         data = super().clean()
+        category = data.get('category')
         is_mobile_app = data.get('is_mobile_app', False)
         is_desktop_app = data.get('is_desktop_app', False)
+        license_type = data.get('license_type')
         mobile_apple_url = data.get('mobile_apple_url')
         mobile_google_url = data.get('mobile_google_url')
         desktop_linux_url = data.get('desktop_linux_url')
         desktop_macos_url = data.get('desktop_macos_url')
         desktop_windows_url = data.get('desktop_windows_url')
 
+        if category in ('app', 'www'):
+            if not license_type:
+                self.add_error('license_type', _('This field is required!'))
+        else:
+            data['license_type'] = ''
         if is_mobile_app and not any([mobile_apple_url, mobile_google_url]):
             self.add_error(None, _('At least one url for mobile app (iOS, Android) is required!'))
 

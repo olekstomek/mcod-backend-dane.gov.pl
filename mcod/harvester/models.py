@@ -23,7 +23,7 @@ from marshmallow import ValidationError as SchemaValidationError
 from mcod import settings
 from mcod.categories.models import Category
 from mcod.core.db.managers import TrashManager
-from mcod.core.db.models import TrashModelBase
+from mcod.core.db.models import LogMixin, TrashModelBase
 from mcod.core.models import SoftDeletableModel
 from mcod.harvester.managers import DataSourceManager
 from mcod.harvester.utils import (
@@ -35,6 +35,8 @@ from mcod.harvester.utils import (
     retrieve_to_file
 )
 from mcod.organizations.models import Organization
+from mcod.unleash import is_enabled
+
 
 logger = logging.getLogger('mcod')
 
@@ -80,7 +82,7 @@ IMPORT_STATUS_CHOICES = (
 )
 
 
-class DataSource(SoftDeletableModel, TimeStampedModel):
+class DataSource(LogMixin, SoftDeletableModel, TimeStampedModel):
     """Model of data source."""
     INSTITUTION_TYPE_CHOICES = Organization.INSTITUTION_TYPE_CHOICES
     SOURCE_TYPE_CHOICES = (
@@ -490,6 +492,7 @@ class DataSource(SoftDeletableModel, TimeStampedModel):
         modified = data.pop('modified', None)
         modified = modified or data.get('created')
         int_ident = data.pop('int_ident', None)
+        special_signs = data.pop('special_signs', [])
         if int_ident:
             created = False
             obj = self.resource_model.raw.filter(dataset=dataset, id=int_ident).first()
@@ -502,6 +505,8 @@ class DataSource(SoftDeletableModel, TimeStampedModel):
                 dataset=dataset, ext_ident=data['ext_ident'], defaults=data)
         if obj and modified:  # TODO: find a better way to save modification date with value from data.
             self.resource_model.raw.filter(id=obj.id).update(modified=modified)
+        if is_enabled('S41_xml_harvester_special_signs.be'):
+            obj.special_signs.set(obj.special_signs.model.objects.filter(symbol__in=special_signs))
         return obj, created
 
     def _import_from(self, path):

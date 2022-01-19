@@ -17,7 +17,7 @@ def create_showcase_proposal_task(data):
 @shared_task
 def create_showcase_task(showcase_proposal_id):
     model = apps.get_model('showcases.ShowcaseProposal')
-    obj = model.objects.filter(id=showcase_proposal_id, showcase=None).first()
+    obj = model.objects.filter(id=showcase_proposal_id).first()
     created = obj.convert_to_showcase() if obj else False
     return {
         'created': created,

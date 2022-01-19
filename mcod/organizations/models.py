@@ -1,5 +1,3 @@
-import logging
-
 import phonenumbers
 from bs4 import BeautifulSoup
 from django.contrib.auth import get_user_model
@@ -22,8 +20,6 @@ from mcod.organizations.signals import remove_related_datasets
 
 User = get_user_model()
 
-signal_logger = logging.getLogger('signals')
-
 
 class Organization(ExtendedModel):
     INSTITUTION_TYPE_PRIVATE = 'private'
@@ -44,7 +40,7 @@ class Organization(ExtendedModel):
                     search_signals.remove_document_with_related, core_signals.notify_removed),
     }
 
-    title = models.CharField(max_length=100, verbose_name=_('Name'))
+    title = models.CharField(max_length=200, verbose_name=_('Name'))
     description = models.TextField(blank=True, null=True, verbose_name=_('Description'))
     image = models.ImageField(max_length=254, storage=storages.get_storage('organizations'),
                               upload_to='%Y%m%d',
@@ -216,16 +212,7 @@ class Organization(ExtendedModel):
 
 @receiver(remove_related_datasets, sender=Organization)
 def remove_datasets_after_organization_removed(sender, instance, *args, **kwargs):
-    signal_logger.debug(
-        'Removing related datasets',
-        extra={
-            'sender': '{}.{}'.format(sender._meta.model_name, sender._meta.object_name),
-            'instance': '{}.{}'.format(instance._meta.model_name, instance._meta.object_name),
-            'instance_id': instance.id,
-            'signal': 'remove_related_datasets'
-        },
-        exc_info=1
-    )
+    sender.log_debug(instance, 'Removing related datasets', 'remove_related_datasets')
 
     if instance.is_removed:
         for dataset in instance.datasets.all():

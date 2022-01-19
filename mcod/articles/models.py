@@ -1,5 +1,3 @@
-import logging
-
 from django.contrib.auth import get_user_model
 from django.contrib.postgres.indexes import GinIndex
 from django.db import models
@@ -18,8 +16,6 @@ from mcod.lib.widgets import RichTextUploadingField
 
 
 User = get_user_model()
-
-signal_logger = logging.getLogger('signals')
 
 
 CATEGORY_TYPES = (
@@ -85,16 +81,7 @@ class ArticleCategory(ExtendedModel):
 
 @receiver(update_related_articles, sender=ArticleCategory)
 def reindex_related_articles(sender, instance, *args, **kwargs):
-    signal_logger.debug(
-        'Reindex related articles',
-        extra={
-            'sender': '{}.{}'.format(sender._meta.model_name, sender._meta.object_name),
-            'instance': '{}.{}'.format(instance._meta.model_name, instance._meta.object_name),
-            'instance_id': instance.id,
-            'signal': 'update_related_articles'
-        },
-        exc_info=1
-    )
+    sender.log_debug(instance, 'Reindex related articles', 'update_related_articles')
     for article in instance.article_set.all():
         search_signals.update_document.send(article._meta.model, article)
 

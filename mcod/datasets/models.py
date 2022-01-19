@@ -1,5 +1,9 @@
+import json
+import os
 import itertools
 import logging
+from types import SimpleNamespace
+from uuid import uuid4
 
 from constance import config
 from django.utils.functional import cached_property
@@ -26,12 +30,13 @@ from mcod.core.db.managers import TrashManager
 from mcod.core.db.models import ExtendedModel, update_watcher, TrashModelBase
 from mcod.counters.models import ResourceDownloadCounter, ResourceViewCounter
 from mcod.datasets.signals import remove_related_resources
+from mcod.datasets.tasks import archive_resources_files
 from mcod.core.storages import get_storage
 from mcod.regions.models import Region
 from mcod.unleash import is_enabled
 
 
-signal_logger = logging.getLogger('signals')
+logger = logging.getLogger('mcod')
 
 User = get_user_model()
 
@@ -64,6 +69,10 @@ TYPE = (
     ('dataset', _('dataset')),
     ('article', _('article'))
 )
+
+
+def archives_upload_to(instance, filename):
+    return f'dataset_{instance.pk}/{filename}'
 
 
 class Dataset(ExtendedModel):
@@ -210,10 +219,17 @@ class Dataset(ExtendedModel):
     )
     image_alt = models.CharField(max_length=255, blank=True, verbose_name=_('Alternative text'))
     dcat_vocabularies = JSONField(blank=True, null=True, verbose_name=_("Controlled Vocabularies"))
-    has_high_value_data = models.BooleanField(verbose_name=_('Has high value data'), default=False)
+    archived_resources_files = models.FileField(
+        storage=get_storage('datasets_archives'), blank=True, null=True,
+        upload_to=archives_upload_to, max_length=2000, verbose_name=_("Archived resources files")
+    )
 
     def __str__(self):
         return self.title
+
+    @cached_property
+    def has_high_value_data(self):
+        return self.resources.filter(has_high_value_data=True).exists()
 
     @cached_property
     def has_table(self):
@@ -233,7 +249,7 @@ class Dataset(ExtendedModel):
         if self.source:
             emails.extend(self.source.emails_list)
         else:
-            if self.update_notification_recipient_email and is_enabled('S36_dataset_resource_comment_recipient.be'):
+            if self.update_notification_recipient_email:
                 emails.append(self.update_notification_recipient_email)
             elif self.modified_by:
                 emails.append(self.modified_by.email)
@@ -437,6 +453,28 @@ class Dataset(ExtendedModel):
         resources_ids = list(self.resources.values_list('pk', flat=True))
         return Region.objects.filter(resource__pk__in=resources_ids).distinct()
 
+    @cached_property
+    def showcases_published(self):
+        return self.showcases.filter(status='published')
+
+    def archive_files(self):
+        archive_resources_files.s(dataset_id=self.pk).apply_async(countdown=settings.DATASET_ARCHIVE_FILES_TASK_DELAY)
+
+    @classmethod
+    def get_license_data(cls, name, lang=None):
+        data = None
+        if name not in ['CC0', 'CCBY', 'CCBY-SA', 'CCBY-NC', 'CCBY-NC-SA', 'CCBY-ND', 'CCBY-NC-ND']:
+            return data
+        with open(os.path.join(settings.DATA_DIR, 'datasets', 'licenses.json')) as fp:
+            json_data = json.load(fp)
+            try:
+                lang = lang or get_language()
+                data = json_data[lang][name]
+                data = SimpleNamespace(id=uuid4(), **data)
+            except Exception as exc:
+                logger.debug(exc)
+        return data
+
     i18n = TranslationField(fields=("title", "notes", "image_alt"))
     objects = DatasetManager()
     trash = TrashManager()
@@ -466,16 +504,7 @@ def handle_dataset_without_resources(sender, instance, *args, **kwargs):
 
 @receiver(remove_related_resources, sender=Dataset)
 def remove_resources_after_dataset_removed(sender, instance, *args, **kwargs):
-    signal_logger.debug(
-        'Remove related resources',
-        extra={
-            'sender': '{}.{}'.format(sender._meta.model_name, sender._meta.object_name),
-            'instance': '{}.{}'.format(instance._meta.model_name, instance._meta.object_name),
-            'instance_id': instance.id,
-            'signal': 'remove_related_resources'
-        },
-        exc_info=1
-    )
+    sender.log_debug(instance, 'Remove related resources', 'remove_related_resources')
     if instance.is_removed:
         for resource in instance.resources.all():
             resource.delete()
@@ -495,17 +524,11 @@ class DatasetTrash(Dataset, metaclass=TrashModelBase):
 
 def update_related_watchers(sender, instance, *args, state=None, **kwargs):
     state = 'm2m_{}'.format(state)
-
-    signal_logger.debug(
+    sender.log_debug(
+        instance,
         '{} {}'.format(sender._meta.object_name, state),
-        extra={
-            'sender': '{}.{}'.format(sender._meta.app_label, sender._meta.object_name),
-            'instance': '{}.{}'.format(instance._meta.app_label, instance._meta.object_name),
-            'instance_id': instance.id,
-            'state': state,
-            'signal': 'notify_{}'.format(state)
-        },
-        exc_info=1
+        'notify_{}'.format(state),
+        state,
     )
     instances = list(instance.applications.all()) + list(instance.articles.all())
     instances.append(instance.organization)

@@ -58,7 +58,7 @@ Feature: Resource from link creation
 
   Scenario: Restored draft api resource doesnt validate local file
     Given draft remote file resource of api type with id 998
-    Then set status published on resource with id 998
+    Then set status to published on resource with id 998
     And resource with id 998 attributes are equal {"file_tasks_last_status": "", "link_tasks_last_status": "SUCCESS", "type": "api"}
 
   Scenario: Resource creation with regions is ok and regions are imported from api
@@ -69,3 +69,22 @@ Feature: Resource from link creation
     Then admin's response status code is 200
     And resource has assigned main and additional regions
     And admin's response page contains /change/">test</a>" został pomyślnie dodany.
+
+  Scenario: No Copy to new resource button creation page
+    Given admin's request logged user is active user
+    When admin's page /resources/resource/add/ is requested
+    Then admin's response status code is 200
+    And admin's response page not contains Kopiuj do nowego
+    And admin's response page not contains <a href="/resources/resource/add/?from_id=
+
+@elasticsearch
+Feature: Resource with file creation
+  Scenario: Resource with file creation is ok
+    Given dataset with id 999
+    When admin's request method is POST
+    And admin's request posted resource data is {"title": "test resource title", "description": "more than 20 characters", "switcher": "file", "link": "", "dataset": 999, "data_date": "22.05.2020", "status": "published"}
+    And request resource posted data contains simple file
+    And admin's page /resources/resource/add/ is requested
+    Then admin's response status code is 200
+    And admin's response page contains /change/">test resource title</a>" został pomyślnie dodany.
+    And resource has assigned file

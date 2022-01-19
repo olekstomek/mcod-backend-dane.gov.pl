@@ -287,12 +287,15 @@ class HighValueDataAggregation(schemas.ExtSchema):
     title = fields.String()
     doc_count = fields.Integer()
 
-    @ma.pre_dump(pass_many=True)
-    def prepare_data(self, data, many, **kwargs):
-        val_dict = {0: _('No'), 1: _('Yes')}
+    @ma.post_dump(pass_many=True)
+    def ensure_keys(self, data, many, **kwargs):
+        val_dict = {'false': _('No'), 'true': _('Yes')}
         if many:
+            values = [x['id'] for x in data]
+            if 'true' not in values:
+                data.append({'id': 'true', 'doc_count': 0})
             for item in data:
-                item['title'] = val_dict.get(item.key)
+                item['title'] = str(val_dict.get(item['id']))
         return data
 
 
@@ -372,6 +375,13 @@ class DatasetApiRelationships(Relationships):
         _type='resource',
         url_template='{object_url}/resources'
     )
+    if is_enabled('S42_dataset_showcases.be'):
+        showcases = fields.Nested(
+            Relationship,
+            many=False, default=[],
+            _type='showcase',
+            url_template='{object_url}/showcases'
+        )
     subscription = fields.Nested(
         Relationship,
         many=False,
@@ -379,13 +389,12 @@ class DatasetApiRelationships(Relationships):
         url_template='{api_url}/auth/subscriptions/{ident}'
     )
 
-    @ma.pre_dump
-    def prepare_data(self, data, **kwargs):
-        object_url = data.pop('object_url', None)
-        if object_url:
-            self._fields['resources'].schema.context.update(object_url=object_url)
-        if not self.context.get('is_listing', False) and 'resources' in data:
-            data['resources'] = data['resources'].filter(status='published')
+    def filter_data(self, data, **kwargs):
+        if not self.context.get('is_listing', False):
+            if 'resources' in data:
+                data['resources'] = data['resources'].filter(status='published')
+            if 'showcases' in data:
+                data['showcases'] = data['showcases'].filter(status='published')
         return data
 
 
@@ -609,3 +618,28 @@ class DatasetResourcesCSVSerializer(CSVSerializer):
 
     class Meta:
         ordered = True
+
+
+class DescriptionSchema(ExtSchema):
+    name = fields.Str()
+    description = fields.Str()
+
+    class Meta:
+        ordered = True
+
+
+class LicenseApiAttrs(ObjectAttrs):
+    link = fields.String()
+    secondLink = fields.String()
+    description = fields.Nested(DescriptionSchema())
+    allowed = fields.Nested(DescriptionSchema(), many=True)
+    conditions = fields.Nested(DescriptionSchema(), many=True)
+
+    class Meta:
+        object_type = 'license'
+        ordered = True
+
+
+class LicenseApiResponse(TopLevel):
+    class Meta:
+        attrs_schema = LicenseApiAttrs

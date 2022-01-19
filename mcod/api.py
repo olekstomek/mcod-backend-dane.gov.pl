@@ -21,7 +21,7 @@ from webargs import falconparser
 from mcod import settings
 from mcod.core.api import middlewares
 from mcod.core.api.converters import ExportFormatConverter, RDFFormatConverter
-from mcod.core.api.media import ExportHandler, RDFHandler, SparqlHandler, XMLHandler
+from mcod.core.api.media import ExportHandler, RDFHandler, SparqlHandler, XMLHandler, ZipHandler
 from mcod.core.api.utils.json_encoders import APIEncoder
 from mcod.core.api.apm import get_client, get_data_from_request
 from mcod.core.utils import get_limiter_key
@@ -46,6 +46,7 @@ extra_handlers = {
     'application/vnd.ms-excel': ExportHandler(),
     'application/sparql-results+json': SparqlHandler(),
     'application/sparql-results+xml': SparqlHandler(),
+    'application/zip': ZipHandler()
 }
 
 

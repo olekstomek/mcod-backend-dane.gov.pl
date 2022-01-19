@@ -1,6 +1,7 @@
 import time
 
 import pytest
+from pytest_bdd import scenarios
 from bs4 import BeautifulSoup
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.test import Client
@@ -10,6 +11,11 @@ from mcod.datasets.models import Dataset
 from mcod.organizations.models import Organization
 from mcod.resources.models import Resource
 from mcod.users.models import User, UserFollowingDataset
+from mcod.unleash import is_enabled
+
+
+if is_enabled('S41_resource_bulk_download.be'):
+    scenarios('features/dataset_create_resources_files_zip.feature')
 
 
 def create_organization(param):

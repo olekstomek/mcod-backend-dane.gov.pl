@@ -12,6 +12,7 @@ from mcod.datasets.field_validators import validate_dataset_image_file_extension
 from mcod.datasets.models import UPDATE_FREQUENCY, Dataset
 from mcod.lib.widgets import JsonPairDatasetInputs
 from mcod.tags.forms import ModelFormWithKeywords
+from mcod.unleash import is_enabled
 
 
 class DatasetForm(ModelFormWithKeywords):
@@ -77,19 +78,32 @@ class DatasetForm(ModelFormWithKeywords):
             "to that set will be changed to a draft"
         )
     )
+    if is_enabled('S41_resource_has_high_value_data.be'):
+        has_high_value_data = forms.ChoiceField(
+            disabled=True,
+            initial=False,
+            required=False,
+            label=_('has high value data').capitalize(),
+            help_text=(
+                'Zaznaczając dane dodane w zbiorze danych zostaną określone jako wysokiej wartości. Są to dane, '
+                'których ponowne wykorzystanie wiąże się z istotnymi korzyściami dla społeczeństwa, środowiska '
+                'i gospodarki'),
+            choices=[(True, _('Yes')), (False, _('No'))],
+            widget=forms.RadioSelect(attrs={'class': 'inline'}))
 
     def __init__(self, *args, instance=None, **kwargs):
+        if instance and is_enabled('S41_resource_has_high_value_data.be'):
+            initial = kwargs.get('initial', {})
+            initial['has_high_value_data'] = instance.has_high_value_data
+            kwargs['initial'] = initial
         super(DatasetForm, self).__init__(*args, instance=instance, **kwargs)
+        if 'categories' in self.fields and is_enabled('S41_dataset_categories_required.be'):
+            self.fields['categories'].required = True
         try:
             self.fields['image'].validators.append(validate_dataset_image_file_extension)
             self.fields['image'].help_text = \
                 _('Allowed file extensions: jpg, gif, png. For better readability,'
                   ' we recommend .png files with a transparent background')
-        except KeyError:
-            pass
-
-        try:
-            self.fields['categories'].required = False
         except KeyError:
             pass
 

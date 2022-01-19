@@ -285,3 +285,10 @@ class CreateCommentRequest(TopLevel):
     class Meta:
         attrs_schema = CreateCommentAttrs
         attrs_schema_required = True
+
+
+class LicenseApiRequest(CommonSchema):
+
+    class Meta:
+        strict = True
+        ordered = True

@@ -1,5 +1,5 @@
 from django.utils.translation import gettext_lazy as _
-from marshmallow import pre_dump, post_dump
+from marshmallow import post_dump
 
 from mcod.core.api import fields
 from mcod.core.api.jsonapi.serializers import \
@@ -11,16 +11,17 @@ from mcod.watchers.serializers import SubscriptionMixin
 
 
 class InstitutionApiRelationships(Relationships):
-    datasets = fields.Nested(Relationship,
-                             many=False, default=[],
-                             _type='dataset',
-                             url_template='{object_url}/datasets',
-                             )
+    datasets = fields.Nested(
+        Relationship,
+        many=False, default=[],
+        _type='dataset',
+        url_template='{object_url}/datasets',
+        required=True,
+    )
     subscription = fields.Nested(Relationship, many=False, _type='subscription',
                                  url_template='{api_url}/auth/subscriptions/{ident}')
 
-    @pre_dump
-    def prepare_data(self, data, **kwargs):
+    def filter_data(self, data, **kwargs):
         if not self.context.get('is_listing', False):
             data['datasets'] = data['datasets'].filter(status='published')
         return data

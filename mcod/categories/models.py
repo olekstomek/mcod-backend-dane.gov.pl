@@ -1,5 +1,3 @@
-import logging
-
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.postgres.indexes import GinIndex
@@ -20,8 +18,6 @@ from mcod.core.managers import SoftDeletableManager
 
 
 User = get_user_model()
-
-signal_logger = logging.getLogger('signals')
 
 
 class Category(ExtendedModel):
@@ -89,32 +85,14 @@ class Category(ExtendedModel):
 
 @receiver(null_in_related_datasets, sender=Category)
 def null_category_in_datasets(sender, instance, *args, **kwargs):
-    signal_logger.debug(
-        'Setting null in datasets',
-        extra={
-            'sender': '{}.{}'.format(sender._meta.model_name, sender._meta.object_name),
-            'instance': '{}.{}'.format(instance._meta.model_name, instance._meta.object_name),
-            'instance_id': instance.id,
-            'signal': 'null_in_related_datasets'
-        },
-        exc_info=1
-    )
+    sender.log_debug(instance, 'Setting null in datasets', 'null_in_related_datasets')
     null_field_in_related_task.apply_async(
         args=(instance._meta.app_label, instance._meta.object_name, instance.id), countdown=3)
 
 
 @receiver(update_related_datasets, sender=Category)
 def update_category_in_datasets(sender, instance, *args, **kwargs):
-    signal_logger.debug(
-        'Updating related datasets',
-        extra={
-            'sender': '{}.{}'.format(sender._meta.model_name, sender._meta.object_name),
-            'instance': '{}.{}'.format(instance._meta.model_name, instance._meta.object_name),
-            'instance_id': instance.id,
-            'signal': 'update_related_datasets'
-        },
-        exc_info=1
-    )
+    sender.log_debug(instance, 'Updating related datasets', 'update_related_datasets')
     for dataset in instance.dataset_set.all():
         search_signals.update_document.send(dataset._meta.model, dataset)
         rdf_signals.update_graph.send(dataset._meta.model, dataset)

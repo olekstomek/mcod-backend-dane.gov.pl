@@ -5,8 +5,8 @@ from copy import deepcopy
 from celery import shared_task
 from constance import config
 from django.apps import apps
-from django.core.mail import send_mail, get_connection
 from django.conf import settings
+from django.core.mail import send_mail, get_connection
 from django.template.loader import render_to_string
 from django.utils import translation
 from django.utils.translation import ugettext_lazy as _
@@ -19,7 +19,8 @@ logger = logging.getLogger('mcod')
 
 
 @shared_task
-def process_resource_from_url_task(resource_id, update_file=True, **kwargs):
+def process_resource_from_url_task(resource_id, update_file=True,
+                                   update_file_archive=False, forced_file_changed=False, **kwargs):
     Resource = apps.get_model('resources', 'Resource')
     resource = Resource.raw.get(id=resource_id)
     if resource.is_imported_from_ckan:
@@ -31,27 +32,34 @@ def process_resource_from_url_task(resource_id, update_file=True, **kwargs):
         if resource_type == 'website' and resource.forced_api_type:
             logger.debug("Resource of type 'website' forced into type 'api'!")
             resource_type = 'api'
-
-        openness_score = resource.get_openness_score(options['format'])
-        qs = Resource.raw.filter(id=resource_id)
-        if resource_type == 'file':
-            if 'filename' in options:
+        if is_enabled('S40_new_file_model.be'):
+            process_for_separate_file_model(resource_id, resource, options,
+                                            resource_type, update_file_archive=update_file_archive,
+                                            forced_file_changed=forced_file_changed, **kwargs)
+        else:
+            openness_score = resource.get_openness_score(options['format'])
+            qs = Resource.raw.filter(id=resource_id)
+            if resource_type == 'file':
+                if 'filename' in options:
+                    qs.update(
+                        file=resource.save_file(options['content'], options['filename']),
+                        format=options['format'],
+                        openness_score=openness_score
+                    )
+                process_resource_file_task.s(resource_id, update_link=False,
+                                             update_file_archive=update_file_archive, **kwargs).apply_async(
+                    countdown=2)
+            else:  # API or WWW
                 qs.update(
-                    file=resource.save_file(options['content'], options['filename']),
+                    type=resource_type,
                     format=options['format'],
+                    file=None,
+                    file_info=None,
+                    file_encoding=None,
                     openness_score=openness_score
                 )
-            process_resource_file_task.s(resource_id, update_link=False, **kwargs).apply_async(
-                countdown=2)
-        else:  # API or WWW
-            qs.update(
-                type=resource_type,
-                format=options['format'],
-                file=None,
-                file_info=None,
-                file_encoding=None,
-                openness_score=openness_score
-            )
+                if is_enabled('S41_resource_bulk_download.be') and forced_file_changed:
+                    resource.dataset.archive_files()
 
     resource = Resource.raw.get(id=resource_id)
     result = {
@@ -61,15 +69,63 @@ def process_resource_from_url_task(resource_id, update_file=True, **kwargs):
         'type': resource.type
     }
 
-    if resource.type == 'file' and resource.file:
-        result['path'] = resource.file.path
+    if resource.type == 'file' and resource.main_file:
+        result['path'] = resource.main_file.path
         result['url'] = resource.file_url
 
     return json.dumps(result)
 
 
+def get_or_create_main_res_file(resource_id, openness_score):
+    ResourceFile = apps.get_model('resources', 'ResourceFile')
+
+    try:
+        res_file = ResourceFile.objects.get(
+            resource_id=resource_id,
+            is_main=True
+        )
+    except ResourceFile.DoesNotExist:
+        res_file = ResourceFile.objects.create(
+            resource_id=resource_id,
+            openness_score=openness_score,
+        )
+    return res_file
+
+
+def process_for_separate_file_model(resource_id, resource, options, resource_type,
+                                    update_file_archive, forced_file_changed, **kwargs):
+    Resource = apps.get_model('resources', 'Resource')
+    ResourceFile = apps.get_model('resources', 'ResourceFile')
+    openness_score, _ = resource.get_openness_score(options['format'])
+    qs = Resource.raw.filter(id=resource_id)
+    if resource_type == 'file':
+        res_file, created = ResourceFile.objects.get_or_create(
+            resource_id=resource_id,
+            is_main=True,
+        )
+        if 'filename' in options:
+            ResourceFile.objects.filter(pk=res_file.pk).update(
+                file=res_file.save_file(options['content'], options['filename'])
+            )
+            qs.update(
+                format=options['format'],
+                openness_score=openness_score
+            )
+        process_resource_res_file_task.s(res_file.pk, update_link=False,
+                                         update_file_archive=update_file_archive, **kwargs).apply_async(countdown=2)
+    else:  # API or WWW
+        ResourceFile.objects.filter(resource_id=resource_id).delete()
+        if is_enabled('S41_resource_bulk_download.be') and forced_file_changed:
+            resource.dataset.archive_files()
+        qs.update(
+            type=resource_type,
+            format=options['format'],
+            openness_score=openness_score
+        )
+
+
 @shared_task
-def process_resource_file_task(resource_id, update_link=True, **kwargs):
+def process_resource_file_task(resource_id, update_link=True, update_file_archive=False, **kwargs):
     Resource = apps.get_model('resources', 'Resource')
 
     resource = Resource.raw.get(id=resource_id)
@@ -103,7 +159,8 @@ def process_resource_file_task(resource_id, update_link=True, **kwargs):
     if update_link:
         process_resource_from_url_task.s(resource_id, update_file=False, **kwargs).apply_async(
             countdown=2)
-
+    if is_enabled('S41_resource_bulk_download.be') and update_file_archive:
+        resource.dataset.archive_files()
     return json.dumps({
         'uuid': str(resource.uuid),
         'link': resource.link,
@@ -145,7 +202,7 @@ def process_resource_file_data_task(resource_id, **kwargs):
         'link': resource.link,
         'format': resource.format,
         'type': resource.type,
-        'path': resource.file.path,
+        'path': resource.main_file.path,
         'resource_id': resource_id,
         'url': resource.file_url
     })
@@ -297,3 +354,59 @@ def process_resource_data_indexing_task(resource_id):
         success, failed = obj.data.index(force=True)
         return {'resource_id': resource_id, 'indexed': success, 'failed': failed}
     return {}
+
+
+@shared_task
+def process_resource_res_file_task(resource_file_id, update_link=True, update_file_archive=False, **kwargs):
+    ResourceFile = apps.get_model('resources', 'ResourceFile')
+    Resource = apps.get_model('resources', 'Resource')
+    resource_file = ResourceFile.objects.get(pk=resource_file_id)
+    resource_id = resource_file.resource_id
+    format, file_info, file_encoding, p, file_mimetype, analyze_exc = resource_file.analyze()
+    if not resource_file.extension and format:
+        ResourceFile.objects.filter(pk=resource_file_id).update(
+            file=resource_file.save_file(resource_file.file, f'{resource_file.file_basename}.{format}')
+        )
+    ResourceFile.objects.filter(pk=resource_file_id).update(
+        format=format,
+        mimetype=file_mimetype,
+        info=file_info,
+        encoding=file_encoding,
+    )
+    resource = Resource.raw.get(pk=resource_id)
+    Resource.raw.filter(pk=resource_id).update(
+        format=format,
+        type='file',
+        link=resource.file_url if update_link else resource.link,
+    )
+    resource_file = ResourceFile.objects.get(id=resource_file_id)
+    resource = Resource.raw.get(id=resource_id)
+    resource_score, files_score = resource.get_openness_score(format)
+    Resource.raw.filter(pk=resource_id).update(
+        openness_score=resource_score
+    )
+    for rf in files_score:
+        ResourceFile.objects.filter(pk=rf['file_pk']).update(openness_score=rf['score'])
+
+    resource_file.check_support()
+
+    if resource_file.format == 'csv' and resource_file.encoding is None:
+        raise FileEncodingValidationError(
+            [{'code': 'unknown-encoding', 'message': 'Nie udało się wykryć kodowania pliku.'}])
+
+    if analyze_exc:
+        raise analyze_exc
+    process_resource_file_data_task.s(resource_id, **kwargs).apply_async(countdown=2)
+    if update_link:
+        process_resource_from_url_task.s(resource_id, update_file=False, **kwargs).apply_async(
+            countdown=2)
+    if is_enabled('S41_resource_bulk_download.be') and update_file_archive:
+        resource.dataset.archive_files()
+    return json.dumps({
+        'uuid': str(resource.uuid),
+        'link': resource.link,
+        'format': resource_file.format,
+        'type': resource.type,
+        'path': resource_file.file.path,
+        'url': resource.file_url
+    })

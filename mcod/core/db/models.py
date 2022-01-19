@@ -57,7 +57,21 @@ def default_slug_value():
     return uuid.uuid4().hex
 
 
-class BaseExtendedModel(AdminMixin, ApiMixin, StatusModel, TimeStampedModel):
+class LogMixin(object):
+    @classmethod
+    def log_debug(cls, instance, msg, signal, state=None):
+        extra = {
+            'sender': '{}.{}'.format(cls._meta.model_name, cls._meta.object_name),
+            'instance': '{}.{}'.format(instance._meta.model_name, instance._meta.object_name),
+            'instance_id': instance.id,
+            'signal': signal,
+        }
+        if state:
+            extra['state'] = state
+        signal_logger.debug(msg, extra=extra, exc_info=1)
+
+
+class BaseExtendedModel(LogMixin, AdminMixin, ApiMixin, StatusModel, TimeStampedModel):
     STATUS = Choices(*STATUS_CHOICES)
     slug = models.SlugField(max_length=600, null=False, blank=True)
     uuid = models.UUIDField(default=uuid.uuid4)
@@ -418,17 +432,13 @@ models.signals.class_prepared.connect(BaseExtendedModel.on_class_prepared)
 
 
 def update_watcher(sender, instance, *args, state=None, **kwargs):
-    signal_logger.debug(
-        '{} {}'.format(sender._meta.object_name, state),
-        extra={
-            'sender': '{}.{}'.format(sender._meta.app_label, sender._meta.object_name),
-            'instance': '{}.{}'.format(instance._meta.app_label, instance._meta.object_name),
-            'instance_id': instance.id,
-            'state': state,
-            'signal': 'notify_{}'.format(state)
-        },
-        exc_info=1
-    )
+    if hasattr(sender, 'log_debug'):
+        sender.log_debug(
+            instance,
+            '{} {}'.format(sender._meta.object_name, state),
+            'notify_{}'.format(state),
+            state,
+        )
     update_model_watcher_task.s(
         instance._meta.app_label,
         instance._meta.object_name,
@@ -440,17 +450,13 @@ def update_watcher(sender, instance, *args, state=None, **kwargs):
 
 
 # def update_common_doc(sender, instance, *args, state=None, **kwargs):
-#     signal_logger.debug(
-#         '{} {}'.format(sender._meta.object_name, state),
-#         extra={
-#             'sender': '{}.{}'.format(sender._meta.app_label, sender._meta.object_name),
-#             'instance': '{}.{}'.format(instance._meta.app_label, instance._meta.object_name),
-#             'instance_id': instance.id,
-#             'state': state,
-#             'signal': 'notify_{}'.format(state)
-#         },
-#         exc_info=1
-#     )
+#     if hasattr(sender, 'log_debug'):
+#         sender.log_debug(
+#             instance,
+#             '{} {}'.format(sender._meta.object_name, state),
+#             'notify_{}'.format(state),
+#             state,
+#         )
 #     if state not in {'published', 'restored', 'updated', 'removed'}:
 #         return
 
@@ -473,16 +479,12 @@ class TrashModelBase(ModelBase):
 
 @receiver(permanently_remove_related_objects)
 def permanently_remove_related_objects_after_instance_removal(sender, instance, *args, **kwargs):
-    signal_logger.debug(
-        f'Permanently removing objects related to {sender.__name__} with id {instance.id}',
-        extra={
-            'sender': '{}.{}'.format(sender._meta.model_name, sender._meta.object_name),
-            'instance': '{}.{}'.format(instance._meta.model_name, instance._meta.object_name),
-            'instance_id': instance.id,
-            'signal': 'permanently_remove_related_objects'
-        },
-        exc_info=1
-    )
+    if hasattr(sender, 'log_debug'):
+        sender.log_debug(
+            instance,
+            f'Permanently removing objects related to {sender.__name__} with id {instance.id}',
+            'permanently_remove_related_objects',
+        )
 
     opts = sender._meta
     for relation in get_candidate_relations_to_delete(opts):

@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import base64
-import logging
 import os
 from email.mime.image import MIMEImage
 from mimetypes import guess_type, guess_extension
@@ -47,7 +46,6 @@ from mcod.unleash import is_enabled
 
 User = get_user_model()
 
-signal_logger = logging.getLogger('signals')
 
 MAIN_PAGE_ORDERING_CHOICES = [
     (1, _("First")),
@@ -461,8 +459,8 @@ class Application(ApplicationMixin):
     SIGNALS_MAP = {
         'updated': (generate_thumbnail, core_signals.notify_updated),
         'published': (generate_thumbnail, core_signals.notify_published),
-        'restored': (generate_thumbnail, core_signals.notify_restored),
-        'removed': (search_signals.remove_document, core_signals.notify_removed),
+        'restored': (search_signals.update_document_with_related, generate_thumbnail, core_signals.notify_restored),
+        'removed': (search_signals.remove_document_with_related, core_signals.notify_removed),
         'pre_m2m_added': (core_signals.notify_m2m_added,),
         'pre_m2m_removed': (core_signals.notify_m2m_removed,),
         'pre_m2m_cleaned': (core_signals.notify_m2m_cleaned,),
@@ -620,16 +618,7 @@ def handle_application_proposal_pre_save(sender, instance, *args, **kwargs):
 
 @receiver(generate_thumbnail, sender=Application)
 def regenerate_thumbnail(sender, instance, *args, **kwargs):
-    signal_logger.debug(
-        'Regenerating thumbnail ',
-        extra={
-            'sender': '{}.{}'.format(sender._meta.model_name, sender._meta.object_name),
-            'instance': '{}.{}'.format(instance._meta.model_name, instance._meta.object_name),
-            'instance_id': instance.id,
-            'signal': 'generate_thumbnail'
-        },
-        exc_info=1
-    )
+    sender.log_debug(instance, 'Regenerating thumbnail ', 'generate_thumbnail')
     if any([instance.tracker.has_changed('image'),
             instance.tracker.has_changed('status') and instance.status == instance.STATUS.published]):
         generate_logo_thumbnail_task.s(instance.id).apply_async(countdown=1)

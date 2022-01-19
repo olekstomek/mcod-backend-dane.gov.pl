@@ -60,8 +60,7 @@ class ScheduleApiRelationships(Relationships):
             kwargs['exclude'] = kwargs.get('exclude', tuple()) + ('agents', )
         super().__init__(*args, **kwargs)
 
-    @pre_dump
-    def prepare_data(self, data, **kwargs):
+    def filter_data(self, data, **kwargs):
         user = self.context['request'].user if 'request' in self.context else None
         if user and not user.is_superuser:
             user = user.extra_agent_of or user
@@ -70,10 +69,6 @@ class ScheduleApiRelationships(Relationships):
                     user_schedule__user=user)
             if 'user_schedules' in data:
                 data['user_schedules'] = data['user_schedules'].filter(user=user)
-        object_url = data.pop('object_url', None)
-        if object_url:
-            self._fields['user_schedules'].schema.context.update(object_url=object_url)
-            self._fields['user_schedule_items_included'].schema.context.update(object_url=object_url)
         return data
 
 
@@ -96,13 +91,6 @@ class UserScheduleApiRelationships(Relationships):
         _type='user_schedule_item',
         url_template='{object_url}/items',
     )
-
-    @pre_dump
-    def prepare_data(self, data, **kwargs):
-        object_url = data.pop('object_url', None)
-        if object_url:
-            self._fields['user_schedule_items'].schema.context.update(object_url=object_url)
-        return data
 
 
 class UserScheduleItemApiRelationships(Relationships):
@@ -131,13 +119,6 @@ class UserScheduleItemApiRelationships(Relationships):
         _type='comment',
         url_template='{object_url}/comments',
     )
-
-    @pre_dump
-    def prepare_data(self, data, **kwargs):
-        object_url = data.pop('object_url', None)
-        if object_url:
-            self._fields['comments'].schema.context.update(object_url=object_url)
-        return data
 
 
 class ScheduleApiAttrs(ObjectAttrs):

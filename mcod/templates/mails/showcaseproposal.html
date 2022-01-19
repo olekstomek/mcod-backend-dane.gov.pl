@@ -28,7 +28,7 @@
                 </table>
                 <table border="0" cellspacing="0" cellpadding="0" align="center" style="width:100%;display:block;margin:0 auto;max-width:580px;table-layout:fixed;clear:both;">
                     {% include 'mails/proposal-row-label.html' with val='E-mail zgłaszającego:' %}
-                    {% include 'mails/proposal-row-value.html' with val=obj.applicant_email %}
+                    {% include 'mails/proposal-row-value.html' with val=obj.applicant_email|urlize %}
                     {% include 'mails/proposal-row-label.html' with val='Nazwa propozycji wykorzystania danych:' %}
                     {% include 'mails/proposal-row-value.html' with val=obj.title %}
                     {% include 'mails/proposal-row-label.html' with val='Kategoria:' %}
@@ -41,10 +41,8 @@
                     {% include 'mails/proposal-row-value.html' with val=obj.notes|linebreaksbr %}
                     {% include 'mails/proposal-row-label.html' with val='Logo (opcjonalne, ale zalecane):' %}
                     {% include 'mails/proposal-image.html' with image_src=obj.image_absolute_url %}
-                    {% if obj.illustrative_graphics %}
-                        {% include 'mails/proposal-row-label.html' with val='Grafika ilustracyjna (opcjonalne):' %}
-                        {% include 'mails/proposal-image.html' with image_src=obj.illustrative_graphics_absolute_url %}
-                    {% endif %}
+                    {% include 'mails/proposal-row-label.html' with val='Grafika ilustracyjna (opcjonalne):' %}
+                    {% include 'mails/proposal-image.html' with image_src=obj.illustrative_graphics_url %}
                     {% include 'mails/proposal-row-label.html' with val='Lista zbiorów z portalu dane.gov.pl wykorzystanych w propozycji (opcjonalne):' %}
                     {% include 'mails/proposal-row-value.html' with val=obj.datasets_links|safe %}
                     {% include 'mails/proposal-row-label.html' with val='Lista zbiorów danych zewnętrznych wykorzystanych w propozycji (opcjonalne):' %}

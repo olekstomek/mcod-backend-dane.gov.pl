@@ -1,7 +1,8 @@
 from django.apps import apps
 from django.conf import settings
 from django.db.models import Count, Q, Prefetch
-from mcod.core.managers import SoftDeletableQuerySet, SoftDeletableManager
+from mcod.core.managers import SoftDeletableQuerySet, SoftDeletableManager, RawManager
+from mcod.unleash import is_enabled
 
 
 class ChartQuerySet(SoftDeletableQuerySet):
@@ -38,7 +39,16 @@ class ChartManager(SoftDeletableManager):
         return self.get_queryset().published()
 
 
-class SoftDeletableMetadataQuerySet(SoftDeletableQuerySet):
+class PrefetchResourceFilesMixin:
+
+    def get_files_prefetch(self):
+        resource_file = apps.get_model('resources', 'ResourceFile')
+        main_file = Prefetch('files', resource_file.objects.filter(is_main=True), to_attr='_cached_file')
+        other_files = Prefetch('files', resource_file.objects.filter(is_main=False), to_attr='_other_files')
+        return main_file, other_files
+
+
+class SoftDeletableMetadataQuerySet(PrefetchResourceFilesMixin, SoftDeletableQuerySet):
 
     def with_metadata(self):
         tag_model = apps.get_model('tags', 'Tag')
@@ -73,14 +83,31 @@ class SoftDeletableMetadataQuerySet(SoftDeletableQuerySet):
         return self.by_formats(formats).filter(**query)
 
     def by_formats(self, formats):
-        return self.filter(file__isnull=False, format__in=formats).exclude(file='')
+        if is_enabled('S40_new_file_model.be'):
+            return self.filter(files__isnull=False, format__in=formats)
+        else:
+            return self.filter(file__isnull=False, format__in=formats).exclude(file='')
 
     def published(self):
         return self.filter(status='published')
 
+    def with_prefetched_files(self):
+        main_file, other_files = self.get_files_prefetch()
+        return self.prefetch_related(main_file, other_files)
+
+    def with_files(self):
+        return self.exclude(Q(file__isnull=True) | Q(file=''))
+
 
 class ResourceManager(SoftDeletableManager):
     _queryset_class = SoftDeletableMetadataQuerySet
+
+    def get_queryset(self):
+        if is_enabled('S40_new_file_model.be'):
+            qs = super(ResourceManager, self).get_queryset().with_prefetched_files()
+        else:
+            qs = super(ResourceManager, self).get_queryset()
+        return qs
 
     def with_metadata(self):
         return super().get_queryset().with_metadata()
@@ -97,3 +124,12 @@ class ResourceManager(SoftDeletableManager):
 
     def published(self):
         return super().get_queryset().published()
+
+    def with_files(self):
+        return super().get_queryset().with_files()
+
+
+class ResourceRawManager(PrefetchResourceFilesMixin, RawManager):
+    def get_queryset(self):
+        main_file, other_files = self.get_files_prefetch()
+        return super().get_queryset().prefetch_related(main_file, other_files)

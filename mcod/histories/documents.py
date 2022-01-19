@@ -59,4 +59,7 @@ class LogEntryDoc(Document):
         model = LogEntry
 
     def get_queryset(self):
-        return LogEntry.objects.for_admin_panel().exclude(content_type__model='user')
+        return LogEntry.objects.for_admin_panel(exclude_models=['user'])
+
+    def get_queryset_count(self):
+        return LogEntry.objects.for_admin_panel(exclude_models=['user']).count()

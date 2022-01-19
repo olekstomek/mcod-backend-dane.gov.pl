@@ -28,7 +28,7 @@
                 </table>
                 <table border="0" cellspacing="0" cellpadding="0" align="center" style="width:100%;display:block;margin:0 auto;max-width:580px;table-layout:fixed;clear:both;">
                     {% include 'mails/proposal-row-label.html' with val='E-mail zgłaszającego:' %}
-                    {% include 'mails/proposal-row-value.html' with val=applicant_email %}
+                    {% include 'mails/proposal-row-value.html' with val=applicant_email|urlize %}
                     {% include 'mails/proposal-row-label.html' with val='Tytuł aplikacji:' %}
                     {% include 'mails/proposal-row-value.html' with val=title %}
                     {% include 'mails/proposal-row-label.html' with val='Autor:' %}

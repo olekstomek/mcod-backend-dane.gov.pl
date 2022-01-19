@@ -31,6 +31,8 @@ Feature: Applications list API
     Then api request param <req_param_name> is <req_param_value>
     And send api request and fetch the response
     And api's response list is sorted by <sort> <sort_order>
+    And api's response body has field data/*/relationships/datasets/meta/count
+    And api's response body has field data/*/relationships/datasets/links/related
     Examples:
     | request_path      | req_param_name | req_param_value | sort        | sort_order   |
     | /1.0/applications | sort           | views_count     | views_count | ascendingly  |

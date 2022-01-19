@@ -1,11 +1,11 @@
-import datetime
-
 import pytest
 from namedlist import namedlist
 
 from mcod.datasets.forms import DatasetForm
 from mcod.datasets.models import Dataset
 from mcod.lib.helpers import change_namedlist
+from mcod.unleash import is_enabled
+
 
 fields = [
     'slug',
@@ -116,6 +116,7 @@ class TestDatasetFormValidity:
                                    license_condition_source,
                                    update_frequency,
                                    legacy_category,
+                                   categories,
                                    status,
                                    validity,
                                    institution,
@@ -138,9 +139,12 @@ class TestDatasetFormValidity:
             "license_condition_source": license_condition_source,
             "update_frequency": update_frequency,
             "category": legacy_category,
+            "categories": [x.id for x in categories],
             "status": status,
             "tags_pl": [tag_pl.id],
         }
+        if is_enabled('S41_resource_has_high_value_data.be'):
+            data['has_high_value_data'] = False
 
         form = DatasetForm(data=data)
         assert form.is_valid() is validity
@@ -148,7 +152,7 @@ class TestDatasetFormValidity:
             form.save()
             assert Dataset.objects.last().title == title
 
-    def test_dataset_form_add_tags(self, tag, tag_pl, tag_en, institution):
+    def test_dataset_form_add_tags(self, tag, tag_pl, tag_en, institution, categories):
         data = {
             'title': "Test add tag",
             'slug': "test-add-tag",
@@ -159,7 +163,10 @@ class TestDatasetFormValidity:
             'url': "http://cos.tam.pl",
             'tags_pl': [tag_pl],
             'tags_en': [tag_en],
+            'categories': [x.id for x in categories],
         }
+        if is_enabled('S41_resource_has_high_value_data.be'):
+            data['has_high_value_data'] = False
 
         form = DatasetForm(data=data)
         assert form.is_valid()
@@ -181,6 +188,8 @@ class TestDatasetFormValidity:
             'categories': [category.id for category in categories],
             'tags_pl': [tag_pl],
         }
+        if is_enabled('S41_resource_has_high_value_data.be'):
+            data['has_high_value_data'] = False
 
         form = DatasetForm(data=data)
         assert form.is_valid()
@@ -188,28 +197,7 @@ class TestDatasetFormValidity:
         dataset = Dataset.objects.last()
         assert all(category in dataset.categories.all() for category in categories)
 
-    def test_metadata_modified_is_not_null(self, institution, tag, tag_pl):
-        data = {
-            'title': "test metadata_modified title",
-            'slug': "Test",
-            'notes': 'more than 20 characters',
-            'organization': institution.id,
-            'url': 'http://cos.tam.pl',
-            'update_frequency': "weekly",
-            'license_id': "other-pd",
-            'status': 'published',
-            'validity': True,
-            'tags_pl': [tag_pl.id],
-        }
-
-        form = DatasetForm(data=data)
-        assert form.is_valid()
-        form.save()
-        last_ds = Dataset.objects.last()
-        assert last_ds.title == data['title']
-        assert isinstance(last_ds.modified, datetime.datetime)
-
-    def test_add_category(self, institution, legacy_category, tag, tag_pl):
+    def test_add_category(self, institution, legacy_category, tag, tag_pl, categories):
         data = {
             'title': "Test add tag",
             'slug': "test-add-tag",
@@ -219,8 +207,11 @@ class TestDatasetFormValidity:
             "update_frequency": "weekly",
             'url': "http://cos.tam.pl",
             'category': legacy_category.id,
+            'categories': [x.id for x in categories],
             'tags_pl': [tag_pl.id],
         }
+        if is_enabled('S41_resource_has_high_value_data.be'):
+            data['has_high_value_data'] = False
 
         form = DatasetForm(data=data)
         form.is_valid()
@@ -230,7 +221,7 @@ class TestDatasetFormValidity:
         assert d.slug == 'test-add-tag'
         assert d.category == legacy_category
 
-    def test_is_valid_upload_image(self, institution, tag, tag_pl, small_image):
+    def test_is_valid_upload_image(self, institution, tag, tag_pl, small_image, categories):
         data = {
             'title': "Test add tag",
             'slug': "test-add-tag",
@@ -240,6 +231,9 @@ class TestDatasetFormValidity:
             "update_frequency": "weekly",
             'url': "http://cos.tam.pl",
             'tags_pl': [tag_pl.id],
+            'categories': [x.id for x in categories],
         }
+        if is_enabled('S41_resource_has_high_value_data.be'):
+            data['has_high_value_data'] = False
         form = DatasetForm(data=data, files={'image': small_image})
         assert form.is_valid()

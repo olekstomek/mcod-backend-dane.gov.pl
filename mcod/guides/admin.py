@@ -46,7 +46,7 @@ class GuideAdminMixin(DynamicAdminListDisplayMixin, CreatedByDisplayAdminMixin,
 
 class GuideItemInline(SortableStackedInline):
     form = GuideItemForm
-    fields = ['title_pl', 'title_en', 'content_pl', 'content_en', 'route', 'css_selector', 'position', 'is_optional',
+    fields = ['title', 'title_en', 'content', 'content_en', 'route', 'css_selector', 'position', 'is_optional',
               'is_clickable', 'is_expandable']
     min_num = 1
     model = GuideItem
@@ -63,13 +63,14 @@ class GuideItemInline(SortableStackedInline):
         return formset
 
 
+@admin.register(Guide)
 class GuideAdmin(GuideAdminMixin, HistoryMixin, SoftDeleteMixin, MCODAdminMixin, admin.ModelAdmin):
     fieldsets = [
         (
             None, {
                 'classes': ('suit-tab', 'suit-tab-course', ),
                 'fields': (
-                    ('title_pl', 'title_en', 'status', '_created_by', '_created', ),
+                    ('title', 'title_en', 'status', '_created_by', '_created', ),
                 )
             },
         ),
@@ -84,6 +85,7 @@ class GuideAdmin(GuideAdminMixin, HistoryMixin, SoftDeleteMixin, MCODAdminMixin,
     )
 
 
+@admin.register(GuideTrash)
 class GuideTrashAdmin(GuideAdminMixin, HistoryMixin, TrashMixin):
 
     readonly_fields = (
@@ -101,7 +103,3 @@ class GuideTrashAdmin(GuideAdminMixin, HistoryMixin, TrashMixin):
         '_created',
         'is_removed',
     )
-
-
-admin.site.register(Guide, GuideAdmin)
-admin.site.register(GuideTrash, GuideTrashAdmin)

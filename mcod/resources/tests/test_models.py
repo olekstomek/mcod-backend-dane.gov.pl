@@ -1,12 +1,13 @@
 # import json
 from datetime import date
+
 import pytest
 from celery import states
-
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
-from django.core.files.uploadedfile import SimpleUploadedFile
+
 from mcod.resources.models import Resource, TaskResult, Chart, update_resource
+from mcod.unleash import is_enabled
 
 
 class TestResourceModel(object):
@@ -60,6 +61,8 @@ class TestResourceModel(object):
             "modified_by_id",
             "created_by_id",
         ]
+        if is_enabled('S40_new_file_model.be'):
+            fields.remove('file')
 
         for f in fields:
             assert f in r_dict
@@ -83,18 +86,17 @@ class TestResourceModel(object):
 
     def test_file_url_and_path(self, resource, mocker):
         mocker.patch('mcod.resources.link_validation.download_file', return_value=('file', {}))
-        resource.file = SimpleUploadedFile("somefile.jpg", b"""1px""")
-        resource.save()
-        assert resource.file
+        resource = Resource.objects.get(pk=resource.pk)
+        assert resource.main_file
         date_folder = date.today().isoformat().replace('-', '')
-        file_name = resource.file.name
-        assert resource.file.url == f"/media/resources/{file_name}"
-        assert resource.file.path == f"{settings.RESOURCES_MEDIA_ROOT}/{file_name}"
-        assert date_folder in resource.file.url
-        assert date_folder in resource.file.path
+        file_name = resource.main_file.name
+        assert resource.main_file.url == f"/media/resources/{file_name}"
+        assert resource.main_file.path == f"{settings.RESOURCES_MEDIA_ROOT}/{file_name}"
+        assert date_folder in resource.main_file.url
+        assert date_folder in resource.main_file.path
 
         k = len(TaskResult.objects.all())
-        assert k > 1
+        assert k > 0
         resource.revalidate()
         assert len(TaskResult.objects.all()) > k
 

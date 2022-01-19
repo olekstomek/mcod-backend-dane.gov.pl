@@ -1,4 +1,6 @@
+from django.apps import apps
 from django.utils.translation import get_language
+from marshmallow import missing
 
 from mcod import settings
 from mcod.core.api import fields
@@ -96,6 +98,7 @@ class CommonObjectApiAttrs(ObjectAttrs, HighlightObjectMixin):
     image_thumb_url = fields.Str()
     if is_enabled('S39_showcases.be'):
         showcase_category = fields.Str()
+        showcase_category_name = fields.Method('get_showcase_category_name')
         showcase_types = fields.List(fields.Str())
         showcase_platforms = fields.List(fields.Str())
 
@@ -115,7 +118,15 @@ class CommonObjectApiAttrs(ObjectAttrs, HighlightObjectMixin):
         # regions
         region_id = fields.Int()
         hierarchy_label = TranslatedStr()
+        bbox = fields.List(fields.List(fields.Float), attribute='bbox.coordinates')
         regions = fields.Nested(RegionSchema, many=True)
+
+    def get_showcase_category_name(self, obj):
+        val = getattr(obj, 'showcase_category', None)
+        if val:
+            model = apps.get_model('showcases.Showcase')
+            return str(model.CATEGORY_NAMES[val])
+        return missing
 
     @staticmethod
     def self_api_url(data):
@@ -138,10 +149,8 @@ class CommonObjectApiAttrs(ObjectAttrs, HighlightObjectMixin):
 class SearchCounterAggregation(ExtSchema):
     datasets = fields.Integer()
     resources = fields.Integer()
-    if is_enabled('S39_showcases.be'):
-        showcases = fields.Integer()
-    else:
-        applications = fields.Integer()
+    showcases = fields.Integer()
+    applications = fields.Integer()
     institutions = fields.Integer()
     articles = fields.Integer()
     knowledge_base = fields.Integer()

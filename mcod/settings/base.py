@@ -247,6 +247,7 @@ HARVESTER_XML_VERSION_TO_SCHEMA_PATH = {
     '1.1': HARVESTER_DATA_DIR.path('xml_import_otwarte_dane_1_1.xsd').root,
     '1.2': HARVESTER_DATA_DIR.path('xml_import_otwarte_dane_1_2.xsd').root,
     '1.3': HARVESTER_DATA_DIR.path('xml_import_otwarte_dane_1_3.xsd').root,
+    '1.4': HARVESTER_DATA_DIR.path('xml_import_otwarte_dane_1_4.xsd').root,
 }
 
 HARVESTER_IMPORTERS = {
@@ -349,6 +350,7 @@ IMAGES_MEDIA_ROOT = str(ROOT_DIR.path(MEDIA_ROOT, 'images'))
 MEETINGS_MEDIA_ROOT = str(ROOT_DIR.path(MEDIA_ROOT, 'meetings'))
 NEWSLETTER_MEDIA_ROOT = str(ROOT_DIR.path(MEDIA_ROOT, 'newsletter'))
 RESOURCES_MEDIA_ROOT = str(ROOT_DIR.path(MEDIA_ROOT, 'resources'))
+DATASETS_MEDIA_ROOT = str(ROOT_DIR.path(MEDIA_ROOT, 'datasets'))
 REPORTS_MEDIA_ROOT = str(ROOT_DIR.path(MEDIA_ROOT, 'reports'))
 SHOWCASES_MEDIA_ROOT = str(ROOT_DIR.path(MEDIA_ROOT, 'showcases'))
 LABORATORY_MEDIA_ROOT = str(ROOT_DIR.path(MEDIA_ROOT, 'lab_reports'))
@@ -361,6 +363,7 @@ ACADEMY_URL = '%s%s' % (MEDIA_URL, 'academy')
 MEETINGS_URL = '%s%s' % (MEDIA_URL, 'meetings')
 NEWSLETTER_URL = '%s%s' % (MEDIA_URL, 'newsletter')
 RESOURCES_URL = '%s%s' % (MEDIA_URL, 'resources')
+DATASETS_URL = '%s%s' % (MEDIA_URL, 'datasets')
 SHOWCASES_URL = '%s%s' % (MEDIA_URL, 'showcases')
 IMAGES_URL = '%s%s' % (MEDIA_URL, 'images')
 REPORTS_MEDIA = '%s%s' % (MEDIA_URL, 'reports')
@@ -505,7 +508,7 @@ SUIT_CONFIG = {
                 }, {
                     'model': 'showcases.showcase',
                     'permissions': 'auth.add_user',
-                    'label': _('Showcases'),
+                    'label': _('PoCoTo'),
                     'icon': 'icon-cupe-black'
                 }, {
                     'model': 'articles.article',
@@ -605,6 +608,7 @@ SUIT_CONFIG = {
                 {
                     'model': 'showcases.showcaseproposal',
                     'permissions': 'auth.add_user',
+                    'label': 'Propozycje PoCoTo',
                     'url': '/showcases/showcaseproposal/?decision=not_taken',
                 },
                 {
@@ -779,6 +783,7 @@ CELERY_TASK_ROUTES = {
     'mcod.resources.tasks.check_link_protocol': {'queue': 'periodic'},
     'mcod.resources.tasks.process_resource_from_url_task': {'queue': 'resources'},
     'mcod.resources.tasks.process_resource_file_task': {'queue': 'resources'},
+    'mcod.resources.tasks.process_resource_res_file_task': {'queue': 'resources'},
     'mcod.resources.tasks.process_resource_file_data_task': {'queue': 'resources'},
     'mcod.resources.tasks.remove_orphaned_files_task': {'queue': 'resources'},
     'mcod.resources.tasks.update_resource_has_table_has_map_task': {'queue': 'resources'},
@@ -883,6 +888,8 @@ else:
             'schedule': crontab(minute=0, hour=2)
         },
     })
+
+CELERY_SINGLETON_BACKEND_URL = REDIS_URL
 
 RESOURCE_MIN_FILE_SIZE = 1024
 RESOURCE_MAX_FILE_SIZE = 1024 * 1024 * 1024  # 1024 MB
@@ -1143,7 +1150,7 @@ SUPPORTED_CONTENT_TYPES = [
     ('text', 'n3', ('n3',), 4, {5}),
     ('text', 'turtle', ('ttl', 'turtle'), 4, {5}),
     ('application', 'nt-triples', ('nt', 'nt11', 'ntriples'), 4, {5}),
-    ('application', 'n-quads', ('nquads',), 4, {5}),
+    ('application', 'n-quads', ('nq', 'nquads',), 4, {5}),
     ('application', 'trix', ('trix',), 4, {5}),
     ('application', 'trig', ('trig',), 4, {5}),
 ]
@@ -1400,6 +1407,7 @@ RDF_FORMAT_TO_MIMETYPE = {
     'nt': 'application/n-triples',
     'nt11': 'application/n-triples',
     'ntriples': 'application/n-triples',
+    'nq': 'application/n-quads',
     'nquads': 'application/n-quads',
     'trix': 'application/trix',
     'trig': 'application/trig',
@@ -1547,3 +1555,7 @@ ZABBIX_API = {
 }
 
 DEFAULT_REGION_ID = 85633723
+
+DATASET_ARCHIVE_FILES_TASK_DELAY = env('DATASET_ARCHIVE_FILES_TASK_DELAY', default=180)
+
+ALLOWED_MINIMUM_SPACE = 1024*1024*1024*env('ALLOWED_MINIMUM_FREE_GB', default=20)

@@ -248,8 +248,12 @@ def dict_fetch_all(cursor):
 @app.task
 def create_daily_resources_report():
     str_date = datetime.datetime.now().strftime('%Y_%m_%d_%H%M')
-    if is_enabled('S16_new_date_counters.be'):
+    if is_enabled('S40_new_file_model.be') and is_enabled('S16_new_date_counters.be'):
+        view_name = 'mv_resource_dataset_organization_new_counters_report_separate_files'
+    elif is_enabled('S16_new_date_counters.be'):
         view_name = 'mv_resource_dataset_organization_new_counters_report'
+    elif is_enabled('S40_new_file_model.be'):
+        view_name = 'mv_resource_dataset_organization_report_separate_files'
     else:
         view_name = 'mv_resource_dataset_organization_report'
     with connection.cursor() as cursor:

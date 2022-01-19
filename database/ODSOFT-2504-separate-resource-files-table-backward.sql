@@ -1,0 +1,1 @@
+DROP MATERIALIZED VIEW IF EXISTS public.mv_resource_dataset_organization_report_separate_files;

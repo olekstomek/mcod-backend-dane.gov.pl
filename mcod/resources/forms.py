@@ -168,6 +168,16 @@ class ResourceForm(forms.ModelForm):
     )
     if is_enabled('S37_resources_admin_region_data.be'):
         regions = RegionsMultipleChoiceField(required=False, label=_('Regions'))
+    if is_enabled('S41_resource_has_high_value_data.be'):
+        has_high_value_data = forms.ChoiceField(
+            label=_('has high value data').capitalize(),
+            help_text=(
+                'Zaznaczając dane dodane w zbiorze danych zostaną określone jako wysokiej wartości. Są to dane, '
+                'których ponowne wykorzystanie wiąże się z istotnymi korzyściami dla społeczeństwa, środowiska '
+                'i gospodarki'),
+            choices=[(True, _('Yes')), (False, _('No'))],
+            widget=forms.RadioSelect(attrs={'class': 'inline'}),
+            required=True)
 
 
 class ChangeResourceForm(ResourceForm):
@@ -209,12 +219,7 @@ class ChangeResourceForm(ResourceForm):
                 "You can't set status of this resource to published, because it's dataset is still a draft. "
                 "You should first published that dataset: "
             )
-
-            error_message += "<a href='{}'>{}</a>".format(
-                reverse('admin:datasets_dataset_change', args=[dataset.id]),
-                dataset.title
-            )
-
+            error_message += "<a href='{}'>{}</a>".format(dataset.admin_change_url, dataset.title)
             raise forms.ValidationError(mark_safe(error_message))
 
         return self.cleaned_data['status']
@@ -222,12 +227,25 @@ class ChangeResourceForm(ResourceForm):
     class Meta:
         model = Resource
         exclude = ["old_resource_type", ]
-        labels = {
-            'created': _("Availability date"),
-            'modified': _("Modification date"),
-            'verified': _("Update date"),
-            'is_chart_creation_blocked': _('Do not allow user charts to be created'),
-        }
+        if is_enabled('S40_new_file_model.be'):
+            labels = {
+                'created': _("Availability date"),
+                'modified': _("Modification date"),
+                'verified': _("Update date"),
+                'is_chart_creation_blocked': _('Do not allow user charts to be created'),
+                'main_file': _('File'),
+                'csv_converted_file': _("File as CSV"),
+                'jsonld_converted_file': _("File as JSON-LD"),
+                'main_file_info': _('File info'),
+                'main_file_encoding': _('File encoding')
+            }
+        else:
+            labels = {
+                'created': _("Availability date"),
+                'modified': _("Modification date"),
+                'verified': _("Update date"),
+                'is_chart_creation_blocked': _('Do not allow user charts to be created')
+            }
 
 
 class LinkOrFileUploadForm(forms.ModelForm):
@@ -278,12 +296,7 @@ class AddResourceForm(ResourceForm, LinkOrFileUploadForm):
                     "You can't set status of this resource to published, because it's dataset is still a draft. "
                     "Set status of this resource to draft or set stauts to published for that dataset: "
                 )
-
-                error_message += "<a href='{}'>{}</a>".format(
-                    reverse('admin:datasets_dataset_change', args=[dataset.id]),
-                    dataset.title
-                )
-
+                error_message += "<a href='{}'>{}</a>".format(dataset.admin_change_url, dataset.title)
                 raise forms.ValidationError(mark_safe(error_message))
 
         return self.cleaned_data['status']

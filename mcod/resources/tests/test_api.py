@@ -5,15 +5,12 @@ from openapi_core.validation.request.validators import RequestValidator
 from openapi_core.validation.response.validators import ResponseValidator
 from pytest_bdd import scenarios, then, when
 
-import mcod.unleash
 from mcod.api import app
 from mcod.core.tests.helpers.openapi_wrappers import FalconOpenAPIWrapper
 from mcod.core.utils import jsonapi_validator
-from mcod.counters.tasks import save_counters
 from mcod.resources.models import Resource
 from mcod.settings.test import API_URL
-
-mcod.unleash.is_enabled = lambda x: True
+from mcod.unleash import is_enabled
 
 
 @pytest.fixture
@@ -32,11 +29,6 @@ def container():
             }
         }
     }
-
-
-@then('counter incrementing task is executed')
-def counter_incrementing_task_is_executed(context):
-    save_counters()
 
 
 @when('I search in tabular data rows')
@@ -71,6 +63,8 @@ def validate_response(resource, valid_response):
 
 
 scenarios("features/resources_list_api.feature")
+if is_enabled('S40_new_file_model.be'):
+    scenarios("features/resource_list_api_other_files_not_in_res.feature")
 scenarios("features/tabular_view_test.feature")
 scenarios("features/resource_details_api.feature")
 scenarios('features/resource_comment.feature')

@@ -82,6 +82,7 @@ hypereditor-0.1.0-py3-none-any.whl
 python-dateutil==2.8.1
 xmlschema==1.0.16
 celery-progress==0.0.14
+celery-singleton==0.3.1
 tox
 xlsxwriter==1.2.9
 accept-types==0.4.1

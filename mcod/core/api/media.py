@@ -93,3 +93,13 @@ class ExportHandler(BaseHandler):
         pd.read_csv(csv_output, sep=';').to_excel(writer, index=False)
         writer.save()
         return output.getvalue()
+
+
+class ZipHandler(BaseHandler):
+
+    def deserialize(self, stream, content_type, content_length):
+        # Todo - to be implemented. For now do nothing
+        return stream
+
+    def serialize(self, media, content_type):
+        return media

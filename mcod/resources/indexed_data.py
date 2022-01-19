@@ -1,4 +1,5 @@
 import uuid
+import os
 
 import shapefile
 
@@ -57,6 +58,8 @@ class IndexedData(object):
         idx_prefix = getattr(settings, 'ELASTICSEARCH_INDEX_PREFIX', None)
         self.idx_name = 'resource-{}'.format(self.resource.id)
         if idx_prefix:
+            worker = os.environ.get('PYTEST_XDIST_WORKER', '')
+            idx_prefix = f'{idx_prefix}-{worker}'
             self.idx_name = '{}-{}'.format(idx_prefix, self.idx_name)
         self._idx_cache = None
         self._doc_cache = None
@@ -264,7 +267,7 @@ class ShpData(IndexedData):
     @property
     def source(self):
         if not self._source:
-            with ArchiveReader(self.resource.file.path) as extracted:
+            with ArchiveReader(self.resource.main_file.path) as extracted:
                 shp_path = next(iter(f for f in extracted if f.endswith('.shp')))
                 self._source = shapefile.Reader(shp_path)
                 self._transformer = ShapeTransformer(extracted)
@@ -553,16 +556,16 @@ class TabularData(IndexedData):
         return _schema
 
     def infer_schema(self):
-        if not self.resource.file:
+        if not self.resource.main_file:
             raise ValidationError(_('File does not exist'))
 
         if self.resource.format not in ('csv', 'tsv', 'xls', 'xlsx', 'ods'):
             raise ValidationError(_('Invalid file type'))
 
-        _table = Table(self.resource.file.path,
+        _table = Table(self.resource.file_data_path,
                        ignore_blank_headers=True,
                        format=self.resource.format,
-                       encoding=self.resource.file_encoding or 'utf-8',
+                       encoding=self.resource.main_file_encoding or 'utf-8',
                        skip_rows={'type': 'preset', 'value': 'blank'})
         _schema = _table.infer(limit=5000, missing_values=self.missing_values)
         [x.update({'type': 'string'}) for x in _schema['fields'] if x['type'] in ['geopoint', 'missing']]
@@ -571,7 +574,7 @@ class TabularData(IndexedData):
 
     @property
     def schema(self):
-        if not self.resource.file:
+        if not self.resource.main_file:
             raise ValidationError(_('File does not exist'))
 
         if self.resource.format not in ('csv', 'tsv', 'xls', 'xlsx', 'ods'):
@@ -592,14 +595,15 @@ class TabularData(IndexedData):
             error_limit=10,
             format=self.resource.format,
             preset='table',
-            encoding=self.resource.file_encoding,
+            encoding=self.resource.main_file_encoding,
             skip_rows={'type': 'preset', 'value': 'blank'},
         )
         if self.resource.tabular_data_schema:
             kwargs['schema'] = self.get_schema()
         else:
             kwargs['infer_schema'] = True
-        report = validate_table(self.resource.file.path, **kwargs)
+
+        report = validate_table(self.resource.file_data_path, **kwargs)
         if not report['valid']:
             raise ResourceDataValidationError(report['tables'][0]['errors'])
 
@@ -612,12 +616,11 @@ class TabularData(IndexedData):
     @property
     def table(self):
         if not self._table_cache:
-            schema = self.schema or None
-            self._table_cache = Table(self.resource.file.path,
+            self._table_cache = Table(self.resource.file_data_path,
                                       ignore_blank_headers=True,
-                                      schema=schema,
+                                      schema=self.schema or None,
                                       format=self.resource.format,
-                                      encoding=self.resource.file_encoding or 'utf-8')
+                                      encoding=self.resource.main_file_encoding or 'utf-8')
         return self._table_cache
 
     @staticmethod

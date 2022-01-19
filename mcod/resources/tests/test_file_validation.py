@@ -1,17 +1,15 @@
 import pytest
-from mcod.resources.factories import ResourceFactory
+from pytest_bdd import scenarios
+
+scenarios(
+    'features/task_results.feature',
+)
 
 
 @pytest.mark.elasticsearch
-def test_headers_only_csv_file_validation(onlyheaders_csv_file):
-    resource = ResourceFactory.create(
-        type='file',
-        format='csv',
-        link=None,
-        file=onlyheaders_csv_file,
-    )
-    assert resource.data_tasks.count() == 1
-    assert 'zero-data-rows' in resource.data_tasks.order_by('id').last().result
-    resource.revalidate()
-    assert resource.data_tasks.count() == 2
-    assert 'zero-data-rows' in resource.data_tasks.order_by('id').last().result
+def test_headers_only_csv_file_validation(onlyheaderscsv_resource):
+    assert onlyheaderscsv_resource.data_tasks.count() == 1
+    assert 'zero-data-rows' in onlyheaderscsv_resource.data_tasks.order_by('id').last().result
+    onlyheaderscsv_resource.revalidate()
+    assert onlyheaderscsv_resource.data_tasks.count() == 2
+    assert 'zero-data-rows' in onlyheaderscsv_resource.data_tasks.order_by('id').last().result

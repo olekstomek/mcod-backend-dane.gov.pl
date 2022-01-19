@@ -1,5 +1,3 @@
-import logging
-
 from django.contrib.auth import get_user_model
 from django.contrib.postgres.indexes import GinIndex
 from django.db import models
@@ -21,8 +19,6 @@ STATUS_CHOICES = [
     ('published', _('Published')),
     ('draft', _('Draft')),
 ]
-
-signal_logger = logging.getLogger('signals')
 
 
 class Tag(BaseExtendedModel):
@@ -107,16 +103,7 @@ class Tag(BaseExtendedModel):
 
 @receiver(update_related_datasets, sender=Tag)
 def update_tag_in_datasets(sender, instance, *args, **kwargs):
-    signal_logger.debug(
-        'Updating related datasets',
-        extra={
-            'sender': '{}.{}'.format(sender._meta.model_name, sender._meta.object_name),
-            'instance': '{}.{}'.format(instance._meta.model_name, instance._meta.object_name),
-            'instance_id': instance.id,
-            'signal': 'update_related_datasets'
-        },
-        exc_info=1
-    )
+    sender.log_debug(instance, 'Updating related datasets', 'update_related_datasets')
     for dataset in instance.datasets.all():
         search_signals.update_document.send(dataset._meta.model, dataset)
         rdf_signals.update_graph.send(dataset._meta.model, dataset)
@@ -124,31 +111,13 @@ def update_tag_in_datasets(sender, instance, *args, **kwargs):
 
 @receiver(update_related_articles, sender=Tag)
 def update_tag_in_articles(sender, instance, *args, **kwargs):
-    signal_logger.debug(
-        'Updating related articles',
-        extra={
-            'sender': '{}.{}'.format(sender._meta.model_name, sender._meta.object_name),
-            'instance': '{}.{}'.format(instance._meta.model_name, instance._meta.object_name),
-            'instance_id': instance.id,
-            'signal': 'update_related_articles'
-        },
-        exc_info=1
-    )
+    sender.log_debug(instance, 'Updating related articles', 'update_related_articles')
     for app in instance.applications.all():
         search_signals.update_document.send(app._meta.model, app)
 
 
 @receiver(update_related_applications, sender=Tag)
 def update_tag_in_applications(sender, instance, *args, **kwargs):
-    signal_logger.debug(
-        'Updating related applications',
-        extra={
-            'sender': '{}.{}'.format(sender._meta.model_name, sender._meta.object_name),
-            'instance': '{}.{}'.format(instance._meta.model_name, instance._meta.object_name),
-            'instance_id': instance.id,
-            'signal': 'update_related_applications'
-        },
-        exc_info=1
-    )
+    sender.log_debug(instance, 'Updating related applications', 'update_related_applications')
     for article in instance.articles.all():
         search_signals.update_document.send(article._meta.model, article)

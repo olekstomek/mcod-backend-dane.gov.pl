@@ -278,7 +278,7 @@ def get_dataset_dcat_ap_triples(dataset, config):
         (format_ref, ns.SKOS.inScheme, URIRef(vocab["file-type"].rstrip('/'))),
     ]
 
-    media_type_ref = URIRef(f'{vocab["media-type"]}{resource.file_mimetype}')
+    media_type_ref = URIRef(f'{vocab["media-type"]}{resource.main_file_mimetype}')
     media_type_triples = [
         (resource_ref, ns.DCAT.mediaType, media_type_ref),
         (media_type_ref, ns.RDF.type, ns.DCT.MediaType),
@@ -409,7 +409,7 @@ def get_dataset_schemaorg_triples(dataset):
         (resource_ref, ns.SCHEMA.dateModified, Literal(str(resource.modified).replace(' ', 'T'))),
         (resource_ref, ns.SCHEMA.url, Literal(resource_uri)),
         (resource_ref, ns.SCHEMA.contentUrl, Literal(resource.download_url)),
-        (resource_ref, ns.SCHEMA.encodingFormat, Literal(resource.file_mimetype)),
+        (resource_ref, ns.SCHEMA.encodingFormat, Literal(resource.main_file_mimetype)),
         resource_license_triple,
 
         # ORGANIZATION

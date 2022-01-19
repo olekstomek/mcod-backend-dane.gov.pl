@@ -17,6 +17,10 @@ class AdminMixin(object):
             return reverse('admin:%s_%s_change' % (self._meta.app_label, self._meta.model_name), args=(self.id,))
         return ''
 
+    @classmethod
+    def admin_list_url(cls):
+        return reverse('admin:%s_%s_changelist' % (cls._meta.app_label, cls._meta.model_name))
+
     def mark_safe(self, value):
         return mark_safe(value)
 

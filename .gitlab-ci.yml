@@ -63,6 +63,8 @@ test:
     ADMIN_PASSWORD: Britenet.1
     FUSEKI_DATASET_1: ds
     FUSEKI_URL: http://fuseki:3030
+    ALLOWED_MINIMUM_FREE_GB: 1
+    DATASET_ARCHIVE_FILES_TASK_DELAY: 1
   services:
     - name: redis:6.2
       alias: redis

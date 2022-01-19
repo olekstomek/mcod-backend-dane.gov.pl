@@ -15,7 +15,6 @@ from wagtail.api.v2.utils import BadRequestError, page_models_from_string
 from wagtail.images.api.v2.views import ImagesAPIViewSet
 
 from mcod.cms.api.serializers import CmsPageSerializer
-from mcod.unleash import is_enabled
 from mcod.cms.utils import filter_page_type
 
 
@@ -89,7 +88,6 @@ class CmsPagesViewSet(PagesAPIViewSet):
     detail_only_fields = ['parent']
     lookup_field = 'url_path'
     lookup_url_kwarg = None
-    is_cms_api_cache_used = is_enabled('S27_cms_api_cache.be')
 
     def _activate_language(self, request):
         lang = request.query_params.get('lang', 'pl')
@@ -143,21 +141,17 @@ class CmsPagesViewSet(PagesAPIViewSet):
 
         return obj
 
-    if is_cms_api_cache_used:
-        @method_decorator(
-            cache_page(
-                settings.CMS_API_CACHE_TIMEOUT,
-                key_prefix='cms-api',
-                remember_all_urls=True,
-                remember_stats_all_urls=True,
-            )
+    @method_decorator(
+        cache_page(
+            settings.CMS_API_CACHE_TIMEOUT,
+            key_prefix='cms-api',
+            remember_all_urls=True,
+            remember_stats_all_urls=True,
         )
-        @method_decorator(vary_on_cookie)
-        def page_view(self, request, url_path=None):
-            return self._page_view(request, url_path=url_path)
-    else:
-        def page_view(self, request, url_path=None):
-            return self._page_view(request, url_path=url_path)
+    )
+    @method_decorator(vary_on_cookie)
+    def page_view(self, request, url_path=None):
+        return self._page_view(request, url_path=url_path)
 
     def _page_view(self, request, url_path=None):
         url_path = '' if not url_path else url_path

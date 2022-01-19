@@ -10,7 +10,7 @@ from django.core.management.base import BaseCommand, CommandError
 from django.db.models import Sum
 
 from mcod.counters.models import ResourceDownloadCounter, ResourceViewCounter
-from mcod.histories.models import History
+from mcod.histories.models import LogEntry
 from mcod.resources.models import Resource
 
 
@@ -267,7 +267,7 @@ class Command(BaseCommand):
         self.merge_zabbix_data()
 
     def gen_initial_json(self, init_file_name):
-        d = History.objects.resources_availability_as_dict()
+        d = LogEntry.objects.resources_availability_as_dict()
         self.save_json_result_file(init_file_name, d)
 
     def process_statuses_dict(self, date_to_status):
@@ -298,10 +298,13 @@ class Command(BaseCommand):
         self.save_json_result_file(self.resource_availability_file, input_data)
 
     def create_res_availability_history(self):
-        self.stdout.write('Creating resource_availability_history.json')
         init_file_name = 'resource_availability_history_initial.json'
-        self.gen_initial_json(init_file_name)
-        self.post_process_json(init_file_name)
+        if not os.path.isfile(self.file_path + self.resource_availability_file):
+            self.stdout.write('Creating resource_availability_history.json')
+            self.gen_initial_json(init_file_name)
+            self.post_process_json(init_file_name)
+        else:
+            self.stdout.write('resource_availability_history.json exists, skipping creation.')
 
     def create_pub_res_file(self):
         self.stdout.write("Creating public resources count history data json file.")

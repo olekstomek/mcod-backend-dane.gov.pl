@@ -1,3 +1,4 @@
+from pytest_bdd import scenarios
 # import falcon
 # import pytest
 # from marshmallow import Schema, ValidationError, validates, fields
@@ -94,3 +95,7 @@
 #         # result = client.simulate_get('/test_model_validation_2')
 #         # assert result.status_code == 400
 #         # assert result.json['code'] == 'error'
+
+
+scenarios(
+    'features/api_spec.feature')

@@ -24,6 +24,7 @@ class RegionDocument(Document):
     hierarchy_label = TranslatedTextField('hierarchy_label')
     model = fields.KeywordField()
     created = fields.DateField()
+    bbox = fields.GeoShapeField('envelope')
 
     class Index:
         name = mcs.ELASTICSEARCH_INDEX_NAMES['regions']

@@ -1,7 +1,11 @@
 from django.apps import AppConfig
 
+from mcod.unleash import is_enabled
+
 
 class ExtendedAppMixin:
+    is_auditlog_custom = is_enabled('S42_auditlog_custom.be')
+
     def connect_core_signals(self, sender):
         from django.db import models
         from mcod.core.db.models import BaseExtendedModel
@@ -19,14 +23,17 @@ class ExtendedAppMixin:
         models.signals.m2m_changed.connect(BaseExtendedModel.on_m2m_changed, sender=sender)
 
     def connect_history(self, *senders):
-        from auditlog.registry import auditlog
+        if self.is_auditlog_custom:
+            from mcod.core.auditlog import auditlog
+        else:
+            from auditlog.registry import auditlog
+
         from mcod.core.registries import history_registry
-        from mcod.unleash import is_enabled
-        new_history = is_enabled('S30_new_history.be')
         for sender in senders:
             history_registry.register(sender)
-            if new_history:
-                auditlog.register(sender)
+            auditlog.register(sender)
+            if self.is_auditlog_custom and hasattr(sender, 'trash_class'):
+                auditlog.register(sender.trash_class)
 
 
 class CoreConfig(AppConfig):

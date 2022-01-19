@@ -1,5 +1,5 @@
 from elasticsearch_dsl.query import Term
-from marshmallow import pre_load, validate, validates, validates_schema, ValidationError
+from marshmallow import pre_load, post_load, validate, validates, validates_schema, ValidationError
 from django.utils.translation import gettext_lazy as _, get_language
 
 from mcod import settings
@@ -127,12 +127,7 @@ class CreateShowcaseProposalAttrs(ObjectAttrs):
             choices=ShowcaseProposal.CATEGORIES,
             error=_('Invalid value! Possible values: %(values)s') % {'values': ShowcaseProposal.CATEGORIES})
     )
-    license_type = core_fields.Str(
-        required=True,
-        validate=validate.OneOf(
-            choices=ShowcaseProposal.LICENSE_TYPES,
-            error=_('Invalid value! Possible values: %(values)s') % {'values': ShowcaseProposal.LICENSE_TYPES})
-    )
+    license_type = core_fields.Str(required=False)
     applicant_email = core_fields.Email(required=True)
     author = core_fields.Str(required=True, validate=validate.Length(max=50))
     title = core_fields.Str(
@@ -164,9 +159,15 @@ class CreateShowcaseProposalAttrs(ObjectAttrs):
         ordered = True
         object_type = 'showcaseproposal'
 
+    @post_load
+    def postprocess_data(self, data, **kwargs):
+        if data.get('category') == 'other':
+            data['license_type'] = ''
+        return data
+
     @pre_load
     def prepare_data(self, data, **kwargs):
-        data['datasets'] = [x.replace('dataset-', '') for x in data.get('datasets', [])]
+        data['datasets'] = [x.replace('dataset-', '') for x in data.get('datasets', []) if x]
         return data
 
     @validates('mobile_apple_url')
@@ -222,6 +223,11 @@ class CreateShowcaseProposalAttrs(ObjectAttrs):
         if is_desktop_app and not any(desktop_urls):
             errors['is_desktop_app'] = msg_template % {
                 'items': 'desktop_linux_url, desktop_macos_url, desktop_windows_url'}
+        category = data.get('category')
+        license_type = data.get('license_type')
+        if category in ('app', 'www') and not license_type:
+            errors['license_type'] = _('Invalid value! Possible values: %(values)s') % {
+                'values': ShowcaseProposal.LICENSE_TYPES}
         if errors:
             raise ValidationError(errors)
 

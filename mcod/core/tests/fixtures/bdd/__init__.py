@@ -4,6 +4,7 @@ from mcod.core.tests.fixtures.bdd.applications import *  # noqa
 from mcod.core.tests.fixtures.bdd.articles import *  # noqa
 from mcod.core.tests.fixtures.bdd.cms import *  # noqa
 from mcod.core.tests.fixtures.bdd.common import *  # noqa
+from mcod.core.tests.fixtures.bdd.categories import *  # noqa
 from mcod.core.tests.fixtures.bdd.datasets import *  # noqa
 from mcod.core.tests.fixtures.bdd.discourse import *  # noqa
 from mcod.core.tests.fixtures.bdd.organizations import *  # noqa

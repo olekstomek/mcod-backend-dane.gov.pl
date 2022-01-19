@@ -16,15 +16,25 @@ from mcod.core.api.hooks import login_optional
 from mcod.core.api.views import JsonAPIView, RDFView, BaseView
 from mcod.core.versioning import versioned
 from mcod.datasets.deserializers import (
+    CatalogRdfApiRequest,
+    CreateCommentRequest,
     DatasetApiRequest,
     DatasetApiSearchRequest,
-    CreateCommentRequest,
-    CatalogRdfApiRequest
+    LicenseApiRequest,
 )
 from mcod.datasets.documents import DatasetDocument
-from mcod.datasets.handlers import CSVMetadataViewHandler, XMLMetadataViewHandler
+from mcod.datasets.handlers import (
+    CSVMetadataViewHandler,
+    XMLMetadataViewHandler,
+    ArchiveDownloadViewHandler
+)
 from mcod.datasets.models import Dataset
-from mcod.datasets.serializers import DatasetApiResponse, CommentApiResponse, DatasetRDFResponseSchema
+from mcod.datasets.serializers import (
+    CommentApiResponse,
+    DatasetApiResponse,
+    DatasetRDFResponseSchema,
+    LicenseApiResponse,
+)
 from mcod.resources.deserializers import ResourceApiSearchRequest
 from mcod.resources.documents import ResourceDocument
 from mcod.resources.serializers import ResourceApiResponse
@@ -243,3 +253,38 @@ class XMLMetadataView(BaseView):
 
     def set_content_type(self, resp, **kwargs):
         return settings.EXPORT_FORMAT_TO_MIMETYPE['xml']
+
+
+class LicenseView(JsonAPIView):
+
+    def on_get(self, request, response, *args, **kwargs):
+        self.handle(request, response, self.GET, *args, **kwargs)
+
+    class GET(BaseHdlr):
+        deserializer_schema = LicenseApiRequest
+        database_model = apps.get_model('datasets', 'Dataset')
+        serializer_schema = LicenseApiResponse
+
+        def _get_data(self, cleaned, *args, **kwargs):
+            data = self.database_model.get_license_data(kwargs['name'])
+            if not data:
+                raise falcon.HTTPNotFound
+            return data
+
+
+class DatasetResourcesFilesBulkDownloadView(BaseView):
+
+    def on_get(self, request, response, *args, **kwargs):
+        self.handle(request, response, self.GET, *args, **kwargs)
+
+    def on_head(self, request, response, *args, **kwargs):
+        self.handle(request, response, self.HEAD, *args, **kwargs)
+
+    class GET(ArchiveDownloadViewHandler):
+        pass
+
+    class HEAD(ArchiveDownloadViewHandler):
+        pass
+
+    def set_content_type(self, resp, **kwargs):
+        return 'application/zip'

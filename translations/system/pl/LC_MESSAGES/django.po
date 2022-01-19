@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-12-06 17:27+0100\n"
+"POT-Creation-Date: 2021-12-30 18:42+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -757,6 +757,15 @@ msgstr ""
 "Jeśli wybierzesz szkic, status wszystkich opubilkowanych zasobów należących "
 "do tego zbioru zostanie zmieniony na szkic"
 
+msgid "has high value data"
+msgstr "zawiera dane o wysokiej wartości"
+
+msgid "Yes"
+msgstr "Tak"
+
+msgid "No"
+msgstr "Nie"
+
 msgid ""
 "Allowed file extensions: jpg, gif, png. For better readability, we "
 "recommend .png files with a transparent background"
@@ -893,6 +902,9 @@ msgstr ""
 msgid "Has high value data"
 msgstr "Zawiera dane wysokiej wartości"
 
+msgid "Archived resources files"
+msgstr "Zarchiwizowane pliki zasobów"
+
 msgid "modified"
 msgstr "zmodyfikowany"
 
@@ -902,12 +914,6 @@ msgstr "zbiór danych"
 #, python-format
 msgid "The value must be between %(min)s and %(max)s"
 msgstr "Wartość musi być pomiędzy %(min)s a %(max)s"
-
-msgid "No"
-msgstr "Nie"
-
-msgid "Yes"
-msgstr "Tak"
 
 msgid "id"
 msgstr ""
@@ -1986,6 +1992,9 @@ msgstr "Zmień %s - kosz"
 msgid "View %s - trash"
 msgstr "Obejrzyj %s - kosz"
 
+msgid "Removed:"
+msgstr "Usunięte:"
+
 #, python-format
 msgid "Change history: %s"
 msgstr "Historia zmian: %s"
@@ -2883,6 +2892,18 @@ msgstr ""
 msgid "Do not allow user charts to be created"
 msgstr "Nie zezwalaj na tworzenie wykresów przez użytkownika"
 
+msgid "File as CSV"
+msgstr "Plik jako CSV"
+
+msgid "File as JSON-LD"
+msgstr "Plik jako JSON-LD"
+
+msgid "File info"
+msgstr "Informacje o pliku"
+
+msgid "File encoding"
+msgstr "Kodowanie pliku"
+
 msgid "Data source"
 msgstr "Źródło danych"
 
@@ -2938,20 +2959,8 @@ msgstr "dostępność"
 msgid "Packed file"
 msgstr "Spakowany plik"
 
-msgid "File as CSV"
-msgstr "Plik jako CSV"
-
-msgid "File as JSON-LD"
-msgstr "Plik jako JSON-LD"
-
 msgid "File mimetype"
 msgstr "Typ MIME pliku"
-
-msgid "File info"
-msgstr "Informacje o pliku"
-
-msgid "File encoding"
-msgstr "Kodowanie pliku"
 
 msgid "Resource Link"
 msgstr "Link do zasobu"
@@ -3299,8 +3308,8 @@ msgstr "Zablokowany"
 msgid "Open Data - Administration Panel"
 msgstr "Otwarte Dane - Panel Administracyjny"
 
-msgid "Showcases"
-msgstr "Innowacje"
+msgid "PoCoTo"
+msgstr ""
 
 msgid "Data suggestions"
 msgstr "Propozycje nowych danych"
@@ -3373,10 +3382,10 @@ msgid "Application type"
 msgstr "Rodzaj aplikacji"
 
 msgid "Delete selected showcase proposals"
-msgstr "Usuń wybrane propozycje innowacji"
+msgstr "Usuń wybrane propozycje ponownego wykorzystania"
 
 msgid "Showcase creation task was launched!"
-msgstr "Zadanie utworzenia innowacji zostało uruchomione!"
+msgstr "Zadanie utworzenia ponownego wykorzystania zostało uruchomione!"
 
 #, python-format
 msgid "Passing at least one of: %(items)s is required!"
@@ -3400,14 +3409,23 @@ msgstr "Aplikacje mobilne"
 msgid "Desktop Applications"
 msgstr "Aplikacje desktopowe"
 
-msgid "Portal WWW"
-msgstr "Portal WWW"
+msgctxt "showcase category name"
+msgid "Website"
+msgstr "Serwis WWW"
 
 msgid "Free App"
 msgstr "Darmowa aplikacja"
 
 msgid "Commercial App"
 msgstr "Płatna aplikacja"
+
+msgctxt "license type"
+msgid "Free"
+msgstr "Darmowa"
+
+msgctxt "license type"
+msgid "Commercial"
+msgstr "Płatna"
 
 msgid "is mobile app?"
 msgstr "aplikacja mobilna?"
@@ -3443,34 +3461,37 @@ msgid "attachement"
 msgstr "załącznik"
 
 msgid "showcase"
-msgstr "innowacja"
+msgstr "ponowne wykorzystanie"
 
 msgid "Showcase Proposal"
-msgstr "Propozycja innowacji"
+msgstr "Propozycja ponownego wykorzystania"
 
 msgid "Showcase Proposals"
-msgstr "Propozycje innowacji"
+msgstr "Propozycje ponownego wykorzystania"
 
 msgid "acc: showcase proposal"
-msgstr "propozycję innowacji"
+msgstr "propozycję ponownego wykorzystania"
 
 msgid "Showcase Proposal Trash"
-msgstr "Propozycja innowacji - Kosz"
+msgstr "Propozycja ponownego wykorzystania - Kosz"
 
 msgid "Showcase Proposals Trash"
-msgstr "Propozycje innowacji - Kosz"
+msgstr "Propozycje ponownego wykorzystania - Kosz"
 
 msgid "Showcase"
-msgstr "Innowacja"
+msgstr "Ponowne wykorzystanie"
+
+msgid "Showcases"
+msgstr "Ponowne wykorzystanie"
 
 msgid "acc: Showcase"
-msgstr "innowację"
+msgstr "ponowne wykorzystanie danych"
 
 msgid "Showcase Trash"
-msgstr "Innowacja - Kosz"
+msgstr "Ponowne wykorzystanie - Kosz"
 
 msgid "Showcases Trash"
-msgstr "Innowacje - Kosz"
+msgstr "Ponowne wykorzystanie - Kosz"
 
 msgid "Desktop App"
 msgstr "Desktopowa"

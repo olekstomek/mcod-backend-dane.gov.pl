@@ -1,3 +1,4 @@
+from decimal import Decimal
 from django.contrib.postgres.fields import JSONField
 from django.contrib.postgres.indexes import GinIndex
 from django.db import models
@@ -74,6 +75,13 @@ class Region(BaseExtendedModel):
     @property
     def wkt_bbox(self):
         return f'BBOX ({self.bbox[0]},{self.bbox[2]},{self.bbox[1]},{self.bbox[3]})'
+
+    @property
+    def envelope(self):
+        return {
+            'type': 'envelope',
+            'coordinates': [[Decimal(self.bbox[0]), Decimal(self.bbox[3])], [Decimal(self.bbox[2]), Decimal(self.bbox[1])]]
+        }
 
     @property
     def wkt_centroid(self):

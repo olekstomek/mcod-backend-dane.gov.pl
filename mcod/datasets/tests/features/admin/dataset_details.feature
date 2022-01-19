@@ -25,9 +25,10 @@ Feature: Dataset details
 
   Scenario: Dataset creation automatically creates slug from title
     Given institution with id 999
+    And category with id 999
     And tag created with params {"id": 999, "name": "Tag1", "language": "pl"}
     When admin's request method is POST
-    And admin's request posted dataset data is {"update_notification_recipient_email": "test@example.com", "title": "Dataset automatically created slug test", "notes": "more than 20 characters", "organization": [999], "tags": [999], "tags_pl": [999]}
+    And admin's request posted dataset data is {"update_notification_recipient_email": "test@example.com", "title": "Dataset automatically created slug test", "notes": "more than 20 characters", "organization": [999], "categories": [999], "tags": [999], "tags_pl": [999]}
     And admin's page /datasets/dataset/add/ is requested
     Then admin's response status code is 200
     And admin's response page contains /change/">Dataset automatically created slug test</a>" został pomyślnie dodany.
@@ -35,9 +36,10 @@ Feature: Dataset details
 
   Scenario: Admin can add tags to dataset
     Given institution with id 999
+    And category with id 999
     And tag created with params {"id": 999, "name": "Tag1", "language": "pl"}
     When admin's request method is POST
-    And admin's request posted dataset data is {"update_notification_recipient_email": "test@example.com", "title": "Admin can add tags to dataset test", "notes": "more than 20 characters", "organization": [999], "tags": [999], "tags_pl": [999]}
+    And admin's request posted dataset data is {"update_notification_recipient_email": "test@example.com", "title": "Admin can add tags to dataset test", "notes": "more than 20 characters", "categories": [999], "organization": [999], "tags": [999], "tags_pl": [999]}
     And admin's page /datasets/dataset/add/ is requested
     Then admin's response status code is 200
     And admin's response page contains /change/">Admin can add tags to dataset test</a>" został pomyślnie dodany.
@@ -45,10 +47,11 @@ Feature: Dataset details
 
   Scenario: Editor can add tags to dataset
     Given institution with id 999
+    And category with id 999
     And tag created with params {"id": 999, "name": "Tag1", "language": "pl"}
     And admin's request logged editor user created with params {"id": 999, "organizations": [999]}
     When admin's request method is POST
-    And admin's request posted dataset data is {"update_notification_recipient_email": "test@example.com", "title": "Editor can add tags to dataset test", "notes": "more than 20 characters", "organization": [999], "tags": [999], "tags_pl": [999]}
+    And admin's request posted dataset data is {"update_notification_recipient_email": "test@example.com", "title": "Editor can add tags to dataset test", "notes": "more than 20 characters", "organization": [999], "categories": [999], "tags": [999], "tags_pl": [999]}
     And admin's page /datasets/dataset/add/ is requested
     Then admin's response status code is 200
     And admin's response page contains /change/">Editor can add tags to dataset test</a>" został pomyślnie dodany.
@@ -56,10 +59,11 @@ Feature: Dataset details
 
   Scenario: Dataset creation sets created_by to currently logged user
     Given institution with id 999
+    And category with id 999
     And tag created with params {"id": 999, "name": "Tag1", "language": "pl"}
     And admin's request logged editor user created with params {"id": 999, "organizations": [999]}
     When admin's request method is POST
-    And admin's request posted dataset data is {"update_notification_recipient_email": "test@example.com", "title": "Dataset created_by set test", "notes": "more than 20 characters", "organization": [999], "tags": [999], "tags_pl": [999]}
+    And admin's request posted dataset data is {"update_notification_recipient_email": "test@example.com", "title": "Dataset created_by set test", "notes": "more than 20 characters", "organization": [999], "categories": [999], "tags": [999], "tags_pl": [999]}
     And admin's page /datasets/dataset/add/ is requested
     Then admin's response status code is 200
     And admin's response page contains /change/">Dataset created_by set test</a>" został pomyślnie dodany.
@@ -67,14 +71,28 @@ Feature: Dataset details
 
   Scenario: Dataset creation with related resource at once
     Given institution with id 999
+    And category with id 999
     And admin's request logged admin user created with params {"id": 999}
     And tag created with params {"id": 999, "name": "Tag1", "language": "pl"}
     When admin's request method is POST
-    And admin's request posted dataset data is {"update_notification_recipient_email": "test@example.com", "notes": "more than 20 characters", "organization": [999], "tags": [999], "tags_pl": [999], "resources-2-TOTAL_FORMS": "1", "resources-2-0-switcher": "link", "resources-2-0-link": "https://test.pl", "resources-2-0-title": "123", "resources-2-0-description": "<p>more than 20 characters</p>", "resources-2-0-status": "published", "resources-2-0-id": "", "resources-2-0-dataset": ""}
+    And admin's request posted dataset data is {"update_notification_recipient_email": "test@example.com", "notes": "more than 20 characters", "organization": [999], "categories": [999], "tags": [999], "tags_pl": [999], "resources-2-TOTAL_FORMS": "1", "resources-2-0-switcher": "link", "resources-2-0-link": "https://test.pl", "resources-2-0-title": "123", "resources-2-0-description": "<p>more than 20 characters</p>", "resources-2-0-status": "published", "resources-2-0-id": "", "resources-2-0-dataset": ""}
     And admin's page /datasets/dataset/add/ is requested
     Then admin's response status code is 200
     And admin's response page contains /change/">Test with dataset title</a>" został pomyślnie dodany.
     And resources.Resource with title 123 contains data {"link": "https://test.pl", "created_by_id": 999, "modified_by_id": 999}
+
+  Scenario: Dataset modified attribute is set
+    Given institution with id 999
+    And category with id 999
+    And admin's request logged admin user created with params {"id": 999}
+    And tag created with params {"id": 999, "name": "Tag1", "language": "pl"}
+    When admin's request method is POST
+    And admin's request posted dataset data is {"title": "test metadata_modified title", "slug": "Test", "notes": "more than 20 characters", "organization": [999], "url": "http://cos.tam.pl", "update_frequency": "weekly", "update_notification_recipient_email": "test@example.com", "license_id": "other-pd", "status": "published", "categories": [999], "tags": [999], "tags_pl": [999], "resources-2-TOTAL_FORMS": "1", "resources-2-0-switcher": "link", "resources-2-0-link": "https://test.pl", "resources-2-0-title": "123", "resources-2-0-description": "<p>more than 20 characters</p>", "resources-2-0-status": "published", "resources-2-0-id": "", "resources-2-0-dataset": ""}
+    And admin's page /datasets/dataset/add/ is requested
+    Then admin's response status code is 200
+    And admin's response page contains /change/">test metadata_modified title</a>" został pomyślnie dodany.
+    And latest dataset attribute title is test metadata_modified title
+    And latest dataset attribute modified is not None
 
   Scenario: Imported dataset is correctly displayed in trash for admin
     Given dataset for data {"id": 999, "is_removed": true} imported from ckan named Test Source with url http://example.com
@@ -107,21 +125,23 @@ Feature: Dataset details
 
   Scenario: Notification mail is updated after dataset edition by editor
     Given institution with id 999
+    And category with id 999
     And tag created with params {"id": 998, "name": "Tag1", "language": "pl"}
     And admin's request logged editor user created with params {"id": 1000, "organizations": [999], "email": "editor@dane.gov.pl"}
     And dataset with id 1001 and institution 999
     When admin's request method is POST
-    And admin's request posted dataset data is {"update_notification_recipient_email": "temp@dane.gov.pl", "organization": [999], "tags_pl": [998]}
+    And admin's request posted dataset data is {"update_notification_recipient_email": "temp@dane.gov.pl", "organization": [999], "categories": [999], "tags_pl": [998]}
     And admin's page /datasets/dataset/1001/change/ is requested
     Then datasets.Dataset with id 1001 contains data {"update_notification_recipient_email": "editor@dane.gov.pl"}
 
   Scenario: Notification mail is not updated after dataset edition by superuser
     Given institution with id 999
+    And category with id 999
     And tag created with params {"id": 998, "name": "Tag1", "language": "pl"}
     And admin's request logged admin user created with params {"id": 1000, "organizations": [999], "email": "superuser@dane.gov.pl"}
     And dataset with id 1001 and institution 999
     When admin's request method is POST
-    And admin's request posted dataset data is {"update_notification_recipient_email": "temp@dane.gov.pl", "organization": [999], "tags_pl": [998]}
+    And admin's request posted dataset data is {"update_notification_recipient_email": "temp@dane.gov.pl", "organization": [999], "categories": [999], "tags_pl": [998]}
     And admin's page /datasets/dataset/1001/change/ is requested
     Then datasets.Dataset with id 1001 contains data {"update_notification_recipient_email": "temp@dane.gov.pl"}
 

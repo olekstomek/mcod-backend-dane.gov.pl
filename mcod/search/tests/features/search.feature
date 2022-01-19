@@ -68,6 +68,15 @@ Feature: Global Search API
     | institution | {"id": 999, "abbreviation": "abbrev"}        | {"model": "institution", "q": "abbrev"}       | en        | title,notes,abbreviation |
     | institution | {"id": 999, "abbreviation": "abbrev"}        | {"model": "institution", "q": "abbrev"}       | pl        | title,notes,abbreviation |
 
+    | showcase    | {"id": 999, "title_en": "title_en"}          | {"model": "showcase", "q": "title_en"}     | en        | title,notes,author,image_thumb_url,image_alt,showcase_category,showcase_category_name,showcase_platforms,showcase_types      |
+    | showcase    | {"id": 999, "title": "title_pl"}             | {"model": "showcase", "q": "title_pl"}     | pl        | title,notes,author,image_thumb_url,image_alt,showcase_category,showcase_category_name,showcase_platforms,showcase_types      |
+    | showcase    | {"id": 999, "notes_en": "notes_en"}          | {"model": "showcase", "q": "notes_en"}     | en        | title,notes,author,image_thumb_url,image_alt,showcase_category,showcase_category_name,showcase_platforms,showcase_types      |
+    | showcase    | {"id": 999, "notes": "notes_pl"}             | {"model": "showcase", "q": "notes_pl"}     | pl        | title,notes,author,image_thumb_url,image_alt,showcase_category,showcase_category_name,showcase_platforms,showcase_types      |
+    | showcase    | {"id": 999, "author": "John Cleese"}         | {"model": "showcase", "q": "John Cleese"}  | en        | title,notes,author,image_thumb_url,image_alt,showcase_category,showcase_category_name,showcase_platforms,showcase_types      |
+    | showcase    | {"id": 999, "author": "John Cleese"}         | {"model": "showcase", "q": "John Cleese"}  | pl        | title,notes,author,image_thumb_url,image_alt,showcase_category,showcase_category_name,showcase_platforms,showcase_types      |
+    | showcase    | {"id": 999, "tags": ["app_tag_en"]}          | {"model": "showcase", "q": "app_tag_en"}   | en        | title,notes,author,image_thumb_url,image_alt,tags,showcase_category,showcase_category_name,showcase_platforms,showcase_types |
+    | showcase    | {"id": 999, "tags": ["app_tag_pl"]}          | {"model": "showcase", "q": "app_tag_pl"}   | pl        | title,notes,author,image_thumb_url,image_alt,tags,showcase_category,showcase_category_name,showcase_platforms,showcase_types |
+
   Scenario Outline: Search filters by regions geodata
     Given dataset with id 998
     And resource with id 999 dataset id 998 and single main region

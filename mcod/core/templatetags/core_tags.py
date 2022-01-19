@@ -10,6 +10,7 @@ from django.utils.safestring import mark_safe
 from suit.templatetags.suit_list import result_list_with_context
 from django.utils.html import format_html
 from suit.templatetags.suit_menu import get_admin_site, Menu as SuitMenu
+from suit.templatetags.suit_tags import field_contents_foreign_linked
 
 from mcod.unleash import is_enabled
 
@@ -38,6 +39,23 @@ class Menu(SuitMenu):
 
     def get_native_model_url(self, model):
         return model.get('admin_url') or model.get('add_url') or ''
+
+    def activate_models(self, app, match_by_name=False):
+        super().activate_models(app, match_by_name=match_by_name)
+        if self.request.path in ('/showcases/showcaseproposal/', '/suggestions/datasetsubmission/'):
+            # fix inactive links in menu.
+            for model in app['models']:
+                if (self.request.path == '/showcases/showcaseproposal/' and
+                        model.get('name') == 'showcases.showcaseproposal'):
+                    model['is_active'] = True
+
+                if (self.request.path == '/suggestions/datasetsubmission/' and
+                        model.get('name') == 'suggestions.datasetsubmission'):
+                    model['is_active'] = True
+
+                # Mark parent as active too
+                if model['is_active'] and not self.app_activated:
+                    app['is_active'] = self.app_activated = True
 
 
 @register.filter()
@@ -116,3 +134,16 @@ def get_model_extra_data(app_label, object_name):
         'admin_url': admin_url,
     }
     return extra_data
+
+
+@register.filter()
+def mcod_field_contents_foreign_linked(admin_field):
+    file_fields = ['main_file', 'jsonld_converted_file', 'csv_converted_file']
+    field = field_contents_foreign_linked(admin_field)
+    field_display = field
+    if admin_field.field['field'] in file_fields:
+        f_field = getattr(admin_field.form.instance, admin_field.field['field'], '')
+        file_url = getattr(f_field, 'url', '')
+        if file_url:
+            field_display = mark_safe("<a href='%s'>%s</a>" % (file_url, field))
+    return field_display

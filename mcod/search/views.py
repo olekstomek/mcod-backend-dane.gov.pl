@@ -34,6 +34,7 @@ logger = logging.getLogger('mcod')
 
 
 PLURAL_MODEL_NAMES = {
+    'application': 'applications',
     'dataset': 'datasets',
     'resource': 'resources',
     'institution': 'institutions',
@@ -45,11 +46,10 @@ PLURAL_MODEL_NAMES = {
 }
 if is_enabled('S39_showcases.be'):
     PLURAL_MODEL_NAMES['showcase'] = 'showcases'
-else:
-    PLURAL_MODEL_NAMES['application'] = 'applications'
 
 
 ALLOWED_MODELS = [
+    'application',
     'dataset',
     'resource',
     'institution',
@@ -61,8 +61,6 @@ ALLOWED_MODELS = [
 ]
 if is_enabled('S39_showcases.be'):
     ALLOWED_MODELS.append('showcase')
-else:
-    ALLOWED_MODELS.append('application')
 
 
 class NoneVisualizationCleaner:

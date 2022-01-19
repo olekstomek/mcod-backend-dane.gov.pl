@@ -19,8 +19,8 @@ class TestApplicationsTasks(object):
         data = dict(
             category='app',
             license_type='free',
-            title='Jakaś innowacja',
-            notes='Nieszczególnie\nciekawy\nopis\ninnowacji',
+            title='Testowa propozycja aplikacji',
+            notes='Nieszczególnie\nciekawy\nopis',
             applicant_email='anyone@anywhere.any',
             author='Jan Kowalski',
             url='http://www.anywhere.any',

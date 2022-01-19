@@ -10,17 +10,23 @@ from mcod.resources.geo import (
     analyze_shapefile,
     are_shapefiles,
     check_geodata,
-    is_json_stat_path,
     has_geotiff_files,
 )
 from mcod.resources.meteo import check_meteo_data
-from mcod.unleash import is_enabled
 
 logger = logging.getLogger('mcod')
 
 
 class UnknownFileFormatError(Exception):
     pass
+
+
+def _is_json(family, content_type):
+    return family == 'application' and content_type == 'json'
+
+
+def _is_xml(family, content_type):
+    return family == 'text' and content_type == 'xml'
 
 
 def _is_office_file(extension, content_type):
@@ -133,8 +139,8 @@ def get_file_info(path):
     return parse_mime_type(result)
 
 
-def analyze_file(path, extension=None):  # noqa: C901
-    logger.debug(f"analyze_resource_file({path}, {extension})")
+def analyze_file(path):  # noqa: C901
+    logger.debug(f"analyze_resource_file({path})")
     family, content_type, options = get_file_info(path)
     extracted = None
     analyze_exc = None
@@ -147,9 +153,7 @@ def analyze_file(path, extension=None):  # noqa: C901
         else:
             if are_shapefiles(extracted):
                 shp_type, options = analyze_shapefile(extracted)
-                extension = 'shp'
                 content_type = 'shapefile'
-                logger.debug(f"  recognized shapefile {shp_type}, {options}")
             elif has_geotiff_files(extracted):
                 family = 'image'
                 content_type = 'tiff;application=geotiff'
@@ -167,17 +171,18 @@ def analyze_file(path, extension=None):  # noqa: C901
     encoding = options.get('charset', 'unknown')
     logger.debug(f"  encoding: {encoding}")
 
-    extension = file_format_from_content_type(content_type, family=family, extension=extension) or path.rsplit('.')[-1]
+    extension = file_format_from_content_type(content_type, family=family, extension=None) or path.rsplit('.')[-1]
+
     logger.debug(f"  extension: {extension}")
-    if _is_plain_text(family, content_type):
+
+    if _is_plain_text(family, content_type) or _is_json(family, content_type) or _is_xml(family, content_type):
         extension, encoding = _analyze_plain_text(path, extension, encoding)
+
     if _is_office_file(extension, content_type):
         extension, encoding = _analyze_office_file(path, encoding, content_type, extension)
 
     logger.debug(f'  finally: extension = {extension}, file_info = {file_info}, encoding = {encoding}')
 
-    if extension == 'json' and is_enabled('S35_jsonstat.be') and is_json_stat_path(path):
-        extension = 'jsonstat'
     if extracted:
         extracted.cleanup()
 

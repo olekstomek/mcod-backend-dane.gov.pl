@@ -1,5 +1,7 @@
 import logging
 import os
+import zipfile
+from shutil import disk_usage
 from datetime import datetime
 
 from celery import shared_task
@@ -12,9 +14,10 @@ from django.core.mail.message import EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.utils import translation
 from django.utils.translation import ugettext_lazy as _
+from celery_singleton import Singleton
 
 from mcod.core.utils import save_as_csv, save_as_xml
-from mcod.datasets.models import Dataset
+from mcod.core import storages
 from mcod.unleash import is_enabled
 
 
@@ -140,7 +143,8 @@ def send_dataset_update_reminder():
         'monthly': {'default_delay': 3, 'relative_delta': relativedelta(months=1)},
         'weekly': {'default_delay': 1, 'relative_delta': relativedelta(days=7)},
     }
-    qs = Dataset.objects.datasets_to_notify(list(freq_updates_with_delays.keys()))
+    dataset_model = apps.get_model('datasets', 'Dataset')
+    qs = dataset_model.objects.datasets_to_notify(list(freq_updates_with_delays.keys()))
     upcoming_updates = []
     for freq, freq_details in freq_updates_with_delays.items():
         notification_delays = set(list(qs.filter(
@@ -164,3 +168,66 @@ def send_dataset_update_reminder():
             [ds.dataset_update_notification_recipient], alternatives=[(msg_html, 'text/html')]))
     sent_messages = conn.send_messages(messages)
     logger.debug(f'Sent {sent_messages} messages with dataset update reminder.')
+
+
+@shared_task(base=Singleton)
+def archive_resources_files(dataset_id):
+    free_space = disk_usage(settings.MEDIA_ROOT).free
+    if free_space < settings.ALLOWED_MINIMUM_SPACE:
+        logger.error('There is not enough free space on disk, archive creation is canceled.')
+        raise ResourceWarning
+    logger.debug(f'Updating dataset resources files archive for dataset {dataset_id}')
+    resourcefile_model = apps.get_model('resources', 'ResourceFile')
+    resource_model = apps.get_model('resources', 'Resource')
+    dataset_model = apps.get_model('datasets', 'Dataset')
+    ds = dataset_model.raw.get(pk=dataset_id)
+
+    def create_full_file_path(_fname):
+        storage_location = ds.archived_resources_files.storage.location
+        full_fname = ds.archived_resources_files.field.generate_filename(ds, _fname)
+        return os.path.join(storage_location, full_fname)
+    creation_start = datetime.now()
+    tmp_filename = f'resources_files_{creation_start.strftime("%Y-%m-%d-%H%M%S%f")}.zip'
+    symlink_name = 'resources_files.zip'
+    res_storage = storages.get_storage('resources')
+    full_symlink_name = ds.archived_resources_files.field.generate_filename(ds, symlink_name)
+
+    full_file_path = create_full_file_path(tmp_filename)
+    full_symlink_path = create_full_file_path(symlink_name)
+    full_tmp_symlink_path = create_full_file_path('tmp_resources_files.zip')
+    abs_path = os.path.dirname(full_file_path)
+    os.makedirs(abs_path, exist_ok=True)
+    with zipfile.ZipFile(full_file_path, 'w', zipfile.ZIP_DEFLATED, compresslevel=1) as main_zip:
+        res_location = res_storage.location
+        if is_enabled('S40_new_file_model.be'):
+            filtered_files = resourcefile_model.objects.filter(
+                resource__dataset_id=dataset_id,
+                resource__status='published', resource__is_removed=False)
+            file_details = filtered_files.values_list('file', 'resource_id')
+        else:
+            filtered_files = resource_model.objects.filter(status='published', dataset_id=dataset_id).with_files()
+            all_resource_files = filtered_files.values('file', 'csv_file', 'jsonld_file', 'pk')
+            file_details = []
+            for res in all_resource_files:
+                res_files = [(res['file'], res['pk'])]
+                if res['csv_file']:
+                    res_files.append((res['csv_file'], res['pk']))
+                if res['jsonld_file']:
+                    res_files.append((res['jsonld_file'], res['pk']))
+                file_details.extend(res_files)
+        for details in file_details:
+            split_name = details[0].split('/')
+            full_path = os.path.join(res_location, details[0])
+            main_zip.write(
+                full_path,
+                os.path.join(f'resource_{details[1]}', split_name[1])
+            )
+    if not ds.archived_resources_files:
+        os.symlink(full_file_path, full_symlink_path)
+        dataset_model.objects.filter(pk=dataset_id).update(archived_resources_files=full_symlink_name)
+    else:
+        old_file_path = os.path.realpath(full_symlink_path)
+        os.symlink(full_file_path, full_tmp_symlink_path)
+        os.rename(full_tmp_symlink_path, full_symlink_path)
+        os.remove(old_file_path)
+    logger.debug(f'Updated dataset {dataset_id} archive with {tmp_filename}')

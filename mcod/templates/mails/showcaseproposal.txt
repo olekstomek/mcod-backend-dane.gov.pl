@@ -1,9 +1,9 @@
-Zgłoszono propozycję aplikacji:
+Zgłoszenie propozycji wykorzystania danych w zakładce PoCoTo:
 
 E-mail zgłaszającego:
 {{ obj.applicant_email }}
 
-Tytuł aplikacji:
+Nazwa propozycji wykorzystania danych:
 {{ obj.title }}
 
 Kategoria:
@@ -12,17 +12,23 @@ Kategoria:
 Autor:
 {{ obj.author }}
 
-Adres url aplikacji:
+Adres URL do rozwiązania wykorzystującego dane:
 {{ obj.url }}
 
-Opis aplikacji:
+Opis rozwiązania ponownego wykorzystania otwartych danych:
 {{ obj.notes }}
 
-Lista zbiorów danych używanych przez aplikację (opcjonalne):
-{{ obj.datasets_links_info }}
+Logo (opcjonalne, ale zalecane):
+{{ obj.image_absolute_url|default:"-" }}
 
-Lista zbiorów danych zewnętrznych używanych przez aplikację (opcjonalne):
-{{ obj.external_datasets_info }}
+Grafika ilustracyjna (opcjonalne):
+{{ obj.illustrative_graphics_url|default:"-" }}
+
+Lista zbiorów z portalu dane.gov.pl wykorzystanych w propozycji (opcjonalne):
+{{ obj.datasets_links_info|default:"-" }}
+
+Lista zbiorów danych zewnętrznych wykorzystanych w propozycji (opcjonalne):
+{{ obj.external_datasets_info|default:"-" }}
 
 Słowa kluczowe (opcjonalne):
-{{ obj.keywords|join:", " }}
+{{ obj.keywords|join:", "|default:"-" }}

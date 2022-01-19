@@ -40,7 +40,8 @@ Feature: Datasets list API
     And api's response datasets contain valid links to related resources
 
   Scenario Outline: Test datasets list is filtered by openness_scores
-    Given 3 datasets with 3 resources
+    Given dataset with id 999
+    And resource created with params {"id": 999, "dataset_id": 999, "openness_score": 3}
     When api request method is GET
     And api request path is <request_path>
     And api request param <req_param_name> is <req_param_value>
@@ -50,8 +51,7 @@ Feature: Datasets list API
 
     Examples:
     | request_path  | req_param_name  | req_param_value | field_name                         | field_value |
-    | /1.0/datasets | openness_scores | 3               | /data/*/attributes/openness_scores | 3           |
-    # openness_scores parameter was renamed to openness_score in API 1.4.
+    | /1.0/datasets | openness_score  | 3               | /data/*/attributes/openness_scores | 3           |
     | /1.4/datasets | openness_score  | 3               | /data/*/attributes/openness_scores | 3           |
 
   Scenario Outline: Test datasets list can be sorted
@@ -189,3 +189,18 @@ Feature: Datasets list API
     And send api request and fetch the response
     Then api's response body field data/[0]/attributes/regions/[0]/name is Polska
     And api's response body field data/[0]/attributes/regions/[0]/region_id is 85633723
+
+  Scenario Outline: Datasets resource relationship has proper object urls
+      Given dataset created with params {"id": 1000, "title": "test dataset", "slug": "test-dataset"}
+      And dataset with id 1001 and title is another test dataset and slug is another-test-dataset
+      When api request path is <request_path>
+      Then send api request and fetch the response
+      And api's response body field /data/0/relationships/resources/links/related endswith datasets/1000,test-dataset/resources
+      And api's response body field /data/0/relationships/resources/meta/count is 0
+      And api's response body field /data/1/relationships/resources/links/related endswith datasets/1001,another-test-dataset/resources
+      And api's response body field /data/1/relationships/resources/meta/count is 0
+
+    Examples:
+    | request_path           |
+    | /1.0/datasets/?sort=id |
+    | /1.4/datasets/?sort=id |

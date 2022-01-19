@@ -69,14 +69,16 @@ $(function () {
     }
 
     const section_en = document.getElementById('tab-tresc-en') || document.getElementById('tab-formularz-en');
-    const wrapper = document.createElement('div');
-    wrapper.className = "copy_pl_to_en";
+    if(section_en != null){
+        const wrapper = document.createElement('div');
+        wrapper.className = "copy_pl_to_en";
 
-    const button = document.createElement('span');
-    button.innerText = "Przekopiuj treść z wersji PL";
-    button.onclick = function () {
-        openDialog();
-    };
-    wrapper.appendChild(button);
-    section_en.prepend(wrapper);
+        const button = document.createElement('span');
+        button.innerText = "Przekopiuj treść z wersji PL";
+        button.onclick = function () {
+            openDialog();
+        };
+        wrapper.appendChild(button);
+        section_en.prepend(wrapper);
+    }
 });

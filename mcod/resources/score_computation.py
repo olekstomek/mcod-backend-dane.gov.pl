@@ -43,19 +43,38 @@ class OpennessScoreCalculator:
         _, content = content_type_from_file_format(format_.lower())
         return DEFAULT_OPENNESS_SCORE.get(content, 0)
 
-    def get_context(self, resource):
-        context = {}
-        if resource.link and not resource.file:
-            try:
-                response = requests.get(resource.link, stream=True, allow_redirects=True, verify=False, timeout=180)
-                context['res_link'] = resource.link
-                context['link_header'] = response.headers.get('Link')
-                context['data'] = response.content
-            except RequestException:
-                context['data'] = None
+    def get_link_or_file_context(self, link_or_file):
+        if isinstance(link_or_file, str) and link_or_file.startswith('http'):
+            context = self.get_link_context_data(link_or_file)
         else:
-            with open(resource.file.path, 'rb') as outfile:
-                context['data'] = outfile.read()
+            context = self.get_file_context_data(link_or_file)
+        return context
+
+    def get_context(self, resource):
+        if is_enabled('S40_new_file_model.be'):
+            context = self.get_link_or_file_context(resource)
+        else:
+            if resource.link and not resource.file:
+                context = self.get_link_context_data(resource.link)
+            else:
+                context = self.get_file_context_data(resource.file)
+        return context
+
+    def get_link_context_data(self, link):
+        context = {}
+        try:
+            response = requests.get(link, stream=True, allow_redirects=True, verify=False, timeout=180)
+            context['res_link'] = link
+            context['link_header'] = response.headers.get('Link')
+            context['data'] = response.content
+        except RequestException:
+            context['data'] = None
+        return context
+
+    def get_file_context_data(self, file):
+        context = {}
+        with open(file.path, 'rb') as outfile:
+            context['data'] = outfile.read()
         return context
 
     def calculate_score(self, context):
@@ -85,7 +104,7 @@ class CSVScoreCalculator(OpennessScoreCalculator):
     def get_score(self, resource, format_):
 
         score = self.default_score
-        if resource.jsonld_file:
+        if not is_enabled('S40_new_file_model.be') and resource.jsonld_file:
             score = 4
             with open(resource.jsonld_file.path, 'rb') as outfile:
                 jsonld_data = outfile.read()
@@ -102,33 +121,37 @@ class JSONScoreCalculator(OpennessScoreCalculator):
 
     default_score = 3
 
+    def get_graph(self, context):
+        json.loads(context['data'])
+        graph = ConjunctiveGraph()
+        link_header = context.get('link_header')
+        if link_header and 'application/ld+json' in link_header:
+            json_ctx_uri = link_header.split(';')[0]
+            json_ctx_path = json_ctx_uri.rstrip('>').lstrip('<')
+            if not json_ctx_path.startswith('http'):
+                url_details = urlparse(context['res_link'])
+                base_url = f'{url_details.scheme}://{url_details.netloc}'
+                ctx_rel_has_slash = json_ctx_path.startswith('/')
+                if ctx_rel_has_slash:
+                    full_ctx_url = base_url + json_ctx_path
+                else:
+                    full_ctx_url = f'{base_url}/{json_ctx_path}'
+            else:
+                full_ctx_url = json_ctx_path
+            json_data = json.loads(context['data'])
+            json_data['@context'] = full_ctx_url
+            json_bts = BytesIO()
+            json_bts.write(json.dumps(json_data).encode())
+            json_bts.seek(0)
+            json_str = json_bts.read()
+        else:
+            json_str = context['data']
+        graph.parse(data=json_str, format='json-ld')
+        return graph
+
     def validate_score_level_4(self, context):
         try:
-            json.loads(context['data'])
-            graph = ConjunctiveGraph()
-            link_header = context.get('link_header')
-            if link_header and 'application/ld+json' in link_header:
-                json_ctx_uri = link_header.split(';')[0]
-                json_ctx_path = json_ctx_uri.rstrip('>').lstrip('<')
-                if not json_ctx_path.startswith('http'):
-                    url_details = urlparse(context['res_link'])
-                    base_url = f'{url_details.scheme}://{url_details.netloc}'
-                    ctx_rel_has_slash = json_ctx_path.startswith('/')
-                    if ctx_rel_has_slash:
-                        full_ctx_url = base_url + json_ctx_path
-                    else:
-                        full_ctx_url = f'{base_url}/{json_ctx_path}'
-                else:
-                    full_ctx_url = json_ctx_path
-                json_data = json.loads(context['data'])
-                json_data['@context'] = full_ctx_url
-                json_bts = BytesIO()
-                json_bts.write(json.dumps(json_data).encode())
-                json_bts.seek(0)
-                json_str = json_bts.read()
-            else:
-                json_str = context['data']
-            graph.parse(data=json_str, format='json-ld')
+            graph = self.get_graph(context)
             if not graph:
                 raise ScoreValidationError
             context['rdf_graph'] = graph
@@ -151,10 +174,8 @@ class XMLScoreCalculator(OpennessScoreCalculator):
     default_score = 3
 
     def get_score(self, resource, format_):
-        if is_enabled('S29_new_xml_openness_score.be'):
-            context = self.get_context(resource)
-            return self.calculate_score(context)
-        return super().get_score(resource, format_)
+        context = self.get_context(resource)
+        return self.calculate_score(context)
 
     def validate_score_level_4(self, context):
         data = context['data']

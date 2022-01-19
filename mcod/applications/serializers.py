@@ -1,4 +1,3 @@
-from marshmallow import pre_dump
 from django.utils.translation import gettext_lazy as _
 
 from mcod.core.api import fields
@@ -22,16 +21,12 @@ class ExternalDataset(ExtSchema):
 
 
 class ApplicationApiRelationships(Relationships):
-    datasets = fields.Nested(Relationship,
-                             many=False, default=[],
-                             _type='dataset',
-                             url_template='{object_url}/datasets',
-                             )
+    datasets = fields.Nested(
+        Relationship, many=False, default=[], _type='dataset', url_template='{object_url}/datasets', required=True)
     subscription = fields.Nested(Relationship, many=False, _type='subscription',
                                  url_template='{api_url}/auth/subscriptions/{ident}')
 
-    @pre_dump
-    def prepare_datasets(self, data, **kwargs):
+    def filter_data(self, data, **kwargs):
         if not self.context.get('is_listing', False) and 'datasets' in data:
             data['datasets'] = data['datasets'].filter(status='published')
         return data

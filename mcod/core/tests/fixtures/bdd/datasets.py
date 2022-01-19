@@ -4,6 +4,7 @@ import csv
 import io
 import os
 import xml.etree.ElementTree as ET
+import zipfile
 
 import pytest
 import xmlschema
@@ -18,6 +19,7 @@ from mcod.core.tests.fixtures.bdd.common import prepare_file, prepare_dbf_file, 
 from mcod.datasets.factories import DatasetFactory
 from mcod.harvester.factories import DataSourceFactory
 from mcod.resources.factories import ChartFactory, ResourceFactory
+from mcod.showcases.factories import ShowcaseFactory
 from mcod.tags.factories import TagFactory
 
 
@@ -137,6 +139,17 @@ def dataset_with_resource():
     return _dataset
 
 
+@given(parsers.parse('dataset with resource having {field_name} with value {field_value}'))
+def dataset_with_resource_and_params(field_name, field_value):
+    _dataset = DatasetFactory.create()
+    kwargs = {
+        field_name: field_value
+    }
+    ResourceFactory.create(dataset=_dataset, **kwargs)
+    CategoryFactory.create_batch(2, datasets=(_dataset,))
+    return _dataset
+
+
 @given(parsers.parse('dataset with id {dataset_id:d}'))
 def dataset_with_id(dataset_id):
     _dataset = DatasetFactory.create(
@@ -150,6 +163,14 @@ def dataset_with_id(dataset_id):
 def dataset_with_id_and_datasets(dataset_id, num):
     _dataset = DatasetFactory.create(id=dataset_id, title='dataset {} with resources'.format(dataset_id))
     ResourceFactory.create_batch(num, dataset=_dataset)
+    return _dataset
+
+
+@given(parsers.parse('dataset with id {dataset_id:d} and {num:d} showcases'))
+def dataset_with_id_and_showcases(dataset_id, num):
+    _dataset = DatasetFactory.create(id=dataset_id, title='dataset {} with showcases'.format(dataset_id))
+    for x in range(num):
+        ShowcaseFactory.create(title=f'Ponowne wykorzystanie {x+1}', datasets=[_dataset])
     return _dataset
 
 
@@ -316,6 +337,17 @@ def example_gpx_file():
 
 
 @pytest.fixture
+def example_jsonld_file():
+    return prepare_file('rdf/example_jsonld.jsonld')
+
+
+@pytest.fixture
+def example_jsonstat_file():
+    # https://json-stat.org/samples/order.json
+    return prepare_file('example_jsonstat.json')
+
+
+@pytest.fixture
 def example_json_file_with_geojson_content():
     return prepare_file('example_geojson.json')
 
@@ -323,6 +355,24 @@ def example_json_file_with_geojson_content():
 @pytest.fixture
 def example_kml_file():
     return prepare_file('example_kml.kml')
+
+
+@pytest.fixture
+def example_n3_file():
+    # https://w3c.github.io/N3/spec/#simpletriples
+    return prepare_file('rdf/example_n3.n3')
+
+
+@pytest.fixture
+def example_n_triples_file():
+    # https://www.w3.org/TR/2014/REC-n-triples-20140225/Overview.html
+    return prepare_file('rdf/example_n_triples.nt')
+
+
+@pytest.fixture
+def example_n_quads_file():
+    # https://www.w3.org/TR/2014/REC-n-quads-20140225/
+    return prepare_file('rdf/example_n_quads.nq')
 
 
 @pytest.fixture
@@ -366,8 +416,57 @@ def shapefile_arch():
 
 
 @pytest.fixture
+def empty_zip_file():
+    return prepare_file('empty_file.zip')
+
+
+@pytest.fixture
+def empty_rar_file():
+    return prepare_file('empty_file.rar')
+
+
+@pytest.fixture
+def empty_7z_file():
+    return prepare_file('empty_file.7z')
+
+
+@pytest.fixture
+def empty_tar_gz_file():
+    return prepare_file('empty_file.tar.gz')
+
+
+@pytest.fixture
+def empty_tar_bz2_file():
+    return prepare_file('empty_file.tar.bz2')
+
+
+@pytest.fixture
 def example_ods_file():
     return prepare_file('example_ods_file.ods')
+
+
+@pytest.fixture
+def example_rdf_file():
+    # https://www.w3.org/TR/REC-rdf-syntax/#example7
+    return prepare_file('rdf/example_rdf.rdf')
+
+
+@pytest.fixture
+def example_trig_file():
+    # https://www.w3.org/TR/2014/REC-trig-20140225/
+    return prepare_file('rdf/example_trig.trig')
+
+
+@pytest.fixture
+def example_trix_file():
+    # https://www.w3.org/2004/03/trix/
+    return prepare_file('rdf/example_trix.trix')
+
+
+@pytest.fixture
+def example_turtle_file():
+    # https://www.w3.org/TR/2014/REC-turtle-20140225/examples/example1.ttl
+    return prepare_file('rdf/example_turtle.ttl')
 
 
 @pytest.fixture
@@ -387,22 +486,39 @@ def example_binary_netcdf():
 
 @given(parsers.parse('I have file {file_type}'))
 @given('I have file <file_type>')
-def validated_file(example_docx_file, example_geojson_file, example_geojson_file_without_extension, example_gpx_file,
-                   example_json_file_with_geojson_content, example_kml_file, example_ods_file, example_xlsx_file,
-                   multi_file_pack, single_csv_zip, multi_file_zip_pack, file_type, single_file_pack,
-                   shapefile_arch, example_grib, example_hdf_netcdf, example_binary_netcdf):
+def validated_file(empty_zip_file, empty_rar_file, empty_7z_file, empty_tar_gz_file, empty_tar_bz2_file,
+                   example_docx_file, example_geojson_file, example_geojson_file_without_extension, example_gpx_file,
+                   example_jsonld_file, example_jsonstat_file, example_json_file_with_geojson_content,
+                   example_kml_file, example_n3_file, example_n_triples_file, example_n_quads_file, example_ods_file,
+                   example_trig_file, example_trix_file, example_turtle_file, example_xlsx_file, example_rdf_file,
+                   multi_file_pack, single_csv_zip, multi_file_zip_pack, single_file_pack, shapefile_arch,
+                   example_grib, example_hdf_netcdf, example_binary_netcdf, file_type):
     file_types = {
         'docx': example_docx_file,
+        'empty_file.zip': empty_zip_file,
+        'empty_file.rar': empty_rar_file,
+        'empty_file.7z': empty_7z_file,
+        'empty_file.tar.gz': empty_tar_gz_file,
+        'empty_file.tar.bz2': empty_tar_bz2_file,
         'geojson': example_geojson_file,
         'geojson without extension': example_geojson_file_without_extension,
         'json with geojson content': example_json_file_with_geojson_content,
+        'jsonld': example_jsonld_file,
+        'jsonstat': example_jsonstat_file,
         'kml': example_kml_file,
+        'n3': example_n3_file,
+        'n_triples': example_n_triples_file,
+        'n_quads': example_n_quads_file,
         'ods': example_ods_file,
         'xlsx': example_xlsx_file,
         'rar with many files': multi_file_pack,
+        'rdf': example_rdf_file,
         'zip with one csv': single_csv_zip,
         'zip with many files': multi_file_zip_pack,
         'tar.gz with one csv': single_file_pack,
+        'trig': example_trig_file,
+        'trix': example_trix_file,
+        'turtle': example_turtle_file,
         'shapefile arch': shapefile_arch,
         'gpx': example_gpx_file,
         'grib': example_grib,
@@ -467,3 +583,14 @@ def create_catalog_xml_file():
         if not os.path.exists(os.path.dirname(dest)):
             os.makedirs(os.path.dirname(dest))
         copyfile(src, dest)
+
+
+@then(parsers.parse('Dataset with id {dataset_id} has archive containing {files_count} files'), converters={
+    'files_count': int,
+})
+def archive_contains_files(dataset_id, files_count):
+    model = apps.get_model('datasets', 'dataset')
+    inst = model.objects.get(pk=dataset_id)
+    zipped_files = inst.archived_resources_files
+    with zipfile.ZipFile(zipped_files.path) as zip_f:
+        assert len(zip_f.namelist()) == files_count

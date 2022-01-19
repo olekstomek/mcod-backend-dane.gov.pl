@@ -1,5 +1,7 @@
+import os
 import logging
 import string
+from io import BytesIO
 
 import ijson
 import requests
@@ -116,17 +118,19 @@ def has_geotiff_files(files):
     return ('tfw' in base_tiff_files and tif_file is not None) or is_geotiff(tif_file)
 
 
-def is_json_stat(data):
+def is_json_stat(source):
+    if not is_enabled('S35_jsonstat.be'):
+        return False
+    if isinstance(source, str):
+        source = open(os.path.realpath(source))
+    elif isinstance(source, bytes):
+        source = BytesIO(source)
+    source.seek(0)
     try:
-        return jsonstat_validate(data.read())
+        return jsonstat_validate(source.read())
     except Exception as exc:
         logger.debug('Exception during JSON-stat validation: {}'.format(exc))
         return False
-
-
-def is_json_stat_path(path):
-    with open(path) as fp:
-        return is_json_stat(fp)
 
 
 def analyze_shapefile(files):
@@ -134,7 +138,7 @@ def analyze_shapefile(files):
     with shapefile.Reader(files[0]) as shp:
         options['charset'] = shp.encoding
         shp_type = shp.shapeTypeName
-
+        logger.debug(f'  recognized shapefile {shp_type}, {options}')
     return shp_type, options
 
 
@@ -283,13 +287,13 @@ def extract_coords_from_uaddress(uaddress):
 def check_geodata(path, content_type, family):
     if is_geotiff(path):
         content_type += ';application=geotiff'
-    if is_enabled('S35_geojson.be') and content_type in ('json', 'plain') and is_geojson(path):
+    if content_type in ('json', 'plain') and is_geojson(path):
         family = 'application'
         content_type = 'geo+json'
     if is_gpx(path, content_type):
         family = 'application'
         content_type = 'gpx+xml'
-    if is_enabled('S36_kml.be') and is_kml(path, content_type):
+    if is_kml(path, content_type):
         family = 'application'
         content_type = 'vnd.google-earth.kml+xml'
     return content_type, family

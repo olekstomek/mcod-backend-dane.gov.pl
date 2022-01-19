@@ -9,10 +9,16 @@ Feature: File validation
     | geojson                   | geojson     |
     | geojson without extension | geojson     |
     | json with geojson content | geojson     |
+    | jsonld                    | jsonld      |
+    | jsonstat                  | jsonstat    |
     | ods                       | ods         |
     | xlsx                      | xlsx        |
     | zip with one csv          | csv         |
     | tar.gz with one csv       | csv         |
+    | empty_file.7z             | csv         |
+    | empty_file.rar            | csv         |
+    | empty_file.tar.gz         | csv         |
+    | empty_file.tar.bz2        | csv         |
     | shapefile arch            | shp         |
     | gpx                       | gpx         |
     | grib                      | grib        |
@@ -27,6 +33,13 @@ Feature: File validation
     | dbase_8b.dbf              | dbf         |
     | dbase_f5.dbf              | dbf         |
     | kml                       | kml         |
+    | n3                        | n3          |
+    | n_triples                 | nt          |
+    | n_quads                   | nq          |
+    | rdf                       | rdf         |
+    | turtle                    | ttl         |
+    | trig                      | trig        |
+    | trix                      | trix        |
 
   Scenario Outline: Validation of rar with many files
     Given I have file <file_type>
@@ -44,3 +57,15 @@ Feature: File validation
     | grib            | application/x-grib |
     | hdf_netcdf      | application/netcdf |
     | binary_netcdf   | application/netcdf |
+
+  Scenario Outline: Unpacking of archive files
+    Given I have file <file_type>
+    Then archive file is successfully unpacked and has <files_number> files
+    Examples:
+    | file_type           | files_number |
+    | empty_file.zip      | 1            |
+    | empty_file.rar      | 1            |
+    | empty_file.7z       | 1            |
+    | empty_file.tar.gz   | 1            |
+    | empty_file.tar.bz2  | 1            |
+    | rar with many files | 2            |

@@ -21,6 +21,12 @@ from mcod.showcases import views as showcases_views
 from mcod.suggestions import views as submission_views
 
 
+dataset_showcases = [
+    ('/datasets/{id:int}/showcases', showcases_views.DatasetShowcasesApiView()),
+    ('/datasets/{id:int},{slug}/showcases', showcases_views.DatasetShowcasesApiView()),
+] if is_enabled('S42_dataset_showcases.be') else []
+
+
 routes = [
     # Tools & utilities
     ('/search', search_views.SearchView()),
@@ -35,6 +41,7 @@ routes = [
     ('/spec', core_views.OpenApiSpec()),
     ('/spec/{version}', core_views.OpenApiSpec()),
     ('/doc', core_views.SwaggerView()),
+    ('/licenses/{name}', dataset_views.LicenseView()),
     # User
     ('/auth/login', user_views.LoginView()),
     ('/auth/logout', user_views.LogoutView()),
@@ -91,6 +98,7 @@ routes = [
     ('/datasets/{id:int},{slug}', dataset_views.DatasetApiView()),
     ('/datasets/{id:int}/resources', dataset_views.DatasetResourceSearchApiView()),
     ('/datasets/{id:int},{slug}/resources', dataset_views.DatasetResourceSearchApiView()),
+    *dataset_showcases,
     ('/datasets/{id:int}/comments', dataset_views.DatasetCommentsView()),
     ('/datasets/{id:int},{slug}/comments', dataset_views.DatasetCommentsView()),
 
@@ -225,5 +233,10 @@ if is_enabled('S39_showcases.be'):
         ('/showcases/suggest', showcases_views.ShowcaseProposalView()),
     ])
 
+if is_enabled('S41_resource_bulk_download.be'):
+    routes.extend([
+        ('/datasets/{id:int}/resources/files/download', dataset_views.DatasetResourcesFilesBulkDownloadView()),
+        ('/datasets/{id:int},{slug}/resources/files/download', dataset_views.DatasetResourcesFilesBulkDownloadView())
+    ])
 
 routes.extend(list(map(lambda x: ("/{api_version}" + x[0], *x[1:]), routes)))

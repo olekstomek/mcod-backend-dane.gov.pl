@@ -34,7 +34,6 @@ from mcod.core.managers import SoftDeletableQuerySet
 from mcod.core.models import SoftDeletableModel
 from mcod.lib.jwt import decode_jwt_token
 from mcod.watchers.models import Notification, MODEL_TO_OBJECT_NAME
-from mcod.unleash import is_enabled
 from mcod.users.managers import MeetingTrashManager, MeetingFileManager, MeetingFileTrashManager, MeetingManager
 from mcod.users.signals import user_changed
 
@@ -531,13 +530,13 @@ class User(AdminMixin, ApiMixin, AbstractBaseUser, PermissionsMixin, SoftDeletab
                 if any((is_default, not is_default and not chart, chart and chart.created_by == self)):
                     return True
             else:  # edytor poza swoją instytucją.
-                if resource.is_chart_creation_blocked and is_enabled('S24_named_charts.be'):
+                if resource.is_chart_creation_blocked:
                     return False
                 if any((not is_default and not chart, chart and chart.is_private and chart.created_by == self)):
                     return True
             return False
         else:  # zwykły dla wszystkich instytucji.
-            if resource.is_chart_creation_blocked and is_enabled('S24_named_charts.be'):
+            if resource.is_chart_creation_blocked:
                 return False
             if any((not is_default and not chart, chart and chart.is_private and chart.created_by == self)):
                 return True

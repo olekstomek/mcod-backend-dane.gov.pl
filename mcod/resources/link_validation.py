@@ -60,13 +60,13 @@ def _get_resource_type(response):
     _, content_type, _ = parse_mime_type(response.headers.get('Content-Type'))
     content_disposition = response.headers.get('Content-Disposition', None)
 
-    if content_type == 'html' and guess.web_format(response, None):
+    if content_type == 'html' and guess.web_format(response.content):
         return 'website'
     elif not (content_disposition and 'attachment' in content_disposition) and content_type in (
         'vnd.api+json',
         'json',
         'xml'
-    ) and guess.api_format(response, None):
+    ) and guess.api_format(response.content):
         return 'api'
     else:
         return 'file'
@@ -178,7 +178,7 @@ def download_file(url, forced_file_type=False, allowed_content_types=None):  # n
                 simplified_url(response.url) != simplified_url(url))):
             raise InvalidResponseCode('Resource location has been moved!')
         options = {'format': format}
-    if format == 'json' and is_enabled('S35_jsonstat.be') and is_json_stat(content):
+    if format == 'json' and is_json_stat(content):
         options['format'] = 'jsonstat'
     return resource_type, options
 

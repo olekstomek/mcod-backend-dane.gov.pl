@@ -30,7 +30,6 @@ from mcod.core.csrf import _sanitize_token, compare_salted_tokens, generate_csrf
 from mcod.core.utils import jsonapi_validator, route_to_name, falcon_set_cookie
 from mcod.counters.lib import Counter
 from mcod.lib.encoders import DateTimeToISOEncoder
-from mcod.unleash import is_enabled
 
 
 logger = logging.getLogger(__name__)
@@ -291,8 +290,7 @@ class CsrfMiddleware:
     @staticmethod
     def set_token(response: Response, salted_token: str) -> None:
         """We're setting multiple cookies to support debugging on localhost."""
-        if is_enabled('S40_csrf_header.be'):
-            response.set_header(settings.API_CSRF_HEADER_NAME, salted_token)
+        response.set_header(settings.API_CSRF_HEADER_NAME, salted_token)
         for cookie_domain in settings.API_CSRF_COOKIE_DOMAINS:
             falcon_set_cookie(
                 response,

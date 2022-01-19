@@ -289,6 +289,9 @@ class Command(BaseCommand):
         if i > 0:
             count_value = sorted_entries[i][count_type] - sorted_entries[i - 1][count_type]
         else:
-            count_value = sorted_entries[i][count_type] if\
-                sorted_entries[i + 1][count_type] - sorted_entries[i][count_type] > 0 else 0
+            if len(sorted_entries) > 1:
+                count_value = sorted_entries[i][count_type] if\
+                    sorted_entries[i + 1][count_type] - sorted_entries[i][count_type] > 0 else 0
+            else:
+                count_value = sorted_entries[i][count_type]
         return count_value

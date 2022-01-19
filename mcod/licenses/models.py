@@ -1,5 +1,3 @@
-import logging
-
 from django.contrib.postgres.indexes import GinIndex
 from django.db import models
 from django.dispatch import receiver
@@ -14,8 +12,6 @@ from mcod.core.db.managers import TrashManager
 from mcod.core.db.models import ExtendedModel
 from mcod.core.managers import SoftDeletableManager
 from mcod.licenses.signals import update_related_datasets, null_in_related_datasets
-
-signal_logger = logging.getLogger('signals')
 
 
 class License(ExtendedModel):
@@ -51,16 +47,7 @@ class License(ExtendedModel):
 
 @receiver(null_in_related_datasets, sender=License)
 def null_license_in_datasets(sender, instance, *args, **kwargs):
-    signal_logger.debug(
-        'Setting license to null in related datasets',
-        extra={
-            'sender': '{}.{}'.format(sender._meta.model_name, sender._meta.object_name),
-            'instance': '{}.{}'.format(instance._meta.model_name, instance._meta.object_name),
-            'instance_id': instance.id,
-            'signal': 'null_in_related_datasets'
-        },
-        exc_info=1
-    )
+    sender.log_debug(instance, 'Setting license to null in related datasets', 'null_in_related_datasets')
     null_field_in_related_task.apply_async(
         args=(instance._meta.app_label, instance._meta.object_name, instance.id),
         countdown=2)
@@ -68,15 +55,6 @@ def null_license_in_datasets(sender, instance, *args, **kwargs):
 
 @receiver(update_related_datasets, sender=License)
 def update_license_in_datasets(sender, instance, *args, **kwargs):
-    signal_logger.debug(
-        'Updating related datasets',
-        extra={
-            'sender': '{}.{}'.format(sender._meta.model_name, sender._meta.object_name),
-            'instance': '{}.{}'.format(instance._meta.model_name, instance._meta.object_name),
-            'instance_id': instance.id,
-            'signal': 'update_related_datasets'
-        },
-        exc_info=1
-    )
+    sender.log_debug(instance, 'Updating related datasets', 'update_related_datasets')
     for dataset in instance.dataset_set.all():
         search_signals.update_document.send(dataset._meta.model, dataset)

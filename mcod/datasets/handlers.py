@@ -1,8 +1,12 @@
+import os
+import zipfile
 from functools import partial
 
 from django.apps import apps
+import falcon
 
-from mcod.core.api.handlers import RetrieveManyHdlr
+from mcod.core.api.handlers import RetrieveManyHdlr, RetrieveOneHdlr
+from mcod.counters.lib import Counter
 from mcod.datasets.deserializers import DatasetResourcesDownloadApiRequest
 from mcod.datasets.serializers import DatasetXMLSerializer, DatasetResourcesCSVSerializer
 
@@ -41,3 +45,24 @@ class XMLMetadataViewHandler(RetrieveManyHdlr):
         self.prepare_context(*args, **kwargs)
         self.response.downloadable_as = '{}.xml'.format(kwargs.get('id', 'katalog'))
         return self.response.context
+
+
+class ArchiveDownloadViewHandler(RetrieveOneHdlr):
+
+    database_model = apps.get_model('datasets', 'Dataset')
+
+    def serialize(self, *args, **kwargs):
+        zip_path = self._cached_instance.archived_resources_files.path
+        try:
+            with open(zip_path, 'rb') as f:
+                zipped_files = f.read()
+            with zipfile.ZipFile(zip_path) as z:
+                resources_ids = list(set([os.path.dirname(x).split('_')[1] for x in z.namelist()]))
+                counter = Counter()
+                for res_id in resources_ids:
+                    counter.incr_download_count(res_id)
+        except FileNotFoundError:
+            raise falcon.HTTPNotFound
+        self.response.downloadable_as = os.path.basename(zip_path)
+
+        return zipped_files

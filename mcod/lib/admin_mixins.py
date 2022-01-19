@@ -19,7 +19,6 @@ from modeltrans.utils import get_language
 from mcod import settings
 from mcod.histories.models import History, LogEntry
 from mcod.tags.views import TagAutocompleteJsonView
-from mcod.unleash import is_enabled
 
 
 class MCODChangeList(ChangeList):
@@ -153,12 +152,16 @@ class TrashMixin(ActionsMixin, admin.ModelAdmin):
             context['title'] = title % self.model.accusative_case()
         return super().render_change_form(request, context, add=add, change=change, form_url=form_url, obj=obj)
 
+    def formfield_for_dbfield(self, db_field, request, **kwargs):
+        if db_field.name == 'is_removed':
+            kwargs['label'] = _('Removed:')
+        return super().formfield_for_dbfield(db_field, request, **kwargs)
+
 
 class HistoryMixin(object):
 
     is_history_other = False
     is_history_with_unknown_user_rows = False
-    new_history = is_enabled('S30_new_history.be')
 
     def get_history(self, obj):
         queryset = LogEntry.objects.get_for_object(obj)
@@ -191,8 +194,7 @@ class HistoryMixin(object):
         # Then get the history for this object.
         opts = model._meta
         app_label = opts.app_label
-        action_list = self.get_history(obj) if self.new_history else (
-            x for x in self.get_history_action_list(opts.db_table, obj) if x.difference != "{}")
+        action_list = self.get_history(obj)
         context = dict(
             self.admin_site.each_context(request),
             title=_('Change history: %s') % obj,
@@ -473,14 +475,16 @@ class AdminListMixin(object):
         'SUCCESS': 'fas fa-check text-success',
         'PENDING': 'fas fa-question-circle text-warning',
         'FAILURE': 'fas fa-times-circle text-error',
-        None: 'fas fa-minus-circle text-light'
+        None: 'fas fa-minus-circle text-light',
+        '': 'fas fa-minus-circle text-light',
     }
 
     task_status_tooltip = {
         'SUCCESS': _('Correct Validation'),
         'PENDING': _('Validation in progress'),
         'FAILURE': _('Validation failed'),
-        None: _('No validation')
+        None: _('No validation'),
+        '': _('No validation'),
     }
 
     def _format_list_status(self, val):

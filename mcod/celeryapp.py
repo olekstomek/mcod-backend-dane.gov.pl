@@ -50,9 +50,8 @@ if is_enabled('remove_orphaned_files_task.be'):
         'schedule': crontab(0, 0, day_of_month='1'),  # Execute on the first day of every month at 00:00.
     }
 
-if is_enabled('S29_send_dataset_update_reminders.be'):
-    app.conf.beat_schedule['dataset_update_reminders'] = {
-        'task': 'mcod.datasets.tasks.send_dataset_update_reminder',
-        'options': {'queue': 'periodic'},
-        'schedule': crontab(minute=0, hour=6)
-    }
+app.conf.beat_schedule['dataset_update_reminders'] = {
+    'task': 'mcod.datasets.tasks.send_dataset_update_reminder',
+    'options': {'queue': 'periodic'},
+    'schedule': crontab(minute=0, hour=6)
+}

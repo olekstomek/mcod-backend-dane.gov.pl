@@ -3,7 +3,6 @@ from django.contrib import admin
 from mcod.core.admin import LogEntryAdmin
 from mcod.histories.models import History, LogEntry
 from mcod.lib.admin_mixins import MCODAdminMixin
-from mcod.unleash import is_enabled
 
 
 class HistoryAdmin(MCODAdminMixin, admin.ModelAdmin):
@@ -38,7 +37,4 @@ class HistoryAdmin(MCODAdminMixin, admin.ModelAdmin):
             table_name__in=['member', 'application_tag', 'dataset_tag', 'article_tag', 'application_dataset'])
 
 
-if is_enabled('S30_new_history.be'):
-    admin.site.register(LogEntry, LogEntryAdmin)
-else:
-    admin.site.register(History, HistoryAdmin)
+admin.site.register(LogEntry, LogEntryAdmin)

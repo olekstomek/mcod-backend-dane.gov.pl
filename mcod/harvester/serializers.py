@@ -213,6 +213,7 @@ class XMLResourceSchema(ResourceMixin, Schema):
     data_date = Date(data_key='dataDate')
     created = DateTime(data_key='created', allow_none=True)
     modified = DateTime(data_key='lastUpdateDate', allow_none=True)
+    special_signs = List(Str())
 
     class Meta:
         ordered = True
@@ -227,6 +228,9 @@ class XMLResourceSchema(ResourceMixin, Schema):
             data['description_en'] = data['description'].get('english', '')
             data['description_pl'] = data['description'].get('polish', '')
         data['availability'] = data.get('availability', 'local')
+        special_signs = data.pop('specialSigns', {})
+        if 'specialSign' in special_signs:
+            data['special_signs'] = special_signs['specialSign']
         return data
 
     @validates_schema

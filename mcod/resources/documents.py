@@ -17,6 +17,15 @@ SpecialSign = apps.get_model('special_signs', 'SpecialSign')
 Region = apps.get_model('regions', 'Region')
 
 
+def files_field(**kwargs):
+    return fields.NestedField(properties={
+        'download_url': fields.TextField(),
+        'file_size': fields.IntegerField(),
+        'openness_score': fields.IntegerField(),
+        'format': fields.TextField()
+    }, **kwargs)
+
+
 @registry.register_document
 class ResourceDocument(ExtendedDocument):
     NOTES_FIELD_NAME = 'description'
@@ -92,6 +101,8 @@ class ResourceDocument(ExtendedDocument):
     has_high_value_data = fields.BooleanField()
     if is_enabled('S37_resources_admin_region_data.be'):
         regions = regions_field(attr='all_regions')
+    if is_enabled('S40_new_file_model.be'):
+        files = files_field(attr='all_files')
 
     class Index:
         name = mcs.ELASTICSEARCH_INDEX_NAMES['resources']

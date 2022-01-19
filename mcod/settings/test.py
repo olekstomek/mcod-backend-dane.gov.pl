@@ -7,7 +7,6 @@ DEBUG = True
 TEMPLATES[0]['OPTIONS']['debug'] = DEBUG  # noqa: F405
 
 EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
-EMAIL_FILE_PATH = '/tmp/app-messages'  # change this to a proper location
 
 BASE_URL = 'http://test.mcod'
 API_URL = 'http://api.test.mcod'
@@ -33,6 +32,8 @@ LANGUAGE_CODE = 'pl'
 def get_es_index_names():
     import uuid
     index_prefix = str(uuid.uuid4())
+    worker = os.environ.get('PYTEST_XDIST_WORKER', '')
+    index_prefix = f'{index_prefix}-{worker}'
     return {
         "common": "test-common-{}".format(index_prefix),
         "articles": "test-articles-{}".format(index_prefix),
@@ -62,11 +63,6 @@ def get_email_file_path():
 
 
 EMAIL_FILE_PATH = get_email_file_path()
-
-# DATA_DIR = ROOT_DIR.path('data')
-# TEST_SAMPLES_PATH = os.path.join(str(DATA_DIR), 'test_samples')
-
-
 TEST_SAMPLES_PATH = str(ROOT_DIR('data/test_samples'))
 TEST_CERTS_PATH = str(ROOT_DIR('data/test_certs'))
 TEST_ROOT = str(ROOT_DIR('test'))

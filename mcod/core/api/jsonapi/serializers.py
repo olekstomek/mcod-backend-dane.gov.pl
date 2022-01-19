@@ -141,6 +141,22 @@ class Relationships(schemas.ExtSchema):
             field.schema.context.update(field.metadata)
             field.many = False
 
+    def prepare_object_url(self, data):
+        object_url = data.pop('object_url', None)
+        if object_url:
+            for _name, field in self._fields.items():
+                url_template = field.metadata.get('url_template')
+                if url_template and 'object_url' in url_template:
+                    field.schema.context.update(object_url=object_url)
+
+    def filter_data(self, data, **kwargs):
+        return data
+
+    @pre_dump
+    def prepare_data(self, data, **kwargs):
+        self.prepare_object_url(data)
+        return self.filter_data(data, **kwargs)
+
 
 class ObjectAttrsMeta(schemas.ExtSchema):
     pass

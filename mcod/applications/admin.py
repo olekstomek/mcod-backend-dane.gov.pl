@@ -21,7 +21,6 @@ from mcod.lib.admin_mixins import (
     MCODAdminMixin
 )
 from mcod.reports.admin import ExportCsvMixin
-from mcod.unleash import is_enabled
 
 
 class ApplicationAdmin(DynamicAdminListDisplayMixin, CreatedByDisplayAdminMixin, CRUDMessageMixin, SoftDeleteMixin,
@@ -298,8 +297,7 @@ class ApplicationProposalTrashAdmin(ApplicationProposalMixin, TrashMixin):
     fields = [x for x in readonly_fields] + ['is_removed']
 
 
-if not is_enabled('S39_showcases.be'):
-    admin.site.register(Application, ApplicationAdmin)
-    admin.site.register(ApplicationTrash, ApplicationTrashAdmin)
-    admin.site.register(ApplicationProposal, ApplicationProposalAdmin)
-    admin.site.register(ApplicationProposalTrash, ApplicationProposalTrashAdmin)
+admin.site.register(Application, ApplicationAdmin)  # visible for copy-paste work for admins.
+admin.site.register(ApplicationTrash, ApplicationTrashAdmin)
+admin.site.register(ApplicationProposal, ApplicationProposalAdmin)
+admin.site.register(ApplicationProposalTrash, ApplicationProposalTrashAdmin)

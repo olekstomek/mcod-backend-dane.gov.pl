@@ -48,7 +48,6 @@ from mcod.resources.serializers import (
     ResourceRDFResponseSchema,
     TableApiResponse,
 )
-from mcod.unleash import is_enabled
 
 
 Resource = apps.get_model('resources', 'Resource')
@@ -369,7 +368,6 @@ class ResourceFileDownloadView(object):
     def __init__(self, file_type=None):
         super().__init__()
         self.file_type = file_type
-        self.is_csv_to_jsonld_enabled = is_enabled('S27_csv_to_jsonld.be')
 
     def on_get(self, request, response, id, *args, **kwargs):
         try:
@@ -387,7 +385,7 @@ class ResourceFileDownloadView(object):
             response.location = resource.link
         elif self.file_type == 'csv':
             response.location = resource.csv_file_url
-        elif self.file_type == 'jsonld' and self.is_csv_to_jsonld_enabled:
+        elif self.file_type == 'jsonld':
             response.location = resource.jsonld_file_url
         else:
             response.location = resource.file_url
@@ -407,7 +405,7 @@ class ResourceFileDownloadView(object):
             response.location = resource.link
         elif self.file_type == 'csv':
             response.location = resource.csv_file_url
-        elif self.file_type == 'jsonld' and self.is_csv_to_jsonld_enabled:
+        elif self.file_type == 'jsonld':
             response.location = resource.jsonld_file_url
         else:
             response.location = resource.file_url
@@ -588,7 +586,7 @@ class ChartView(JsonAPIView):
             return self._cached_instance
 
         def _get_instance(self, id, *args, **kwargs):
-            if 'chart_id' in kwargs and is_enabled('S24_named_charts.be'):
+            if 'chart_id' in kwargs:
                 return self._get_chart_instance(id, *args, **kwargs)
             resource = super()._get_instance(id, *args, **kwargs)
             return resource.charts.chart_for_user(self.request.user)
@@ -646,7 +644,6 @@ class ChartsView(JsonAPIView):
         database_model = apps.get_model('resources', 'Resource')
         deserializer_schema = ListingSchema
         serializer_schema = partial(ChartApiResponse, many=True)
-        named_charts = is_enabled('S24_named_charts.be')
 
         def _get_instance(self, *args, **kwargs):
             instance = getattr(self, '_cached_instance', None)
@@ -661,7 +658,7 @@ class ChartsView(JsonAPIView):
             return self._cached_instance
 
         def clean(self, *args, **kwargs):
-            self.serializer.context['named_charts'] = self.named_charts
+            self.serializer.context['named_charts'] = True
             self._get_instance(*args, **kwargs)
             return super().clean(*args, **kwargs)
 

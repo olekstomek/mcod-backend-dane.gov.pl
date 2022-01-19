@@ -19,8 +19,20 @@ from mcod.showcases.deserializers import (
     ShowcasesApiRequest,
 )
 from mcod.showcases.documents import ShowcaseDocument
+from mcod.showcases.models import Showcase
 from mcod.showcases.serializers import ShowcaseApiResponse, ShowcaseProposalApiResponse
 from mcod.showcases.tasks import create_showcase_proposal_task
+
+
+class ShowcasesSearchHdlr(SearchHdlr):
+    deserializer_schema = ShowcasesApiRequest
+    serializer_schema = partial(ShowcaseApiResponse, many=True)
+    search_document = ShowcaseDocument()
+
+    def _queryset_extra(self, queryset, id=None, **kwargs):
+        if id:
+            queryset = queryset.query('nested', path='datasets', query=Q('term', **{'datasets.id': id}))
+        return queryset.filter('term', status=Showcase.STATUS.published)
 
 
 class ShowcasesApiView(JsonAPIView):
@@ -33,10 +45,22 @@ class ShowcasesApiView(JsonAPIView):
         """
         self.handle(request, response, self.GET, *args, **kwargs)
 
-    class GET(SearchHdlr):
-        deserializer_schema = ShowcasesApiRequest
-        serializer_schema = partial(ShowcaseApiResponse, many=True)
-        search_document = ShowcaseDocument()
+    class GET(ShowcasesSearchHdlr):
+        pass
+
+
+class DatasetShowcasesApiView(JsonAPIView):
+
+    @versioned
+    def on_get(self, request, response, *args, **kwargs):
+        """
+        ---
+        doc_template: docs/datasets/dataset_showcases_view.yml
+        """
+        self.handle(request, response, self.GET, *args, **kwargs)
+
+    class GET(ShowcasesSearchHdlr):
+        pass
 
 
 class ShowcaseApiView(JsonAPIView):

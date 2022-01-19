@@ -144,7 +144,7 @@ class CreateSubmissionAttrs(ObjectAttrs):
 
     @pre_load
     def prepare_data(self, data, **kwargs):
-        data['datasets'] = [x.replace('dataset-', '') for x in data.get('datasets', [])]
+        data['datasets'] = [x.replace('dataset-', '') for x in data.get('datasets', []) if x]
         return data
 
     @validates('is_personal_data_processing_accepted')

@@ -85,6 +85,13 @@ class Command(BaseCommand):
             const='get',
             help="Use ES connections from get_connection method",
         )
+        parser.add_argument(
+            '--chunk-size',
+            dest='chunk_size',
+            type=int,
+            default=2000,
+            help='Chunk size (default: 2000)',
+        )
 
     def _get_models(self, args):
         """
@@ -116,18 +123,22 @@ class Command(BaseCommand):
 
     def _get_docs(self, models):
         _last_doc = None
+        _logentries_doc = None
         _docs = []
 
         for doc in registry.get_documents(models):
             # Move history index
             if doc.Index.name == 'histories':
                 _last_doc = doc
+            elif doc.Index.name == 'logentries':
+                _logentries_doc = doc
             else:
                 _docs.append(doc)
 
         if _last_doc:
             _docs.append(_last_doc)
-
+        if _logentries_doc:
+            _docs.append(_logentries_doc)
         return _docs
 
     def _create(self, models, options):
@@ -135,31 +146,18 @@ class Command(BaseCommand):
             self.stdout.write("Creating index '{}'".format(index._name))
             index.create()
 
-    def _populate_parallel(self, models, options):
-        parallel = options['parallel']
+    def _populate(self, models, options):
+        parallel = options.get('parallel', False)
+        chunk_size = options.get('chunk_size', 2000)
         for doc in self._get_docs(models):
             self.stdout.write("Indexing {} '{}' objects in '{}' index {}".format(
-                doc().get_queryset().count() if options['count'] else 'all',
+                doc().get_queryset_count() if options['count'] else 'all',
                 doc.__name__,
                 doc.Index.name,
                 "(parallel)" if parallel else "")
             )
-            qs = doc().get_indexing_queryset()
-            doc().update(qs, parallel=parallel)
-
-    def _populate_no_parallel(self, models, options):
-        for doc in self._get_docs(models):
-            qs = doc().get_queryset()
-            self.stdout.write("Indexing {} '{}' objects in '{}' index".format(
-                qs.count(), doc.__name__, doc.Index.name)
-            )
-            doc().update(qs)
-
-    def _populate(self, models, options):
-        parallel = options['parallel']
-        if parallel:
-            return self._populate_parallel(models, options)
-        return self._populate_no_parallel(models, options)
+            qs = doc().get_indexing_queryset(chunk_size=chunk_size)
+            doc().update(qs, parallel=parallel, chunk_size=chunk_size)
 
     def _delete(self, models, options):
         index_names = [str(index._name) for index in registry.get_indices(models)]

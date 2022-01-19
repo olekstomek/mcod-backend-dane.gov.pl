@@ -31,6 +31,8 @@ Feature: Showcases list API
     Then api request param <req_param_name> is <req_param_value>
     And send api request and fetch the response
     And api's response list is sorted by <sort> <sort_order>
+    And api's response body has field data/*/relationships/datasets/meta/count
+    And api's response body has field data/*/relationships/datasets/links/related
     Examples:
     | request_path   | req_param_name | req_param_value | sort        | sort_order   |
     | /1.0/showcases | sort           | views_count     | views_count | ascendingly  |
@@ -39,29 +41,29 @@ Feature: Showcases list API
     | /1.4/showcases | sort           | -views_count    | views_count | descendingly |
 
   Scenario: Showcases list contains published showcases
-    Given showcase created with params {"id": 999, "title": "Testowa innowacja", "status": "published"}
+    Given showcase created with params {"id": 999, "title": "Ponowne wykorzystanie - test", "status": "published"}
     When api request method is GET
     And api request path is /1.0/showcases?id=999
     Then send api request and fetch the response
     And api's response status code is 200
-    And api's response body field data/[0]/attributes/title is Testowa innowacja
+    And api's response body field data/[0]/attributes/title is Ponowne wykorzystanie - test
 
   Scenario: Showcases list doesnt contains draft showcases
-    Given showcase created with params {"id": 999, "title": "Testowa innowacja", "status": "draft"}
+    Given showcase created with params {"id": 999, "title": "Ponowne wykorzystanie - test", "status": "draft"}
     When api request method is GET
     And api request path is /1.0/showcases?id=999
     Then send api request and fetch the response
     And api's response status code is 200
-    And api's response body field data/[0]/attributes/title does not contain Testowa innowacja
+    And api's response body field data/[0]/attributes/title does not contain Ponowne wykorzystanie - test
 
   Scenario: Created draft showcase with related datasets is not pushed into index (not visible in Search)
     Given dataset with id 999
-    And showcase created with params {"id": 999, "title": "Testowa innowacja", "status": "draft", "datasets": [999]}
+    And showcase created with params {"id": 999, "title": "Ponowne wykorzystanie - test", "status": "draft", "datasets": [999]}
     When api request method is GET
     And api request path is /1.0/showcases?id=999
     Then send api request and fetch the response
     And api's response status code is 200
-    And api's response body field data/[0]/attributes/title does not contain Testowa innowacja
+    And api's response body field data/[0]/attributes/title does not contain Ponowne wykorzystanie - test
 
   Scenario: Featured showcases
     Given featured showcases

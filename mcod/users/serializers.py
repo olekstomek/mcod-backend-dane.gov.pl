@@ -161,8 +161,7 @@ class AgentApiRelationships(UserApiRelationships):
     class Meta:
         ordered = True
 
-    @pre_dump
-    def prepare_data(self, data, **kwargs):
+    def prepare_object_url(self, data):
         obj = data.get('_planned_user_schedule')
         if obj:
             url = f'{self.api_url}/auth/user_schedules/{obj.id}'
@@ -171,7 +170,6 @@ class AgentApiRelationships(UserApiRelationships):
         else:
             self._fields['planned_user_schedule'].schema.context.update(object_url='')
             self._fields['planned_user_schedule_items'].schema.context.update(object_url='')
-        return data
 
 
 class UserSchemaMixin(object):

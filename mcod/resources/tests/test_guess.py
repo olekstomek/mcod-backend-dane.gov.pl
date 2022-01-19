@@ -15,25 +15,20 @@ class TestGuess(object):
     def test_html(self, file_html):
         assert guess._html(file_html.name, 'utf-8') == 'html'
         assert guess._html(file_html.name, None) == 'html'
-        assert guess._html(open(file_html.name, 'r'), None) == 'html'
+        assert guess._html(open(file_html.name), None) == 'html'
 
-    # def test_rdf(self, file_rdf):
-    #     # TODO
-    #     # rdflib.plugin.PluginException: No plugin registered for (rdf, <class 'rdflib.parser.Parser'>)
-    #     # co ciekawe file_xml jest rozpoznawany... jako rdf
-    #     assert guess._rdf(file_rdf.name, 'utf-8') == 'rdf'
-    #     assert guess._rdf(file_rdf.name, None) == 'rdf'
-    #     assert guess._rdf(open(file_rdf.name, 'r'), None) == 'rdf'
+    def test_rdf(self, file_rdf):
+        assert guess._rdf(file_rdf.name, 'utf-8') == 'rdf'
+        assert guess._rdf(file_rdf.name, None) == 'rdf'
 
-    def test_json(self, file_json):
+    def test_json(self, file_json, file_jsonstat):
         assert guess._json(file_json.name, 'utf-8') == 'json'
         assert guess._json(file_json.name, None) == 'json'
-        assert guess._json(open(file_json.name, 'r'), None) == 'json'
+        assert guess._json(file_jsonstat.name, None) == 'jsonstat'
 
-    def test_jsonapi(self, file_jsonapi):
+    def test_jsonapi(self, file_jsonapi, file_jsonstat):
         assert guess._jsonapi(file_jsonapi.name, 'utf-8') == 'jsonapi'
         assert guess._jsonapi(file_jsonapi.name, None) == 'jsonapi'
-        assert guess._jsonapi(open(file_jsonapi.name, 'r'), None) == 'jsonapi'
 
     def test_failures(self, file_csv, file_xml, file_html, file_json, file_rdf, file_txt):
         assert guess._csv(file_txt.name, None) is None
@@ -72,14 +67,14 @@ class TestGuess(object):
         # assert guess.text_file_format(file_txt.name, None) is None
 
     def test_web_format_guess(self, file_html):
-        assert guess.web_format(file_html.name, 'utf-8') == 'html'
+        assert guess.web_format(file_html.name) == 'html'
 
     def test_api_format_guess(self, fake_client):
         resp = fake_client.simulate_get('/json')
-        assert guess.api_format(resp, None) == 'json'
+        assert guess.api_format(resp.content) == 'json'
 
         resp = fake_client.simulate_get('/jsonapi')
-        assert guess.api_format(resp, None) == 'jsonapi'
+        assert guess.api_format(resp.content) == 'jsonapi'
 
         resp = fake_client.simulate_get('/xml')
-        assert guess.api_format(resp, None) == 'xml'
+        assert guess.api_format(resp.content) == 'xml'

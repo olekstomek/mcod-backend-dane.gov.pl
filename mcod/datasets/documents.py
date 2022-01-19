@@ -118,6 +118,7 @@ class DatasetDocument(ExtendedDocument):
         }
     )
     showcases = fields.NestedField(
+        attr='showcases_published',
         properties={
             'id': fields.IntegerField(),
             'title': TranslatedTextField('title')

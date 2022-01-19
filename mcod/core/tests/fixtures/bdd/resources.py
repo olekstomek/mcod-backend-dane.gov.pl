@@ -10,6 +10,7 @@ import requests_mock
 from dateutil import parser
 from django.apps import apps
 from django.core.files import File
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.utils.timezone import datetime
 from pytest_bdd import given, when, then
 from pytest_bdd import parsers
@@ -18,10 +19,11 @@ from mcod import settings
 from mcod.core.tests.fixtures.bdd.common import copyfile, prepare_file
 from mcod.counters.factories import ResourceViewCounterFactory, ResourceDownloadCounterFactory
 from mcod.counters.lib import Counter
+from mcod.counters.tasks import save_counters
 from mcod.datasets.factories import DatasetFactory
 from mcod.harvester.factories import DataSourceFactory
-from mcod.resources.archives import UnsupportedArchiveError
-from mcod.resources.factories import ChartFactory, ResourceFactory, TaskResultFactory
+from mcod.resources.archives import ArchiveReader, UnsupportedArchiveError
+from mcod.resources.factories import ChartFactory, ResourceFactory, TaskResultFactory, ResourceFileFactory
 from mcod.resources.file_validation import analyze_file, check_support
 from mcod.unleash import is_enabled
 
@@ -41,92 +43,85 @@ def httpsserver_custom(request):
     return server
 
 
+def create_res(ds, editor, **kwargs):
+    from mcod.resources.models import Resource, ResourceFile
+    _fname = kwargs.pop('filename')
+    _kwargs = {
+        'title': 'Analysis of fake news sites and viral posts',
+        'description': 'Over the past four years, BuzzFeed News has maintained lists of sites that '
+                       'publish completely fabricated stories. As we encounter new ones and debunk '
+                       'their content, we add them to the list.',
+        'file': _fname,
+        'link': f'https://falconframework.org/media/resources/{_fname}',
+        'format': 'csv',
+        'openness_score': 3,
+        'views_count': 10,
+        'downloads_count': 20,
+        'dataset': ds,
+        'created_by': editor,
+        'modified_by': editor,
+        'data_date': datetime.today(),
+    }
+    if is_enabled('S41_resource_has_high_value_data'):
+        _kwargs['has_high_value_data'] = False
+    _kwargs.update(**kwargs)
+
+    if is_enabled('S40_new_file_model.be'):
+        with open(os.path.join(settings.RESOURCES_MEDIA_ROOT, _fname), 'rb') as f:
+            from mcod.resources.link_validation import session
+            adapter = requests_mock.Adapter()
+            adapter.register_uri('GET', _kwargs['link'], content=f.read(), headers={'Content-Type': 'application/csv'})
+            session.mount('https://falconframework.org', adapter)
+        _kwargs.pop('file')
+        res = Resource.objects.create(**_kwargs)
+        ResourceFile.objects.create(
+            is_main=True,
+            resource=res,
+            file=os.path.join(settings.RESOURCES_MEDIA_ROOT, _fname),
+            format='csv'
+        )
+    else:
+        res = Resource(**_kwargs)
+        res.tracker.saved_data['link'] = res.link
+        res.save()
+    res = Resource.objects.get(pk=res.pk)
+    return res
+
+
 @pytest.fixture
 def buzzfeed_fakenews_resource(buzzfeed_dataset, buzzfeed_editor, mocker):
-    from mcod.resources.models import Resource
     _name = 'buzzfeed-2018-fake-news-1000-lines.csv'
     copyfile(
         os.path.join(settings.TEST_SAMPLES_PATH, _name),
         os.path.join(settings.RESOURCES_MEDIA_ROOT, _name)
     )
-
-    res = Resource(
-        title='Analysis of fake news sites and viral posts',
-        description='Over the past four years, BuzzFeed News has maintained lists of sites that '
-                    'publish completely fabricated stories. As we encounter new ones and debunk '
-                    'their content, we add them to the list.',
-        file=_name,
-        link=f'http://falconframework.org/media/resources/{_name}',
-        format='csv',
-        openness_score=3,
-        views_count=10,
-        downloads_count=20,
-        dataset=buzzfeed_dataset,
-        created_by=buzzfeed_editor,
-        modified_by=buzzfeed_editor,
-        data_date=datetime.today()
-    )
-    res.tracker.saved_data['link'] = res.link
-    res.save()
-    return res
+    return create_res(buzzfeed_dataset, buzzfeed_editor, filename=_name)
 
 
 @pytest.fixture
 def resource_with_date_and_datetime(buzzfeed_dataset, buzzfeed_editor, mocker):
-    from mcod.resources.models import Resource
     _name = 'date_and_datetime.csv'
     copyfile(
         os.path.join(settings.TEST_SAMPLES_PATH, _name),
         os.path.join(settings.RESOURCES_MEDIA_ROOT, _name)
     )
 
-    res = Resource(
-        title='Analysis of fake news sites and viral posts',
-        description='Over the past four years, BuzzFeed News has maintained lists of sites that '
-                    'publish completely fabricated stories. As we encounter new ones and debunk '
-                    'their content, we add them to the list.',
-        file=_name,
-        link=f'http://falconframework.org/media/resources/{_name}',
-        format='csv',
-        openness_score=3,
-        views_count=10,
-        downloads_count=20,
-        dataset=buzzfeed_dataset,
-        created_by=buzzfeed_editor,
-        modified_by=buzzfeed_editor,
-        data_date=datetime.today()
-    )
-    res.tracker.saved_data['link'] = res.link
-    res.save()
-    return res
+    return create_res(buzzfeed_dataset, buzzfeed_editor, filename=_name)
 
 
 @pytest.fixture
 def geo_tabular_data_resource(buzzfeed_dataset, buzzfeed_editor, mocker):
-    from mcod.resources.models import Resource
     _name = 'geo.csv'
     copyfile(
         os.path.join(settings.TEST_SAMPLES_PATH, _name),
         os.path.join(settings.RESOURCES_MEDIA_ROOT, _name)
     )
-
-    res = Resource(
-        title='Geo tab test',
-        description='more than 20 characters',
-        file=_name,
-        link=f'http://falconframework.org/media/resources/{_name}',
-        format='csv',
-        openness_score=3,
-        views_count=10,
-        downloads_count=20,
-        dataset=buzzfeed_dataset,
-        created_by=buzzfeed_editor,
-        modified_by=buzzfeed_editor,
-        data_date=datetime.today()
-    )
-    res.tracker.saved_data['link'] = res.link
-    res.save()
-    return res
+    res_attrs = {
+        'filename': _name,
+        'title': 'Geo tab test',
+        'description': 'more than 20 characters'
+    }
+    return create_res(buzzfeed_dataset, buzzfeed_editor, **res_attrs)
 
 
 @pytest.fixture
@@ -144,6 +139,35 @@ def remote_file_resource(buzzfeed_dataset, buzzfeed_editor, mocker, httpserver):
     res = Resource(
         title='Remote file resource',
         description='Remote file resource',
+        link=httpserver.url,
+        format='csv',
+        openness_score=3,
+        views_count=10,
+        downloads_count=20,
+        dataset=buzzfeed_dataset,
+        created_by=buzzfeed_editor,
+        modified_by=buzzfeed_editor,
+        data_date=datetime.today()
+    )
+    res.save()
+    return res
+
+
+@pytest.fixture
+def other_remote_file_resource(buzzfeed_dataset, buzzfeed_editor, mocker, httpserver):
+    from mcod.resources.models import Resource
+
+    simple_csv_path = os.path.join(settings.TEST_SAMPLES_PATH, 'simple.csv')
+    httpserver.serve_content(
+        content=open(simple_csv_path).read(),
+        headers={
+            'content-type': 'application/csv'
+        },
+    )
+
+    res = Resource(
+        title='Other remote file resource',
+        description='Other remote file resource',
         link=httpserver.url,
         format='csv',
         openness_score=3,
@@ -195,50 +219,85 @@ def remote_file_resource_with_forced_file_type(remote_file_resource):
 
 @pytest.fixture
 def local_file_resource(buzzfeed_dataset, buzzfeed_editor, mocker):
-    from mcod.resources.models import Resource
     _name = 'geo.csv'
     copyfile(
         os.path.join(settings.TEST_SAMPLES_PATH, _name),
         os.path.join(settings.RESOURCES_MEDIA_ROOT, _name)
     )
-    res = Resource(
-        title='Local file resource',
-        description='Local file resource',
-        file=_name,
-        format='csv',
-        openness_score=3,
-        views_count=10,
-        downloads_count=20,
-        dataset=buzzfeed_dataset,
-        created_by=buzzfeed_editor,
-        modified_by=buzzfeed_editor,
-        data_date=datetime.today()
-    )
-    res.save()
+    res_attrs = {
+        'filename': _name,
+        'title': 'Local file resource',
+        'description': 'Local file resource'
+    }
+    res = create_res(buzzfeed_dataset, buzzfeed_editor, **res_attrs)
     ChartFactory.create(resource=res, is_default=True)
     return res
 
 
 @pytest.fixture
 def resource_with_xls_file(example_xls_file):
-    res = ResourceFactory.create(
-        type='file',
-        format='xls',
-        link=None,
-        file=example_xls_file,
-    )
-    res.revalidate()
+    from mcod.resources.models import Resource
+    if is_enabled('S40_new_file_model.be'):
+        res = ResourceFactory.create(
+            type='file',
+            format='xls',
+            link=None,
+            main_file__file=example_xls_file,
+        )
+        res = Resource.objects.get(pk=res.pk)
+    else:
+        res = ResourceFactory.create(
+            type='file',
+            format='xls',
+            link=None,
+            file=example_xls_file,
+        )
+        res.revalidate()
     res.increase_openness_score()
     return res
 
 
 @pytest.fixture
-def resource_with_success_tasks_statuses(resource):
-    tasks = TaskResultFactory.create_batch(size=3, status='SUCCESS')
-    resource.link_tasks.add(tasks[0])
-    resource.file_tasks.add(tasks[1])
-    resource.data_tasks.add(tasks[2])
+def onlyheaderscsv_resource(onlyheaders_csv_file):
+    from mcod.resources.models import Resource
+    if is_enabled('S40_new_file_model.be'):
+        resource = ResourceFactory.create(
+            type='file',
+            format='csv',
+            link=None,
+            main_file__file=onlyheaders_csv_file,
+        )
+        resource = Resource.objects.get(pk=resource.pk)
+    else:
+        resource = ResourceFactory.create(
+            type='file',
+            format='csv',
+            link=None,
+            file=onlyheaders_csv_file,
+        )
     return resource
+
+
+@pytest.fixture
+def resource_with_success_tasks_statuses(remote_file_resource):
+    tasks = TaskResultFactory.create_batch(size=3, status='SUCCESS')
+    remote_file_resource.link_tasks.add(tasks[0])
+    remote_file_resource.file_tasks.add(tasks[1])
+    remote_file_resource.data_tasks.add(tasks[2])
+    remote_file_resource.link_tasks_last_status = tasks[0].status
+    remote_file_resource.save()
+    return remote_file_resource
+
+
+@pytest.fixture
+def resource_with_failure_tasks_statuses(other_remote_file_resource):
+    tasks = TaskResultFactory.create_batch(size=3, status='FAILURE')
+    other_remote_file_resource.link_tasks.add(tasks[0])
+    other_remote_file_resource.file_tasks.add(tasks[1])
+    other_remote_file_resource.data_tasks.add(tasks[2])
+    other_remote_file_resource.link_tasks_last_status = tasks[0].status
+    other_remote_file_resource.save()
+    return other_remote_file_resource
 
 
 @given(parsers.parse('resource'))
@@ -249,11 +308,20 @@ def resource():
 
 @given(parsers.parse('resource'))
 def resource_with_file(file_csv):
-    res = ResourceFactory.build(
-        type="file",
-        format='csv',
-        file=File(file_csv)
-    )
+    if is_enabled('S40_new_file_model.be'):
+        res = ResourceFactory.create(
+            type="file",
+            format='csv',
+            main_file__file=factory.django.FileField(
+                from_path=os.path.join(settings.TEST_SAMPLES_PATH, 'simple.csv'), filename='simple.csv'
+            )
+        )
+    else:
+        res = ResourceFactory.build(
+            type="file",
+            format='csv',
+            file=File(file_csv)
+        )
     return res
 
 
@@ -292,24 +360,44 @@ def get_json_file():
 
 @given(parsers.parse('resource of type website'))
 def resource_of_type_website():
-    res = ResourceFactory.create(
-        type="website",
-        format=None,
-        file=factory.django.FileField(from_func=get_html_file, filename='{}.html'.format(str(uuid.uuid4()))),
-        content_type="text/html",
-    )
+    if is_enabled('S40_new_file_model.be'):
+        res = ResourceFactory.create(
+            type="website",
+            format=None,
+            main_file__file=factory.django.FileField(
+                from_func=get_html_file, filename='{}.html'.format(str(uuid.uuid4()))
+            ),
+            main_file__content_type="text/html",
+        )
+    else:
+        res = ResourceFactory.create(
+            type="website",
+            format=None,
+            file=factory.django.FileField(from_func=get_html_file, filename='{}.html'.format(str(uuid.uuid4()))),
+            content_type="text/html",
+        )
     return res
 
 
 @given(parsers.parse('resource of type api'))
 def resource_of_type_api():
-    res = ResourceFactory.create(
-        type="api",
-        format=None,
-        file=factory.django.FileField(from_func=get_json_file, filename='{}.json'.format(str(uuid.uuid4()))),
-        content_type="application/json",
+    from mcod.resources.models import Resource
+    if is_enabled('S40_new_file_model.be'):
+        res = ResourceFactory(
+            type="api",
+            format=None,
+            main_file__file=factory.django.FileField(from_func=get_json_file, filename='{}.json'.format(str(uuid.uuid4()))),
+            main_file__content_type="application/json",
+        )
+        res = Resource.objects.get(pk=res.pk)
+    else:
+        res = ResourceFactory.create(
+            type="api",
+            format=None,
+            file=factory.django.FileField(from_func=get_json_file, filename='{}.json'.format(str(uuid.uuid4()))),
+            content_type="application/json",
 
-    )
+        )
     return res
 
 
@@ -359,54 +447,112 @@ def two_charts_for_resource_id(context, data_str):
 
 @given(parsers.parse('resource with date and datetime'))
 def _resource_with_date_and_datetime(csv_with_date_and_datetime):
-    res = ResourceFactory.build(
-        type='file',
-        format='csv',
-        file=File(csv_with_date_and_datetime)
-    )
+    if is_enabled('S40_new_file_model.be'):
+        res = ResourceFactory.create(
+            type='file',
+            format='csv',
+            main_file__file=File(csv_with_date_and_datetime)
+        )
+    else:
+        res = ResourceFactory.build(
+            type='file',
+            format='csv',
+            file=File(csv_with_date_and_datetime)
+        )
     return res
 
 
 @given(parsers.parse('resource with id {res_id} and xls file converted to csv'))
-def resource_with_xls_file_converted_to_csv(res_id, example_xls_file):
-    res = ResourceFactory.create(
-        id=res_id,
-        type='file',
-        format='xls',
-        link=None,
-        file=example_xls_file,
-    )
-    res.revalidate()
-    res.increase_openness_score()
+def resource_with_xls_file_converted_to_csv(res_id, example_xls_file, buzzfeed_dataset, buzzfeed_editor):
+    if is_enabled('S40_new_file_model.be'):
+        from mcod.resources.models import Resource
+        params = {
+            'id': res_id,
+            'type': 'file',
+            'format': 'xls',
+            'link': None,
+            'filename': 'example_xls_file.xls',
+            'openness_score': 1
+        }
+        res = create_res(buzzfeed_dataset, buzzfeed_editor, **params)
+        resource_score, files_score = res.get_openness_score()
+        Resource.objects.filter(pk=res.pk).update(openness_score=resource_score)
+        res.revalidate()
+    else:
+        res = ResourceFactory.create(
+            id=res_id,
+            type='file',
+            format='xls',
+            link=None,
+            file=example_xls_file,
+        )
+        res.revalidate()
+        res.increase_openness_score()
     return res
 
 
 @given(parsers.parse('resource with csv file converted to jsonld with params {params_str}'))
 def resource_with_csv_file_converted_to_jsonld(csv2jsonld_csv_file, csv2jsonld_jsonld_file, params_str):
+    from mcod.resources.models import Resource
     params = json.loads(params_str)
     obj_id = params.pop('id')
-    return ResourceFactory.create(
-        id=obj_id,
-        type='file',
-        format='csv',
-        link=None,
-        file=csv2jsonld_csv_file,
-        jsonld_file=csv2jsonld_jsonld_file,
-        **params,
-    )
+    if is_enabled('S40_new_file_model.be'):
+        res = ResourceFactory(
+            main_file__file=csv2jsonld_csv_file,
+            id=obj_id,
+            type='file',
+            format='csv',
+            link=None,
+            **params,)
+        ResourceFileFactory.create(
+            file=csv2jsonld_jsonld_file,
+            format='jsonld',
+            resource=res,
+            is_main=False
+        )
+        resource_score, files_score = res.get_openness_score()
+        Resource.objects.filter(pk=res.pk).update(openness_score=resource_score)
+        res = Resource.objects.get(pk=res.pk)
+        res.revalidate()
+    else:
+        res = ResourceFactory.create(
+            id=obj_id,
+            type='file',
+            format='csv',
+            link=None,
+            file=csv2jsonld_csv_file,
+            jsonld_file=csv2jsonld_jsonld_file,
+            **params,
+        )
+        res.openness_score = res.get_openness_score()
+        res.save()
+    return res
 
 
 @given(parsers.parse('resource with id {res_id} and simple csv file'))
 def resource_with_simple_csv(res_id, simple_csv_file):
-    res = ResourceFactory.create(
-        id=res_id,
-        type='file',
-        format='csv',
-        link=None,
-        file=simple_csv_file,
-    )
-    res.tracker.saved_data['file'] = None
-    res.save()
+    if is_enabled('S40_new_file_model.be'):
+        res = ResourceFactory(
+            id=res_id,
+            type='file',
+            format='csv',
+            link=None,
+            main_file__file=simple_csv_file,
+        )
+        res.data_tasks_last_status = res.data_tasks.all().last().status
+        res.file_tasks_last_status = res.file_tasks.all().last().status
+        res.save()
+
+    else:
+        res = ResourceFactory.create(
+            id=res_id,
+            type='file',
+            format='csv',
+            link=None,
+            file=simple_csv_file,
+        )
+        res.tracker.saved_data['file'] = None
+        res.save()
     return res
 
 
@@ -514,7 +660,7 @@ def given_unpublished_resource_views_count_is(resource_id, counter_type, val):
 @then(parsers.parse('resource csv file has {columns} as headers'))
 def resource_csv_file_has_headers(resource_with_xls_file_converted_to_csv, columns):
     res = resource_with_xls_file_converted_to_csv
-    with open(res.csv_file.path, 'r') as outfile:
+    with open(res.csv_converted_file.path, 'r') as outfile:
         first_line = outfile.readline().rstrip('\n')
         assert columns == first_line
 #
@@ -604,15 +750,29 @@ def resource_with_id_and_filename(filename, dataset, obj_id):
     from mcod.resources.models import Resource
     full_filename = prepare_file(filename)
     with open(full_filename, 'rb') as outfile:
-        Resource.objects.create(
-            id=obj_id,
-            title='Local file resource',
-            description='Resource with file',
-            file=File(outfile),
-            dataset=dataset,
-            data_date=datetime.today(),
-            status='published'
-        )
+        if is_enabled('S40_new_file_model.be'):
+            res = Resource.objects.create(
+                id=obj_id,
+                title='Local file resource',
+                description='Resource with file',
+                dataset=dataset,
+                data_date=datetime.today(),
+                status='published'
+            )
+            ResourceFileFactory.create(
+                resource_id=res.pk,
+                file=File(outfile),
+            )
+        else:
+            Resource.objects.create(
+                id=obj_id,
+                title='Local file resource',
+                description='Resource with file',
+                file=File(outfile),
+                dataset=dataset,
+                data_date=datetime.today(),
+                status='published'
+            )
 
 
 @given(parsers.parse('draft remote file resource of api type with id {obj_id}'))
@@ -629,7 +789,12 @@ def draft_remote_file_resource(obj_id, httpsserver_custom):
         'link': httpsserver_custom.url,
         'status': 'draft'
     }
-    return ResourceFactory.create(**kwargs)
+    if is_enabled('S40_new_file_model.be'):
+        kwargs['main_file'] = None
+    else:
+        kwargs['file'] = None
+    res = ResourceFactory.create(**kwargs)
+    return res
 
 
 @then(parsers.parse('resource with id {obj_id} attributes are equal {expected_attr_vals}'))
@@ -652,8 +817,20 @@ def resource_field_value_is(context, r_field, r_value):
 @then(parsers.parse('file is validated and result is {file_format}'))
 @then('file is validated and result is <file_format>')
 def file_format(validated_file, file_format):
-    extension, file_info, encoding, path, file_mimetype, exc = analyze_file(validated_file)
-    assert extension == file_format
+    ext, file_info, encoding, path, file_mimetype, exc = analyze_file(validated_file)
+    assert ext == file_format, f'Analyzed {validated_file} file format is not: "{file_format}", but: "{ext}"'
+
+
+@then(parsers.parse('archive file is successfully unpacked and has {files_number} files'))
+@then('archive file is successfully unpacked and has <files_number> files')
+def file_archive(validated_file, files_number):
+    with ArchiveReader(validated_file) as extracted:
+        assert os.path.exists(extracted.tmp_dir)
+        assert extracted
+        assert len(extracted) == int(files_number)
+        for path in extracted:
+            assert os.path.isfile(path)
+    assert not os.path.exists(extracted.tmp_dir)
 
 
 @then(parsers.parse('file is validated and result mimetype is {mimetype}'))
@@ -686,3 +863,38 @@ def resource_with_region(res_id, dataset_id, main_region, additional_regions):
     resource.regions.set([main_region])
     resource.regions.add(*additional_regions, through_defaults={'is_additional': True})
     resource.save()
+
+
+@when(parsers.parse('resource with id {obj_id} is revalidated'))
+def resource_is_validated(obj_id):
+    from mcod.resources.models import Resource
+    from mcod.resources.link_validation import session
+    res = Resource.objects.get(pk=obj_id)
+    if res.link and res.main_file:
+        adapter = requests_mock.Adapter()
+        adapter.register_uri('GET', res.link, content=res.main_file.read(),
+                             headers={'Content-Type': res.main_file_mimetype})
+        session.mount(res.link, adapter)
+    res.revalidate()
+
+
+@when('request resource posted data contains simple file')
+def posted_data_with_file(admin_context):
+    _file = SimpleUploadedFile('test.html', get_html_file().read(), content_type='text/html')
+    admin_context.obj['file'] = _file
+
+
+@then('resource has assigned file')
+def resource_created_with_file():
+    from mcod.resources.models import Resource
+    res = Resource.objects.all().latest('id')
+    if is_enabled('S40_new_file_model.be'):
+        assert res.file.name == ''
+        assert res.main_file.name != ''
+    else:
+        assert res.file.name != ''
+
+
+@then('counter incrementing task is executed')
+def counter_incrementing_task_is_executed(context):
+    save_counters()

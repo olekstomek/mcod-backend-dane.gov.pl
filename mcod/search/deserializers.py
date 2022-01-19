@@ -253,20 +253,20 @@ class ApiSearchRequest(ListingSchema):
         regions = fields.FilterField(RegionsFilterSchema)
     if is_enabled('S39_showcases.be'):
         showcase_category = fields.FilterField(
-            ListTermsSchema,
+            StringTermSchema,
             doc_template='docs/generic/fields/string_term_field.html',
             doc_base_url='/search',
             doc_field_name='showcase_category',
         )
         showcase_types = fields.FilterField(
-            ListTermsSchema,
+            StringTermSchema,
             query_field='showcase_types',
             doc_template='docs/generic/fields/string_term_field.html',
             doc_base_url='/search',
             doc_field_name='showcase types'
         )
         showcase_platforms = fields.FilterField(
-            ListTermsSchema,
+            StringTermSchema,
             query_field='showcase_platforms',
             doc_template='docs/generic/fields/string_term_field.html',
             doc_base_url='/search',
@@ -338,10 +338,16 @@ class ApiSuggestRequest(CommonSchema):
         description='Maximum length of given suggestion list. By default there is no limit',
         validate=validate.Range(1, 100, error=_("Invalid maximum list length"))
     )
-    if is_enabled('S39_showcases.be'):
-        _supported_models = {'dataset', 'resource', 'institution', 'article', 'knowledge_base', 'showcase'}
-    else:
-        _supported_models = {'dataset', 'resource', 'institution', 'article', 'knowledge_base', 'application'}
+    _supported_models = {
+        'application',
+        'article',
+        'dataset',
+        'institution',
+        'knowledge_base',
+        'resource',
+        'showcase',
+    }
+
     _completion_models = {'region'}
     models = fields.StringField()
     advanced = fields.StringField()

@@ -1,4 +1,3 @@
-import logging
 import os
 from io import BytesIO
 
@@ -15,7 +14,7 @@ from django.dispatch import receiver
 from django.forms.models import model_to_dict
 from django.utils import timezone, translation
 from django.utils.functional import cached_property
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext_lazy as _, pgettext_lazy
 from django.templatetags.static import static
 from django.template.loader import render_to_string
 from modeltrans.fields import TranslationField
@@ -36,8 +35,6 @@ from mcod.showcases.signals import generate_thumbnail, update_showcase_document
 from mcod.showcases.tasks import generate_logo_thumbnail_task, send_showcase_proposal_mail_task
 
 
-signal_logger = logging.getLogger('signals')
-
 User = get_user_model()
 
 
@@ -55,7 +52,7 @@ class ShowcaseMixin(ExtendedModel):
     }
     CATEGORY_CHOICES = (
         ('app', _('Application')),
-        ('www', _('Portal WWW')),
+        ('www', pgettext_lazy('showcase category name', 'Website')),
         ('other', _('Other')),
     )
     CATEGORY_NAMES = dict(CATEGORY_CHOICES)
@@ -64,7 +61,10 @@ class ShowcaseMixin(ExtendedModel):
         ('free', _('Free App')),
         ('commercial', _('Commercial App')),
     )
-    LICENSE_TYPE_NAMES = dict(LICENSE_TYPE_CHOICES)
+    LICENSE_TYPE_NAMES = {
+        'free': pgettext_lazy('license type', 'Free'),
+        'commercial': pgettext_lazy('license type', 'Commercial'),
+    }
     LICENSE_TYPES = [code for code, _ in LICENSE_TYPE_CHOICES]
 
     category = models.CharField(max_length=5, verbose_name=_('category'), choices=CATEGORY_CHOICES)
@@ -80,7 +80,8 @@ class ShowcaseMixin(ExtendedModel):
     desktop_linux_url = models.URLField(verbose_name=_('Linux App URL'), blank=True)
     desktop_macos_url = models.URLField(verbose_name=_('MacOS App URL'), blank=True)
     desktop_windows_url = models.URLField(verbose_name=_('Windows App URL'), blank=True)
-    license_type = models.CharField(max_length=10, choices=LICENSE_TYPE_CHOICES, verbose_name=_('license type'))
+    license_type = models.CharField(
+        max_length=10, blank=True, choices=LICENSE_TYPE_CHOICES, verbose_name=_('license type'))
 
     def __str__(self):
         return self.title
@@ -139,18 +140,18 @@ class ShowcaseMixin(ExtendedModel):
             result.append('windows')
         return result
 
-    @cached_property
-    def illustrative_graphics_absolute_url(self):
-        return self._get_absolute_url(
-            self.illustrative_graphics.url, use_lang=False
-        ) if self.illustrative_graphics else ''
-
-    @cached_property
+    @property
     def illustrative_graphics_url(self):
-        url = self.illustrative_graphics.url if self.illustrative_graphics else ''
+        return self._get_absolute_url(
+            self.illustrative_graphics.url, use_lang=False) if self.illustrative_graphics else None
+
+    @property
+    def illustrative_graphics_img(self):
+        url = self.illustrative_graphics_url
+        alt = getattr(self, 'illustrative_graphics_alt', '')
         if url:
-            return self._get_absolute_url(url, use_lang=False)
-        return url
+            return self.mark_safe(
+                f'<a href="{self.admin_change_url}" target="_blank"><img src="{url}" width="100" alt="{alt}" /></a>')
 
     @property
     def file_url(self):
@@ -221,7 +222,7 @@ class ShowcaseProposal(ShowcaseMixin):
     comment = models.TextField(verbose_name=_('comment'), blank=True)
 
     showcase = models.OneToOneField(
-        'showcases.Showcase', on_delete=models.CASCADE, null=True, blank=True, verbose_name=_('showcase'))
+        'showcases.Showcase', on_delete=models.SET_NULL, null=True, blank=True, verbose_name=_('showcase'))
     created_by = models.ForeignKey(
         User,
         models.DO_NOTHING,
@@ -258,6 +259,11 @@ class ShowcaseProposal(ShowcaseMixin):
                 100,
             ))
         return ''
+
+    @property
+    def applicant_email_link(self):
+        if self.applicant_email:
+            return self.mark_safe(f'<a href="mailto:{self.applicant_email}">{self.applicant_email}</a>')
 
     @property
     def datasets_links(self):
@@ -299,6 +305,10 @@ class ShowcaseProposal(ShowcaseMixin):
         return self.decision == 'accepted'
 
     @property
+    def is_converted_to_showcase(self):
+        return self.showcase and not self.showcase.is_permanently_removed
+
+    @property
     def is_rejected(self):
         return self.decision == 'rejected'
 
@@ -312,7 +322,7 @@ class ShowcaseProposal(ShowcaseMixin):
 
     def convert_to_showcase(self):  # noqa
         created = False
-        if self.showcase:
+        if self.is_converted_to_showcase:
             return created  # proposal is after convertion already. Do not convert.
         tag_model = apps.get_model('tags.Tag')
         data = model_to_dict(
@@ -382,7 +392,7 @@ class ShowcaseProposal(ShowcaseMixin):
             msg_plain = render_to_string('mails/showcaseproposal.txt', context)
             msg_html = render_to_string('mails/showcaseproposal.html', context)
             mail = EmailMultiAlternatives(
-                'Zgłoszono propozycję innowacji {}'.format(obj.title.replace('\n', ' ').replace('\r', '')),
+                'Powiadomienie - Nowe zgłoszenie PoCoTo',
                 msg_plain,
                 from_email=config.NO_REPLY_EMAIL,
                 to=emails,
@@ -411,8 +421,8 @@ class Showcase(ShowcaseMixin):
     SIGNALS_MAP = {
         'updated': (generate_thumbnail, core_signals.notify_updated),
         'published': (generate_thumbnail, core_signals.notify_published),
-        'restored': (generate_thumbnail, core_signals.notify_restored),
-        'removed': (search_signals.remove_document, core_signals.notify_removed),
+        'restored': (search_signals.update_document_with_related, generate_thumbnail, core_signals.notify_restored),
+        'removed': (search_signals.remove_document_with_related, core_signals.notify_removed),
         'pre_m2m_added': (core_signals.notify_m2m_added,),
         'pre_m2m_removed': (core_signals.notify_m2m_removed,),
         'pre_m2m_cleaned': (core_signals.notify_m2m_cleaned,),
@@ -541,10 +551,6 @@ class Showcase(ShowcaseMixin):
         return self.mark_safe(
             f'<a href="{self.frontend_preview_url}" class="btn" target="_blank">{_("Preview")}</a>')
 
-    @cached_property
-    def users_following_list(self):
-        return [user.id for user in self.users_following.all()]
-
     @property
     def application_logo(self):
         if self.image_thumb_absolute_url or self.image_absolute_url:
@@ -600,16 +606,7 @@ def handle_showcase_proposal_pre_save(sender, instance, *args, **kwargs):
 
 @receiver(generate_thumbnail, sender=Showcase)
 def regenerate_thumbnail(sender, instance, *args, **kwargs):
-    signal_logger.debug(
-        'Regenerating thumbnail ',
-        extra={
-            'sender': '{}.{}'.format(sender._meta.model_name, sender._meta.object_name),
-            'instance': '{}.{}'.format(instance._meta.model_name, instance._meta.object_name),
-            'instance_id': instance.id,
-            'signal': 'generate_thumbnail'
-        },
-        exc_info=1
-    )
+    sender.log_debug(instance, 'Regenerating thumbnail ', 'generate_thumbnail')
     if any([instance.tracker.has_changed('image'),
             instance.tracker.has_changed('status') and instance.status == instance.STATUS.published]):
         generate_logo_thumbnail_task.s(instance.id).apply_async(countdown=1)

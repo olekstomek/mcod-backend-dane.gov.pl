@@ -5,6 +5,9 @@ import os
 import re
 import shutil
 import smtplib
+import zipfile
+from io import BytesIO
+from pydoc import locate
 
 from django.apps import apps
 from django.test import Client
@@ -16,6 +19,7 @@ from pytest_bdd import given, parsers, then, when
 from mcod import settings
 from mcod.core.api.rdf.namespaces import NAMESPACES
 from mcod.core.registries import factories_registry
+from mcod.unleash import is_enabled
 
 
 def copyfile(src, dst):
@@ -24,8 +28,13 @@ def copyfile(src, dst):
 
 
 def prepare_file(filename):
-    src = str(os.path.join(settings.TEST_SAMPLES_PATH, filename))
-    dst = str(os.path.join(settings.RESOURCES_MEDIA_ROOT, filename))
+    dirs = filename.split(os.sep)
+    filename = dirs.pop()
+    src = str(os.path.join(settings.TEST_SAMPLES_PATH, *dirs, filename))
+    dst_dir = os.path.join(settings.RESOURCES_MEDIA_ROOT, *dirs)
+    if not os.path.exists(dst_dir):
+        os.makedirs(dst_dir)
+    dst = str(os.path.join(dst_dir, filename))
     copyfile(src, dst)
 
     return dst
@@ -39,7 +48,7 @@ def prepare_dbf_file(filename):
 def create_object(obj_type, obj_id, is_removed=False, status='published', **kwargs):
     _factory = factories_registry.get_factory(obj_type)
     kwargs['pk'] = obj_id
-    if obj_type != 'tag':
+    if obj_type not in ['tag', 'task result']:
         kwargs['is_removed'] = is_removed
     if 'user' not in obj_type:
         kwargs['status'] = status
@@ -399,6 +408,48 @@ def admin_request_method(admin_context, request_method):
     admin_context.admin.method = request_method
 
 
+@given(parsers.parse('form class is {form_class}'))
+@given('form class is <form_class>')
+def form_class_is(admin_context, form_class):
+    admin_context.form_class = locate(form_class)
+    assert admin_context.form_class
+
+
+def get_data(resource):
+    resource.revalidate()
+    assert resource.tabular_data_schema
+    data = resource.__dict__
+    data['dataset'] = resource.dataset_id
+    if is_enabled('S41_resource_has_high_value_data.be'):
+        data['has_high_value_data'] = False
+    return data
+
+
+@given(parsers.parse('form geo data is {form_data}'))
+@given('form geo data is <form_data>')
+def form_geo_data(admin_context, geo_tabular_data_resource, form_data):
+    data = get_data(geo_tabular_data_resource)
+    data.update(json.loads(form_data))
+    admin_context.form_data = data
+
+
+@given(parsers.parse('form tabular data is {form_data}'))
+@given('form tabular data is <form_data>')
+def form_tabular_data(admin_context, tabular_resource, form_data):
+    data = get_data(tabular_resource)
+    data.update(json.loads(form_data))
+    admin_context.form_data = data
+
+
+@given(parsers.parse('form instance is {form_instance}'))
+@given('form instance is <form_instance>')
+def form_instance_is(admin_context, geo_tabular_data_resource, tabular_resource, form_instance):
+    if form_instance == 'geo_tabular_data_resource':
+        admin_context.form_instance = geo_tabular_data_resource
+    elif form_instance == 'tabular_resource':
+        admin_context.form_instance = tabular_resource
+
+
 @given(parsers.parse('admin\'s request logged user is {user_type}'))
 @given('admin\'s request logged user is <user_type>')
 def admin_request_logged_user_is(admin_context, user_type):
@@ -509,6 +560,20 @@ def api_request_post_data(admin_context, data_type, req_post_data):
         },
         'datasetsubmission': {
 
+        },
+        'guide': {
+            "title": "test",
+            "status": "published",
+            "items-TOTAL_FORMS": 1,
+            "items-INITIAL_FORMS": 0,
+            "items-MIN_NUM_FORMS": 1,
+            "items-MAX_NUM_FORMS": 1000,
+            "items-0-title": "test",
+            "items-0-content": "test",
+            "items-0-route": "/",
+            "items-0-css_selector": "test",
+            "items-0-position": "top",
+            "items-0-order": 0
         },
         'institution': {
             "_save": "",
@@ -642,12 +707,46 @@ def api_request_post_data(admin_context, data_type, req_post_data):
             "organizations": []
         }
     }
+    if is_enabled('S41_resource_has_high_value_data.be'):
+        default_post_data['dataset'].update({
+            "has_high_value_data": False,
+            "resources-2-0-has_high_value_data": False,
+        })
+        default_post_data['institution']['datasets-2-0-has_high_value_data'] = False
+        default_post_data['resource']['has_high_value_data'] = False
+
     assert data_type in default_post_data.keys()
     default_post_data["datasets-2-0-tags_pl"] = []
     default_post_data["datasets-2-0-tags_en"] = []
     data = default_post_data.get(data_type, {}).copy()
     data.update(post_data)
     admin_context.obj = data
+
+
+@then('form is valid')
+def form_is_valid(admin_context):
+    assert admin_context.form_class
+    kwargs = {'data': admin_context.form_data}
+    if admin_context.form_instance:
+        kwargs['instance'] = admin_context.form_instance
+    admin_context.form = admin_context.form_class(**kwargs)
+    form = admin_context.form
+    assert form.is_valid(), 'Form "%s" should be valid, but has errors: %s"' % (form.__class__, form.errors)
+
+
+@then(parsers.parse('form field {field} error is {error}'))
+@then('form field <field> error is <error>')
+def form_field_error(admin_context, field, error):
+    assert admin_context.form_class
+    kwargs = {'data': admin_context.form_data}
+    if admin_context.form_instance:
+        kwargs['instance'] = admin_context.form_instance
+    admin_context.form = admin_context.form_class(**kwargs)
+    form = admin_context.form
+    assert not form.is_valid()
+    assert field in form.errors, f'Field {field} was not found in form.errors'
+    errors = form.errors[field]
+    assert any([error in x for x in errors]), f'"{error}" not found in {errors}'
 
 
 @then(parsers.parse('admin\'s response status code is {status_code:d}'))
@@ -789,7 +888,10 @@ def latest_object_attribute_is(obj_type, attr, value):
     obj = model.raw.latest('id')
     attr_val = getattr(obj, attr)
     attr_val = str(attr_val) if not isinstance(attr_val, str) else attr_val
-    assert attr_val == value, f'{obj} attribute {attr} should be {value}, but is {attr_val}'
+    if value == 'not None':
+        assert attr_val is not None, f'{obj} attribute {attr} should not be None, but is {attr_val}'
+    else:
+        assert attr_val == value, f'{obj} attribute {attr} should be {value}, but is {attr_val}'
 
 
 @given('removed <object_type> objects with ids <object_ids>')
@@ -839,3 +941,10 @@ def obj_with_id_attribute_is(object_type, obj_id, data_str):
         if isinstance(obj_attr, datetime.date):
             obj_attr = str(obj_attr)
         assert obj_attr == attr_value, f'{object_type} attribute {attr_name} should be {attr_value}, but is {obj_attr}'
+
+
+@then(parsers.parse('api\'s response data has zipped {files_count} files'), converters=dict(files_count=int))
+@then('api\'s response data has zipped <files_count> files')
+def api_response_data_has_zipped_files(context, files_count):
+    with zipfile.ZipFile(BytesIO(context.response.content)) as z:
+        assert len(z.filelist) == files_count

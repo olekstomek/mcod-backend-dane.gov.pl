@@ -6,7 +6,7 @@ from django.db.models import Subquery, OuterRef, Q
 from django.forms.models import model_to_dict
 from django.http.response import HttpResponseRedirect
 from django.template.loader import get_template
-from django.urls import reverse, path
+from django.urls import path
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
@@ -28,6 +28,7 @@ from mcod.reports.admin import ExportCsvMixin
 from mcod.resources.forms import ChangeResourceForm, AddResourceForm, TrashResourceForm
 from mcod.resources.models import (
     Resource,
+    ResourceFile,
     ResourceTrash,
     RESOURCE_FORCED_TYPE,
     RESOURCE_TYPE,
@@ -65,12 +66,15 @@ class FormatFilter(admin.SimpleListFilter):
         if not val:
             return queryset
         query = Q(format=val)
-        if val in ['json-ld', 'jsonld']:
-            query.add(~Q(jsonld_file=None), Q.OR)
-            query.add(~Q(jsonld_file=''), Q.AND)
-        elif val == 'csv':
-            query.add(~Q(csv_file=None), Q.OR)
-            query.add(~Q(csv_file=''), Q.AND)
+        if is_enabled('S40_new_file_model.be'):
+            query = query | Q(files__format=val)
+        else:
+            if val in ['json-ld', 'jsonld']:
+                query.add(~Q(jsonld_file=None), Q.OR)
+                query.add(~Q(jsonld_file=''), Q.AND)
+            elif val == 'csv':
+                query.add(~Q(csv_file=None), Q.OR)
+                query.add(~Q(csv_file=''), Q.AND)
         return queryset.filter(query)
 
 
@@ -87,7 +91,8 @@ class TaskStatus(admin.SimpleListFilter):
         val = self.value()
         if not val:
             return queryset
-        val = None if val == 'N/A' else val
+        empty_val = '' if is_enabled('S41_resource_AP_optimization.be') else None
+        val = empty_val if val == 'N/A' else val
         return queryset.filter(**{self.qs_param: val})
 
 
@@ -118,19 +123,19 @@ class TypeFilter(admin.SimpleListFilter):
 class LinkStatusFilter(TaskStatus):
     title = _('Link status')
     parameter_name = 'link_status'
-    qs_param = '_link_status'
+    qs_param = 'link_tasks_last_status' if is_enabled('S41_resource_AP_optimization.be') else '_link_status'
 
 
 class FileStatusFilter(TaskStatus):
     title = _('File status')
     parameter_name = 'file_status'
-    qs_param = '_file_status'
+    qs_param = 'file_tasks_last_status' if is_enabled('S41_resource_AP_optimization.be') else '_file_status'
 
 
 class TabularViewFilter(TaskStatus):
     title = _('TabularView')
     parameter_name = 'tabular_view_status'
-    qs_param = '_data_status'
+    qs_param = 'data_tasks_last_status' if is_enabled('S41_resource_AP_optimization.be') else '_data_status'
 
 
 class TaskResultInline(admin.options.InlineModelAdmin):
@@ -239,6 +244,10 @@ class ResourceAdmin(DynamicAdminListDisplayMixin, AddChangeMixin, StatusLabelAdm
         ('general', _('General')),
         *LangFieldsOnlyMixin.get_translations_tabs()
     )
+    has_high_value_data_fieldset = [(None, {
+        'classes': ('suit-tab', 'suit-tab-general'),
+        'fields': ('has_high_value_data',),
+    })] if is_enabled('S41_resource_has_high_value_data.be') else []
 
     add_fieldsets = [
         (None, {
@@ -257,6 +266,7 @@ class ResourceAdmin(DynamicAdminListDisplayMixin, AddChangeMixin, StatusLabelAdm
             'classes': ('suit-tab', 'suit-tab-general'),
             'fields': ('data_date',),
         }),
+        *has_high_value_data_fieldset,
         (None, {
             'classes': ('suit-tab', 'suit-tab-general'),
             'fields': ('status', 'from_resource'),
@@ -280,6 +290,7 @@ class ResourceAdmin(DynamicAdminListDisplayMixin, AddChangeMixin, StatusLabelAdm
         'type',
         'file_info',
         'file_encoding',
+        'special_signs_symbols',
         'link_tasks',
         'file_tasks',
         'data_tasks',
@@ -300,10 +311,9 @@ class ResourceAdmin(DynamicAdminListDisplayMixin, AddChangeMixin, StatusLabelAdm
         'created',
     ]
 
-    format_filter = [FormatFilter] if is_enabled('S28_resources_format_filter.be') else ['format']
     list_filter = [
         DatasetFilter,
-        *format_filter,
+        FormatFilter,
         TYPE_FILTER,
         "status",
         LinkStatusFilter,
@@ -365,10 +375,7 @@ class ResourceAdmin(DynamicAdminListDisplayMixin, AddChangeMixin, StatusLabelAdm
         return fieldsets
 
     def maps_and_plots_fieldset(self, obj):
-        if is_enabled('S24_named_charts.be'):
-            fields = ('maps_and_plots', 'is_chart_creation_blocked', )
-        else:
-            fields = ('maps_and_plots', )  # pragma: no cover
+        fields = ('maps_and_plots', 'is_chart_creation_blocked', )
         fieldsets = [(
             None,
             {
@@ -380,9 +387,18 @@ class ResourceAdmin(DynamicAdminListDisplayMixin, AddChangeMixin, StatusLabelAdm
 
     def get_fieldsets(self, request, obj=None):
         if obj:
-            jsonld_file = ['jsonld_file'] if obj.jsonld_file and is_enabled('S27_csv_to_jsonld.be') else []
-            special_signs = ['special_signs'] if not obj.is_imported else []
+            jsonld_file = ['jsonld_file'] if obj.jsonld_converted_file else []
+            jsonld_file = ['jsonld_converted_file'] if jsonld_file and is_enabled('S40_new_file_model.be') else jsonld_file
+            csv_file = ['csv_converted_file'] if is_enabled('S40_new_file_model.be') else ['csv_file']
+            file = ['main_file'] if is_enabled('S40_new_file_model.be') else ['file']
+            special_signs = ['special_signs'] if not obj.is_imported else ['special_signs_symbols']
+            file_info = ['main_file_info'] if is_enabled('S40_new_file_model.be') else ['file_info']
+            file_encoding = ['main_file_encoding'] if is_enabled('S40_new_file_model.be') else ['file_encoding']
             regions = ['regions'] if is_enabled('S37_resources_admin_region_data.be') and not obj.is_imported else []
+            if is_enabled('S41_resource_has_high_value_data.be'):
+                has_high_value_data = ['has_high_value_data'] if not obj.is_imported else ['has_high_value_data_info']
+            else:
+                has_high_value_data = []
             extra_fields = []
             if obj.type == RESOURCE_TYPE_WEBSITE or obj.forced_api_type:
                 extra_fields = ['forced_api_type']
@@ -395,8 +411,8 @@ class ResourceAdmin(DynamicAdminListDisplayMixin, AddChangeMixin, StatusLabelAdm
             tab_general_fields = (
                 'link',
                 *extra_fields,
-                'file',
-                'csv_file',
+                *file,
+                *csv_file,
                 *jsonld_file,
                 'packed_file',
                 'title',
@@ -405,6 +421,7 @@ class ResourceAdmin(DynamicAdminListDisplayMixin, AddChangeMixin, StatusLabelAdm
                 'dataset',
                 *regions,
                 'data_date',
+                *has_high_value_data,
                 'status',
                 *special_signs,
                 'show_tabular_view',
@@ -412,11 +429,11 @@ class ResourceAdmin(DynamicAdminListDisplayMixin, AddChangeMixin, StatusLabelAdm
                 'created',
                 'verified',
                 'type',
-                'file_info',
-                'file_encoding',
+                *file_info,
+                *file_encoding,
             )
-            if not obj.csv_file:
-                tab_general_fields = (x for x in tab_general_fields if x != 'csv_file')
+            if not obj.csv_converted_file:
+                tab_general_fields = (x for x in tab_general_fields if x != csv_file[0])
             change_fieldsets = [
                 (
                     None,
@@ -454,6 +471,16 @@ class ResourceAdmin(DynamicAdminListDisplayMixin, AddChangeMixin, StatusLabelAdm
 
     def get_readonly_fields(self, request, obj=None):
         readonly_fields = self.change_readonly_fields if obj and obj.id else self.add_readonly_fields
+        if is_enabled('S40_new_file_model.be'):
+            new_fields_mapping = {
+                'file': 'main_file',
+                'file_info': 'main_file_info',
+                'file_encoding': 'main_file_encoding',
+                'csv_file': 'csv_converted_file',
+                'jsonld_file': 'jsonld_converted_file'
+            }
+            readonly_fields =\
+                [field if field not in new_fields_mapping else new_fields_mapping[field] for field in readonly_fields]
         if obj and not obj.data_is_valid:
             readonly_fields = (*readonly_fields, 'show_tabular_view')
         if obj and obj.type != "file":
@@ -461,7 +488,7 @@ class ResourceAdmin(DynamicAdminListDisplayMixin, AddChangeMixin, StatusLabelAdm
         if obj and obj.is_imported:
             readonly_fields = (
                 *readonly_fields, 'dataset', 'data_date', 'description', 'description_en', 'show_tabular_view',
-                'slug_en', 'status', 'title', 'title_en', 'is_chart_creation_blocked')
+                'slug_en', 'status', 'title', 'title_en', 'is_chart_creation_blocked', 'has_high_value_data_info')
         return tuple(set(readonly_fields))
 
     def render_change_form(self, request, context, add=False, change=False, form_url='', obj=None):
@@ -479,34 +506,38 @@ class ResourceAdmin(DynamicAdminListDisplayMixin, AddChangeMixin, StatusLabelAdm
 
         if request.user.is_staff and not request.user.is_superuser:
             qs = qs.filter(dataset__organization__in=request.user.organizations.iterator())
+        if not is_enabled('S41_resource_AP_optimization.be'):
+            link_tasks = TaskResult.objects.filter(link_task_resources=OuterRef('pk')).order_by('-date_done')
+            qs = qs.annotate(
+                _link_status=Subquery(
+                    link_tasks.values('status')[:1])
+            )
+            file_tasks = TaskResult.objects.filter(file_task_resources=OuterRef('pk')).order_by('-date_done')
+            qs = qs.annotate(
+                _file_status=Subquery(
+                    file_tasks.values('status')[:1])
+            )
 
-        link_tasks = TaskResult.objects.filter(link_task_resources=OuterRef('pk')).order_by('-date_done')
-        qs = qs.annotate(
-            _link_status=Subquery(
-                link_tasks.values('status')[:1])
-        )
-        file_tasks = TaskResult.objects.filter(file_task_resources=OuterRef('pk')).order_by('-date_done')
-        qs = qs.annotate(
-            _file_status=Subquery(
-                file_tasks.values('status')[:1])
-        )
-
-        data_tasks = TaskResult.objects.filter(data_task_resources=OuterRef('pk')).order_by('-date_done')
-        qs = qs.annotate(
-            _data_status=Subquery(
-                data_tasks.values('status')[:1])
-        )
+            data_tasks = TaskResult.objects.filter(data_task_resources=OuterRef('pk')).order_by('-date_done')
+            qs = qs.annotate(
+                _data_status=Subquery(
+                    data_tasks.values('status')[:1])
+            )
         return qs
 
     def link_status(self, obj):
-        return self._format_list_status(obj._link_status)
+        return self._format_list_status(obj.link_tasks_last_status if
+                                        is_enabled('S41_resource_AP_optimization.be') else obj._link_status)
 
-    link_status.admin_order_field = '_link_status'
+    link_status.admin_order_field = 'link_tasks_last_status' if\
+        is_enabled('S41_resource_AP_optimization.be') else '_link_status'
 
     def file_status(self, obj):
-        return self._format_list_status(obj._file_status)
+        return self._format_list_status(obj.file_tasks_last_status if
+                                        is_enabled('S41_resource_AP_optimization.be') else obj._file_status)
 
-    file_status.admin_order_field = '_file_status'
+    file_status.admin_order_field = 'file_tasks_last_status' if\
+        is_enabled('S41_resource_AP_optimization.be') else '_file_status'
 
     def formats(self, obj):
         return obj.formats or '-'
@@ -514,10 +545,21 @@ class ResourceAdmin(DynamicAdminListDisplayMixin, AddChangeMixin, StatusLabelAdm
     formats.admin_order_field = 'format'
     formats.short_description = 'Format'
 
-    def tabular_view(self, obj):
-        return self._format_list_status(obj._data_status)
+    def has_high_value_data_info(self, obj):
+        return obj.has_high_value_data or False
+    has_high_value_data_info.short_description = _('has high value data')
+    has_high_value_data_info.boolean = True
 
-    tabular_view.admin_order_field = '_data_status'
+    def special_signs_symbols(self, obj):
+        return obj.special_signs_symbols or '-'
+    special_signs_symbols.short_description = _('Special Signs')
+
+    def tabular_view(self, obj):
+        return self._format_list_status(obj.data_tasks_last_status if
+                                        is_enabled('S41_resource_AP_optimization.be') else obj._data_status)
+
+    tabular_view.admin_order_field = 'data_tasks_last_status' if\
+        is_enabled('S41_resource_AP_optimization.be') else '_data_status'
 
     tabular_view.short_description = format_html('<i class="fas fa-table" title="{}"></i>'.format(
         _('Tabular data validation status')))
@@ -530,7 +572,17 @@ class ResourceAdmin(DynamicAdminListDisplayMixin, AddChangeMixin, StatusLabelAdm
         if not obj.id:
             obj.created_by = request.user
         obj.modified_by = request.user
+        if is_enabled('S40_new_file_model.be') and obj.file:
+            obj.file = None
         obj.save()
+        if is_enabled('S40_new_file_model.be') and form.cleaned_data.get('file'):
+            ResourceFile.objects.update_or_create(
+                resource=obj,
+                is_main=True,
+                defaults={
+                    'file': form.cleaned_data['file']
+                }
+            )
 
     def get_changeform_initial_data(self, request):
         """
@@ -569,21 +621,12 @@ class ResourceAdmin(DynamicAdminListDisplayMixin, AddChangeMixin, StatusLabelAdm
         try:
             resource = self.model.objects.get(pk=resource_id)
         except self.model.DoesNotExist:
-            url = reverse(
-                'admin:resources_resource_changelist',
-                current_app=self.admin_site.name,
-            )
             messages.add_message(request, messages.WARNING, _('Resource with this id does not exists'))
-            return HttpResponseRedirect(url)
+            return HttpResponseRedirect(self.model.admin_list_url())
 
         resource.revalidate()
         messages.add_message(request, messages.SUCCESS, _('Task for resource revalidation queued'))
-        url = reverse(
-            'admin:resources_resource_change',
-            args=[resource_id],
-            current_app=self.admin_site.name,
-        )
-        return HttpResponseRedirect(url)
+        return HttpResponseRedirect(resource.admin_change_url)
 
     def response_change(self, request, obj):
 
@@ -602,7 +645,10 @@ class ResourceAdmin(DynamicAdminListDisplayMixin, AddChangeMixin, StatusLabelAdm
             obj.save()
             messages.add_message(request, messages.SUCCESS, _('Map definition saved'))
             self.revalidate(request, obj.id)
-        elif is_enabled('S39_resource_revalidate.be') and '_continue' in request.POST:
+        elif '_continue' in request.POST or\
+             (is_enabled('S41_resource_revalidate.be') and '_save' in request.POST):
+            if is_enabled('S41_resource_revalidate.be'):
+                obj.save()
             self.revalidate(request, obj.id)
         return super().response_change(request, obj)
 
@@ -625,10 +671,11 @@ class TrashAdmin(HistoryMixin, TrashMixin):
         'Couldn\'t restore following resources, because their related datasets are still removed: {}')
 
     def get_fields(self, request, obj=None):
-        csv_file = ['csv_file'] if obj and obj.csv_file else []
-        jsonld_file = ['jsonld_file'] if obj and obj.jsonld_file and is_enabled('S27_csv_to_jsonld.be') else []
+        csv_file = ['csv_converted_file'] if obj and obj.csv_converted_file else []
+        jsonld_file = ['jsonld_converted_file'] if obj and obj.jsonld_converted_file else []
+        file = ['main_file'] if obj and obj.main_file else []
         return [
-            'file',
+            *file,
             *csv_file,
             *jsonld_file,
             'link',

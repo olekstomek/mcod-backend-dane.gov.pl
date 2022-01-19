@@ -110,8 +110,6 @@ Feature: Articles' API
     And api's response body has field /data/*/attributes/title
     And api's response body has field /data/*/attributes/views_count
 
-
-
   Scenario: Article with id 1000 does not exist in API 1.4
     Given article with id 999 and title is Article 999
     When api request method is GET
@@ -217,36 +215,43 @@ Feature: Articles' API
     And api's response body has field /data/attributes/title
     And api's response body has field /data/attributes/views_count
 
-  Scenario: Test articles list is sortable by views_count ascendingly in API 1.4
+  Scenario Outline: Test articles list is sortable by views_count ascendingly
     Given 3 articles
-    When api request method is GET
-    And api request path is /1.4/articles
+    When api request path is <request_path>
     Then api request param sort is views_count
     And send api request and fetch the response
     And api's response list is sorted by views_count ascendingly
+    And api's response body has field data/*/relationships/datasets/meta/count
+    And api's response body has field data/*/relationships/datasets/links/related
+    Examples:
+    | request_path  |
+    | /1.0/articles |
+    | /1.4/articles |
 
-  Scenario: Test articles list is sortable by views_count descendingly in API 1.4
+  Scenario Outline: Test articles list is sortable by views_count descendingly
     Given 3 articles
-    When api request method is GET
-    And api request path is /1.4/articles
+    When api request path is <request_path>
     Then api request param sort is -views_count
     And send api request and fetch the response
     And api's response list is sorted by views_count descendingly
+    And api's response body has field data/*/relationships/datasets/meta/count
+    And api's response body has field data/*/relationships/datasets/links/related
+    Examples:
+    | request_path  |
+    | /1.0/articles |
+    | /1.4/articles |
 
-  Scenario: Test articles list is sortable by views_count ascendingly in API 1.0
-    Given 3 articles
-    When api request method is GET
-    And api request path is /1.0/articles
-    Then api request param sort is views_count
-    And send api request and fetch the response
-    And api's response list is sorted by views_count ascendingly
+  Scenario Outline: Articles datasets relationships has proper object urls
+    Given article created with params {"id": 1000, "title": "test article", "slug": "test-article"}
+    And article with id 1001 and title is another test article and slug is another-test-article
+    When api request path is <request_path>
+    Then send api request and fetch the response
+    And api's response body field /data/0/relationships/datasets/links/related endswith articles/1000,test-article/datasets
+    And api's response body field /data/0/relationships/datasets/meta/count is 0
+    And api's response body field /data/1/relationships/datasets/links/related endswith articles/1001,another-test-article/datasets
+    And api's response body field /data/1/relationships/datasets/meta/count is 0
 
-  Scenario: Test articles list is sortable by views_count descendingly in API 1.0
-    Given 3 articles
-    When api request method is GET
-    And api request path is /1.0/articles
-    Then api request param sort is -views_count
-    And send api request and fetch the response
-    And api's response list is sorted by views_count descendingly
-
-# TODO test other search queries
+    Examples:
+    | request_path  |
+    | /1.0/articles?sort=id |
+    | /1.4/articles?sort=id |

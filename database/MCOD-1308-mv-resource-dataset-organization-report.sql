@@ -1,4 +1,4 @@
-
+DROP MATERIALIZED VIEW IF EXISTS public.mv_resource_dataset_organization_report;
 /* 1. CREATE MATERIALIZED VIEW */
 
 CREATE MATERIALIZED VIEW public.mv_resource_dataset_organization_report

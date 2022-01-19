@@ -9,7 +9,7 @@ class GuideForm(forms.ModelForm):
         model = Guide
         fields = ['title', 'status']
         labels = {
-            'title_pl': _('Name of course (PL)'),
+            'title': _('Name of course (PL)'),
             'title_en': _('Name of course (EN)'),
             'status': 'Status',
         }
@@ -18,19 +18,27 @@ class GuideForm(forms.ModelForm):
 class GuideItemForm(forms.ModelForm):
     class Meta:
         model = GuideItem
-        fields = ['title', 'content', 'route', 'css_selector', 'position',
-                  'is_optional', 'is_clickable', 'is_expandable']
+        fields = [
+            'title',
+            'content',
+            'route',
+            'css_selector',
+            'position',
+            'is_optional',
+            'is_clickable',
+            'is_expandable',
+        ]
         labels = {
-            'title_pl': _('Title (PL)'),
+            'title': _('Title (PL)'),
             'title_en': _('Title (EN)'),
-            'content_pl': _('Content'),
+            'content': _('Content'),
             'position': _('Display at')
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        for name in ['title_pl', 'title_en', 'content_pl', 'content_en', 'route', 'css_selector']:
+        for name in ['title', 'title_en', 'content', 'content_en', 'route', 'css_selector']:
             if name in self.fields:
                 self.fields[name].widget.attrs.update({'class': 'input-block-level'})
-                if name in ['content_pl', 'content_en']:
+                if name in ['content', 'content_en']:
                     self.fields[name].widget.attrs.update({'rows': '3'})

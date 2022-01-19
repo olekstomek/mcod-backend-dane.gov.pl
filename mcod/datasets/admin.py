@@ -208,6 +208,7 @@ class AddResourceStacked(InlineModelAdmin):
 
     add_readonly_fields = ()
 
+    has_high_value_data = ['has_high_value_data'] if is_enabled('S41_resource_has_high_value_data.be') else []
     _fields = (
         'title',
         'description',
@@ -215,6 +216,7 @@ class AddResourceStacked(InlineModelAdmin):
         'data_date',
         'status',
         'special_signs',
+        *has_high_value_data,
     )
 
     fieldsets = (
@@ -305,37 +307,45 @@ class DatasetAdmin(DynamicAdminListDisplayMixin, CreatedByDisplayAdminMixin, Sta
         ('admin/datasets/licences/custom_include.html', 'top', 'licenses'),
     )
 
+    def has_high_value_data_info(self, obj):
+        return obj.has_high_value_data
+    has_high_value_data_info.short_description = _('has high value data')
+    has_high_value_data_info.boolean = True
+
     def update_frequency_display(self, obj):
         return obj.frequency_display
-
     update_frequency_display.short_description = _('Update frequency')
 
     def get_fieldsets(self, request, obj=None):
         tags_tab_fields = ('tags_list_pl', 'tags_list_en') if obj and obj.is_imported else ('tags_pl', 'tags_en')
-        update_frequency_field = "update_frequency_display" if obj and obj.is_imported else "update_frequency"
-
+        update_frequency_field = 'update_frequency_display' if obj and obj.is_imported else 'update_frequency'
+        category_field = 'categories_list' if obj and obj.is_imported else 'categories'
         frequency_fields = []
-        if is_enabled('S29_update_frequency_notifications_pa.be') and not (obj and obj.is_imported):
+        if not (obj and obj.is_imported):
             frequency_fields = [
                 'is_update_notification_enabled',
                 'update_notification_frequency',
                 'update_notification_recipient_email',
             ]
-
-        general_fields = ["notes", "url", "image", "image_alt", "dataset_logo", "customfields", update_frequency_field,
-                          *frequency_fields, 'organization']
-        general_fields += ['categories_list'] if obj and obj.is_imported else ['categories']
+        has_high_value_data = []
         if is_enabled('S35_high_value_data.be'):
-            general_fields += ['has_high_value_data']
+            has_high_value_data = ['has_high_value_data_info'] if obj and obj.is_imported else ['has_high_value_data']
+        general_fields = [
+            'notes',
+            'url',
+            'image',
+            'image_alt',
+            'dataset_logo',
+            'customfields',
+            update_frequency_field,
+            *frequency_fields,
+            'organization',
+            category_field,
+            *has_high_value_data,
+        ]
+        if is_enabled('S41_resource_bulk_download.be'):
+            general_fields += ['archived_resources_files']
         general_fields += ['status', 'created_by', 'created', 'modified', 'verified']
-        license_fields = (
-            "license_condition_source",
-            "license_condition_modification",
-            "license_condition_responsibilities",
-            "license_condition_db_or_copyrighted",
-            "license_chosen",
-            "license_condition_personal_data",
-        )
 
         return [
             (
@@ -343,8 +353,8 @@ class DatasetAdmin(DynamicAdminListDisplayMixin, CreatedByDisplayAdminMixin, Sta
                 {
                     'classes': ('suit-tab', 'suit-tab-general',),
                     'fields': (
-                        "title",
-                        "slug",
+                        'title',
+                        'slug',
                     )
                 }
             ),
@@ -362,16 +372,27 @@ class DatasetAdmin(DynamicAdminListDisplayMixin, CreatedByDisplayAdminMixin, Sta
                     'fields': general_fields
                 }
             ),
-
             (
                 None,
                 {
                     'classes': ('suit-tab', 'suit-tab-licenses',),
-                    'fields': license_fields,
+                    'fields': (
+                        'license_condition_source',
+                        'license_condition_modification',
+                        'license_condition_responsibilities',
+                        'license_condition_db_or_copyrighted',
+                        'license_chosen',
+                        'license_condition_personal_data',
+                    ),
                 }
             )
-
         ] + self.get_translations_fieldsets()
+
+    def get_readonly_fields(self, request, obj=None):
+        read_only_fields = super(DatasetAdmin, self).get_readonly_fields(request, obj)
+        archived_resources = ['archived_resources_files'] if is_enabled('S41_resource_bulk_download.be') else []
+        read_only_fields = archived_resources + read_only_fields
+        return read_only_fields
 
     def categories_list(self, instance):
         return instance.categories_list_as_html

@@ -23,7 +23,6 @@ from wagtail.images.models import AbstractImage, AbstractRendition
 from mcod.cms.fields import CustomTextField
 from mcod.core.api.search import signals as search_signals
 from mcod.core.db.mixins import ApiMixin
-from mcod.unleash import is_enabled
 
 
 logger = logging.getLogger('wagtail.core')
@@ -353,7 +352,7 @@ class BasePage(ApiMixin, Page, metaclass=BasePageMeta):
         is_indexable = getattr(instance, 'is_indexable', False)
         if is_indexable and instance.live:
             search_signals.update_document.send(sender, instance)
-        if getattr(instance, 'url_path', None) and is_enabled('S27_cms_api_cache.be'):
+        if getattr(instance, 'url_path', None):
             removed_cache_items = list(find_urls([
                 f'*{instance.url_path}',
                 f'*{instance.url_path}?*'], purge=True))

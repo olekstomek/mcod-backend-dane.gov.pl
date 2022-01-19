@@ -1,4 +1,5 @@
 import pytest
+import os
 import requests_mock
 from django.conf import settings
 from falcon.util.structures import Context
@@ -72,9 +73,21 @@ def pytest_runtest_setup(item):
 def pytest_runtest_teardown(item, nextitem):
     from mcod.core.api.rdf.registry import registry as rdf_registry
     from django_elasticsearch_dsl.registries import registry
+    from mcod.resources.indexed_data import es_connections
+    import shutil
+
+    worker = os.environ.get('PYTEST_XDIST_WORKER', '')
+    archives_path = os.path.join(settings.DATASETS_MEDIA_ROOT, 'archives', worker)
+    if os.path.exists(archives_path):
+        shutil.rmtree(archives_path)
 
     es_marker = item.get_closest_marker('elasticsearch')
     if es_marker:
+        worker = os.environ.get('PYTEST_XDIST_WORKER', '')
+        idx_prefix = getattr(settings, 'ELASTICSEARCH_INDEX_PREFIX', None)
+        es = es_connections.get_connection()
+        for res_index in es.indices.get_alias(f'{idx_prefix}-{worker}-*'):
+            es.indices.delete(index=res_index, ignore=[404])
         for index in registry.get_indices():
             index.delete(ignore=404)
 
@@ -124,4 +137,16 @@ def admin_context(admin):
     _context.admin.body = {}
     _context.user = None
     _context.session = session_store()
+    _context.form_class = None
+    _context.form_data = {}
+    _context.form_instance = None
+    _context.form = None
     return _context
+
+
+@pytest.fixture(autouse=True)
+def archive_storage_mocker(mocker):
+    worker = os.environ.get('PYTEST_XDIST_WORKER', '')
+    archives_path = os.path.join(settings.DATASETS_MEDIA_ROOT, 'archives', worker)
+    mocker.patch('mcod.core.storages.DatasetsArchivesStorage.location',
+                 return_value=archives_path, new_callable=mocker.PropertyMock)
