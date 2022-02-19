@@ -1,4 +1,4 @@
-FROM postgres:10
+FROM postgres:13
 
 RUN mkdir /dumps
 RUN chmod 655 /dumps

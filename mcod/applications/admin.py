@@ -8,27 +8,24 @@ from mcod.applications.forms import ApplicationForm, ApplicationProposalForm
 from mcod.applications.models import Application, ApplicationProposal, ApplicationProposalTrash, ApplicationTrash
 from mcod.applications.tasks import create_application_task
 from mcod.lib.admin_mixins import (
-    ActionsMixin,
-    CRUDMessageMixin,
     DecisionFilter,
     HistoryMixin,
     LangFieldsOnlyMixin,
-    SoftDeleteMixin,
     TrashMixin,
     CreatedByDisplayAdminMixin,
     DecisionStatusLabelAdminMixin,
     DynamicAdminListDisplayMixin,
-    MCODAdminMixin
+    MCODAdminMixin,
+    ModelAdmin,
 )
-from mcod.reports.admin import ExportCsvMixin
 
 
-class ApplicationAdmin(DynamicAdminListDisplayMixin, CreatedByDisplayAdminMixin, CRUDMessageMixin, SoftDeleteMixin,
-                       HistoryMixin, LangFieldsOnlyMixin, MCODAdminMixin, admin.ModelAdmin):
+class ApplicationAdmin(DynamicAdminListDisplayMixin, CreatedByDisplayAdminMixin, HistoryMixin, LangFieldsOnlyMixin,
+                       MCODAdminMixin, ModelAdmin):
     actions_on_top = True
-    prepopulated_fields = {'slug': ('title',)}
     autocomplete_fields = ['tags']
-    readonly_fields = ['application_logo', 'illustrative_graphics_img', 'preview_link']
+    form = ApplicationForm
+    is_history_with_unknown_user_rows = True
     list_display = [
         'title',
         'created_by',
@@ -38,20 +35,19 @@ class ApplicationAdmin(DynamicAdminListDisplayMixin, CreatedByDisplayAdminMixin,
         'status',
         'obj_history'
     ]
-    obj_gender = 'f'
-    search_fields = ['title', 'created_by__email', 'url']
-    list_filter = ['status', 'main_page_position']
     list_editable = ['status']
-
+    list_filter = ['status', 'main_page_position']
+    obj_gender = 'f'
+    prepopulated_fields = {'slug': ('title',)}
+    readonly_fields = ['application_logo', 'illustrative_graphics_img', 'preview_link']
+    search_fields = ['title', 'created_by__email', 'url']
+    soft_delete = True
     suit_form_tabs = (
         ('general', _('General')),
         *LangFieldsOnlyMixin.get_translations_tabs(),
         ('tags', _('Tags')),
         ('datasets', _('Datasets')),
     )
-
-    form = ApplicationForm
-    is_history_with_unknown_user_rows = True
 
     def get_translations_fieldsets(self):
         i18n_field = get_i18n_field(self.model)
@@ -179,8 +175,7 @@ class ApplicationTrashAdmin(HistoryMixin, TrashMixin):
     tags_list_en.short_description = _('Tags') + ' (EN)'
 
 
-class ApplicationProposalMixin(ActionsMixin, CRUDMessageMixin, HistoryMixin,
-                               DecisionStatusLabelAdminMixin, MCODAdminMixin):
+class ApplicationProposalMixin(HistoryMixin, DecisionStatusLabelAdminMixin, MCODAdminMixin):
     delete_selected_msg = _('Delete selected application proposals')
     is_history_other = True
     is_history_with_unknown_user_rows = True
@@ -216,7 +211,8 @@ class ApplicationProposalMixin(ActionsMixin, CRUDMessageMixin, HistoryMixin,
         return False
 
 
-class ApplicationProposalAdmin(ApplicationProposalMixin, ExportCsvMixin, SoftDeleteMixin, admin.ModelAdmin):
+class ApplicationProposalAdmin(ApplicationProposalMixin, ModelAdmin):
+    export_to_csv = True
     fieldsets = [
         (
             None,
@@ -258,6 +254,7 @@ class ApplicationProposalAdmin(ApplicationProposalMixin, ExportCsvMixin, SoftDel
         'report_date',
         'decision_date',
     ]
+    soft_delete = True
     suit_form_tabs = (
         ('general', _('General')),
     )

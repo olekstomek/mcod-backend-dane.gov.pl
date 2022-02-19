@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-12-30 18:42+0100\n"
+"POT-Creation-Date: 2022-01-27 12:49+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -22,9 +22,6 @@ msgstr ""
 
 msgid "Sessions"
 msgstr "Sesje"
-
-msgid "Delete selected courses"
-msgstr "Usuń wybrane kursy"
 
 msgid "End date"
 msgstr "Data zakończenia"
@@ -43,6 +40,9 @@ msgstr "Tytuł kursu"
 
 msgid "Course venue"
 msgstr "Miejsce kursu"
+
+msgid "Delete selected courses"
+msgstr "Usuń wybrane kursy"
 
 msgid "General"
 msgstr "Ogólne"
@@ -719,6 +719,12 @@ msgstr "Warunki"
 msgid "Resources"
 msgstr "Zasoby"
 
+msgid "dynamic data"
+msgstr "dane dynamiczne"
+
+msgid "has high value data"
+msgstr "zawiera dane o wysokiej wartości"
+
 msgid "Update frequency"
 msgstr "Częstotliwość aktualizacji"
 
@@ -757,9 +763,6 @@ msgstr ""
 "Jeśli wybierzesz szkic, status wszystkich opubilkowanych zasobów należących "
 "do tego zbioru zostanie zmieniony na szkic"
 
-msgid "has high value data"
-msgstr "zawiera dane o wysokiej wartości"
-
 msgid "Yes"
 msgstr "Tak"
 
@@ -781,6 +784,9 @@ msgstr "Data modyfikacji"
 
 msgid "Update date"
 msgstr "Data aktualizacji"
+
+msgid "Archived resources files"
+msgstr "Zarchiwizowane pliki zasobów"
 
 msgid "Text area is filled, license must be selected"
 msgstr "Uzupełniono pole tekstowe, należy wybrać licencję"
@@ -899,12 +905,6 @@ msgstr "licznik pobrań"
 msgid "Controlled Vocabularies"
 msgstr ""
 
-msgid "Has high value data"
-msgstr "Zawiera dane wysokiej wartości"
-
-msgid "Archived resources files"
-msgstr "Zarchiwizowane pliki zasobów"
-
 msgid "modified"
 msgstr "zmodyfikowany"
 
@@ -976,6 +976,12 @@ msgstr "Warunki wykorzystywania"
 msgid "License"
 msgstr "Licencja"
 
+msgid "Dataset has high value data"
+msgstr "Zbiór zawiera dane o wysokiej wartości"
+
+msgid "Dataset has dynamic data"
+msgstr "Zbiór zawiera dane dynamiczne"
+
 msgid "last import timestamp"
 msgstr "data ostatniego importu"
 
@@ -997,9 +1003,6 @@ msgstr "Integracja Discourse"
 msgid "Only administrators and agents have access to forum"
 msgstr "Tylko administratorzy i pełnomocnicy mają dostęp do forum"
 
-msgid "Delete selected elements"
-msgstr "Usuń zaznaczone elementy"
-
 msgid "creation date"
 msgstr "data utworzenia"
 
@@ -1009,6 +1012,9 @@ msgstr "utworzony przez"
 
 msgid "communique"
 msgstr "komunikat"
+
+msgid "Delete selected elements"
+msgstr "Usuń zaznaczone elementy"
 
 msgid "Portal guide"
 msgstr "Przewodnik po portalu"
@@ -1964,43 +1970,11 @@ msgstr "Decyzja podjęta"
 msgid "Decision not taken"
 msgstr "Decyzja niepodjęta"
 
-msgid "Delete selected objects"
-msgstr "Usuń wybrane obiekty"
+msgid "Task for CSV generation queued"
+msgstr "Tworzenie pliku CSV dodane do kolejki zadań"
 
-msgid ""
-"Couldn't restore following objects, because their related objects are still "
-"removed: {}"
-msgstr ""
-"Nie można przywrócić następujących obiektów, ponieważ powiązane z nimi "
-"obiekty wciąż pozostają usunięte: {}"
-
-msgid "Successfully restored objects: {}"
-msgstr "Pomyślnie przywróconych elementów: {}"
-
-msgid "Restore selected objects"
-msgstr "Przywróć wybrane elementy"
-
-#, python-format
-msgid "Add %s - trash"
-msgstr "Dodaj %s - kosz"
-
-#, python-format
-msgid "Change %s - trash"
-msgstr "Zmień %s - kosz"
-
-#, python-format
-msgid "View %s - trash"
-msgstr "Obejrzyj %s - kosz"
-
-msgid "Removed:"
-msgstr "Usunięte:"
-
-#, python-format
-msgid "Change history: %s"
-msgstr "Historia zmian: %s"
-
-msgid "Translation ({lang_code.upper()})"
-msgstr "Tłumaczenie ({lang_code.upper()})"
+msgid "Export selected to CSV"
+msgstr "Eksportuj zaznaczone do CSV"
 
 #, python-brace-format
 msgid "The {name} \"{obj}\" was added successfully."
@@ -2118,7 +2092,7 @@ msgstr ""
 
 #, python-format
 msgid "The %(name)s \"%(obj)s\" was deleted successfully."
-msgstr "%(name)s \"%(obj)s\" usuniety pomyślnie."
+msgstr "%(name)s \"%(obj)s\" usunięty pomyślnie."
 
 msgctxt "The %(name)s \"%(obj)s\" was deleted successfully."
 msgid "feminine"
@@ -2130,6 +2104,44 @@ msgstr "%(name)s \"%(obj)s\" usunięte pomyślnie."
 
 msgid "You may edit it again below."
 msgstr "Poniżej możesz ponownie edytować."
+
+msgid "Delete selected objects"
+msgstr "Usuń wybrane obiekty"
+
+msgid ""
+"Couldn't restore following objects, because their related objects are still "
+"removed: {}"
+msgstr ""
+"Nie można przywrócić następujących obiektów, ponieważ powiązane z nimi "
+"obiekty wciąż pozostają usunięte: {}"
+
+msgid "Successfully restored objects: {}"
+msgstr "Pomyślnie przywróconych elementów: {}"
+
+msgid "Restore selected objects"
+msgstr "Przywróć wybrane elementy"
+
+#, python-format
+msgid "Add %s - trash"
+msgstr "Dodaj %s - kosz"
+
+#, python-format
+msgid "Change %s - trash"
+msgstr "Zmień %s - kosz"
+
+#, python-format
+msgid "View %s - trash"
+msgstr "Obejrzyj %s - kosz"
+
+msgid "Removed:"
+msgstr "Usunięte:"
+
+#, python-format
+msgid "Change history: %s"
+msgstr "Historia zmian: %s"
+
+msgid "Translation ({lang_code.upper()})"
+msgstr "Tłumaczenie ({lang_code.upper()})"
 
 msgid "Correct Validation"
 msgstr "Poprawna walidacja"
@@ -2232,6 +2244,15 @@ msgstr "Strona musi być większa niż 1"
 
 msgid "Page size mus be greater then 0"
 msgstr "Wielkość strony musi być większa niż 0"
+
+msgid "YES"
+msgstr "TAK"
+
+msgid "NO"
+msgstr "NIE"
+
+msgid "not specified"
+msgstr "nie sprecyzowano"
 
 msgid "Licenses"
 msgstr "Licencje"
@@ -2709,12 +2730,6 @@ msgstr ""
 "Zadanie wygenerowania raportu zostało zlecone. Raport może pojawić się z "
 "opóźnieniem..."
 
-msgid "Task for CSV generation queued"
-msgstr "Tworzenie pliku CSV dodane do kolejki zadań"
-
-msgid "Export selected to CSV"
-msgstr "Eksportuj zaznaczone do CSV"
-
 msgid "Task"
 msgstr "Zadanie"
 
@@ -2814,6 +2829,9 @@ msgstr "Weryfikacja jakości"
 msgid "Maps and plots"
 msgstr "Mapy i wykresy"
 
+msgid "Special Signs"
+msgstr "Znaki umowne"
+
 msgid "Resource with this id does not exists"
 msgstr "Zasób z tym id nie istnieje"
 
@@ -2852,6 +2870,27 @@ msgstr ""
 "Nie możesz zmienić wykresu zdefiniowanego przez Dostawcę danych. Zmiany na "
 "wykresie zapisz pod nową nazwą."
 
+msgid "latitude"
+msgstr "szerokość geograficzna"
+
+msgid "longitude"
+msgstr "długość geograficzna"
+
+msgid "postal code"
+msgstr "kod pocztowy"
+
+msgid "place"
+msgstr "miejscowość"
+
+msgid "house number"
+msgstr "numer domu"
+
+msgid "universal address"
+msgstr "adres uniwersalny"
+
+msgid "label"
+msgstr "etykieta"
+
 msgid "Selected items {} come from different map data sets."
 msgstr "Wybrane elementy {} pochodzą z różnych zestawów danych mapowych."
 
@@ -2874,9 +2913,6 @@ msgstr "Długość geograficzna powinna być liczbą"
 
 msgid "Latitude should be a number"
 msgstr "Szerokość geograficzna powinna być liczbą"
-
-msgid "Special Signs"
-msgstr "Znaki umowne"
 
 msgid "special signs"
 msgstr "znaki umowne"
@@ -3061,11 +3097,11 @@ msgstr "Liczba wyświetleń danych"
 msgid "Resource downloads count"
 msgstr "Liczba pobrań danych"
 
-msgid "YES"
-msgstr "TAK"
+msgid "Resource has high value data"
+msgstr "Zasób zawiera dane o wysokiej wartości"
 
-msgid "NO"
-msgstr "NIE"
+msgid "Resource has dynamic data"
+msgstr "Zasób zawiera dane dynamiczne"
 
 msgid "Download URL"
 msgstr "URL pliku (do pobrania)"
@@ -3090,18 +3126,6 @@ msgstr ""
 
 msgid "Address feature"
 msgstr "Cecha adresu"
-
-msgid "label"
-msgstr "etykieta"
-
-msgid "geographical coordinates"
-msgstr ""
-
-msgid "universal address"
-msgstr "adres uniwersalny"
-
-msgid "address"
-msgstr "adres"
 
 msgid "Schedules"
 msgstr "Harmonogramy"

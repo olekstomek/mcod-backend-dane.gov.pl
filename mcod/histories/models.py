@@ -10,13 +10,13 @@ from pygments.lexers.data import JsonLexer
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.postgres.fields import JSONField
-from django.db.models.signals import post_save
+from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 from django.utils.translation import gettext_lazy as _
 from django.db import models
 
 from mcod.core.api.search.helpers import get_document_for_model
-from mcod.core.api.search.tasks import update_document_task
+from mcod.core.api.search.tasks import delete_document_task, update_document_task
 from mcod.core.registries import history_registry
 from mcod.histories.managers import HistoryManager, LogEntryManager
 
@@ -153,6 +153,13 @@ class LogEntry(BaseLogEntry):
 
     objects = LogEntryManager()
 
+    class Meta:
+        get_latest_by = 'timestamp'
+        ordering = ['-timestamp']
+        verbose_name = _('History')
+        verbose_name_plural = _('Histories')
+        proxy = True
+
     def __str__(self):
         return f"{self.id} | {self.action_display} > {self.table_name} > {self.object_id}"
 
@@ -228,12 +235,22 @@ class LogEntry(BaseLogEntry):
     def is_delete(self):
         return self.action == self.Action.DELETE
 
-    class Meta:
-        get_latest_by = 'timestamp'
-        ordering = ['-timestamp']
-        verbose_name = _('History')
-        verbose_name_plural = _('Histories')
-        proxy = True
+    @classmethod
+    def migrate_history(cls, from_obj, obj):
+        s_ct = ContentType.objects.get_for_model(obj._meta.model)
+        old_history = cls.objects.get_for_object(obj)
+        history = cls.objects.get_for_object(from_obj)
+        if old_history.exists():
+            old_history.delete()
+        for item in history:
+            item.id = None
+            item.content_type = s_ct
+            item.object_id = obj.id
+            item.object_pk = str(obj.id)
+            timestamp = item.timestamp
+            item.save()
+            item.timestamp = timestamp  # https://stackoverflow.com/q/7499767/1845230
+            item.save(update_fields=['timestamp'])
 
 
 @receiver(post_save, sender=LogEntry)
@@ -243,3 +260,12 @@ def update_log_entry_handler(sender, instance, *args, **kwargs):
         LogEntry._meta.app_label,
         LogEntry._meta.object_name,
         instance.id).apply_async(countdown=1, queue='history')
+
+
+@receiver(post_delete, sender=LogEntry)
+@receiver(post_delete, sender=BaseLogEntry)
+def delete_log_entry_handler(sender, instance, *args, **kwargs):
+    delete_document_task.s(
+        LogEntry._meta.app_label,
+        LogEntry._meta.object_name,
+        instance.id).apply_async(queue='history')

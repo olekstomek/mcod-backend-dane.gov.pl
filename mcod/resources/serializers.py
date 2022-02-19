@@ -118,6 +118,8 @@ class ResourceApiAttrs(ObjectAttrs, HighlightObjectMixin):
     link = fields.Str()
     data_special_signs = fields.Nested(SpecialSignSchema, data_key='special_signs', many=True)
     is_chart_creation_blocked = fields.Bool()
+    if is_enabled('S43_dynamic_data.be'):
+        has_dynamic_data = fields.Boolean()
     if is_enabled('S35_high_value_data.be'):
         has_high_value_data = fields.Boolean()
     if is_enabled('S37_resources_admin_region_data.be'):
@@ -310,8 +312,11 @@ class GeoApiAttrs(ObjectAttrs, GeoShapeObject):
 class GeoTileAggregation(schemas.ExtSchema):
     tile_name = fields.String()
     doc_count = fields.Integer()
-    shapes = fields.Nested(GeoShapeObject, many=True)
     centroid = fields.List(fields.Float)
+
+
+class GeoTileShapesAggregation(GeoTileAggregation):
+    shapes = fields.Nested(GeoShapeObject, many=True)
 
 
 class GeoBounds(schemas.ExtSchema):
@@ -320,7 +325,7 @@ class GeoBounds(schemas.ExtSchema):
 
 
 class GeoAggregations(ma.Schema):
-    tiles = fields.Nested(GeoTileAggregation, many=True)
+    tiles = fields.Nested(GeoTileShapesAggregation, many=True)
     bounds = fields.Nested(GeoBounds)
 
 
@@ -461,6 +466,10 @@ class ResourceXMLSerializer(schemas.ExtSchema):
     visualization_types = ListWithoutNoneStrElement(fields.Str())
     download_url = fields.Str()
     data_special_signs = fields.Nested(SpecialSignSchema, data_key='special_signs', many=True)
+    if is_enabled('S41_resource_has_high_value_data.be'):
+        has_high_value_data = fields.Bool()
+    if is_enabled('S43_dynamic_data.be'):
+        has_dynamic_data = fields.Bool()
 
 
 class ResourceCSVMetadataSerializer(schemas.ExtSchema):
@@ -479,6 +488,10 @@ class ResourceCSVMetadataSerializer(schemas.ExtSchema):
     has_table = fields.Function(lambda obj: _('YES') if obj.has_table else _('NO'), data_key=_('Table'))
     has_chart = fields.Function(lambda obj: _('YES') if obj.has_chart else _('NO'), data_key=_('Map'))
     has_map = fields.Function(lambda obj: _('YES') if obj.has_map else _('NO'), data_key=_('Chart'))
+    if is_enabled('S41_resource_has_high_value_data.be'):
+        has_high_value_data = fields.MetaDataNullBoolean(data_key=_('Resource has high value data'))
+    if is_enabled('S43_dynamic_data.be'):
+        has_dynamic_data = fields.MetaDataNullBoolean(data_key=_('Resource has dynamic data'))
     download_url = fields.Url(data_key=_('Download URL'))
     data_special_signs = fields.Nested(SpecialSignSchema, data_key=_('special signs'), many=True)
 

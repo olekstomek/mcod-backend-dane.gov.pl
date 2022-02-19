@@ -13,13 +13,14 @@ from mcod import settings
 from mcod.regions.fields import RegionsMultipleChoiceField
 from mcod.lib.field_validators import ContainsLetterValidator
 from mcod.lib.widgets import (
+    CheckboxSelect,
     CKEditorWidget,
     ResourceDataRulesWidget,
     ResourceDataSchemaWidget,
     ResourceMapsAndPlotsWidget,
 )
 from mcod.resources.archives import ARCHIVE_EXTENSIONS
-from mcod.resources.models import Resource, supported_formats_choices
+from mcod.resources.models import Resource, supported_formats_choices, ResourceFile
 from mcod.special_signs.models import SpecialSign
 from mcod.unleash import is_enabled
 
@@ -72,11 +73,19 @@ class MapsJSONField(JSONField):
             self.coordinates_should_be_numeric(fields)
 
     def only_one_x_validator(self, names):
-        ones = ['b', 'l', 'postal_code', "place", "house_number", "uaddress", "label"]
-        for v in ones:
-            if names.count(v) > 1:
+        ones = {
+            'b': _('latitude'),
+            'l': _('longitude'),
+            'postal_code': _('postal code'),
+            'place': _('place'),
+            'house_number': _('house number'),
+            'uaddress': _('universal address'),
+            'label': _('label'),
+        }
+        for k, v in ones.items():
+            if names.count(k) > 1:
                 raise ValidationError(
-                    f'{_("element")} {_(v)} {_("occured more than once")}. {_("Redefine the map by selecting only once the required element of the map set.")}')  # noqa
+                    f'{_("element")} {v} {_("occured more than once")}. {_("Redefine the map by selecting only once the required element of the map set.")}')  # noqa
 
     def from_different_sets(self, names):
         groups = {'coordinates': ["b", "l"],
@@ -168,16 +177,28 @@ class ResourceForm(forms.ModelForm):
     )
     if is_enabled('S37_resources_admin_region_data.be'):
         regions = RegionsMultipleChoiceField(required=False, label=_('Regions'))
+    if is_enabled('S43_dynamic_data.be'):
+        has_dynamic_data = forms.ChoiceField(
+            required=True,
+            label=_('dynamic data').capitalize(),
+            choices=[(True, _('Yes')), (False, _('No'))],
+            help_text=(
+                'Wskazanie TAK oznacza, że zasób jest traktowany jako dane dynamiczne.<br><br>Jeżeli chcesz się '
+                'więcej dowiedzieć na temat danych dynamicznych <a href="%(url)s" target="_blank">przejdź do strony'
+                '</a>') % {'url': f'{settings.BASE_URL}{settings.DYNAMIC_DATA_MANUAL_URL}'},
+            widget=CheckboxSelect(attrs={'class': 'inline'}),
+        )
     if is_enabled('S41_resource_has_high_value_data.be'):
         has_high_value_data = forms.ChoiceField(
+            required=True,
             label=_('has high value data').capitalize(),
-            help_text=(
-                'Zaznaczając dane dodane w zbiorze danych zostaną określone jako wysokiej wartości. Są to dane, '
-                'których ponowne wykorzystanie wiąże się z istotnymi korzyściami dla społeczeństwa, środowiska '
-                'i gospodarki'),
             choices=[(True, _('Yes')), (False, _('No'))],
-            widget=forms.RadioSelect(attrs={'class': 'inline'}),
-            required=True)
+            help_text=(
+                'Wskazanie TAK oznacza, że zasób jest traktowany jako dane o wysokiej wartości.<br><br>Jeżeli chcesz '
+                'się więcej dowiedzieć na temat danych o wysokiej wartości <a href="%(url)s" target="_blank">przejdź '
+                'do strony</a>') % {'url': f'{settings.BASE_URL}{settings.HIGH_VALUE_DATA_MANUAL_URL}'},
+            widget=CheckboxSelect(attrs={'class': 'inline'}),
+        )
 
 
 class ChangeResourceForm(ResourceForm):
@@ -339,3 +360,20 @@ class TrashResourceForm(forms.ModelForm):
             raise forms.ValidationError(mark_safe(error_message))
 
         return self.cleaned_data['is_removed']
+
+
+class ResourceInlineFormset(forms.models.BaseInlineFormSet):
+
+    def save_new(self, form, commit=True):
+        file = None
+        if commit:
+            file = form.cleaned_data.pop('file')
+            form.instance.file = None
+        instance = super().save_new(form, commit=commit)
+        if file and instance.pk:
+            ResourceFile.objects.create(
+                resource=instance,
+                is_main=True,
+                file=file
+            )
+        return instance

@@ -5,6 +5,7 @@ from elasticsearch_dsl.connections import get_connection
 from mcod.celeryapp import app
 from mcod.resources.models import Resource
 from mcod.resources.tasks import process_resource_data_indexing_task
+from mcod.unleash import is_enabled
 
 
 class Command(BaseCommand):
@@ -76,10 +77,18 @@ class Command(BaseCommand):
         else:
             self.stdout.write('No indices found!')
 
-    def _delete_orphans(self, queryset, **options):
+    def _delete_orphans(self, **options):
+        queryset = Resource.raw.filter(
+            type='file',
+            format__in=('csv', 'tsv', 'xls', 'xlsx', 'ods', 'shp'),
+        )
+        if is_enabled('S40_new_file_model.be'):
+            queryset = queryset.filter(files__isnull=False).distinct()
+        else:
+            queryset = queryset.filter(file__isnull=False).exclude(file='')
         connection = get_connection()
-        valid_indices = [x.data.idx_name for x in queryset]
-        resource_data_indices = connection.indices.get('resource-*')
+        valid_indices = [f'resource-{x.id}' for x in queryset]
+        resource_data_indices = connection.indices.get('resource-*').keys()
         indices = [x for x in resource_data_indices if x not in valid_indices]
         indices = ','.join(indices) if indices else ''
         self.stdout.write('Trying to delete orphans (stale indices with tabular data):')
@@ -129,7 +138,6 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         self.app = app
-        qs_all = Resource.objects.with_tabular_data()
 
         queue_info = self._get_queue_info()
 
@@ -142,9 +150,10 @@ class Command(BaseCommand):
             return
 
         if options['no_orphans']:
-            self._delete_orphans(qs_all, **options)
+            self._delete_orphans(**options)
             return
 
+        qs_all = Resource.objects.with_tabular_data()
         count = queue_info.get('message_count')
         msg = 'Current number of msgs in \'indexing_data\' queue: {}'.format(count)
         if count > 0 and not options['force']:

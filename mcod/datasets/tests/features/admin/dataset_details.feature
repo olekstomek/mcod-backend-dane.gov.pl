@@ -81,6 +81,19 @@ Feature: Dataset details
     And admin's response page contains /change/">Test with dataset title</a>" został pomyślnie dodany.
     And resources.Resource with title 123 contains data {"link": "https://test.pl", "created_by_id": 999, "modified_by_id": 999}
 
+  Scenario: Dataset creation with related resource file at once
+    Given institution with id 999
+    And category with id 999
+    And admin's request logged admin user created with params {"id": 999}
+    And tag created with params {"id": 999, "name": "Tag1", "language": "pl"}
+    When admin's request method is POST
+    And admin's request posted dataset data is {"update_notification_recipient_email": "test@example.com", "notes": "more than 20 characters", "organization": [999], "categories": [999], "tags": [999], "tags_pl": [999], "resources-2-TOTAL_FORMS": "1", "resources-2-0-switcher": "file", "resources-2-0-title": "file-test-123", "resources-2-0-description": "<p>more than 20 characters</p>", "resources-2-0-status": "published", "resources-2-0-id": "", "resources-2-0-dataset": "", "resources-2-0-data_date": "2022-01-01"}
+    And admin's request posted file data is {"resources-2-0-file": "unique_simple.csv"}
+    And admin's page /datasets/dataset/add/ is requested
+    Then admin's response status code is 200
+    And admin's response page contains /change/">Test with dataset title</a>" został pomyślnie dodany.
+    And Resource with title file-test-123 has assigned file unique_simple.csv
+
   Scenario: Dataset modified attribute is set
     Given institution with id 999
     And category with id 999

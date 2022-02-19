@@ -129,6 +129,8 @@ def get_xml_schema_path(version):
         raise KeyError(version)
     if version == '1.4' and not is_enabled('S41_xml_harvester_special_signs.be'):
         raise KeyError(version)
+    if version == '1.5' and not is_enabled('S43_xml_harvester_high_value_dynamic_data.be'):
+        raise KeyError(version)
     return settings.HARVESTER_XML_VERSION_TO_SCHEMA_PATH[version]
 
 

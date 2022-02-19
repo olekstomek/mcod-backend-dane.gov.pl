@@ -8,6 +8,7 @@ import re
 from collections import OrderedDict
 from http.cookies import SimpleCookie
 from typing import Union
+import unicodedata
 from xml.dom.minidom import parseString
 
 from dicttoxml import dicttoxml
@@ -287,3 +288,12 @@ def save_as_xml(file, data):
     xml = dicttoxml(data, attr_type=False, item_func=custom_item_func, custom_root='catalog')
     dom = parseString(xml)
     file.write(dom.toprettyxml())
+
+
+def clean_filename(filename, limit=220):
+    forbidden_chars_map = dict((ord(char), None) for char in '<>:"/|?*~#%&+{}-^\\')
+    cleaned_filename = "".join(ch for ch in filename if unicodedata.category(ch)[0] != "C")
+    cleaned_filename = cleaned_filename.translate(forbidden_chars_map)
+    cleaned_filename = unicodedata.normalize('NFKD', cleaned_filename).encode('ASCII', 'ignore').decode('ascii')
+    cleaned_filename = cleaned_filename[:limit]
+    return cleaned_filename.strip()

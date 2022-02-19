@@ -18,12 +18,12 @@ cache:
 prepare-images:
   stage: prepare
   script:
-    - docker build -f docker/elasticsearch/Dockerfile -t $REGISTRY_PATH/elasticsearch:6.7.0-mcod-1 .
-    - docker build -f docker/postgres/Dockerfile -t $REGISTRY_PATH/postgresql:10-mcod .
+    - docker build -f docker/elasticsearch/Dockerfile -t $REGISTRY_PATH/elasticsearch:6.8.23-mcod-1 .
+    - docker build -f docker/postgres/Dockerfile -t $REGISTRY_PATH/postgresql:13-mcod .
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD registry.dane.gov.pl
     #- docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN registry.dane.gov.pl
-    - docker push $REGISTRY_PATH/elasticsearch:6.7.0-mcod-1
-    - docker push $REGISTRY_PATH/postgresql:10-mcod
+    - docker push $REGISTRY_PATH/elasticsearch:6.8.23-mcod-1
+    - docker push $REGISTRY_PATH/postgresql:13-mcod
   except:
     - tags
     - master
@@ -68,11 +68,11 @@ test:
   services:
     - name: redis:6.2
       alias: redis
-    - name: rabbitmq:3.8-management
+    - name: rabbitmq:3.9.13-management
       alias: rabbitmq
     - name: stain/jena-fuseki:3.14.0
       alias: fuseki
-    - name: $REGISTRY_PATH/elasticsearch:6.7.0-mcod-1
+    - name: $REGISTRY_PATH/elasticsearch:6.8.23-mcod-1
       alias: elasticsearch
       command:
         [
@@ -82,7 +82,7 @@ test:
           "-Eindex.store.type=niofs",
           "-Ebootstrap.memory_lock=true",
         ]
-    - name: $REGISTRY_PATH/postgresql:10-mcod
+    - name: $REGISTRY_PATH/postgresql:13-mcod
       alias: postgres
   before_script:
     - apt-get update && apt-get install -y --allow-unauthenticated gettext libarchive13 libmagickwand-dev libmagickcore-6.q16-3-extra

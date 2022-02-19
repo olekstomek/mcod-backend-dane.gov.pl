@@ -12,25 +12,22 @@ from mcod.showcases.models import (
     ShowcaseProposalTrash,
 )
 from mcod.lib.admin_mixins import (
-    ActionsMixin,
-    CRUDMessageMixin,
     DecisionFilter,
     HistoryMixin,
     LangFieldsOnlyMixin,
-    SoftDeleteMixin,
     TrashMixin,
     CreatedByDisplayAdminMixin,
     DecisionStatusLabelAdminMixin,
     DynamicAdminListDisplayMixin,
-    MCODAdminMixin
+    MCODAdminMixin,
+    ModelAdmin,
 )
-from mcod.reports.admin import ExportCsvMixin
 from mcod.showcases.tasks import create_showcase_task
 from mcod.unleash import is_enabled
 
 
-class ShowcaseAdmin(DynamicAdminListDisplayMixin, CreatedByDisplayAdminMixin, CRUDMessageMixin, SoftDeleteMixin,
-                    HistoryMixin, LangFieldsOnlyMixin, MCODAdminMixin, admin.ModelAdmin):
+class ShowcaseAdmin(DynamicAdminListDisplayMixin, CreatedByDisplayAdminMixin, HistoryMixin, LangFieldsOnlyMixin,
+                    MCODAdminMixin, ModelAdmin):
     actions_on_top = True
     prepopulated_fields = {'slug': ('title',)}
     autocomplete_fields = ['tags']
@@ -48,6 +45,7 @@ class ShowcaseAdmin(DynamicAdminListDisplayMixin, CreatedByDisplayAdminMixin, CR
     list_display_links = ('title',)
     obj_gender = 'n'
     search_fields = ['title', 'created_by__email', 'url']
+    soft_delete = True
     list_filter = ['status', 'main_page_position']
     list_editable = ['status']
 
@@ -229,8 +227,7 @@ class ShowcaseTrashAdmin(HistoryMixin, TrashMixin):
     tags_list_en.short_description = _('Tags') + ' (EN)'
 
 
-class ShowcaseProposalMixin(ActionsMixin, CRUDMessageMixin, HistoryMixin,
-                            DecisionStatusLabelAdminMixin, MCODAdminMixin):
+class ShowcaseProposalMixin(HistoryMixin, DecisionStatusLabelAdminMixin, MCODAdminMixin):
     delete_selected_msg = _('Delete selected showcase proposals')
     is_history_other = True
     is_history_with_unknown_user_rows = True
@@ -276,7 +273,10 @@ class ShowcaseProposalMixin(ActionsMixin, CRUDMessageMixin, HistoryMixin,
         return False
 
 
-class ShowcaseProposalAdmin(ShowcaseProposalMixin, ExportCsvMixin, SoftDeleteMixin, admin.ModelAdmin):
+class ShowcaseProposalAdmin(ShowcaseProposalMixin, ModelAdmin):
+
+    export_to_csv = True
+    soft_delete = True
 
     def get_fieldsets(self, request, obj=None):
         app_info = ['app_info'] if obj and obj.is_app else []
@@ -328,7 +328,6 @@ class ShowcaseProposalAdmin(ShowcaseProposalMixin, ExportCsvMixin, SoftDeleteMix
         'external_datasets_admin',
         'keywords',
         'report_date',
-        'file',
         'decision_date',
     ]
     suit_form_tabs = (

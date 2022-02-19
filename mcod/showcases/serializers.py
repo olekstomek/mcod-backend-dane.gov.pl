@@ -46,7 +46,7 @@ class ShowcaseApiAggs(ExtSchema):
 
 
 class ShowcaseApiAttrs(ObjectAttrs, HighlightObjectMixin):
-    category = fields.Str()
+    category = fields.Str(attribute='showcase_category')
     category_name = fields.Method('get_category_name')
     slug = TranslatedStr()
     title = TranslatedStr()
@@ -79,8 +79,6 @@ class ShowcaseApiAttrs(ObjectAttrs, HighlightObjectMixin):
 
     license_type = fields.Str()
     license_type_name = fields.Method('get_license_type_name')
-    # api use showcase fields:
-    file_url = fields.Str()
 
     class Meta:
         relationships_schema = ShowcaseApiRelationships

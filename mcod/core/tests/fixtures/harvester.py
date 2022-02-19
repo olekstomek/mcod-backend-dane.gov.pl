@@ -18,12 +18,26 @@ def harvester_decoded_xml_1_2_data(harvester_decoded_xml_1_2_import_data):
     return list(harvester_decoded_xml_1_2_import_data['dataset'])
 
 
+def get_harvested_xml_as_dict(version):
+    full_path = os.path.join(settings.TEST_SAMPLES_PATH, 'harvester', f'import_example{version}.xml')
+    with open(full_path, 'r') as xml_file:
+        data = get_xml_as_dict(xml_file, version)
+    return data
+
+
 @pytest.fixture
 def harvester_decoded_xml_1_2_import_data():
-    full_path = os.path.join(settings.TEST_SAMPLES_PATH, 'harvester_import_example1.2.xml')
-    with open(full_path, 'r') as xml_file:
-        data = get_xml_as_dict(xml_file, '1.2')
-    return data
+    return get_harvested_xml_as_dict('1.2')
+
+
+@pytest.fixture
+def harvester_decoded_xml_1_4_import_data():
+    return get_harvested_xml_as_dict('1.4')
+
+
+@pytest.fixture
+def harvester_decoded_xml_1_5_import_data():
+    return get_harvested_xml_as_dict('1.5')
 
 
 @pytest.fixture
@@ -88,14 +102,23 @@ def harvester_ckan_expected_data():
                     ('created', datetime.datetime(2020, 5, 27, 15, 44, 38, 387593).astimezone(local_timezone)),
                     ('ext_ident', '6db2e083-72b8-4f92-a6ab-678fc8461865'),
                     ('link', 'https://mock-resource.com.pl/simple.csv'),
-                    ('description', '##Sektory:')])]),
+                    ('description', '##Sektory:')]),
+                    OrderedDict([
+                        ('title', 'Ilości odebranych odpadów z podziałem na sektory ze spacja'), ('format', 'csv'),
+                        ('modified', datetime.datetime(2021, 4, 15, 8, 30, 11, 533597).astimezone(local_timezone)),
+                        ('created', datetime.datetime(2020, 5, 27, 15, 44, 38, 387593).astimezone(local_timezone)),
+                        ('ext_ident', '6db2e083-72b8-4f92-a6ab-678fc8461866'),
+                        ('link', 'https://mock-resource.com.pl/simple.csv'),
+                        ('description', '##Sektory:')])]),
             ('tags', []), ('title', 'Ilości odebranych odpadów z podziałem na sektory')])
 
 
 def get_example_triple_data():
     example_base_uri = 'https://example-uri.com'
     resource_uri = f'{example_base_uri}/distribution/999'
+    second_resource_uri = f'{example_base_uri}/distribution/1000'
     resource_ref = URIRef(resource_uri)
+    second_resource_ref = URIRef(second_resource_uri)
     vocab = VOCABULARIES
     created = datetime.datetime(2021, 1, 1, 12, 0, 0, 0, tzinfo=pytz.utc)
     modified = datetime.datetime(2021, 1, 1, 13, 0, 0, 0, tzinfo=pytz.utc)
@@ -115,6 +138,7 @@ def get_example_triple_data():
         (dataset_ref, ns.DCAT.keyword, Literal('jakis tag', lang='pl')),
         (dataset_ref, ns.DCAT.keyword, Literal('tagggg', lang='en')),
         (dataset_ref, ns.DCAT.distribution, resource_ref),
+        (dataset_ref, ns.DCAT.distribution, second_resource_ref),
         # Distribution
         (resource_ref, RDF.type, ns.DCAT.Distribution),
         (resource_ref, ns.DCT.identifier, Literal('999')),
@@ -124,7 +148,17 @@ def get_example_triple_data():
         (resource_ref, ns.DCT.modified, Literal(modified, datatype=XSD.dateTime)),
         (resource_ref, ns.DCT['format'], URIRef(f'{vocab["file-type"]}xlsx')),
         (resource_ref, ns.DCAT.accessURL, resource_ref),
-        (resource_ref, ns.DCT.license, Literal('CC_BY_SA_4.0'))
+        (resource_ref, ns.DCT.license, Literal('CC_BY_SA_4.0')),
+        # 2nd Distribution
+        (second_resource_ref, RDF.type, ns.DCAT.Distribution),
+        (second_resource_ref, ns.DCT.identifier, Literal('1000')),
+        (second_resource_ref, ns.DCT.title, Literal('    Second distribution title      ')),
+        (second_resource_ref, ns.DCT.description, Literal('Some other distribution description')),
+        (second_resource_ref, ns.DCT.issued, Literal(created, datatype=XSD.dateTime)),
+        (second_resource_ref, ns.DCT.modified, Literal(modified, datatype=XSD.dateTime)),
+        (second_resource_ref, ns.DCT['format'], URIRef(f'{vocab["file-type"]}xlsx')),
+        (second_resource_ref, ns.DCAT.accessURL, second_resource_ref),
+        (second_resource_ref, ns.DCT.license, Literal('CC_BY_SA_4.0'))
     ]
 
 
@@ -145,10 +179,18 @@ def harvester_dcat_expected_data():
         ('modified', datetime.datetime(2021, 1, 1, 13, 0, tzinfo=pytz.utc)),
         ('tags',
          [OrderedDict([('name', 'jakis tag'), ('lang', 'pl')]), OrderedDict([('name', 'tagggg'), ('lang', 'en')])]),
-        ('resources', [OrderedDict([
-            ('ext_ident', '999'), ('title_pl', 'Distribution title'), ('title_en', None),
-            ('description_pl', 'Some distribution description'),
-            ('description_en', None), ('created', datetime.datetime(2021, 1, 1, 12, 0, tzinfo=pytz.utc)),
-            ('modified', datetime.datetime(2021, 1, 1, 13, 0, tzinfo=pytz.utc)),
-            ('link', 'https://example-uri.com/distribution/999'), ('format', 'xlsx'), ('file_mimetype', None)])]),
+        ('resources', [
+            OrderedDict([
+                ('ext_ident', '1000'), ('title_pl', 'Second distribution title'), ('title_en', None),
+                ('description_pl', 'Some other distribution description'),
+                ('description_en', None), ('created', datetime.datetime(2021, 1, 1, 12, 0, tzinfo=pytz.utc)),
+                ('modified', datetime.datetime(2021, 1, 1, 13, 0, tzinfo=pytz.utc)),
+                ('link', 'https://example-uri.com/distribution/1000'), ('format', 'xlsx'), ('file_mimetype', None)]),
+            OrderedDict([
+                ('ext_ident', '999'), ('title_pl', 'Distribution title'), ('title_en', None),
+                ('description_pl', 'Some distribution description'),
+                ('description_en', None), ('created', datetime.datetime(2021, 1, 1, 12, 0, tzinfo=pytz.utc)),
+                ('modified', datetime.datetime(2021, 1, 1, 13, 0, tzinfo=pytz.utc)),
+                ('link', 'https://example-uri.com/distribution/999'), ('format', 'xlsx'), ('file_mimetype', None)])
+        ]),
         ('categories', ['GOV', 'ECON']), ('update_frequency', None), ('license_chosen', 'CC_BY_SA_4.0')])

@@ -1,21 +1,27 @@
 import nested_admin
 from django.contrib import admin
-from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
-from rules.contrib.admin import ObjectPermissionsModelAdmin, ObjectPermissionsStackedInline
+from rules.contrib.admin import ObjectPermissionsStackedInline
 
 from mcod.datasets.forms import DatasetForm, DatasetStackedNoSaveForm
 from mcod.datasets.models import Dataset
 from mcod.lib.admin_mixins import (
-    AdminListMixin, TrashMixin, HistoryMixin, LangFieldsOnlyMixin, SoftDeleteMixin, StatusLabelAdminMixin,
-    DynamicAdminListDisplayMixin, MCODAdminMixin
+    AdminListMixin,
+    DynamicAdminListDisplayMixin,
+    HistoryMixin,
+    LangFieldsOnlyMixin,
+    MCODAdminMixin,
+    NestedModelAdmin,
+    ObjectPermissionsModelAdmin,
+    StatusLabelAdminMixin,
+    TrashMixin,
 )
 from mcod.organizations.forms import OrganizationForm
 from mcod.organizations.models import Organization, OrganizationTrash
 from mcod.organizations.views import OrganizationAutocompleteJsonView
-from mcod.reports.admin import ExportCsvMixin
+from mcod.unleash import is_enabled
 from mcod.users.forms import FilteredSelectMultipleCustom
 from mcod.users.models import User
 
@@ -24,21 +30,13 @@ class ChangeDatasetStacked(AdminListMixin, nested_admin.NestedStackedInline, Obj
     template = 'admin/datasets/inline-list.html'
 
     fields = [
-        "_title",
-        "modified",
+        '_title',
+        'modified',
         'organization',
         'categories_list',
     ]
-
+    readonly_fields = fields
     sortable = 'modified'
-
-    readonly_fields = [
-        "_title",
-        "modified",
-        'organization',
-        'categories_list',
-    ]
-
     max_num = 0
     min_num = 0
     extra = 3
@@ -48,9 +46,7 @@ class ChangeDatasetStacked(AdminListMixin, nested_admin.NestedStackedInline, Obj
     form = DatasetStackedNoSaveForm
 
     def categories_list(self, instance):
-        if instance.pk:
-            return instance.categories_list_as_html
-        return '-'
+        return instance.categories_list_as_html if instance.pk else '-'
     categories_list.short_description = _('Categories')
 
     def link_status(self, obj):
@@ -84,9 +80,8 @@ class ChangeDatasetStacked(AdminListMixin, nested_admin.NestedStackedInline, Obj
         return self.get_formset(request, obj, fields=None).form
 
     def _title(self, obj):
-        return obj.mark_safe(
-            '<a href="{}">{}</a>'.format(reverse('admin:datasets_dataset_change', args=[obj.id]), obj.title))
-    _title.short_description = _("title")
+        return obj.mark_safe('<a href="{}">{}</a>'.format(obj.admin_change_url, obj.title))
+    _title.short_description = _('title')
 
 
 class AddDatasetStacked(AdminListMixin, nested_admin.NestedStackedInline, ObjectPermissionsStackedInline):
@@ -97,6 +92,8 @@ class AddDatasetStacked(AdminListMixin, nested_admin.NestedStackedInline, Object
     extra = 0
     form = DatasetForm
     suit_classes = 'suit-tab suit-tab-datasets'
+    has_dynamic_data = ['has_dynamic_data'] if is_enabled('S43_dynamic_data.be') else []
+    has_high_value_data = ['has_high_value_data'] if is_enabled('S41_resource_has_high_value_data.be') else []
     fields = (
         'title',
         'notes',
@@ -114,6 +111,8 @@ class AddDatasetStacked(AdminListMixin, nested_admin.NestedStackedInline, Object
         'license_condition_db_or_copyrighted',
         'license_chosen',
         'license_condition_personal_data',
+        *has_dynamic_data,
+        *has_high_value_data,
     )
     autocomplete_fields = ['tags', ]
 
@@ -140,7 +139,6 @@ class AddDatasetStacked(AdminListMixin, nested_admin.NestedStackedInline, Object
                 self.admin_site,
                 can_add_related=False,
             )
-
         return formfield
 
 
@@ -151,21 +149,20 @@ class UserInline(nested_admin.NestedStackedInline):
 
 
 @admin.register(Organization)
-class OrganizationAdmin(DynamicAdminListDisplayMixin, StatusLabelAdminMixin, SoftDeleteMixin, HistoryMixin,
-                        ExportCsvMixin, LangFieldsOnlyMixin, MCODAdminMixin, nested_admin.NestedModelAdmin,
-                        ObjectPermissionsModelAdmin):
+class OrganizationAdmin(DynamicAdminListDisplayMixin, StatusLabelAdminMixin, HistoryMixin, LangFieldsOnlyMixin,
+                        MCODAdminMixin, NestedModelAdmin, ObjectPermissionsModelAdmin):
     actions_on_top = True
-    prepopulated_fields = {"slug": ("title",), }
-    list_display = ["title", "get_photo", "short_description", "status", 'obj_history']
-    list_filter = ["status"]
-    search_fields = ["slug", "title", "description"]
-
+    export_to_csv = True
+    form = OrganizationForm
     inlines = [
         ChangeDatasetStacked,
         AddDatasetStacked,
     ]
-
-    form = OrganizationForm
+    list_display = ["title", "get_photo", "short_description", "status", 'obj_history']
+    list_filter = ["status"]
+    prepopulated_fields = {"slug": ("title",), }
+    search_fields = ["slug", "title", "description"]
+    soft_delete = True
     suit_form_tabs = tuple()
 
     def autocomplete_view(self, request):
@@ -307,8 +304,7 @@ class OrganizationAdmin(DynamicAdminListDisplayMixin, StatusLabelAdminMixin, Sof
 
     def get_readonly_fields(self, request, obj=None):
         if not request.user.is_superuser:
-
-            readonly_fields = [
+            return [
                 "institution_type",
                 "title",
                 "slug",
@@ -329,9 +325,7 @@ class OrganizationAdmin(DynamicAdminListDisplayMixin, StatusLabelAdminMixin, Sof
                 "regon",
                 "website",
             ]
-            return readonly_fields
-        else:
-            return super(OrganizationAdmin, self).get_readonly_fields(request, obj)
+        return super().get_readonly_fields(request, obj=obj)
 
     def get_prepopulated_fields(self, request, obj=None):
         if not request.user.is_superuser:

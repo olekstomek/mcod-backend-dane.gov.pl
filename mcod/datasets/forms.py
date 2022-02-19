@@ -7,10 +7,11 @@ from django.urls import reverse
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 
+from mcod import settings
 from mcod.core.db.models import STATUS_CHOICES
 from mcod.datasets.field_validators import validate_dataset_image_file_extension
 from mcod.datasets.models import UPDATE_FREQUENCY, Dataset
-from mcod.lib.widgets import JsonPairDatasetInputs
+from mcod.lib.widgets import CheckboxSelect, JsonPairDatasetInputs
 from mcod.tags.forms import ModelFormWithKeywords
 from mcod.unleash import is_enabled
 
@@ -78,25 +79,33 @@ class DatasetForm(ModelFormWithKeywords):
             "to that set will be changed to a draft"
         )
     )
+    if is_enabled('S43_dynamic_data.be'):
+        has_dynamic_data = forms.ChoiceField(
+            required=True,
+            label=_('dynamic data').capitalize(),
+            choices=[(True, _('Yes')), (False, _('No'))],
+            help_text=(
+                'Zaznaczenie TAK spowoduje oznaczenie wszystkich nowo dodanych danych w zbiorze jako dane dynamiczne.'
+                '<br><br>Jeżeli chcesz się więcej dowiedzieć na temat danych dynamicznych '
+                '<a href="%(url)s" target="_blank">przejdź do strony</a>') % {
+                'url': f'{settings.BASE_URL}{settings.DYNAMIC_DATA_MANUAL_URL}'},
+            widget=CheckboxSelect(attrs={'class': 'inline'}),
+        )
     if is_enabled('S41_resource_has_high_value_data.be'):
         has_high_value_data = forms.ChoiceField(
-            disabled=True,
-            initial=False,
-            required=False,
+            required=True,
             label=_('has high value data').capitalize(),
-            help_text=(
-                'Zaznaczając dane dodane w zbiorze danych zostaną określone jako wysokiej wartości. Są to dane, '
-                'których ponowne wykorzystanie wiąże się z istotnymi korzyściami dla społeczeństwa, środowiska '
-                'i gospodarki'),
             choices=[(True, _('Yes')), (False, _('No'))],
-            widget=forms.RadioSelect(attrs={'class': 'inline'}))
+            help_text=(
+                'Zaznaczenie TAK spowoduje oznaczenie wszystkich nowo dodanych danych w zbiorze jako dane o wysokiej '
+                'wartości.<br><br>Jeżeli chcesz się więcej dowiedzieć na temat danych wysokiej wartości '
+                '<a href="%(url)s" target="_blank">przejdź do strony</a>') % {
+                'url': f'{settings.BASE_URL}{settings.HIGH_VALUE_DATA_MANUAL_URL}'},
+            widget=CheckboxSelect(attrs={'class': 'inline'}),
+        )
 
     def __init__(self, *args, instance=None, **kwargs):
-        if instance and is_enabled('S41_resource_has_high_value_data.be'):
-            initial = kwargs.get('initial', {})
-            initial['has_high_value_data'] = instance.has_high_value_data
-            kwargs['initial'] = initial
-        super(DatasetForm, self).__init__(*args, instance=instance, **kwargs)
+        super().__init__(*args, instance=instance, **kwargs)
         if 'categories' in self.fields and is_enabled('S41_dataset_categories_required.be'):
             self.fields['categories'].required = True
         try:
@@ -117,7 +126,6 @@ class DatasetForm(ModelFormWithKeywords):
 
     class Meta:
         model = Dataset
-
         widgets = {
             'license_condition_source': CheckboxInputWithLabel(label='CC BY 4.0'),
             'license_condition_modification': CheckboxInputWithLabel(label='CC BY 4.0'),
@@ -127,7 +135,6 @@ class DatasetForm(ModelFormWithKeywords):
             'license_condition_personal_data': CKEditorWidget(config_name='licenses'),
             'update_notification_frequency': forms.TextInput(attrs={'maxlength': 3}),
         }
-
         fields = [
             'title',
             'slug',
@@ -156,6 +163,7 @@ class DatasetForm(ModelFormWithKeywords):
             'created': _("Availability date"),
             'modified': _("Modification date"),
             'verified': _("Update date"),
+            'archived_resources_files_media_url': _('Archived resources files')
         }
 
     def clean(self):

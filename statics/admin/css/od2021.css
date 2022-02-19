@@ -470,6 +470,9 @@ p.irreversible-deletion-warning {
 	padding: 0;
 	display: block;
 }
+.od2021 .form-horizontal .control-group span.readonly {
+	word-break: break-all;
+}
 /*/ FORMS */
 
 
@@ -638,6 +641,6 @@ p.irreversible-deletion-warning {
 }
 /*/ LOGIN PAGE */
 
-#id_has_high_value_data.inline input {
+#id_has_high_value_data.inline input, #id_has_dynamic_data.inline input {
 	vertical-align:text-bottom;
 }

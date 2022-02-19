@@ -14,16 +14,14 @@ from mcod.harvester.models import DataSource, DataSourceImport, DataSourceTrash
 from mcod.harvester.tasks import import_data_task
 from mcod.harvester.views import ValidateXMLDataSourceView, get_progress
 from mcod.lib.admin_mixins import (
-    ActionsMixin,
     AdminListMixin,
-    CRUDMessageMixin,
     HistoryMixin,
-    SoftDeleteMixin,
     TrashMixin,
     CreatedByDisplayAdminMixin,
     StatusLabelAdminMixin,
     DynamicAdminListDisplayMixin,
-    MCODAdminMixin
+    MCODAdminMixin,
+    ModelAdmin,
 )
 from mcod.users.forms import FilteredSelectMultipleCustom
 
@@ -135,8 +133,8 @@ class DataSourceImports(AdminListMixin, PaginationInline):
         return self.get_fields(request, obj=obj)
 
 
-class DataSourceAdmin(DynamicAdminListDisplayMixin, CreatedByDisplayAdminMixin, StatusLabelAdminMixin, ActionsMixin,
-                      CRUDMessageMixin, HistoryMixin, SoftDeleteMixin, MCODAdminMixin, admin.ModelAdmin):
+class DataSourceAdmin(DynamicAdminListDisplayMixin, CreatedByDisplayAdminMixin, StatusLabelAdminMixin,
+                      HistoryMixin, MCODAdminMixin, ModelAdmin):
     search_fields = ['name']
     list_display = ('name', 'created_by', 'created', '_status', 'last_import')
     list_filter = [
@@ -162,6 +160,7 @@ class DataSourceAdmin(DynamicAdminListDisplayMixin, CreatedByDisplayAdminMixin, 
     delete_selected_msg = _('Delete selected data sources')
     is_history_other = True
     obj_gender = 'n'
+    soft_delete = True
     suit_form_tabs = [
         ('general', _('General')),
         ('imports', _('Imports')),

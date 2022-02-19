@@ -8,6 +8,7 @@ Feature: Showcase details API
     Then send api request and fetch the response
     And api's response status code is 200
     And api's response body field data/links/self endswith 999,showcase-slug
+    And api's response body field /data/attributes has fields category,category_name,slug,title,notes,author,url,image_url,image_thumb_url,image_alt,illustrative_graphics_url,illustrative_graphics_alt,keywords,views_count,modified,created,has_image_thumb,main_page_position,external_datasets,is_mobile_app,is_mobile_app_name,is_desktop_app,is_desktop_app_name,mobile_apple_url,mobile_google_url,desktop_linux_url,desktop_macos_url,desktop_windows_url,license_type,license_type_name
 
   Scenario Outline: Published showcase details endpoint is available
     Given showcase with id 999

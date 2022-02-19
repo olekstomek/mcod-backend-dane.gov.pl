@@ -2,7 +2,7 @@ version: "3"
 services:
   mcod-db:
     container_name: mcod-db
-    image: postgres:11
+    image: postgres:13
     restart: "no"
     command: postgres -c config_file=/etc/postgresql/postgresql.conf
     volumes:
@@ -18,7 +18,7 @@ services:
       - 5432:5432
 
   mcod-rabbitmq:
-    image: rabbitmq:3.7-management
+    image: rabbitmq:3.9.13-management
     container_name: mcod-rabbitmq
     restart: "no"
     volumes:
@@ -42,7 +42,7 @@ services:
         ipv4_address: 172.18.18.20
 
   mcod-elasticsearch:
-    image: elasticsearch:6.7.0-mcod-1
+    image: elasticsearch:6.8.23-mcod-1
     container_name: mcod-elasticsearch
     build:
       context: .

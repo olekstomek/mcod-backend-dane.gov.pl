@@ -2,8 +2,11 @@ from dal_admin_filters import AutocompleteFilter
 from django.contrib import admin
 from django.contrib.admin.options import InlineModelAdmin
 from django.contrib.admin.views.main import ChangeList
+from django.core.exceptions import PermissionDenied
 from django.core.paginator import EmptyPage, InvalidPage, Paginator
 from django.db.models import Subquery, OuterRef
+from django.http import JsonResponse
+from django.urls import path
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 from django_celery_results.models import TaskResult
@@ -15,16 +18,15 @@ from mcod.lib.admin_mixins import (
     AdminListMixin,
     HistoryMixin,
     LangFieldsOnlyMixin,
-    SoftDeleteMixin,
     TrashMixin,
     CreatedByDisplayAdminMixin,
     ModifiedByDisplayAdminMixin,
     StatusLabelAdminMixin,
     DynamicAdminListDisplayMixin,
-    MCODAdminMixin
+    MCODAdminMixin,
+    ModelAdmin,
 )
-from mcod.reports.admin import ExportCsvMixin
-from mcod.resources.forms import ResourceListForm, AddResourceForm
+from mcod.resources.forms import ResourceListForm, AddResourceForm, ResourceInlineFormset
 from mcod.resources.models import Resource
 from mcod.unleash import is_enabled
 from mcod.users.forms import FilteredSelectMultipleCustom
@@ -208,6 +210,7 @@ class AddResourceStacked(InlineModelAdmin):
 
     add_readonly_fields = ()
 
+    has_dynamic_data = ['has_dynamic_data'] if is_enabled('S43_dynamic_data.be') else []
     has_high_value_data = ['has_high_value_data'] if is_enabled('S41_resource_has_high_value_data.be') else []
     _fields = (
         'title',
@@ -216,6 +219,7 @@ class AddResourceStacked(InlineModelAdmin):
         'data_date',
         'status',
         'special_signs',
+        *has_dynamic_data,
         *has_high_value_data,
     )
 
@@ -235,6 +239,8 @@ class AddResourceStacked(InlineModelAdmin):
     )
     model = Resource
     form = AddResourceForm
+    if is_enabled('S40_new_file_model.be'):
+        formset = ResourceInlineFormset
 
     extra = 0
     suit_classes = 'suit-tab suit-tab-resources'
@@ -266,11 +272,24 @@ class OrganizationFilter(AutocompleteFilter):
 
 @admin.register(Dataset)
 class DatasetAdmin(DynamicAdminListDisplayMixin, CreatedByDisplayAdminMixin, StatusLabelAdminMixin,
-                   AddChangeMixin, SoftDeleteMixin, HistoryMixin, ExportCsvMixin, LangFieldsOnlyMixin,
-                   MCODAdminMixin, admin.ModelAdmin):
+                   AddChangeMixin, HistoryMixin, LangFieldsOnlyMixin, MCODAdminMixin, ModelAdmin):
     actions_on_top = True
     autocomplete_fields = ['tags', 'organization']
+    export_to_csv = True
+    form = DatasetForm
+    inlines = [
+        ChangeResourceStacked,
+        AddResourceStacked,
+    ]
     list_display = ['title', 'organization', 'created', 'created_by', 'status', 'obj_history']
+    list_filter = [
+        'categories',
+        OrganizationFilter,
+        'status'
+    ]
+    prepopulated_fields = {
+        "slug": ("title", ),
+    }
     readonly_fields = [
         'created_by',
         'created',
@@ -278,23 +297,11 @@ class DatasetAdmin(DynamicAdminListDisplayMixin, CreatedByDisplayAdminMixin, Sta
         'verified',
         'dataset_logo'
     ]
-    inlines = [
-        ChangeResourceStacked,
-        AddResourceStacked,
-    ]
     search_fields = ["title", ]
-    prepopulated_fields = {
-        "slug": ("title", ),
-    }
-
-    list_filter = [
-        'categories',
-        OrganizationFilter,
-        'status'
-    ]
-
-    form = DatasetForm
-
+    soft_delete = True
+    suit_form_includes = (
+        ('admin/datasets/licences/custom_include.html', 'top', 'licenses'),
+    )
     suit_form_tabs = (
         ('general', _('General')),
         *LangFieldsOnlyMixin.get_translations_tabs(),
@@ -303,14 +310,21 @@ class DatasetAdmin(DynamicAdminListDisplayMixin, CreatedByDisplayAdminMixin, Sta
         ('resources', _('Resources')),
     )
 
-    suit_form_includes = (
-        ('admin/datasets/licences/custom_include.html', 'top', 'licenses'),
-    )
+    def has_dynamic_data_info(self, obj):
+        if obj.has_dynamic_data is True:
+            return 'Tak'
+        elif obj.has_dynamic_data is False:
+            return 'Nie'
+        return '-'
+    has_dynamic_data_info.short_description = _('dynamic data')
 
     def has_high_value_data_info(self, obj):
-        return obj.has_high_value_data
+        if obj.has_high_value_data is True:
+            return 'Tak'
+        elif obj.has_high_value_data is False:
+            return 'Nie'
+        return '-'
     has_high_value_data_info.short_description = _('has high value data')
-    has_high_value_data_info.boolean = True
 
     def update_frequency_display(self, obj):
         return obj.frequency_display
@@ -327,6 +341,9 @@ class DatasetAdmin(DynamicAdminListDisplayMixin, CreatedByDisplayAdminMixin, Sta
                 'update_notification_frequency',
                 'update_notification_recipient_email',
             ]
+        has_dynamic_data = []
+        if is_enabled('S43_dynamic_data.be'):
+            has_dynamic_data = ['has_dynamic_data_info'] if obj and obj.is_imported else ['has_dynamic_data']
         has_high_value_data = []
         if is_enabled('S35_high_value_data.be'):
             has_high_value_data = ['has_high_value_data_info'] if obj and obj.is_imported else ['has_high_value_data']
@@ -337,6 +354,7 @@ class DatasetAdmin(DynamicAdminListDisplayMixin, CreatedByDisplayAdminMixin, Sta
             'image_alt',
             'dataset_logo',
             'customfields',
+            *has_dynamic_data,
             update_frequency_field,
             *frequency_fields,
             'organization',
@@ -344,7 +362,7 @@ class DatasetAdmin(DynamicAdminListDisplayMixin, CreatedByDisplayAdminMixin, Sta
             *has_high_value_data,
         ]
         if is_enabled('S41_resource_bulk_download.be'):
-            general_fields += ['archived_resources_files']
+            general_fields += ['archived_resources_files_media_url']
         general_fields += ['status', 'created_by', 'created', 'modified', 'verified']
 
         return [
@@ -390,7 +408,7 @@ class DatasetAdmin(DynamicAdminListDisplayMixin, CreatedByDisplayAdminMixin, Sta
 
     def get_readonly_fields(self, request, obj=None):
         read_only_fields = super(DatasetAdmin, self).get_readonly_fields(request, obj)
-        archived_resources = ['archived_resources_files'] if is_enabled('S41_resource_bulk_download.be') else []
+        archived_resources = ['archived_resources_files_media_url'] if is_enabled('S41_resource_bulk_download.be') else []
         read_only_fields = archived_resources + read_only_fields
         return read_only_fields
 
@@ -410,6 +428,24 @@ class DatasetAdmin(DynamicAdminListDisplayMixin, CreatedByDisplayAdminMixin, Sta
         if request.path == '/datasets/dataset/autocomplete/':
             queryset = queryset.filter(source__isnull=True)
         return super().get_search_results(request, queryset, search_term)
+
+    def get_dataset_details(self, request, object_id):
+        if not self.has_change_permission(request):
+            raise PermissionDenied
+        obj = Dataset.objects.filter(id=object_id).first()
+        data = {
+            'has_high_value_data': obj.has_high_value_data,
+            'has_dynamic_data': obj.has_dynamic_data,
+        } if obj else {}
+        return JsonResponse(data)
+
+    def get_urls(self):
+        urls = super().get_urls()
+        custom_urls = [
+            path('<path:object_id>/details/', self.get_dataset_details,
+                 name='dataset-details')
+        ] if is_enabled('S41_resource_has_high_value_data.be') else []
+        return custom_urls + urls
 
     def render_change_form(self, request, context, **kwargs):
         obj = kwargs.get('obj')

@@ -735,6 +735,50 @@ class GeoDistance(Field):
         return value, attr, data
 
 
+class MetaDataNullBoolean(ExtendedFieldMixin, fields.Boolean):
+    default_error_messages = {
+        'invalid': _('Not a valid boolean.'),
+    }
+    unspecified = [
+        'not specified'
+    ]
+
+    @property
+    def openapi_property(self):
+        ret = self._prepare_openapi_property()
+        ret['type'] = 'null_boolean'
+        return ret
+
+    def _serialize(self, value, attr, obj, **kwargs):
+        if value is None:
+            return _('not specified')
+
+        try:
+            if value in self.truthy:
+                return _('YES')
+            elif value in self.falsy:
+                return _('NO')
+        except TypeError:
+            pass
+
+        return bool(value)
+
+    def _deserialize(self, value, attr, data, **kwargs):
+        if not self.truthy:
+            return bool(value)
+        else:
+            try:
+                if value in self.truthy:
+                    return True
+                elif value in self.falsy:
+                    return False
+                elif value in self.unspecified:
+                    return None
+            except TypeError as error:
+                raise self.make_error("invalid", input=value) from error
+        raise self.make_error("invalid", input=value)
+
+
 # Aliases
 URL = Url
 Str = String

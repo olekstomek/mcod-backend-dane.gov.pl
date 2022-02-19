@@ -34,6 +34,39 @@ class ExtraSchema(Schema):
     value = Str()
 
 
+class PreProcessedSchema(Schema):
+
+    def strip_whitespace(self, data):
+        pass
+
+    def prepare_data(self, data, **kwargs):
+        return data
+
+    @pre_load
+    def preprocess_data(self, data, **kwargs):
+        self.strip_whitespace(data)
+        return self.prepare_data(data, **kwargs)
+
+
+class DCATSchema(Schema):
+
+    def strip_whitespace(self, data):
+        for record in data:
+            if record.get('title_pl'):
+                record['title_pl'] = record['title_pl'].strip()
+            if record.get('title_en'):
+                record['title_en'] = record['title_en'].strip()
+        return data
+
+    def prepare_multi_data(self, data, **kwargs):
+        return data
+
+    @pre_load(pass_many=True)
+    def preprocess_multidata(self, data, **kwargs):
+        data = self.prepare_multi_data(data, **kwargs)
+        return self.strip_whitespace(data)
+
+
 class CategorySchema(Schema):
     description = Str()
     display_name = Str()
@@ -79,7 +112,28 @@ class ResourceMixin:
                 raise ValidationError(_('Required scheme is https://'), field_name='link')
 
 
-class ResourceSchema(ResourceMixin, Schema):
+class CKANPreProcessedSchema(PreProcessedSchema):
+
+    def strip_whitespace(self, data):
+        if data.get('title'):
+            data['title'] = data['title'].strip()
+        if data.get('name'):
+            data['name'] = data['name'].strip()
+
+
+class XMLPreProcessedSchema(PreProcessedSchema):
+
+    def strip_whitespace(self, data):
+        if 'title' in data and isinstance(data.get('title'), dict):
+            title_en = data['title'].get('english')
+            title_pl = data['title'].get('polish')
+            if title_en:
+                data['title']['english'] = title_en.strip()
+            if title_pl:
+                data['title']['polish'] = title_pl.strip()
+
+
+class ResourceSchema(ResourceMixin, CKANPreProcessedSchema):
     mimetype = Str(allow_none=True)
     cache_last_updated = Str(allow_none=True)
     cache_url = Str(allow_none=True)
@@ -117,7 +171,6 @@ class ResourceSchema(ResourceMixin, Schema):
             error = _('Unsupported format: %(format)s.') % {'format': value}
             raise ValidationError(error, field_name='format')
 
-    @pre_load
     def prepare_data(self, data, **kwargs):
         if 'format' in data:
             value = data['format'].lower()
@@ -157,7 +210,7 @@ class TagDCATSchema(Schema):
         ordered = True
 
 
-class DatasetSchema(Schema):
+class DatasetSchema(CKANPreProcessedSchema):
     author = Str()
     author_email = Str()
     creator_user_id = UUID()
@@ -200,7 +253,7 @@ class DatasetSchema(Schema):
         unknown = EXCLUDE
 
 
-class XMLResourceSchema(ResourceMixin, Schema):
+class XMLResourceSchema(ResourceMixin, XMLPreProcessedSchema):
     ext_ident = Str(data_key='extIdent', validate=validate.Length(max=36), required=True)
     int_ident = Int(data_key='intIdent')
     status = Str(data_key='@status', validate=validate.OneOf(choices=['draft', 'published']))
@@ -214,12 +267,13 @@ class XMLResourceSchema(ResourceMixin, Schema):
     created = DateTime(data_key='created', allow_none=True)
     modified = DateTime(data_key='lastUpdateDate', allow_none=True)
     special_signs = List(Str())
+    has_dynamic_data = Bool(data_key='hasDynamicData', allow_none=True)
+    has_high_value_data = Bool(data_key='hasHighValueData', allow_none=True)
 
     class Meta:
         ordered = True
         unknown = EXCLUDE
 
-    @pre_load
     def prepare_data(self, data, **kwargs):
         if 'title' in data and isinstance(data.get('title'), dict):
             data['title_en'] = data['title'].get('english', '')
@@ -247,7 +301,7 @@ class XMLResourceSchema(ResourceMixin, Schema):
             raise ValidationError(msg, field_name='int_ident')
 
 
-class XMLDatasetSchema(Schema):
+class XMLDatasetSchema(XMLPreProcessedSchema):
     ext_ident = Str(data_key='extIdent', validate=validate.Length(max=36), required=True)
     int_ident = Int(data_key='intIdent')
     status = Str(data_key='@status', validate=validate.OneOf(choices=['draft', 'published']))
@@ -269,12 +323,13 @@ class XMLDatasetSchema(Schema):
     categories = List(Str())
     resources = Nested(XMLResourceSchema, many=True)
     tags = Nested(XMLTagSchema, many=True)
+    has_dynamic_data = Bool(data_key='hasDynamicData', allow_none=True)
+    has_high_value_data = Bool(data_key='hasHighValueData', allow_none=True)
 
     class Meta:
         ordered = True
         unknown = EXCLUDE
 
-    @pre_load
     def prepare_data(self, data, **kwargs):
         if 'title' in data and isinstance(data.get('title'), dict):
             data['title_en'] = data['title'].get('english', '')
@@ -343,7 +398,7 @@ class XMLDatasetSchema(Schema):
             )
 
 
-class ResourceDCATSchema(ResourceMixin, Schema):
+class ResourceDCATSchema(ResourceMixin, DCATSchema):
     ext_ident = Str(validate=validate.Length(max=36))
     title_pl = Str()
     title_en = Str(allow_none=True)
@@ -355,7 +410,6 @@ class ResourceDCATSchema(ResourceMixin, Schema):
     format = Str()
     file_mimetype = Str(allow_none=True)
 
-    @pre_load(pass_many=True)
     def prepare_multi_data(self, data, **kwargs):
         for res in data:
             if res.get('modified') and not res.get('created'):
@@ -378,7 +432,7 @@ class ResourceDCATSchema(ResourceMixin, Schema):
         unknown = EXCLUDE
 
 
-class DatasetDCATSchema(Schema):
+class DatasetDCATSchema(DCATSchema):
     ext_ident = Str(validate=validate.Length(max=36))
     title_pl = Str()
     title_en = Str(allow_none=True)
@@ -396,7 +450,6 @@ class DatasetDCATSchema(Schema):
         unknown = EXCLUDE
         ordered = True
 
-    @pre_load(pass_many=True)
     def prepare_multi_data(self, triple_store_dct, **kwargs):
         triple_store = triple_store_dct
         dataset_deserializer = DCATDatasetDeserializer(many=True)

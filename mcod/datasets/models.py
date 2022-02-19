@@ -6,6 +6,7 @@ from types import SimpleNamespace
 from uuid import uuid4
 
 from constance import config
+from django.apps import apps
 from django.utils.functional import cached_property
 from django.contrib.auth import get_user_model
 from django.contrib.postgres.fields import JSONField
@@ -163,6 +164,8 @@ class Dataset(ExtendedModel):
     update_frequency = models.CharField(max_length=50, blank=True, null=True, verbose_name=_("Update frequency"))
     is_update_notification_enabled = models.BooleanField(
         default=True, verbose_name=_('turn on notification'))
+    has_dynamic_data = models.NullBooleanField(verbose_name=_('dynamic data'))
+    has_high_value_data = models.NullBooleanField(verbose_name=_('has high value data'))
     update_notification_frequency = models.PositiveSmallIntegerField(
         null=True, blank=True, verbose_name=_('set notifications frequency'))
     update_notification_recipient_email = models.EmailField(
@@ -226,10 +229,6 @@ class Dataset(ExtendedModel):
 
     def __str__(self):
         return self.title
-
-    @cached_property
-    def has_high_value_data(self):
-        return self.resources.filter(has_high_value_data=True).exists()
 
     @cached_property
     def has_table(self):
@@ -474,6 +473,36 @@ class Dataset(ExtendedModel):
             except Exception as exc:
                 logger.debug(exc)
         return data
+
+    @property
+    def archived_resources_files_url(self):
+        return '{}/datasets/{}/resources/files/download'.format(settings.API_URL, self.ident) if\
+            self.archived_resources_files else None
+
+    @property
+    def resources_files_list(self):
+        resourcefile_model = apps.get_model('resources', 'ResourceFile')
+        resource_model = apps.get_model('resources', 'Resource')
+        if is_enabled('S40_new_file_model.be'):
+            file_details = resourcefile_model.objects.files_details_list(dataset_id=self.pk)
+        else:
+            file_details = resource_model.objects.file_details_list(dataset_id=self.pk)
+        return file_details
+
+    @property
+    def archived_resources_files_media_url(self):
+        if self.archived_resources_files:
+            real_path = os.path.realpath(self.archived_resources_files.path)
+            base_url = self.archived_resources_files.url.rsplit('/', 1)
+            full_url = self._get_absolute_url(
+                base_url=f'{base_url[0]}/',
+                url=os.path.basename(real_path),
+                use_lang=False)
+            return self.mark_safe("<a href='%s'>%s</a>" % (
+                full_url,
+                self.archived_resources_files.name
+            ))
+        return ''
 
     i18n = TranslationField(fields=("title", "notes", "image_alt"))
     objects = DatasetManager()

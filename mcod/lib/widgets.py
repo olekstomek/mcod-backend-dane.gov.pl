@@ -3,12 +3,16 @@ import json
 from ckeditor.widgets import CKEditorWidget as BaseCKEditorWidget
 from ckeditor_uploader.fields import RichTextUploadingField as BaseRichTextUploadingField
 from ckeditor_uploader.widgets import CKEditorUploadingWidget as BaseCKEditorUploadingWidget
-from django.forms import fields, Widget
+from django.forms import fields, CheckboxSelectMultiple, Widget
 from django.template.loader import get_template
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 from django.conf import settings
 import more_itertools as mit
+
+
+class CheckboxSelect(CheckboxSelectMultiple):
+    allow_multiple_selected = False
 
 
 class CKEditorMixin(object):

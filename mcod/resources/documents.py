@@ -98,6 +98,7 @@ class ResourceDocument(ExtendedDocument):
     update_frequency = fields.KeywordField()
     computed_downloads_count = fields.IntegerField()
     computed_views_count = fields.IntegerField()
+    has_dynamic_data = fields.BooleanField()
     has_high_value_data = fields.BooleanField()
     if is_enabled('S37_resources_admin_region_data.be'):
         regions = regions_field(attr='all_regions')

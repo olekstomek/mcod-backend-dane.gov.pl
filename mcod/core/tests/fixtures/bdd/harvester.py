@@ -89,15 +89,17 @@ def datasource_finishes_import(obj_id, **kwargs):
 @then(parsers.parse('ckan datasource with id {obj_id:d} created all data in db'))
 def datasource_imported_resources(obj_id):
     dataset = Dataset.objects.get(source_id=obj_id)
-    res = Resource.objects.get(dataset__source_id=obj_id)
+    resources = Resource.objects.filter(dataset__source_id=obj_id).order_by('ext_ident')
+    res = resources[0]
+    second_res = resources[1]
     org = dataset.organization
     source_import = DataSourceImport.objects.get(datasource_id=obj_id)
     assert source_import.error_desc == ''
     assert source_import.status == 'ok'
     assert source_import.datasets_count == 1
     assert source_import.datasets_created_count == 1
-    assert source_import.resources_count == 1
-    assert source_import.resources_created_count == 1
+    assert source_import.resources_count == 2
+    assert source_import.resources_created_count == 2
     assert org.title == 'Wydział Środowiska'
     assert org.uuid.urn == 'urn:uuid:b97080cc-858d-4763-a751-4b54bf3fb0f0'
     assert dataset.title == 'Ilości odebranych odpadów z podziałem na sektory'
@@ -107,11 +109,15 @@ def datasource_imported_resources(obj_id):
     assert res.ext_ident == '6db2e083-72b8-4f92-a6ab-678fc8461865'
     assert res.description == '##Sektory:'
     assert res.format == 'csv'
+    assert second_res.title == 'Ilości odebranych odpadów z podziałem na sektory ze spacja'
+    assert second_res.ext_ident == '6db2e083-72b8-4f92-a6ab-678fc8461866'
 
 
-@when(parsers.parse('xml datasource with id {obj_id:d} finishes importing objects'))
+@when(parsers.parse('xml datasource with id {obj_id:d} of version {version} finishes importing objects'))
 @requests_mock.Mocker(kw='mock_request')
-def xml_datasource_finishes_import(obj_id, harvester_decoded_xml_1_2_import_data, **kwargs):
+def xml_datasource_finishes_import(
+        obj_id, version, harvester_decoded_xml_1_2_import_data, harvester_decoded_xml_1_4_import_data,
+        harvester_decoded_xml_1_5_import_data, **kwargs):
     mock_request = kwargs['mock_request']
     obj = DataSource.objects.get(pk=obj_id)
     simple_csv_path = os.path.join(settings.TEST_SAMPLES_PATH, 'simple.csv')
@@ -119,7 +125,7 @@ def xml_datasource_finishes_import(obj_id, harvester_decoded_xml_1_2_import_data
         mock_request.get('http://mock-resource.com.pl/simple.csv',
                          headers={'content-type': 'application/csv'}, content=tmp_file.read())
     mock_request.post(settings.SPARQL_UPDATE_ENDPOINT)
-    xml_data_path = os.path.join(settings.TEST_SAMPLES_PATH, 'harvester_import_example1.2.xml')
+    xml_data_path = os.path.join(settings.TEST_SAMPLES_PATH, 'harvester', f'import_example{version}.xml')
     with open(xml_data_path, 'rb') as xml_resp_data:
         xml_request_kwargs = {
             'url': obj.xml_url,
@@ -131,15 +137,20 @@ def xml_datasource_finishes_import(obj_id, harvester_decoded_xml_1_2_import_data
     md5_url = xml_request_kwargs['url'].replace('.xml', '.md5')
     mock_request.get(md5_url, content=hashlib.md5(xml_request_kwargs['content']).hexdigest().encode('utf-8'))
     mock_request.head(**xml_request_kwargs)
+    xml_map = {
+        '1.2': harvester_decoded_xml_1_2_import_data,
+        '1.4': harvester_decoded_xml_1_4_import_data,
+        '1.5': harvester_decoded_xml_1_5_import_data,
+    }
     with patch('mcod.harvester.utils.urlretrieve') as mock_urlretrieve:
         with patch('mcod.harvester.utils.decode_xml') as mock_to_dict:
             mock_urlretrieve.return_value = xml_data_path, {}
-            mock_to_dict.return_value = harvester_decoded_xml_1_2_import_data
+            mock_to_dict.return_value = xml_map[version]
             obj.import_data()
 
 
-@then(parsers.parse('xml datasource with id {obj_id:d} created all data in db'))
-def xml_datasource_imported_resources(obj_id):
+@then(parsers.parse('xml datasource with id {obj_id:d} of version {version} created all data in db'))
+def xml_datasource_imported_resources(obj_id, version):
     source_import = DataSourceImport.objects.get(datasource_id=obj_id)
     assert source_import.error_desc == ''
     assert source_import.status == 'ok'
@@ -157,6 +168,14 @@ def xml_datasource_imported_resources(obj_id):
     assert dataset.keywords_list == [{'name': '2028_tagPL', 'language': 'pl'}]
     assert set(res.values_list('ext_ident', flat=True)) == {'zasob_extId_zasob_1', 'zasob_extId_zasob_2'}
     assert set(res.values_list('title', flat=True)) == {'ZASOB CSV LOCAL', 'ZASOB csv REMOTE'}
+    if version == '1.4':  # from this version special_signs of resources are imported also.
+        for resource in res:
+            assert resource.special_signs_symbols_list == '-'
+    elif version == '1.5':  # from this version has_high_value_data, has_dynamic_data attrs are imported also.
+        assert dataset.has_high_value_data
+        assert dataset.has_dynamic_data
+        assert set(res.values_list('has_dynamic_data', flat=True)) == {True, None}
+        assert set(res.values_list('has_high_value_data', flat=True)) == {False, None}
 
 
 @when(parsers.parse('dcat datasource with id {obj_id:d} finishes importing objects'))
@@ -182,13 +201,18 @@ def dcat_datasource_imported_resources(obj_id):
     assert source_import.status == 'ok'
     assert source_import.datasets_count == 1
     assert source_import.datasets_created_count == 1
-    assert source_import.resources_count == 1
-    assert source_import.resources_created_count == 1
+    assert source_import.resources_count == 2
+    assert source_import.resources_created_count == 2
     dataset = Dataset.objects.get(source_id=obj_id)
-    res = Resource.objects.get(dataset__source_id=obj_id)
+    resources = Resource.objects.filter(dataset__source_id=obj_id).order_by('-ext_ident')
+    res = resources[0]
+    second_res = resources[1]
     assert res.title == 'Distribution title'
     assert res.description == 'Some distribution description'
     assert res.ext_ident == '999'
+    assert second_res.title == 'Second distribution title'
+    assert second_res.description == 'Some other distribution description'
+    assert second_res.ext_ident == '1000'
     assert dataset.title == 'Dataset title'
     assert dataset.notes == 'DESCRIPTION'
     assert dataset.ext_ident == '1'

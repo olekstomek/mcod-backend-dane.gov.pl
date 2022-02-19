@@ -10,6 +10,7 @@ from io import BytesIO
 from pydoc import locate
 
 from django.apps import apps
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client
 from django.utils import translation
 import requests_mock
@@ -316,9 +317,7 @@ def translated_object_type(object_type):
     return obj
 
 
-@given('<object_type> created with params <params>')
-@given(parsers.parse('{object_type} created with params {params}'))
-def object_type_created_with_params(context, object_type, params):
+def parse_and_create(context, object_type, params):
     params = json.loads(params)
     if object_type.endswith('report'):
         _factory = factories_registry.get_factory(object_type)
@@ -337,6 +336,18 @@ def object_type_created_with_params(context, object_type, params):
     create_object(object_type, object_id, **params)
 
 
+@given('<object_type> created with params <params>')
+@given(parsers.parse('{object_type} created with params {params}'))
+def object_type_created_with_params(context, object_type, params):
+    parse_and_create(context, object_type, params)
+
+
+@given('another <object_type> created with params <another_params>')
+@given(parsers.parse('another {object_type} created with params {another_params}'))
+def another_object_type_created_with_params(context, object_type, another_params):
+    parse_and_create(context, object_type, another_params)
+
+
 @given('translated objects')
 def translated_objects():
     for object_type in ['application', 'article', 'dataset', 'institution', 'resource']:
@@ -353,9 +364,20 @@ def object_with_id_and_param_p(object_type, object_id, field_name, value):
     return create_object(object_type, object_id, **{field_name: value})
 
 
+@given('<param_object_type> with id <param_object_id> and <param_field_name> is <param_value>')
+def object_with_id_and_param_for_outline(param_object_type, param_object_id, param_field_name, param_value):
+    return create_object(param_object_type, param_object_id, **{param_field_name: param_value})
+
+
 @given(parsers.parse('another {object_type} with id {object_id:d} and {field_name} is {value}'))
 def another_object_with_id_and_param_p(object_type, object_id, field_name, value):
     return create_object(object_type, object_id, **{field_name: value})
+
+
+@given('another <param_object_type> with id <another_param_object_id> and <param_field_name> is <another_param_value>')
+def another_object_with_id_and_param_p_for_outline(param_object_type, another_param_object_id,
+                                                   param_field_name, another_param_value):
+    return create_object(param_object_type, another_param_object_id, **{param_field_name: another_param_value})
 
 
 @given(parsers.parse(
@@ -415,28 +437,58 @@ def form_class_is(admin_context, form_class):
     assert admin_context.form_class
 
 
+@given(parsers.parse('form has image to upload'))
+@given('form has image to upload')
+def form_has_image_to_upload(admin_context, small_image):
+    admin_context.form_files = {'image': small_image}
+
+
 def get_data(resource):
     resource.revalidate()
     assert resource.tabular_data_schema
     data = resource.__dict__
     data['dataset'] = resource.dataset_id
+    if is_enabled('S43_dynamic_data.be'):
+        data['has_dynamic_data'] = False
     if is_enabled('S41_resource_has_high_value_data.be'):
         data['has_high_value_data'] = False
     return data
 
 
-@given(parsers.parse('form geo data is {form_data}'))
-@given('form geo data is <form_data>')
-def form_geo_data(admin_context, geo_tabular_data_resource, form_data):
-    data = get_data(geo_tabular_data_resource)
-    data.update(json.loads(form_data))
-    admin_context.form_data = data
-
-
-@given(parsers.parse('form tabular data is {form_data}'))
-@given('form tabular data is <form_data>')
-def form_tabular_data(admin_context, tabular_resource, form_data):
-    data = get_data(tabular_resource)
+@given(parsers.parse('form {object_type} data is {form_data}'))
+@given('form <object_type> data is <form_data>')
+def form_data_is(admin_context, institution, tag_pl, tag_en, categories, buzzfeed_fakenews_resource,
+                 geo_tabular_data_resource, object_type, form_data):
+    data_map = {
+        'dataset': {
+            "categories": [x.id for x in categories],
+            "customfields": None,
+            "has_dynamic_data": False,
+            "has_high_value_data": False,
+            "license_condition_db_or_copyrighted": None,
+            "license_condition_modification": None,
+            "license_condition_original": None,
+            "license_condition_personal_data": None,
+            "license_condition_responsibilities": None,
+            "license_condition_source": None,
+            "license_id": "other-pd",
+            "notes": "more than 20 characters",
+            "organization": institution.id,
+            "slug": "test",
+            "status": "published",
+            "tags_en": [],
+            "tags_pl": [tag_pl],
+            "title": "Test",
+            "update_frequency": "weekly",
+            "url": "http://cos.tam.pl",
+        }
+    }
+    if object_type == 'tabular':
+        data = get_data(buzzfeed_fakenews_resource)
+    elif object_type == 'geo':
+        data = get_data(geo_tabular_data_resource)
+    else:
+        data = data_map.get(object_type, {})
     data.update(json.loads(form_data))
     admin_context.form_data = data
 
@@ -707,6 +759,13 @@ def api_request_post_data(admin_context, data_type, req_post_data):
             "organizations": []
         }
     }
+    if is_enabled('S43_dynamic_data.be'):
+        default_post_data['dataset'].update({
+            "has_dynamic_data": False,
+            "resources-2-0-has_dynamic_data": False,
+        })
+        default_post_data['institution']['datasets-2-0-has_dynamic_data'] = False
+        default_post_data['resource']['has_dynamic_data'] = False
     if is_enabled('S41_resource_has_high_value_data.be'):
         default_post_data['dataset'].update({
             "has_high_value_data": False,
@@ -723,30 +782,56 @@ def api_request_post_data(admin_context, data_type, req_post_data):
     admin_context.obj = data
 
 
-@then('form is valid')
-def form_is_valid(admin_context):
+@when(parsers.parse('admin\'s request posted file data is {req_post_files}'))
+@when('admin\'s request posted file data is <req_post_files>')
+def api_request_post_file(admin_context, req_post_files):
+    post_file_names = json.loads(req_post_files)
+    posted_files = {}
+    for field_name, file_name in post_file_names.items():
+        with open(os.path.join(settings.TEST_SAMPLES_PATH, file_name), 'rb') as f:
+            posted_files[field_name] = SimpleUploadedFile(file_name, f.read())
+    admin_context.obj.update(posted_files)
+
+
+def form_is_validated(admin_context):
     assert admin_context.form_class
     kwargs = {'data': admin_context.form_data}
     if admin_context.form_instance:
         kwargs['instance'] = admin_context.form_instance
+    if admin_context.form_files:
+        kwargs['files'] = admin_context.form_files
     admin_context.form = admin_context.form_class(**kwargs)
+
+
+@then('form is valid')
+def form_is_valid(admin_context):
+    form_is_validated(admin_context)
     form = admin_context.form
     assert form.is_valid(), 'Form "%s" should be valid, but has errors: %s"' % (form.__class__, form.errors)
 
 
-@then(parsers.parse('form field {field} error is {error}'))
-@then('form field <field> error is <error>')
-def form_field_error(admin_context, field, error):
-    assert admin_context.form_class
-    kwargs = {'data': admin_context.form_data}
-    if admin_context.form_instance:
-        kwargs['instance'] = admin_context.form_instance
-    admin_context.form = admin_context.form_class(**kwargs)
+@then('form is not valid')
+def form_is_not_valid(admin_context):
+    form_is_validated(admin_context)
     form = admin_context.form
     assert not form.is_valid()
-    assert field in form.errors, f'Field {field} was not found in form.errors'
-    errors = form.errors[field]
-    assert any([error in x for x in errors]), f'"{error}" not found in {errors}'
+
+
+@then('form is saved')
+def form_is_saved(admin_context):
+    assert admin_context.form
+    admin_context.form.save()
+
+
+@then(parsers.parse('form field {field_name} error is {error_msg}'))
+@then('form field <field_name> error is <error_msg>')
+def form_field_error_is(admin_context, field_name, error_msg):
+    form_is_validated(admin_context)
+    form = admin_context.form
+    assert not form.is_valid()
+    assert field_name in form.errors, f'Field {field_name} was not found in form.errors'
+    errors = form.errors[field_name]
+    assert any([error_msg in x for x in errors]), f'"{error_msg}" not found in {errors}'
 
 
 @then(parsers.parse('admin\'s response status code is {status_code:d}'))
@@ -799,17 +884,38 @@ def admin_response_page_not_contains(admin_context, value):
     assert value not in content, f'Page content should not contain phrase: \"{value}\"'
 
 
-@when(parsers.parse('admin\'s page {page_url} is requested'))
-@when('admin\'s page <page_url> is requested')
-def admin_page_is_requested(admin_context, page_url):
+@then(parsers.parse('admin\'s response resolved url name is {url_name}'))
+@then('admin\'s response resolved url name is <url_name>')
+def admin_response_resolved_url_name_is(admin_context, url_name):
+    resolved_url_name = admin_context.response.resolver_match.url_name
+    assert url_name == resolved_url_name, f'Resolved name is: {resolved_url_name}'
+
+
+def get_response(admin_context):
     client = Client()
     client.force_login(admin_context.admin.user)
     translation.activate('pl')
     if admin_context.admin.method == 'POST':
-        response = client.post(page_url, data=getattr(admin_context, 'obj', None), follow=True)
+        response = client.post(
+            admin_context.admin.path,
+            data=getattr(admin_context, 'obj', None),
+            follow=True)
     else:
-        response = client.get(page_url, follow=True)
-    admin_context.response = response
+        response = client.get(admin_context.admin.path, follow=True)
+    return response
+
+
+@when('admin\'s page is requested')
+@then('admin\'s page is requested')
+def admin_path_is_requested(admin_context):
+    admin_context.response = get_response(admin_context)
+
+
+@when(parsers.parse('admin\'s page {page_url} is requested'))
+@when('admin\'s page <page_url> is requested')
+def admin_page_is_requested(admin_context, page_url):
+    admin_context.admin.path = page_url
+    admin_context.response = get_response(admin_context)
 
 
 @when(parsers.parse('admin\'s page with mocked geo api {page_url} is requested'))

@@ -11,12 +11,17 @@ import xmlschema
 from dateutil import parser
 from django.apps import apps
 from django.conf import settings
+
+from django.test import override_settings
 from pytest_bdd import given, when, then
 from pytest_bdd import parsers
+from dateutil.relativedelta import relativedelta
+from datetime import date
 
 from mcod.categories.factories import CategoryFactory
 from mcod.core.tests.fixtures.bdd.common import prepare_file, prepare_dbf_file, copyfile, create_object
 from mcod.datasets.factories import DatasetFactory
+from mcod.datasets.tasks import send_dataset_update_reminder
 from mcod.harvester.factories import DataSourceFactory
 from mcod.resources.factories import ChartFactory, ResourceFactory
 from mcod.showcases.factories import ShowcaseFactory
@@ -594,3 +599,90 @@ def archive_contains_files(dataset_id, files_count):
     zipped_files = inst.archived_resources_files
     with zipfile.ZipFile(zipped_files.path) as zip_f:
         assert len(zip_f.namelist()) == files_count
+
+
+@then(parsers.parse('Dataset with id {dataset_id} has zip with trimmed file names and no special characters'))
+def archive_files_trimmed_filename_and_no_special_chars(dataset_id):
+    model = apps.get_model('datasets', 'dataset')
+    special_chars = '<>:"/\\|?*~#%&+{}-^ęóąśćłńźżĘÓĄŚŁŻŹĆŃ'
+    inst = model.objects.get(pk=dataset_id)
+    zipped_files = inst.archived_resources_files
+    zip_name = os.path.basename(zipped_files.path)
+    found_ds_chars = [ch for ch in special_chars if ch in zip_name]
+    assert len(zip_name) == 223
+    assert len(found_ds_chars) == 0
+    with zipfile.ZipFile(zipped_files.path) as zip_f:
+        dirs_list = [os.path.dirname(fname) for fname in zip_f.namelist()]
+        for d_name in dirs_list:
+            found_res_chars = [ch for ch in special_chars if ch in d_name]
+            assert len(d_name) <= 255
+            assert len(found_res_chars) == 0
+
+
+@then(parsers.parse('Dataset with id {dataset_id} has no archive assigned'))
+def no_archive_created(dataset_id):
+    model = apps.get_model('datasets', 'dataset')
+    inst = model.objects.get(pk=dataset_id)
+    zipped_files = inst.archived_resources_files
+    assert zipped_files.name is None
+
+
+@then(parsers.parse('latest dataset has categories with ids {categories_ids}'))
+@then('latest dataset has categories with ids <categories_ids>')
+def dataset_has_categories_with_ids(categories_ids):
+    dataset = DatasetFactory._meta.model.raw.latest('id')
+    categories_ids = [int(x) for x in categories_ids.split(',')]
+    dataset_categories_ids = [x.id for x in dataset.categories.all()]
+    assert all(x in dataset_categories_ids for x in categories_ids)
+
+
+@when(parsers.parse('Dataset with id {first_id} resource\'s data_date delay equals {first_delay} and'
+                    ' dataset with id {second_id} resource\'s data_date delay equals {second_delay}'),
+      converters={'first_delay': int, 'second_delay': int})
+@when('Dataset with id <param_value> resource\'s data_date delay equals <first_delay> and'
+      ' dataset with id <another_param_value> resource\'s data_date delay equals <second_delay>')
+def dataset_resources_has_set_data_date(param_value, another_param_value, first_delay, second_delay, admin):
+    freq_updates_with_delays = {
+        'yearly': {'default_delay': 7, 'relative_delta': relativedelta(years=1)},
+        'everyHalfYear': {'default_delay': 7, 'relative_delta': relativedelta(months=6)},
+        'quarterly': {'default_delay': 7, 'relative_delta': relativedelta(months=3)},
+        'monthly': {'default_delay': 3, 'relative_delta': relativedelta(months=1)},
+        'weekly': {'default_delay': 1, 'relative_delta': relativedelta(days=7)},
+    }
+    dataset_model = apps.get_model('datasets', 'dataset')
+    first_ds = dataset_model.objects.get(pk=param_value)
+    second_ds = dataset_model.objects.get(pk=another_param_value)
+    first_ds.modified_by = admin
+    second_ds.modified_by = admin
+    first_ds.save()
+    second_ds.save()
+    first_resource = first_ds.resources.latest('created')
+    second_resource = second_ds.resources.latest('created')
+    first_reldelta = freq_updates_with_delays[first_ds.update_frequency]['relative_delta']
+    second_reldelta = freq_updates_with_delays[second_ds.update_frequency]['relative_delta']
+    first_data_date = date.today() + relativedelta(days=int(second_delay)) - first_reldelta
+    first_resource.data_date = first_data_date
+    first_resource.update_notification_frequency = first_delay
+    second_data_date = date.today() + relativedelta(days=int(second_delay)) - second_reldelta
+    second_resource.data_date = second_data_date
+    second_resource.type = 'file'
+    first_resource.type = 'file'
+    second_resource.update_notification_frequency = second_delay
+    first_resource.save()
+    second_resource.save()
+
+
+@override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend')
+@when('Dataset update reminders are sent')
+def dataset_reminders_are_sent():
+    send_dataset_update_reminder()
+
+
+@override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend')
+@then(parsers.parse('There is 1 sent reminder for dataset with title {dataset_title}'))
+@then('There is 1 sent reminder for dataset with title <dataset_title>')
+def single_sent_reminder(dataset_title):
+    from django.core import mail
+    assert len(mail.outbox) == 1
+    assert mail.outbox[0].subject == dataset_title
+    assert 'Przypomnienie o aktualizacji Zbioru danych' in mail.outbox[0].body

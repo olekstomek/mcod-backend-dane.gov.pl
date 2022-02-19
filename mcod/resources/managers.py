@@ -1,6 +1,6 @@
 from django.apps import apps
 from django.conf import settings
-from django.db.models import Count, Q, Prefetch
+from django.db.models import Count, Q, Prefetch, Manager
 from mcod.core.managers import SoftDeletableQuerySet, SoftDeletableManager, RawManager
 from mcod.unleash import is_enabled
 
@@ -84,7 +84,7 @@ class SoftDeletableMetadataQuerySet(PrefetchResourceFilesMixin, SoftDeletableQue
 
     def by_formats(self, formats):
         if is_enabled('S40_new_file_model.be'):
-            return self.filter(files__isnull=False, format__in=formats)
+            return self.filter(files__isnull=False, format__in=formats).distinct()
         else:
             return self.filter(file__isnull=False, format__in=formats).exclude(file='')
 
@@ -97,6 +97,21 @@ class SoftDeletableMetadataQuerySet(PrefetchResourceFilesMixin, SoftDeletableQue
 
     def with_files(self):
         return self.exclude(Q(file__isnull=True) | Q(file=''))
+
+    def files_details_list(self, dataset_id):
+        all_resource_files = self.filter(
+            status='published',
+            dataset_id=dataset_id
+        ).with_files().values('file', 'csv_file', 'jsonld_file', 'pk', 'title')
+        files_details = []
+        for res in all_resource_files:
+            res_files = [(res['file'], res['pk'], res['title'])]
+            if res['csv_file']:
+                res_files.append((res['csv_file'], res['pk'], res['title']))
+            if res['jsonld_file']:
+                res_files.append((res['jsonld_file'], res['pk'], res['title']))
+            files_details.extend(res_files)
+        return files_details
 
 
 class ResourceManager(SoftDeletableManager):
@@ -128,8 +143,20 @@ class ResourceManager(SoftDeletableManager):
     def with_files(self):
         return super().get_queryset().with_files()
 
+    def file_details_list(self, dataset_id):
+        return super().get_queryset().file_details_list(dataset_id)
+
 
 class ResourceRawManager(PrefetchResourceFilesMixin, RawManager):
     def get_queryset(self):
         main_file, other_files = self.get_files_prefetch()
         return super().get_queryset().prefetch_related(main_file, other_files)
+
+
+class ResourceFileManager(Manager):
+
+    def files_details_list(self, dataset_id):
+        return self.filter(
+            resource__dataset_id=dataset_id,
+            resource__status='published', resource__is_removed=False
+        ).values_list('file', 'resource_id', 'resource__title')

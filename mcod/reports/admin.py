@@ -4,7 +4,6 @@ from django.http.response import HttpResponseRedirect
 from django.urls import path, reverse
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
-from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from rangefilter.filter import DateRangeFilter
 
@@ -23,7 +22,7 @@ from mcod.reports.models import (
     SummaryDailyReport,
     UserReport,
 )
-from mcod.reports.tasks import generate_csv, create_daily_resources_report
+from mcod.reports.tasks import create_daily_resources_report
 from mcod.unleash import is_enabled
 
 
@@ -143,28 +142,6 @@ class DailyResourceReportsAdmin(ReportsAdmin):
         msg = _('The task of generating the report has been commissioned. The report may appear with a delay ...')
         messages.info(request, msg)
         return HttpResponseRedirect(url)
-
-
-def export_to_csv(self, request, queryset):
-    generate_csv.s(tuple(obj.id for obj in queryset),
-                   self.model._meta.label,
-                   request.user.id,
-                   now().strftime('%Y%m%d%H%M%S.%s')
-                   ).apply_async(countdown=1)
-    messages.add_message(request, messages.SUCCESS, _('Task for CSV generation queued'))
-
-
-export_to_csv.short_description = _("Export selected to CSV")
-
-
-class ExportCsvMixin:
-    def get_actions(self, request):
-        actions = super().get_actions(request)
-        if request.user.is_superuser:
-            actions.update({
-                'export_to_csv': (export_to_csv, 'export_to_csv', _("Export selected to CSV"))
-            })
-        return actions
 
 
 admin.site.register(MonitoringReport, MonitoringReportsAdmin)

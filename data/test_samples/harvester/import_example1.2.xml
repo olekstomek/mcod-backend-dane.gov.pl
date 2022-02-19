@@ -3,8 +3,8 @@
 	<dataset status="published">
 		<extIdent>zbior_extId_1</extIdent>
 		<title>
-			<polish>Zbiór danych - nowy scheme CC0 1.0</polish>
-			<english>Zbiór danych - Testy nowych tagów i kategorii - EN</english>
+			<polish>  Zbiór danych - nowy scheme CC0 1.0</polish>
+			<english>  	Zbiór danych - Testy nowych tagów i kategorii - EN</english>
 		</title>
 		<description>
 			<polish>Opis w wersji PL - opis testowy do testow UAT</polish>
@@ -28,8 +28,8 @@
 				<extIdent>zasob_extId_zasob_1</extIdent>
 				<url>https://mock-resource.com.pl/simple.csv</url>
 				<title>
-					<polish>ZASOB csv REMOTE</polish>
-					<english>ENGLISH TITLE - RESOURCE 1</english>
+					<polish>		ZASOB csv REMOTE  </polish>
+					<english> ENGLISH TITLE - RESOURCE 1</english>
 				</title>
 				<description>
 					<polish>Opis zasobu opublikowane z XMLA - aktualizacja</polish>

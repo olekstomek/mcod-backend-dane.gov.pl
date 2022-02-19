@@ -1,8 +1,8 @@
   Feature: Model instances removal
     Scenario Outline: Remove model instances
       Given factory <object_type> with params <params>
-      When admin's request method is GET
-      And changelist for <object_type> is requested
+      When admin's path is changelist for <object_type>
+      And admin's page is requested
       Then admin's response status code is 200
       And <object_type> has trash if <has_trash>
       And object is deletable in admin panel if <can_delete>
@@ -14,8 +14,8 @@
     Examples:
     | object_type               |                              params| has_trash | can_delete | can_remove_from_db |
     | course                    |                       {"id": 1001} |         1 |          1 |                  0 |
-#    | application               |                       {"id": 1001} |         1 |          1 |                  0 |
-#    | applicationproposal       |                       {"id": 1001} |         1 |          1 |                  0 |
+    | application               |                       {"id": 1001} |         1 |          1 |                  0 |
+    | applicationproposal       |                       {"id": 1001} |         1 |          1 |                  0 |
     | article                   |                       {"id": 1001} |         1 |          1 |                  0 |
     | search history            |                       {"id": 1001} |         0 |          1 |                  1 |
     | institution               |                       {"id": 1001} |         1 |          1 |                  0 |
@@ -50,31 +50,35 @@
 
     Scenario Outline: Remove model instances from trash
       Given removed factory <object_type> with params <params>
-      When admin's request method is GET
-      And trash changelist for <object_type> is requested
+      When admin's page <page_url> is requested
       Then admin's response status code is 200
+      And admin's path is trash change for <object_type>
+      And admin's page is requested
+      And admin's response status code is 200
+      And admin's response page contains name="_save">Zapisz</button
+      And admin's response page not contains Zapisz i kontynuuj edycję
       And removed object is flagged as permanently removed after deleted from trash by button
       And removed object is flagged as permanently removed after deleted from trash by action
       And removed object is flagged as permanently removed after deleted from trash by model delete method
       And removed object is flagged as permanently removed after deleted from trash by trash queryset delete method
 
     Examples:
-    | object_type               |                             params |
-    | course                    |                       {"id": 1003} |
-#    | application               |                       {"id": 1003} |
-#    | applicationproposal       |                       {"id": 1003} |
-    | article                   |                       {"id": 1003} |
-    | institution               |                       {"id": 1003} |
-    | category                  |                       {"id": 1003} |
-    | lab_event                 |                       {"id": 1003} |
-    | guide                     |                       {"id": 1003} |
-    | meeting                   |                       {"id": 1003} |
-    | resource                  |                       {"id": 1003} |
-    | dataset                   |                       {"id": 1003} |
-    | datasetsubmission         |                       {"id": 1003} |
-    | resourcecomment           |                       {"id": 1003} |
-    | datasetcomment            |                       {"id": 1003} |
-    | accepteddatasetsubmission |                       {"id": 1003} |
-    | datasource                | {"id": 1003, "status": "inactive"} |
-    | showcase                  |                       {"id": 1003} |
-    | showcaseproposal          |                       {"id": 1003} |
+    | object_type               | page_url                                     | params       |
+    | course                    | /academy/coursetrash/                        | {"id": 1003} |
+    | application               | /applications/applicationtrash/              | {"id": 1003} |
+    | applicationproposal       | /applications/applicationproposaltrash/      | {"id": 1003} |
+    | article                   | /articles/articletrash/                      | {"id": 1003} |
+    | institution               | /organizations/organizationtrash/            | {"id": 1003} |
+    | category                  | /categories/categorytrash/                   | {"id": 1003} |
+    | lab_event                 | /laboratory/labeventtrash/                   | {"id": 1003} |
+    | guide                     | /guides/guidetrash/                          | {"id": 1003} |
+    | meeting                   | /users/meetingtrash/                         | {"id": 1003} |
+    | resource                  | /resources/resourcetrash/                    | {"id": 1003} |
+    | dataset                   | /datasets/datasettrash/                      | {"id": 1003} |
+    | datasetsubmission         | /suggestions/datasetsubmissiontrash/         | {"id": 1003} |
+    | resourcecomment           | /suggestions/resourcecommenttrash/           | {"id": 1003} |
+    | datasetcomment            | /suggestions/datasetcommenttrash/            | {"id": 1003} |
+    | accepteddatasetsubmission | /suggestions/accepteddatasetsubmissiontrash/ | {"id": 1003} |
+    | datasource                | /harvester/datasourcetrash/                  | {"id": 1003, "status": "inactive"} |
+    | showcase                  | /showcases/showcasetrash/                    | {"id": 1003} |
+    | showcaseproposal          | /showcases/showcaseproposaltrash/            | {"id": 1003} |

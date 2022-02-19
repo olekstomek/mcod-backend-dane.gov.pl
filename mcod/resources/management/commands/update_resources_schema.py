@@ -1,9 +1,9 @@
 from django.apps import apps
-from django.core.management.base import CommandError
-from django_tqdm import BaseCommand
-
-from mcod.resources.tasks import process_resource_file_data_task
 from django.conf import settings
+from django.core.management import BaseCommand
+from django.core.management.base import CommandError
+from tqdm import tqdm
+
 
 description = """
 Po zmianie sposobu wyświetlania i indeksowania date i datetime stare zasoby mogą mieć problem ze zmianą typu. 
@@ -61,11 +61,8 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-
         if not options['pks']:
-            raise CommandError(
-                "No resource id specified. You must provide at least one."
-            )
+            raise CommandError('No resource id specified. You must provide at least one.')
         Resource = apps.get_model('resources', 'Resource')
         asnc = options.get('async') or False
         if not asnc:
@@ -74,16 +71,12 @@ class Command(BaseCommand):
         date_format = options['dateformat']
         datetime_format = options['datetimeformat']
 
-        pks = (int(pk) for pk in options['pks'].split(','))
-        queryset = Resource.objects.with_tabular_data(pks=pks)
-
-        progress_bar = self.tqdm(desc="Indexing", total=queryset.count())
-
-        for res in queryset:
-            if res.tabular_data_schema:
-                tabular_data_schema = update_schema(res.tabular_data_schema, date_format, datetime_format)
-                Resource.objects.filter(pk=res.id).update(tabular_data_schema=tabular_data_schema)
-            process_resource_file_data_task.delay(res.id, update_verification_date=False)
-            progress_bar.update(1)
-
-        print('Done.')
+        queryset = Resource.objects.with_tabular_data(
+            pks=(int(pk) for pk in options['pks'].split(',')))
+        self.stdout.write('The action will update schema for {} resource(s)'.format(queryset.count()))
+        for obj in tqdm(queryset, desc='Indexing'):
+            if obj.tabular_data_schema:
+                tabular_data_schema = update_schema(obj.tabular_data_schema, date_format, datetime_format)
+                Resource.objects.filter(pk=obj.id).update(tabular_data_schema=tabular_data_schema)
+            obj.index_file()
+        self.stdout.write('Done.')

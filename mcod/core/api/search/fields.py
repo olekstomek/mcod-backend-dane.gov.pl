@@ -7,9 +7,11 @@ from functools import reduce
 
 import six
 from django.utils.translation import get_language
-from elasticsearch_dsl import Field as DSLField, Q, A
+from django.conf import settings
+from elasticsearch_dsl import Field as DSLField, Q, A, Search
 from elasticsearch_dsl import TermsFacet, DateHistogramFacet
 from elasticsearch_dsl.query import Bool, Query
+from elasticsearch_dsl.aggs import Nested, Filter, GeoCentroid
 from marshmallow import class_registry, utils
 from marshmallow.base import SchemaABC
 
@@ -763,31 +765,115 @@ class StringField(ElasticField, fields.String):
 MAX_MAP_RATIO = 2
 
 
-class GeoShapeField(ElasticField, fields.BoundingBox):
+class TileAggregationMixin:
+
+    @staticmethod
+    def bound(min_lon, max_lon, min_lat, max_lat, agg_size, **kwargs):
+        raise NotImplementedError
+
+    def aggregate_tiles_bbox(self, bbox, aggs, **kwargs):
+        lat_side = bbox.max_lat - bbox.min_lat
+        lon_side = bbox.max_lon - bbox.min_lon
+        side_ratio = lat_side / lon_side
+        if side_ratio > 1.:
+            lon_step = lon_side / bbox.divider
+            lon_div, lat_div = bbox.divider, min((int(round(lat_side / lon_step)), MAX_MAP_RATIO * bbox.divider))
+            lat_step = lat_side / lat_div
+        else:
+            lat_step = lat_side / bbox.divider
+            lon_div, lat_div = min((int(round(lon_side / lat_step)), MAX_MAP_RATIO * bbox.divider)), bbox.divider
+            lon_step = lon_side / lon_div
+
+        for i in range(lon_div):
+            for j in range(lat_div):
+                min_lon = bbox.min_lon + lon_step * i
+                max_lon = bbox.min_lon + lon_step * (i + 1)
+                min_lat = bbox.max_lat - lat_step * (j + 1)
+                max_lat = bbox.max_lat - lat_step * j
+                aggs.append((
+                    f"tile{j + 1}{i + 1}",
+                    self.bound(min_lon, max_lon, min_lat, max_lat, bbox.agg_size, **kwargs)
+                ))
+
+    def get_aggregations(self, bbox, **kwargs):
+        aggs = []
+        self.aggregate_tiles_bbox(bbox, aggs, **kwargs)
+        return aggs
+
+    def _prepare_queryset(self, queryset, data):
+        q, aggs = data
+        queryset = super()._prepare_queryset(queryset, q)
+        for a in aggs:
+            queryset.aggs.bucket(*a)
+        return queryset
+
+
+class AggregatedBboxField(TileAggregationMixin, ElasticField, fields.BoundingBox):
+    relation_type = 'intersects'
+
+    @property
+    def query_field_name(self):
+        return self._context.get('query_field', self.metadata.get('query_field', self._name))
+
+    def get_geo_shape_query(self, bbox):
+        return Q('geo_shape', **{
+            self.query_field_name: {
+                "shape": {
+                    "type": "envelope",
+                    "coordinates": [
+                        [bbox.min_lon, bbox.max_lat],
+                        [bbox.max_lon, bbox.min_lat]
+                    ]
+                },
+                "relation": self.relation_type
+            }
+        })
 
     def q(self, value):
         bbox = self.bbox(value)
         if bbox:
-            q = Q('geo_shape', **{
-                self.query_field_name: {
-                    "shape": {
-                        "type": "envelope",
-                        "coordinates": [
-                            [bbox.min_lon, bbox.max_lat],
-                            [bbox.max_lon, bbox.min_lat]
-                        ]
-                    },
-                    "relation": "within",
-                }
-            })
-            return q
+            q = self.get_geo_shape_query(bbox)
+            aggs = self.get_aggregations(bbox)
+            return q, aggs
         else:
             return value
 
 
-class BBoxField(ElasticField, fields.BoundingBox):
+class GeoShapeField(AggregatedBboxField):
+
+    relation_type = 'within'
+
+    def bound(self, min_lon, max_lon, min_lat, max_lat, agg_size, **kwargs):
+        bbox_q_dict = {
+            'regions.coords': {
+                'top_left': {'lon': min_lon, 'lat': max_lat},
+                'bottom_right': {'lon': max_lon, 'lat': min_lat}
+            }
+        }
+        bbox_q = Q('geo_bounding_box', **bbox_q_dict)
+        main_bbox_q = self.get_geo_shape_query(kwargs['main_bbox'])
+        nested_bbox_q = Q('nested', path='regions', query=bbox_q & main_bbox_q)
+        return Filter(filter=nested_bbox_q).metric(
+            'resources_regions',
+            Nested(path='regions').metric(
+                "tile_regions", A("filter", filter=bbox_q & main_bbox_q).metric(
+                    'centroid', GeoCentroid(field="regions.coords"))
+            )
+        )
+
+    def q(self, value):
+        bbox = self.bbox(value)
+        if bbox:
+            q = self.get_geo_shape_query(bbox)
+            aggs = self.get_aggregations(bbox, main_bbox=bbox)
+            return q, aggs
+        else:
+            return value
+
+
+class BBoxField(AggregatedBboxField):
     @staticmethod
-    def bound(min_lon, max_lon, min_lat, max_lat, agg_size):
+    def bound(min_lon, max_lon, min_lat, max_lat, agg_size, **kwargs):
         q_bbox = Q('geo_bounding_box', **{
             'point': {
                 'top_left': {'lon': min_lon, 'lat': max_lat},
@@ -799,69 +885,62 @@ class BBoxField(ElasticField, fields.BoundingBox):
             .metric("points", A("top_hits", size=agg_size)) \
             .metric("centroid", A("geo_centroid", field="point"))
 
-    def q(self, value):
-        bbox = self.bbox(value)
-        if bbox:
-            q = Q('geo_shape', **{
-                'shape': {
-                    "shape": {
-                        "type": "envelope",
-                        "coordinates": [
-                            [bbox.min_lon, bbox.max_lat],
-                            [bbox.max_lon, bbox.min_lat]
-                        ]
-                    },
-                    "relation": "intersects"
-                }
-            })
-
-            lat_side = bbox.max_lat - bbox.min_lat
-            lon_side = bbox.max_lon - bbox.min_lon
-            side_ratio = lat_side / lon_side
-            if side_ratio > 1.:
-                lon_step = lon_side / bbox.divider
-                lon_div, lat_div = bbox.divider, min((int(round(lat_side / lon_step)), MAX_MAP_RATIO * bbox.divider))
-                lat_step = lat_side / lat_div
-            else:
-                lat_step = lat_side / bbox.divider
-                lon_div, lat_div = min((int(round(lon_side / lat_step)), MAX_MAP_RATIO * bbox.divider)), bbox.divider
-                lon_step = lon_side / lon_div
-
-            aggs = [("others",
-                     A("filters", filters={"others": ~Q("match", shape_type=1)})
-                     .metric("others", A("top_hits", size=int(self._context['request'].params.get('per_page', 20)))))]
-            for i in range(lon_div):
-                for j in range(lat_div):
-                    min_lon = bbox.min_lon + lon_step * i
-                    max_lon = bbox.min_lon + lon_step * (i + 1)
-                    min_lat = bbox.max_lat - lat_step * (j + 1)
-                    max_lat = bbox.max_lat - lat_step * j
-                    aggs.append((
-                        f"tile{j + 1}{i + 1}",
-                        self.bound(min_lon, max_lon, min_lat, max_lat, bbox.agg_size)
-                    ))
-            return q, aggs
-        else:
-            return value
-
-    def _prepare_queryset(self, queryset, data):
-        q, aggs = data
-        queryset = super()._prepare_queryset(queryset, q)
-        for a in aggs:
-            queryset.aggs.bucket(*a)
-        return queryset
+    def get_aggregations(self, bbox, **kwargs):
+        aggs = [("others",
+                 A("filters", filters={"others": ~Q("match", shape_type=1)})
+                 .metric("others", A("top_hits", size=int(self._context['request'].params.get('per_page', 20)))))]
+        return aggs + super().get_aggregations(bbox)
 
 
 class GeoDistanceField(ElasticField, fields.GeoDistance):
+    @property
+    def query_field_name(self):
+        s = self._context.get('query_field', self.metadata.get('query_field', self._name))
+        return s
+
     def q(self, value):
         lon, lat, distance = value.split(',')
         return Q("geo_distance", **{
             "distance": distance,
-            "point": {
+            self.query_field_name: {
                 "lat": float(lat),
                 "lon": float(lon)
             }
         })
+
+
+class TileAggregatedTermsField(TileAggregationMixin, TermsField):
+
+    @staticmethod
+    def bound(min_lon, max_lon, min_lat, max_lat, agg_size, **kwargs):
+        bbox_q_dict = {
+            'regions.coords': {
+                'top_left': {'lon': min_lon, 'lat': max_lat},
+                'bottom_right': {'lon': max_lon, 'lat': min_lat}
+            }
+        }
+        bbox_q = Q('geo_bounding_box', **bbox_q_dict)
+        region_q = Q('terms', **{'regions.region_id': kwargs['region_id']})
+        nested_bbox_q = Q('nested', path='regions', query=bbox_q & region_q)
+        return Filter(filter=nested_bbox_q).metric(
+            'resources_regions',
+            Nested(path='regions').metric(
+                "tile_regions", A("filter", filter=bbox_q & region_q).metric(
+                    'centroid', GeoCentroid(field="regions.coords"))
+            )
+        )
+
+    def q(self, value):
+        q = super().q(value)
+        query = Search(index=settings.ELASTICSEARCH_COMMON_ALIAS_NAME)
+        res = query.filter(Q('terms', **{'region_id': value})).execute()
+        try:
+            es_bbox = res[0].bbox.coordinates
+            bbox = fields.BBoxTuple(es_bbox[0][0], es_bbox[0][1], es_bbox[1][0], es_bbox[1][1], 3, 9)
+            aggs = self.get_aggregations(bbox, region_id=value)
+        except IndexError:
+            aggs = []
+        return q, aggs
 
 
 class NoDataField(ElasticField, fields.Boolean):

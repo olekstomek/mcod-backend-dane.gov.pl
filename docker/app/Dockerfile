@@ -7,7 +7,7 @@ ARG UNAME=mcod
 ENV PYTHONUNBUFFERED 1
 ENV VIRTUAL_ENV=/usr/src/mcod_backend/venv
 
-RUN apt-get update && apt-get install -y --allow-unauthenticated gettext locales libarchive13 libmagickwand-dev libmagickcore-6.q16-3-extra curl dirmngr apt-transport-https lsb-release ca-certificates firefox-esr
+RUN apt-get update && apt-get install -y --allow-unauthenticated gettext locales libarchive13 libmagickwand-dev libmagickcore-6.q16-3-extra curl dirmngr apt-transport-https lsb-release ca-certificates firefox-esr ffmpeg
 
 RUN curl -sL https://deb.nodesource.com/setup_12.x | bash -
 
@@ -18,9 +18,9 @@ RUN sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen
 RUN sed -i '/pl_PL.UTF-8/s/^# //g' /etc/locale.gen
 RUN locale-gen
 
-ENV LANG pl_PL.UTF-8  
-ENV LANGUAGE pl_PL:pl  
-ENV LC_ALL pl_PL.UTF-8 
+ENV LANG pl_PL.UTF-8
+ENV LANGUAGE pl_PL:pl
+ENV LC_ALL pl_PL.UTF-8
 
 ENV OPENSSL_CONF /etc/ssl/
 

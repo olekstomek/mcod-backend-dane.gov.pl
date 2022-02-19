@@ -3,23 +3,21 @@ from django.contrib import admin
 from django.contrib.admin.exceptions import DisallowedModelAdminToField
 from django.contrib.admin.options import TO_FIELD_VAR
 from django.contrib.admin.utils import unquote
-from django.contrib.auth.admin import UserAdmin, AdminPasswordChangeForm
+from django.contrib.auth.admin import AdminPasswordChangeForm
 from django.core.exceptions import PermissionDenied
 from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
 from django_admin_multiple_choice_list_filter.list_filters import MultipleChoiceListFilter
 
 from mcod.lib.admin_mixins import (
-    ActionsMixin,
-    CRUDMessageMixin,
     DynamicAdminListDisplayMixin,
     HistoryMixin,
     MCODChangeList,
-    SoftDeleteMixin,
+    ModelAdmin,
     StateStatusLabelAdminMixin,
     TrashMixin,
+    UserAdmin,
 )
-from mcod.reports.admin import ExportCsvMixin
 from mcod.users.forms import MeetingForm, UserCreationForm, UserChangeForm, FilteredSelectMultipleCustom
 from mcod.users.models import ACADEMY_PERMS_CODENAMES, LABS_PERMS_CODENAMES, User, Meeting, MeetingFile, MeetingTrash
 
@@ -87,10 +85,10 @@ class UserRoleListFilter(MultipleChoiceListFilter):
 
 
 @admin.register(User)
-class UserAdmin(DynamicAdminListDisplayMixin, StateStatusLabelAdminMixin, HistoryMixin,
-                ExportCsvMixin, AdminConfirmMixin, SoftDeleteMixin, UserAdmin):
+class UserAdmin(DynamicAdminListDisplayMixin, StateStatusLabelAdminMixin, HistoryMixin, AdminConfirmMixin, UserAdmin):
     add_form_template = 'admin/users/user/add_form.html'
     actions_on_top = True
+    export_to_csv = True
     list_display = [
         'email', 'fullname', 'state', 'last_login', 'is_staff', 'is_official', 'is_agent', 'is_superuser',
         '_is_academy_admin', '_is_labs_admin']
@@ -219,7 +217,7 @@ class UserAdmin(DynamicAdminListDisplayMixin, StateStatusLabelAdminMixin, Histor
 
     def get_form(self, request, obj=None, **kwargs):
         self._request = request
-        form = super(UserAdmin, self).get_form(request, obj=obj, **kwargs)
+        form = super().get_form(request, obj=obj, **kwargs)
         form.declared_fields['phone'].required = form.base_fields['fullname'].required = request.user.is_normal_staff
         return form
 
@@ -326,7 +324,7 @@ class MeetingFilesInline(admin.StackedInline):
     ordering = ('created', )
 
 
-class MeetingAdminMixin(ActionsMixin, CRUDMessageMixin, HistoryMixin):
+class MeetingAdminMixin(HistoryMixin):
     delete_selected_msg = _('Delete selected meetings')
     filter_horizontal = ('members', )
     form = MeetingForm
@@ -376,7 +374,7 @@ class MeetingAdminMixin(ActionsMixin, CRUDMessageMixin, HistoryMixin):
         return formfield
 
 
-class MeetingAdmin(MeetingAdminMixin, admin.ModelAdmin):
+class MeetingAdmin(MeetingAdminMixin, ModelAdmin):
 
     actions_on_top = True
     fieldsets = [

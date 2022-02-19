@@ -105,6 +105,7 @@ class LogEntryManager(BaseLogEntryManager):
             'organization',
             'reports_report',
             'resource',
+            'showcase',
             'tag',
             'user',
             'user_following_application',

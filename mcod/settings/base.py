@@ -63,6 +63,7 @@ INSTALLED_APPS = [
     'wagtail.core',
     'wagtail.api.v2',
     'hypereditor',
+    'wagtailvideos',
 
     'modelcluster',
     'taggit',
@@ -248,6 +249,7 @@ HARVESTER_XML_VERSION_TO_SCHEMA_PATH = {
     '1.2': HARVESTER_DATA_DIR.path('xml_import_otwarte_dane_1_2.xsd').root,
     '1.3': HARVESTER_DATA_DIR.path('xml_import_otwarte_dane_1_3.xsd').root,
     '1.4': HARVESTER_DATA_DIR.path('xml_import_otwarte_dane_1_4.xsd').root,
+    '1.5': HARVESTER_DATA_DIR.path('xml_import_otwarte_dane_1_5.xsd').root,
 }
 
 HARVESTER_IMPORTERS = {
@@ -738,7 +740,7 @@ ELASTICSEARCH_DSL_INDEX_SETTINGS = {
 ELASTICSEARCH_DSL_SEARCH_INDEX_SETTINGS = {
     'number_of_shards': 1,
     'number_of_replicas': 1,
-    'max_result_window': 25000
+    'max_result_window': 40000
 }
 
 ELASTICSEARCH_DSL_SEARCH_INDEX_ALIAS = {
@@ -1236,6 +1238,10 @@ BASE_URL = env('BASE_URL', default='https://www.dane.gov.pl')
 API_URL = env('API_URL', default='https://api.dane.gov.pl')
 ADMIN_URL = env('ADMIN_URL', default='https://admin.dane.gov.pl')
 CMS_URL = env('CMS_URL', default='https://cms.dane.gov.pl')
+DYNAMIC_DATA_MANUAL_URL = env(
+    'DYNAMIC_DATA_MANUAL_URL', default='/pl/knowledgebase/useful-materials/dane-dynamiczne')
+HIGH_VALUE_DATA_MANUAL_URL = env(
+    'HIGH_VALUE_DATA_MANUAL_URL', default='/pl/knowledgebase/useful-materials/dane-o-wysokiej-wartosci')
 TOURPICKER_URL = f'{BASE_URL}?tourPicker=1'
 API_URL_INTERNAL = env('API_URL_INTERNAL', default='http://mcod-api:8000')
 

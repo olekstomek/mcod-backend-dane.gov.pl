@@ -1,11 +1,15 @@
 from datetime import date
 
 import pytest
+from pytest_bdd import scenarios
 from dateutil.relativedelta import relativedelta
 from django.core import mail
 from django.test import override_settings
 
 from mcod.datasets.tasks import send_dataset_update_reminder
+
+
+scenarios('features/dataset_send_update_reminder.feature')
 
 
 class TestDatasetUpdateReminder:

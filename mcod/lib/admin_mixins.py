@@ -1,24 +1,31 @@
 import json
+import nested_admin
 from urllib.parse import quote as urlquote
 
 from django.contrib import admin, messages
 from django.contrib.admin.utils import quote, unquote
 from django.contrib.admin.templatetags.admin_urls import add_preserved_filters
 from django.contrib.admin.views.main import ChangeList
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.core.exceptions import PermissionDenied
 from django.http import HttpResponseRedirect
+from django.template.defaultfilters import truncatewords
 from django.template.response import TemplateResponse
 from django.urls import reverse, NoReverseMatch
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils.text import capfirst
+from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _, gettext, pgettext_lazy
 from modeltrans.translator import get_i18n_field
 from modeltrans.utils import get_language
+from rules.contrib.admin import ObjectPermissionsModelAdmin as BaseObjectPermissionsModelAdmin
 
 from mcod import settings
 from mcod.histories.models import History, LogEntry
+from mcod.reports.tasks import generate_csv
 from mcod.tags.views import TagAutocompleteJsonView
+from mcod.unleash import is_enabled
 
 
 class MCODChangeList(ChangeList):
@@ -67,19 +74,6 @@ class DecisionFilter(admin.SimpleListFilter):
         return queryset
 
 
-class ActionsMixin(object):
-
-    delete_selected_msg = None
-
-    def get_actions(self, request):
-        """Override delete_selected action description."""
-        actions = super().get_actions(request)
-        if self.delete_selected_msg and 'delete_selected' in actions:
-            func, action, description = actions.get('delete_selected')
-            actions['delete_selected'] = func, action, self.delete_selected_msg
-        return actions
-
-
 class AddChangeMixin(object):
 
     def has_add_permission(self, request):
@@ -100,7 +94,269 @@ class AddChangeMixin(object):
         return super().has_change_permission(request, obj=obj)
 
 
-class TrashMixin(ActionsMixin, admin.ModelAdmin):
+def export_to_csv(self, request, queryset):
+    generate_csv.s(tuple(obj.id for obj in queryset),
+                   self.model._meta.label,
+                   request.user.id,
+                   now().strftime('%Y%m%d%H%M%S.%s')
+                   ).apply_async(countdown=1)
+    messages.add_message(request, messages.SUCCESS, _('Task for CSV generation queued'))
+
+
+export_to_csv.short_description = _("Export selected to CSV")
+
+
+class ExportCsvMixin:
+
+    export_to_csv = False
+
+    def get_actions(self, request):
+        actions = super().get_actions(request)
+        if self.export_to_csv and request.user.is_superuser:
+            actions.update({
+                'export_to_csv': (export_to_csv, 'export_to_csv', _("Export selected to CSV"))
+            })
+        return actions
+
+
+class SoftDeleteMixin:
+    """
+    Overrides default queryset.delete() call from base class.
+    """
+
+    soft_delete = False
+
+    def delete_queryset(self, request, queryset):
+        if self.soft_delete:
+            for instance in queryset:
+                instance.delete(soft=True)
+        else:
+            super().delete_queryset(request, queryset)
+
+
+class CRUDMessageMixin:
+    """
+    Overrides default messages displayed for user after successful saving of instance.
+    """
+    obj_gender = None  # options: f=feminine, n=neuter.
+
+    add_msg_template = _('The {name} "{obj}" was added successfully.')
+    add_msg_template_f = pgettext_lazy('The {name} "{obj}" was added successfully.', 'feminine')
+    add_msg_template_n = pgettext_lazy('The {name} "{obj}" was added successfully.', 'neuter')
+
+    add_continue_msg_template = _('The {name} "{obj}" was added successfully.')
+    add_continue_msg_template_f = pgettext_lazy('The {name} "{obj}" was added successfully.', 'feminine')
+    add_continue_msg_template_n = pgettext_lazy('The {name} "{obj}" was added successfully.', 'neuter')
+
+    add_addanother_msg_template = _('The {name} "{obj}" was added successfully. You may add another {name} below.')
+    add_addanother_msg_template_f = pgettext_lazy(
+        'The {name} "{obj}" was added successfully. You may add another {name} below.', 'feminine')
+    add_addanother_msg_template_n = pgettext_lazy(
+        'The {name} "{obj}" was added successfully. You may add another {name} below.', 'neuter')
+
+    change_msg_template = _('The {name} "{obj}" was changed successfully.')
+    change_msg_template_f = pgettext_lazy('The {name} "{obj}" was changed successfully.', 'feminine')
+    change_msg_template_n = pgettext_lazy('The {name} "{obj}" was changed successfully.', 'neuter')
+
+    change_continue_msg_template = _('The {name} "{obj}" was changed successfully. You may edit it again below.')
+    change_continue_msg_template_f = pgettext_lazy(
+        'The {name} "{obj}" was changed successfully. You may edit it again below.', 'feminine')
+    change_continue_msg_template_n = pgettext_lazy(
+        'The {name} "{obj}" was changed successfully. You may edit it again below.', 'neuter')
+
+    change_saveasnew_msg_template = _('The {name} "{obj}" was added successfully. You may edit it again below.')
+    change_saveasnew_msg_template_f = pgettext_lazy(
+        'The {name} "{obj}" was added successfully. You may edit it again below.', 'feminine')
+    change_saveasnew_msg_template_n = pgettext_lazy(
+        'The {name} "{obj}" was added successfully. You may edit it again below.', 'neuter')
+
+    change_addanother_msg_template = _(
+        'The {name} "{obj}" was changed successfully. You may add another {name} below.')
+    change_addanother_msg_template_f = pgettext_lazy(
+        'The {name} "{obj}" was changed successfully. You may add another {name} below.', 'feminine')
+    change_addanother_msg_template_n = pgettext_lazy(
+        'The {name} "{obj}" was changed successfully. You may add another {name} below.', 'neuter')
+
+    delete_msg_template = _('The %(name)s "%(obj)s" was deleted successfully.')
+    delete_msg_template_f = pgettext_lazy('The %(name)s "%(obj)s" was deleted successfully.', 'feminine')
+    delete_msg_template_n = pgettext_lazy('The %(name)s "%(obj)s" was deleted successfully.', 'neuter')
+
+    s43_admin_trash_fixes = is_enabled('S43_admin_trash_fixes.be')
+
+    def get_msg_template(self, template_name):
+        if self.obj_gender in ['f', 'n']:
+            template_name = f'{template_name}_{self.obj_gender}'
+        return getattr(self, template_name)
+
+    def response_add(self, request, obj, post_url_continue=None):
+        if "_popup" in request.POST:
+            return super().response_add(request, obj, post_url_continue=post_url_continue)
+
+        opts = obj._meta
+        preserved_filters = self.get_preserved_filters(request)
+        obj_url = reverse(
+            'admin:%s_%s_change' % (opts.app_label, opts.model_name),
+            args=(quote(obj.pk),),
+            current_app=self.admin_site.name,
+        )
+        # Add a link to the object's change form if the user can edit the obj.
+        if self.has_change_permission(request, obj):
+            obj_repr = format_html('<a href="{}">{}</a>', urlquote(obj_url), obj)
+        else:
+            obj_repr = str(obj)
+        msg_dict = {
+            'name': opts.verbose_name.capitalize(),
+            'obj': obj_repr,
+        }
+        if "_continue" in request.POST or (
+                # Redirecting after "Save as new".
+                "_saveasnew" in request.POST and self.save_as_continue and
+                self.has_change_permission(request, obj)):
+
+            msg = self.get_msg_template('add_continue_msg_template')
+            if self.has_change_permission(request, obj):
+                msg += ' ' + gettext('You may edit it again below.')
+            self.message_user(request, format_html(msg, **msg_dict), messages.SUCCESS)
+            if post_url_continue is None:
+                post_url_continue = obj_url
+            post_url_continue = add_preserved_filters(
+                {'preserved_filters': preserved_filters, 'opts': opts},
+                post_url_continue
+            )
+            return HttpResponseRedirect(post_url_continue)
+
+        elif "_addanother" in request.POST:
+            msg = format_html(self.get_msg_template('add_addanother_msg_template'), **msg_dict)
+            self.message_user(request, msg, messages.SUCCESS)
+            redirect_url = request.path
+            redirect_url = add_preserved_filters({'preserved_filters': preserved_filters, 'opts': opts}, redirect_url)
+            return HttpResponseRedirect(redirect_url)
+        else:
+            msg = format_html(
+                self.get_msg_template('add_msg_template'), **msg_dict)
+            self.message_user(request, msg, messages.SUCCESS)
+            return self.response_post_save_add(request, obj)
+
+    def _get_obj_url(self, request, obj):
+        if self.s43_admin_trash_fixes:
+            obj_url = obj.admin_change_url
+            if self.model._meta.proxy and not obj.is_removed:
+                opts = self.model._meta.concrete_model._meta
+                obj_url = reverse(
+                    'admin:%s_%s_change' % (opts.app_label, opts.model_name), args=(obj.pk,),
+                    current_app=self.admin_site.name)
+        else:
+            obj_url = urlquote(request.path)
+        return obj_url
+
+    def response_change(self, request, obj):
+        if "_popup" in request.POST:
+            return super().response_change(request, obj)
+
+        opts = self.model._meta
+        preserved_filters = self.get_preserved_filters(request)
+
+        obj_url = self._get_obj_url(request, obj)
+        msg_dict = {
+            'name': opts.verbose_name.capitalize(),
+            'obj': format_html('<a href="{}">{}</a>', obj_url, truncatewords(obj, 18)),
+        }
+        if "_continue" in request.POST:
+            msg = format_html(self.get_msg_template('change_continue_msg_template'), **msg_dict)
+            self.message_user(request, msg, messages.SUCCESS)
+            redirect_url = request.path
+            redirect_url = add_preserved_filters({'preserved_filters': preserved_filters, 'opts': opts}, redirect_url)
+            return HttpResponseRedirect(redirect_url)
+
+        elif "_saveasnew" in request.POST:
+            msg = format_html(self.get_msg_template('change_saveasnew_msg_template'), **msg_dict)
+            self.message_user(request, msg, messages.SUCCESS)
+            redirect_url = reverse('admin:%s_%s_change' %
+                                   (opts.app_label, opts.model_name),
+                                   args=(obj.pk,),
+                                   current_app=self.admin_site.name)
+            redirect_url = add_preserved_filters({'preserved_filters': preserved_filters, 'opts': opts}, redirect_url)
+            return HttpResponseRedirect(redirect_url)
+
+        elif "_addanother" in request.POST:
+            msg = format_html(self.get_msg_template('change_addanother_msg_template'), **msg_dict)
+            self.message_user(request, msg, messages.SUCCESS)
+            redirect_url = reverse('admin:%s_%s_add' %
+                                   (opts.app_label, opts.model_name),
+                                   current_app=self.admin_site.name)
+            redirect_url = add_preserved_filters({'preserved_filters': preserved_filters, 'opts': opts}, redirect_url)
+            return HttpResponseRedirect(redirect_url)
+
+        else:
+            msg = format_html(self.get_msg_template('change_msg_template'), **msg_dict)
+            self.message_user(request, msg, messages.SUCCESS)
+            return self.response_post_save_change(request, obj)
+
+    def response_delete(self, request, obj_display, obj_id):
+        opts = self.model._meta
+
+        if "_popup" in request.POST:
+            popup_response_data = json.dumps({
+                'action': 'delete',
+                'value': str(obj_id),
+            })
+            return TemplateResponse(request, self.popup_response_template or [
+                'admin/%s/%s/popup_response.html' % (opts.app_label, opts.model_name),
+                'admin/%s/popup_response.html' % opts.app_label,
+                'admin/popup_response.html',
+            ], {
+                'popup_response_data': popup_response_data,
+            })
+
+        self.message_user(
+            request,
+            self.get_msg_template('delete_msg_template') % {
+                'name': opts.verbose_name.capitalize(),
+                'obj': truncatewords(obj_display, 18),
+            },
+            messages.SUCCESS,
+        )
+
+        if self.has_change_permission(request, None):
+            post_url = reverse(
+                'admin:%s_%s_changelist' % (opts.app_label, opts.model_name),
+                current_app=self.admin_site.name,
+            )
+            preserved_filters = self.get_preserved_filters(request)
+            post_url = add_preserved_filters(
+                {'preserved_filters': preserved_filters, 'opts': opts}, post_url
+            )
+        else:
+            post_url = reverse('admin:index', current_app=self.admin_site.name)
+        return HttpResponseRedirect(post_url)
+
+
+class ModelAdmin(ExportCsvMixin, SoftDeleteMixin, CRUDMessageMixin, admin.ModelAdmin):
+
+    delete_selected_msg = None
+
+    def get_actions(self, request):
+        """Override delete_selected action description."""
+        actions = super().get_actions(request)
+        if self.delete_selected_msg and 'delete_selected' in actions:
+            func, action, description = actions.get('delete_selected')
+            actions['delete_selected'] = func, action, self.delete_selected_msg
+        return actions
+
+
+class UserAdmin(ExportCsvMixin, SoftDeleteMixin, BaseUserAdmin):
+    soft_delete = True
+
+
+class NestedModelAdmin(SoftDeleteMixin, nested_admin.NestedModelAdmin):
+    pass
+
+
+class ObjectPermissionsModelAdmin(ExportCsvMixin, BaseObjectPermissionsModelAdmin):
+    pass
+
+
+class TrashMixin(ModelAdmin):
     delete_selected_msg = _("Delete selected objects")
     related_objects_query = None
     cant_restore_msg = _('Couldn\'t restore following objects,'
@@ -142,6 +398,8 @@ class TrashMixin(ActionsMixin, admin.ModelAdmin):
         return False
 
     def render_change_form(self, request, context, add=False, change=False, form_url='', obj=None):
+        if self.s43_admin_trash_fixes:
+            context['show_save_and_continue'] = False
         if hasattr(self.model, 'accusative_case'):
             if add:
                 title = _('Add %s - trash')
@@ -266,202 +524,6 @@ class LangFieldsOnlyMixin(object):
         return tuple((f'lang-{lang_code}', _(f'Translation ({lang_code.upper()})'))
                      for lang_code in settings.MODELTRANS_AVAILABLE_LANGUAGES
                      if lang_code is not settings.LANGUAGE_CODE)
-
-
-class SoftDeleteMixin(object):
-    """
-    Overrides default queryset.delete() call from base class.
-    """
-
-    def delete_queryset(self, request, queryset):
-        for instance in queryset:
-            instance.delete(soft=True)
-
-
-class CRUDMessageMixin(object):
-    """
-    Overrides default messages displayed for user after successful saving of instance.
-    """
-    obj_gender = None  # options: f=feminine, n=neuter.
-
-    add_msg_template = _('The {name} "{obj}" was added successfully.')
-    add_msg_template_f = pgettext_lazy('The {name} "{obj}" was added successfully.', 'feminine')
-    add_msg_template_n = pgettext_lazy('The {name} "{obj}" was added successfully.', 'neuter')
-
-    add_continue_msg_template = _('The {name} "{obj}" was added successfully.')
-    add_continue_msg_template_f = pgettext_lazy('The {name} "{obj}" was added successfully.', 'feminine')
-    add_continue_msg_template_n = pgettext_lazy('The {name} "{obj}" was added successfully.', 'neuter')
-
-    add_addanother_msg_template = _('The {name} "{obj}" was added successfully. You may add another {name} below.')
-    add_addanother_msg_template_f = pgettext_lazy(
-        'The {name} "{obj}" was added successfully. You may add another {name} below.', 'feminine')
-    add_addanother_msg_template_n = pgettext_lazy(
-        'The {name} "{obj}" was added successfully. You may add another {name} below.', 'neuter')
-
-    change_msg_template = _('The {name} "{obj}" was changed successfully.')
-    change_msg_template_f = pgettext_lazy('The {name} "{obj}" was changed successfully.', 'feminine')
-    change_msg_template_n = pgettext_lazy('The {name} "{obj}" was changed successfully.', 'neuter')
-
-    change_continue_msg_template = _('The {name} "{obj}" was changed successfully. You may edit it again below.')
-    change_continue_msg_template_f = pgettext_lazy(
-        'The {name} "{obj}" was changed successfully. You may edit it again below.', 'feminine')
-    change_continue_msg_template_n = pgettext_lazy(
-        'The {name} "{obj}" was changed successfully. You may edit it again below.', 'neuter')
-
-    change_saveasnew_msg_template = _('The {name} "{obj}" was added successfully. You may edit it again below.')
-    change_saveasnew_msg_template_f = pgettext_lazy(
-        'The {name} "{obj}" was added successfully. You may edit it again below.', 'feminine')
-    change_saveasnew_msg_template_n = pgettext_lazy(
-        'The {name} "{obj}" was added successfully. You may edit it again below.', 'neuter')
-
-    change_addanother_msg_template = _(
-        'The {name} "{obj}" was changed successfully. You may add another {name} below.')
-    change_addanother_msg_template_f = pgettext_lazy(
-        'The {name} "{obj}" was changed successfully. You may add another {name} below.', 'feminine')
-    change_addanother_msg_template_n = pgettext_lazy(
-        'The {name} "{obj}" was changed successfully. You may add another {name} below.', 'neuter')
-
-    delete_msg_template = _('The %(name)s "%(obj)s" was deleted successfully.')
-    delete_msg_template_f = pgettext_lazy('The %(name)s "%(obj)s" was deleted successfully.', 'feminine')
-    delete_msg_template_n = pgettext_lazy('The %(name)s "%(obj)s" was deleted successfully.', 'neuter')
-
-    def get_msg_template(self, template_name):
-        if self.obj_gender in ['f', 'n']:
-            template_name = f'{template_name}_{self.obj_gender}'
-        return getattr(self, template_name)
-
-    def response_add(self, request, obj, post_url_continue=None):
-        if "_popup" in request.POST:
-            return super().response_add(request, obj, post_url_continue=post_url_continue)
-
-        opts = obj._meta
-        preserved_filters = self.get_preserved_filters(request)
-        obj_url = reverse(
-            'admin:%s_%s_change' % (opts.app_label, opts.model_name),
-            args=(quote(obj.pk),),
-            current_app=self.admin_site.name,
-        )
-        # Add a link to the object's change form if the user can edit the obj.
-        if self.has_change_permission(request, obj):
-            obj_repr = format_html('<a href="{}">{}</a>', urlquote(obj_url), obj)
-        else:
-            obj_repr = str(obj)
-        msg_dict = {
-            'name': opts.verbose_name.capitalize(),
-            'obj': obj_repr,
-        }
-        if "_continue" in request.POST or (
-                # Redirecting after "Save as new".
-                "_saveasnew" in request.POST and self.save_as_continue and
-                self.has_change_permission(request, obj)):
-
-            msg = self.get_msg_template('add_continue_msg_template')
-            if self.has_change_permission(request, obj):
-                msg += ' ' + gettext('You may edit it again below.')
-            self.message_user(request, format_html(msg, **msg_dict), messages.SUCCESS)
-            if post_url_continue is None:
-                post_url_continue = obj_url
-            post_url_continue = add_preserved_filters(
-                {'preserved_filters': preserved_filters, 'opts': opts},
-                post_url_continue
-            )
-            return HttpResponseRedirect(post_url_continue)
-
-        elif "_addanother" in request.POST:
-            msg = format_html(self.get_msg_template('add_addanother_msg_template'), **msg_dict)
-            self.message_user(request, msg, messages.SUCCESS)
-            redirect_url = request.path
-            redirect_url = add_preserved_filters({'preserved_filters': preserved_filters, 'opts': opts}, redirect_url)
-            return HttpResponseRedirect(redirect_url)
-        else:
-            msg = format_html(
-                self.get_msg_template('add_msg_template'), **msg_dict)
-            self.message_user(request, msg, messages.SUCCESS)
-            return self.response_post_save_add(request, obj)
-
-    def response_change(self, request, obj):
-        if "_popup" in request.POST:
-            return super().response_change(request, obj)
-
-        opts = self.model._meta
-        preserved_filters = self.get_preserved_filters(request)
-
-        msg_dict = {
-            'name': opts.verbose_name.capitalize(),
-            'obj': format_html('<a href="{}">{}</a>', urlquote(request.path), obj),
-        }
-        if "_continue" in request.POST:
-            msg = format_html(self.get_msg_template('change_continue_msg_template'), **msg_dict)
-            self.message_user(request, msg, messages.SUCCESS)
-            redirect_url = request.path
-            redirect_url = add_preserved_filters({'preserved_filters': preserved_filters, 'opts': opts}, redirect_url)
-            return HttpResponseRedirect(redirect_url)
-
-        elif "_saveasnew" in request.POST:
-            msg = format_html(self.get_msg_template('change_saveasnew_msg_template'), **msg_dict)
-            self.message_user(request, msg, messages.SUCCESS)
-            redirect_url = reverse('admin:%s_%s_change' %
-                                   (opts.app_label, opts.model_name),
-                                   args=(obj.pk,),
-                                   current_app=self.admin_site.name)
-            redirect_url = add_preserved_filters({'preserved_filters': preserved_filters, 'opts': opts}, redirect_url)
-            return HttpResponseRedirect(redirect_url)
-
-        elif "_addanother" in request.POST:
-            msg = format_html(self.get_msg_template('change_addanother_msg_template'), **msg_dict)
-            self.message_user(request, msg, messages.SUCCESS)
-            redirect_url = reverse('admin:%s_%s_add' %
-                                   (opts.app_label, opts.model_name),
-                                   current_app=self.admin_site.name)
-            redirect_url = add_preserved_filters({'preserved_filters': preserved_filters, 'opts': opts}, redirect_url)
-            return HttpResponseRedirect(redirect_url)
-
-        else:
-            msg_dict = {
-                'name': opts.verbose_name.capitalize(),
-                'obj': format_html('<a href="{}">{}</a>', urlquote(request.path), obj),
-            }
-            msg = format_html(self.get_msg_template('change_msg_template'), **msg_dict)
-            self.message_user(request, msg, messages.SUCCESS)
-            return self.response_post_save_change(request, obj)
-
-    def response_delete(self, request, obj_display, obj_id):
-        opts = self.model._meta
-
-        if "_popup" in request.POST:
-            popup_response_data = json.dumps({
-                'action': 'delete',
-                'value': str(obj_id),
-            })
-            return TemplateResponse(request, self.popup_response_template or [
-                'admin/%s/%s/popup_response.html' % (opts.app_label, opts.model_name),
-                'admin/%s/popup_response.html' % opts.app_label,
-                'admin/popup_response.html',
-            ], {
-                'popup_response_data': popup_response_data,
-            })
-
-        self.message_user(
-            request,
-            self.get_msg_template('delete_msg_template') % {
-                'name': opts.verbose_name.capitalize(),
-                'obj': obj_display,
-            },
-            messages.SUCCESS,
-        )
-
-        if self.has_change_permission(request, None):
-            post_url = reverse(
-                'admin:%s_%s_changelist' % (opts.app_label, opts.model_name),
-                current_app=self.admin_site.name,
-            )
-            preserved_filters = self.get_preserved_filters(request)
-            post_url = add_preserved_filters(
-                {'preserved_filters': preserved_filters, 'opts': opts}, post_url
-            )
-        else:
-            post_url = reverse('admin:index', current_app=self.admin_site.name)
-        return HttpResponseRedirect(post_url)
 
 
 class AdminListMixin(object):

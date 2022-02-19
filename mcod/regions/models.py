@@ -74,7 +74,7 @@ class Region(BaseExtendedModel):
 
     @property
     def wkt_bbox(self):
-        return f'BBOX ({self.bbox[0]},{self.bbox[2]},{self.bbox[1]},{self.bbox[3]})'
+        return f'BBOX ({self.bbox[0]},{self.bbox[2]},{self.bbox[3]},{self.bbox[1]})'
 
     @property
     def envelope(self):

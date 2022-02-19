@@ -5,18 +5,22 @@ from django.utils.translation import gettext_lazy as _
 from mcod.articles.forms import ArticleForm
 from mcod.articles.models import Article, ArticleTrash
 from mcod.lib.admin_mixins import (
-    TrashMixin, HistoryMixin, LangFieldsOnlyMixin,
-    SoftDeleteMixin, CreatedByDisplayAdminMixin, StatusLabelAdminMixin,
-    DynamicAdminListDisplayMixin, MCODAdminMixin
+    CreatedByDisplayAdminMixin,
+    DynamicAdminListDisplayMixin,
+    HistoryMixin,
+    LangFieldsOnlyMixin,
+    MCODAdminMixin,
+    ModelAdmin,
+    StatusLabelAdminMixin,
+    TrashMixin,
 )
 
 
 @admin.register(Article)
-class ArticleAdmin(DynamicAdminListDisplayMixin, CreatedByDisplayAdminMixin, StatusLabelAdminMixin, SoftDeleteMixin,
-                   HistoryMixin, LangFieldsOnlyMixin, MCODAdminMixin, admin.ModelAdmin):
+class ArticleAdmin(DynamicAdminListDisplayMixin, CreatedByDisplayAdminMixin, StatusLabelAdminMixin, HistoryMixin,
+                   LangFieldsOnlyMixin, MCODAdminMixin, ModelAdmin):
     actions_on_top = True
     autocomplete_fields = ['tags']
-    prepopulated_fields = {"slug": ("title",)}
     fieldsets = (
         (
             None,
@@ -61,13 +65,7 @@ class ArticleAdmin(DynamicAdminListDisplayMixin, CreatedByDisplayAdminMixin, Sta
             }
         ),
     )
-    readonly_fields = ['preview_link']
-    suit_form_tabs = (
-        ('general', _('General')),
-        *LangFieldsOnlyMixin.get_translations_tabs(),
-        ('tags', _('Tags')),
-    )
-
+    form = ArticleForm
     list_display = [
         "title",
         "status",
@@ -77,8 +75,15 @@ class ArticleAdmin(DynamicAdminListDisplayMixin, CreatedByDisplayAdminMixin, Sta
         'obj_history'
     ]
     list_filter = ['category', ]
+    prepopulated_fields = {"slug": ("title",)}
+    readonly_fields = ['preview_link']
+    soft_delete = True
+    suit_form_tabs = (
+        ('general', _('General')),
+        *LangFieldsOnlyMixin.get_translations_tabs(),
+        ('tags', _('Tags')),
+    )
     search_fields = ["title", "created_by__email"]
-    form = ArticleForm
 
     def get_fieldsets(self, request, obj=None):
         return self.fieldsets + tuple(self.get_translations_fieldsets())

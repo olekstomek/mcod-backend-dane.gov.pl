@@ -5,6 +5,7 @@ from django.core.exceptions import PermissionDenied
 from django.db.models import Subquery, OuterRef, Q
 from django.forms.models import model_to_dict
 from django.http.response import HttpResponseRedirect
+from django.template.defaultfilters import truncatewords
 from django.template.loader import get_template
 from django.urls import path
 from django.utils.html import format_html
@@ -19,12 +20,11 @@ from mcod.lib.admin_mixins import (
     HistoryMixin,
     LangFieldsOnlyMixin,
     MCODAdminMixin,
-    SoftDeleteMixin,
+    ModelAdmin,
     StatusLabelAdminMixin,
     TrashMixin,
 )
 from mcod.lib.helpers import get_paremeters_from_post
-from mcod.reports.admin import ExportCsvMixin
 from mcod.resources.forms import ChangeResourceForm, AddResourceForm, TrashResourceForm
 from mcod.resources.models import (
     Resource,
@@ -203,10 +203,11 @@ def process_verification_results(col, results, table_schema, rules):
 
 
 @admin.register(Resource)
-class ResourceAdmin(DynamicAdminListDisplayMixin, AddChangeMixin, StatusLabelAdminMixin, AdminListMixin, SoftDeleteMixin,
-                    HistoryMixin, ExportCsvMixin, LangFieldsOnlyMixin, MCODAdminMixin, admin.ModelAdmin):
+class ResourceAdmin(DynamicAdminListDisplayMixin, AddChangeMixin, StatusLabelAdminMixin, AdminListMixin,
+                    HistoryMixin, LangFieldsOnlyMixin, MCODAdminMixin, ModelAdmin):
     actions_on_top = True
-
+    export_to_csv = True
+    soft_delete = True
     TYPE_FILTER = TypeFilter
     TYPE_DISPLAY_FIELD = 'type_as_str'
 
@@ -244,6 +245,10 @@ class ResourceAdmin(DynamicAdminListDisplayMixin, AddChangeMixin, StatusLabelAdm
         ('general', _('General')),
         *LangFieldsOnlyMixin.get_translations_tabs()
     )
+    has_dynamic_data_fieldset = [(None, {
+        'classes': ('suit-tab', 'suit-tab-general'),
+        'fields': ('has_dynamic_data',),
+    })] if is_enabled('S43_dynamic_data.be') else []
     has_high_value_data_fieldset = [(None, {
         'classes': ('suit-tab', 'suit-tab-general'),
         'fields': ('has_high_value_data',),
@@ -266,6 +271,7 @@ class ResourceAdmin(DynamicAdminListDisplayMixin, AddChangeMixin, StatusLabelAdm
             'classes': ('suit-tab', 'suit-tab-general'),
             'fields': ('data_date',),
         }),
+        *has_dynamic_data_fieldset,
         *has_high_value_data_fieldset,
         (None, {
             'classes': ('suit-tab', 'suit-tab-general'),
@@ -395,10 +401,12 @@ class ResourceAdmin(DynamicAdminListDisplayMixin, AddChangeMixin, StatusLabelAdm
             file_info = ['main_file_info'] if is_enabled('S40_new_file_model.be') else ['file_info']
             file_encoding = ['main_file_encoding'] if is_enabled('S40_new_file_model.be') else ['file_encoding']
             regions = ['regions'] if is_enabled('S37_resources_admin_region_data.be') and not obj.is_imported else []
+            has_dynamic_data = []
+            if is_enabled('S43_dynamic_data.be'):
+                has_dynamic_data = ['has_dynamic_data'] if not obj.is_imported else ['has_dynamic_data_info']
+            has_high_value_data = []
             if is_enabled('S41_resource_has_high_value_data.be'):
                 has_high_value_data = ['has_high_value_data'] if not obj.is_imported else ['has_high_value_data_info']
-            else:
-                has_high_value_data = []
             extra_fields = []
             if obj.type == RESOURCE_TYPE_WEBSITE or obj.forced_api_type:
                 extra_fields = ['forced_api_type']
@@ -421,6 +429,7 @@ class ResourceAdmin(DynamicAdminListDisplayMixin, AddChangeMixin, StatusLabelAdm
                 'dataset',
                 *regions,
                 'data_date',
+                *has_dynamic_data,
                 *has_high_value_data,
                 'status',
                 *special_signs,
@@ -488,7 +497,8 @@ class ResourceAdmin(DynamicAdminListDisplayMixin, AddChangeMixin, StatusLabelAdm
         if obj and obj.is_imported:
             readonly_fields = (
                 *readonly_fields, 'dataset', 'data_date', 'description', 'description_en', 'show_tabular_view',
-                'slug_en', 'status', 'title', 'title_en', 'is_chart_creation_blocked', 'has_high_value_data_info')
+                'slug_en', 'status', 'title', 'title_en', 'is_chart_creation_blocked', 'has_dynamic_data_info',
+                'has_high_value_data_info')
         return tuple(set(readonly_fields))
 
     def render_change_form(self, request, context, add=False, change=False, form_url='', obj=None):
@@ -545,10 +555,21 @@ class ResourceAdmin(DynamicAdminListDisplayMixin, AddChangeMixin, StatusLabelAdm
     formats.admin_order_field = 'format'
     formats.short_description = 'Format'
 
+    def has_dynamic_data_info(self, obj):
+        if obj.has_dynamic_data is True:
+            return 'Tak'
+        elif obj.has_dynamic_data is False:
+            return 'Nie'
+        return '-'
+    has_dynamic_data_info.short_description = _('dynamic data')
+
     def has_high_value_data_info(self, obj):
-        return obj.has_high_value_data or False
+        if obj.has_high_value_data is True:
+            return 'Tak'
+        elif obj.has_high_value_data is False:
+            return 'Nie'
+        return '-'
     has_high_value_data_info.short_description = _('has high value data')
-    has_high_value_data_info.boolean = True
 
     def special_signs_symbols(self, obj):
         return obj.special_signs_symbols or '-'
@@ -606,6 +627,10 @@ class ResourceAdmin(DynamicAdminListDisplayMixin, AddChangeMixin, StatusLabelAdm
                 initial['title_en'] = data.get('title_en')
                 initial['description_en'] = data.get('description_en')
                 initial['slug_en'] = data.get('slug_en')
+                if is_enabled('S43_dynamic_data.be'):
+                    initial['has_dynamic_data'] = data.get('has_dynamic_data')
+                if is_enabled('S41_resource_has_high_value_data.be'):
+                    initial['has_high_value_data'] = data.get('has_high_value_data')
         return initial
 
     def get_urls(self):
@@ -662,13 +687,18 @@ class ResourceAdmin(DynamicAdminListDisplayMixin, AddChangeMixin, StatusLabelAdm
 
 @admin.register(ResourceTrash)
 class TrashAdmin(HistoryMixin, TrashMixin):
-    list_display = ['title', 'dataset', 'modified']
+    list_display = ['title_short', 'dataset', 'modified']
     search_fields = ['title', 'dataset__title']
     form = TrashResourceForm
     is_history_with_unknown_user_rows = True
     related_objects_query = 'dataset'
     cant_restore_msg = _(
         'Couldn\'t restore following resources, because their related datasets are still removed: {}')
+
+    def title_short(self, obj):
+        return truncatewords(obj.title, 18)
+    title_short.short_description = _('Name')
+    title_short.admin_order_field = 'title'
 
     def get_fields(self, request, obj=None):
         csv_file = ['csv_converted_file'] if obj and obj.csv_converted_file else []

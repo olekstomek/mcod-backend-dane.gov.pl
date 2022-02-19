@@ -4,10 +4,19 @@ from marshmallow import pre_load, validate, validates, validates_schema, Validat
 from mcod.core.api import fields
 from mcod.core.api.jsonapi.deserializers import TopLevel, ObjectAttrs
 from mcod.core.api.schemas import (
-    CommonSchema, ExtSchema, ListingSchema, ListTermsSchema, NumberTermSchema, StringTermSchema, StringMatchSchema,
-    DateTermSchema)
+    BooleanTermSchema,
+    CommonSchema,
+    DateTermSchema,
+    ExtSchema,
+    ListingSchema,
+    ListTermsSchema,
+    NumberTermSchema,
+    StringMatchSchema,
+    StringTermSchema,
+)
 from mcod.core.api.search import fields as search_fields
 from mcod.datasets.deserializers import RdfValidationRequest
+from mcod.unleash import is_enabled
 
 
 class ResourceDatasetFilterField(ExtSchema):
@@ -152,6 +161,20 @@ class ResourceApiSearchRequest(ListingSchema):
         description='Allow the client to customize which related resources should be returned in included section.',
         allowEmptyValue=True,
     )
+    if is_enabled('S43_dynamic_data.be'):
+        has_dynamic_data = search_fields.FilterField(
+            BooleanTermSchema,
+            doc_template='docs/generic/fields/boolean_term_field.html',
+            doc_base_url='/resources',
+            doc_field_name='has_dynamic_data',
+        )
+    if is_enabled('S41_resource_has_high_value_data.be'):
+        has_high_value_data = search_fields.FilterField(
+            BooleanTermSchema,
+            doc_template='docs/generic/fields/boolean_term_field.html',
+            doc_base_url='/resources',
+            doc_field_name='has_high_value_data',
+        )
 
     class Meta:
         strict = True
@@ -207,8 +230,8 @@ class TableApiRequest(CommonSchema):
 
 
 class GeoApiSearchRequest(ListingSchema):
-    bbox = search_fields.BBoxField(required=False)
-    dist = search_fields.GeoDistanceField(required=False)
+    bbox = search_fields.BBoxField(required=False, query_field='shape')
+    dist = search_fields.GeoDistanceField(required=False, query_field='point')
     q = search_fields.QueryStringField(
         all_fields=True, required=False, doc_template='docs/tables/fields/query_string.html')
     sort = search_fields.SortField(doc_base_url='/resources')

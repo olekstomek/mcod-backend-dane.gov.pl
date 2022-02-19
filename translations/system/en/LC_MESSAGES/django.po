@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-12-30 18:42+0100\n"
+"POT-Creation-Date: 2022-01-27 12:51+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -19,9 +19,6 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 msgid "Sessions"
-msgstr ""
-
-msgid "Delete selected courses"
 msgstr ""
 
 msgid "End date"
@@ -40,6 +37,9 @@ msgid "Title of course"
 msgstr ""
 
 msgid "Course venue"
+msgstr ""
+
+msgid "Delete selected courses"
 msgstr ""
 
 msgid "General"
@@ -696,6 +696,12 @@ msgstr ""
 msgid "Resources"
 msgstr ""
 
+msgid "dynamic data"
+msgstr ""
+
+msgid "has high value data"
+msgstr ""
+
 msgid "Update frequency"
 msgstr ""
 
@@ -730,9 +736,6 @@ msgid ""
 "that set will be changed to a draft"
 msgstr ""
 
-msgid "has high value data"
-msgstr ""
-
 msgid "Yes"
 msgstr ""
 
@@ -751,6 +754,9 @@ msgid "Modification date"
 msgstr ""
 
 msgid "Update date"
+msgstr ""
+
+msgid "Archived resources files"
 msgstr ""
 
 msgid "Text area is filled, license must be selected"
@@ -853,9 +859,6 @@ msgstr ""
 msgid "Controlled Vocabularies"
 msgstr ""
 
-msgid "Has high value data"
-msgstr ""
-
 msgid "modified"
 msgstr ""
 
@@ -925,6 +928,12 @@ msgstr ""
 msgid "License"
 msgstr ""
 
+msgid "Dataset has high value data"
+msgstr ""
+
+msgid "Dataset has dynamic data"
+msgstr ""
+
 msgid "last import timestamp"
 msgstr ""
 
@@ -946,9 +955,6 @@ msgstr ""
 msgid "Only administrators and agents have access to forum"
 msgstr ""
 
-msgid "Delete selected elements"
-msgstr ""
-
 msgid "creation date"
 msgstr ""
 
@@ -957,6 +963,9 @@ msgid "created by"
 msgstr ""
 
 msgid "communique"
+msgstr ""
+
+msgid "Delete selected elements"
 msgstr ""
 
 msgid "Portal guide"
@@ -1851,40 +1860,10 @@ msgstr ""
 msgid "Decision not taken"
 msgstr ""
 
-msgid "Delete selected objects"
+msgid "Task for CSV generation queued"
 msgstr ""
 
-msgid ""
-"Couldn't restore following objects, because their related objects are still "
-"removed: {}"
-msgstr ""
-
-msgid "Successfully restored objects: {}"
-msgstr ""
-
-msgid "Restore selected objects"
-msgstr ""
-
-#, python-format
-msgid "Add %s - trash"
-msgstr ""
-
-#, python-format
-msgid "Change %s - trash"
-msgstr ""
-
-#, python-format
-msgid "View %s - trash"
-msgstr ""
-
-msgid "Removed:"
-msgstr ""
-
-#, python-format
-msgid "Change history: %s"
-msgstr ""
-
-msgid "Translation ({lang_code.upper()})"
+msgid "Export selected to CSV"
 msgstr ""
 
 #, python-brace-format
@@ -1992,6 +1971,42 @@ msgstr ""
 msgid "You may edit it again below."
 msgstr ""
 
+msgid "Delete selected objects"
+msgstr ""
+
+msgid ""
+"Couldn't restore following objects, because their related objects are still "
+"removed: {}"
+msgstr ""
+
+msgid "Successfully restored objects: {}"
+msgstr ""
+
+msgid "Restore selected objects"
+msgstr ""
+
+#, python-format
+msgid "Add %s - trash"
+msgstr ""
+
+#, python-format
+msgid "Change %s - trash"
+msgstr ""
+
+#, python-format
+msgid "View %s - trash"
+msgstr ""
+
+msgid "Removed:"
+msgstr ""
+
+#, python-format
+msgid "Change history: %s"
+msgstr ""
+
+msgid "Translation ({lang_code.upper()})"
+msgstr ""
+
 msgid "Correct Validation"
 msgstr ""
 
@@ -2089,6 +2104,15 @@ msgid "Page must be greater then 1"
 msgstr ""
 
 msgid "Page size mus be greater then 0"
+msgstr ""
+
+msgid "YES"
+msgstr ""
+
+msgid "NO"
+msgstr ""
+
+msgid "not specified"
 msgstr ""
 
 msgid "Licenses"
@@ -2558,12 +2582,6 @@ msgid ""
 "appear with a delay ..."
 msgstr ""
 
-msgid "Task for CSV generation queued"
-msgstr ""
-
-msgid "Export selected to CSV"
-msgstr ""
-
 msgid "Task"
 msgstr ""
 
@@ -2661,6 +2679,9 @@ msgstr ""
 msgid "Maps and plots"
 msgstr ""
 
+msgid "Special Signs"
+msgstr ""
+
 msgid "Resource with this id does not exists"
 msgstr ""
 
@@ -2695,6 +2716,27 @@ msgid ""
 "new chart name."
 msgstr ""
 
+msgid "latitude"
+msgstr ""
+
+msgid "longitude"
+msgstr ""
+
+msgid "postal code"
+msgstr ""
+
+msgid "place"
+msgstr ""
+
+msgid "house number"
+msgstr ""
+
+msgid "universal address"
+msgstr ""
+
+msgid "label"
+msgstr ""
+
 msgid "Selected items {} come from different map data sets."
 msgstr ""
 
@@ -2714,9 +2756,6 @@ msgid "Longitude should be a number"
 msgstr ""
 
 msgid "Latitude should be a number"
-msgstr ""
-
-msgid "Special Signs"
 msgstr ""
 
 msgid "special signs"
@@ -2893,10 +2932,10 @@ msgstr ""
 msgid "Resource downloads count"
 msgstr ""
 
-msgid "YES"
+msgid "Resource has high value data"
 msgstr ""
 
-msgid "NO"
+msgid "Resource has dynamic data"
 msgstr ""
 
 msgid "Download URL"
@@ -2919,18 +2958,6 @@ msgid ""
 msgstr ""
 
 msgid "Address feature"
-msgstr ""
-
-msgid "label"
-msgstr ""
-
-msgid "geographical coordinates"
-msgstr ""
-
-msgid "universal address"
-msgstr ""
-
-msgid "address"
 msgstr ""
 
 msgid "Schedules"

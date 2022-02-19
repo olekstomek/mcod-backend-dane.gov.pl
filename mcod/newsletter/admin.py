@@ -4,13 +4,15 @@ from django.utils.translation import ugettext_lazy as _
 from mcod.newsletter.models import Newsletter, Submission, Subscription
 from mcod.newsletter.forms import NewsletterAdminForm
 from mcod.lib.admin_mixins import (
-    ActionsMixin, HistoryMixin, StatusLabelAdminMixin,
-    DynamicAdminListDisplayMixin, MCODAdminMixin
+    DynamicAdminListDisplayMixin,
+    HistoryMixin,
+    MCODAdminMixin,
+    ModelAdmin,
+    StatusLabelAdminMixin,
 )
 
 
-class NewsletterAdmin(DynamicAdminListDisplayMixin, StatusLabelAdminMixin, ActionsMixin, HistoryMixin,
-                      MCODAdminMixin, admin.ModelAdmin):
+class NewsletterAdmin(DynamicAdminListDisplayMixin, StatusLabelAdminMixin, HistoryMixin, MCODAdminMixin, ModelAdmin):
     search_fields = ['title']
     list_display = ('email_title', 'status', 'planned_sending_date', 'sending_date')
     readonly_fields = ['status']
@@ -91,7 +93,7 @@ class NewsletterAdmin(DynamicAdminListDisplayMixin, StatusLabelAdminMixin, Actio
         super().save_model(request, obj, form, change)
 
 
-class SubscriptionAdmin(ActionsMixin, MCODAdminMixin, admin.ModelAdmin):
+class SubscriptionAdmin(MCODAdminMixin, ModelAdmin):
     actions_on_top = True
     delete_selected_msg = _('Delete selected subscriptions')
     list_select_related = ('user', )

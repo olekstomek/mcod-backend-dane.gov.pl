@@ -1,4 +1,4 @@
-FROM docker.elastic.co/elasticsearch/elasticsearch:6.7.0
+FROM docker.elastic.co/elasticsearch/elasticsearch:6.8.23
 
 RUN mkdir /usr/share/elasticsearch/config/hunspell
 RUN mkdir /usr/share/elasticsearch/config/synonyms

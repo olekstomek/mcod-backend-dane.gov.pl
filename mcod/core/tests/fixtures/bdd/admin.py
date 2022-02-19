@@ -56,27 +56,25 @@ def objects_with_ids_are_still_in_trash(object_type, unrestored_object_ids):
     ).count() == len(ids_list)
 
 
-@when('changelist for <object_type> is requested')
-def changelist_for_object_type_is_requested(admin_context, object_type):
+@when('admin\'s path is changelist for <object_type>')
+@then('admin\'s path is changelist for <object_type>')
+def admin_path_is_changelist(admin_context, object_type):
     _factory = factories_registry.get_factory(object_type)
     model = _factory._meta.model
-    client = Client()
-    client.force_login(admin_context.admin.user)
-    page_url = reverse(f'admin:{model._meta.app_label}_{model._meta.model_name}_changelist')
-    response = client.get(page_url, follow=True)
-    admin_context.response = response
+    path = reverse(f'admin:{model._meta.app_label}_{model._meta.model_name}_changelist')
+    admin_context.admin.path = path
 
 
-@when('trash changelist for <object_type> is requested')
-@then('trash changelist for <object_type> is requested')
-def trash_changelist_for_object_type_is_requested(admin_context, object_type):
+@when('admin\'s path is trash change for <object_type>')
+@then('admin\'s path is trash change for <object_type>')
+def admin_path_is_trash_change(admin_context, object_type):
     _factory = factories_registry.get_factory(object_type)
     model = _factory._meta.model
-    client = Client()
-    client.force_login(admin_context.admin.user)
-    page_url = reverse(f'admin:{model._meta.app_label}_{model._meta.model_name}trash_changelist')
-    response = client.get(page_url, follow=True)
-    admin_context.response = response
+    assert admin_context.obj
+    path = reverse(
+        f'admin:{model._meta.app_label}_{model._meta.model_name}trash_change',
+        kwargs={'object_id': admin_context.obj.id})
+    admin_context.admin.path = path
 
 
 @then('<object_type> has trash if <has_trash>')

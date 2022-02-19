@@ -1,3 +1,6 @@
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
+
 from django.apps import apps
 from django.db.models import Count, Prefetch, Q, Max
 from model_utils.managers import SoftDeletableManager, SoftDeletableQuerySet
@@ -89,14 +92,47 @@ class DatasetQuerySet(SoftDeletableQuerySet):
         queryset = self._with_metadata_annotated(queryset)
         return queryset
 
-    def datasets_to_notify(self, update_frequencies):
-        return self.filter(
+    def datasets_to_notify(self):
+        freq_updates_with_delays = {
+            'yearly': {'default_delay': 7, 'relative_delta': relativedelta(years=1)},
+            'everyHalfYear': {'default_delay': 7, 'relative_delta': relativedelta(months=6)},
+            'quarterly': {'default_delay': 7, 'relative_delta': relativedelta(months=3)},
+            'monthly': {'default_delay': 3, 'relative_delta': relativedelta(months=1)},
+            'weekly': {'default_delay': 1, 'relative_delta': relativedelta(days=7)},
+        }
+        qs = self.filter(
             status='published', source__isnull=True, is_update_notification_enabled=True,
-            update_frequency__in=update_frequencies).exclude(
+            update_frequency__in=list(freq_updates_with_delays.keys())).exclude(
             Q(resources__type='api') | Q(resources__type='website')
         ).annotate(max_data_date=Max('resources__data_date', filter=Q(
             resources__is_removed=False, resources__is_permanently_removed=False, resources__status='published'
         ))).exclude(max_data_date__isnull=True)
+        q = None
+        for freq, freq_details in freq_updates_with_delays.items():
+            custom_delays = list(qs.filter(update_frequency=freq, update_notification_frequency__isnull=False).exclude(
+                update_notification_frequency=freq_details['default_delay']
+            ).values_list(
+                'update_notification_frequency', flat=True
+            ).distinct())
+            default_upcoming_date = (datetime.today().date() +
+                                     relativedelta(days=freq_details['default_delay'])) - freq_details['relative_delta']
+            delays_q = (Q(update_frequency=freq) & (
+                        Q(update_notification_frequency__isnull=True) |
+                        Q(update_notification_frequency=freq_details['default_delay'])) &
+                        Q(max_data_date=default_upcoming_date))
+            if q is None:
+                q = delays_q
+            else:
+                q |= delays_q
+            for delay in custom_delays:
+                custom_upcoming_date = (datetime.today().date() +
+                                        relativedelta(days=delay)) - freq_details['relative_delta']
+                delay_q = (Q(update_frequency=freq) &
+                           Q(update_notification_frequency=delay) &
+                           Q(max_data_date=custom_upcoming_date))
+                q |= delay_q
+
+        return qs.filter(q).select_related('modified_by')
 
 
 class DatasetManager(SoftDeletableManager):
@@ -108,5 +144,5 @@ class DatasetManager(SoftDeletableManager):
     def with_metadata_fetched_as_list(self):
         return super().get_queryset().with_metadata_fetched_as_list()
 
-    def datasets_to_notify(self, update_frequencies):
-        return super().get_queryset().datasets_to_notify(update_frequencies)
+    def datasets_to_notify(self):
+        return super().get_queryset().datasets_to_notify()

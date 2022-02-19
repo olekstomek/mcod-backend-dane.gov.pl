@@ -139,6 +139,7 @@ def admin_context(admin):
     _context.session = session_store()
     _context.form_class = None
     _context.form_data = {}
+    _context.form_files = None
     _context.form_instance = None
     _context.form = None
     return _context

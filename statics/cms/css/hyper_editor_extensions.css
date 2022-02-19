@@ -234,6 +234,15 @@
     width: 88px;
 }
 
+.ql-snow .ql-formats .ql-menuList::before{
+    content: 'Lista menu';
+    font-size: 10px;
+    line-height:initial;
+}
+.ql-snow .ql-formats .ql-menuList{
+    line-height:0px;
+}
+
 .ql-snow .ql-picker.ql-language .ql-picker-label::before {
     content: 'Język';
 }
@@ -279,7 +288,7 @@ span[lang] {
     display: block;
 }
 
-.ql-snow .ql-tooltip.ql-editing label#target-label {
+.ql-snow .ql-tooltip.ql-editing label#target-label, .ql-snow .ql-tooltip.ql-editing label#is-menu-label {
     display: inline-block;
 }
 

@@ -18,6 +18,7 @@ from mcod.cms.handlers import (
     TitledLinkHandler, TitledExternalLinkElementHandler,
     titled_link_entity, TitledPageLinkElementHandler, TitledPageLinkHandler
 )
+from mcod.unleash import is_enabled
 
 
 CUSTOM_STYLESHEETS = [
@@ -275,3 +276,9 @@ def editor_js():
         """,
         reverse('wagtailadmin_choose_page_titled_external_link')
     )
+
+
+@hooks.register('construct_main_menu')
+def flagged_listing_main(request, menu_items):
+    if not is_enabled('S44_cms_upload_videos.be'):
+        menu_items[:] = [item for item in menu_items if item.name != 'videos']

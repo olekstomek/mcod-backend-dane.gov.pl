@@ -2,19 +2,16 @@ from django.contrib import admin, messages
 from django.utils.translation import gettext_lazy as _
 
 from mcod.lib.admin_mixins import (
-    ActionsMixin,
-    CRUDMessageMixin,
     DecisionFilter,
     HistoryMixin,
-    SoftDeleteMixin,
     TrashMixin,
     LangFieldsOnlyMixin,
     StatusLabelAdminMixin,
     DecisionStatusLabelAdminMixin,
     DynamicAdminListDisplayMixin,
-    MCODAdminMixin
+    MCODAdminMixin,
+    ModelAdmin,
 )
-from mcod.reports.admin import ExportCsvMixin
 from mcod.suggestions.forms import (
     AcceptedDatasetSubmissionForm,
     DatasetCommentForm,
@@ -34,15 +31,16 @@ from mcod.suggestions.models import (
 from mcod.suggestions.tasks import create_accepted_dataset_suggestion_task
 
 
-class CommentAdminMixin(DynamicAdminListDisplayMixin, DecisionStatusLabelAdminMixin, ActionsMixin,
-                        CRUDMessageMixin, HistoryMixin, ExportCsvMixin, SoftDeleteMixin,
-                        MCODAdminMixin, admin.ModelAdmin):
+class CommentAdminMixin(DynamicAdminListDisplayMixin, DecisionStatusLabelAdminMixin, HistoryMixin, MCODAdminMixin,
+                        ModelAdmin):
+    export_to_csv = True
     is_history_other = True
     is_history_with_unknown_user_rows = True
     list_filter = [
         DecisionFilter,
     ]
     obj_gender = 'f'
+    soft_delete = True
     suit_form_tabs = (
         ('general', _('General')),
     )
@@ -161,12 +159,12 @@ class CommentAdminTrashMixin(TrashMixin):
     fields = [x for x in readonly_fields] + ['is_removed']
 
 
-class DatasetSubmissionAdminMixin(CRUDMessageMixin, SoftDeleteMixin, HistoryMixin,
-                                  MCODAdminMixin, admin.ModelAdmin):
+class DatasetSubmissionAdminMixin(HistoryMixin, MCODAdminMixin, ModelAdmin):
     is_history_other = True
     is_history_with_unknown_user_rows = True
     obj_gender = 'f'
     search_fields = ['title']
+    soft_delete = True
     suit_form_tabs = (
         ('general', _('General')),
     )
@@ -175,8 +173,8 @@ class DatasetSubmissionAdminMixin(CRUDMessageMixin, SoftDeleteMixin, HistoryMixi
         return False
 
 
-class DatasetSubmissionAdmin(DynamicAdminListDisplayMixin, DecisionStatusLabelAdminMixin,
-                             ExportCsvMixin, DatasetSubmissionAdminMixin):
+class DatasetSubmissionAdmin(DynamicAdminListDisplayMixin, DecisionStatusLabelAdminMixin, DatasetSubmissionAdminMixin):
+    export_to_csv = True
     form = DatasetSubmissionForm
     list_filter = [
         DecisionFilter,

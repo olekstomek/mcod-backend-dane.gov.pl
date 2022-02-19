@@ -53,7 +53,12 @@ from mcod.resources.error_mappings import recommendations, messages
 from mcod.resources.file_validation import analyze_file, check_support, get_file_info
 from mcod.resources.indexed_data import ShpData, TabularData
 from mcod.resources.link_validation import check_link_status, download_file
-from mcod.resources.managers import ChartManager, ResourceManager, ResourceRawManager
+from mcod.resources.managers import (
+    ChartManager,
+    ResourceManager,
+    ResourceRawManager,
+    ResourceFileManager
+)
 from mcod.resources.score_computation import get_score
 from mcod.resources.signals import revalidate_resource, update_chart_resource, update_dataset_file_archive
 from mcod.resources.tasks import (
@@ -406,6 +411,7 @@ class Resource(ExtendedModel):
 
     show_tabular_view = models.BooleanField(verbose_name=_('Tabular view'), default=True)
     has_chart = models.BooleanField(verbose_name=_('has chart?'), default=False)
+    has_dynamic_data = models.NullBooleanField(verbose_name=_('dynamic data'))
     has_high_value_data = models.NullBooleanField(verbose_name=_('has high value data'))
     has_map = models.BooleanField(verbose_name=_('has map?'), default=False)
     has_table = models.BooleanField(verbose_name=_('has table?'), default=False)
@@ -776,6 +782,9 @@ class Resource(ExtendedModel):
             except Exception as exc:
                 logger.debug(exc)
                 return None
+
+    def index_file(self):
+        process_resource_file_data_task.delay(self.id, update_verification_date=False)
 
     def save_file(self, content, filename):
         dt = self.created.date() if self.created else now().date()
@@ -1157,8 +1166,14 @@ class Resource(ExtendedModel):
     def is_published(self):
         return self.status == 'published'
 
+    @property
+    def needs_es_and_rdf_db_update(self):
+        if is_enabled('S44_es_update_fix.be'):
+            return self.is_published and not self.is_removed and not self.is_permanently_removed
+        return self.is_published
+
     def update_es_and_rdf_db(self):
-        if self.is_published:
+        if self.needs_es_and_rdf_db_update:
             update_with_related_task.s('resources', 'Resource', self.pk).apply_async()
             update_graph_task.s('resources', 'Resource', self.pk).apply_async(countdown=1)
 
@@ -1271,6 +1286,7 @@ class ResourceFile(models.Model):
                                          validators=[MinValueValidator(0), MaxValueValidator(5)])
 
     tracker = FieldTracker()
+    objects = ResourceFileManager()
 
     @property
     def file_size(self):
@@ -1385,6 +1401,11 @@ def process_resource(sender, instance, *args, **kwargs):
         process_resource_file_task.s(instance.id, update_file_archive=True).apply_async(countdown=2)
     elif is_enabled('S40_new_file_model.be') and instance.state_restored:
         process_resource_res_file_task.s(instance._main_file.pk, update_file_archive=True).apply_async(countdown=2)
+    elif is_enabled('S41_resource_bulk_download.be') and\
+            instance.tracker.has_changed('dataset_id') and instance.tracker.previous('dataset_id') is not None:
+        instance.dataset.archive_files()
+        previous_ds = instance.tracker.previous('dataset_id')
+        Dataset.objects.get(pk=previous_ds).archive_files()
 
 
 @receiver(update_dataset_file_archive, sender=Resource)
@@ -1563,10 +1584,11 @@ def process_resource_res_file_task_postrun_handler(sender, task_id, task, signal
 @task_postrun.connect(sender=process_resource_file_data_task)
 def process_resource_file_data_task_postrun_handler(sender, task_id, task, signal, **kwargs):
     kwargs.update({
-        'update_data_tasks_last_status': True,
         'update_has_map': True,
         'update_has_table': True
     })
+    if not is_enabled('S41_resource_AP_optimization.be'):
+        kwargs['update_data_tasks_last_status'] = True
     if is_enabled('S40_new_file_model.be'):
         kwargs['update_revalidated_data'] = True
     update_resource(task_id, **kwargs)
@@ -1662,16 +1684,29 @@ def process_resource_res_file_task_failure_handler(sender, task_id, exception, a
 
 @task_success.connect(sender=process_resource_file_data_task)
 def process_resource_file_data_task_success_handler(sender, result, *args, **kwargs):
+    if sender.request.is_eager:
+        result_task = TaskResult.objects.get_task(sender.request.id)
+        result_task.result = json.dumps(result)
+        result_task.status = 'SUCCESS'
+        result_task.save()
     try:
         data = json.loads(result)
     except json.JSONDecodeError:
         data = {}
     indexed = data.get('indexed')
     resource_id = data.get('resource_id')
+    if is_enabled('S41_resource_AP_optimization.be'):
+        kwargs.update({
+            'args': [resource_id],
+            'update_data_tasks_last_status': True
+        })
+        update_resource(sender.request.id, **kwargs)
     if indexed and resource_id:
         resource = Resource.raw.filter(id=resource_id).first()
         if resource:
             resource.increase_openness_score()
+            if is_enabled('S41_resource_bulk_download.be'):
+                resource.dataset.archive_files()
             if is_enabled('S40_new_file_model.be'):
                 resource_score, files_score = resource.get_openness_score()
                 Resource.raw.filter(pk=resource_id).update(
@@ -1679,12 +1714,6 @@ def process_resource_file_data_task_success_handler(sender, result, *args, **kwa
                 )
                 for rf in files_score:
                     ResourceFile.objects.filter(pk=rf['file_pk']).update(openness_score=rf['score'])
-
-    if sender.request.is_eager:
-        result_task = TaskResult.objects.get_task(sender.request.id)
-        result_task.result = json.dumps(result)
-        result_task.status = 'SUCCESS'
-        result_task.save()
 
 
 @task_failure.connect(sender=process_resource_file_data_task)
@@ -1706,6 +1735,9 @@ def process_resource_file_data_task_failure_handler(sender, task_id, exception, 
         result_task.status = 'FAILURE'
     result_task.result = json.dumps(result)
     result_task.save()
+    if is_enabled('S41_resource_AP_optimization.be'):
+        kwargs['update_data_tasks_last_status'] = True
+        kwargs['args'] = [resource_id]
     update_resource(task_id, **kwargs)
 
 

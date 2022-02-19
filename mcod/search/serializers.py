@@ -16,16 +16,17 @@ from mcod.core.api.jsonapi.serializers import (
 from mcod.core.api.rdf.schemas import ResponseSchema as RDFResponseSchema
 from mcod.core.api.schemas import ExtSchema
 from mcod.datasets.serializers import (
+    BoolDataAggregation,
     CategoryAggregation,
     InstitutionAggregation,
     SourceSchema,
     LicenseAggregation,
     UpdateFrequencyAggregation,
-    HighValueDataAggregation
 )
 from mcod.lib.serializers import TranslatedStr, KeywordsList
 from mcod.organizations.serializers import DataSourceAttr
 from mcod.regions.serializers import RegionSchema
+from mcod.resources.serializers import GeoTileAggregation
 from mcod.showcases.serializers import (
     ShowcaseCategoryAggregation,
     ShowcasePlatformAggregation,
@@ -80,6 +81,8 @@ class CommonObjectApiAttrs(ObjectAttrs, HighlightObjectMixin):
     verified = fields.DateTime()
     categories = fields.Nested(Category, many=True)
     category = fields.Nested(Category)
+    if is_enabled('S43_dynamic_data.be'):
+        has_dynamic_data = fields.Boolean()
     if is_enabled('S35_high_value_data.be'):
         has_high_value_data = fields.Boolean()
 
@@ -197,9 +200,14 @@ class CommonObjectApiAggregations(ExtSchema):
                                         many=True,
                                         attribute='_filter_by_update_frequency.by_update_frequency.buckets')
 
-    by_has_high_value_data = fields.Nested(HighValueDataAggregation,
-                                           many=True,
-                                           attribute='_filter_by_has_high_value_data.by_has_high_value_data.buckets')
+    by_has_dynamic_data = fields.Nested(
+        BoolDataAggregation,
+        many=True,
+        attribute='_filter_by_has_dynamic_data.by_has_dynamic_data.buckets')
+    by_has_high_value_data = fields.Nested(
+        BoolDataAggregation,
+        many=True,
+        attribute='_filter_by_has_high_value_data.by_has_high_value_data.buckets')
     by_showcase_category = fields.Nested(
         ShowcaseCategoryAggregation,
         many=True,
@@ -212,6 +220,7 @@ class CommonObjectApiAggregations(ExtSchema):
         ShowcasePlatformAggregation,
         many=True,
         attribute='_filter_by_showcase_platforms.by_showcase_platforms.buckets')
+    by_tiles = fields.Nested(GeoTileAggregation, many=True)
 
 
 class CommonObjectApiMetaSchema(TopLevelMeta):

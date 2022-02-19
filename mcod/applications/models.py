@@ -446,6 +446,33 @@ class ApplicationProposal(ApplicationMixin):
                 mail.attach(illustrative_graphics_img)
             mail.send()
 
+    def migrate_to_showcase_proposal(self, showcase=None):
+        sp_model = apps.get_model('showcases.ShowcaseProposal')
+        prop_data = model_to_dict(self, exclude=['application', 'slug'])
+        if showcase:
+            prop_data['showcase'] = showcase
+        prop_data['category'] = showcase.category if showcase else 'app'
+        prop_data['created_by'] = self.created_by
+        prop_data['modified_by'] = self.modified_by
+        prop_data['created'] = self.created
+        prop_data['license_type'] = sp_model.LICENSE_TYPES[0]
+        prop_id = prop_data.pop('id')
+        datasets = prop_data.pop('datasets', [])
+        image = prop_data.pop('image', None)
+        illustrative_graphics = prop_data.pop('illustrative_graphics', None)
+        prop, created = sp_model.objects.update_or_create(id=prop_id, defaults=prop_data)
+        if image:
+            prop.image = prop.save_file(
+                image, os.path.basename(image.path))
+        if illustrative_graphics:
+            prop.illustrative_graphics = prop.save_file(
+                illustrative_graphics, os.path.basename(illustrative_graphics.path),
+                field_name='illustrative_graphics')
+        if image or illustrative_graphics:
+            prop.save()
+        prop.datasets.set(datasets)
+        sp_model.raw.filter(id=prop.id).update(modified=self.modified)
+
 
 class ApplicationProposalTrash(ApplicationProposal, metaclass=TrashModelBase):
 
@@ -590,6 +617,41 @@ class Application(ApplicationMixin):
     @classmethod
     def accusative_case(cls):
         return _("acc: Application")
+
+    def migrate_to_showcase(self, category=None):
+        s_model = apps.get_model('showcases.Showcase')
+        data = model_to_dict(self, exclude=[
+            'title',
+            'slug',
+            'notes',
+            'image_alt',
+            'illustrative_graphics_alt',
+        ])
+        data['category'] = category if category in s_model.CATEGORIES else 'app'
+        data['created_by'] = self.created_by
+        data['modified_by'] = self.modified_by
+        data['created'] = self.created
+        data['license_type'] = s_model.LICENSE_TYPES[0]
+        obj_id = data.pop('id')
+        datasets = data.pop('datasets', [])
+        tags = data.pop('tags', [])
+        image = data.pop('image', None)
+        illustrative_graphics = data.pop('illustrative_graphics', None)
+        obj, created = s_model.raw.update_or_create(id=obj_id, defaults=data)
+        if image:
+            obj.image = obj.save_file(
+                image, os.path.basename(image.path))
+        if illustrative_graphics:
+            obj.illustrative_graphics = obj.save_file(
+                illustrative_graphics, os.path.basename(illustrative_graphics.path),
+                field_name='illustrative_graphics')
+        if image or illustrative_graphics:
+            obj.save()
+        obj.datasets.set(datasets)
+        obj.tags.set(tags)
+        s_model.raw.filter(id=obj.id).update(modified=self.modified)
+        if hasattr(self, 'applicationproposal'):
+            self.applicationproposal.migrate_to_showcase_proposal(obj)
 
     def published_datasets(self):
         return self.datasets.filter(status='published')

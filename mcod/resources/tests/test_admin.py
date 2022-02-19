@@ -369,6 +369,8 @@ class TestResourceChangeType(object):
             '_change_type': ''}
         if is_enabled('S41_resource_has_high_value_data.be'):
             data['has_high_value_data'] = False
+        if is_enabled('S43_dynamic_data.be'):
+            data['has_dynamic_data'] = False
         resp = client.post(
             reverse('admin:resources_resource_change', kwargs={'object_id': geo_tabular_data_resource.id}), data=data,
             follow=True
@@ -401,6 +403,8 @@ class TestResourceMapSave(object):
         }
         if is_enabled('S41_resource_has_high_value_data.be'):
             data['has_high_value_data'] = False
+        if is_enabled('S43_dynamic_data.be'):
+            data['has_dynamic_data'] = False
         resp = client.post(geo_tabular_data_resource.admin_change_url, data=data, follow=True)
         content = resp.content.decode()
         assert _('Map definition saved') in content
@@ -474,27 +478,6 @@ class TestResourceChangeList(object):
 
 
 class TestResourceForm(object):
-
-    def test_change_resource(self, admin, resource):
-        client = Client()
-        client.force_login(admin)
-        data = {
-            'title': ['title changed in form'], 'description': ['<p>more than 20 characters</p>'],
-            'data_date': [datetime.date(2021, 5, 4)], 'status': ['published'], 'title_en': [''], 'description_en': [''],
-            'slug_en': [''], 'Resource_file_tasks-TOTAL_FORMS': ['4'], 'Resource_file_tasks-INITIAL_FORMS': ['1'],
-            'dataset': [resource.dataset_id],
-            'Resource_file_tasks-MIN_NUM_FORMS': ['0'], 'Resource_file_tasks-MAX_NUM_FORMS': ['1000'],
-            'Resource_data_tasks-TOTAL_FORMS': ['1'], 'Resource_data_tasks-INITIAL_FORMS': ['1'],
-            'Resource_data_tasks-MIN_NUM_FORMS': ['0'], 'Resource_data_tasks-MAX_NUM_FORMS': ['1000'],
-            'Resource_link_tasks-TOTAL_FORMS': ['1'], 'Resource_link_tasks-INITIAL_FORMS': ['1'],
-            'Resource_link_tasks-MIN_NUM_FORMS': ['0'], 'Resource_link_tasks-MAX_NUM_FORMS': ['1000'],
-            '_save': ['']}
-        if is_enabled('S41_resource_has_high_value_data.be'):
-            data['has_high_value_data'] = False
-        resp = client.post(resource.admin_change_url, data=data, follow=True)
-        content = resp.content.decode()
-        assert resp.resolver_match.url_name == 'resources_resource_changelist'
-        assert 'title changed in form' in content
 
     def test_non_csv_resource_doesnt_display_csv_file_data(self, admin, resource_of_type_website):
         client = Client()

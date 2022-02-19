@@ -22,7 +22,7 @@
     {% else %}
         <p>{% blocktrans %}Are you sure you want to delete the objects?: {% endblocktrans %}</p>
         {% for obj in queryset %}
-            <p> {%  if obj.title %}"{{ obj.title }}" {% elif obj.email %} "{{ obj.email }}" {% else %} "{{ obj }}" {% endif %}</p>
+            <p> {%  if obj.title %}"{{ obj.title|truncatewords:"18" }}" {% elif obj.email %} "{{ obj.email }}" {% else %} "{{ obj|truncatewords:"18" }}" {% endif %}</p>
             {% if obj.datasource_datasets %}
               <p>({% trans 'All existing datasets and resources imported from this source will be deleted also.' %})</p>
             {% endif %}

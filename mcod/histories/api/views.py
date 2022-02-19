@@ -46,9 +46,9 @@ class HistoryView(JsonAPIView):
         def _get_instance(self, id, *args, **kwargs):
             instance = getattr(self, '_cached_instance', None)
             if not instance:
-                query = {'content_type__model': 'user'} if self.new_history else {'table_name': 'user'}
                 try:
-                    self._cached_instance = self.database_model.objects.exclude(**query).get(pk=id)
+                    self._cached_instance = self.database_model.objects.exclude(
+                        content_type__model='user').get(pk=id)
                 except self.database_model.DoesNotExist:
                     raise falcon.HTTPNotFound
             return self._cached_instance

@@ -898,3 +898,10 @@ def resource_created_with_file():
 @then('counter incrementing task is executed')
 def counter_incrementing_task_is_executed(context):
     save_counters()
+
+
+@then(parsers.parse('Resource with title {title} has assigned file {filename}'))
+def resource_file_name_id(title, filename):
+    model = apps.get_model('resources', 'resource')
+    obj = model.objects.get(title=title)
+    assert obj.main_file.name.endswith(filename)

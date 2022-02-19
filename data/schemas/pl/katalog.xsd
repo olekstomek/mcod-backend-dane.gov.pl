@@ -68,6 +68,24 @@
                 </xs:complexType>
             </xs:element>
             <xs:element type="xs:string" name="data_date"/>
+            <xs:element name="has_high_value_data">
+                <xs:simpleType>
+                    <xs:restriction base="xs:string">
+                        <xs:enumeration value="False"/>
+                        <xs:enumeration value="True"/>
+                        <xs:enumeration value=""/>
+                    </xs:restriction>
+                </xs:simpleType>
+            </xs:element>
+            <xs:element name="has_dynamic_data">
+                <xs:simpleType>
+                    <xs:restriction base="xs:string">
+                        <xs:enumeration value="False"/>
+                        <xs:enumeration value="True"/>
+                        <xs:enumeration value=""/>
+                    </xs:restriction>
+                </xs:simpleType>
+            </xs:element>
         </xs:all>
     </xs:complexType>
     <xs:complexType name="resourcesType">
@@ -117,6 +135,24 @@
                         <xs:enumeration value="CC BY-NC-SA 4.0"/>
                         <xs:enumeration value="CC BY-ND 4.0"/>
                         <xs:enumeration value="CC BY-NC-ND 4.0"/>
+                    </xs:restriction>
+                </xs:simpleType>
+            </xs:element>
+            <xs:element name="has_high_value_data">
+                <xs:simpleType>
+                    <xs:restriction base="xs:string">
+                        <xs:enumeration value="False"/>
+                        <xs:enumeration value="True"/>
+                        <xs:enumeration value=""/>
+                    </xs:restriction>
+                </xs:simpleType>
+            </xs:element>
+            <xs:element name="has_dynamic_data">
+                <xs:simpleType>
+                    <xs:restriction base="xs:string">
+                        <xs:enumeration value="False"/>
+                        <xs:enumeration value="True"/>
+                        <xs:enumeration value=""/>
                     </xs:restriction>
                 </xs:simpleType>
             </xs:element>

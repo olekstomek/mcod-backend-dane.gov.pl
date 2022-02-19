@@ -5,11 +5,11 @@ from django.forms.models import BaseInlineFormSet
 from django.utils.translation import gettext_lazy as _
 from mcod.laboratory.models import LabEvent, LabReport, LabEventTrash
 from mcod.lib.admin_mixins import (
-    SoftDeleteMixin,
     HistoryMixin,
     LangFieldsOnlyMixin,
     TrashMixin,
-    MCODAdminMixin
+    MCODAdminMixin,
+    ModelAdmin,
 )
 from mcod.resources.forms import LinkOrFileUploadForm
 
@@ -40,11 +40,12 @@ class AddReportStacked(nested_admin.NestedStackedInline):
     max_num = 2
 
 
-class LabEventAdmin(SoftDeleteMixin, HistoryMixin, LangFieldsOnlyMixin, MCODAdminMixin, admin.ModelAdmin):
+class LabEventAdmin(HistoryMixin, LangFieldsOnlyMixin, MCODAdminMixin, ModelAdmin):
     actions_on_top = True
     is_history_other = True
     list_display = ["title", "event_type", "execution_date"]
     search_fields = ["title", "notes"]
+    soft_delete = True
 
     inlines = [AddReportStacked]
 

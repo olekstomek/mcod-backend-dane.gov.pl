@@ -3,9 +3,12 @@ from wagtail.admin.edit_handlers import StreamFieldPanel
 from wagtail.api import APIField
 from wagtail.api.v2.serializers import StreamField as StreamFieldSerializer
 from wagtail.core.fields import StreamField
+from hypereditor.fields import HyperFieldPanel
 
+from mcod.cms.api.fields import HyperEditorJSONField, LocalizedHyperField
 from mcod.cms.blocks.common import CarouselBlock
 from mcod.cms.models.base import BasePage
+from mcod.unleash import is_enabled
 
 
 class RootPage(BasePage):
@@ -33,10 +36,22 @@ class RootPage(BasePage):
                                          verbose_name='Blok nad sekcją "Aktualności"',
                                          help_text='TODO: napisać'
                                          )
+    header_gov = LocalizedHyperField(default=None, blank=True, null=True, verbose_name='Górny nagłówek - sekcja mój gov')
+    header_gov_en = LocalizedHyperField(default=None, blank=True, null=True, verbose_name='Górny nagłówek - sekcja mój gov')
+
+    footer_nav = LocalizedHyperField(default=None, blank=True, null=True, verbose_name='Stopka - sekcja nawigacji')
+    footer_nav_en = LocalizedHyperField(default=None, blank=True, null=True, verbose_name='Stopka - sekcja nawigacji')
+
+    footer_logos = StreamField(CarouselBlock(max_num=5, required=False), default=None, blank=True,
+                               verbose_name='Stopka - sekcja logo')
+    footer_logos_en = StreamField(CarouselBlock(max_num=5, required=False), default=None, blank=True,
+                                  verbose_name='Stopka - sekcja logo')
 
     parent_page_types = ['wagtailcore.Page']
 
     fixed_url_path = ''
+
+    header_and_nav_management = is_enabled('S42_cms_header_nav_manage.be')
 
     api_fields = BasePage.api_fields + [
         APIField('over_login_section_cb', serializer=StreamFieldSerializer(source='over_login_section_cb_i18n')),
@@ -54,13 +69,28 @@ class RootPage(BasePage):
         StreamFieldPanel('over_login_section_cb_en'),
         StreamFieldPanel('over_search_field_cb_en'),
         StreamFieldPanel('over_latest_news_cb_en'),
+
     ]
 
     i18n_fields = BasePage.i18n_fields + ['over_login_section_cb', 'over_search_field_cb', 'over_latest_news_cb']
+    if header_and_nav_management:
+        i18n_fields += ['header_gov', 'footer_nav', 'footer_logos']
+        api_fields += [APIField('header_gov', serializer=HyperEditorJSONField(source='header_gov_i18n')),
+                       APIField('footer_nav', serializer=HyperEditorJSONField(source='footer_nav_i18n')),
+                       APIField('footer_logos', serializer=StreamFieldSerializer(source='footer_logos_i18n'))]
+        content_panels_pl += [HyperFieldPanel('header_gov'),
+                              HyperFieldPanel('footer_nav'),
+                              StreamFieldPanel('footer_logos')]
+        content_panels_en += [HyperFieldPanel('header_gov_en'),
+                              HyperFieldPanel('footer_nav_en'),
+                              StreamFieldPanel('footer_logos_en')]
 
     class Meta:
         verbose_name = "Strona główna"
         verbose_name_plural = "Strony główne"
 
     def get_copyable_fields(self):
-        return super().get_copyable_fields() + ['over_login_section_cb', 'over_search_field_cb', 'over_latest_news_cb']
+        page_fields = ['over_login_section_cb', 'over_search_field_cb', 'over_latest_news_cb']
+        if self.header_and_nav_management:
+            page_fields += ['header_gov', 'footer_nav', 'footer_logos']
+        return super().get_copyable_fields() + page_fields

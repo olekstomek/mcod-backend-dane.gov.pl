@@ -154,13 +154,6 @@ class ShowcaseMixin(ExtendedModel):
                 f'<a href="{self.admin_change_url}" target="_blank"><img src="{url}" width="100" alt="{alt}" /></a>')
 
     @property
-    def file_url(self):
-        return self._get_absolute_url(
-            self.file.url,
-            base_url=settings.API_URL,
-            use_lang=False) if self.file else None
-
-    @property
     def is_app(self):
         return self.category == 'app'
 
@@ -181,9 +174,7 @@ class ShowcaseMixin(ExtendedModel):
 
     def save_file(self, content, filename, field_name='image'):
         dt = self.created.date() if self.created else timezone.now().date()
-        subdir = dt.isoformat().replace('-', '')
-        if field_name == 'illustrative_graphics':
-            subdir = os.path.join(field_name, subdir)
+        subdir = os.path.join(field_name, dt.isoformat().replace('-', ''))
         field = getattr(self, field_name)
         dest_dir = os.path.join(field.storage.location, subdir)
         os.makedirs(dest_dir, exist_ok=True)
@@ -207,10 +198,6 @@ class ShowcaseProposal(ShowcaseMixin):
         max_length=200, storage=storages.get_storage('showcases'),
         upload_to='proposals/illustrative_graphics/%Y%m%d', blank=True, null=True,
         verbose_name=_('illustrative graphics'),
-    )
-    file = models.FileField(
-        verbose_name=_('attachement'), storage=storages.get_storage('showcases'),
-        upload_to='proposals/file/%Y%m%d', max_length=2000, blank=True, null=True,
     )
     datasets = models.ManyToManyField(
         'datasets.Dataset', blank=True, verbose_name=_('datasets'), related_name='showcase_proposals')
@@ -331,14 +318,13 @@ class ShowcaseProposal(ShowcaseMixin):
                 'category', 'notes', 'author', 'url', 'title', 'image', 'illustrative_graphics', 'datasets',
                 'external_datasets', 'keywords', 'created_by', 'modified_by', 'is_mobile_app', 'is_desktop_app',
                 'mobile_apple_url', 'mobile_google_url', 'desktop_windows_url', 'desktop_linux_url',
-                'desktop_macos_url', 'license_type', 'file']
+                'desktop_macos_url', 'license_type']
         )
         data['status'] = 'draft'
         data['modified_by_id'] = data.pop('modified_by')
         data['created_by_id'] = data.pop('created_by') or data['modified_by_id']
         image = data.pop('image')
         illustrative_graphics = data.pop('illustrative_graphics')
-        file = data.pop('file')
         datasets = data.pop('datasets')
         keywords = data.pop('keywords')
         showcase = Showcase.objects.create(**data)
@@ -348,10 +334,7 @@ class ShowcaseProposal(ShowcaseMixin):
             showcase.illustrative_graphics = showcase.save_file(
                 illustrative_graphics, os.path.basename(illustrative_graphics.path),
                 field_name='illustrative_graphics')
-        if file:
-            showcase.file = showcase.save_file(
-                file, os.path.basename(file.path), field_name='file')
-        if image or illustrative_graphics or file:
+        if image or illustrative_graphics:
             showcase.save()
         if datasets:
             showcase.datasets.set(datasets)
@@ -446,10 +429,6 @@ class Showcase(ShowcaseMixin):
         upload_to='image_thumb/%Y%m%d', blank=True, null=True
     )
     image_alt = models.CharField(max_length=255, null=True, blank=True, verbose_name=_('Alternative text'))
-    file = models.FileField(
-        verbose_name=_('attachement'), storage=storages.get_storage('showcases'),
-        upload_to='file/%Y%m%d', max_length=2000, blank=True, null=True,
-    )
     datasets = models.ManyToManyField(
         'datasets.Dataset',
         db_table='showcase_dataset',

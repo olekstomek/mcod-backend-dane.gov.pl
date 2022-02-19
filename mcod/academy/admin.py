@@ -3,7 +3,12 @@ from django.utils.translation import gettext_lazy as _
 
 from mcod.academy.forms import CourseAdminForm, CourseModuleAdminFormSet, CourseModuleInlineAdminForm
 from mcod.academy.models import Course, CourseModule, CourseTrash
-from mcod.lib.admin_mixins import ActionsMixin, HistoryMixin, SoftDeleteMixin, TrashMixin, MCODAdminMixin
+from mcod.lib.admin_mixins import (
+    HistoryMixin,
+    MCODAdminMixin,
+    ModelAdmin,
+    TrashMixin,
+)
 
 
 class CourseModuleInline(admin.TabularInline):
@@ -24,11 +29,10 @@ class CourseModuleInline(admin.TabularInline):
         return formset
 
 
-class CourseAdminMixin(ActionsMixin):
+class CourseAdminMixin:
     is_history_other = True
     search_fields = ['title']
     list_display = ('_title', 'participants_number', '_modules_count', '_venue', '_start', '_end')
-    delete_selected_msg = _('Delete selected courses')
 
     def _end(self, obj):
         return obj._end
@@ -65,9 +69,10 @@ class CourseAdminMixin(ActionsMixin):
         return qs.with_schedule()
 
 
-class CourseAdmin(CourseAdminMixin, HistoryMixin, SoftDeleteMixin, MCODAdminMixin, admin.ModelAdmin):
+class CourseAdmin(CourseAdminMixin, HistoryMixin, MCODAdminMixin, ModelAdmin):
 
     actions_on_top = True
+    delete_selected_msg = _('Delete selected courses')
     fieldsets = [
         (
             None, {
@@ -86,6 +91,7 @@ class CourseAdmin(CourseAdminMixin, HistoryMixin, SoftDeleteMixin, MCODAdminMixi
     ]
     form = CourseAdminForm
     inlines = (CourseModuleInline, )
+    soft_delete = True
     suit_form_tabs = (
         ('course', _('General')),
     )
@@ -95,7 +101,7 @@ class CourseAdmin(CourseAdminMixin, HistoryMixin, SoftDeleteMixin, MCODAdminMixi
 
 
 class CourseTrashAdmin(CourseAdminMixin, HistoryMixin, TrashMixin):
-
+    delete_selected_msg = _('Delete selected courses')
     readonly_fields = (
         'title',
         'participants_number',

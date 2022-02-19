@@ -103,6 +103,10 @@ class DataAggregations(ExtSchema):
                 'field': 'update_frequency',
                 'size': 100
             },
+            'by_has_dynamic_data': {
+                'field': 'has_dynamic_data',
+                'size': 100
+            },
             'by_has_high_value_data': {
                 'field': 'has_high_value_data',
                 'size': 100
@@ -242,6 +246,14 @@ class ApiSearchRequest(ListingSchema):
         doc_base_url='/search',
         doc_field_name='update_frequency'
     )
+    if is_enabled('S43_dynamic_data.be'):
+        has_dynamic_data = fields.FilterField(
+            BooleanTermSchema,
+            query_field='has_dynamic_data',
+            doc_template='docs/generic/fields/boolean_term_field.html',
+            doc_base_url='/search',
+            doc_field_name='has_dynamic_data'
+        )
     has_high_value_data = fields.FilterField(
         BooleanTermSchema,
         query_field='has_high_value_data',

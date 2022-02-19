@@ -23,6 +23,7 @@ from marshmallow import ValidationError as SchemaValidationError
 from mcod import settings
 from mcod.categories.models import Category
 from mcod.core.db.managers import TrashManager
+from mcod.core.db.mixins import AdminMixin
 from mcod.core.db.models import LogMixin, TrashModelBase
 from mcod.core.models import SoftDeletableModel
 from mcod.harvester.managers import DataSourceManager
@@ -82,7 +83,7 @@ IMPORT_STATUS_CHOICES = (
 )
 
 
-class DataSource(LogMixin, SoftDeletableModel, TimeStampedModel):
+class DataSource(AdminMixin, LogMixin, SoftDeletableModel, TimeStampedModel):
     """Model of data source."""
     INSTITUTION_TYPE_CHOICES = Organization.INSTITUTION_TYPE_CHOICES
     SOURCE_TYPE_CHOICES = (

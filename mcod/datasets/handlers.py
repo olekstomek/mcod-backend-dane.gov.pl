@@ -52,12 +52,15 @@ class ArchiveDownloadViewHandler(RetrieveOneHdlr):
     database_model = apps.get_model('datasets', 'Dataset')
 
     def serialize(self, *args, **kwargs):
-        zip_path = self._cached_instance.archived_resources_files.path
+        try:
+            zip_path = self._cached_instance.archived_resources_files.path
+        except ValueError:
+            raise falcon.HTTPNotFound
         try:
             with open(zip_path, 'rb') as f:
                 zipped_files = f.read()
             with zipfile.ZipFile(zip_path) as z:
-                resources_ids = list(set([os.path.dirname(x).split('_')[1] for x in z.namelist()]))
+                resources_ids = list([os.path.dirname(x).split('_')[-1] for x in z.namelist()])
                 counter = Counter()
                 for res_id in resources_ids:
                     counter.incr_download_count(res_id)

@@ -1,5 +1,5 @@
-{% load static %}
-
+{% load static  core_tags %}
+{% is_unleash_enabled "S42_cms_header_nav_manage.be" as S42_head_footer_manage %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -21,6 +21,7 @@
         const UiTooltip = Quill.import('ui/tooltip');
         const SnowTheme = Quill.import('themes/snow');
         const LinkBlot = Quill.import('formats/link');
+        const ListBlot = Quill.import('formats/list');
         const icons = Quill.import('ui/icons');
         function isStringified(value) {
           try {
@@ -48,12 +49,23 @@
                         else{
                             node.setAttribute('title', newValue.title);
                         }
-
+                        if((newValue.css_classes == null || newValue.css_classes == '') && node.hasAttribute('class')){
+                            node.removeAttribute('class');
+                        }
+                        else if(newValue.css_classes != null && newValue.css_classes != ''){
+                            node.setAttribute('class', newValue.css_classes);
+                        }
                         if(newValue.target == false){
                             node.setAttribute('target', '_self');
                         }
                         else if(typeof(newValue.target) === 'string'){
                             node.setAttribute('target', newValue.target);
+                        }
+                        if(newValue.is_menu == false && node.hasAttribute('role')){
+                            node.removeAttribute('role');
+                        }
+                        else if(newValue.is_menu === true || typeof(newValue.is_menu) === 'string'){
+                            node.setAttribute('role', 'menuitem');
                         }
                         return node;
                     }
@@ -61,10 +73,16 @@
                     return node;
             }
             static formats(domNode) {
+                let classes = '';
+                if(domNode.hasAttribute('class')){
+                    classes = domNode.getAttribute('class');
+                }
                 return JSON.stringify({
                     href: domNode.getAttribute('href'),
                     title: domNode.getAttribute('title'),
-                    target: domNode.getAttribute('target')
+                    target: domNode.getAttribute('target'),
+                    is_menu: domNode.getAttribute('role'),
+                    css_classes: classes
                 });
             }
             format(name, value){
@@ -81,6 +99,20 @@
                 if (typeof(newValue) !== 'string') {
                     this.domNode.setAttribute('href', newValue.href);
                     this.domNode.setAttribute('title', newValue.title);
+                    {% if S42_head_footer_manage %}
+                    if(newValue.css_classes == '' && this.domNode.hasAttribute('class')){
+                        this.domNode.removeAttribute('class');
+                    }
+                    else{
+                        this.domNode.setAttribute('class', newValue.css_classes);
+                    }
+                    if(newValue.is_menu == false && this.domNode.hasAttribute('role')){
+                        this.domNode.removeAttribute('role');
+                    }
+                    else if(newValue.is_menu == true){
+                        this.domNode.setAttribute('role', 'menuitem');
+                    }
+                    {% endif %}
                     if(newValue.target == false){
                         this.domNode.setAttribute('target', '_self');
                     }
@@ -93,6 +125,21 @@
                 }
             }
         }
+        {% if S42_head_footer_manage %}
+            class CustomListBlot extends ListBlot {
+                static create(value) {
+                    let tagName = value === 'ordered' ? 'OL' : 'UL';
+                    let node = super.create(tagName);
+                    if (value === 'checked' || value === 'unchecked') {
+                      node.setAttribute('data-checked', value === 'checked');
+                    }
+                    node.setAttribute('role', 'menu');
+                    return node;
+                  }
+            }
+            CustomListBlot.blotName = 'menuList';
+            Quill.register(CustomListBlot);
+        {% endif %}
         Quill.register(CustomLinkBlot);
 
         class Range {
@@ -107,7 +154,9 @@
                 super(quill, boundsContainer);
                 this.textbox = this.root.querySelector('input[type="text"]');
                 this.title_textbox = this.root.querySelector('input[type="text"]#url-title');
+                this.classes_textbox = this.root.querySelector('input[type="text"]#url-css-classes');
                 this.target_checkbox = this.root.querySelector('input[type="checkbox"]#url-target');
+                this.role_checkbox = this.root.querySelector('input[type="checkbox"]#url-is-menu');
                 this.listen();
                 this.preview = this.root.querySelector('a.ql-preview');
             }
@@ -138,7 +187,9 @@
                         this.save();
                     }
                     else {
-                        this.edit('link', JSON.stringify({'href': this.preview.textContent, 'title': this.preview.title, 'target': this.preview.target}));
+                        let classes = this.preview.className;
+                        let added_classes = classes.replace("ql-preview",'');
+                        this.edit('link', JSON.stringify({'href': this.preview.textContent, 'title': this.preview.title, 'target': this.preview.target, 'is_menu': this.preview.getAttribute('role'), 'css_classes': added_classes}));
                     }
                     event.preventDefault();
                 });
@@ -167,6 +218,18 @@
                                 this.preview.textContent = preview['href'];
                                 this.preview.setAttribute('title', preview['title']);
                                 this.preview.setAttribute('target', preview['target']);
+                                {% if S42_head_footer_manage %}
+                                if(preview['is_menu'] != null){
+                                    this.preview.setAttribute('role', preview['is_menu']);
+                                }
+                                if(this.preview.hasAttribute('class')){
+                                    let new_classes = preview['css_classes'];
+                                    if(preview['css_classes'].length && !(/^\s/.test(new_classes))){
+                                        new_classes = ' '+new_classes
+                                    }
+                                    this.preview.className += new_classes;
+                                }
+                                {% endif %}
                                 this.show();
                                 this.position(this.quill.getBounds(this.linkRange));
                                 return;
@@ -200,23 +263,48 @@
                         else{
                             this.target_checkbox.checked = true;
                         }
+                        {% if S42_head_footer_manage %}
+                        if(newPreview.is_menu == 'menuitem'){
+                            this.role_checkbox.checked = true;
+                        }
+                        else{
+                            this.role_checkbox.checked = false;
+                        }
+                        {% endif %}
                         if(newPreview.title == null){
                             this.title_textbox.value = newPreview['href'];
                         }
                         else{
                             this.title_textbox.value = newPreview['title'];
                         }
+                        {% if S42_head_footer_manage %}
+                        if(newPreview.css_classes == null){
+                            this.classes_textbox.value = '';
+                        }
+                        else{
+                            this.classes_textbox.value = newPreview['css_classes'];
+                        }
+                        {% endif %}
                     }
                     else{
                         this.textbox.value = newPreview;
                         this.title_textbox.value = newPreview;
                         this.target_checkbox.checked = true;
+                        {% if S42_head_footer_manage %}
+                        this.role_checkbox.checked = false;
+                        this.classes_textbox.value = '';
+                        {% endif %}
                     }
                 }
                 else if (mode !== this.root.getAttribute('data-mode')) {
                     this.textbox.value = '';
                     this.title_textbox.value = '';
                     this.target_checkbox.checked = true;
+                    {% if S42_head_footer_manage %}
+                    this.role_checkbox.checked = false;
+                    this.classes_textbox.value = '';
+                    {% endif %}
+
                 }
                 this.position(this.quill.getBounds(this.quill.selection.savedRange));
                 this.textbox.select();
@@ -237,6 +325,13 @@
                 let { value } = this.textbox;
                 let title_value = this.title_textbox.value;
                 let target_value = this.target_checkbox.checked;
+                {% if S42_head_footer_manage %}
+                let role_value = this.role_checkbox.checked;
+                let classes_value = this.classes_textbox.value;
+                {% else %}
+                let role_value = null;
+                let classes_value = null;
+                {% endif %}
                 switch (this.root.getAttribute('data-mode')) {
                     case 'link': {
                         const { scrollTop } = this.quill.root;
@@ -244,15 +339,16 @@
                             this.quill.formatText(
                                 this.linkRange,
                                 'link',
-                                JSON.stringify({'href': value, 'title': title_value, 'target': target_value}),
+                                JSON.stringify({'href': value, 'title': title_value, 'target': target_value, 'is_menu': role_value, 'css_classes': classes_value}),
                                 'user',
                             );
                             delete this.linkRange;
                         }
                         else {
                             this.restoreFocus();
-                            this.quill.format('link', JSON.stringify({'href': value, 'title': title_value, 'target': target_value}), 'user');
+                            this.quill.format('link', JSON.stringify({'href': value, 'title': title_value, 'target': target_value, 'is_menu': role_value, 'css_classes': classes_value}), 'user');
                         }
+                        this.preview.className = 'ql-preview';
                         this.quill.root.scrollTop = scrollTop;
                         break;
                     }
@@ -282,6 +378,10 @@
                 this.title_textbox.value = '';
                 this.textbox.value = '';
                 this.target_checkbox.checked = true;
+                {% if S42_head_footer_manage %}
+                this.role_checkbox.checked = false;
+                this.classes_textbox.value = '';
+                {% endif %}
                 this.hide();
             }
 
@@ -327,6 +427,8 @@
             '<input type="text" data-formula="e=mc^2" data-link="https://example.com" data-video="Embed URL">',
             '<label for="url-title">Podpowiedź po najechaniu na odnośnik:</label><input id="url-title" type="text">',
             '<label for="url-target" id="target-label">Otwórz odnośnik w nowej karcie:</label><input id="url-target" type="checkbox" checked="checked">',
+            {% if S42_head_footer_manage %}'<label for="url-css-classes">Dodatkowe klasy css:</label><input id="url-css-classes" type="text">',
+            '<label for="url-is-menu" id="is-menu-label">Odnośnik jest elementem menu:</label><input id="url-is-menu" type="checkbox">',{% endif %}
             '<a class="ql-action"></a>',
             '<a class="ql-remove"></a>',
         ].join('');
@@ -335,7 +437,7 @@
             container: [
                 [{header: [1, 2, 3, false]}],
                 ['bold', 'italic', 'underline', 'link'],
-                [{list: 'ordered'}, {list: 'bullet'}],
+                [{list: 'ordered'}, {list: 'bullet'}, {% if S42_head_footer_manage %}{menuList: 'bullet'}{% endif %}],
                 [{language: ['pl', 'en', false]}],
                 [{fontSize: [16, 18, 20, 22, 24, 26, 28, 30, false]}],
                 [{fontColor: ["blue", "black", "grey", "grey-light", "red", "yellow", "green", "white", false]}],

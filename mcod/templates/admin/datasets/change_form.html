@@ -102,5 +102,13 @@
             });
         {% endif %}
     {% endif %}
+    $('input[name="has_dynamic_data"]').click(function(){
+      $('input[name="has_dynamic_data"]').prop('checked', false);
+      $(this).prop('checked', true);
+    });
+    $('input[name="has_high_value_data"]').click(function(){
+      $('input[name="has_high_value_data"]').prop('checked', false);
+      $(this).prop('checked', true);
+    });
     </script>
 {% endblock extrajs %}

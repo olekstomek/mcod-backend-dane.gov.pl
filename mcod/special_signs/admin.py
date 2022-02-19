@@ -2,16 +2,18 @@ from django.contrib import admin
 from django.utils.translation import gettext_lazy as _
 
 from mcod.lib.admin_mixins import (
-    ActionsMixin, CRUDMessageMixin, HistoryMixin, LangFieldsOnlyMixin, SoftDeleteMixin, MCODAdminMixin
+    HistoryMixin,
+    LangFieldsOnlyMixin,
+    MCODAdminMixin,
+    ModelAdmin,
 )
 from mcod.special_signs.forms import SpecialSignAdminForm
 from mcod.special_signs.models import SpecialSign
 
 
-class SpecialSignAdminMixin(ActionsMixin, CRUDMessageMixin):
+class SpecialSignAdminMixin:
     is_history_other = True
     list_display = ('symbol', 'name', '_description', 'obj_history')
-    delete_selected_msg = _('Delete selected special signs')
 
     def _description(self, obj):
         return obj.description
@@ -25,11 +27,12 @@ class SpecialSignAdminMixin(ActionsMixin, CRUDMessageMixin):
         super().save_model(request, obj, form, change)
 
 
-class SpecialSignAdmin(SpecialSignAdminMixin, HistoryMixin, LangFieldsOnlyMixin, SoftDeleteMixin,
-                       MCODAdminMixin, admin.ModelAdmin):
+class SpecialSignAdmin(SpecialSignAdminMixin, HistoryMixin, LangFieldsOnlyMixin, MCODAdminMixin, ModelAdmin):
 
     actions_on_top = True
+    delete_selected_msg = _('Delete selected special signs')
     form = SpecialSignAdminForm
+    soft_delete = True
     suit_form_tabs = (
         ('general', _('General')),
         *LangFieldsOnlyMixin.get_translations_tabs(),

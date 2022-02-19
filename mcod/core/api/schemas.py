@@ -215,6 +215,22 @@ class GeoShapeSchema(ExtSchema):
     class Meta:
         default_field = 'geo_shape'
 
+
+class GeoDistanceSchema(ExtSchema):
+
+    dist = fields.GeoDistanceField()
+
+    class Meta:
+        default_field = 'dist'
+
+
+class RegionIdTermsSchema(ExtSchema):
+
+    terms = fields.TileAggregatedTermsField(example=10)
+
+    class Meta:
+        default_field = 'terms'
+
 #
 # class JsonApiRequestData(ExtSchema):
 #     _type = fields.Str(data_key='type', attribute='type', required=True)

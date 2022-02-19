@@ -282,7 +282,7 @@ class UpdateFrequencyAggregation(schemas.ExtSchema):
         return data
 
 
-class HighValueDataAggregation(schemas.ExtSchema):
+class BoolDataAggregation(schemas.ExtSchema):
     id = fields.String(attribute='key_as_string')
     title = fields.String()
     doc_count = fields.Integer()
@@ -292,6 +292,8 @@ class HighValueDataAggregation(schemas.ExtSchema):
         val_dict = {'false': _('No'), 'true': _('Yes')}
         if many:
             values = [x['id'] for x in data]
+            if 'false' not in values:
+                data.append({'id': 'false', 'doc_count': 0})
             if 'true' not in values:
                 data.append({'id': 'true', 'doc_count': 0})
             for item in data:
@@ -435,10 +437,14 @@ class DatasetApiAttrs(ObjectAttrs, HighlightObjectMixin):
     source = fields.Nested(SourceSchema)
     image_url = fields.Str()
     image_alt = TranslatedStr()
+    if is_enabled('S43_dynamic_data.be'):
+        has_dynamic_data = fields.Boolean()
     if is_enabled('S35_high_value_data.be'):
         has_high_value_data = fields.Boolean()
     if is_enabled('S37_resources_admin_region_data.be'):
         regions = fields.Nested(RegionSchema, many=True)
+    if is_enabled('S41_resource_bulk_download.be'):
+        archived_resources_files_url = fields.Str()
 
     class Meta:
         relationships_schema = DatasetApiRelationships
@@ -513,6 +519,10 @@ class DatasetXMLSerializer(ExtSchema):
     resources = fields.Method('get_resources')
 
     source = fields.Nested(SourceXMLSchema)
+    if is_enabled('S41_resource_has_high_value_data.be'):
+        has_high_value_data = fields.Bool()
+    if is_enabled('S43_dynamic_data.be'):
+        has_dynamic_data = fields.Bool()
 
     def get_conditions(self, dataset):
         conditions = _('This dataset is public information, it can be reused under the following conditions: ')
@@ -552,6 +562,10 @@ class DatasetResourcesCSVSerializer(CSVSerializer):
     dataset_conditions = fields.Method('get_dataset_conditions', data_key=_('Terms of use'))
     dataset_license = fields.Str(attribute='license_name', data_key=_('License'))
     dataset_source = fields.Nested(SourceXMLSchema, attribute='source', data_key=_('source'))
+    if is_enabled('S41_resource_has_high_value_data.be'):
+        has_high_value_data = fields.MetaDataNullBoolean(data_key=_('Dataset has high value data'))
+    if is_enabled('S43_dynamic_data.be'):
+        has_dynamic_data = fields.MetaDataNullBoolean(data_key=_('Dataset has dynamic data'))
     organization = fields.Method('get_organization')
     resources = fields.Nested(ResourceCSVMetadataSerializer, many=True, attribute='published_resources')
 

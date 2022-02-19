@@ -1,12 +1,17 @@
 from django import forms
 from django.db.models import Q
 from django.conf import settings
+from django.core.exceptions import ValidationError
+from django.forms.utils import ErrorList
 from django.utils.functional import cached_property
 from wagtail.core import blocks
+from wagtail.core.blocks.struct_block import StructBlockValidationError
 from wagtail.embeds.blocks import EmbedBlock
 from wagtail.images.blocks import ImageChooserBlock as WagtailImageChooserBlock
 from wagtail.documents.blocks import DocumentChooserBlock as WagtailDocumentChooserBlock
+from wagtailvideos.blocks import VideoChooserBlock
 from mcod.cms.widgets import ColorPickerWidget
+from mcod.unleash import is_enabled
 
 
 class ImageChooserBlock(WagtailImageChooserBlock):
@@ -161,16 +166,53 @@ class HeaderBlock(blocks.StructBlock):
         icon = 'title'
 
 
+class UploadedVideoChooserBlock(VideoChooserBlock):
+
+    def get_api_representation(self, value, context=None):
+        return {
+            'title': value.title,
+            'download_url': '{}{}'.format(settings.CMS_URL, value.file.url),
+            'thumbnail_url': '{}{}'.format(settings.CMS_URL, value.thumbnail.url)
+        } if value else None
+
+
 class VideoBlock(blocks.StructBlock):
+
+    def __init__(self, local_blocks=None, **kwargs):
+        super().__init__(local_blocks=local_blocks, **kwargs)
+        if not is_enabled('S44_cms_upload_videos.be'):
+            self.child_blocks.pop('uploaded_video')
+
     video = EmbedBlock(
-        required=True,
+        required=False,
         label='Wideo',
         help_text='Wklej adres URL do wideo, na przykład: https://www.youtube.com/watch?v=jVAYxah_RP8'
     )
     caption = blocks.TextBlock(rows=2, max_length=60, required=False, label='Podpis',
                                help_text='Opcjonalny podpis filmu, dwie linie, maksymalnie 60 znaków.')
 
+    uploaded_video = UploadedVideoChooserBlock(required=False, label='Przesłane wideo',
+                                               help_text='Wybierz plik wideo załadowany poprzez'
+                                                         ' panel administracyjny CMS')
+
     # caption = blocks.RichTextBlock(required=False)
+    def clean(self, value):
+        cleaned_data = super().clean(value)
+        error = None
+        if not is_enabled('S44_cms_upload_videos.be') and not cleaned_data['video']:
+            raise StructBlockValidationError({
+                'video': ErrorList([ValidationError('To pole jest wymagane.')]),
+            })
+        elif not cleaned_data['video'] and not cleaned_data.get('uploaded_video'):
+            error = ValidationError('Należy uzupełnić jedno z pól.')
+        elif cleaned_data['video'] and cleaned_data.get('uploaded_video'):
+            error = ValidationError('Należy uzupełnić tylko jedno z pól.')
+        if error:
+            raise StructBlockValidationError({
+                'video': ErrorList([error]),
+                'uploaded_video': ErrorList([error])
+            })
+        return cleaned_data
 
     class Meta:
         icon = 'media'

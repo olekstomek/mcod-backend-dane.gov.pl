@@ -5,19 +5,21 @@ from suit.admin import SortableStackedInline
 from mcod.guides.forms import GuideForm, GuideItemForm
 from mcod.guides.models import Guide, GuideItem, GuideTrash
 from mcod.lib.admin_mixins import (
-    ActionsMixin, CRUDMessageMixin, HistoryMixin,
-    SoftDeleteMixin, TrashMixin, CreatedByDisplayAdminMixin,
-    StatusLabelAdminMixin, DynamicAdminListDisplayMixin, MCODAdminMixin
+    CreatedByDisplayAdminMixin,
+    DynamicAdminListDisplayMixin,
+    HistoryMixin,
+    MCODAdminMixin,
+    ModelAdmin,
+    StatusLabelAdminMixin,
+    TrashMixin,
 )
 
 
-class GuideAdminMixin(DynamicAdminListDisplayMixin, CreatedByDisplayAdminMixin,
-                      StatusLabelAdminMixin, ActionsMixin, CRUDMessageMixin):
+class GuideAdminMixin(DynamicAdminListDisplayMixin, CreatedByDisplayAdminMixin, StatusLabelAdminMixin):
     is_history_other = True
     form = GuideForm
     search_fields = ['title']
     list_display = ('title', 'created_by', '_created', '_status')
-    delete_selected_msg = _('Delete selected elements')
 
     def _created(self, obj):
         return obj.created_localized if obj.pk else '-'
@@ -64,7 +66,8 @@ class GuideItemInline(SortableStackedInline):
 
 
 @admin.register(Guide)
-class GuideAdmin(GuideAdminMixin, HistoryMixin, SoftDeleteMixin, MCODAdminMixin, admin.ModelAdmin):
+class GuideAdmin(GuideAdminMixin, HistoryMixin, MCODAdminMixin, ModelAdmin):
+    delete_selected_msg = _('Delete selected elements')
     fieldsets = [
         (
             None, {
@@ -76,18 +79,19 @@ class GuideAdmin(GuideAdminMixin, HistoryMixin, SoftDeleteMixin, MCODAdminMixin,
         ),
     ]
     inlines = (GuideItemInline, )
-    suit_form_tabs = (
-        ('course', _('General')),
-    )
     readonly_fields = ('_created', '_created_by', )
+    soft_delete = True
     suit_form_includes = (
         ('admin/guides/guide/tourpicker_button.html', 'middle', 'course'),
+    )
+    suit_form_tabs = (
+        ('course', _('General')),
     )
 
 
 @admin.register(GuideTrash)
 class GuideTrashAdmin(GuideAdminMixin, HistoryMixin, TrashMixin):
-
+    delete_selected_msg = _('Delete selected elements')
     readonly_fields = (
         'title_pl',
         'title_en',
