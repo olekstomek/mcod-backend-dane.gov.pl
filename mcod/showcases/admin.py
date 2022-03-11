@@ -14,28 +14,23 @@ from mcod.showcases.models import (
 from mcod.lib.admin_mixins import (
     DecisionFilter,
     HistoryMixin,
-    LangFieldsOnlyMixin,
     TrashMixin,
-    CreatedByDisplayAdminMixin,
-    DecisionStatusLabelAdminMixin,
-    DynamicAdminListDisplayMixin,
-    MCODAdminMixin,
     ModelAdmin,
 )
 from mcod.showcases.tasks import create_showcase_task
 from mcod.unleash import is_enabled
 
 
-class ShowcaseAdmin(DynamicAdminListDisplayMixin, CreatedByDisplayAdminMixin, HistoryMixin, LangFieldsOnlyMixin,
-                    MCODAdminMixin, ModelAdmin):
+class ShowcaseAdmin(HistoryMixin, ModelAdmin):
     actions_on_top = True
     prepopulated_fields = {'slug': ('title',)}
     autocomplete_fields = ['tags']
     readonly_fields = ['application_logo', 'illustrative_graphics_img', 'preview_link']
+    lang_fields = True
     list_display = [
         'category',
         'title',
-        'created_by',
+        'created_by_label',
         'application_logo',
         'modified',
         'main_page_position',
@@ -49,12 +44,14 @@ class ShowcaseAdmin(DynamicAdminListDisplayMixin, CreatedByDisplayAdminMixin, Hi
     list_filter = ['status', 'main_page_position']
     list_editable = ['status']
 
-    suit_form_tabs = (
-        ('general', _('General')),
-        *LangFieldsOnlyMixin.get_translations_tabs(),
-        ('tags', _('Tags')),
-        ('datasets', _('Datasets')),
-    )
+    @property
+    def suit_form_tabs(self):
+        return (
+            ('general', _('General')),
+            *self.get_translations_tabs(),
+            ('tags', _('Tags')),
+            ('datasets', _('Datasets')),
+        )
 
     form = ShowcaseForm
     is_history_with_unknown_user_rows = True
@@ -227,7 +224,7 @@ class ShowcaseTrashAdmin(HistoryMixin, TrashMixin):
     tags_list_en.short_description = _('Tags') + ' (EN)'
 
 
-class ShowcaseProposalMixin(HistoryMixin, DecisionStatusLabelAdminMixin, MCODAdminMixin):
+class ShowcaseProposalMixin(HistoryMixin):
     delete_selected_msg = _('Delete selected showcase proposals')
     is_history_other = True
     is_history_with_unknown_user_rows = True
@@ -258,16 +255,35 @@ class ShowcaseProposalMixin(HistoryMixin, DecisionStatusLabelAdminMixin, MCODAdm
         return obj.datasets_links or '-'
     datasets_admin.short_description = _('Datasets being used to build application')
 
+    def decision_label(self, obj):
+        return self._format_label(obj, 'decision')
+
+    def get_decision_value(self, obj):
+        return obj.decision
+
+    def get_decision_label(self, obj):
+        return obj.get_decision_display() or _('Decision not taken')
+
+    decision_label.admin_order_field = 'decision'
+    decision_label.short_description = _('decision')
+
     def external_datasets_admin(self, obj):
         return obj.external_datasets_links or '-'
     external_datasets_admin.short_description = _('External public data used')
     external_datasets_admin.admin_order_field = 'external_datasets'
 
     def get_list_display(self, request):
-        list_display = ['category', 'title', 'author', 'application_logo', 'report_date', 'decision']
-        if request.method == 'GET' and request.GET.get('decision') == 'taken':
-            return list_display + ['decision_date']
-        return list_display
+        decision_date = ['decision_date'] if request.method == 'GET' and request.GET.get('decision') == 'taken' else []
+        self.list_display = [
+            'category',
+            'title',
+            'author',
+            'application_logo',
+            'report_date',
+            'decision_label',
+            *decision_date,
+        ]
+        return super().get_list_display(request)
 
     def has_add_permission(self, request, obj=None):
         return False

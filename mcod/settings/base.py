@@ -135,11 +135,14 @@ INSTALLED_APPS = [
     'mcod.showcases',
 ]
 
+CMS_MIDDLEWARE = ['mcod.cms.middleware.CounterMiddleware'] if COMPONENT == 'cms' else []
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     # 'django.middleware.locale.LocaleMiddleware',
     'mcod.cms.middleware.SiteMiddleware',
+    *CMS_MIDDLEWARE,
     'wagtail.contrib.redirects.middleware.RedirectMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -728,6 +731,7 @@ ELASTICSEARCH_INDEX_NAMES = OrderedDict({
     "meetings": "meetings",
     "knowledge_base_pages": "knowledge_base_pages",
     "showcases": "showcases",
+    "news": "news",
 })
 
 ELASTICSEARCH_DSL_SIGNAL_PROCESSOR = 'mcod.core.api.search.signals.AsyncSignalProcessor'
@@ -1083,6 +1087,7 @@ if APM_SERVER_URL and COMPONENT in APM_SERVICES:
 
 SUPPORTED_CONTENT_TYPES = [
     # (family, type, extensions, default openness score, other possible openness scores)
+    ('application', 'atom+xml', ('xml',), 3, {4, 5}),
     ('application', 'csv', ('csv',), 3, {4, 5}),
     ('application', 'epub+zip', ('epub',), 1),
     ('application', 'excel', ('xls',), 2),
@@ -1100,6 +1105,7 @@ SUPPORTED_CONTENT_TYPES = [
     ('application', 'vnd.api+json', ('json',), 3, {4, 5}),
     ('application', 'vnd.geo+json', ('geojson',), 3, {4, 5}),
     ('application', 'vnd.google-earth.kml+xml', ('kml',), 3, {4, 5}),
+    ('application', 'vnd.google-earth.kmz', ('kmz',), 3),
     ('application', 'vnd.ms-excel', ('xls', 'xlsx', 'xlb'), 2),
     ('application', 'vnd.ms-excel.12', ('xls', 'xlsx', 'xlb'), 2),
     ('application', 'vnd.ms-excel.sheet.macroEnabled.12', ('xls', 'xlsx', 'xlb'), 2),
@@ -1126,6 +1132,7 @@ SUPPORTED_CONTENT_TYPES = [
     ('application', 'x-texinfo', ('texi', 'texinfo',), 3),
     ('application', 'x-dbf', ('dbf',), 3),
     ('application', 'x-grib', ('grib', 'grib2',), 2),
+    ('application', 'x-wsdl', ('xml', 'wsdl', ), 3, {4, 5}),
     ('application', 'netcdf', ('nc',), 2),
     ('image', 'bmp', ('bmp',), 1),
     ('image', 'gif', ('gif',), 2),
@@ -1156,6 +1163,23 @@ SUPPORTED_CONTENT_TYPES = [
     ('application', 'trix', ('trix',), 4, {5}),
     ('application', 'trig', ('trig',), 4, {5}),
 ]
+ARCHIVE_CONTENT_TYPES = {
+    'bzip2',
+    'gzip',
+    'rar',
+    'vnd.rar',
+    'x-bzip',
+    'x-bzip2',
+    'x-gzip',
+    'x-rar',
+    'x-rar-compressed',
+    'x-tar',
+    'x-zip-compressed',
+    'x-7z-compressed',
+    'zip'
+}
+ARCHIVE_EXTENSIONS = {'bz', 'bz2', 'gz', 'rar', 'tar', 'zip', '7z'}
+ALLOWED_CONTENT_TYPES = [x[1] for x in SUPPORTED_CONTENT_TYPES] + list(ARCHIVE_CONTENT_TYPES)
 
 FILE_UPLOAD_MAX_MEMORY_SIZE = 1073741824  # 1Gb
 FILE_UPLOAD_PERMISSIONS = 0o644
@@ -1163,7 +1187,12 @@ FILE_UPLOAD_PERMISSIONS = 0o644
 IMAGE_UPLOAD_MAX_SIZE = 10 * 1024 ** 2
 THUMB_SIZE = (200, 1024)
 
-COUNTED_VIEWS = ['applications', 'articles', 'resources']
+COUNTED_MODELS = {
+    'applications.Application': {'status': 'published'},
+    'articles.Article': {'status': 'published'},
+    'resources.Resource': {'status': 'published'},
+    'cms.NewsPage': {'live': True},
+}
 SEARCH_PATH = '/search'
 
 JSONAPI_SCHEMA_PATH = str(DATA_DIR.path('jsonapi.config.json'))
@@ -1455,10 +1484,20 @@ youtube = {
     ],
 }
 
+OD_EMBED = {
+    'urls': [
+        '^https?://cms\.(?:(?:dev|int|szkolenia)\.)?dane\.gov\.pl/admin/videos/\d+/?$',
+    ]
+}
+
 WAGTAILEMBEDS_FINDERS = [
     {
         'class': 'wagtail.embeds.finders.oembed',
         'providers': [dailymotion, youtube] + all_providers,
+    },
+    {
+        'class': 'mcod.cms.embed.finders.ODEmbedFinder',
+        'providers': [OD_EMBED]
     }
 ]
 
@@ -1548,7 +1587,7 @@ CSV_CATALOG_BATCH_SIZE = env('CSV_CATALOG_BATCH_SIZE', default=20000)
 DISCOURSE_FORUM_ENABLED = env('DISCOURSE_FORUM_ENABLED', default=True)
 
 SPARQL_ENDPOINTS = {
-    'kronika': {'endpoint': env('KRONIKA_SPARQL_URL', default='http://kronika.mcod.local'),
+    'kronika': {'query_endpoint': env('KRONIKA_SPARQL_URL', default='http://kronika.mcod.local'),
                 'headers': {'host': 'public-api.k8s'},
                 'returnFormat': 'json'}
 }
@@ -1565,3 +1604,5 @@ DEFAULT_REGION_ID = 85633723
 DATASET_ARCHIVE_FILES_TASK_DELAY = env('DATASET_ARCHIVE_FILES_TASK_DELAY', default=180)
 
 ALLOWED_MINIMUM_SPACE = 1024*1024*1024*env('ALLOWED_MINIMUM_FREE_GB', default=20)
+
+WAGTAILVIDEOS_VIDEO_MODEL = 'cms.CustomVideo'

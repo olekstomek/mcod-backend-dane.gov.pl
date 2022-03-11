@@ -435,7 +435,7 @@ def get_dataset_dcat_ap_expected_rdf(dataset, config, catalog=False):
     for triple in triples:
         graph.add(triple)
 
-    return graph.serialize(format='application/rdf+xml').decode('utf-8')
+    return graph.serialize(format='application/rdf+xml')
 
 
 def get_dataset_schemaorg_expected_rdf(dataset, catalog=False, config=None):
@@ -451,4 +451,4 @@ def get_dataset_schemaorg_expected_rdf(dataset, catalog=False, config=None):
     for triple in triples:
         graph.add(triple)
 
-    return graph.serialize(format='application/rdf+xml').decode('utf-8')
+    return graph.serialize(format='application/rdf+xml')

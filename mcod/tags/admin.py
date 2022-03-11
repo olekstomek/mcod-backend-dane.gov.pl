@@ -4,8 +4,7 @@ from django.utils.translation import gettext_lazy as _
 from mcod import settings
 from mcod.lib.admin_mixins import (
     HistoryMixin,
-    LangFieldsOnlyMixin,
-    MCODAdminMixin,
+    ModelAdmin,
     TagAutocompleteMixin,
 )
 from mcod.tags.forms import TagForm
@@ -13,10 +12,11 @@ from mcod.tags.models import Tag
 
 
 @admin.register(Tag)
-class TagAdmin(TagAutocompleteMixin, LangFieldsOnlyMixin, MCODAdminMixin, HistoryMixin, admin.ModelAdmin):
+class TagAdmin(TagAutocompleteMixin, HistoryMixin, ModelAdmin):
     search_fields = ['name']
 
     fields = ('name', 'language')
+    lang_fields = True
     list_display = ('name', 'language')
 
     form = TagForm

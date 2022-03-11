@@ -11,6 +11,7 @@ from mcod.unleash import is_enabled
 scenarios(
     'features/dataset_comment.feature',
     'features/dataset_resources_list_api.feature',
+    'features/dataset_details_api.feature',
     'features/dataset_resources_download_csv_api.feature',
     'features/dataset_resources_download_xml_api.feature',
     'features/dataset_licenses.feature',

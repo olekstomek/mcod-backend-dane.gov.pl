@@ -6,6 +6,7 @@ from functools import partial
 
 from django.conf import settings
 from django.core.files.base import ContentFile
+from django.core.mail import EmailMultiAlternatives, get_connection, send_mail
 from django.db import models
 from django.db.models.base import ModelBase
 from django.db.models.deletion import get_candidate_relations_to_delete
@@ -16,7 +17,7 @@ from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _, get_language
 from mimetypes import guess_type, guess_extension
 from model_utils import Choices
-from model_utils.models import TimeStampedModel
+from model_utils.models import TimeStampedModel as BaseTimeStampedModel
 from model_utils.models import StatusModel, MonitorField
 
 from mcod.core import signals
@@ -69,6 +70,55 @@ class LogMixin(object):
         if state:
             extra['state'] = state
         signal_logger.debug(msg, extra=extra, exc_info=1)
+
+
+class MailMixin:
+    @classmethod
+    def send_mail_message(cls, subject, body, from_email, to, body_html, attachments=None):
+        mail = EmailMultiAlternatives(
+            subject,
+            body,
+            from_email=from_email,
+            to=to,
+            connection=get_connection(settings.EMAIL_BACKEND),
+        )
+        mail.mixed_subtype = 'related'
+        mail.attach_alternative(body_html, 'text/html')
+        if attachments:
+            for item in attachments:
+                mail.attach(item)
+        return mail.send()
+
+    @classmethod
+    def send_mail_messages(cls, data):
+        messages = []
+        for item in data:
+            message = EmailMultiAlternatives(
+                item['subject'],
+                item['body'],
+                item['from_email'],
+                item['to'],
+                alternatives=item['alternatives'],
+            )
+            messages.append(message)
+        connection = get_connection(settings.EMAIL_BACKEND)
+        return connection.send_messages(messages)
+
+    def send_mail(self, *args, **kwargs):
+        kwargs['connection'] = get_connection(settings.EMAIL_BACKEND)
+        return send_mail(*args, **kwargs)
+
+
+class Model(MailMixin, models.Model):
+
+    class Meta:
+        abstract = True
+
+
+class TimeStampedModel(MailMixin, BaseTimeStampedModel):
+
+    class Meta:
+        abstract = True
 
 
 class BaseExtendedModel(LogMixin, AdminMixin, ApiMixin, StatusModel, TimeStampedModel):
@@ -245,6 +295,9 @@ class BaseExtendedModel(LogMixin, AdminMixin, ApiMixin, StatusModel, TimeStamped
     @staticmethod
     def _get_absolute_url(url, base_url=settings.BASE_URL, use_lang=True):
         return f'{base_url}/{get_language()}{url}' if use_lang else f'{base_url}{url}'
+
+    def _get_api_url(self, url):
+        return self._get_absolute_url(url, base_url=settings.API_URL, use_lang=False)
 
     def _get_internal_url(self, url, use_lang=False):
         return self._get_absolute_url(url, base_url=settings.API_URL_INTERNAL, use_lang=use_lang)

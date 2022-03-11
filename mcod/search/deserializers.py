@@ -356,6 +356,7 @@ class ApiSuggestRequest(CommonSchema):
         'dataset',
         'institution',
         'knowledge_base',
+        'news',
         'resource',
         'showcase',
     }
@@ -396,7 +397,7 @@ class ApiSuggestRequest(CommonSchema):
                 query = query.filter('term', model=model).query('ids', values=ids)
             else:
                 query = Search(index=settings.ELASTICSEARCH_COMMON_ALIAS_NAME)
-                query = query.filter('term', model=model)
+                query = query.filter('term', model=model).filter('term', status='published')
                 query = query.query('bool',
                                     should=[nested_query_with_advanced_opts(phrase, field, lang, op, suffix)
                                             for field in ('title', 'notes')])

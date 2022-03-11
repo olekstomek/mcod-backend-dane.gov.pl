@@ -7,12 +7,7 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 from rangefilter.filter import DateRangeFilter
 
-from mcod.lib.admin_mixins import (
-    DynamicAdminListDisplayMixin,
-    MCODAdminMixin,
-    OrderedByDisplayAdminMixin,
-    TaskStatusLabelAdminMixin,
-)
+from mcod.lib.admin_mixins import ModelAdmin
 from mcod.reports.models import (
     DatasetReport,
     MonitoringReport,
@@ -35,10 +30,9 @@ class UserFilter(AutocompleteFilter):
     }
 
 
-class ReportsAdmin(DynamicAdminListDisplayMixin, OrderedByDisplayAdminMixin,
-                   TaskStatusLabelAdminMixin, MCODAdminMixin, admin.ModelAdmin):
+class ReportsAdmin(ModelAdmin):
     model = Report
-    list_display = ('file_name', 'file_size', 'ordered_by', 'created', 'status')
+    list_display = ('file_name', 'file_size', 'ordered_by_label', 'created', 'status_label')
     list_display_links = None
     list_filter = (('created', DateRangeFilter), UserFilter)
     ordering = ('-created',)
@@ -65,13 +59,34 @@ class ReportsAdmin(DynamicAdminListDisplayMixin, OrderedByDisplayAdminMixin,
 
     file_size.short_description = _('File size')
 
+    def get_status_value(self, obj):
+        if hasattr(obj, 'task'):
+            status_value = obj.task.status if obj.task else 'PENDING'
+        else:
+            status_value = obj.status
+        return status_value
+
+    def get_status_label(self, obj):
+        if hasattr(obj, 'task'):
+            status_label = _(obj.task.status) if obj.task else _('PENDING')
+        else:
+            status_label = _(obj.status)
+        return status_label
+
     def status_label(self, obj):
         return super().status_label(obj)
 
     status_label.short_description = _('status')
     status_label.admin_order_field = None
 
+    def ordered_by_label(self, obj):
+        return self._format_user_display(obj.ordered_by.email if obj.ordered_by else '@')
 
+    ordered_by_label.admin_order_field = 'ordered_by'
+    ordered_by_label.short_description = _('Ordered by')
+
+
+@admin.register(MonitoringReport)
 class MonitoringReportsAdmin(ReportsAdmin):
     app_models = [
         'applications.ApplicationProposal',
@@ -142,6 +157,3 @@ class DailyResourceReportsAdmin(ReportsAdmin):
         msg = _('The task of generating the report has been commissioned. The report may appear with a delay ...')
         messages.info(request, msg)
         return HttpResponseRedirect(url)
-
-
-admin.site.register(MonitoringReport, MonitoringReportsAdmin)

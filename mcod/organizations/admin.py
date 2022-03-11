@@ -3,19 +3,13 @@ from django.contrib import admin
 from django.utils.html import format_html
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
-from rules.contrib.admin import ObjectPermissionsStackedInline
 
 from mcod.datasets.forms import DatasetForm, DatasetStackedNoSaveForm
 from mcod.datasets.models import Dataset
 from mcod.lib.admin_mixins import (
-    AdminListMixin,
-    DynamicAdminListDisplayMixin,
     HistoryMixin,
-    LangFieldsOnlyMixin,
-    MCODAdminMixin,
-    NestedModelAdmin,
     ObjectPermissionsModelAdmin,
-    StatusLabelAdminMixin,
+    ObjectPermissionsStackedInline,
     TrashMixin,
 )
 from mcod.organizations.forms import OrganizationForm
@@ -26,7 +20,7 @@ from mcod.users.forms import FilteredSelectMultipleCustom
 from mcod.users.models import User
 
 
-class ChangeDatasetStacked(AdminListMixin, nested_admin.NestedStackedInline, ObjectPermissionsStackedInline):
+class ChangeDatasetStacked(ObjectPermissionsStackedInline):
     template = 'admin/datasets/inline-list.html'
 
     fields = [
@@ -84,9 +78,10 @@ class ChangeDatasetStacked(AdminListMixin, nested_admin.NestedStackedInline, Obj
     _title.short_description = _('title')
 
 
-class AddDatasetStacked(AdminListMixin, nested_admin.NestedStackedInline, ObjectPermissionsStackedInline):
+class AddDatasetStacked(ObjectPermissionsStackedInline):
     template = 'admin/datasets/inline-new.html'
     show_change_link = False
+    use_translated_fields = True
     prepopulated_fields = {"slug": ("title",)}
     model = Dataset
     extra = 0
@@ -94,13 +89,23 @@ class AddDatasetStacked(AdminListMixin, nested_admin.NestedStackedInline, Object
     suit_classes = 'suit-tab suit-tab-datasets'
     has_dynamic_data = ['has_dynamic_data'] if is_enabled('S43_dynamic_data.be') else []
     has_high_value_data = ['has_high_value_data'] if is_enabled('S41_resource_has_high_value_data.be') else []
+    slug = ['slug'] if is_enabled('S45_forms_unification.be') else []
+    image_alt = ['image_alt'] if is_enabled('S45_forms_unification.be') else []
+    frequency_fields = [
+        'is_update_notification_enabled',
+        'update_notification_frequency',
+        'update_notification_recipient_email',
+    ] if is_enabled('S45_forms_unification.be') else []
     fields = (
         'title',
+        *slug,
         'notes',
         'url',
         'image',
+        *image_alt,
         'customfields',
         'update_frequency',
+        *frequency_fields,
         'categories',
         'status',
         'tags_pl',
@@ -108,6 +113,7 @@ class AddDatasetStacked(AdminListMixin, nested_admin.NestedStackedInline, Object
         'license_condition_source',
         'license_condition_modification',
         'license_condition_responsibilities',
+        'license_condition_cc40_responsibilities',
         'license_condition_db_or_copyrighted',
         'license_chosen',
         'license_condition_personal_data',
@@ -141,6 +147,12 @@ class AddDatasetStacked(AdminListMixin, nested_admin.NestedStackedInline, Object
             )
         return formfield
 
+    def get_prepopulated_fields(self, request, obj=None):
+        fields = super().get_prepopulated_fields(request, obj)
+        if is_enabled('S45_forms_unification.be'):
+            fields['slug_en'] = ("title_en",)
+        return fields
+
 
 class UserInline(nested_admin.NestedStackedInline):
     model = User.organizations.through
@@ -149,8 +161,7 @@ class UserInline(nested_admin.NestedStackedInline):
 
 
 @admin.register(Organization)
-class OrganizationAdmin(DynamicAdminListDisplayMixin, StatusLabelAdminMixin, HistoryMixin, LangFieldsOnlyMixin,
-                        MCODAdminMixin, NestedModelAdmin, ObjectPermissionsModelAdmin):
+class OrganizationAdmin(HistoryMixin, ObjectPermissionsModelAdmin):
     actions_on_top = True
     export_to_csv = True
     form = OrganizationForm
@@ -158,7 +169,8 @@ class OrganizationAdmin(DynamicAdminListDisplayMixin, StatusLabelAdminMixin, His
         ChangeDatasetStacked,
         AddDatasetStacked,
     ]
-    list_display = ["title", "get_photo", "short_description", "status", 'obj_history']
+    lang_fields = True
+    list_display = ["title", "get_photo", "short_description", "status_label", 'obj_history']
     list_filter = ["status"]
     prepopulated_fields = {"slug": ("title",), }
     search_fields = ["slug", "title", "description"]
@@ -184,14 +196,13 @@ class OrganizationAdmin(DynamicAdminListDisplayMixin, StatusLabelAdminMixin, His
 
     def get_form(self, request, obj=None, **kwargs):
         self._request = request
-        form = super().get_form(request, obj, **kwargs)
-        return form
+        return super().get_form(request, obj, **kwargs)
 
     @property
     def suit_form_tabs(self):
         suit_form_tabs = [
             ('general', _('General')),
-            *LangFieldsOnlyMixin.get_translations_tabs(),
+            *self.get_translations_tabs(),
             ('contact', _('Contact')),
         ]
         if self._request.user.is_superuser:

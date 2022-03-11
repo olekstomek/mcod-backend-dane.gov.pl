@@ -1,13 +1,21 @@
+import re
 from collections import deque
+
+from django.core.exceptions import FieldDoesNotExist
+from django.core.paginator import Paginator, EmptyPage
+from django.conf import settings
 
 from django.urls.exceptions import NoReverseMatch
 from hypereditor.fields import HyperField
 from rest_framework import fields as drff
 from bs4 import BeautifulSoup
 from rest_framework import relations
+from wagtailvideos import get_video_model
+
+from mcod.cms.api.exceptions import UnprocessableEntity
 from mcod.cms.api.utils import get_object_detail_url
-from django.conf import settings
 from mcod.cms.models import CustomImage
+from mcod.unleash import is_enabled
 
 
 class TypeField(drff.Field):
@@ -44,6 +52,10 @@ class DetailUrlField(drff.Field):
 
     def to_representation(self, url):
         return url
+
+
+class IntegerField(drff.IntegerField):
+    pass
 
 
 class PageHtmlUrlField(drff.Field):
@@ -128,15 +140,84 @@ class PageParentField(relations.RelatedField):
         return serializer.to_representation(page)
 
 
-class PageChildernField(relations.RelatedField):
+class PageChildrenField(relations.RelatedField):
+    @staticmethod
+    def _parse_positive_int_query_param(params, name, default=None):
+        if name not in params:
+            return default
+        param_value = params[name]
+
+        try:
+            value = int(param_value)
+        except ValueError:
+            value = 0
+
+        if value < 1:
+            raise UnprocessableEntity(detail=f"{name}: '{param_value}' is not valid positive integer")
+        return value
+
+    @staticmethod
+    def _parse_model_field_query_param(params, name, model):
+        if name not in params:
+            return
+        param_value = params[name]
+        field_name = param_value[1:] if param_value.startswith('-') else param_value
+        try:
+            model._meta.get_field(field_name)
+        except FieldDoesNotExist:
+            raise UnprocessableEntity(detail=f"{name}: '{field_name}' is not valid field name")
+
+        return params[name]
+
+    @staticmethod
+    def _validate_model_fields(param_name, field_names, model):
+        for field_name in field_names:
+            try:
+                model._meta.get_field(field_name)
+            except FieldDoesNotExist:
+                raise UnprocessableEntity(detail=f"{param_name}: '{field_name}' is not valid field name")
+        return field_names
+
     def get_attribute(self, instance):
-        return instance.get_children().public().live()
+        qs = instance.get_children().public().live()
+        try:
+            params = self.context['request'].GET
+        except (AttributeError, KeyError):
+            params = {}
+
+        children_sort = self._parse_model_field_query_param(params, 'children_sort', qs.model)
+        children_per_page = self._parse_positive_int_query_param(params, 'children_per_page')
+        children_page = self._parse_positive_int_query_param(params, 'children_page', default=1)
+
+        if children_sort:
+            qs = qs.order_by(children_sort)
+
+        if children_per_page:
+            paginator = Paginator(qs, children_per_page)
+            try:
+                qs = paginator.page(children_page)
+            except EmptyPage:
+                qs = qs.none()
+
+        return qs
 
     def to_representation(self, value):
         from mcod.cms.api.serializers import CmsPageSerializer, get_serializer_class
+
+        try:
+            params = self.context['request'].GET
+        except (AttributeError, KeyError):
+            params = {}
+
+        children_extra_fields = []
+        if 'children_extra_fields' in params:
+            children_extra_fields = params['children_extra_fields'].split(',')
+
         output = []
         for page in value:
             page = page.specific
+            self._validate_model_fields('children_extra_fields', children_extra_fields, page.__class__)
+            page_serializer_class = getattr(page, 'serializer_class', CmsPageSerializer)
             serializer_class = get_serializer_class(page.__class__,
                                                     [
                                                         'id',
@@ -145,8 +226,10 @@ class PageChildernField(relations.RelatedField):
                                                         'html_url',
                                                         'slug',
                                                         'first_published_at',
+                                                        'last_published_at',
                                                         'url_path',
-                                                        'title'
+                                                        'title',
+                                                        *children_extra_fields,
                                                     ],
                                                     meta_fields=[
                                                         'type',
@@ -155,8 +238,9 @@ class PageChildernField(relations.RelatedField):
                                                         'slug',
                                                         'url_path',
                                                         'first_published_at',
+                                                        'last_published_at',
                                                     ],
-                                                    base=CmsPageSerializer)
+                                                    base=page_serializer_class)
             serializer = serializer_class(context=self.context)
             output.append(serializer.to_representation(page))
         return output
@@ -272,6 +356,28 @@ class TagsField(drff.Field):
 
 
 class LocalizedHyperField(HyperField):
+
+    def get_uploaded_video(self, block_settings):
+        if is_enabled('S45_cms_embed_od_videos.be'):
+            od_pattern = [pattern for pattern in settings.OD_EMBED['urls'] if re.match(
+                pattern, block_settings.get('video_url', ''))]
+            if od_pattern:
+                match = re.search(r'/(\d+)/?', block_settings.get('video_url', ''))
+                video_pk = match.group(1)
+                try:
+                    video = get_video_model().objects.get(pk=video_pk)
+                    video_data = {'title': video.title,
+                                  'thumbnail_url': video.thumbnail_url,
+                                  'download_url': video.video_url}
+                except get_video_model().DoesNotExist:
+                    video_data = {}
+                block_settings['uploaded_video'] = video_data
+
+    def from_db_value(self, value, expression, connection, context=None):
+        # Django>=3.0 upgrade fix.
+        # https://docs.djangoproject.com/en/3.0/releases/3.0/#features-removed-in-3-0
+        return self.to_python(value)
+
     def to_python(self, value):
         """
         Injects image's alt_pl or alt_en depending on current language,
@@ -300,6 +406,7 @@ class LocalizedHyperField(HyperField):
                         block_settings['image']['alt'] = img.alt_i18n
                     except CustomImage.DoesNotExist:
                         pass
+                self.get_uploaded_video(block_settings)
 
         return response
 

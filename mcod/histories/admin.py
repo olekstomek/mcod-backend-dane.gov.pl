@@ -2,10 +2,10 @@ from django.contrib import admin
 
 from mcod.core.admin import LogEntryAdmin
 from mcod.histories.models import History, LogEntry
-from mcod.lib.admin_mixins import MCODAdminMixin
+from mcod.lib.admin_mixins import ModelAdmin
 
 
-class HistoryAdmin(MCODAdminMixin, admin.ModelAdmin):
+class HistoryAdmin(ModelAdmin):
     list_display = ['id', 'action', 'table_name', 'row_id', 'message']
     list_filter = ['action', 'table_name']
     search_fields = ['row_id']

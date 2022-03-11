@@ -5,7 +5,7 @@ import hashlib
 from django.conf import settings
 from django.test import Client
 from pytest_bdd import given, parsers, then, when
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 import requests_mock
 
 from mcod.datasets.models import Dataset
@@ -178,20 +178,26 @@ def xml_datasource_imported_resources(obj_id, version):
         assert set(res.values_list('has_high_value_data', flat=True)) == {False, None}
 
 
-@when(parsers.parse('dcat datasource with id {obj_id:d} finishes importing objects'))
-@requests_mock.Mocker(kw='mock_request')
-def dcat_datasource_finishes_import(obj_id, harvester_dcat_data, **kwargs):
-    mock_request = kwargs['mock_request']
+@patch('rdflib.plugins.stores.sparqlconnector.urlopen')
+def mock_sparqlconnector_requests(obj_id, harvester_dcat_data, *args):
     obj = DataSource.objects.get(pk=obj_id)
-    mock_request.get(obj.api_url,
-                     headers={'content-type': 'application/rdf+xml'},
-                     content=harvester_dcat_data.serialize())
-    mock_request.post(settings.SPARQL_UPDATE_ENDPOINT)
-    simple_csv_path = os.path.join(settings.TEST_SAMPLES_PATH, 'simple.csv')
-    with open(simple_csv_path, 'rb') as tmp_file:
-        mock_request.get('http://example-uri.com/distribution/999',
-                         headers={'content-type': 'application/csv'}, content=tmp_file.read())
-    obj.import_data()
+    urlopen_mock = args[0]
+    mocked_response = MagicMock()
+    mocked_response.read.return_value = harvester_dcat_data.serialize(format='xml', encoding="utf-8")
+    mocked_response.headers = {'Content-Type': 'application/rdf+xml'}
+    urlopen_mock.return_value = mocked_response
+    with requests_mock.Mocker() as mock_request:
+        mock_request.post(settings.SPARQL_UPDATE_ENDPOINT)
+        simple_csv_path = os.path.join(settings.TEST_SAMPLES_PATH, 'simple.csv')
+        with open(simple_csv_path, 'rb') as tmp_file:
+            mock_request.get('http://example-uri.com/distribution/999',
+                             headers={'content-type': 'application/csv'}, content=tmp_file.read())
+        obj.import_data()
+
+
+@when(parsers.parse('dcat datasource with id {obj_id:d} finishes importing objects'))
+def dcat_datasource_finishes_import(obj_id, harvester_dcat_data):
+    mock_sparqlconnector_requests(obj_id, harvester_dcat_data)
 
 
 @then(parsers.parse('dcat datasource with id {obj_id:d} created all data in db'))

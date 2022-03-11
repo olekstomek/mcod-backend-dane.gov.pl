@@ -116,6 +116,7 @@ class CommonObjectApiAttrs(ObjectAttrs, HighlightObjectMixin):
 
     # cms pages
     html_url = fields.Str()
+    author_i18n = TranslatedStr()
 
     if is_enabled('S39_filter_by_geodata.be'):
         # regions
@@ -138,6 +139,8 @@ class CommonObjectApiAttrs(ObjectAttrs, HighlightObjectMixin):
             model = data.model
             obj_id = data.id
             slug = data['slug'][get_language()]
+            if model == 'news':
+                model = 'new'  # fix 'newss' in url.
             full_url = f'{api_url}/{model}s/{obj_id},{slug}'
         except AttributeError:
             full_url = None
@@ -156,6 +159,7 @@ class SearchCounterAggregation(ExtSchema):
     applications = fields.Integer()
     institutions = fields.Integer()
     articles = fields.Integer()
+    news = fields.Integer()
     knowledge_base = fields.Integer()
 
 

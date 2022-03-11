@@ -8,6 +8,7 @@ from urllib.parse import urlparse
 import elasticapm
 import elasticapm.instrumentation.control
 import falcon
+from django.apps import apps
 from django.utils.http import is_same_domain
 from django.utils.translation import activate, gettext_lazy as _
 from django.utils.translation.trans_real import (
@@ -173,9 +174,14 @@ class CounterMiddleware(object):
         except (ValueError, IndexError):
             view, obj_id = None, None
 
-        if view in settings.COUNTED_VIEWS and resp.status == falcon.HTTP_200:
-            counter = Counter()
-            counter.incr_view_count(view, obj_id)
+        if resp.status == falcon.HTTP_200 and view:
+            try:
+                model = apps.get_model(view, view[:-1])
+                label = model._meta.label
+                if label in settings.COUNTED_MODELS:
+                    Counter().incr_view_count(label, obj_id)
+            except LookupError:
+                pass
 
 
 class DebugMiddleware(object):

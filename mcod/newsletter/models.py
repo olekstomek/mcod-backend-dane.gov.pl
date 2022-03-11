@@ -2,15 +2,17 @@ import logging
 import magic
 
 from bs4 import BeautifulSoup
+from constance import config
 from django.contrib.auth.hashers import get_hasher
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.template.loader import render_to_string
 from django.utils.timezone import now
-from django.utils.translation import gettext_lazy as _, get_language
-from model_utils.models import TimeStampedModel
+from django.utils.translation import gettext_lazy as _, get_language, override
 
 from mcod import settings
 from mcod.core import storages
+from mcod.core.db.models import TimeStampedModel
 from mcod.newsletter.tasks import remove_inactive_subscription, send_newsletter_mail, send_subscription_confirm_mail
 from mcod.newsletter.utils import make_activation_code
 
@@ -147,6 +149,23 @@ class Subscription(TimeStampedModel):
         self.subscribe_date = now()
         self.save()
 
+    def send_subscription_confirm_mail(self):
+        with override(self.lang):
+            subject = _('Activating the newsletter of dane.gov.pl portal')
+            context = {
+                'host': settings.BASE_URL,
+                'url': self.subscribe_confirm_absolute_url,
+            }
+            message = render_to_string('newsletter/confirm_subscription.txt', context=context)
+            html_message = render_to_string('newsletter/confirm_subscription.html', context=context)
+            return self.send_mail(
+                subject,
+                message,
+                config.NEWSLETTER_EMAIL,
+                [self.email, ],
+                html_message=html_message,
+            )
+
     def unsubscribe(self):
         logger.debug('Unsubscribing subscription %s.', self)
         _id = self.id
@@ -274,3 +293,12 @@ class Submission(TimeStampedModel):
     @property
     def title(self):
         return self.__str__()
+
+    def send_newsletter_mail(self, html_message):
+        self.send_mail(
+            self.newsletter.title,
+            '',
+            config.NEWSLETTER_EMAIL,
+            [self.subscription.email],
+            html_message=html_message,
+        )

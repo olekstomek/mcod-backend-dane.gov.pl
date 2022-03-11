@@ -3,10 +3,11 @@ from django.contrib.postgres.indexes import GinIndex
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from model_utils import Choices
-from model_utils.models import StatusModel
+from model_utils.models import StatusModel, TimeStampedModel
 from modeltrans.fields import TranslationField
 
-from model_utils.models import TimeStampedModel
+from mcod.core.db.mixins import AdminMixin
+
 
 User = get_user_model()
 
@@ -23,7 +24,7 @@ DISPLAY_STATUS = {
 }
 
 
-class Alert(StatusModel, TimeStampedModel):
+class Alert(AdminMixin, StatusModel, TimeStampedModel):
     STATUS = Choices(*STATUS_CHOICES)
     title = models.CharField(max_length=300, verbose_name=_("Title"), null=False, blank=False,
                              help_text=_('Title of the alert (300 characters max.)')

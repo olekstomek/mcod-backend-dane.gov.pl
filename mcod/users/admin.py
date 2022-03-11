@@ -10,11 +10,9 @@ from django.utils.translation import gettext_lazy as _
 from django_admin_multiple_choice_list_filter.list_filters import MultipleChoiceListFilter
 
 from mcod.lib.admin_mixins import (
-    DynamicAdminListDisplayMixin,
     HistoryMixin,
     MCODChangeList,
     ModelAdmin,
-    StateStatusLabelAdminMixin,
     TrashMixin,
     UserAdmin,
 )
@@ -85,12 +83,12 @@ class UserRoleListFilter(MultipleChoiceListFilter):
 
 
 @admin.register(User)
-class UserAdmin(DynamicAdminListDisplayMixin, StateStatusLabelAdminMixin, HistoryMixin, AdminConfirmMixin, UserAdmin):
+class UserAdmin(HistoryMixin, AdminConfirmMixin, UserAdmin):
     add_form_template = 'admin/users/user/add_form.html'
     actions_on_top = True
     export_to_csv = True
     list_display = [
-        'email', 'fullname', 'state', 'last_login', 'is_staff', 'is_official', 'is_agent', 'is_superuser',
+        'email', 'fullname', 'state_label', 'last_login', 'is_staff', 'is_official', 'is_agent', '_is_superuser',
         '_is_academy_admin', '_is_labs_admin']
 
     ordering = ('email',)
@@ -179,13 +177,6 @@ class UserAdmin(DynamicAdminListDisplayMixin, StateStatusLabelAdminMixin, Histor
     def get_changelist(self, request, **kwargs):
         return UserChangeList  # overriden to fix pagination links for multi user role filtering.
 
-    def get_list_display(self, request):
-        list_display = super().get_list_display(request)
-        for idx, item in enumerate(list_display):
-            if item == 'is_superuser':
-                list_display[idx] = '_is_superuser'
-        return list_display
-
     def get_list_filter(self, request):
         return['state', UserRoleListFilter]
 
@@ -245,6 +236,18 @@ class UserAdmin(DynamicAdminListDisplayMixin, StateStatusLabelAdminMixin, Histor
     suit_form_tabs = (
         ('general', _('General')),
     )
+
+    def get_state_value(self, obj):
+        return obj.state
+
+    def get_state_label(self, obj):
+        return obj.get_state_display()
+
+    def state_label(self, obj):
+        return self._format_label(obj, 'state')
+
+    state_label.admin_order_field = 'state'
+    state_label.short_description = _('State')
 
     def get_fieldsets(self, request, obj=None):
         _agent_organizations_fields = [

@@ -1,4 +1,8 @@
-# from pytest_bdd import scenario, given, when, then
+from pytest_bdd import scenarios
+
+scenarios(
+    'features/admin/alert_details.feature',
+)
 # from selenium.webdriver.support.wait import WebDriverWait
 #
 #

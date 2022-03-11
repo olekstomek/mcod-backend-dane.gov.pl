@@ -1,8 +1,9 @@
+import re
 from django.conf import settings
 from django.conf.urls import url
 from django.http import Http404
 from django.shortcuts import get_object_or_404
-from django.urls import reverse
+from django.urls import reverse, path
 from django.utils.decorators import method_decorator
 from django.utils.translation import activate
 from django.views.decorators.vary import vary_on_cookie
@@ -13,8 +14,10 @@ from wagtail.api.v2.views import BaseAPIViewSet, PagesAPIViewSet
 from wagtail.core.models import PageRevision, Page
 from wagtail.api.v2.utils import BadRequestError, page_models_from_string
 from wagtail.images.api.v2.views import ImagesAPIViewSet
+from wagtailvideos import get_video_model
 
-from mcod.cms.api.serializers import CmsPageSerializer
+
+from mcod.cms.api.serializers import CmsPageSerializer, VideoOEmbedSerializer
 from mcod.cms.utils import filter_page_type
 
 
@@ -71,6 +74,7 @@ class CmsPagesViewSet(PagesAPIViewSet):
         'seo_title',
         'search_description',
         'first_published_at',
+        'last_published_at',
         'parent',
         'children',
         'locale'
@@ -80,6 +84,7 @@ class CmsPagesViewSet(PagesAPIViewSet):
         'html_url',
         'slug',
         'first_published_at',
+        'last_published_at',
         'url_path'
     ]
     nested_default_fields = BaseAPIViewSet.nested_default_fields + [
@@ -217,3 +222,32 @@ class CmsPagesViewSet(PagesAPIViewSet):
         except Page.DoesNotExist:
             raise NotFound
         raise MethodNotAllowed(method='POST')
+
+
+class OEmbedApiViewSet(BaseAPIViewSet):
+    base_serializer_class = VideoOEmbedSerializer
+
+    model = get_video_model()
+
+    body_fields = ['type', 'title', 'thumbnail_url', 'provider_name', 'html']
+    meta_fields = []
+
+    def get_object(self):
+        queryset = self.filter_queryset(self.get_queryset())
+        video_url = self.request.GET['url']
+        match = re.search(r'/(\d+)/?', video_url)
+        video_pk = match.group(1)
+        filter_kwargs = {'pk': video_pk}
+        obj = get_object_or_404(queryset, **filter_kwargs)
+        return obj
+
+    def detail_view(self, request, pk=None):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
+
+    @classmethod
+    def get_urlpatterns(cls):
+        return [
+            path('', cls.as_view({'get': 'detail_view'}), name='detail')
+        ]

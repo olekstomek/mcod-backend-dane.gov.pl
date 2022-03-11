@@ -7,7 +7,6 @@ from django.contrib.auth import get_user_model
 from django.contrib.postgres.fields import ArrayField, JSONField
 from django.contrib.postgres.indexes import GinIndex
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.core.mail import get_connection, EmailMultiAlternatives
 from django.db import models
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
@@ -374,16 +373,13 @@ class ShowcaseProposal(ShowcaseMixin):
         with translation.override('pl'):
             msg_plain = render_to_string('mails/showcaseproposal.txt', context)
             msg_html = render_to_string('mails/showcaseproposal.html', context)
-            mail = EmailMultiAlternatives(
+            cls.send_mail_message(
                 'Powiadomienie - Nowe zgłoszenie PoCoTo',
                 msg_plain,
-                from_email=config.NO_REPLY_EMAIL,
-                to=emails,
-                connection=get_connection(settings.EMAIL_BACKEND),
+                config.NO_REPLY_EMAIL,
+                emails,
+                msg_html,
             )
-            mail.mixed_subtype = 'related'
-            mail.attach_alternative(msg_html, 'text/html')
-            mail.send()
 
 
 class ShowcaseProposalTrash(ShowcaseProposal, metaclass=TrashModelBase):

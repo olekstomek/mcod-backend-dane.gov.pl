@@ -4,6 +4,9 @@ from functools import partial
 import falcon
 from dal import autocomplete
 from django.apps import apps
+from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.http import JsonResponse
+from django.views import View
 from elasticsearch_dsl import Q, A
 from django.conf import settings
 from django.utils.translation import get_language
@@ -28,7 +31,7 @@ from mcod.datasets.handlers import (
     XMLMetadataViewHandler,
     ArchiveDownloadViewHandler
 )
-from mcod.datasets.models import Dataset
+from mcod.datasets.models import Dataset, LICENSE_CONDITION_LABELS
 from mcod.datasets.serializers import (
     CommentApiResponse,
     DatasetApiResponse,
@@ -288,3 +291,16 @@ class DatasetResourcesFilesBulkDownloadView(BaseView):
 
     def set_content_type(self, resp, **kwargs):
         return 'application/zip'
+
+
+class ConditionLabelsAdminView(PermissionRequiredMixin, View):
+    http_method_names = ['get']
+
+    def has_permission(self):
+        return self.request.user.is_staff or self.request.user.is_superuser
+
+    def get(self, request, *args, **kwargs):
+        req_organization_type = request.GET.get('organization_type')
+        org_type = req_organization_type if req_organization_type in LICENSE_CONDITION_LABELS else 'public'
+        labels = LICENSE_CONDITION_LABELS[org_type]
+        return JsonResponse({'condition_labels': labels})

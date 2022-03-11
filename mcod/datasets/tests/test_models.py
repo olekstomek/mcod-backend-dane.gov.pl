@@ -106,6 +106,7 @@ class TestDatasetModel(object):
             'license_condition_modification',
             'license_condition_original',
             'license_condition_responsibilities',
+            'license_condition_cc40_responsibilities',
             'license_condition_source',
             'update_frequency',
             'category_id',

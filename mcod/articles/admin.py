@@ -5,20 +5,14 @@ from django.utils.translation import gettext_lazy as _
 from mcod.articles.forms import ArticleForm
 from mcod.articles.models import Article, ArticleTrash
 from mcod.lib.admin_mixins import (
-    CreatedByDisplayAdminMixin,
-    DynamicAdminListDisplayMixin,
     HistoryMixin,
-    LangFieldsOnlyMixin,
-    MCODAdminMixin,
     ModelAdmin,
-    StatusLabelAdminMixin,
     TrashMixin,
 )
 
 
 @admin.register(Article)
-class ArticleAdmin(DynamicAdminListDisplayMixin, CreatedByDisplayAdminMixin, StatusLabelAdminMixin, HistoryMixin,
-                   LangFieldsOnlyMixin, MCODAdminMixin, ModelAdmin):
+class ArticleAdmin(HistoryMixin, ModelAdmin):
     actions_on_top = True
     autocomplete_fields = ['tags']
     fieldsets = (
@@ -66,10 +60,11 @@ class ArticleAdmin(DynamicAdminListDisplayMixin, CreatedByDisplayAdminMixin, Sta
         ),
     )
     form = ArticleForm
+    lang_fields = True
     list_display = [
-        "title",
-        "status",
-        "created_by",
+        'title',
+        'status_label',
+        'created_by_label',
         'category',
         'preview_link',
         'obj_history'
@@ -78,12 +73,15 @@ class ArticleAdmin(DynamicAdminListDisplayMixin, CreatedByDisplayAdminMixin, Sta
     prepopulated_fields = {"slug": ("title",)}
     readonly_fields = ['preview_link']
     soft_delete = True
-    suit_form_tabs = (
-        ('general', _('General')),
-        *LangFieldsOnlyMixin.get_translations_tabs(),
-        ('tags', _('Tags')),
-    )
     search_fields = ["title", "created_by__email"]
+
+    @property
+    def suit_form_tabs(self):
+        return (
+            ('general', _('General')),
+            *self.get_translations_tabs(),
+            ('tags', _('Tags')),
+        )
 
     def get_fieldsets(self, request, obj=None):
         return self.fieldsets + tuple(self.get_translations_fieldsets())
@@ -153,27 +151,3 @@ class ArticleTrashAdmin(HistoryMixin, TrashMixin):
     def tags_list_en(self, instance):
         return instance.tags_as_str(lang='en')
     tags_list_en.short_description = _('Tags') + ' (EN)'
-
-# @admin.register(ArticleCategory)
-# class ArticleCategoryAdmin(LangFieldsOnlyMixin, admin.ModelAdmin):
-#     list_display = ['name', 'description', 'id']
-#     ordering = ('id', )
-#
-#     fieldsets = [
-#         (None, {
-#             'classes': ('suit-tab', 'suit-tab-general',),
-#             'fields': [
-#                 'name_pl', 'description_pl'
-#             ]
-#         }),
-#         (None, {
-#             'classes': ('suit-tab', 'suit-tab-english',),
-#             'fields': ['name_en', 'description_en', ]
-#         }),
-#
-#     ]
-#
-#     suit_form_tabs = (
-#         ('general', _('General')),
-#         ('english', _('Translation (EN)'))
-#     )

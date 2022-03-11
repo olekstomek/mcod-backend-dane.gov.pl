@@ -1,3 +1,5 @@
+{% load core_tags %}
+{% is_unleash_enabled "S45_admin_user_checkboxes.be" as S45_admin_user_checkboxes %}
 {% if 'agent_organizations' in adminform.form.fields %}
 <script type="text/javascript">
     function toggle_is_agent_opts() {
@@ -10,6 +12,14 @@
         }
         if ($('#id_is_agent').prop('checked') === false) {
             $('div.field-agent_organizations, div.field-agent_organization_main, div.field-from_agent').hide();
+        }
+    }
+
+    function toggle_is_editor_checkbox() {
+        if($('#id_is_superuser:checked,#id_is_academy_admin:checked,#id_is_labs_admin:checked').length > 0) {
+            $('#id_is_staff').prop('checked', true).prop('disabled', true).trigger('change');
+        } else {
+            $('#id_is_staff').prop('disabled', false).trigger('change');
         }
     }
 
@@ -40,6 +50,13 @@
             $('div.field-organizations').hide();
         }
     });
+
+    {% if S45_admin_user_checkboxes %}
+    toggle_is_editor_checkbox();
+    $('#id_is_superuser,#id_is_academy_admin,#id_is_labs_admin').change(function(){
+        toggle_is_editor_checkbox();
+    });
+    {% endif %}
 
     $('#id_is_agent').change(function(){
         if($(this).is(":checked")) {

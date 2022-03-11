@@ -247,6 +247,6 @@ def validate_xml_url(url):
 
 
 def fetch_dcat_data(api_url, query):
-    store = SPARQLStore(endpoint=api_url, returnFormat='application/rdf+xml')
+    store = SPARQLStore(query_endpoint=api_url, returnFormat='application/rdf+xml')
     results = store.query(query, DEBUG=True)
     return results.graph if results else {}

@@ -92,3 +92,16 @@ Feature: Global Search API
       | request_path                                                                                                    |
       | /1.4/search/?regions[bbox][geo_shape]=19.259214,53.481806,23.128409,51.013112&model[terms]=resource&per_page=10 |
       | /1.4/search/?regions[id][terms]=101752777&model[terms]=resource&per_page=10                                     |
+
+  Scenario Outline: Institution abbrevation based search is case insensitive
+    Given institution created with params {"id": 1000, "title": "test institution", "slug": "test-institution", "abbreviation": "TSTI"}
+    When api request path is <request_path>
+    Then send api request and fetch the response
+    And api's response status code is 200
+    And api's response body field data/[0]/attributes/title is test institution
+
+    Examples:
+      | request_path                                                                  |
+      | /1.4/search?page=1&per_page=20&q=tsti&sort=relevance&model[terms]=institution |
+      | /1.4/search?page=1&per_page=20&q=TSTI&sort=relevance&model[terms]=institution |
+      | /1.4/search?page=1&per_page=20&q=TSti&sort=relevance&model[terms]=institution |

@@ -11,7 +11,6 @@ from django.contrib.auth import authenticate, login, logout, get_user_model
 from django.contrib.auth.views import LoginView as DjangoLoginView
 from django.contrib.auth.password_validation import validate_password as dj_validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
-from django.core.mail import get_connection
 from django.http import HttpResponseRedirect
 from django.conf import settings
 from django.urls import reverse
@@ -145,8 +144,7 @@ class RegistrationView(JsonAPIView):
             data['email'] = data['email'].lower()
             user = User.objects.create_user(**data)
             try:
-                connection = get_connection(settings.EMAIL_BACKEND)
-                user.send_registration_email(connection)
+                user.send_registration_email()
             except SMTPException:
                 raise falcon.HTTPInternalServerError(
                     description=_('Email cannot be sent'),
@@ -376,8 +374,7 @@ class ResetPasswordView(JsonAPIView):
                     code='account_not_found'
                 )
             try:
-                connection = get_connection(settings.EMAIL_BACKEND)
-                msgs_count = user.send_password_reset_email(connection)
+                msgs_count = user.send_password_reset_email()
             except SMTPException:
                 raise falcon.HTTPInternalServerError(
                     description=_('Email cannot be sent'),
@@ -504,8 +501,7 @@ class ResendActivationEmailView(JsonAPIView):
                     code='account_not_found'
                 )
             try:
-                connection = get_connection(settings.EMAIL_BACKEND)
-                msgs_count = user.resend_activation_email(connection)
+                msgs_count = user.resend_activation_email()
                 user.is_activation_email_sent = bool(msgs_count)
                 self.response.context.data = user
             except SMTPException:

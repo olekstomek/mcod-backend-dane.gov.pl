@@ -14,13 +14,8 @@ from mcod.harvester.models import DataSource, DataSourceImport, DataSourceTrash
 from mcod.harvester.tasks import import_data_task
 from mcod.harvester.views import ValidateXMLDataSourceView, get_progress
 from mcod.lib.admin_mixins import (
-    AdminListMixin,
     HistoryMixin,
     TrashMixin,
-    CreatedByDisplayAdminMixin,
-    StatusLabelAdminMixin,
-    DynamicAdminListDisplayMixin,
-    MCODAdminMixin,
     ModelAdmin,
 )
 from mcod.users.forms import FilteredSelectMultipleCustom
@@ -48,7 +43,7 @@ class CreatedListFilter(admin.filters.DateFieldListFilter):
         )
 
 
-class DataSourceDatasets(AdminListMixin, PaginationInline):
+class DataSourceDatasets(PaginationInline):
     can_add = False
     can_change = False
     can_delete = False
@@ -86,7 +81,7 @@ class DataSourceDatasets(AdminListMixin, PaginationInline):
     _title.short_description = _('Title')
 
 
-class DataSourceImports(AdminListMixin, PaginationInline):
+class DataSourceImports(PaginationInline):
     can_add = False
     can_change = False
     can_delete = False
@@ -133,10 +128,16 @@ class DataSourceImports(AdminListMixin, PaginationInline):
         return self.get_fields(request, obj=obj)
 
 
-class DataSourceAdmin(DynamicAdminListDisplayMixin, CreatedByDisplayAdminMixin, StatusLabelAdminMixin,
-                      HistoryMixin, MCODAdminMixin, ModelAdmin):
+class DataSourceAdmin(HistoryMixin, ModelAdmin):
     search_fields = ['name']
-    list_display = ('name', 'created_by', 'created', '_status', 'last_import')
+    list_display = [
+        'name',
+        'type_col',
+        'created_by_label',
+        'created',
+        'status_label',
+        'last_import',
+    ]
     list_filter = [
         ('created', CreatedListFilter),
         'status',
@@ -165,13 +166,6 @@ class DataSourceAdmin(DynamicAdminListDisplayMixin, CreatedByDisplayAdminMixin, 
         ('general', _('General')),
         ('imports', _('Imports')),
     ]
-    STATUS_CSS_CLASSES = {
-        'active': 'label label-success',
-        'inactive': 'label',
-    }
-
-    def get_list_display(self, request):
-        return self.replace_attributes(['name', 'type_col', 'created_by', 'created', '_status', 'last_import'])
 
     def get_readonly_fields(self, request, obj=None):
         readonly_fields = super().get_readonly_fields(request, obj=obj)
@@ -182,12 +176,6 @@ class DataSourceAdmin(DynamicAdminListDisplayMixin, CreatedByDisplayAdminMixin, 
     def get_status_label(self, obj):
         choices_indexes = {status[0]: index for index, status in enumerate(obj.STATUS_CHOICES)}
         return obj.STATUS_CHOICES[choices_indexes[obj.status]][1].capitalize()
-
-    def _status(self, obj):
-        return obj.get_status_display().capitalize()
-
-    _status.short_description = _('Status')
-    _status.admin_order_field = 'status'
 
     def type_col(self, obj):
         source_type = obj.get_source_type_display()
@@ -342,7 +330,7 @@ class DataSourceAdmin(DynamicAdminListDisplayMixin, CreatedByDisplayAdminMixin, 
         return formfield
 
 
-class DataSourceImportAdmin(MCODAdminMixin, admin.ModelAdmin):
+class DataSourceImportAdmin(ModelAdmin):
 
     exclude = ['is_report_email_sent']  # email reports aren't implemented.
 
@@ -365,9 +353,9 @@ class DataSourceImportAdmin(MCODAdminMixin, admin.ModelAdmin):
         return fields
 
 
-class DataSourceTrashAdmin(CreatedByDisplayAdminMixin, HistoryMixin, TrashMixin):
+class DataSourceTrashAdmin(HistoryMixin, TrashMixin):
     search_fields = ['name']
-    list_display = ('name', 'created_by')
+    list_display = ('name', 'created_by_label')
     readonly_fields = (
         'name',
         'description',

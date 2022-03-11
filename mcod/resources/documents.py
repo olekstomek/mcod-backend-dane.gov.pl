@@ -20,7 +20,7 @@ Region = apps.get_model('regions', 'Region')
 def files_field(**kwargs):
     return fields.NestedField(properties={
         'download_url': fields.TextField(),
-        'file_size': fields.IntegerField(),
+        'file_size': fields.LongField(),
         'openness_score': fields.IntegerField(),
         'format': fields.TextField()
     }, **kwargs)
@@ -39,7 +39,7 @@ class ResourceDocument(ExtendedDocument):
     file_url = fields.TextField()
     download_url = fields.TextField()
     link = fields.TextField()
-    file_size = fields.IntegerField()
+    file_size = fields.LongField()
     types = fields.KeywordField(multi=True)
     dataset = fields.NestedField(properties={
         'id': fields.IntegerField(),

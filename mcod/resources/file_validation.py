@@ -159,7 +159,7 @@ def analyze_file(path):  # noqa: C901
                 content_type = 'tiff;application=geotiff'
 
     try:
-        content_type, family = check_geodata(path, content_type, family)
+        content_type, family = check_geodata(path, content_type, family, is_extracted=bool(extracted))
     except Exception as exc:
         analyze_exc = Exception(
             [{'code': 'geodata-error', 'message': 'Błąd podczas analizy pliku: {}.'.format(exc.message)}])

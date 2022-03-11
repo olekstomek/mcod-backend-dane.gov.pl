@@ -3,9 +3,11 @@ from django_elasticsearch_dsl import fields
 from django_elasticsearch_dsl.registries import registry
 
 from mcod import settings as mcs
+from mcod.core.api.search.normalizers import keyword_uppercase
 from mcod.datasets.documents import datasets_field
 from mcod.lib.search.fields import TranslatedTextField
 from mcod.search.documents import ExtendedDocument
+from mcod.unleash import is_enabled
 
 Organization = apps.get_model('organizations', 'Organization')
 Dataset = apps.get_model('datasets', 'Dataset')
@@ -15,7 +17,10 @@ Dataset = apps.get_model('datasets', 'Dataset')
 class InstitutionDocument(ExtendedDocument):
     NOTES_FIELD_NAME = 'description'
     image_url = fields.TextField()
-    abbreviation = fields.KeywordField()
+    if is_enabled('S46_org_abbr_upppercase_search.be'):
+        abbreviation = fields.KeywordField(normalizer=keyword_uppercase)
+    else:
+        abbreviation = fields.KeywordField()
     postal_code = fields.KeywordField()
     city = fields.KeywordField()
     street_type = fields.KeywordField()

@@ -104,12 +104,7 @@ class UserForm(forms.ModelForm):
         is_agent = data.get('is_agent')
         is_agent_opts = data.get('is_agent_opts')
         from_agent = data.get('from_agent')
-        is_staff = data.get('is_staff')
-        if is_staff is None and self.instance:
-            is_staff = self.instance.is_staff
         extra_agent_of = data.get('extra_agent_of')
-        if not is_staff:
-            data['organizations'] = []
         if is_agent:
             if is_agent_opts == 'from_agent':
                 if not from_agent:
@@ -133,11 +128,18 @@ class UserForm(forms.ModelForm):
             if agent_org_main:
                 data['agent_organization_main'] = None
 
+        is_staff = data.get('is_staff')
+        if is_staff is None and self.instance:
+            is_staff = self.instance.is_staff
+
         is_academy_admin = data.get('is_academy_admin')
         is_labs_admin = data.get('is_labs_admin')
         is_superuser = data.get('is_superuser')
         if any([is_academy_admin, is_labs_admin, is_superuser]):
+            is_staff = True  # ensure is_staff even if checkbox in form was disabled by jquery.
             data['is_staff'] = True
+        if not is_staff:
+            data['organizations'] = []
         return data
 
     def save(self, commit=True):

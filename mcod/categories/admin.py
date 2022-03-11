@@ -2,24 +2,28 @@ from django.contrib import admin
 from django.utils.translation import gettext_lazy as _
 
 from mcod.categories.models import Category, CategoryTrash
-from mcod.lib.admin_mixins import TrashMixin, HistoryMixin, LangFieldsOnlyMixin, MCODAdminMixin
+from mcod.lib.admin_mixins import TrashMixin, HistoryMixin, ModelAdmin
 
 
 @admin.register(Category)
-class CategoryAdmin(LangFieldsOnlyMixin, HistoryMixin, MCODAdminMixin, admin.ModelAdmin):
+class CategoryAdmin(HistoryMixin, ModelAdmin):
     prepopulated_fields = {
         "slug": ("title",),
     }
     is_history_with_unknown_user_rows = True
     actions_on_top = True
+    lang_fields = True
     list_display = ['title_i18n', 'code', 'obj_history']
-
-    first_section_fields = ['code', 'title', 'slug', 'description']
 
     fieldsets = [
         (None, {
             'classes': ('suit-tab', 'suit-tab-general',),
-            'fields': first_section_fields,
+            'fields': [
+                'code',
+                'title',
+                'slug',
+                'description',
+            ],
         }),
         (None, {
             'classes': ('suit-tab', 'suit-tab-general',),
@@ -38,10 +42,12 @@ class CategoryAdmin(LangFieldsOnlyMixin, HistoryMixin, MCODAdminMixin, admin.Mod
     def get_fieldsets(self, request, obj=None):
         return self.get_translations_fieldsets() + self.fieldsets
 
-    suit_form_tabs = (
-        ('general', _('General')),
-        *LangFieldsOnlyMixin.get_translations_tabs()
-    )
+    @property
+    def suit_form_tabs(self):
+        return (
+            ('general', _('General')),
+            *self.get_translations_tabs()
+        )
 
 
 @admin.register(CategoryTrash)

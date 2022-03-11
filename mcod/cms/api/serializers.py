@@ -1,12 +1,14 @@
-from wagtail.api.v2.serializers import BaseSerializer
+from wagtail.api.v2.serializers import BaseSerializer, TagsField
+from rest_framework import serializers
 from mcod.cms.api.fields import (
     DetailUrlField,
     PageHtmlUrlField,
     PageParentField,
     ChildRelationField,
     PageTypeField,
-    PageChildernField,
-    CharField
+    PageChildrenField,
+    CharField,
+    IntegerField,
 )
 from modelcluster.models import get_all_child_relations
 
@@ -16,7 +18,8 @@ class CmsPageSerializer(BaseSerializer):
     title = CharField(source='title_i18n', fallback_source='title')
     html_url = PageHtmlUrlField(read_only=True)
     parent = PageParentField(read_only=True)
-    children = PageChildernField(read_only=True)
+    children = PageChildrenField(read_only=True)
+    children_count = IntegerField(read_only=True)
     detail_url = DetailUrlField(read_only=True)
 
     def build_relational_field(self, field_name, relation_info):
@@ -33,6 +36,12 @@ class CmsPageSerializer(BaseSerializer):
                 return ChildRelationField, {'serializer_class': self.child_serializer_classes[field_name]}
 
         return super().build_relational_field(field_name, relation_info)
+
+
+class NewsPageSerializer(CmsPageSerializer):
+    body = CharField(source='body_i18n', fallback_source='body')
+    author = CharField(source='author_i18n', fallback_source='author')
+    tags = TagsField(source='tags_i18n')
 
 
 def get_serializer_class(model,
@@ -56,3 +65,11 @@ def get_serializer_class(model,
         attrs.update(field_serializer_overrides)
 
     return type(str(model_.__name__ + 'Serializer'), (base, ), attrs)
+
+
+class VideoOEmbedSerializer(BaseSerializer):
+    title = serializers.ReadOnlyField()
+    thumbnail_url = serializers.ReadOnlyField()
+    provider_name = serializers.ReadOnlyField(default='dane.gov.pl')
+    html = serializers.ReadOnlyField(source='embed_html')
+    type = serializers.ReadOnlyField(default='video')

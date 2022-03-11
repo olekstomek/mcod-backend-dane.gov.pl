@@ -11,13 +11,13 @@ from wagtail.documents import urls as wagtaildocs_urls
 from wagtail.documents.api.v2.views import DocumentsAPIViewSet
 from bokeh.server.django import static_extensions
 from mcod.cms.views import revisions_view
-from mcod.datasets.views import DatasetAutocompleteAdminView
+from mcod.datasets.views import DatasetAutocompleteAdminView, ConditionLabelsAdminView
 from mcod.regions.views import RegionsAutocomplete
 from mcod.organizations.views import InstitutionAutocompleteAdminView, InstitutionTypeAdminView
 from mcod.users.views import AdminAutocomplete, CustomAdminLoginView
 from mcod.cms import urls as cms_urls
 from mcod.cms.api.router import CmsApiRouter
-from mcod.cms.api.views import CmsPagesViewSet, ImagesViewSet
+from mcod.cms.api.views import CmsPagesViewSet, ImagesViewSet, OEmbedApiViewSet
 
 
 panel_app_config = apps.get_app_config('mcod.pn_apps')
@@ -29,6 +29,7 @@ if settings.COMPONENT == 'cms':
     api_router.register_endpoint('pages', CmsPagesViewSet)
     api_router.register_endpoint('images', ImagesViewSet)
     api_router.register_endpoint('documents', DocumentsAPIViewSet)
+    api_router.register_endpoint('oembed', OEmbedApiViewSet)
 
     urlpatterns += [
         re_path(r'^documents/', include(wagtaildocs_urls)),
@@ -66,6 +67,11 @@ else:
             'admin-autocomplete/',
             AdminAutocomplete.as_view(),
             name='admin-autocomplete',
+        ),
+        path(
+            'dataset-license-labels/',
+            ConditionLabelsAdminView.as_view(),
+            name='dataset-license-labels',
         ),
         path(
             'regions-autocomplete/',

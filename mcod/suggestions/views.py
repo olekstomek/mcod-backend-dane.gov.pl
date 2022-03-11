@@ -183,9 +183,8 @@ class AcceptedDatasetSubmissionCommentView(JsonAPIView):
         def _get_data(self, cleaned, id, *args, **kwargs):
             instance = self._get_instance(id, *args, **kwargs)
             send_accepted_submission_comment.s(
+                instance.id,
                 cleaned['data']['attributes']['comment'],
-                instance.frontend_absolute_url,
-                instance.title,
             ).apply_async()
             setattr(instance, 'is_comment_email_sent', True)
             return instance

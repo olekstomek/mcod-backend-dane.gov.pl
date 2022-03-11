@@ -42,8 +42,8 @@ def test_unpublished_accepted_submission_not_in_public_details_view(
 
 @pytest.mark.elasticsearch
 def test_send_data_suggestion_task(suggestion):
-    result = send_data_suggestion.delay(suggestion.id, {'notes': 'test send data suggestion'})
-    assert result.result['suggestion'] == 'test send data suggestion'
+    result = send_data_suggestion.delay(suggestion.id)
+    assert result.result['suggestion'] == 'test suggestion notes'
 
 
 @pytest.mark.elasticsearch

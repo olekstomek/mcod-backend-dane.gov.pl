@@ -106,7 +106,6 @@ class BasePage(ApiMixin, Page, metaclass=BasePageMeta):
         editable=False,
         null=True
     )
-
     indexable = False
 
     def get_copyable_fields(self):
@@ -123,10 +122,6 @@ class BasePage(ApiMixin, Page, metaclass=BasePageMeta):
     @property
     def created(self):
         return self.first_published_at
-
-    @property
-    def views_count(self):
-        return 0
 
     @property
     def status(self):
@@ -353,9 +348,17 @@ class BasePage(ApiMixin, Page, metaclass=BasePageMeta):
         if is_indexable and instance.live:
             search_signals.update_document.send(sender, instance)
         if getattr(instance, 'url_path', None):
-            removed_cache_items = list(find_urls([
+            urls = [
                 f'*{instance.url_path}',
-                f'*{instance.url_path}?*'], purge=True))
+                f'*{instance.url_path}?*',
+            ]
+            parent = instance.get_parent()
+            if parent and getattr(parent, 'url_path', None):
+                urls += [
+                    f'*{parent.url_path}',
+                    f'*{parent.url_path}?*',
+                ]
+            removed_cache_items = list(find_urls(urls, purge=True))
             for url, key, count in removed_cache_items:
                 mcod_logger.debug('URL \"%s\" removed from cache on post_save \"%s\" page signal.' % (url, instance))
 

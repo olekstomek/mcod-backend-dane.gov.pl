@@ -16,8 +16,9 @@ from django.db import models
 from django.db.models import Max, Sum, Q
 from django.db.models.signals import pre_save, post_save
 from django.dispatch import receiver
+from django.template.loader import render_to_string
 from django.utils.timezone import now
-from django.utils.translation import gettext_lazy as _, get_language
+from django.utils.translation import gettext_lazy as _, get_language, override
 from model_utils import FieldTracker
 from modeltrans.fields import TranslationField
 
@@ -74,6 +75,51 @@ TYPE = (
 
 def archives_upload_to(instance, filename):
     return f'dataset_{instance.pk}/{filename}'
+
+
+LICENSE_CONDITION_LABELS = {
+    'private': {
+        'source': _('The user should inform about the source, time of creation and'
+                    ' obtaining private data from the entity providing the data (supplier)'),
+        'modification': _('The user should inform about the processing of the used private data'
+                          ' (if he modifies it in any way)'),
+        'responsibilities': _('The scope of the responsibility of the entity providing private data (suppliers) for the'
+                              ' provided data'),
+        'db_or_copyrighted': _('Conditions for the use of private data with the features of a work or subject of'
+                               ' related rights within the meaning of the Act of February 4, 1994 on'
+                               ' copyright and related rights or constituting a database within the meaning'
+                               ' of the Act of July 27, 2001 on the protection of databases,'
+                               ' or covered by plant variety rights within the meaning of the Act of 26 June 2003'
+                               ' on the legal protection of plant varieties, to which the entity providing private'
+                               ' data (suppliers) has rights (Article 36 (2) (1) of the Act of 11'
+                               ' August 2021 on open data and re-use of public sector information)')
+    },
+    'public': {
+        'source': _('The user should inform about the source, time of creation and obtaining public sector'
+                    ' information from the obliged entity (supplier)'),
+        'modification': _('The user should inform about the processing of public sector'
+                          ' information to re-use (when modifying it in any way)'),
+        'responsibilities': _('The scope of the responsibility of the obliged entity (supplier) for shared'
+                              ' public sector information'),
+        'db_or_copyrighted': _('Conditions for the re-use of public sector information with the features of a work'
+                               ' or subject of related rights within the meaning of the provisions of the'
+                               ' Act of February 4, 1994 on copyright and related rights or constituting a database'
+                               ' within the meaning of the provisions of the Act of July 27, 2001 on the protection'
+                               ' of databases or covered by plant variety rights within the meaning of the Act'
+                               ' of 26 June 2003 on the legal protection of plant varieties to which the obligated'
+                               ' entity (suppliers) has rights (14 (2) of the Act of 11 August 2021 on open data'
+                               ' and re-use public sector information)'),
+        'personal_data': _('Conditions for the re-use of public sector information constituting or containing personal'
+                           ' data (Article 15 (1) (4) of the Act of 11 August 2021 on open data and re-use'
+                           ' of public sector information)')
+    }
+}
+CC_BY_40_RESPONSIBILITIES_LABELS = {
+    'private': _('The scope of the responsibility of the entity providing private data (suppliers) for the shared data'
+                 ' in accordance with the terms of the CC BY 4.0 license'),
+    'public': _('The scope of the responsibility of the obliged entity (supplier) providing public sector information'
+                ' in accordance with the terms of the CC BY 4.0 license')
+}
 
 
 class Dataset(ExtendedModel):
@@ -136,27 +182,25 @@ class Dataset(ExtendedModel):
 
     license_condition_db_or_copyrighted = models.TextField(
         blank=True, null=True,
-        verbose_name=_(
-            "Conditions for using public information that meets the characteristics of the work or constitute "
-            "a database (Article 13 paragraph 2 of the Act on the re-use of public sector information)")
+        verbose_name=_('Condition for data with features of work with copy rights or database')
     )
     license_condition_personal_data = models.CharField(
         max_length=300, blank=True, null=True,
-        verbose_name=_(
-            "Conditions for using public sector information containing personal data (Article 14 paragraph 1 "
-            "point 4 of the Act on the re-use of public Sector Information)")
+        verbose_name=_('Condition for data containing personal data')
     )
     license_condition_modification = models.NullBooleanField(
         null=True, blank=True, default=None,
-        verbose_name=_("The recipient should inform about the processing of the information when it modifies it"))
+        verbose_name=_('Condition for possible processing of data'))
     license_condition_original = models.NullBooleanField(null=True, blank=True, default=None)
     license_condition_responsibilities = models.TextField(
         blank=True, null=True,
-        verbose_name=_("The scope of the provider's responsibility for the information provided"))
+        verbose_name=_('Condition for scope of responsibilities for data'))
+    license_condition_cc40_responsibilities = models.NullBooleanField(
+        null=True, blank=True, default=None,
+        verbose_name="")
     license_condition_source = models.NullBooleanField(
         null=True, blank=True, default=None,
-        verbose_name=_("The recipient should inform about the date, time of completion and obtaining information from"
-                       " the obliged entity"))
+        verbose_name=_('Condition for informing about the source of data'))
     license_condition_timestamp = models.NullBooleanField(null=True, blank=True)
     organization = models.ForeignKey('organizations.Organization', on_delete=models.CASCADE, related_name='datasets',
                                      verbose_name=_('Institution'))
@@ -289,6 +333,10 @@ class Dataset(ExtendedModel):
         return self.source.portal_url if self.source else None
 
     @property
+    def title_as_link(self):
+        return self.mark_safe(f'<a href="{self.admin_change_url}">{self.title}</a>')
+
+    @property
     def formats(self):
         items = [x.formats_list for x in self.resources.all() if x.formats_list]
         return sorted(set([item for sublist in items for item in sublist]))
@@ -336,7 +384,8 @@ class Dataset(ExtendedModel):
     @property
     def license_code(self):
         license_ = self.LICENSE_CC0
-        if self.license_condition_source or self.license_condition_modification or self.license_condition_responsibilities:
+        if self.license_condition_source or self.license_condition_modification or\
+                self.license_condition_responsibilities or self.license_condition_cc40_responsibilities:
             license_ = self.LICENSE_CC_BY
         if self.license_chosen and self.license_chosen > license_:
             license_ = self.license_chosen
@@ -368,7 +417,8 @@ class Dataset(ExtendedModel):
             self.license_condition_db_or_copyrighted,
             self.license_condition_modification,
             self.license_condition_original,
-            self.license_condition_responsibilities
+            self.license_condition_responsibilities,
+            self.license_condition_cc40_responsibilities
         ])
 
     @property
@@ -439,6 +489,52 @@ class Dataset(ExtendedModel):
             msg = _('The value must be between %(min)s and %(max)s') % {'min': _range[0], 'max': _range[1]}
             raise ValidationError({'update_notification_frequency': msg})
 
+    def send_dataset_comment_mail(self, comment):
+        with override('pl'):
+            title = self.title.replace('\n', ' ').replace('\r', '')
+            version = _(' (version %(version)s)') % {'version': self.version} if self.version else ''
+            msg_template = _('On the data set %(title)s%(version)s [%(url)s] was posted a comment:')
+            msg = msg_template % {
+                'title': title,
+                'version': version,
+                'url': self.frontend_absolute_url,
+            }
+            html_msg = msg_template % {
+                'title': title,
+                'version': version,
+                'url': f'<a href="{self.frontend_absolute_url}">{self.frontend_absolute_url}</a>',
+            }
+            context = {
+                'host': settings.BASE_URL,
+                'url': self.frontend_absolute_url,
+                'comment': comment,
+                'dataset': self,
+                'message': msg,
+                'html_message': html_msg,
+                'test': bool(settings.DEBUG and config.TESTER_EMAIL),
+            }
+            template_suffix = '-test' if settings.DEBUG and config.TESTER_EMAIL else ''
+            subject = _('A comment was posted on the data set %(title)s%(version)s') % {
+                'title': title,
+                'version': version,
+            }
+            if is_enabled('S39_mail_layout.be'):
+                _plain = 'mails/dataset-comment.txt'
+                _html = 'mails/dataset-comment.html'
+            else:
+                _plain = f'mails/report-dataset-comment{template_suffix}.txt'
+                _html = f'mails/report-dataset-comment{template_suffix}.html'
+            msg_plain = render_to_string(_plain, context=context)
+            msg_html = render_to_string(_html, context=context)
+
+            return self.send_mail(
+                subject,
+                msg_plain,
+                config.SUGGESTIONS_EMAIL,
+                [config.TESTER_EMAIL] if settings.DEBUG and config.TESTER_EMAIL else self.comment_mail_recipients,
+                html_message=msg_html,
+            )
+
     @property
     def frequency_display(self):
         return dict(UPDATE_FREQUENCY).get(self.update_frequency)
@@ -474,6 +570,27 @@ class Dataset(ExtendedModel):
                 logger.debug(exc)
         return data
 
+    @classmethod
+    def send_dataset_update_reminder_mails(cls, datasets):
+        data = []
+        for ds in datasets:
+            context = {
+                'dataset_title': ds.title,
+                'url': ds.frontend_absolute_url,
+                'host': settings.BASE_URL,
+            }
+            subject = ds.title.replace('\n', '').replace('\r', '')
+            msg_plain = render_to_string('mails/dataset-update-reminder.txt', context=context)
+            msg_html = render_to_string('mails/dataset-update-reminder.html', context=context)
+            data.append({
+                'subject': subject,
+                'body': msg_plain,
+                'from_email': config.NO_REPLY_EMAIL,
+                'to': [ds.dataset_update_notification_recipient],
+                'alternatives': [(msg_html, 'text/html')],
+            })
+        return cls.send_mail_messages(data)
+
     @property
     def archived_resources_files_url(self):
         return '{}/datasets/{}/resources/files/download'.format(settings.API_URL, self.ident) if\
@@ -503,6 +620,44 @@ class Dataset(ExtendedModel):
                 self.archived_resources_files.name
             ))
         return ''
+
+    @property
+    def institution_type(self):
+        return self.organization.institution_type if \
+            self.organization.institution_type in LICENSE_CONDITION_LABELS else 'public'
+
+    @property
+    def license_condition_labels(self):
+        return LICENSE_CONDITION_LABELS[self.institution_type]
+
+    @property
+    def current_condition_descriptions(self):
+        labels = dict(self.license_condition_labels)
+        labels['cc40_responsibilities'] = CC_BY_40_RESPONSIBILITIES_LABELS[self.institution_type]
+        descriptions = {}
+        for key, val in labels.items():
+            condition_field = f'license_condition_{key}'
+            if getattr(self, condition_field) and key == 'cc40_responsibilities':
+                descriptions[condition_field] = f'{labels["responsibilities"]}: \n{val}'
+            elif getattr(self, condition_field):
+                descriptions[condition_field] = val
+        return descriptions
+
+    @property
+    def formatted_condition_descriptions(self):
+        user_input_conditions = ['license_condition_responsibilities',
+                                 'license_condition_personal_data',
+                                 'license_condition_db_or_copyrighted']
+        conditions = _('This dataset can be used under following conditions: ')
+        descriptions = self.current_condition_descriptions
+        terms = []
+        for key, val in descriptions.items():
+            if key in user_input_conditions:
+                condition_text = f'{val}: {getattr(self, key)}'
+            else:
+                condition_text = str(val)
+            terms.append(condition_text)
+        return conditions + '\n'.join([term for term in terms if term]) if terms else ''
 
     i18n = TranslationField(fields=("title", "notes", "image_alt"))
     objects = DatasetManager()

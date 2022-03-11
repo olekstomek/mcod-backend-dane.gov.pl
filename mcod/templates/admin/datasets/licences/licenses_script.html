@@ -2,6 +2,13 @@
 
 <script>
     const institutionTypePrivate = 'private';
+    const privateDescriptionHeader = 'Warunki ponownego wykorzystywania danych prywatnych w tym zbiorze.';
+    const privateDescriptionCC0 = 'Dane prywatne są udostępniane w celu ich wykorzystywania bez warunków (licencja CC0).';
+    const privateConditionsDescription = 'Istnieją od tej zasady wymienione poniżej wyjątki, jednak zachęcamy, aby ich nie stosować. Jeżeli masz istotne uzasadnienie i musisz określić warunki wykorzystywania, to mogą być one następujące:';
+    const publicDescriptionHeader = 'Warunki ponownego wykorzystywania informacji sektora publicznego w tym zbiorze.';
+    const publicDescriptionCC0 = 'Informacje sektora publicznego są udostępniane w celu ich ponownego wykorzystywania bez warunków (licencja CC0).';
+    const publicConditionsDescription = 'Istnieją od tej zasady wymienione poniżej wyjątki, jednak zachęcamy, aby ich nie stosować. Jeżeli masz istotne uzasadnienie i musisz określić warunki ponownego wykorzystywania, to mogą być one następujące:';
+
     const hasAccessToPublicInstitutions = {{ user.has_access_to_public_institutions|yesno:"true,false" }};
     const hasAccessToPrivateInstitutions = {{ user.has_access_to_private_institutions|yesno:"true,false" }};
     {% with organization_id=adminform.form.instance.organization_id %}
@@ -15,16 +22,11 @@
     const organizationIdSelected = $organizationSelect.val();
     const organizationIdComputed = organizationIdSelected || organizationId;
 
-    const LicenseConditionSourceTextPublic = "Odbiorca powinien poinformować o źródle, czasie wytworzenia i pozyskania informacji od podmiotu zobowiązanego";
-    const LicenseConditionSourceTextPrivate = "Odbiorca powinien poinformować o źródle, czasie wytworzenia i pozyskania informacji od podmiotu udostępniającego informacje";
-
-    const LicenseConditionDbOrCopyrightedTextPublic = "Warunki wykorzystywania informacji sektora publicznego spełniających cechy utworu lub stanowiących bazę danych (art. 13 ust. 2 ustawy o ponownym wykorzystywaniu informacji sektora publicznego):";
-    const LicenseConditionDbOrCopyrightedTextPrivate = "Warunki wykorzystywania informacji spełniających cechy utworu lub stanowiących bazę danych:";
-
     const $licenseTabButton = $("#suit_form_tabs > li > a[href='#licenses']");
     const $licenseTab = $licenseTabButton.parent();
 
     const licenseConditionDbOrCopyrightedPattern = /^id_(datasets-2-\d-)?license_condition_db_or_copyrighted$/;
+
 
     function disableLicensesTab() {
         $licenseTabButton.addClass('disabledTab');
@@ -38,24 +40,31 @@
         $licenseTab.removeAttr('title');
     }
 
-    function initializeLicensesTabPrivate() {
-        $("div.field-license_condition_source .control-label label").text(LicenseConditionSourceTextPrivate);
-        $("div.field-license_condition_db_or_copyrighted .control-label label").text(LicenseConditionDbOrCopyrightedTextPrivate);
-        $("div.field-license_condition_personal_data").hide();
-    }
+    function initializeLicensesTab(institutionType){
+        $.ajax({
+            type: "GET",
+            url: "{% url 'dataset-license-labels' %}",
+            data: {organization_type: institutionType},
+            success: function (data) {
+                let condition_labels = data.condition_labels;
+                for (var label in condition_labels){
+                    let label_selector = "div.field-license_condition_"+label+" .control-label label";
+                    $(label_selector).text(condition_labels[label]);
+                }
+                if(institutionType === institutionTypePrivate) {
+                    $("h3#conditions-header").text(privateDescriptionHeader);
+                    $("p#description-cc0").text(privateDescriptionCC0);
+                    $("p#conditions-header").text(privateConditionsDescription);
+                    $("div.field-license_condition_personal_data").hide();
+                } else {
+                    $("div.field-license_condition_personal_data").show();
+                    $("h3#conditions-header").text(publicDescriptionHeader);
+                    $("p#description-cc0").text(publicDescriptionCC0);
+                    $("p#conditions-header").text(publicConditionsDescription);
+                }
+            },
+        });
 
-    function initializeLicensesTabPublic() {
-        $("div.field-license_condition_source .control-label label").text(LicenseConditionSourceTextPublic);
-        $("div.field-license_condition_db_or_copyrighted .control-label label").text(LicenseConditionDbOrCopyrightedTextPublic);
-        $("div.field-license_condition_personal_data").show();
-    }
-
-    function updateDatasetFormset(institutionType) {
-        if(institutionType === institutionTypePrivate) {
-            initializeLicensesTabPrivate();
-        } else {
-            initializeLicensesTabPublic();
-        }
     }
 
     function updateLicensesTab(organizationId) {
@@ -68,11 +77,7 @@
             url: "{% url 'organization-type' %}",
             data: {organization_id: organizationId},
             success: function (data) {
-                if (data.institution_type === institutionTypePrivate) {
-                    initializeLicensesTabPrivate()
-                } else {
-                    initializeLicensesTabPublic();
-                }
+                initializeLicensesTab(data.institution_type);
                 enableLicensesTab();
             },
             error: function (data) {
@@ -83,9 +88,9 @@
 
     if (hasDynamicLicensesTab) {
         if (institutionTypeSelectExists) {
-            updateDatasetFormset($institutionTypeSelect.val());
+            initializeLicensesTab($institutionTypeSelect.val());
             $institutionTypeSelect.change(function () {
-                updateDatasetFormset($(this).val());
+                initializeLicensesTab($(this).val());
             });
 
         } else if (organizationSelectExists) {
@@ -100,7 +105,7 @@
             }
         }
     } else if (hasAccessToPrivateInstitutions) {
-        initializeLicensesTabPrivate()
+        initializeLicensesTab(institutionTypePrivate);
     }
 
     var $licenseConditionDbOrCopyrighted = $("div.control-group.field-license_condition_db_or_copyrighted");
@@ -110,12 +115,15 @@
         var $licenseChosenContent = $licenseChosen.find("span.readonly");
         $licenseChosenContent.css('display', 'block').removeClass('readonly');
         $licenseConditionDbOrCopyrighted.find("span.readonly").prepend($licenseChosenContent);
+        let resp_content = $(".control-group.field-license_condition_responsibilities").find("span.readonly");
+        let def_resp_content = $(".control-group.field-license_condition_cc40_responsibilities").find("span.readonly");
+        resp_content.html(def_resp_content.html())
+        $(".control-group.field-license_condition_cc40_responsibilities").css("display", "none");
         $licenseChosen.hide();
     } else {
         $licenseConditionDbOrCopyrighted.find("div.controls").prepend("<strong>W przypadku wybrania tej opcji należy zaznaczyć licencje poniżej.</strong>");
-        var $licenseConditionResponsibilities = $("div.control-group.field-license_condition_responsibilities");
-        $licenseConditionResponsibilities.find("div.controls").append("<strong>CC BY 4.0</strong>");
         $(".control-group.field-license_condition_db_or_copyrighted .control-label").css("border-bottom", "none");
+        $(".control-group.field-license_condition_responsibilities .control-label").css("border-bottom", "none");
     }
 
     function refresh_license_choices(text, prefix) {
@@ -156,4 +164,40 @@
             $relatedBlock.slideUp();
         }
     });
+    function get_ckeditor_id(responsibilities_checkbox){
+        let ckeditor_id = 'id_license_condition_responsibilities';
+        let name = responsibilities_checkbox.getAttribute('name');
+        let inlineSubstring = 'datasets';
+        if(name.indexOf(inlineSubstring) !== -1){
+            let split_name = name.split('-');
+            let prefix = split_name.slice(0, 3).join('-');
+            ckeditor_id = 'id_'+prefix+'-license_condition_responsibilities';
+        }
+        return ckeditor_id
+    }
+
+    $(document).ready(function() {
+        let ckeditor_data = {};
+        let $defaultResponibilities = $('.field-license_condition_cc40_responsibilities input');
+        let responsibilities_editor;
+        $defaultResponibilities.change(function(){
+            let ckeditor_id = get_ckeditor_id(this);
+            responsibilities_editor = CKEDITOR.instances[ckeditor_id];
+            if(this.checked){
+                ckeditor_data[ckeditor_id] = responsibilities_editor.getData();
+                responsibilities_editor.setReadOnly(true);
+                responsibilities_editor.setData('');
+            }
+            else{
+                responsibilities_editor.setData(ckeditor_data[ckeditor_id]);
+                responsibilities_editor.setReadOnly(false);
+            }
+        })
+        $defaultResponibilities.each(function(i, obj){
+            if($(this).is(":checked")){
+                let ckeditor_id = get_ckeditor_id(obj);
+                CKEDITOR.instances[ckeditor_id].config.readOnly = true;
+            }
+        });
+    })
 </script>

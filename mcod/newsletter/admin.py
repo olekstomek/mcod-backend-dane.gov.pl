@@ -3,18 +3,12 @@ from django.utils.translation import ugettext_lazy as _
 
 from mcod.newsletter.models import Newsletter, Submission, Subscription
 from mcod.newsletter.forms import NewsletterAdminForm
-from mcod.lib.admin_mixins import (
-    DynamicAdminListDisplayMixin,
-    HistoryMixin,
-    MCODAdminMixin,
-    ModelAdmin,
-    StatusLabelAdminMixin,
-)
+from mcod.lib.admin_mixins import HistoryMixin, ModelAdmin
 
 
-class NewsletterAdmin(DynamicAdminListDisplayMixin, StatusLabelAdminMixin, HistoryMixin, MCODAdminMixin, ModelAdmin):
+class NewsletterAdmin(HistoryMixin, ModelAdmin):
     search_fields = ['title']
-    list_display = ('email_title', 'status', 'planned_sending_date', 'sending_date')
+    list_display = ('email_title', 'status_label', 'planned_sending_date', 'sending_date')
     readonly_fields = ['status']
     exclude = ['lang', 'sending_date', 'created_by', 'modified_by']
     actions = ['send_newsletter_now']
@@ -38,11 +32,6 @@ class NewsletterAdmin(DynamicAdminListDisplayMixin, StatusLabelAdminMixin, Histo
     suit_form_tabs = (
         ('general', _('General')),
     )
-    STATUS_CSS_CLASSES = {
-        'sent': 'label label-success',
-        'awaits': 'label label-warning',
-        'error': 'label label-important'
-    }
 
     def get_status_label(self, obj):
         status_indexes = {
@@ -93,7 +82,7 @@ class NewsletterAdmin(DynamicAdminListDisplayMixin, StatusLabelAdminMixin, Histo
         super().save_model(request, obj, form, change)
 
 
-class SubscriptionAdmin(MCODAdminMixin, ModelAdmin):
+class SubscriptionAdmin(ModelAdmin):
     actions_on_top = True
     delete_selected_msg = _('Delete selected subscriptions')
     list_select_related = ('user', )
@@ -110,7 +99,7 @@ class SubscriptionAdmin(MCODAdminMixin, ModelAdmin):
         super().save_model(request, obj, form, change)
 
 
-class SubmissionAdmin(MCODAdminMixin, admin.ModelAdmin):
+class SubmissionAdmin(ModelAdmin):
     actions_on_top = True
     search_fields = ['subscription__email', 'newsletter__title']
     list_select_related = ('newsletter', 'subscription')

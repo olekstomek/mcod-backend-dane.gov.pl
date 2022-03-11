@@ -1,6 +1,5 @@
 from dal_admin_filters import AutocompleteFilter
 from django.contrib import admin
-from django.contrib.admin.options import InlineModelAdmin
 from django.contrib.admin.views.main import ChangeList
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import EmptyPage, InvalidPage, Paginator
@@ -14,17 +13,11 @@ from django_celery_results.models import TaskResult
 from mcod.datasets.forms import DatasetForm, TrashDatasetForm
 from mcod.datasets.models import Dataset, DatasetTrash, UPDATE_NOTIFICATION_FREQUENCY_DEFAULT_VALUES
 from mcod.lib.admin_mixins import (
-    AddChangeMixin,
-    AdminListMixin,
     HistoryMixin,
-    LangFieldsOnlyMixin,
-    TrashMixin,
-    CreatedByDisplayAdminMixin,
-    ModifiedByDisplayAdminMixin,
-    StatusLabelAdminMixin,
-    DynamicAdminListDisplayMixin,
-    MCODAdminMixin,
     ModelAdmin,
+    TabularInline,
+    TrashMixin,
+    InlineModelAdmin
 )
 from mcod.resources.forms import ResourceListForm, AddResourceForm, ResourceInlineFormset
 from mcod.resources.models import Resource
@@ -46,7 +39,7 @@ class InlineChangeList:
         self.page_param = page_param
 
 
-class PaginationInline(admin.TabularInline):
+class PaginationInline(TabularInline):
     template = 'admin/resources/tabular_paginated.html'
     per_page = 20
     page_param = 'p'
@@ -79,10 +72,8 @@ class PaginationInline(admin.TabularInline):
         return PaginationFormSet
 
 
-class ChangeResourceStacked(DynamicAdminListDisplayMixin, ModifiedByDisplayAdminMixin, StatusLabelAdminMixin,
-                            AdminListMixin, PaginationInline):
+class ChangeResourceStacked(PaginationInline):
     template = 'admin/resources/inline-list.html'
-
     fields = (
         '_title',
         'type',
@@ -93,17 +84,15 @@ class ChangeResourceStacked(DynamicAdminListDisplayMixin, ModifiedByDisplayAdmin
         'verified',
         'data_date',
         'modified',
-        'modified_by',
-        'status'
+        'modified_by_label',
+        'status_label'
     )
     readonly_fields = fields
-
     sortable = 'modified'
     max_num = 0
     min_num = 0
     extra = 3
     suit_classes = 'suit-tab suit-tab-resources'
-
     model = Resource
     form = ResourceListForm
 
@@ -117,6 +106,12 @@ class ChangeResourceStacked(DynamicAdminListDisplayMixin, ModifiedByDisplayAdmin
         return self._format_list_status(obj._link_status)
 
     link_status.admin_order_field = '_link_status'
+
+    def modified_by_label(self, obj):
+        return self._format_user_display(obj.modified_by.email if obj.modified_by else '')
+
+    modified_by_label.admin_order_field = 'modified_by'
+    modified_by_label.short_description = _('Modified by')
 
     def file_status(self, obj):
         return self._format_list_status(obj._file_status)
@@ -179,7 +174,7 @@ class ChangeResourceStacked(DynamicAdminListDisplayMixin, ModifiedByDisplayAdmin
         return self.get_fields(request, obj)
 
     def _title(self, obj):
-        return obj.mark_safe(f'<a href="{obj.admin_change_url}">{obj.title}</a>')
+        return obj.title_as_link
     _title.short_description = _("title")
 
 
@@ -187,6 +182,7 @@ class AddResourceStacked(InlineModelAdmin):
     template = 'admin/resources/inline-new.html'
 
     show_change_link = False
+    use_translated_fields = True
 
     add_fieldsets = [
         (None, {
@@ -212,10 +208,13 @@ class AddResourceStacked(InlineModelAdmin):
 
     has_dynamic_data = ['has_dynamic_data'] if is_enabled('S43_dynamic_data.be') else []
     has_high_value_data = ['has_high_value_data'] if is_enabled('S41_resource_has_high_value_data.be') else []
+    regions = ['regions_'] if\
+        is_enabled('S45_forms_unification.be') and is_enabled('S37_resources_admin_region_data.be') else []
     _fields = (
         'title',
         'description',
         'dataset',
+        *regions,
         'data_date',
         'status',
         'special_signs',
@@ -260,6 +259,13 @@ class AddResourceStacked(InlineModelAdmin):
         obj.modified_by = request.user
         super().save_model(request, obj, form, change)
 
+    def get_fieldsets(self, request, obj=None):
+        fieldsets = super().get_fieldsets(request, obj)
+        if is_enabled('S45_forms_unification.be'):
+            extended_fields = self.extend_by_lang_fields(fieldsets[1][1]['fields'])
+            fieldsets[1][1]['fields'] = extended_fields
+        return fieldsets
+
 
 class OrganizationFilter(AutocompleteFilter):
     field_name = 'organization'  # field name - ForeignKey to Organization model
@@ -271,17 +277,25 @@ class OrganizationFilter(AutocompleteFilter):
 
 
 @admin.register(Dataset)
-class DatasetAdmin(DynamicAdminListDisplayMixin, CreatedByDisplayAdminMixin, StatusLabelAdminMixin,
-                   AddChangeMixin, HistoryMixin, LangFieldsOnlyMixin, MCODAdminMixin, ModelAdmin):
+class DatasetAdmin(HistoryMixin, ModelAdmin):
     actions_on_top = True
     autocomplete_fields = ['tags', 'organization']
+    check_imported_obj_perms = True
     export_to_csv = True
     form = DatasetForm
     inlines = [
         ChangeResourceStacked,
         AddResourceStacked,
     ]
-    list_display = ['title', 'organization', 'created', 'created_by', 'status', 'obj_history']
+    list_display = [
+        'title',
+        'organization',
+        'created',
+        'created_by_label',
+        'status_label',
+        'obj_history',
+    ]
+    lang_fields = True
     list_filter = [
         'categories',
         OrganizationFilter,
@@ -302,13 +316,16 @@ class DatasetAdmin(DynamicAdminListDisplayMixin, CreatedByDisplayAdminMixin, Sta
     suit_form_includes = (
         ('admin/datasets/licences/custom_include.html', 'top', 'licenses'),
     )
-    suit_form_tabs = (
-        ('general', _('General')),
-        *LangFieldsOnlyMixin.get_translations_tabs(),
-        ('licenses', _('Conditions')),
-        ('tags', _('Tags')),
-        ('resources', _('Resources')),
-    )
+
+    @property
+    def suit_form_tabs(self):
+        return (
+            ('general', _('General')),
+            *self.get_translations_tabs(),
+            ('licenses', _('Conditions')),
+            ('tags', _('Tags')),
+            ('resources', _('Resources')),
+        )
 
     def has_dynamic_data_info(self, obj):
         if obj.has_dynamic_data is True:
@@ -398,6 +415,7 @@ class DatasetAdmin(DynamicAdminListDisplayMixin, CreatedByDisplayAdminMixin, Sta
                         'license_condition_source',
                         'license_condition_modification',
                         'license_condition_responsibilities',
+                        'license_condition_cc40_responsibilities',
                         'license_condition_db_or_copyrighted',
                         'license_chosen',
                         'license_condition_personal_data',
@@ -407,10 +425,10 @@ class DatasetAdmin(DynamicAdminListDisplayMixin, CreatedByDisplayAdminMixin, Sta
         ] + self.get_translations_fieldsets()
 
     def get_readonly_fields(self, request, obj=None):
-        read_only_fields = super(DatasetAdmin, self).get_readonly_fields(request, obj)
+        readonly_fields = super().get_readonly_fields(request, obj)
         archived_resources = ['archived_resources_files_media_url'] if is_enabled('S41_resource_bulk_download.be') else []
-        read_only_fields = archived_resources + read_only_fields
-        return read_only_fields
+        readonly_fields = archived_resources + readonly_fields
+        return readonly_fields
 
     def categories_list(self, instance):
         return instance.categories_list_as_html
@@ -537,6 +555,7 @@ class DatasetTrashAdmin(HistoryMixin, TrashMixin):
         "license_condition_source",
         "license_condition_modification",
         "license_condition_responsibilities",
+        "license_condition_cc40_responsibilities",
         "license_condition_db_or_copyrighted",
         "license_chosen",
         "license_condition_personal_data",

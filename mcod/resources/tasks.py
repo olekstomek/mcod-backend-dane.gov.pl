@@ -3,13 +3,7 @@ import logging
 from copy import deepcopy
 
 from celery import shared_task
-from constance import config
 from django.apps import apps
-from django.conf import settings
-from django.core.mail import send_mail, get_connection
-from django.template.loader import render_to_string
-from django.utils import translation
-from django.utils.translation import ugettext_lazy as _
 
 from mcod.resources.indexed_data import FileEncodingValidationError
 from mcod.resources.link_validation import check_link_scheme
@@ -209,41 +203,10 @@ def process_resource_file_data_task(resource_id, **kwargs):
 
 
 @shared_task
-def send_resource_comment(resource_id, comment, lang=None):
+def send_resource_comment(resource_id, comment):
     model = apps.get_model('resources', 'Resource')
     resource = model.objects.get(pk=resource_id)
-    conn = get_connection(settings.EMAIL_BACKEND)
-    template_suffix = ''
-
-    context = {
-        'host': settings.BASE_URL,
-        'resource': resource,
-        'comment': comment,
-        'test': bool(settings.DEBUG and config.TESTER_EMAIL),
-    }
-
-    if settings.DEBUG and config.TESTER_EMAIL:
-        template_suffix = '-test'
-    if is_enabled('S39_mail_layout.be'):
-        _plain = 'mails/resource-comment.txt'
-        _html = 'mails/resource-comment.html'
-    else:
-        _plain = f'mails/report-resource-comment{template_suffix}.txt'
-        _html = f'mails/report-resource-comment{template_suffix}.html'
-    with translation.override('pl'):
-        msg_plain = render_to_string(_plain, context=context)
-        msg_html = render_to_string(_html, context=context)
-        title = resource.title.replace('\n', ' ').replace('\r', '')
-        subject = _('A comment was posted on the resource %(title)s') % {'title': title}
-        send_mail(
-            subject,
-            msg_plain,
-            config.SUGGESTIONS_EMAIL,
-            [config.TESTER_EMAIL] if settings.DEBUG and config.TESTER_EMAIL else resource.comment_mail_recipients,
-            connection=conn,
-            html_message=msg_html,
-        )
-
+    resource.send_resource_comment_mail(comment)
     return {
         'resource': resource_id
     }

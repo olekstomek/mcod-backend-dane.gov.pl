@@ -1,5 +1,4 @@
 from auditlog.admin import (
-    LogEntryAdmin as BaseLogEntryAdmin,
     ResourceTypeFilter as BaseResourceTypeFilter,
 )
 from auditlog.models import LogEntry as BaseLogEntry
@@ -10,14 +9,14 @@ from django.utils.formats import localize
 from django.utils.translation import gettext_lazy as _
 
 from mcod.histories.models import LogEntry
-from mcod.lib.admin_mixins import MCODAdminMixin
+from mcod.lib.admin_mixins import LogEntryAdmin as BaseLogEntryAdmin
 
 
 class ResourceTypeFilter(BaseResourceTypeFilter):
     title = _('table name')
 
 
-class LogEntryAdmin(MCODAdminMixin, BaseLogEntryAdmin):
+class LogEntryAdmin(BaseLogEntryAdmin):
 
     list_display = ['id', '_action', '_table_name', '_row_id', '_message']
     list_filter = ['action', ResourceTypeFilter]

@@ -10,7 +10,6 @@ from django.contrib.postgres.fields import JSONField
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin, Permission
 from django.contrib.sessions.backends.cache import KEY_PREFIX
 from django.core.cache import caches
-from django.core.mail import send_mail, get_connection
 from django.core.paginator import Paginator
 from django.db import models, transaction
 from django.db.models import Case, Count, When
@@ -23,13 +22,11 @@ from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _, override, pgettext_lazy, get_language
 from modeltrans.fields import TranslationField
 from model_utils import FieldTracker
-from model_utils.models import TimeStampedModel
-
 
 from mcod.core import storages
 from mcod.core.api.search.tasks import update_document_task
 from mcod.core.db.mixins import AdminMixin, ApiMixin
-from mcod.core.db.models import ExtendedModel, TrashModelBase
+from mcod.core.db.models import ExtendedModel, TimeStampedModel, TrashModelBase
 from mcod.core.managers import SoftDeletableQuerySet
 from mcod.core.models import SoftDeletableModel
 from mcod.lib.jwt import decode_jwt_token
@@ -560,40 +557,37 @@ class User(AdminMixin, ApiMixin, AbstractBaseUser, PermissionsMixin, SoftDeletab
                 return True
         return False
 
-    def resend_activation_email(self, connection):
-        return send_mail(
+    def resend_activation_email(self):
+        return self.send_mail(
             'Reset password',
             self.email_validation_absolute_url,
             config.ACCOUNTS_EMAIL,
-            [self.email, ],
-            connection=connection,
+            [self.email],
         )
 
-    def send_password_reset_email(self, connection):
+    def send_password_reset_email(self):
         context = {'link': self.password_reset_absolute_url, 'host': settings.BASE_URL}
         msg_plain = render_to_string('mails/password-reset.txt', context)
         msg_html = render_to_string('mails/password-reset.html', context)
 
-        return send_mail(
+        return self.send_mail(
             'Reset hasła',
             msg_plain,
             config.ACCOUNTS_EMAIL,
-            [self.email, ],
-            connection=connection,
+            [self.email],
             html_message=msg_html
         )
 
-    def send_registration_email(self, connection):
+    def send_registration_email(self):
         context = {'link': self.email_validation_absolute_url, 'host': settings.BASE_URL}
         msg_plain = render_to_string('mails/confirm-registration.txt', context)
         msg_html = render_to_string('mails/confirm-registration.html', context)
 
-        return send_mail(
+        return self.send_mail(
             'Aktywacja konta',
             msg_plain,
             config.ACCOUNTS_EMAIL,
-            [self.email, ],
-            connection=connection,
+            [self.email],
             html_message=msg_html,
         )
 
@@ -610,19 +604,16 @@ class User(AdminMixin, ApiMixin, AbstractBaseUser, PermissionsMixin, SoftDeletab
                     'date_from': date_from,
                     'base_url': settings.BASE_URL
                 }
-
-                conn = get_connection(settings.EMAIL_BACKEND)
                 with override(self.lang):
                     context['base_url_with_lang'] = f'{settings.BASE_URL}/{self.lang}'
                     msg_plain = render_to_string('mails/subscriptions-daily.txt', context=context)
                     msg_html = render_to_string('mails/subscriptions-daily.html', context=context)
 
-                    send_mail(
+                    self.send_mail(
                         _('Report of activity of observed objects on the dane.gov.pl portal'),
                         msg_plain,
                         config.FOLLOWINGS_EMAIL,
-                        [self.email, ],
-                        connection=conn,
+                        [self.email],
                         html_message=msg_html,
                     )
 

@@ -1,8 +1,8 @@
-{% load i18n static admin_urls suit_tags %}
+{% load i18n static admin_urls suit_tags admin_modify core_tags %}
 <div class="inline-group {{ inline_admin_formset.opts.suit_classes }}" id="{{ inline_admin_formset.formset.prefix }}-group">
 {{ inline_admin_formset.formset.management_form }}
 {{ inline_admin_formset.formset.non_form_errors }}
-
+{% is_unleash_enabled "S45_forms_unification.be" as S45_forms_unification %}
 {% for inline_admin_form in inline_admin_formset %}<div class="inline-related{% if forloop.last %} empty-form last-related{% endif %}" id="{{ inline_admin_formset.formset.prefix }}-{% if not forloop.last %}{{ forloop.counter0 }}{% else %}empty{% endif %}">
   <h3><b>{{ inline_admin_formset.opts.verbose_name|title }}:</b>&nbsp;<span class="inline_label">{% if inline_admin_form.original %}
     {% if '1.8'|django_version_gte and inline_admin_form.model_admin.show_change_link and inline_admin_form.model_admin.has_registered_model %} <a href="{% url inline_admin_form.model_admin.opts|admin_urlname:'change' inline_admin_form.original.pk|admin_urlquote %}" class="inlinechangelink">{{ inline_admin_form.original }}</a>
@@ -69,7 +69,7 @@
                 var dependency_list = input.data('dependency_list') || [];
                 var dependencies = [];
                 $.each(dependency_list, function(i, field_name) {
-                  dependencies.push('#' + row.find('.form-row .field-' + field_name).find('input, select, textarea').attr('id'));
+                  dependencies.push('#' + row.find('div.form-row.field-' + field_name).find('input, select, textarea').attr('id'));
                 });
                 if (dependencies.length) {
                     input.prepopulate(dependencies, input.attr('maxlength'));
@@ -89,6 +89,87 @@
             });
         };
 
+        var reinitFrequencyFields = function(row){
+            var $updateNotificationRecipientEmailControlGroup = row.find("div.control-group.form-row.field-update_notification_recipient_email");
+            var $updateNotificationRecipientEmailHelpInline = $updateNotificationRecipientEmailControlGroup.find('span.help-inline');
+
+
+            var $updateFrequency = row.find("div.field-update_frequency");
+            var $updateFrequencySelect = $updateFrequency.find('select');
+            var frequencyNotifications = {
+                weekly: {value: 1, text: 'dzień'},
+                monthly: {value: 3, text: 'dni'},
+                quarterly: {value: 7, text: 'dni'},
+                everyHalfYear: {value: 7, text: 'dni'},
+                yearly: {value: 7, text: 'dni'}
+            };
+            var $updateNotificationRecipientEmailInput = $updateNotificationRecipientEmailControlGroup.find("input");
+
+            {% if user.is_superuser %}
+                var $isUpdateNotificationEnabledParent = row.find("div.control-group.form-row.field-is_update_notification_enabled div.controls");
+                var $updateNotificationFrequencyParent = row.find("div.control-group.form-row.field-update_notification_frequency div.controls");
+                $isUpdateNotificationEnabledParent.append('<span style="padding-left: 10px">Do dostawcy zostanie wysłany komunikat przypominający o aktualizacji danych</span>');
+                $updateNotificationFrequencyParent.append('<span style="padding-left: 10px">Liczba dni, według których powiadomienie zostanie wysłane do dostawcy przed planowaną datą aktualizacji danych, licząc od daty pierwszego dodania zbioru.</span>');
+                var $updateNotificationFrequencyInput = $updateNotificationFrequencyParent.find("input");
+
+                var $isUpdateNotificationEnabledControlGroup = row.find("div.control-group.form-row.field-is_update_notification_enabled");
+                var $updateNotificationFrequencyControlGroup = row.find("div.control-group.form-row.field-update_notification_frequency");
+
+                function toggleFrequencyFields(updateFrequency, initial=false) {
+                    var frequencyNotification = frequencyNotifications[updateFrequency];
+                    if (frequencyNotification === undefined) {
+                        $isUpdateNotificationEnabledControlGroup.css('display', 'none');
+                        $updateNotificationFrequencyControlGroup.css('display', 'none');
+                        if (!initial) {
+                            $updateNotificationFrequencyInput.val('');
+                        }
+                    } else {
+                        $isUpdateNotificationEnabledControlGroup.css('display', 'inline');
+                        $updateNotificationFrequencyControlGroup.css('display', 'inline');
+                        if (!initial || $updateNotificationFrequencyInput.val() === '') {
+                            $updateNotificationFrequencyInput.val(frequencyNotification.value);
+                        }
+                    }
+                }
+
+                toggleFrequencyFields($updateFrequencySelect.val(), true);
+                if($updateNotificationRecipientEmailInput.val() === "") {
+                    $updateNotificationRecipientEmailInput.val("{{ user.email }}");
+                }
+
+                $updateFrequencySelect.change(function(){
+                    toggleFrequencyFields($(this).val());
+                });
+
+                function showEmailHelpInline() {
+                    $updateNotificationRecipientEmailHelpInline.css('display', 'block');
+                }
+
+                $updateNotificationRecipientEmailInput.change(showEmailHelpInline).keyup(showEmailHelpInline);
+
+            {% else %}
+                $updateNotificationRecipientEmailInput.val("{{ user.email }}");
+                $updateNotificationRecipientEmailInput.prop('disabled', true);
+                $updateFrequency.find('.controls').append('<span class="help-inline" style="margin-top: 5px;"></span>');
+                var $updateFrequencyHelp = $updateFrequency.find('.help-inline');
+
+                function updateUpdateFrequencyHelp(updateFrequency) {
+                    var frequencyNotification = frequencyNotifications[updateFrequency];
+                    var alertText = "";
+                    if (frequencyNotification !== undefined) {
+                        var daysText = `${frequencyNotification.value} ${frequencyNotification.text}`;
+                        alertText = `Powiadomienie o zbliżającym się terminie aktualizacji danych zostanie wysłane ${daysText} przed datą aktualizacji, jeżeli chcesz zmienić dzień wysyłki powiadomienia skontaktuj się z administratorem`;
+                    }
+                    $updateFrequencyHelp.text(alertText);
+                }
+
+                updateUpdateFrequencyHelp($updateFrequencySelect.val());
+                $updateFrequencySelect.change(function(){
+                    updateUpdateFrequencyHelp($(this).val());
+                });
+            {% endif %}
+        }
+
         $(rows).formset({
             prefix: "{{ inline_admin_formset.formset.prefix }}",
             addText: "{% blocktrans with verbose_name=inline_admin_formset.opts.verbose_name|title %}Add another {{ verbose_name }}{% endblocktrans %}",
@@ -103,11 +184,15 @@
                 updateSelectFilter();
                 updateInlineLabel(row);
                 reinitCheckboxes(row);
+                {% if S45_forms_unification %}reinitFrequencyFields(row);{% endif %}
                 Suit.after_inline.run("{{ inline_admin_formset.formset.prefix }}", row);
                 $('body').trigger('form-ready', [row]);
             })
         });
-
+        $('#organization_form').submit(function(){
+            $(".field-update_notification_recipient_email input:disabled").removeAttr('disabled');
+            return;
+          });
 
     });
 })(django.jQuery);

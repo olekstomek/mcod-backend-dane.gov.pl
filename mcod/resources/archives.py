@@ -2,13 +2,7 @@ import libarchive
 import os
 import tempfile
 
-
-ARCHIVE_CONTENT_TYPES = {
-    'gzip', 'x-gzip', 'vnd.rar', 'rar', 'x-rar', 'x-rar-compressed', 'x-7z-compressed',
-    'x-bzip', 'bzip2', 'x-bzip2', 'x-tar', 'x-zip-compressed', 'zip'
-}
-
-ARCHIVE_EXTENSIONS = {'gz', 'rar', '7z', 'bz', 'bz2', 'tar', 'zip'}
+from mcod import settings
 
 
 class UnsupportedArchiveError(Exception):
@@ -16,12 +10,12 @@ class UnsupportedArchiveError(Exception):
 
 
 def is_archive_file(content_type):
-    return content_type in ARCHIVE_CONTENT_TYPES
+    return content_type in settings.ARCHIVE_CONTENT_TYPES
 
 
 def has_archive_extension(path):
     ext = path.rsplit('.', 1)[-1]
-    return ext in ARCHIVE_EXTENSIONS
+    return ext in settings.ARCHIVE_EXTENSIONS
 
 
 class ArchiveReader(object):

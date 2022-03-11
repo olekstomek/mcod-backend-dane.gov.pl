@@ -123,3 +123,11 @@ div.copy_pl_to_en > span:hover {
 .modal-content .link-types {
   display: none;
 }
+
+.object.stream-field fieldset{
+    padding-top: 20px;
+}
+
+.object.hyper_form_field{
+    padding-right: 20px;
+}

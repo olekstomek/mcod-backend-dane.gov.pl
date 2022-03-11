@@ -6,9 +6,7 @@ from django.utils.translation import gettext_lazy as _
 from mcod.laboratory.models import LabEvent, LabReport, LabEventTrash
 from mcod.lib.admin_mixins import (
     HistoryMixin,
-    LangFieldsOnlyMixin,
     TrashMixin,
-    MCODAdminMixin,
     ModelAdmin,
 )
 from mcod.resources.forms import LinkOrFileUploadForm
@@ -40,9 +38,10 @@ class AddReportStacked(nested_admin.NestedStackedInline):
     max_num = 2
 
 
-class LabEventAdmin(HistoryMixin, LangFieldsOnlyMixin, MCODAdminMixin, ModelAdmin):
+class LabEventAdmin(HistoryMixin, ModelAdmin):
     actions_on_top = True
     is_history_other = True
+    lang_fields = True
     list_display = ["title", "event_type", "execution_date"]
     search_fields = ["title", "notes"]
     soft_delete = True
@@ -51,10 +50,9 @@ class LabEventAdmin(HistoryMixin, LangFieldsOnlyMixin, MCODAdminMixin, ModelAdmi
 
     @property
     def suit_form_tabs(self):
-        suit_form_tabs = [
+        return [
             ('general', _('General')),
         ]
-        return suit_form_tabs
 
     def save_model(self, request, obj, form, change):
         if not obj.id:

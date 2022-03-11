@@ -11,8 +11,6 @@ from django.contrib.auth import get_user_model
 from django.contrib.postgres.fields import ArrayField, JSONField
 from django.contrib.postgres.indexes import GinIndex
 from django.core.files.base import ContentFile
-from django.core.mail import get_connection
-from django.core.mail.message import EmailMultiAlternatives
 from django.db import models
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
@@ -389,8 +387,6 @@ class ApplicationProposal(ApplicationMixin):
     @classmethod
     def send_application_proposal_mail(cls, data):
         dataset_model = apps.get_model('datasets.Dataset')
-        conn = get_connection(settings.EMAIL_BACKEND)
-
         title = data['title']
         img_data = data.get('image')
         illustrative_graphics = data.get('illustrative_graphics')
@@ -431,20 +427,19 @@ class ApplicationProposal(ApplicationMixin):
         with translation.override('pl'):
             msg_plain = render_to_string('mails/propose-application.txt', data)
             msg_html = render_to_string(f'mails/{html_template}.html', data)
-            mail = EmailMultiAlternatives(
+            attachments = []
+            if img_data:
+                attachments.append(image)
+            if illustrative_graphics:
+                attachments.append(illustrative_graphics_img)
+            cls.send_mail_message(
                 'Zgłoszono propozycję aplikacji {}'.format(title.replace('\n', ' ').replace('\r', '')),
                 msg_plain,
-                from_email=config.NO_REPLY_EMAIL,
-                to=emails,
-                connection=conn
+                config.NO_REPLY_EMAIL,
+                emails,
+                msg_html,
+                attachments=attachments,
             )
-            mail.mixed_subtype = 'related'
-            mail.attach_alternative(msg_html, 'text/html')
-            if img_data:
-                mail.attach(image)
-            if illustrative_graphics:
-                mail.attach(illustrative_graphics_img)
-            mail.send()
 
     def migrate_to_showcase_proposal(self, showcase=None):
         sp_model = apps.get_model('showcases.ShowcaseProposal')

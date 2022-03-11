@@ -48,6 +48,7 @@ def get_es_index_names():
         "searchhistories": "test-searchhistories-{}".format(index_prefix),
         "accepted_dataset_submissions": "test-accepted_dataset_submissions-{}".format(index_prefix),
         "meetings": "test-meetings-{}".format(index_prefix),
+        "news": "test-news-{}".format(index_prefix),
         "knowledge_base_pages": "test-knowledge_base_pages-{}".format(index_prefix),
         "regions": "test-regions-{}".format(index_prefix),
         "showcases": "test-showcases-{}".format(index_prefix),

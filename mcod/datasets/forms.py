@@ -10,7 +10,7 @@ from django.utils.translation import gettext_lazy as _
 from mcod import settings
 from mcod.core.db.models import STATUS_CHOICES
 from mcod.datasets.field_validators import validate_dataset_image_file_extension
-from mcod.datasets.models import UPDATE_FREQUENCY, Dataset
+from mcod.datasets.models import UPDATE_FREQUENCY, Dataset, LICENSE_CONDITION_LABELS
 from mcod.lib.widgets import CheckboxSelect, JsonPairDatasetInputs
 from mcod.tags.forms import ModelFormWithKeywords
 from mcod.unleash import is_enabled
@@ -123,6 +123,11 @@ class DatasetForm(ModelFormWithKeywords):
             self.fields['update_notification_recipient_email'].required = True
             if instance and instance.modified_by and not instance.update_notification_recipient_email:
                 self.initial['update_notification_recipient_email'] = instance.modified_by.email
+        if instance:
+            for label_name, label_value in instance.license_condition_labels.items():
+                condition_field = self.fields.get(f'license_condition_{label_name}')
+                if condition_field:
+                    condition_field.label = label_value
 
     class Meta:
         model = Dataset
@@ -130,6 +135,7 @@ class DatasetForm(ModelFormWithKeywords):
             'license_condition_source': CheckboxInputWithLabel(label='CC BY 4.0'),
             'license_condition_modification': CheckboxInputWithLabel(label='CC BY 4.0'),
             'license_condition_responsibilities': CKEditorWidget(config_name='licenses'),
+            'license_condition_cc40_responsibilities': CheckboxInputWithLabel(label='CC BY 4.0'),
             'license_condition_db_or_copyrighted': CKEditorWidget(config_name='licenses'),
             'license_chosen': forms.RadioSelect,
             'license_condition_personal_data': CKEditorWidget(config_name='licenses'),
@@ -150,6 +156,7 @@ class DatasetForm(ModelFormWithKeywords):
             'license_condition_source',
             'license_condition_modification',
             'license_condition_responsibilities',
+            'license_condition_cc40_responsibilities',
             'license_condition_db_or_copyrighted',
             'license_chosen',
             'license_condition_personal_data',
@@ -163,13 +170,24 @@ class DatasetForm(ModelFormWithKeywords):
             'created': _("Availability date"),
             'modified': _("Modification date"),
             'verified': _("Update date"),
-            'archived_resources_files_media_url': _('Archived resources files')
+            'archived_resources_files_media_url': _('Archived resources files'),
+            'license_condition_source': LICENSE_CONDITION_LABELS['public']['source'],
+            'license_condition_modification': LICENSE_CONDITION_LABELS['public']['modification'],
+            'license_condition_responsibilities': LICENSE_CONDITION_LABELS['public']['responsibilities'],
+            'license_condition_db_or_copyrighted': LICENSE_CONDITION_LABELS['public']['db_or_copyrighted'],
+            'license_condition_personal_data': LICENSE_CONDITION_LABELS['public']['personal_data']
         }
 
     def clean(self):
         cleaned_data = super().clean()
         if cleaned_data.get('license_condition_db_or_copyrighted') and not cleaned_data.get('license_chosen'):
             self.add_error('license_chosen', _('Text area is filled, license must be selected'))
+        if cleaned_data.get('license_condition_responsibilities') and\
+                cleaned_data.get('license_condition_cc40_responsibilities'):
+            self.add_error(
+                'license_condition_responsibilities',
+                _('You can\'t enter custom license responsibilities and select'
+                  ' default CC BY 4.0 license responsibilities at the same time. Please choose one.'))
         return cleaned_data
 
     def clean_license_condition_personal_data(self):

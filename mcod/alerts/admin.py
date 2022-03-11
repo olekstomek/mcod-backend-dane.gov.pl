@@ -9,11 +9,7 @@ from django.utils.translation import gettext_lazy as _
 from suit.widgets import SuitSplitDateTimeWidget
 
 from mcod.alerts.models import Alert, DISPLAY_STATUS
-
-from mcod.lib.admin_mixins import (
-    LangFieldsOnlyMixin, CreatedByDisplayAdminMixin, StatusLabelAdminMixin,
-    DynamicAdminListDisplayMixin, MCODAdminMixin
-)
+from mcod.lib.admin_mixins import ModelAdmin
 
 
 class DisplayStatusFilter(admin.SimpleListFilter):
@@ -72,11 +68,17 @@ class AlertForm(ModelForm):
 
 
 @admin.register(Alert)
-class AlertAdmin(DynamicAdminListDisplayMixin, CreatedByDisplayAdminMixin,
-                 StatusLabelAdminMixin, LangFieldsOnlyMixin, MCODAdminMixin, admin.ModelAdmin):
-    list_display = ('title_i18n', 'display_status_str', 'created_by',
-                    'start_date', 'finish_date', 'status')
+class AlertAdmin(ModelAdmin):
+    list_display = (
+        'title_i18n',
+        'display_status_str',
+        'created_by_label',
+        'start_date',
+        'finish_date',
+        'status_label',
+    )
     search_fields = ("title_i18n",)
+    lang_fields = True
     list_filter = (
         ('start_date', admin.DateFieldListFilter),
         ('finish_date', admin.DateFieldListFilter),
@@ -113,10 +115,12 @@ class AlertAdmin(DynamicAdminListDisplayMixin, CreatedByDisplayAdminMixin,
         }),
     ]
 
-    suit_form_tabs = (
-        ('general', _('General')),
-        *LangFieldsOnlyMixin.get_translations_tabs()
-    )
+    @property
+    def suit_form_tabs(self):
+        return (
+            ('general', _('General')),
+            *self.get_translations_tabs()
+        )
 
     def get_fieldsets(self, request, obj=None):
         return self.fieldsets + self.get_translations_fieldsets()
@@ -139,12 +143,10 @@ class AlertAdmin(DynamicAdminListDisplayMixin, CreatedByDisplayAdminMixin,
     def get_queryset(self, request):
         now = timezone.now()
         qs = super().get_queryset(request)
-
-        qs = qs.annotate(display_status=Case(
+        return qs.annotate(display_status=Case(
             When(status='draft', then=Value('n/a')),
             When(finish_date__lt=now, then=Value('finished')),
             When(start_date__gt=now, then=Value('waiting')),
             default=Value('ongoing'),
             output_field=CharField()
         ))
-        return qs

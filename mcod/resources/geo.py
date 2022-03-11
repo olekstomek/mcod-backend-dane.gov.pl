@@ -74,8 +74,10 @@ def is_gpx(path, content_type):
     return path is not None and content_type == 'xml' and is_valid_gpx(path)
 
 
-def is_kml(path, content_type):
+def is_kml(path, content_type, is_extracted=False):
     if content_type == 'xml' and path.lower().endswith('.kml'):
+        if is_extracted:
+            return True
         try:
             xsd_path = 'http://schemas.opengis.net/kml/2.2.0/ogckml22.xsd'
             schema = xmlschema.XMLSchema(xsd_path)
@@ -284,7 +286,7 @@ def extract_coords_from_uaddress(uaddress):
         raise ExtractUAddressError(uaddress)
 
 
-def check_geodata(path, content_type, family):
+def check_geodata(path, content_type, family, is_extracted=False):
     if is_geotiff(path):
         content_type += ';application=geotiff'
     if content_type in ('json', 'plain') and is_geojson(path):
@@ -293,7 +295,7 @@ def check_geodata(path, content_type, family):
     if is_gpx(path, content_type):
         family = 'application'
         content_type = 'gpx+xml'
-    if is_kml(path, content_type):
+    if is_kml(path, content_type, is_extracted):
         family = 'application'
-        content_type = 'vnd.google-earth.kml+xml'
+        content_type = 'vnd.google-earth.kmz' if is_extracted else 'vnd.google-earth.kml+xml'
     return content_type, family

@@ -1,16 +1,21 @@
+import logging
+
+from constance import config
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from django.forms.models import model_to_dict
+from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.safestring import mark_safe
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext_lazy as _, override
 from model_utils import FieldTracker, Choices
 from model_utils.fields import MonitorField
 from modeltrans.fields import TranslationField
 
-from mcod.core.db.models import ExtendedModel, TrashModelBase, STATUS_CHOICES
+from mcod import settings
+from mcod.core.db.models import ExtendedModel, Model, TrashModelBase, STATUS_CHOICES
 from mcod.datasets.tasks import send_dataset_comment
 from mcod.resources.tasks import send_resource_comment
 from mcod.suggestions.managers import (
@@ -24,7 +29,10 @@ from mcod.suggestions.managers import (
     ResourceCommentTrashManager,
 )
 from mcod.suggestions.tasks import send_data_suggestion, send_dataset_suggestion_mail_task
+from mcod.unleash import is_enabled
 
+
+logger = logging.getLogger('mcod')
 User = get_user_model()
 
 
@@ -40,16 +48,32 @@ ACCEPTED_DATASET_SUBMISSION_STATUS_CHOICES_NO_PUBLISHED = [
 ]
 
 
-class Suggestion(models.Model):
+class Suggestion(Model):
     notes = models.TextField()
     send_date = models.DateTimeField(null=True, blank=True)
     created = models.DateTimeField(auto_now_add=True)
 
+    def send_data_suggestion_mail(self):
+        context = {
+            'host': settings.BASE_URL,
+            'notes': self.notes,
+        }
+        with override('pl'):
+            msg_plain = render_to_string('mails/data-suggestion.txt', context)
+            msg_html = render_to_string('mails/data-suggestion.html', context)
+            emails = [config.TESTER_EMAIL] if settings.DEBUG and config.TESTER_EMAIL else [config.CONTACT_MAIL]
+            return self.send_mail_message(
+                _('Resource demand reported'),
+                msg_plain,
+                config.NO_REPLY_EMAIL,
+                emails,
+                msg_html,
+            )
+
 
 @receiver(post_save, sender=Suggestion)
 def handle_suggestion_post_save(sender, instance, *args, **kwargs):
-    data_suggestion = {"notes": instance.notes}
-    send_data_suggestion.s(instance.id, data_suggestion).apply_async(countdown=1)
+    send_data_suggestion.s(instance.id).apply_async(countdown=1)
 
 
 class DatasetSubmissionMixin(ExtendedModel):
@@ -141,6 +165,24 @@ class DatasetSubmission(DatasetSubmissionMixin):
     @classmethod
     def accusative_case(cls):
         return _("acc: Dataset submission")
+
+    def send_dataset_suggestion_mail(self):
+        emails = [config.TESTER_EMAIL] if settings.DEBUG and config.TESTER_EMAIL else [config.CONTACT_MAIL]
+        context = {
+            'obj': self,
+            'host': settings.BASE_URL,
+        }
+        tmpl = 'mails/dataset-submission.html' if is_enabled('S39_mail_layout.be') else 'mails/dataset-suggestion.html'
+        with override('pl'):
+            msg_plain = render_to_string('mails/dataset-suggestion.txt', context)
+            msg_html = render_to_string(tmpl, context)
+            return self.send_mail_message(
+                _('Resource demand reported'),
+                msg_plain,
+                config.NO_REPLY_EMAIL,
+                emails,
+                msg_html,
+            )
 
 
 class AcceptedDatasetSubmission(DatasetSubmissionMixin):
@@ -249,6 +291,46 @@ class AcceptedDatasetSubmission(DatasetSubmissionMixin):
     class Meta(DatasetSubmissionMixin.Meta):
         verbose_name = _('Accepted dataset submission')
         verbose_name_plural = _('Accepted dataset submissions')
+
+    def send_accepted_submission_comment_mail(self, comment):
+        with override('pl'):
+            title = self.title.replace('\n', ' ').replace('\r', '')
+            msg_template = _('On the accepted dataset submission %(title)s [%(url)s] was posted a comment:')
+            url = self.frontend_absolute_url
+            msg = msg_template % {
+                'title': title,
+                'url': url,
+            }
+            html_msg = msg_template % {
+                'title': title,
+                'url': f'<a href="{url}">{url}</a>',
+            }
+            context = {
+                'host': settings.BASE_URL,
+                'url': url,
+                'comment': comment,
+                'submission_title': title,
+                'message': msg,
+                'html_message': html_msg,
+            }
+
+            subject = _('A comment was posted on the accepted dataset submission %(title)s') % {
+                'title': title}
+            msg_plain = render_to_string(
+                'mails/accepted-dataset-submission-comment.txt', context=context)
+            msg_html = render_to_string(
+                'mails/accepted-dataset-submission-comment.html', context=context)
+            try:
+                return self.send_mail(
+                    subject,
+                    msg_plain,
+                    config.SUGGESTIONS_EMAIL,
+                    [config.TESTER_EMAIL] if settings.DEBUG and config.TESTER_EMAIL else [config.CONTACT_MAIL],
+                    html_message=msg_html,
+                )
+            except Exception as err:
+                logger.error(
+                    'Error during sending of an email comment for accepted submission {}: {}'.format(title, err))
 
 
 class DatasetSubmissionTrash(DatasetSubmission, metaclass=TrashModelBase):

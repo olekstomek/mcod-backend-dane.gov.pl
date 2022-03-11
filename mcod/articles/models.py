@@ -1,4 +1,6 @@
+from django.apps import apps
 from django.contrib.auth import get_user_model
+from django.contrib.contenttypes.models import ContentType
 from django.contrib.postgres.indexes import GinIndex
 from django.db import models
 from django.dispatch import receiver
@@ -182,6 +184,50 @@ class Article(ExtendedModel):
     def preview_link(self):
         return self.mark_safe(
             f'<a href="{self.frontend_preview_url}" class="btn" target="_blank">{_("Preview")}</a>')
+
+    def migrate_news_to_cms(self):
+        if not self.is_news:
+            return
+        news_index_model = apps.get_model('cms.NewsPageIndex')
+        news_model = apps.get_model('cms.NewsPage')
+        news_ct = ContentType.objects.get_for_model(news_model)
+        news_index = news_index_model.objects.first()
+        if not news_index:
+            root_model = apps.get_model('cms.RootPage')
+            news_index_ct = ContentType.objects.get_for_model(news_index_model)
+            root = root_model.objects.first()
+            if root:
+                news_index = news_index_model(
+                    title='Aktualności',
+                    title_en='News',
+                    content_type=news_index_ct,
+                    show_in_menus=True,
+                )
+                root.add_child(instance=news_index)
+        if not news_index.get_children().filter(title=self.title).exists():
+            news = news_model(
+                title=self.title,
+                title_en=self.title_en or '',
+                body=self.notes,
+                body_en=self.notes_en or '',
+                author=self.author or '',
+                author_en=self.author or '',
+                first_published_at=self.created,
+                last_published_at=self.modified,
+                views_count=self.views_count,
+                content_type=news_ct,
+                show_in_menus=True,
+                live=bool(self.status == 'published'),
+            )
+            news_index.add_child(instance=news)
+            tags_pl = self.tags.filter(language='pl').values_list('name', flat=True)
+            tags_en = self.tags.filter(language='en').values_list('name', flat=True)
+            for tag in tags_pl:
+                news.tags.add(tag)
+            for tag in tags_en:
+                news.tags_en.add(tag)
+            if tags_pl or tags_en:
+                news.save()
 
     i18n = TranslationField(fields=("title", "notes"))
     tracker = FieldTracker()

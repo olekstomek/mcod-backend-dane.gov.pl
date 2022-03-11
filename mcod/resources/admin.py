@@ -13,17 +13,7 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 from django_celery_results.models import TaskResult
 
-from mcod.lib.admin_mixins import (
-    AddChangeMixin,
-    AdminListMixin,
-    DynamicAdminListDisplayMixin,
-    HistoryMixin,
-    LangFieldsOnlyMixin,
-    MCODAdminMixin,
-    ModelAdmin,
-    StatusLabelAdminMixin,
-    TrashMixin,
-)
+from mcod.lib.admin_mixins import HistoryMixin, ModelAdmin, TrashMixin
 from mcod.lib.helpers import get_paremeters_from_post
 from mcod.resources.forms import ChangeResourceForm, AddResourceForm, TrashResourceForm
 from mcod.resources.models import (
@@ -203,10 +193,11 @@ def process_verification_results(col, results, table_schema, rules):
 
 
 @admin.register(Resource)
-class ResourceAdmin(DynamicAdminListDisplayMixin, AddChangeMixin, StatusLabelAdminMixin, AdminListMixin,
-                    HistoryMixin, LangFieldsOnlyMixin, MCODAdminMixin, ModelAdmin):
+class ResourceAdmin(HistoryMixin, ModelAdmin):
     actions_on_top = True
+    check_imported_obj_perms = True
     export_to_csv = True
+    lang_fields = True
     soft_delete = True
     TYPE_FILTER = TypeFilter
     TYPE_DISPLAY_FIELD = 'type_as_str'
@@ -214,7 +205,7 @@ class ResourceAdmin(DynamicAdminListDisplayMixin, AddChangeMixin, StatusLabelAdm
     def change_suit_form_tabs(self, obj):
         form_tabs = [
             ('general', _('General')),
-            *LangFieldsOnlyMixin.get_translations_tabs(),
+            *self.get_translations_tabs(),
             ('file', _('File validation')),
             ('link', _('Link validation')),
             ('data', _('Data validation')),
@@ -241,10 +232,13 @@ class ResourceAdmin(DynamicAdminListDisplayMixin, AddChangeMixin, StatusLabelAdm
 
         return form_tabs
 
-    add_suit_form_tabs = (
-        ('general', _('General')),
-        *LangFieldsOnlyMixin.get_translations_tabs()
-    )
+    @property
+    def add_suit_form_tabs(self):
+        return (
+            ('general', _('General')),
+            *self.get_translations_tabs()
+        )
+
     has_dynamic_data_fieldset = [(None, {
         'classes': ('suit-tab', 'suit-tab-general'),
         'fields': ('has_dynamic_data',),
@@ -309,7 +303,7 @@ class ResourceAdmin(DynamicAdminListDisplayMixin, AddChangeMixin, StatusLabelAdm
         'uuid',
         'formats',
         'dataset',
-        'status',
+        'status_label',
         TYPE_DISPLAY_FIELD,
         'link_status',
         'file_status',

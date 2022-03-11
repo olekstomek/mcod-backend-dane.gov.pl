@@ -362,14 +362,14 @@ class ResourceCommentsView(JsonAPIView):
             self.response.context.data = model.objects.create(resource_id=id, **data)
 
 
-class ResourceFileDownloadView(object):
+class ResourceFileDownloadView:
     """Increments download counter for specified resource."""
 
     def __init__(self, file_type=None):
         super().__init__()
         self.file_type = file_type
 
-    def on_get(self, request, response, id, *args, **kwargs):
+    def on_request(self, request, response, id, *args, **kwargs):
         try:
             resource = Resource.objects.get(pk=id, status='published')
         except Resource.DoesNotExist:
@@ -378,39 +378,18 @@ class ResourceFileDownloadView(object):
         if not resource.type == 'file' or (not resource.file_url and not resource.link):
             raise falcon.HTTPNotFound
 
-        counter = Counter()
-        counter.incr_download_count(id)
+        if request.method == 'GET':
+            counter = Counter()
+            counter.incr_download_count(id)
 
-        if resource.is_linked:
-            response.location = resource.link
-        elif self.file_type == 'csv':
-            response.location = resource.csv_file_url
-        elif self.file_type == 'jsonld':
-            response.location = resource.jsonld_file_url
-        else:
-            response.location = resource.file_url
-
+        response.location = resource.get_location(self.file_type)
         response.status = falcon.HTTP_302
+
+    def on_get(self, request, response, id, *args, **kwargs):
+        self.on_request(request, response, id, *args, **kwargs)
 
     def on_head(self, request, response, id, *args, **kwargs):
-        try:
-            resource = Resource.objects.get(pk=id, status='published')
-        except Resource.DoesNotExist:
-            raise falcon.HTTPNotFound
-
-        if not resource.type == 'file' or (not resource.file_url and not resource.link):
-            raise falcon.HTTPNotFound
-
-        if resource.is_linked:
-            response.location = resource.link
-        elif self.file_type == 'csv':
-            response.location = resource.csv_file_url
-        elif self.file_type == 'jsonld':
-            response.location = resource.jsonld_file_url
-        else:
-            response.location = resource.file_url
-
-        response.status = falcon.HTTP_302
+        self.on_request(request, response, id, *args, **kwargs)
 
 
 class ResourceTableSpecView(object):

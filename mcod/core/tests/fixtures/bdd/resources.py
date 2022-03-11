@@ -852,7 +852,7 @@ def file_validation_exception(validated_file):
 def resourced_is_visited_and_counter_incremented(res_id):
     import time
     counter = Counter()
-    counter.incr_view_count('resources', res_id)
+    counter.incr_view_count('resources.Resource', res_id)
     counter.save_counters()
     time.sleep(1)  # time for indexing in ES
 

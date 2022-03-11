@@ -3,8 +3,6 @@ from django.utils.translation import gettext_lazy as _
 
 from mcod.lib.admin_mixins import (
     HistoryMixin,
-    LangFieldsOnlyMixin,
-    MCODAdminMixin,
     ModelAdmin,
 )
 from mcod.special_signs.forms import SpecialSignAdminForm
@@ -27,16 +25,20 @@ class SpecialSignAdminMixin:
         super().save_model(request, obj, form, change)
 
 
-class SpecialSignAdmin(SpecialSignAdminMixin, HistoryMixin, LangFieldsOnlyMixin, MCODAdminMixin, ModelAdmin):
+class SpecialSignAdmin(SpecialSignAdminMixin, HistoryMixin, ModelAdmin):
 
     actions_on_top = True
     delete_selected_msg = _('Delete selected special signs')
     form = SpecialSignAdminForm
+    lang_fields = True
     soft_delete = True
-    suit_form_tabs = (
-        ('general', _('General')),
-        *LangFieldsOnlyMixin.get_translations_tabs(),
-    )
+
+    @property
+    def suit_form_tabs(self):
+        return (
+            ('general', _('General')),
+            *self.get_translations_tabs(),
+        )
 
     def has_delete_permission(self, request, obj=None):
         has_delete_permission = super().has_delete_permission(request, obj=obj)

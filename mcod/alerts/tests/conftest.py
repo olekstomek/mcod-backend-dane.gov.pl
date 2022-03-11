@@ -1,1 +1,1 @@
-from mcod.core.tests.fixtures.legacy import *  # noqa
+from mcod.core.tests.fixtures import *  # noqa

@@ -5,13 +5,13 @@ from mcod.academy.forms import CourseAdminForm, CourseModuleAdminFormSet, Course
 from mcod.academy.models import Course, CourseModule, CourseTrash
 from mcod.lib.admin_mixins import (
     HistoryMixin,
-    MCODAdminMixin,
     ModelAdmin,
+    TabularInline,
     TrashMixin,
 )
 
 
-class CourseModuleInline(admin.TabularInline):
+class CourseModuleInline(TabularInline):
     form = CourseModuleInlineAdminForm
     formset = CourseModuleAdminFormSet
     model = CourseModule
@@ -69,7 +69,8 @@ class CourseAdminMixin:
         return qs.with_schedule()
 
 
-class CourseAdmin(CourseAdminMixin, HistoryMixin, MCODAdminMixin, ModelAdmin):
+@admin.register(Course)
+class CourseAdmin(CourseAdminMixin, HistoryMixin, ModelAdmin):
 
     actions_on_top = True
     delete_selected_msg = _('Delete selected courses')
@@ -100,6 +101,7 @@ class CourseAdmin(CourseAdminMixin, HistoryMixin, MCODAdminMixin, ModelAdmin):
     ]
 
 
+@admin.register(CourseTrash)
 class CourseTrashAdmin(CourseAdminMixin, HistoryMixin, TrashMixin):
     delete_selected_msg = _('Delete selected courses')
     readonly_fields = (
@@ -112,7 +114,3 @@ class CourseTrashAdmin(CourseAdminMixin, HistoryMixin, TrashMixin):
         'status',
     )
     fields = [field for field in readonly_fields] + ['is_removed']
-
-
-admin.site.register(Course, CourseAdmin)
-admin.site.register(CourseTrash, CourseTrashAdmin)

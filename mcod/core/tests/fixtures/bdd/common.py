@@ -49,7 +49,7 @@ def prepare_dbf_file(filename):
 def create_object(obj_type, obj_id, is_removed=False, status='published', **kwargs):
     _factory = factories_registry.get_factory(obj_type)
     kwargs['pk'] = obj_id
-    if obj_type not in ['tag', 'task result']:
+    if obj_type not in ['alert', 'tag', 'task result']:
         kwargs['is_removed'] = is_removed
     if 'user' not in obj_type:
         kwargs['status'] = status
@@ -317,7 +317,7 @@ def translated_object_type(object_type):
     return obj
 
 
-def parse_and_create(context, object_type, params):
+def parse_and_create(context, object_type, params, mocker=None):
     params = json.loads(params)
     if object_type.endswith('report'):
         _factory = factories_registry.get_factory(object_type)
@@ -333,13 +333,16 @@ def parse_and_create(context, object_type, params):
         params['tags'] = _tags
     if object_type == 'chart':
         params['created_by'] = context.user
+    file_size = params.pop('file_size', None)
+    if file_size and mocker:
+        mocker.patch('os.path.getsize', return_value=file_size)
     create_object(object_type, object_id, **params)
 
 
 @given('<object_type> created with params <params>')
 @given(parsers.parse('{object_type} created with params {params}'))
-def object_type_created_with_params(context, object_type, params):
-    parse_and_create(context, object_type, params)
+def object_type_created_with_params(context, object_type, params, mocker):
+    parse_and_create(context, object_type, params, mocker)
 
 
 @given('another <object_type> created with params <another_params>')
@@ -470,6 +473,7 @@ def form_data_is(admin_context, institution, tag_pl, tag_en, categories, buzzfee
             "license_condition_original": None,
             "license_condition_personal_data": None,
             "license_condition_responsibilities": None,
+            "license_condition_cc40_responsibilities": None,
             "license_condition_source": None,
             "license_id": "other-pd",
             "notes": "more than 20 characters",
@@ -527,6 +531,13 @@ def admin_request_logged_user_with_id(admin_context, user_type, user_params):
 def api_request_post_data(admin_context, data_type, req_post_data):
     post_data = json.loads(req_post_data)
     default_post_data = {
+        'alert': {
+            "title_pl": "Alert title",
+            "description_pl": "alert description",
+            "title_en": "",
+            "description_en": "",
+            "status": "published",
+        },
         'application': {
             "title": "Application title",
             "slug": "application-title",
@@ -673,6 +684,7 @@ def api_request_post_data(admin_context, data_type, req_post_data):
             "datasets-2-__prefix__-category": "",
             "datasets-2-__prefix__-status": "published",
             "datasets-2-__prefix__-license_condition_responsibilities": "",
+            "datasets-2-__prefix__-license_condition_cc40_responsibilities": "",
             "datasets-2-__prefix__-license_condition_db_or_copyrighted": "",
             "datasets-2-__prefix__-license_condition_personal_data": "",
             "datasets-2-__prefix__-id": "",
@@ -690,6 +702,7 @@ def api_request_post_data(admin_context, data_type, req_post_data):
             "datasets-2-0-category": "",
             "datasets-2-0-status": "published",
             "datasets-2-0-license_condition_responsibilities": "",
+            "datasets-2-0-license_condition_cc40_responsibilities": "",
             "datasets-2-0-license_condition_db_or_copyrighted": "",
             "datasets-2-0-license_condition_personal_data": "",
             "datasets-2-0-id": "",
@@ -948,7 +961,7 @@ def api_response_data_has_length(context, number):
 
 @when(parsers.parse('send_mail will raise SMTPException'))
 def api_request_csrf_token(context, mocker):
-    mocker.patch('mcod.users.models.send_mail', side_effect=smtplib.SMTPException)
+    mocker.patch('mcod.core.db.models.send_mail', side_effect=smtplib.SMTPException)
 
 
 @then(parsers.parse('sparql store contains {item_type} {item_value}'))

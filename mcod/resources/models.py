@@ -25,10 +25,11 @@ from django.db.models import Max, Sum
 from django.db.models.signals import pre_save, post_save, pre_delete
 from django.dispatch import receiver
 from django.template.defaultfilters import filesizeformat
+from django.template.loader import render_to_string
 from django.utils.deconstruct import deconstructible
 from django.utils.functional import cached_property
 from django.utils.timezone import now
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext_lazy as _, override
 from django_celery_results.models import TaskResult as TaskResultOrig
 from elasticsearch_dsl.connections import Connections
 from mimeparse import parse_mime_type
@@ -511,10 +512,7 @@ class Resource(ExtendedModel):
 
     @property
     def csv_file_url(self):
-        return self._get_absolute_url(
-            self.csv_converted_file.url,
-            base_url=settings.API_URL,
-            use_lang=False) if self.csv_converted_file else None
+        return self._get_api_url(self.csv_converted_file.url) if self.csv_converted_file else None
 
     @property
     def file_data_path(self):
@@ -570,12 +568,20 @@ class Resource(ExtendedModel):
             url = _file.url if _file else self.csv_converted_file.url if self.csv_converted_file else None
         return self._get_internal_url(url) if url else None
 
+    def get_location(self, file_type):
+        if self.is_linked:
+            location = self.link
+        elif file_type == 'csv':
+            location = self.csv_file_url
+        elif file_type == 'jsonld':
+            location = self.jsonld_file_url
+        else:
+            location = self.file_url
+        return location
+
     @property
     def jsonld_file_url(self):
-        return self._get_absolute_url(
-            self.jsonld_converted_file.url,
-            base_url=settings.API_URL,
-            use_lang=False) if self.jsonld_converted_file else None
+        return self._get_api_url(self.jsonld_converted_file.url) if self.jsonld_converted_file else None
 
     @property
     def csv_file_size(self):
@@ -678,16 +684,16 @@ class Resource(ExtendedModel):
     @property
     def download_url(self):
         if self.main_file or self.is_imported:
-            return '{}/resources/{}/file'.format(settings.API_URL, self.ident)
+            return self._get_api_url(f'/resources/{self.ident}/file')
         return ''
 
     @property
     def csv_download_url(self):
-        return '{}/resources/{}/csv'.format(settings.API_URL, self.ident) if self.csv_converted_file else None
+        return self._get_api_url(f'/resources/{self.ident}/csv') if self.csv_converted_file else None
 
     @property
     def jsonld_download_url(self):
-        return '{}/resources/{}/jsonld'.format(settings.API_URL, self.ident) if self.jsonld_converted_file else None
+        return self._get_api_url(f'/resources/{self.ident}/jsonld') if self.jsonld_converted_file else None
 
     @property
     def is_indexable(self):
@@ -766,9 +772,8 @@ class Resource(ExtendedModel):
                 context = dict(
                     (pfx, str(ns))
                     for (pfx, ns) in graph.namespaces() if pfx and pfx == 'csvw')
-                data = graph.serialize(format='json-ld', context=context, auto_compact=True).decode()
-                csv_original_url = self._get_absolute_url(
-                    self.main_file.url, base_url=settings.API_URL, use_lang=False)
+                data = graph.serialize(format='json-ld', context=context, auto_compact=True)
+                csv_original_url = self._get_api_url(self.main_file.url)
                 data = data.replace(url, csv_original_url)
                 pattern = f'{os.path.dirname(os.path.realpath(self.main_file.path))}/*.utf8_encoded.csv'
                 tmp_files = glob.glob(pattern)
@@ -879,6 +884,10 @@ class Resource(ExtendedModel):
     @property
     def file_size_human_readable(self):
         return self.sizeof_fmt(self.file_size or 0)
+
+    @property
+    def title_as_link(self):
+        return self.mark_safe(f'<a href="{self.admin_change_url}">{self.title}</a>')
 
     @property
     def title_truncated(self):
@@ -1126,8 +1135,8 @@ class Resource(ExtendedModel):
 
     @property
     def other_files(self):
-        other_files = getattr(self, '_other_files', [])
-        if not other_files:
+        other_files = getattr(self, '_other_files', [])  # _other_files is computed by prefetch_related in manager
+        if not other_files and not is_enabled('S45_resource_indexing_optimalization.be'):
             other_files = self._other_files = self.files.filter(is_main=False)
         return other_files
 
@@ -1171,6 +1180,33 @@ class Resource(ExtendedModel):
         if is_enabled('S44_es_update_fix.be'):
             return self.is_published and not self.is_removed and not self.is_permanently_removed
         return self.is_published
+
+    def send_resource_comment_mail(self, comment):
+        context = {
+            'host': settings.BASE_URL,
+            'resource': self,
+            'comment': comment,
+            'test': bool(settings.DEBUG and config.TESTER_EMAIL),
+        }
+        template_suffix = '-test' if settings.DEBUG and config.TESTER_EMAIL else ''
+        if is_enabled('S39_mail_layout.be'):
+            _plain = 'mails/resource-comment.txt'
+            _html = 'mails/resource-comment.html'
+        else:
+            _plain = f'mails/report-resource-comment{template_suffix}.txt'
+            _html = f'mails/report-resource-comment{template_suffix}.html'
+        with override('pl'):
+            msg_plain = render_to_string(_plain, context=context)
+            msg_html = render_to_string(_html, context=context)
+            title = self.title.replace('\n', ' ').replace('\r', '')
+            subject = _('A comment was posted on the resource %(title)s') % {'title': title}
+            self.send_mail(
+                subject,
+                msg_plain,
+                config.SUGGESTIONS_EMAIL,
+                [config.TESTER_EMAIL] if settings.DEBUG and config.TESTER_EMAIL else self.comment_mail_recipients,
+                html_message=msg_html,
+            )
 
     def update_es_and_rdf_db(self):
         if self.needs_es_and_rdf_db_update:
@@ -1301,11 +1337,8 @@ class ResourceFile(models.Model):
 
     @property
     def download_url(self):
-        if self.is_main:
-            d_url = '{}/resources/{}/file'.format(settings.API_URL, self.resource.ident)
-        else:
-            d_url = '{}/resources/{}/{}'.format(settings.API_URL, self.resource.ident, self.format)
-        return d_url
+        file_type = 'file' if self.is_main else self.format
+        return f'{settings.API_URL}/resources/{self.resource.ident}/{file_type}'
 
     @property
     def file_basename(self):

@@ -9,7 +9,7 @@ ENV VIRTUAL_ENV=/usr/src/mcod_backend/venv
 
 RUN apt-get update && apt-get install -y --allow-unauthenticated gettext locales libarchive13 libmagickwand-dev libmagickcore-6.q16-3-extra curl dirmngr apt-transport-https lsb-release ca-certificates firefox-esr ffmpeg
 
-RUN curl -sL https://deb.nodesource.com/setup_12.x | bash -
+RUN curl -sL https://deb.nodesource.com/setup_14.x | bash -
 
 RUN apt-get install -y nodejs
 

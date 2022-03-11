@@ -19,14 +19,13 @@ from mcod.lib.widgets import (
     ResourceDataSchemaWidget,
     ResourceMapsAndPlotsWidget,
 )
-from mcod.resources.archives import ARCHIVE_EXTENSIONS
 from mcod.resources.models import Resource, supported_formats_choices, ResourceFile
 from mcod.special_signs.models import SpecialSign
 from mcod.unleash import is_enabled
 
 
 SUPPORTED_FILE_EXTENSIONS = [f'.{x[0]}' for x in supported_formats_choices()]
-SUPPORTED_FILE_EXTENSIONS.extend([f'.{x}' for x in ARCHIVE_EXTENSIONS])
+SUPPORTED_FILE_EXTENSIONS.extend([f'.{x}' for x in settings.ARCHIVE_EXTENSIONS])
 
 
 class ResourceSourceSwitcher(forms.widgets.HiddenInput):
@@ -200,6 +199,17 @@ class ResourceForm(forms.ModelForm):
             widget=CheckboxSelect(attrs={'class': 'inline'}),
         )
 
+    def clean(self):
+        data = super().clean()
+        dataset = data.get('dataset')
+
+        if data['status'] == 'published' and dataset and dataset.status == 'draft':
+            error_message = _(
+                "You can't set status of this resource to published, because it's dataset is still a draft. "
+                "You should first published that dataset: ")
+            self.add_error('status', mark_safe(error_message + dataset.title_as_link))
+        return data
+
 
 class ChangeResourceForm(ResourceForm):
     tabular_data_schema = JSONField(
@@ -231,19 +241,6 @@ class ChangeResourceForm(ResourceForm):
             self.fields['maps_and_plots'].widget.instance = self.instance
             if 'regions' in self.fields:
                 self.fields['regions'].choices = self.instance.regions.all().values_list('region_id', 'hierarchy_label')
-
-    def clean_status(self):
-        dataset = self.instance.dataset
-
-        if self.cleaned_data['status'] == 'published' and dataset.status == 'draft':
-            error_message = _(
-                "You can't set status of this resource to published, because it's dataset is still a draft. "
-                "You should first published that dataset: "
-            )
-            error_message += "<a href='{}'>{}</a>".format(dataset.admin_change_url, dataset.title)
-            raise forms.ValidationError(mark_safe(error_message))
-
-        return self.cleaned_data['status']
 
     class Meta:
         model = Resource
@@ -302,25 +299,14 @@ class AddResourceForm(ResourceForm, LinkOrFileUploadForm):
         link = forms.URLField(
             widget=ResourceLinkWidget(attrs={'style': 'width: 99%', 'placeholder': 'https://'}))
 
+    if is_enabled('S37_resources_admin_region_data.be') and is_enabled('S45_forms_unification.be'):
+        regions_ = RegionsMultipleChoiceField(required=False, label=_('Regions'))
+
     def clean_link(self):
         link = super().clean_link()
         if link and not link.startswith('https:') and is_enabled('S37_validate_resource_link_scheme.be'):
             self.add_error('link', _('Required scheme is https://'))
         return link
-
-    def clean_status(self):
-        dataset = self.cleaned_data.get('dataset')
-
-        if dataset and dataset.status == 'draft':
-            if self.cleaned_data['status'] == 'published':
-                error_message = _(
-                    "You can't set status of this resource to published, because it's dataset is still a draft. "
-                    "Set status of this resource to draft or set stauts to published for that dataset: "
-                )
-                error_message += "<a href='{}'>{}</a>".format(dataset.admin_change_url, dataset.title)
-                raise forms.ValidationError(mark_safe(error_message))
-
-        return self.cleaned_data['status']
 
     def clean_switcher(self):
         selected_field = super().clean_switcher()
@@ -376,4 +362,12 @@ class ResourceInlineFormset(forms.models.BaseInlineFormSet):
                 is_main=True,
                 file=file
             )
+        # hack for dealing with bug described in https://code.djangoproject.com/ticket/12203 and
+        # https://code.djangoproject.com/ticket/22852
+        # It allows saving regions which are ManyToMany field with custom through model in InlineModelAdmin
+        regions_data = form.cleaned_data.get('regions_')
+        if is_enabled('S45_forms_unification.be') and regions_data and instance.id:
+            for f in instance._meta.many_to_many:
+                if f.name == 'regions':
+                    f.save_form_data(instance, regions_data)
         return instance

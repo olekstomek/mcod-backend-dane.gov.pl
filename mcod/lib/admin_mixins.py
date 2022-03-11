@@ -1,9 +1,12 @@
 import json
+from collections import defaultdict
 import nested_admin
 from urllib.parse import quote as urlquote
 
+from auditlog.admin import LogEntryAdmin as BaseLogEntryAdmin
 from django.contrib import admin, messages
 from django.contrib.admin.utils import quote, unquote
+from django.contrib.admin.options import InlineModelAdmin as DjangoInlineModelAdmin
 from django.contrib.admin.templatetags.admin_urls import add_preserved_filters
 from django.contrib.admin.views.main import ChangeList
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
@@ -19,7 +22,10 @@ from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _, gettext, pgettext_lazy
 from modeltrans.translator import get_i18n_field
 from modeltrans.utils import get_language
-from rules.contrib.admin import ObjectPermissionsModelAdmin as BaseObjectPermissionsModelAdmin
+from rules.contrib.admin import (
+    ObjectPermissionsModelAdmin as BaseObjectPermissionsModelAdmin,
+    ObjectPermissionsStackedInline as BaseObjectPermissionsStackedInline,
+)
 
 from mcod import settings
 from mcod.histories.models import History, LogEntry
@@ -72,26 +78,6 @@ class DecisionFilter(admin.SimpleListFilter):
         elif val == 'not_taken':
             return queryset.without_decision()
         return queryset
-
-
-class AddChangeMixin(object):
-
-    def has_add_permission(self, request):
-        object_id = request.resolver_match.kwargs.get('object_id')
-        obj = None
-        if object_id:
-            try:
-                obj = self.model.raw.get(id=object_id)
-            except self.model.DoesNotExist:
-                pass
-            if obj and obj.is_imported:
-                return False
-        return super().has_add_permission(request)
-
-    def has_change_permission(self, request, obj=None):
-        if obj and obj.is_imported:
-            return False
-        return super().has_change_permission(request, obj=obj)
 
 
 def export_to_csv(self, request, queryset):
@@ -239,7 +225,7 @@ class CRUDMessageMixin:
 
     def _get_obj_url(self, request, obj):
         if self.s43_admin_trash_fixes:
-            obj_url = obj.admin_change_url
+            obj_url = getattr(obj, 'admin_change_url', None) or urlquote(request.path)
             if self.model._meta.proxy and not obj.is_removed:
                 opts = self.model._meta.concrete_model._meta
                 obj_url = reverse(
@@ -331,8 +317,201 @@ class CRUDMessageMixin:
         return HttpResponseRedirect(post_url)
 
 
-class ModelAdmin(ExportCsvMixin, SoftDeleteMixin, CRUDMessageMixin, admin.ModelAdmin):
+class MCODAdminMixin:
+    @property
+    def admin_url(self):
+        opts = self.model._meta
+        changelist_url = 'admin:%s_%s_changelist' % (opts.app_label, opts.model_name)
+        return reverse(changelist_url)
 
+    def get_changelist(self, request, **kwargs):
+        return MCODChangeList
+
+    def render_change_form(self, request, context, add=False, change=False, form_url='', obj=None):
+        if hasattr(self.model, 'accusative_case'):
+            if add:
+                title = _('Add %s')
+            elif self.has_change_permission(request, obj):
+                title = _('Change %s')
+            else:
+                title = _('View %s')
+            context['title'] = title % self.model.accusative_case()
+        return super().render_change_form(request, context, add=add, change=change, form_url=form_url, obj=obj)
+
+
+class AdminListMixin:
+
+    class Media:
+        css = {
+            'all': ('./fontawesome/css/all.min.css',)
+        }
+
+    task_status_to_css_class = {
+        'SUCCESS': 'fas fa-check text-success',
+        'PENDING': 'fas fa-question-circle text-warning',
+        'FAILURE': 'fas fa-times-circle text-error',
+        None: 'fas fa-minus-circle text-light',
+        '': 'fas fa-minus-circle text-light',
+    }
+
+    task_status_tooltip = {
+        'SUCCESS': _('Correct Validation'),
+        'PENDING': _('Validation in progress'),
+        'FAILURE': _('Validation failed'),
+        None: _('No validation'),
+        '': _('No validation'),
+    }
+
+    def _format_list_status(self, val):
+        return format_html(f'<i class="{self.task_status_to_css_class[val]}"'
+                           f' title="{self.task_status_tooltip[val]}"></i>')
+
+
+class ListDisplayMixin:
+
+    STATUS_CSS_CLASSES = {
+        'accepted': 'label label-success',
+        'active': 'label label-success',
+        'awaits': 'label label-warning',
+        'blocked': 'label label-important',
+        'draft': 'label label-warning',
+        'error': 'label label-important',
+        'FAILURE': 'label label-important',
+        'inactive': 'label',
+        'pending': 'label label-warning',
+        'PENDING': 'label label-warning',
+        'publication_finished': 'label label-info',
+        'published': 'label label-success',
+        'rejected': 'label label-important',
+        'sent': 'label label-success',
+        'SUCCESS': 'label label-success',
+    }
+    label_attributes = [
+        'status',
+        'created_by',
+        'decision',
+        'ordered_by',
+        'state',
+    ]
+
+    def replace_attributes(self, items):
+        for val in self.label_attributes:
+            items = [item if item not in [val, f'_{val}'] else f'{val}_label' for item in items]
+        return items
+
+    def created_by_label(self, obj):
+        return self._format_user_display(obj.created_by.email if obj.created_by else '')
+    created_by_label.admin_order_field = 'created_by'
+    created_by_label.short_description = _('Created by')
+
+    def get_status_label(self, obj):
+        return obj.STATUS[obj.status]
+
+    def get_status_value(self, obj):
+        return obj.status
+
+    def status_label(self, obj):
+        return self._format_label(obj, 'status')
+
+    status_label.admin_order_field = 'status'
+    status_label.short_description = _('status')
+
+    def _format_label(self, obj, labeled_attribute):
+        self_get_label_fn = getattr(self, f'get_{labeled_attribute}_label')
+        self_get_value_fn = getattr(self, f'get_{labeled_attribute}_value')
+        return format_html(
+            f'<span class="{self.STATUS_CSS_CLASSES.get(self_get_value_fn(obj), "label")}">'
+            f'{self_get_label_fn(obj)}</span>')
+
+    @staticmethod
+    def _format_user_display(val, default='Brak'):
+        user, host = val.split('@') if val and '@' in val else (None, None)
+        if user and host:
+            return format_html(f'<span class="email-label-user" title="{val}">{user}</span>'
+                               f'<span class="email-label-host">{host}</span>')
+        return default
+
+
+class TabularInline(ListDisplayMixin, AdminListMixin, admin.TabularInline):
+    pass
+
+
+class LangFieldsOnlyMixin:
+
+    lang_fields = False
+
+    def get_form(self, request, obj=None, **kwargs):
+        if self.lang_fields:
+            i18n_field = get_i18n_field(self.model)
+            language = get_language()
+
+            for field in i18n_field.get_translated_fields():
+                if field.language == language:
+                    field.blank = field.original_field.blank
+
+        return super().get_form(request, obj=obj, **kwargs)
+
+    def get_translations_fieldsets(self):
+        i18n_field = get_i18n_field(self.model)
+        fieldsets = []
+        for lang_code in settings.MODELTRANS_AVAILABLE_LANGUAGES:
+            if lang_code == settings.LANGUAGE_CODE:
+                continue
+            tab_name = 'general' if lang_code == settings.LANGUAGE_CODE else f'lang-{lang_code}'
+            fieldset = (None, {
+                'classes': ('suit-tab', f'suit-tab-{tab_name}',),
+                'fields': [
+                    f'{field.name}' for field in i18n_field.get_translated_fields()
+                    if field.name.endswith(lang_code)
+                ]
+            })
+            fieldsets.append(fieldset)
+        return fieldsets
+
+    @staticmethod
+    def get_translations_tabs():
+        return tuple((f'lang-{lang_code}', _(f'Translation ({lang_code.upper()})'))
+                     for lang_code in settings.MODELTRANS_AVAILABLE_LANGUAGES
+                     if lang_code is not settings.LANGUAGE_CODE)
+
+
+class AdminInlineLangMixin:
+
+    use_translated_fields = False
+
+    def get_lang_fields(self):
+        i18n_field = get_i18n_field(self.model)
+        fields = []
+        for lang_code in settings.MODELTRANS_AVAILABLE_LANGUAGES:
+            if lang_code == settings.LANGUAGE_CODE:
+                continue
+            lang_fields = [
+                f'{field.name}' for field in i18n_field.get_translated_fields()
+                if field.name.endswith(lang_code)
+            ]
+            fields.extend(lang_fields)
+        return fields
+
+    def extend_by_lang_fields(self, orig_fields):
+        if self.use_translated_fields:
+            extended_fields = []
+            i18n_fields = self.get_lang_fields()
+            fields_map = defaultdict(list)
+            for field in i18n_fields:
+                if field not in orig_fields:
+                    fields_map[field.rsplit('_', 1)[0]].append(field)
+            for field in orig_fields:
+                extended_fields.append(field)
+                if field in orig_fields:
+                    extended_fields.extend(fields_map[field])
+            return extended_fields
+        return orig_fields
+
+
+class ModelAdmin(ListDisplayMixin, LangFieldsOnlyMixin, AdminListMixin, ExportCsvMixin, SoftDeleteMixin,
+                 CRUDMessageMixin, MCODAdminMixin, admin.ModelAdmin):
+
+    check_imported_obj_perms = False
     delete_selected_msg = None
 
     def get_actions(self, request):
@@ -343,16 +522,44 @@ class ModelAdmin(ExportCsvMixin, SoftDeleteMixin, CRUDMessageMixin, admin.ModelA
             actions['delete_selected'] = func, action, self.delete_selected_msg
         return actions
 
+    def has_add_permission(self, request):
+        if self.check_imported_obj_perms:
+            object_id = request.resolver_match.kwargs.get('object_id')
+            obj = None
+            if object_id:
+                try:
+                    obj = self.model.raw.get(id=object_id)
+                except self.model.DoesNotExist:
+                    pass
+                if obj and obj.is_imported:
+                    return False
+        return super().has_add_permission(request)
 
-class UserAdmin(ExportCsvMixin, SoftDeleteMixin, BaseUserAdmin):
+    def has_change_permission(self, request, obj=None):
+        if self.check_imported_obj_perms and obj and obj.is_imported:
+            return False
+        return super().has_change_permission(request, obj=obj)
+
+
+class UserAdmin(ListDisplayMixin, ExportCsvMixin, SoftDeleteMixin, BaseUserAdmin):
     soft_delete = True
 
 
-class NestedModelAdmin(SoftDeleteMixin, nested_admin.NestedModelAdmin):
+class ObjectPermissionsStackedInline(AdminInlineLangMixin, AdminListMixin, nested_admin.NestedStackedInline,
+                                     BaseObjectPermissionsStackedInline):
+
+    def get_fields(self, request, obj=None):
+        fields = super().get_fields(request, obj)
+        return self.extend_by_lang_fields(fields) if\
+            is_enabled('S45_forms_unification.be') else fields
+
+
+class ObjectPermissionsModelAdmin(ListDisplayMixin, LangFieldsOnlyMixin, ExportCsvMixin, SoftDeleteMixin,
+                                  MCODAdminMixin, nested_admin.NestedModelAdmin, BaseObjectPermissionsModelAdmin):
     pass
 
 
-class ObjectPermissionsModelAdmin(ExportCsvMixin, BaseObjectPermissionsModelAdmin):
+class LogEntryAdmin(MCODAdminMixin, BaseLogEntryAdmin):
     pass
 
 
@@ -416,7 +623,7 @@ class TrashMixin(ModelAdmin):
         return super().formfield_for_dbfield(db_field, request, **kwargs)
 
 
-class HistoryMixin(object):
+class HistoryMixin:
 
     is_history_other = False
     is_history_with_unknown_user_rows = False
@@ -491,289 +698,5 @@ class HistoryMixin(object):
     obj_history.short_description = _('History')
 
 
-class LangFieldsOnlyMixin(object):
-    def get_form(self, request, obj=None, **kwargs):
-        i18n_field = get_i18n_field(self.model)
-        language = get_language()
-
-        for field in i18n_field.get_translated_fields():
-            if field.language == language:
-                field.blank = field.original_field.blank
-
-        return super().get_form(request, obj=obj, **kwargs)
-
-    def get_translations_fieldsets(self):
-        i18n_field = get_i18n_field(self.model)
-        fieldsets = []
-        for lang_code in settings.MODELTRANS_AVAILABLE_LANGUAGES:
-            if lang_code == settings.LANGUAGE_CODE:
-                continue
-            tab_name = 'general' if lang_code == settings.LANGUAGE_CODE else f'lang-{lang_code}'
-            fieldset = (None, {
-                'classes': ('suit-tab', f'suit-tab-{tab_name}',),
-                'fields': [
-                    f'{field.name}' for field in i18n_field.get_translated_fields()
-                    if field.name.endswith(lang_code)
-                ]
-            })
-            fieldsets.append(fieldset)
-        return fieldsets
-
-    @staticmethod
-    def get_translations_tabs():
-        return tuple((f'lang-{lang_code}', _(f'Translation ({lang_code.upper()})'))
-                     for lang_code in settings.MODELTRANS_AVAILABLE_LANGUAGES
-                     if lang_code is not settings.LANGUAGE_CODE)
-
-
-class AdminListMixin(object):
-
-    class Media:
-        css = {
-            'all': ('./fontawesome/css/all.min.css',)
-        }
-
-    task_status_to_css_class = {
-        'SUCCESS': 'fas fa-check text-success',
-        'PENDING': 'fas fa-question-circle text-warning',
-        'FAILURE': 'fas fa-times-circle text-error',
-        None: 'fas fa-minus-circle text-light',
-        '': 'fas fa-minus-circle text-light',
-    }
-
-    task_status_tooltip = {
-        'SUCCESS': _('Correct Validation'),
-        'PENDING': _('Validation in progress'),
-        'FAILURE': _('Validation failed'),
-        None: _('No validation'),
-        '': _('No validation'),
-    }
-
-    def _format_list_status(self, val):
-        return format_html(f'<i class="{self.task_status_to_css_class[val]}"'
-                           f' title="{self.task_status_tooltip[val]}"></i>')
-
-
-class DynamicAdminListDisplayMixin:
-
-    def replace_attributes(self, source_list):
-        for mixin_label_attr in self.mixins_label_attribute.values():
-            source_list = [
-                display_attr if display_attr != mixin_label_attr and display_attr != f'_{mixin_label_attr}'
-                else f'{mixin_label_attr}_label' for display_attr in source_list]
-        return source_list
-
-    def get_list_display(self, request):
-        list_display = super().get_list_display(request)
-        return self.replace_attributes(list_display)
-
-
-class RelatedUserDisplayFormatBase:
-
-    @staticmethod
-    def _format_user_display(val, default='Brak'):
-        user, host = val.split('@') if val and '@' in val else (None, None)
-        if user and host:
-            return format_html(f'<span class="email-label-user" title="{val}">{user}</span>'
-                               f'<span class="email-label-host">{host}</span>')
-        return default
-
-
-class CreatedByDisplayAdminMixin(RelatedUserDisplayFormatBase):
-
-    def __init_subclass__(cls, **kwargs):
-        mixin_dict = {'CreatedByDisplayAdminMixin': 'created_by'}
-        if not hasattr(cls, 'mixins_label_attribute'):
-            cls.mixins_label_attribute = mixin_dict
-        else:
-            cls.mixins_label_attribute.update(mixin_dict)
-        super().__init_subclass__(**kwargs)
-
-    def created_by_label(self, obj):
-        return self._format_user_display(obj.created_by.email if obj.created_by else '')
-
-    created_by_label.admin_order_field = 'created_by'
-    created_by_label.short_description = _('Created by')
-
-
-class ModifiedByDisplayAdminMixin(RelatedUserDisplayFormatBase):
-
-    def __init_subclass__(cls, **kwargs):
-        mixin_dict = {'ModifiedByDisplayAdminMixin': 'modified_by'}
-        if not hasattr(cls, 'mixins_label_attribute'):
-            cls.mixins_label_attribute = mixin_dict
-        else:
-            cls.mixins_label_attribute.update(mixin_dict)
-        super().__init_subclass__(**kwargs)
-
-    def modified_by_label(self, obj):
-        return self._format_user_display(obj.created_by.email if obj.created_by else '')
-
-    modified_by_label.admin_order_field = 'modified_by'
-    modified_by_label.short_description = _('Modified by')
-
-
-class OrderedByDisplayAdminMixin(RelatedUserDisplayFormatBase):
-
-    def __init_subclass__(cls, **kwargs):
-        mixin_dict = {'OrderedByDisplayAdminMixin': 'ordered_by'}
-        if not hasattr(cls, 'mixins_label_attribute'):
-            cls.mixins_label_attribute = mixin_dict
-        else:
-            cls.mixins_label_attribute.update(mixin_dict)
-        super().__init_subclass__(**kwargs)
-
-    def ordered_by_label(self, obj):
-        return self._format_user_display(obj.ordered_by.email if obj.ordered_by else '@')
-
-    ordered_by_label.admin_order_field = 'ordered_by'
-    ordered_by_label.short_description = _('Ordered by')
-
-
-class FormatLabelBaseMixin:
-    STATUS_CSS_CLASSES = {}
-
-    def _format_label(self, obj, mixin_class):
-        labeled_attribute = self.mixins_label_attribute[mixin_class]
-        self_get_label_fn = getattr(self, f'get_{labeled_attribute}_label')
-        self_get_value_fn = getattr(self, f'get_{labeled_attribute}_value')
-        return format_html(
-            f'<span class="{self.STATUS_CSS_CLASSES.get(self_get_value_fn(obj), "label")}">'
-            f'{self_get_label_fn(obj)}</span>')
-
-
-class BaseStatusLabelAdminMixin(FormatLabelBaseMixin):
-    STATUS_CSS_CLASSES = {
-        'published': 'label label-success',
-        'draft': 'label label-warning'
-    }
-
-    def __init_subclass__(cls, **kwargs):
-        mixin_dict = {'BaseStatusLabelAdminMixin': 'status'}
-        if not hasattr(cls, 'mixins_label_attribute'):
-            cls.mixins_label_attribute = mixin_dict
-        else:
-            cls.mixins_label_attribute.update(mixin_dict)
-        super().__init_subclass__(**kwargs)
-
-    def status_label(self, obj):
-        return self._format_label(obj, 'BaseStatusLabelAdminMixin')
-
-    status_label.admin_order_field = 'status'
-    status_label.short_description = _('status')
-
-
-class StatusLabelAdminMixin(BaseStatusLabelAdminMixin):
-
-    STATUS_CSS_CLASSES = {
-        'published': 'label label-success',
-        'draft': 'label label-warning',
-        'publication_finished': 'label label-info',
-    }
-
-    def get_status_value(self, obj):
-        return obj.status
-
-    def get_status_label(self, obj):
-        return obj.STATUS[obj.status]
-
-
-class TaskStatusLabelAdminMixin(BaseStatusLabelAdminMixin):
-
-    STATUS_CSS_CLASSES = {
-        'SUCCESS': 'label label-success',
-        'PENDING': 'label label-warning',
-        'FAILURE': 'label label-important'
-    }
-
-    def get_status_value(self, obj):
-        if hasattr(obj, 'task'):
-            status_value = obj.task.status if obj.task else 'PENDING'
-        else:
-            status_value = obj.status
-        return status_value
-
-    def get_status_label(self, obj):
-        if hasattr(obj, 'task'):
-            status_label = _(obj.task.status) if obj.task else _('PENDING')
-        else:
-            status_label = _(obj.status)
-        return status_label
-
-
-class StateStatusLabelAdminMixin(FormatLabelBaseMixin):
-
-    STATUS_CSS_CLASSES = {
-        'active': 'label label-success',
-        'pending': 'label label-warning',
-        'blocked': 'label label-important'
-    }
-
-    def __init_subclass__(cls, **kwargs):
-        mixin_dict = {'StateStatusLabelAdminMixin': 'state'}
-        if not hasattr(cls, 'mixins_label_attribute'):
-            cls.mixins_label_attribute = mixin_dict
-        else:
-            cls.mixins_label_attribute.update(mixin_dict)
-        super().__init_subclass__(**kwargs)
-
-    def state_label(self, obj):
-        return self._format_label(obj, 'StateStatusLabelAdminMixin')
-
-    def get_state_value(self, obj):
-        return obj.state
-
-    def get_state_label(self, obj):
-        return obj.get_state_display()
-
-    state_label.admin_order_field = 'state'
-    state_label.short_description = _('State')
-
-
-class DecisionStatusLabelAdminMixin(FormatLabelBaseMixin):
-    STATUS_CSS_CLASSES = {
-        'accepted': 'label label-success',
-        'rejected': 'label label-important',
-    }
-
-    def __init_subclass__(cls, **kwargs):
-        mixin_dict = {'DecisionStatusLabelAdminMixin': 'decision'}
-        if not hasattr(cls, 'mixins_label_attribute'):
-            cls.mixins_label_attribute = mixin_dict
-        else:
-            cls.mixins_label_attribute.update(mixin_dict)
-        super().__init_subclass__(**kwargs)
-
-    def decision_label(self, obj):
-        return self._format_label(obj, 'DecisionStatusLabelAdminMixin')
-
-    def get_decision_value(self, obj):
-        return obj.decision
-
-    def get_decision_label(self, obj):
-        return obj.get_decision_display() or _('Decision not taken')
-
-    decision_label.admin_order_field = 'decision'
-    decision_label.short_description = _('decision')
-
-
-class MCODAdminMixin:
-    @property
-    def admin_url(self):
-        opts = self.model._meta
-        changelist_url = 'admin:%s_%s_changelist' % (opts.app_label, opts.model_name)
-        return reverse(changelist_url)
-
-    def get_changelist(self, request, **kwargs):
-        return MCODChangeList
-
-    def render_change_form(self, request, context, add=False, change=False, form_url='', obj=None):
-        if hasattr(self.model, 'accusative_case'):
-            if add:
-                title = _('Add %s')
-            elif self.has_change_permission(request, obj):
-                title = _('Change %s')
-            else:
-                title = _('View %s')
-            context['title'] = title % self.model.accusative_case()
-        return super().render_change_form(request, context, add=add, change=change, form_url=form_url, obj=obj)
+class InlineModelAdmin(AdminInlineLangMixin, DjangoInlineModelAdmin):
+    pass

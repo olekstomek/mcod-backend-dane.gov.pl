@@ -221,6 +221,15 @@ class DatasetCategoryAttr(ExtSchema):
         return data
 
 
+class LicenseConditionDescriptionSchema(ExtSchema):
+    license_condition_db_or_copyrighted = fields.Str()
+    license_condition_personal_data = fields.Str()
+    license_condition_modification = fields.Str()
+    license_condition_responsibilities = fields.Str()
+    license_condition_cc40_responsibilities = fields.Str()
+    license_condition_source = fields.Str()
+
+
 class SourceSchema(ExtSchema):
     title = fields.Str()
     type = fields.Str(attribute='source_type')
@@ -416,6 +425,7 @@ class DatasetApiAttrs(ObjectAttrs, HighlightObjectMixin):
     license_condition_modification = fields.Boolean()
     license_condition_original = fields.Boolean()
     license_condition_responsibilities = fields.String()
+    license_condition_cc40_responsibilities = fields.Boolean()
     license_condition_source = fields.Boolean()
     license_condition_timestamp = fields.Boolean()
     license_name = fields.String()
@@ -445,6 +455,7 @@ class DatasetApiAttrs(ObjectAttrs, HighlightObjectMixin):
         regions = fields.Nested(RegionSchema, many=True)
     if is_enabled('S41_resource_bulk_download.be'):
         archived_resources_files_url = fields.Str()
+    current_condition_descriptions = fields.Nested(LicenseConditionDescriptionSchema)
 
     class Meta:
         relationships_schema = DatasetApiRelationships
@@ -514,7 +525,7 @@ class DatasetXMLSerializer(ExtSchema):
     downloads_count = fields.Int(attribute='computed_downloads_count')
     published_resources_count = fields.Int(attribute='published_resources__count')
     license = fields.Str(attribute='license_name')
-    conditions = fields.Method('get_conditions')
+    conditions = fields.Str(attribute='formatted_condition_descriptions')
     organization = fields.Method('get_organization')
     resources = fields.Method('get_resources')
 
@@ -523,15 +534,6 @@ class DatasetXMLSerializer(ExtSchema):
         has_high_value_data = fields.Bool()
     if is_enabled('S43_dynamic_data.be'):
         has_dynamic_data = fields.Bool()
-
-    def get_conditions(self, dataset):
-        conditions = _('This dataset is public information, it can be reused under the following conditions: ')
-        terms = [str(dataset._meta.get_field('license_condition_modification').verbose_name) if
-                 dataset.license_condition_modification else '',
-                 str(dataset._meta.get_field('license_condition_source').verbose_name) if
-                 dataset.license_condition_source else '',
-                 dataset.license_condition_db_or_copyrighted, dataset.license_condition_personal_data]
-        return conditions + '\n'.join([term for term in terms if term])
 
     def get_organization(self, dataset):
         context = {
@@ -559,7 +561,7 @@ class DatasetResourcesCSVSerializer(CSVSerializer):
     views_count = fields.Int(attribute='computed_views_count', data_key=_("Dataset views count"))
     downloads_count = fields.Int(attribute='computed_downloads_count', data_key=_('Dataset downloads count'))
     dataset_resources_count = fields.Int(attribute='published_resources__count', data_key=_('Number of data'))
-    dataset_conditions = fields.Method('get_dataset_conditions', data_key=_('Terms of use'))
+    dataset_conditions = fields.Str(attribute='formatted_condition_descriptions', data_key=_('Terms of use'))
     dataset_license = fields.Str(attribute='license_name', data_key=_('License'))
     dataset_source = fields.Nested(SourceXMLSchema, attribute='source', data_key=_('source'))
     if is_enabled('S41_resource_has_high_value_data.be'):
@@ -581,15 +583,6 @@ class DatasetResourcesCSVSerializer(CSVSerializer):
                 tmp_record.update(**resource)
                 new_result_data.append(tmp_record)
         return new_result_data
-
-    def get_dataset_conditions(self, dataset):
-        conditions = _('This dataset is public information, it can be reused under the following conditions: ')
-        terms = [str(dataset._meta.get_field('license_condition_modification').verbose_name) if
-                 dataset.license_condition_modification else '',
-                 str(dataset._meta.get_field('license_condition_source').verbose_name) if
-                 dataset.license_condition_source else '',
-                 dataset.license_condition_db_or_copyrighted, dataset.license_condition_personal_data]
-        return conditions + '\n'.join([term for term in terms if term])
 
     @ma.post_dump(pass_many=False)
     def prepare_nested_data(self, data, **kwargs):

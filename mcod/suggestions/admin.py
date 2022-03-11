@@ -5,11 +5,6 @@ from mcod.lib.admin_mixins import (
     DecisionFilter,
     HistoryMixin,
     TrashMixin,
-    LangFieldsOnlyMixin,
-    StatusLabelAdminMixin,
-    DecisionStatusLabelAdminMixin,
-    DynamicAdminListDisplayMixin,
-    MCODAdminMixin,
     ModelAdmin,
 )
 from mcod.suggestions.forms import (
@@ -31,8 +26,7 @@ from mcod.suggestions.models import (
 from mcod.suggestions.tasks import create_accepted_dataset_suggestion_task
 
 
-class CommentAdminMixin(DynamicAdminListDisplayMixin, DecisionStatusLabelAdminMixin, HistoryMixin, MCODAdminMixin,
-                        ModelAdmin):
+class CommentAdminMixin(HistoryMixin, ModelAdmin):
     export_to_csv = True
     is_history_other = True
     is_history_with_unknown_user_rows = True
@@ -53,10 +47,17 @@ class CommentAdminMixin(DynamicAdminListDisplayMixin, DecisionStatusLabelAdminMi
         return obj.data_provider_url or '-'
     _data_provider_url.short_description = _('Data provider')
 
-    def _decision(self, obj):
+    def decision_label(self, obj):
+        return self._format_label(obj, 'decision')
+
+    def get_decision_value(self, obj):
+        return obj.decision
+
+    def get_decision_label(self, obj):
         return obj.get_decision_display() or _('Decision not taken')
-    _decision.short_description = _('decision')
-    _decision.admin_order_field = 'decision'
+
+    decision_label.admin_order_field = 'decision'
+    decision_label.short_description = _('decision')
 
     def _editor_email(self, obj):
         return obj.editor_email or '-'
@@ -72,19 +73,15 @@ class CommentAdminMixin(DynamicAdminListDisplayMixin, DecisionStatusLabelAdminMi
         return super().admin_url + '?decision=not_taken'
 
     def get_list_display(self, request):
-        attrs = [
+        decision_date = ['decision_date'] if request.method == 'GET' and request.GET.get('decision') == 'taken' else []
+        self.list_display = [
             '_title',
             '_truncated_comment',
             'report_date',
-            '_decision',
-            'decision_date',
-        ] if request.method == 'GET' and request.GET.get('decision') == 'taken' else [
-            '_title',
-            '_truncated_comment',
-            'report_date',
-            '_decision',
+            'decision_label',
+            *decision_date,
         ]
-        return self.replace_attributes(attrs)
+        return super().get_list_display(request)
 
     def has_add_permission(self, request, obj=None):
         return False
@@ -159,7 +156,7 @@ class CommentAdminTrashMixin(TrashMixin):
     fields = [x for x in readonly_fields] + ['is_removed']
 
 
-class DatasetSubmissionAdminMixin(HistoryMixin, MCODAdminMixin, ModelAdmin):
+class DatasetSubmissionAdminMixin(HistoryMixin, ModelAdmin):
     is_history_other = True
     is_history_with_unknown_user_rows = True
     obj_gender = 'f'
@@ -173,7 +170,7 @@ class DatasetSubmissionAdminMixin(HistoryMixin, MCODAdminMixin, ModelAdmin):
         return False
 
 
-class DatasetSubmissionAdmin(DynamicAdminListDisplayMixin, DecisionStatusLabelAdminMixin, DatasetSubmissionAdminMixin):
+class DatasetSubmissionAdmin(DatasetSubmissionAdminMixin):
     export_to_csv = True
     form = DatasetSubmissionForm
     list_filter = [
@@ -199,10 +196,17 @@ class DatasetSubmissionAdmin(DynamicAdminListDisplayMixin, DecisionStatusLabelAd
         'decision_date',
     )
 
-    def _decision(self, obj):
+    def decision_label(self, obj):
+        return self._format_label(obj, 'decision')
+
+    def get_decision_value(self, obj):
+        return obj.decision
+
+    def get_decision_label(self, obj):
         return obj.get_decision_display() or _('Decision not taken')
-    _decision.short_description = _('decision')
-    _decision.admin_order_field = 'decision'
+
+    decision_label.admin_order_field = 'decision'
+    decision_label.short_description = _('decision')
 
     def _notes(self, obj):
         return obj.truncated_notes or '-'
@@ -214,19 +218,15 @@ class DatasetSubmissionAdmin(DynamicAdminListDisplayMixin, DecisionStatusLabelAd
         return super().admin_url + '?decision=not_taken'
 
     def get_list_display(self, request):
-        attrs = [
+        decision_date = ['decision_date'] if request.method == 'GET' and request.GET.get('decision') == 'taken' else []
+        self.list_display = [
             'title',
             '_notes',
             'submission_date',
-            '_decision',
-            'decision_date',
-        ] if request.method == 'GET' and request.GET.get('decision') == 'taken' else [
-            'title',
-            '_notes',
-            'submission_date',
-            '_decision',
+            'decision_label',
+            *decision_date,
         ]
-        return self.replace_attributes(attrs)
+        return super().get_list_display(request)
 
     def save_model(self, request, obj, form, change):
         obj.modified_by = request.user
@@ -241,22 +241,22 @@ class DatasetSubmissionAdmin(DynamicAdminListDisplayMixin, DecisionStatusLabelAd
                 level=messages.SUCCESS)
 
 
-class AcceptedDatasetSubmissionAdmin(DynamicAdminListDisplayMixin, LangFieldsOnlyMixin,
-                                     StatusLabelAdminMixin, DatasetSubmissionAdminMixin):
+class AcceptedDatasetSubmissionAdmin(DatasetSubmissionAdminMixin):
     form = AcceptedDatasetSubmissionForm
+    lang_fields = True
     list_display = [
         '_title',
         '_notes',
         'submission_date',
         'decision_date',
-        'status',
+        'status_label',
     ]
 
     def __init__(self, model, admin_site):
         super().__init__(model, admin_site)
         self.suit_form_tabs = (
             ('general', _('General')),
-            *LangFieldsOnlyMixin.get_translations_tabs()
+            *self.get_translations_tabs()
         )
 
     @staticmethod
@@ -336,8 +336,7 @@ class AcceptedDatasetSubmissionAdmin(DynamicAdminListDisplayMixin, LangFieldsOnl
         return fieldsets
 
 
-class DatasetSubmissionTrashAdmin(DynamicAdminListDisplayMixin, DecisionStatusLabelAdminMixin,
-                                  TrashMixin):
+class DatasetSubmissionTrashAdmin(TrashMixin):
     readonly_fields = [
         'title',
         'notes',
@@ -350,12 +349,24 @@ class DatasetSubmissionTrashAdmin(DynamicAdminListDisplayMixin, DecisionStatusLa
         'decision_date',
     ]
     fields = readonly_fields + ['is_removed']
-    list_display = ['title', '_notes', 'submission_date', '_decision']
+    list_display = [
+        'title',
+        '_notes',
+        'submission_date',
+        'decision_label',
+    ]
 
-    def _decision(self, obj):
+    def decision_label(self, obj):
+        return self._format_label(obj, 'decision')
+
+    def get_decision_value(self, obj):
+        return obj.decision
+
+    def get_decision_label(self, obj):
         return obj.get_decision_display() or _('Decision not taken')
-    _decision.short_description = _('decision')
-    _decision.admin_order_field = 'decision'
+
+    decision_label.admin_order_field = 'decision'
+    decision_label.short_description = _('decision')
 
     def _notes(self, obj):
         return obj.truncated_notes or '-'
@@ -363,14 +374,13 @@ class DatasetSubmissionTrashAdmin(DynamicAdminListDisplayMixin, DecisionStatusLa
     _notes.admin_order_field = 'notes'
 
 
-class AcceptedDatasetSubmissionTrashAdmin(DynamicAdminListDisplayMixin, StatusLabelAdminMixin,
-                                          TrashMixin):
+class AcceptedDatasetSubmissionTrashAdmin(TrashMixin):
     list_display = [
         '_title',
         '_notes',
         'submission_date',
         'decision_date',
-        'status',
+        'status_label',
     ]
 
     def get_fields(self, request, obj=None):

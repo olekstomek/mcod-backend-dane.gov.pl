@@ -9,7 +9,7 @@ from mcod.core.api.jsonapi.serializers import object_attrs_registry as oar
 from mcod import settings
 
 
-class AdminMixin(object):
+class AdminMixin:
 
     @property
     def admin_change_url(self):

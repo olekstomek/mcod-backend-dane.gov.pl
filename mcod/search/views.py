@@ -43,6 +43,7 @@ PLURAL_MODEL_NAMES = {
     'organization': 'organizations',
     'searchhistory': 'searchhistories',
     'history': 'histories',
+    'news': 'news',
 }
 if is_enabled('S39_showcases.be'):
     PLURAL_MODEL_NAMES['showcase'] = 'showcases'
@@ -57,7 +58,8 @@ ALLOWED_MODELS = [
     'knowledge_base',
     'organization',
     'searchhistory',
-    'history'
+    'history',
+    'news',
 ]
 if is_enabled('S39_showcases.be'):
     ALLOWED_MODELS.append('showcase')
@@ -260,7 +262,7 @@ class SparqlView(BaseView):
                 response = store.query(query, initNs=NAMESPACES)
                 _format = 'xml' if return_format == 'application/rdf+xml' else return_format
                 _format = sparql_format if response.graph else _format
-                result = response.serialize(format=_format)
+                result = response.serialize(format=_format, encoding="utf-8")
                 content_type = sparql_format if len(result) else None
                 resp = {'result': result.decode('utf-8'), 'content_type': content_type, 'count': len(response)}
                 if response.type == 'SELECT':

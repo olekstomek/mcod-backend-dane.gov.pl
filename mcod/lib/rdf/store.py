@@ -17,6 +17,16 @@ class SPARQLStore(BaseSPARQLStore):
 
 class SPARQLUpdateStore(BaseSPARQLUpdateStore):
 
+    def query(self, *args, **kwargs):
+        # very ugly temporary fix for bug in rdflib 6.1.1. Update query overwrites store instance request
+        # headers for all subsequent queries(also not updates).
+        # Bug in rdflib.plugins.stores.sparqlconnector in update method
+        kwargs_headers = self.kwargs.get('headers')
+        if kwargs_headers and kwargs_headers.get('Content-Type') and\
+                kwargs_headers.get('Content-Type') == 'application/sparql-update':
+            kwargs_headers.pop('Content-Type')
+        return super(SPARQLUpdateStore, self).query(*args, **kwargs)
+
     def add_object(self, obj):
         query, ns = obj.as_sparql_create_query()
         self.update(query, initNs=ns)
@@ -107,8 +117,8 @@ def get_sparql_store(readonly=False, return_format='xml', external_sparql_endpoi
     if readonly:
         params = {
             'auth': (settings.SPARQL_USER, settings.SPARQL_PASSWORD),
-            'endpoint': settings.SPARQL_QUERY_ENDPOINT,
-            'method': 'POST',
+            'query_endpoint': settings.SPARQL_QUERY_ENDPOINT,
+            'method': 'POST_FORM',
             'returnFormat': return_format,
         }
         external_endpoint_details = settings.SPARQL_ENDPOINTS[external_sparql_endpoint] if\
@@ -120,7 +130,7 @@ def get_sparql_store(readonly=False, return_format='xml', external_sparql_endpoi
 
     params = {
         'auth': (settings.SPARQL_USER, settings.SPARQL_PASSWORD),
-        'queryEndpoint': settings.SPARQL_QUERY_ENDPOINT,
+        'query_endpoint': settings.SPARQL_QUERY_ENDPOINT,
         'update_endpoint': settings.SPARQL_UPDATE_ENDPOINT,
         'node_to_sparql': my_bnode_ext,
     }

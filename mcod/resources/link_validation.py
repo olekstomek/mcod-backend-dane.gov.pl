@@ -11,7 +11,6 @@ from django.core.validators import URLValidator
 from mimeparse import parse_mime_type, MimeTypeParseException
 
 from mcod import settings
-from mcod.resources.archives import ARCHIVE_CONTENT_TYPES
 from mcod.resources import guess
 from mcod.resources.file_validation import file_format_from_content_type
 from mcod.resources.geo import is_json_stat
@@ -63,6 +62,7 @@ def _get_resource_type(response):
     if content_type == 'html' and guess.web_format(response.content):
         return 'website'
     elif not (content_disposition and 'attachment' in content_disposition) and content_type in (
+        'atom+xml',
         'vnd.api+json',
         'json',
         'xml'
@@ -98,8 +98,8 @@ def simplified_url(url):
     return url.replace('http://', '').replace('https://', '').replace('www.', '').rstrip('/')
 
 
-def download_file(url, forced_file_type=False, allowed_content_types=None):  # noqa: C901
-    logger.debug(f"download_file({url}, {allowed_content_types})")
+def download_file(url, forced_file_type=False):  # noqa: C901
+    logger.debug(f'download_file({url})')
     try:
         URLValidator()(url)
     except ValidationError:
@@ -107,8 +107,6 @@ def download_file(url, forced_file_type=False, allowed_content_types=None):  # n
 
     filename, format = None, None
 
-    supported_content_types = allowed_content_types or [ct[1] for ct in settings.SUPPORTED_CONTENT_TYPES]
-    supported_content_types += ARCHIVE_CONTENT_TYPES
     response = session.get(url, stream=True, allow_redirects=True, verify=False, timeout=180)
 
     if not response.url.startswith('https') and is_enabled('S37_validate_resource_link_scheme_harvester.be'):
@@ -124,7 +122,7 @@ def download_file(url, forced_file_type=False, allowed_content_types=None):  # n
 
     logger.debug(f'  Content-Type: {family}/{content_type};{options}')
 
-    if not guess.is_octetstream(content_type) and content_type not in supported_content_types:
+    if not guess.is_octetstream(content_type) and content_type not in settings.ALLOWED_CONTENT_TYPES:
         raise UnsupportedContentType('Unsupported type: %s' % response.headers.get('Content-Type'))
 
     try:
@@ -207,8 +205,7 @@ def check_link_status(url, resource_type):
         URLValidator()(url)
     except ValidationError:
         raise InvalidUrl('Invalid url address: %s' % url)
-    supported_content_types = [ct[1] for ct in settings.SUPPORTED_CONTENT_TYPES]
-    supported_content_types += ARCHIVE_CONTENT_TYPES
+
     response = session.head(url, allow_redirects=True, timeout=30)
     if response.status_code == 405:
         response = session.get(url, allow_redirects=True, timeout=30)
@@ -221,7 +218,7 @@ def check_link_status(url, resource_type):
     except MimeTypeParseException:
         raise InvalidContentType(response.headers.get('Content-Type'))
 
-    if not guess.is_octetstream(content_type) and content_type not in supported_content_types:
+    if not guess.is_octetstream(content_type) and content_type not in settings.ALLOWED_CONTENT_TYPES:
         raise UnsupportedContentType('Unsupported type: %s' % response.headers.get('Content-Type'))
 
     if resource_type not in ['file', 'api'] and response.history and\

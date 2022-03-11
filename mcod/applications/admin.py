@@ -10,25 +10,21 @@ from mcod.applications.tasks import create_application_task
 from mcod.lib.admin_mixins import (
     DecisionFilter,
     HistoryMixin,
-    LangFieldsOnlyMixin,
     TrashMixin,
-    CreatedByDisplayAdminMixin,
-    DecisionStatusLabelAdminMixin,
-    DynamicAdminListDisplayMixin,
-    MCODAdminMixin,
     ModelAdmin,
 )
+from mcod.unleash import is_enabled
 
 
-class ApplicationAdmin(DynamicAdminListDisplayMixin, CreatedByDisplayAdminMixin, HistoryMixin, LangFieldsOnlyMixin,
-                       MCODAdminMixin, ModelAdmin):
+class ApplicationAdmin(HistoryMixin, ModelAdmin):
     actions_on_top = True
     autocomplete_fields = ['tags']
     form = ApplicationForm
     is_history_with_unknown_user_rows = True
+    lang_fields = True
     list_display = [
         'title',
-        'created_by',
+        'created_by_label',
         'application_logo',
         'modified',
         'main_page_position',
@@ -42,12 +38,15 @@ class ApplicationAdmin(DynamicAdminListDisplayMixin, CreatedByDisplayAdminMixin,
     readonly_fields = ['application_logo', 'illustrative_graphics_img', 'preview_link']
     search_fields = ['title', 'created_by__email', 'url']
     soft_delete = True
-    suit_form_tabs = (
-        ('general', _('General')),
-        *LangFieldsOnlyMixin.get_translations_tabs(),
-        ('tags', _('Tags')),
-        ('datasets', _('Datasets')),
-    )
+
+    @property
+    def suit_form_tabs(self):
+        return (
+            ('general', _('General')),
+            *self.get_translations_tabs(),
+            ('tags', _('Tags')),
+            ('datasets', _('Datasets')),
+        )
 
     def get_translations_fieldsets(self):
         i18n_field = get_i18n_field(self.model)
@@ -175,7 +174,7 @@ class ApplicationTrashAdmin(HistoryMixin, TrashMixin):
     tags_list_en.short_description = _('Tags') + ' (EN)'
 
 
-class ApplicationProposalMixin(HistoryMixin, DecisionStatusLabelAdminMixin, MCODAdminMixin):
+class ApplicationProposalMixin(HistoryMixin):
     delete_selected_msg = _('Delete selected application proposals')
     is_history_other = True
     is_history_with_unknown_user_rows = True
@@ -197,15 +196,34 @@ class ApplicationProposalMixin(HistoryMixin, DecisionStatusLabelAdminMixin, MCOD
         return obj.datasets_admin or '-'
     datasets_admin.short_description = _('Datasets being used to build application')
 
+    def decision_label(self, obj):
+        return self._format_label(obj, 'decision')
+
+    def get_decision_value(self, obj):
+        return obj.decision
+
+    def get_decision_label(self, obj):
+        return obj.get_decision_display() or _('Decision not taken')
+
+    decision_label.admin_order_field = 'decision'
+    decision_label.short_description = _('decision')
+
     def external_datasets_admin(self, obj):
         return obj.external_datasets_admin or '-'
     external_datasets_admin.short_description = _('External public data used')
     external_datasets_admin.admin_order_field = 'external_datasets'
 
     def get_list_display(self, request):
-        if request.method == 'GET' and request.GET.get('decision') == 'taken':
-            return ['title', 'author', 'application_logo', 'report_date', 'decision', 'decision_date']
-        return ['title', 'author', 'application_logo', 'report_date', 'decision']
+        decision_date = ['decision_date'] if request.method == 'GET' and request.GET.get('decision') == 'taken' else []
+        self.list_display = [
+            'title',
+            'author',
+            'application_logo',
+            'report_date',
+            'decision_label',
+            *decision_date,
+        ]
+        return super().get_list_display(request)
 
     def has_add_permission(self, request, obj=None):
         return False
@@ -294,7 +312,8 @@ class ApplicationProposalTrashAdmin(ApplicationProposalMixin, TrashMixin):
     fields = [x for x in readonly_fields] + ['is_removed']
 
 
-admin.site.register(Application, ApplicationAdmin)  # visible for copy-paste work for admins.
-admin.site.register(ApplicationTrash, ApplicationTrashAdmin)
-admin.site.register(ApplicationProposal, ApplicationProposalAdmin)
-admin.site.register(ApplicationProposalTrash, ApplicationProposalTrashAdmin)
+if not is_enabled('S46_hide_applications_admin.be'):
+    admin.site.register(Application, ApplicationAdmin)
+    admin.site.register(ApplicationTrash, ApplicationTrashAdmin)
+    admin.site.register(ApplicationProposal, ApplicationProposalAdmin)
+    admin.site.register(ApplicationProposalTrash, ApplicationProposalTrashAdmin)

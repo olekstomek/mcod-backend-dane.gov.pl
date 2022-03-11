@@ -19,6 +19,13 @@ class Command(BaseCommand):
             dest='no_orphans',
         )
         parser.add_argument(
+            '--no-empty-indices',
+            action='store_true',
+            default=False,
+            help='Delete indices w/o documents',
+            dest='no_empty_indices',
+        )
+        parser.add_argument(
             '--delete',
             action='store_true',
             default=False,
@@ -77,6 +84,28 @@ class Command(BaseCommand):
         else:
             self.stdout.write('No indices found!')
 
+    def _delete_empty_indices(self, **options):
+        connection = get_connection()
+        result = connection.cat.indices(index='resource-*', format='json', h='index,docs.count')
+        data = sorted([x['index'] for x in result if x['docs.count'] == '0'])
+        pks = self._get_pks(**options)
+        if pks:
+            pks = tuple(f'-{x}' for x in pks)
+            data = [x for x in data if x.endswith(pks)]
+        data_str = ','.join(data)
+        if data:
+            self.stdout.write(f'{len(data)} indices to delete: {data_str}')
+            answer = options['yes']
+            if answer is None:
+                response = input('Are you sure you want to continue? [y/N]: ').lower().strip()
+                answer = response == 'y'
+            if answer:
+                connection.indices.delete(data_str, ignore_unavailable=True)
+            else:
+                self.stdout.write('Delete of stale indices aborted.')
+        else:
+            self.stdout.write('No indices found!')
+
     def _delete_orphans(self, **options):
         queryset = Resource.raw.filter(
             type='file',
@@ -130,6 +159,10 @@ class Command(BaseCommand):
             data['message_count'] = conn.default_channel.queue_declare(queue=queue, passive=True).message_count
         return data
 
+    def _get_pks(self, **options):
+        pks_str = options.get('pks')
+        return (pk for pk in pks_str.split(',') if pk) if pks_str else None
+
     def _purge_queue(self, queue='indexing_data'):
         with self.app.connection_for_write() as conn:
             conn.connect()
@@ -152,7 +185,9 @@ class Command(BaseCommand):
         if options['no_orphans']:
             self._delete_orphans(**options)
             return
-
+        if options['no_empty_indices']:
+            self._delete_empty_indices(**options)
+            return
         qs_all = Resource.objects.with_tabular_data()
         count = queue_info.get('message_count')
         msg = 'Current number of msgs in \'indexing_data\' queue: {}'.format(count)
@@ -160,8 +195,7 @@ class Command(BaseCommand):
             raise CommandError(
                 'Operation terminated! {}. Pass --force parameter to continue anyway.'.format(msg))
 
-        pks_str = options.get('pks')
-        pks = (pk for pk in pks_str.split(',') if pk) if pks_str else None
+        pks = self._get_pks(**options)
         objs = qs_all.filter(id__in=pks).order_by('id') if pks else qs_all
         if options['delete']:
             self._delete_data(objs, **options)

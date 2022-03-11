@@ -19,9 +19,9 @@ class RDFHandler(BaseHandler):
             content_type = RDF_FORMAT_TO_MIMETYPE['json-ld']
 
         if content_type == 'application/ld+json':
-            result = media.serialize(format=content_type, auto_compact=True)
+            result = media.serialize(format=content_type, auto_compact=True, encoding="utf-8")
         else:
-            result = media.serialize(format=content_type)
+            result = media.serialize(format=content_type, encoding="utf-8")
 
         return result
 

@@ -83,6 +83,7 @@
 
         {% else %}
             $updateNotificationRecipientEmailInput.val("{{ user.email }}");
+            $updateNotificationRecipientEmailInput.prop('disabled', true);
             $updateFrequency.find('.controls').append('<span class="help-inline" style="margin-top: 5px;"></span>');
             var $updateFrequencyHelp = $updateFrequency.find('.help-inline');
 
@@ -100,6 +101,10 @@
             $updateFrequencySelect.change(function(){
                 updateUpdateFrequencyHelp($(this).val());
             });
+            $('#dataset_form').submit(function(){
+                $("input#id_update_notification_recipient_email:disabled").removeAttr('disabled');
+                return;
+            });
         {% endif %}
     {% endif %}
     $('input[name="has_dynamic_data"]').click(function(){
@@ -110,5 +115,6 @@
       $('input[name="has_high_value_data"]').prop('checked', false);
       $(this).prop('checked', true);
     });
+
     </script>
 {% endblock extrajs %}

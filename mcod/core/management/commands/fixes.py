@@ -11,7 +11,7 @@ from mcod import settings
 from mcod.articles.models import ArticleCategory
 from mcod.cms.models import FormPageSubmission
 from mcod.cms.models.formpage import Formset
-from mcod.core.api.search.tasks import update_with_related_task
+from mcod.core.api.search.tasks import update_document_task, update_with_related_task
 from mcod.core.registries import history_registry
 from mcod.datasets.models import Dataset
 from mcod.histories.models import History
@@ -102,6 +102,8 @@ class Command(BaseCommand):
             help="Fix verfied for datasets and resources"
         )
 
+        parser.add_argument('--pks', type=str, default='')
+
         parser.add_argument(
             '--resourcesformats',
             action="store_const",
@@ -188,6 +190,14 @@ class Command(BaseCommand):
             dest='action',
             const='resources-links-protocol',
             help='Change resources links protocol to https based on protocol report',
+        )
+
+        parser.add_argument(
+            '--resource-http-link',
+            action='store_const',
+            dest='action',
+            const='resource-http-link',
+            help='Change resources links protocol to https based on passed --pks parameter',
         )
 
         parser.add_argument('-y, --yes', action='store_true', default=None,
@@ -649,6 +659,36 @@ class Command(BaseCommand):
             update_with_related_task.s('resources', 'Resource', res.id).apply_async(
                 countdown=2)
 
+    def _get_pks(self, **options):
+        pks_str = options.get('pks')
+        return (int(pk) for pk in pks_str.split(',') if pk) if pks_str else None
+
+    def fix_resource_http_link(self, **options):
+        pks = self._get_pks(**options)
+        if not pks:
+            raise CommandError('Passing of --pks parameter is required!')
+        resources = Resource.objects.filter(pk__in=pks, link__startswith='http://')
+        if resources:
+            self.stdout.write(f'Number of resources to fix: {resources.count()}')
+            answer = options['yes']
+            if answer is None:
+                response = input('Are you sure you want to continue? [y/N]: ').lower().strip()
+                answer = response == 'y'
+            if answer:
+                edited_resources = []
+                for obj in resources:
+                    obj.link = obj.link.replace('http://', 'https://')
+                    edited_resources.append(obj)
+                self.stdout.write('Attempting to update resources in db and ES.')
+                Resource.objects.bulk_update(edited_resources, ['link'])
+                for obj in resources:
+                    update_document_task.s('resources', 'resource', obj.id).apply_async()
+                self.stdout.write(f'Updated {resources.count()} resources.')
+            else:
+                self.stdout.write('Aborted.')
+        else:
+            self.stdout.write('No resources found!')
+
     def fix_resources_links_protocol(self):
         self.stdout.write('Reading resource data from https_protocol_report')
         latest_report = None
@@ -691,7 +731,7 @@ class Command(BaseCommand):
                 "'--setverified', '--resources-links', '--resources-validation-results', "
                 "'--resources-has-table-has-map', '--submissions-to-new-format', '--submissions-to-old-format', "
                 "'--submissions-formdata-save', '--submissions-formdata-load', '--reports-id-column',"
-                " '--resources-openness-score', '--resources-links-protocol'."
+                " '--resources-openness-score', '--resources-links-protocol', '--resource-http-link'."
             )
         action = options['action']
 
@@ -714,7 +754,8 @@ class Command(BaseCommand):
             'submissions-formdata-load': self.load_form_page_submissions_form_data_from_file,
             'reports-id-column': self.fix_reports_id_column,
             'resources-openness-score': self.fix_resources_openness_score,
-            'resources-links-protocol': self.fix_resources_links_protocol
+            'resources-links-protocol': self.fix_resources_links_protocol,
+            'resource-http-link': self.fix_resource_http_link,
         }
         if action == 'all':
             self.fix_searchhistories()
@@ -723,5 +764,7 @@ class Command(BaseCommand):
             self.fix_article_categories()
         elif action == 'migratehistory':
             self.fix_history(**options)
+        elif action == 'resource-http-link':
+            self.fix_resource_http_link(**options)
         elif action in actions.keys():
             actions[action]()

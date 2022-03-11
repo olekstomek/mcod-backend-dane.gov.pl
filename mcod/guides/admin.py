@@ -5,21 +5,17 @@ from suit.admin import SortableStackedInline
 from mcod.guides.forms import GuideForm, GuideItemForm
 from mcod.guides.models import Guide, GuideItem, GuideTrash
 from mcod.lib.admin_mixins import (
-    CreatedByDisplayAdminMixin,
-    DynamicAdminListDisplayMixin,
     HistoryMixin,
-    MCODAdminMixin,
     ModelAdmin,
-    StatusLabelAdminMixin,
     TrashMixin,
 )
 
 
-class GuideAdminMixin(DynamicAdminListDisplayMixin, CreatedByDisplayAdminMixin, StatusLabelAdminMixin):
+class GuideAdminMixin:
     is_history_other = True
     form = GuideForm
     search_fields = ['title']
-    list_display = ('title', 'created_by', '_created', '_status')
+    list_display = ('title', 'created_by_label', '_created', 'status_label')
 
     def _created(self, obj):
         return obj.created_localized if obj.pk else '-'
@@ -32,12 +28,6 @@ class GuideAdminMixin(DynamicAdminListDisplayMixin, CreatedByDisplayAdminMixin, 
 
     _created_by.short_description = pgettext_lazy('masculine', 'created by')
     _created_by.admin_order_field = 'created_by'
-
-    def _status(self, obj):
-        return obj.STATUS[obj.status]
-
-    _status.short_description = 'status'
-    _status.admin_order_field = 'status'
 
     def save_model(self, request, obj, form, change):
         if not obj.id:
@@ -66,7 +56,7 @@ class GuideItemInline(SortableStackedInline):
 
 
 @admin.register(Guide)
-class GuideAdmin(GuideAdminMixin, HistoryMixin, MCODAdminMixin, ModelAdmin):
+class GuideAdmin(GuideAdminMixin, HistoryMixin, ModelAdmin):
     delete_selected_msg = _('Delete selected elements')
     fieldsets = [
         (

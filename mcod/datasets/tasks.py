@@ -5,82 +5,25 @@ from shutil import disk_usage
 from datetime import datetime
 
 from celery import shared_task
-from constance import config
 from dateutil.relativedelta import relativedelta
 from django.apps import apps
 from django.conf import settings
-from django.core.mail import send_mail, get_connection
-from django.core.mail.message import EmailMultiAlternatives
-from django.template.loader import render_to_string
+
 from django.utils import translation
-from django.utils.translation import ugettext_lazy as _
 from celery_singleton import Singleton
 
 from mcod.core.utils import save_as_csv, save_as_xml, clean_filename
 from mcod.core import storages
-from mcod.unleash import is_enabled
 
 
 logger = logging.getLogger('mcod')
 
 
 @shared_task
-def send_dataset_comment(dataset_id, comment, lang=None):
+def send_dataset_comment(dataset_id, comment):
     model = apps.get_model('datasets', 'Dataset')
     dataset = model.objects.get(pk=dataset_id)
-
-    conn = get_connection(settings.EMAIL_BACKEND)
-    template_suffix = ''
-
-    with translation.override('pl'):
-        title = dataset.title.replace('\n', ' ').replace('\r', '')
-        version = _(' (version %(version)s)') % {'version': dataset.version} if dataset.version else ''
-        msg_template = _('On the data set %(title)s%(version)s [%(url)s] was posted a comment:')
-        msg = msg_template % {
-            'title': title,
-            'version': version,
-            'url': dataset.frontend_absolute_url,
-        }
-        html_msg = msg_template % {
-            'title': title,
-            'version': version,
-            'url': f'<a href="{dataset.frontend_absolute_url}">{dataset.frontend_absolute_url}</a>',
-        }
-        context = {
-            'host': settings.BASE_URL,
-            'url': dataset.frontend_absolute_url,
-            'comment': comment,
-            'dataset': dataset,
-            'message': msg,
-            'html_message': html_msg,
-            'test': bool(settings.DEBUG and config.TESTER_EMAIL),
-        }
-
-        if settings.DEBUG and config.TESTER_EMAIL:
-            template_suffix = '-test'
-
-        subject = _('A comment was posted on the data set %(title)s%(version)s') % {
-            'title': title,
-            'version': version,
-        }
-        if is_enabled('S39_mail_layout.be'):
-            _plain = 'mails/dataset-comment.txt'
-            _html = 'mails/dataset-comment.html'
-        else:
-            _plain = f'mails/report-dataset-comment{template_suffix}.txt'
-            _html = f'mails/report-dataset-comment{template_suffix}.html'
-        msg_plain = render_to_string(_plain, context=context)
-        msg_html = render_to_string(_html, context=context)
-
-        send_mail(
-            subject,
-            msg_plain,
-            config.SUGGESTIONS_EMAIL,
-            [config.TESTER_EMAIL] if settings.DEBUG and config.TESTER_EMAIL else dataset.comment_mail_recipients,
-            connection=conn,
-            html_message=msg_html,
-        )
-
+    dataset.send_dataset_comment_mail(comment)
     return {
         'dataset': dataset_id
     }
@@ -133,22 +76,10 @@ def create_catalog_metadata_files():
 @shared_task
 def send_dataset_update_reminder():
     logger.debug('Attempting to send datasets update reminders.')
-    messages = []
-    conn = get_connection(settings.EMAIL_BACKEND)
     dataset_model = apps.get_model('datasets', 'Dataset')
     ds_to_notify = dataset_model.objects.datasets_to_notify()
     logger.debug(f'Found {len(ds_to_notify)} datasets.')
-    for ds in ds_to_notify:
-        context = {'dataset_title': ds.title,
-                   'url': ds.frontend_absolute_url,
-                   'host': settings.BASE_URL}
-        subject = ds.title.replace('\n', '').replace('\r', '')
-        msg_plain = render_to_string('mails/dataset-update-reminder.txt', context=context)
-        msg_html = render_to_string('mails/dataset-update-reminder.html', context=context)
-        messages.append(EmailMultiAlternatives(
-            subject, msg_plain, config.NO_REPLY_EMAIL,
-            [ds.dataset_update_notification_recipient], alternatives=[(msg_html, 'text/html')]))
-    sent_messages = conn.send_messages(messages)
+    sent_messages = dataset_model.send_dataset_update_reminder_mails(ds_to_notify)
     logger.debug(f'Sent {sent_messages} messages with dataset update reminder.')
 
 

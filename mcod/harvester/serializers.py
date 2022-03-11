@@ -1,21 +1,20 @@
 import datetime
 
-from django.conf import settings
 from django.utils.translation import gettext_lazy as _, override
 from django.utils.timezone import is_naive, make_aware
 from marshmallow import Schema as BaseSchema, EXCLUDE, pre_load, post_load, validate
 from marshmallow import ValidationError, validates_schema
 from marshmallow.fields import Bool, Date, DateTime, Int, List, Nested, Str, URL, UUID, Method
 
+from mcod import settings
 from mcod.core.api.rdf.profiles.dcat_ap import DCATDatasetDeserializer
 from mcod.datasets.models import Dataset
 from mcod.resources.models import Resource, supported_formats_choices
-from mcod.resources.archives import ARCHIVE_EXTENSIONS
 from mcod.unleash import is_enabled
 
 
 SUPPORTED_RESOURCE_FORMATS = [i[0] for i in supported_formats_choices()]
-SUPPORTED_RESOURCE_FORMATS.extend(ARCHIVE_EXTENSIONS)
+SUPPORTED_RESOURCE_FORMATS.extend(settings.ARCHIVE_EXTENSIONS)
 SUPPORTED_RESOURCE_FORMATS.append('api')
 
 

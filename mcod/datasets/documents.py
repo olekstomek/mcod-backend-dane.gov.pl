@@ -45,6 +45,7 @@ class DatasetDocument(ExtendedDocument):
     license_condition_modification = fields.BooleanField()
     license_condition_original = fields.BooleanField()
     license_condition_responsibilities = fields.TextField()
+    license_condition_cc40_responsibilities = fields.BooleanField()
     license_condition_source = fields.BooleanField()
     license_condition_timestamp = fields.BooleanField()
     license_name = fields.TextField()
