@@ -4,7 +4,7 @@ from rdflib import Literal
 class RDFField:
     def __init__(self, predicate=None, object_type=None, object_value=None, object=None, base_uri=None, allow_null=True,
                  object_value_to_uppercase=False, swap_subject_and_object=False, many=False, required=True,
-                 try_non_lang=False):
+                 try_non_lang=False, value_on_null=None):
 
         if object is None and object_type is None:
             object_type = Literal
@@ -20,6 +20,7 @@ class RDFField:
         self.many = many
         self.required = required
         self.try_non_lang = try_non_lang
+        self.value_on_null = value_on_null
 
     def parse_value(self, value):
         if isinstance(value, Literal) and self.object_type(value.value) == value:

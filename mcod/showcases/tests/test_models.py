@@ -6,7 +6,7 @@ from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.db import IntegrityError
 from django.db.models.query import QuerySet
 from django.test import Client
-from django.utils.encoding import smart_text
+from django.utils.encoding import smart_str
 
 from mcod.showcases.models import Showcase
 
@@ -138,7 +138,7 @@ class TestShowcaseUserRoles(object):
         client.login(email=active_editor.email, password='12345.Abcde')
         response = client.get('/')
         assert response.status_code == 200
-        assert '/showcases/' not in smart_text(response.content)
+        assert '/showcases/' not in smart_str(response.content)
 
     def test_editor_cant_go_to_showcases_in_admin_panel(self, active_editor):
         client = Client()
@@ -151,7 +151,7 @@ class TestShowcaseUserRoles(object):
         client.login(email=admin.email, password='12345.Abcde')
         response = client.get('/')
         assert response.status_code == 200
-        assert '/showcases/' in smart_text(response.content)
+        assert '/showcases/' in smart_str(response.content)
 
     def test_admin_can_go_to_showcases_in_admin_panel(self, admin):
         client = Client()

@@ -79,8 +79,19 @@ session_cache = caches[settings.SESSION_CACHE_ALIAS]
 logger = logging.getLogger('mcod')
 
 
+class UserQuerySet(SoftDeletableQuerySet):
+
+    def autocomplete(self, user, query=None):
+        if not user.is_superuser:
+            return self.none()
+        kwargs = {'is_superuser': True}
+        if query:
+            kwargs['email__icontains'] = query
+        return self.filter(**kwargs)
+
+
 class UserManager(BaseUserManager):
-    _queryset_class = SoftDeletableQuerySet
+    _queryset_class = UserQuerySet
     use_in_migrations = True
 
     def _create_user(self, email, password=None, **extra_fields):
@@ -113,6 +124,9 @@ class UserManager(BaseUserManager):
 
     def agents(self):
         return self.filter(state='active', is_agent=True).order_by('agent_organization_main__title', 'email')
+
+    def autocomplete(self, user, query=None):
+        return super().get_queryset().autocomplete(user, query=query)
 
     def extra_agents(self):
         return self.filter(state='active', extra_agent_of__isnull=False)
@@ -208,13 +222,16 @@ class User(AdminMixin, ApiMixin, AbstractBaseUser, PermissionsMixin, SoftDeletab
     EMAIL_FIELD = 'email'
 
     objects = UserManager()
-    tracker = FieldTracker()
 
     class Meta:
         verbose_name = _("User")
         verbose_name_plural = _("Users")
         db_table = 'user'
         default_manager_name = 'objects'
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._original_from_agent_id = getattr(self.from_agent, 'pk', None)
 
     def __str__(self):
         return self.email
@@ -617,6 +634,10 @@ class User(AdminMixin, ApiMixin, AbstractBaseUser, PermissionsMixin, SoftDeletab
                         html_message=msg_html,
                     )
 
+    @property
+    def has_from_agent_changed(self):
+        return self._original_from_agent_id != getattr(self.from_agent, 'pk', None)
+
 
 @receiver(pre_save, sender=User)
 def pre_save_handler(sender, instance, *args, **kwargs):
@@ -636,8 +657,7 @@ def pre_save_handler(sender, instance, *args, **kwargs):
 def post_save_handler(sender, instance, signal, created=False, raw=False, update_fields=None, using='default', *args, **kwargs):
     if not instance.is_agent and instance.extra_agent.exists():
         instance.extra_agent.update(extra_agent_of=None)
-
-    if instance.tracker.has_changed('from_agent_id'):
+    if instance.has_from_agent_changed:
         obj = instance.from_agent
         if instance.is_agent and obj:
             with transaction.atomic():

@@ -32,7 +32,16 @@ class OrganizationQuerySetMixin:
 
 
 class OrganizationQuerySet(OrganizationQuerySetMixin, SoftDeletableQuerySet):
-    pass
+
+    def autocomplete(self, user, query=None):
+        if not user.is_authenticated:
+            return self.none()
+        kwargs = {}
+        if not user.is_superuser:
+            kwargs['id__in'] = user.organizations.all()
+        if query:
+            kwargs['title__icontains'] = query
+        return self.filter(**kwargs)
 
 
 class OrganizationTrashQuerySet(OrganizationQuerySetMixin, TrashQuerySet):
@@ -55,6 +64,9 @@ class OrganizationManagerMixin:
 
 class OrganizationManager(OrganizationManagerMixin, SoftDeletableManager):
     _queryset_class = OrganizationQuerySet
+
+    def autocomplete(self, user, query=None):
+        return super().get_queryset().autocomplete(user, query=query)
 
 
 class OrganizationTrashManager(OrganizationManagerMixin, TrashManager):

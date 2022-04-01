@@ -110,6 +110,7 @@
     $(document).ready(function($) {
         var rows = "#{{ inline_admin_formset.formset.prefix }}-group .tabular.inline-related tbody tr";
         var alternatingRows = function(row) {
+            //// TODO: django 3.1 removes row1 and row2 css classes
             $(rows).not(".add-row").removeClass("row1 row2")
                 .filter(":even").addClass("row1").end()
                 .filter(rows + ":odd").addClass("row2");

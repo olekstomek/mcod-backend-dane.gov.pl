@@ -1,9 +1,12 @@
-'use strict';
-
 import $ from 'jquery';
+
 import regexQuote from './regexquote';
 import DJNesting from './utils';
-import grappelli from 'grappelli';
+import * as grappelli from 'grappelli';
+import grp from 'grp';
+import grp$ from './grp$';
+// const grp = require('grp');
+// const grp$ = require('./grp$');
 
 var pluginName = 'djangoFormset';
 
@@ -22,6 +25,8 @@ class DjangoFormset {
         var inlineModelClassName = this.$inline.djnData('inlineModel');
 
         this.opts = $.extend({}, this.opts, {
+            childTypes: this.$inline.data('inlineFormset').options.childTypes,
+            formsetFkModel: this.$inline.djnData('formsetFkModel'),
             addButtonSelector: '.djn-add-handler.djn-model-' + inlineModelClassName,
             removeButtonSelector: '.djn-remove-handler.djn-model-' + inlineModelClassName,
             deleteButtonSelector: '.djn-delete-handler.djn-model-' + inlineModelClassName,
@@ -32,6 +37,9 @@ class DjangoFormset {
         DJNesting.initRelatedFields(this.prefix, this.$inline.djnData());
         DJNesting.initAutocompleteFields(this.prefix, this.$inline.djnData());
 
+        if (this.opts.childTypes) {
+            this._setupPolymorphic();
+        }
         this._bindEvents();
 
         this._initializeForms();
@@ -49,6 +57,20 @@ class DjangoFormset {
 
         $(document).trigger('djnesting:initialized', [this.$inline, this]);
     }
+    _setupPolymorphic() {
+        if (!this.opts.childTypes) {
+            throw Error('The polymorphic fieldset options.childTypes is not defined!');
+        }
+        let menu = '<div class="polymorphic-type-menu" style="display: none"><ul>';
+        this.opts.childTypes.forEach(c => {
+            menu += `<li><a href="#" data-type="${c.type}">${c.name}</a></li>`;
+        });
+        menu += '</ul></div>';
+        const $addButton = this.$inline.find(this.opts.addButtonSelector);
+        const $menu = $(menu);
+        $addButton.after($menu);
+    }
+
     _initializeForms() {
         var totalForms = this.mgmtVal('TOTAL_FORMS');
         var maxForms = this.mgmtVal('MAX_NUM_FORMS');
@@ -80,10 +102,34 @@ class DjangoFormset {
         if (typeof $el == 'undefined') {
             $el = this.$inline;
         }
-        $el.find(this.opts.addButtonSelector).off('click.djnesting').on('click.djnesting', function(e) {
+        const $addButton = $el.find(this.opts.addButtonSelector);
+        $addButton.off('click.djnesting').on('click.djnesting', function(e) {
             e.preventDefault();
             e.stopPropagation();
-            self.add();
+            const $menu = $(this).next('.polymorphic-type-menu');
+            if (!$menu.length) {
+                self.add();
+            } else {
+                if (!$menu.is(':visible')) {
+                    function hideMenu() {
+                        $menu.hide();
+                        $(document).off('click', hideMenu);
+                    }
+                    $(document).on('click', hideMenu);
+                }
+                $menu.show();
+            }
+        });
+        const $menuButtons = $addButton.parent().find('> .polymorphic-type-menu a');
+        $menuButtons.off('click.djnesting').on('click.djnesting', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const polymorphicType = $(this).attr('data-type');
+            self.add(null, polymorphicType);
+            const $menu = $(e.target).closest('.polymorphic-type-menu');
+            if ($menu.is(':visible')) {
+                $menu.hide();
+            }
         });
         $el.find(this.opts.removeButtonSelector).filter(function() {
             return !$(this).closest('.djn-empty-form').length;
@@ -120,6 +166,10 @@ class DjangoFormset {
         var index = $form.djangoFormIndex();
         var isInitial = $form.data('isInitial');
 
+        // Clearing out the form HTML itself using DOM APIs is much faster
+        // than using jQuery to remove the element. Using jQuery is so
+        // slow that it hangs the page.
+        $form[0].innerHTML = "";
         $form.remove();
 
         totalForms -= 1;
@@ -225,9 +275,20 @@ class DjangoFormset {
         $(document).trigger('djnesting:mutate', [this.$inline]);
         $(document).trigger('formset:undeleted', [$form, this.prefix]);
     }
-    add(spliceIndex) {
+    add(spliceIndex, ctype) {
         var self = this;
-        var $form = this._$template.clone(true);
+        const $template = (ctype) ? $(`#${this.prefix}-empty-${ctype}`) : this._$template;
+        var $form = $template.clone(true);
+
+        // For django-grappelli >= 2.14, where the grp.jQuery instance is not
+        // the same as django.jQuery, we must copy any prepopulated_field
+        // dependency data from grp.jQuery to the cloned nodes.
+        grp$($template).find(':data(dependency_ids)').each(function() {
+          const id = $(this).attr('id');
+          const $el = $form.find(`#${id}`);
+          grp$($el).data($.extend({}, $el.data(), grp$(this).data()));
+        });
+
         var index = this.mgmtVal('TOTAL_FORMS');
         var maxForms = this.mgmtVal('MAX_NUM_FORMS');
         var isNested = this.$inline.hasClass('djn-group-nested');
@@ -236,17 +297,42 @@ class DjangoFormset {
 
         $form.removeClass(this.opts.emptyClass);
         $form.addClass('djn-item');
-        $form.attr('id', $form.attr('id').replace('-empty', '-' + index));
+        $form.attr('id', $form.attr('id').replace(/\-empty.*?$/, '-' + index));
 
         if (isNested) {
             $form.append(DJNesting.createContainerElement());
         }
 
         DJNesting.updateFormAttributes($form,
-            new RegExp('([\\#_]|^)' + regexQuote(this.prefix) + '\\-(?:__prefix__|empty)\\-', 'g'),
+            new RegExp('([#_]id_|[\\#]|^id_|\"|^)' + regexQuote(this.prefix) + '\\-(?:__prefix__|empty)\\-', 'g'),
             '$1' + this.prefix + '-' + index + '-');
 
-        $form.insertBefore(this._$template);
+        let $firstTemplate = this._$template;
+        if (this.opts.childTypes) {
+            $firstTemplate = $template.closest('.djn-group')
+                .find('> .djn-items > [id*="-empty"], > .djn-fieldset > .djn-items > [id*="-empty"]').eq(0);
+        }
+        if (this.opts.childTypes) {
+            const compatibleParents = this.$inline.djnData('compatibleParents') || {};
+            $form.find('> .djn-group').each((i, el) => {
+                const fkModel = $(el).djnData('formsetFkModel');
+                const compatModels = compatibleParents[ctype] || [];
+                const $el = $(el);
+                const parentModel = $el.djnData('inlineParentModel');
+                const isPolymorphic = !!($el.data('inlineFormset').options.childTypes);
+                const formPrefix = $el.data('inlineFormset').options.prefix;
+                if (parentModel !== ctype || (isPolymorphic && fkModel !== ctype && compatModels.indexOf(fkModel) === -1)) {
+                    $el.find('input[id$="_FORMS"]').each((i, input) => {
+                        input.value = 0
+                        input.setAttribute('value', '0');
+                        el.parentNode.appendChild(input);
+                    });
+                    el.parentNode.removeChild(el);
+                }
+            });
+        }
+
+        $form.insertBefore($firstTemplate);
 
         this.mgmtVal('TOTAL_FORMS', index + 1);
         if ((maxForms - (index + 1)) <= 0) {
@@ -262,15 +348,18 @@ class DjangoFormset {
         }
 
         if (grappelli) {
-            grappelli.reinitDateTimeFields($form);
+            grappelli.reinitDateTimeFields(grp$($form));
         }
         DJNesting.DjangoInlines.initPrepopulatedFields($form);
         DJNesting.DjangoInlines.reinitDateTimeShortCuts();
         DJNesting.DjangoInlines.updateSelectFilter($form);
         DJNesting.initRelatedFields(this.prefix);
         DJNesting.initAutocompleteFields(this.prefix);
-        if ($.fn.grp_collapsible) {
-            $form.find('.collapse').andSelf().grp_collapsible({
+        if (grp && grp.jQuery.fn.grp_collapsible) {
+            var addBackMethod = (grp.jQuery.fn.addBack) ? 'addBack' : 'andSelf';
+            grp$($form).find(
+                '.grp-collapse:not([id$="-empty"]):not([id*="-empty-"])'
+            )[addBackMethod]().grp_collapsible({
                 toggle_handler_slctr: '.grp-collapse-handler:first',
                 closed_css: 'closed grp-closed',
                 open_css: 'open grp-open',
@@ -287,6 +376,14 @@ class DjangoFormset {
 
         this._initializeForm($form);
         this._bindEvents($form);
+
+        if (ctype) {
+          const formsetModelClassName = this.$inline.djnData('inlineModel');
+          const inlineModelClassName = $form.attr('data-inline-model');
+          const $buttons = $form.find(`.djn-model-${formsetModelClassName}`);
+          $buttons.addClass(`djn-model-${inlineModelClassName}`);
+          $form.addClass(`djn-dynamic-form-${inlineModelClassName}`);
+        }
 
         // find any nested formsets
         $form.find('.djn-group[id$="-group"][id^="' + this.prefix + '"][data-inline-formset]:not([id*="-empty"])').each(function() {

@@ -14,7 +14,7 @@ from bokeh.io.export import get_screenshot_as_png
 from bokeh.models import FuncTickFormatter, BasicTicker, CompositeTicker
 from django.db import connections
 from django.utils.functional import cached_property
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 from mcod.organizations.models import Organization
 from mcod.pn_apps.widgets import BootstrapTableTemplate, TabbedBootstrapTableTemplate
 from mcod.pn_apps.utils import (

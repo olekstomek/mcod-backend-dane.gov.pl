@@ -37,7 +37,8 @@
                     !$fixed_item.hasClass('fixed') && $fixed_item.addClass('fixed');
                     var max_top = Math.min(10, $(document).height() - $fixed_item.height() - scroll_top - extra_offset);
                     $fixed_item.css('top', max_top + 'px');
-                } else if (scroll_top <= (pos.top - 10) &&
+                }
+                else if (scroll_top <= (pos.top - 10) &&
                     $fixed_item.hasClass('fixed')) {
                     $fixed_item.removeClass('fixed');
                 }
@@ -153,7 +154,7 @@
             $link.parent().parent().find('.active').removeClass('active');
             $link.parent().addClass('active');
             $('.' + tab_prefix).removeClass('show').addClass('hide');
-            tab_contents($link).removeClass('hide').addClass('show');
+            tab_contents($link).removeClass('hide').addClass('show')
         });
 
         activate_tabs();
@@ -174,7 +175,11 @@
 
             submitting = true;
             $saveButtons.addClass('disabled');
-
+            // See: ODSOFT-1517.
+            // setTimeout(function () {
+            //     $saveButtons.removeClass('disabled');
+            //     submitting = false;
+            // }, 5000);
         });
     };
 

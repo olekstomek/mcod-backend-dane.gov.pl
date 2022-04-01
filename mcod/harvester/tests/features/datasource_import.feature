@@ -5,15 +5,15 @@ Feature: Datasource import
     When ckan datasource with id 100 finishes importing objects
     Then ckan datasource with id 100 created all data in db
 
-  Scenario: XML resources are properly imported
+  Scenario Outline: XML resources are properly imported
     Given active xml_datasource with id 101 for data {"xml_url": "http://api.mock-portal.pl/some-xml.xml"}
-    When xml datasource with id 101 of version 1.2 finishes importing objects
-    Then xml datasource with id 101 of version 1.2 created all data in db
-
-  Scenario: XML resources are properly imported
-    Given active xml_datasource with id 102 for data {"xml_url": "http://api.mock-portal.pl/some-xml.xml"}
-    When xml datasource with id 102 of version 1.5 finishes importing objects
-    Then xml datasource with id 102 of version 1.5 created all data in db
+    When xml datasource with id <obj_id> of version <version> finishes importing objects
+    Then xml datasource with id <obj_id> of version <version> created all data in db
+    Examples:
+    | obj_id | version |
+    | 101    | 1.2     |
+    | 101    | 1.5     |
+    | 101    | 1.6     |
 
   Scenario: DCAT resources are properly imported
     Given active dcat_datasource with id 101 for data {"api_url": "http://api.mock-portal.pl/dcat/endpoint"}

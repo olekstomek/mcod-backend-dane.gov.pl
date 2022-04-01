@@ -86,6 +86,16 @@
                     </xs:restriction>
                 </xs:simpleType>
             </xs:element>
+            <xs:element name="has_research_data">
+                <xs:simpleType>
+                    <xs:restriction base="xs:string">
+                        <xs:enumeration value="False"/>
+                        <xs:enumeration value="True"/>
+                        <xs:enumeration value=""/>
+                    </xs:restriction>
+                </xs:simpleType>
+            </xs:element>
+            <xs:element type="regionsType" name="regions"/>
         </xs:all>
     </xs:complexType>
     <xs:complexType name="resourcesType">
@@ -156,7 +166,17 @@
                     </xs:restriction>
                 </xs:simpleType>
             </xs:element>
+            <xs:element name="has_research_data">
+                <xs:simpleType>
+                    <xs:restriction base="xs:string">
+                        <xs:enumeration value="False"/>
+                        <xs:enumeration value="True"/>
+                        <xs:enumeration value=""/>
+                    </xs:restriction>
+                </xs:simpleType>
+            </xs:element>
             <xs:element type="resourcesType" name="resources"/>
+            <xs:element type="regionsType" name="regions"/>
         </xs:all>
     </xs:complexType>
     <xs:complexType name="categoryType">
@@ -234,4 +254,16 @@
             <xs:enumeration value="API"/>
         </xs:restriction>
     </xs:simpleType>
+    <xs:complexType name="regionType">
+        <xs:all>
+            <xs:element type="xs:string" name="name"/>
+            <xs:element type="xs:string" name="hierarchy_label"/>
+            <xs:element type="xs:integer" name="region_id"/>
+        </xs:all>
+    </xs:complexType>
+    <xs:complexType name="regionsType">
+        <xs:sequence>
+            <xs:element type="regionType" name="region" maxOccurs="unbounded" minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
 </xs:schema>

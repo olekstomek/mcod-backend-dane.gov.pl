@@ -22,11 +22,11 @@ from mcod.users.models import ACADEMY_PERMS_CODENAMES, LABS_PERMS_CODENAMES, Use
 
 class UserChangeList(MCODChangeList):
     def __init__(self, request, *args, **kwargs):
-        super().__init__(request, *args, **kwargs)
-        user_roles = request.GET.getlist('role')
         self.role_query_string = ''
+        user_roles = request.GET.getlist('role')
         for item in user_roles:
             self.role_query_string += f'&role={item}'
+        super().__init__(request, *args, **kwargs)
         if self.role_query_string and 'role' in self.params:
             del self.params['role']
 

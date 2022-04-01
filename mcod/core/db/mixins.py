@@ -11,15 +11,25 @@ from mcod import settings
 
 class AdminMixin:
 
+    @classmethod
+    def get_admin_add_url(cls):
+        return reverse(f'admin:{cls._meta.app_label}_{cls._meta.model_name}_add')
+
+    @classmethod
+    def get_admin_change_url(cls, obj_id, trash=''):
+        return reverse(f'admin:{cls._meta.app_label}_{cls._meta.model_name}{trash}_change', args=(obj_id,))
+
     @property
     def admin_change_url(self):
-        if self.id:
-            return reverse('admin:%s_%s_change' % (self._meta.app_label, self._meta.model_name), args=(self.id,))
-        return ''
+        return self.get_admin_change_url(self.id) if self.id else ''
+
+    @property
+    def admin_trash_change_url(self):
+        return self.get_admin_change_url(self.id, 'trash') if self.id else ''
 
     @classmethod
     def admin_list_url(cls):
-        return reverse('admin:%s_%s_changelist' % (cls._meta.app_label, cls._meta.model_name))
+        return reverse(f'admin:{cls._meta.app_label}_{cls._meta.model_name}_changelist')
 
     def mark_safe(self, value):
         return mark_safe(value)

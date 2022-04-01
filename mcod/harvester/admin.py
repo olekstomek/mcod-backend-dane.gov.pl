@@ -1,10 +1,9 @@
-from dal_admin_filters import AutocompleteFilter
 from django.contrib import admin, messages
 from django.contrib.admin.views.decorators import staff_member_required
 from django.db.models import Q
 from django.urls import path, re_path, reverse
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
 
 from mcod.harvester.forms import DataSourceAdminForm, DataSourceImportAdminForm
@@ -19,15 +18,6 @@ from mcod.lib.admin_mixins import (
     ModelAdmin,
 )
 from mcod.users.forms import FilteredSelectMultipleCustom
-
-
-class UserFilter(AutocompleteFilter):
-    field_name = 'created_by'
-    autocomplete_url = 'admin-autocomplete'
-    is_placeholder_title = False
-    widget_attrs = {
-        'data-placeholder': _('Created by')
-    }
 
 
 class CreatedListFilter(admin.filters.DateFieldListFilter):
@@ -76,8 +66,7 @@ class DataSourceDatasets(PaginationInline):
     category_title.short_description = _('Category')
 
     def _title(self, obj):
-        return mark_safe(
-            '<a href="{}">{}</a>'.format(reverse('admin:datasets_dataset_change', args=[obj.id]), obj.title))
+        return mark_safe(f'<a href="{obj.admin_change_url}">{obj.title}</a>')
     _title.short_description = _('Title')
 
 

@@ -1,6 +1,6 @@
 import param
 import panel as pn
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 from mcod.pn_apps.widgets import BootstrapSelectWidget, ExtendedRadioButtonGroup
 from mcod.organizations.models import Organization
 from mcod.resources.models import RESOURCE_TYPE

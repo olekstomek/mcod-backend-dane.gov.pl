@@ -451,6 +451,8 @@ class DatasetApiAttrs(ObjectAttrs, HighlightObjectMixin):
         has_dynamic_data = fields.Boolean()
     if is_enabled('S35_high_value_data.be'):
         has_high_value_data = fields.Boolean()
+    if is_enabled('S47_research_data.be'):
+        has_research_data = fields.Boolean()
     if is_enabled('S37_resources_admin_region_data.be'):
         regions = fields.Nested(RegionSchema, many=True)
     if is_enabled('S41_resource_bulk_download.be'):
@@ -534,6 +536,10 @@ class DatasetXMLSerializer(ExtSchema):
         has_high_value_data = fields.Bool()
     if is_enabled('S43_dynamic_data.be'):
         has_dynamic_data = fields.Bool()
+    if is_enabled('S47_research_data.be'):
+        has_research_data = fields.Bool()
+    if is_enabled('S37_resources_admin_region_data.be'):
+        regions = fields.Nested(RegionSchema, many=True)
 
     def get_organization(self, dataset):
         context = {
@@ -568,6 +574,10 @@ class DatasetResourcesCSVSerializer(CSVSerializer):
         has_high_value_data = fields.MetaDataNullBoolean(data_key=_('Dataset has high value data'))
     if is_enabled('S43_dynamic_data.be'):
         has_dynamic_data = fields.MetaDataNullBoolean(data_key=_('Dataset has dynamic data'))
+    if is_enabled('S47_research_data.be'):
+        has_research_data = fields.MetaDataNullBoolean(data_key=_('Dataset has research data'))
+    if is_enabled('S37_resources_admin_region_data.be'):
+        regions = fields.Str(data_key=_('Dataset regions'), attribute='regions_str')
     organization = fields.Method('get_organization')
     resources = fields.Nested(ResourceCSVMetadataSerializer, many=True, attribute='published_resources')
 

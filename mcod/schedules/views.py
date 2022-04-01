@@ -1,7 +1,7 @@
 import falcon
 import uuid
 from collections import namedtuple
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from functools import partial
 
 from mcod import settings

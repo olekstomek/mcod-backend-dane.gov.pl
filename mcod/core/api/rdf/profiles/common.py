@@ -65,7 +65,7 @@ class RDFClass(metaclass=RDFMeta):
 
         object = object or field.object
 
-        if not field.allow_null and not object and not object_value:
+        if not field.allow_null and object is None and object_value is None:
             object_value = ''
 
         kwargs = {}
@@ -74,6 +74,9 @@ class RDFClass(metaclass=RDFMeta):
                 kwargs['base'] = self.VOCABULARIES[field.base_uri]
             except KeyError:
                 pass
+
+        if object_value is None:
+            object_value = field.value_on_null
 
         object = object or field.object_type(object_value, **kwargs)
         if field.swap_subject_and_object:

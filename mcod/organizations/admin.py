@@ -89,6 +89,7 @@ class AddDatasetStacked(ObjectPermissionsStackedInline):
     suit_classes = 'suit-tab suit-tab-datasets'
     has_dynamic_data = ['has_dynamic_data'] if is_enabled('S43_dynamic_data.be') else []
     has_high_value_data = ['has_high_value_data'] if is_enabled('S41_resource_has_high_value_data.be') else []
+    has_research_data = ['has_research_data'] if is_enabled('S47_research_data.be') else []
     slug = ['slug'] if is_enabled('S45_forms_unification.be') else []
     image_alt = ['image_alt'] if is_enabled('S45_forms_unification.be') else []
     frequency_fields = [
@@ -119,6 +120,7 @@ class AddDatasetStacked(ObjectPermissionsStackedInline):
         'license_condition_personal_data',
         *has_dynamic_data,
         *has_high_value_data,
+        *has_research_data,
     )
     autocomplete_fields = ['tags', ]
 

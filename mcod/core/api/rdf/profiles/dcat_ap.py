@@ -108,7 +108,7 @@ class DCATDistribution(RDFClass):
     modified = RDFField(predicate=ns.DCT.modified, object_type=partial(Literal, datatype=XSD.dateTime))
     access_url = RDFField(predicate=ns.DCAT.accessURL, object_type=URIRef)
     download_url = RDFField(predicate=ns.DCAT.downloadURL, object_type=URIRef, allow_null=False)
-    file_size = RDFField(predicate=ns.DCAT.byteSize, object_type=partial(Literal, datatype=XSD.decimal))
+    file_size = RDFField(predicate=ns.DCAT.byteSize, object_type=partial(Literal, datatype=XSD.decimal), value_on_null=0)
     license = RDFField(predicate=ns.DCAT.license, object_type=URIRef)
 
     def get_subject(self, data):

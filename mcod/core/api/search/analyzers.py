@@ -86,5 +86,20 @@ english_exact = analyzer(
     char_filter=['html_strip']
 )
 
+autocomplete_filter = token_filter(
+    'autocomplete_filter',
+    type='edge_ngram',
+    min_gram=3,
+    max_gram=15
+)
+
+autocomplete_analyzer = analyzer(
+    'autocomplete_analyzer',
+    type='custom',
+    tokenizer='standard',
+    filter=['lowercase', autocomplete_filter]
+)
+
 lang_synonyms_analyzers = {'pl': polish_synonym, 'en': english_synonym}
 lang_exact_analyzers = {'pl': polish_exact, 'en': english_exact}
+autocomplete_analyzers = {'pl': autocomplete_analyzer, 'en': autocomplete_analyzer}

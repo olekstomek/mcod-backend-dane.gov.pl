@@ -4,7 +4,6 @@ from functools import partial
 from urllib.parse import urlparse
 
 import falcon
-from dal import autocomplete
 from django.apps import apps
 from django.contrib.admin.views.autocomplete import AutocompleteJsonView
 from django.contrib.auth.mixins import PermissionRequiredMixin
@@ -95,25 +94,6 @@ class InstitutionDatasetSearchApiView(JsonAPIView):
                 queryset = queryset.query("nested", path="institution",
                                           query=Q("term", **{'institution.id': id}))
             return queryset.filter('term', status='published')
-
-
-class InstitutionAutocompleteAdminView(autocomplete.Select2QuerySetView):
-    def get_queryset(self):
-
-        user = self.request.user
-        # Don't forget to filter out results depending on the visitor !
-        if not user.is_authenticated:
-            return Organization.objects.none()
-
-        if user.is_superuser:
-            qs = Organization.objects.all()
-        else:
-            qs = Organization.objects.filter(id__in=user.organizations.all())
-
-        if self.q:
-            qs = qs.filter(title__icontains=self.q)
-
-        return qs
 
 
 class InstitutionTypeAdminView(PermissionRequiredMixin, View):

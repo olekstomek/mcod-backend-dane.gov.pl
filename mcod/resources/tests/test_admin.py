@@ -4,7 +4,7 @@ import pytest
 import logging
 from django.test import Client
 from django.urls import reverse
-from django.utils.encoding import smart_text
+from django.utils.encoding import smart_str
 from pytest_bdd import given, parsers, scenarios
 import mcod.unleash
 import requests_mock
@@ -88,7 +88,7 @@ class TestEditorAccess(object):
         client.force_login(active_editor)
         response = client.get(reverse("admin:resources_resourcetrash_changelist"))
         pattern = re.compile(r"/resources/resourcetrash/\d+/change")
-        result = pattern.findall(smart_text(response.content))
+        result = pattern.findall(smart_str(response.content))
         assert all([f'/resources/resourcetrash/{res_id}/change' in result for res_id in editor_res_ids])
 
 
@@ -102,7 +102,7 @@ class TestDuplicateResource(object):
         response = client.get(f"/resources/resource/{id_}", follow=True)
         assert response.status_code == 200
         assert '<a href="/resources/resource/add/?from_id={}" class="btn btn-high"'.format(
-            id_) in smart_text(
+            id_) in smart_str(
             response.content)
         response = client.get(f"/resources/resource/add/?from_id={id_}")
         assert response.status_code == 200
@@ -121,7 +121,7 @@ class TestDuplicateResource(object):
         response = client.get(f"/resources/resource/{id_}", follow=True)
         assert response.status_code == 200
         assert '<a href="/resources/resource/add/?from_id={}" class="btn btn-high"'.format(
-            id_) in smart_text(
+            id_) in smart_str(
             response.content)
         response = client.get(f"/resources/resource/add/?from_id={id_}")
         assert response.status_code == 200
@@ -371,6 +371,8 @@ class TestResourceChangeType(object):
             data['has_high_value_data'] = False
         if is_enabled('S43_dynamic_data.be'):
             data['has_dynamic_data'] = False
+        if is_enabled('S47_research_data.be'):
+            data['has_research_data'] = False
         resp = client.post(
             reverse('admin:resources_resource_change', kwargs={'object_id': geo_tabular_data_resource.id}), data=data,
             follow=True
@@ -405,6 +407,8 @@ class TestResourceMapSave(object):
             data['has_high_value_data'] = False
         if is_enabled('S43_dynamic_data.be'):
             data['has_dynamic_data'] = False
+        if is_enabled('S47_research_data.be'):
+            data['has_research_data'] = False
         resp = client.post(geo_tabular_data_resource.admin_change_url, data=data, follow=True)
         content = resp.content.decode()
         assert _('Map definition saved') in content

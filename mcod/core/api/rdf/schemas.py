@@ -65,8 +65,14 @@ class ResponseSchema(Schema):
 
         shape_path = settings.SHACL_SHAPES[shape]
         conforms, results_graph, results_text = shacl_validate(
-            data, shacl_graph=shape_path, ont_graph=None,
+            data_graph=data,
+            shacl_graph=shape_path,
+            ont_graph=None,
             inference='rdfs',
-            abort_on_error=False, meta_shacl=False, advanced=False, debug=False
+            abort_on_error=False,
+            meta_shacl=False,
+            advanced=False,
+            debug=False,
+            allow_warnings=True,
         )
         return results_graph

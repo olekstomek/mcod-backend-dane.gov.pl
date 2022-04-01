@@ -51,9 +51,14 @@
                   $('input[name="has_dynamic_data"]').prop('checked', false);
                   $(this).prop('checked', true);
                 });
+                $('input[name="has_research_data"]').click(function(){
+                  $('input[name="has_research_data"]').prop('checked', false);
+                  $(this).prop('checked', true);
+                });
 
                 {% is_unleash_enabled "S41_resource_has_high_value_data.be" as S41_resource_has_high_value_data %}
                 {% is_unleash_enabled "S43_dynamic_data.be" as S43_dynamic_data %}
+                {% is_unleash_enabled "S47_research_data.be" as S47_research_data %}
                 {% if add and S41_resource_has_high_value_data %}
                 $(document).on('change', '#id_dataset', function() {
                   var dataset_id = $(this).val();
@@ -79,6 +84,17 @@
                                   } else if (data.has_dynamic_data == false) {
                                       $('#id_has_dynamic_data_0').prop('checked', false);
                                       $('#id_has_dynamic_data_1').prop('checked', true);
+                                  }
+                              }
+                              {% endif %}
+                              {% if S47_research_data %}
+                              if ('has_research_data' in data) {
+                                  if (data.has_research_data == true){
+                                      $('#id_has_research_data_0').prop('checked', true);
+                                      $('#id_has_research_data_1').prop('checked', false);
+                                  } else if (data.has_research_data == false) {
+                                      $('#id_has_research_data_0').prop('checked', false);
+                                      $('#id_has_research_data_1').prop('checked', true);
                                   }
                               }
                               {% endif %}

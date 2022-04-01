@@ -198,6 +198,17 @@ class ResourceForm(forms.ModelForm):
                 'do strony</a>') % {'url': f'{settings.BASE_URL}{settings.HIGH_VALUE_DATA_MANUAL_URL}'},
             widget=CheckboxSelect(attrs={'class': 'inline'}),
         )
+    if is_enabled('S47_research_data.be'):
+        has_research_data = forms.ChoiceField(
+            required=True,
+            label=_('has research data').capitalize(),
+            choices=[(True, _('Yes')), (False, _('No'))],
+            help_text=(
+                'Wskazanie TAK oznacza, że zasób jest traktowany jako dane badawcze.<br><br>Jeżeli chcesz '
+                'się więcej dowiedzieć na temat danych badawczych <a href="%(url)s" target="_blank">przejdź '
+                'do strony</a>') % {'url': f'{settings.BASE_URL}{settings.RESEARCH_DATA_MANUAL_URL}'},
+            widget=CheckboxSelect(attrs={'class': 'inline'}),
+        )
 
     def clean(self):
         data = super().clean()

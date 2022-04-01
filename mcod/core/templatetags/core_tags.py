@@ -5,7 +5,7 @@ from django.contrib import admin
 from django.http import HttpRequest
 from django.template.defaultfilters import capfirst
 from django.urls import reverse
-from django.utils.encoding import force_text
+from django.utils.encoding import force_str
 from django.utils.safestring import mark_safe
 from suit.templatetags.suit_list import result_list_with_context
 from django.utils.html import format_html
@@ -62,7 +62,7 @@ class Menu(SuitMenu):
 def to_accusative(value, model):
     verbose_name = str(model._meta.verbose_name)  # declared in Meta
     try:
-        new_name = force_text(model.accusative_case())  # a custom class method (lives in your Model)
+        new_name = force_str(model.accusative_case())  # a custom class method (lives in your Model)
     except AttributeError:
         return format_html(value)
     if value:

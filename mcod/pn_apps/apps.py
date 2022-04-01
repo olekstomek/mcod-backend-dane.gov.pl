@@ -4,9 +4,13 @@ from django.apps import AppConfig
 from django.conf import settings
 from bokeh.server.django.routing import Routing, RoutingConfiguration
 
+from mcod.lib.utils import is_django_ver_lt
+
 
 class PnAppsConfig(AppConfig):
-    name = label = 'mcod.pn_apps'
+    if is_django_ver_lt(3, 2):
+        label = 'mcod.pn_apps'
+    name = 'mcod.pn_apps'
     verbose_name = "Panel Apps"
 
     _routes: Optional[RoutingConfiguration] = None

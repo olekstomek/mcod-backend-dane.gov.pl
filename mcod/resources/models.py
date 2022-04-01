@@ -415,6 +415,7 @@ class Resource(ExtendedModel):
     has_dynamic_data = models.NullBooleanField(verbose_name=_('dynamic data'))
     has_high_value_data = models.NullBooleanField(verbose_name=_('has high value data'))
     has_map = models.BooleanField(verbose_name=_('has map?'), default=False)
+    has_research_data = models.NullBooleanField(verbose_name=_('has research data'))
     has_table = models.BooleanField(verbose_name=_('has table?'), default=False)
     is_chart_creation_blocked = models.BooleanField(verbose_name=_('is chart creation blocked?'), default=False)
     tabular_data_schema = JSONField(null=True, blank=True)
@@ -1011,6 +1012,10 @@ class Resource(ExtendedModel):
         if not res_regions.exists():
             res_regions = Region.objects.filter(region_id=settings.DEFAULT_REGION_ID)
         return res_regions
+
+    @property
+    def all_regions_str(self):
+        return '; '.join(list(self.all_regions.values_list('hierarchy_label_i18n', flat=True)))
 
     def to_rdf_graph(self):
         _schema = self.get_rdf_serializer_schema()

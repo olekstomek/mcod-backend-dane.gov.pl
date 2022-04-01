@@ -210,6 +210,7 @@ class Dataset(ExtendedModel):
         default=True, verbose_name=_('turn on notification'))
     has_dynamic_data = models.NullBooleanField(verbose_name=_('dynamic data'))
     has_high_value_data = models.NullBooleanField(verbose_name=_('has high value data'))
+    has_research_data = models.NullBooleanField(verbose_name=_('has research data'))
     update_notification_frequency = models.PositiveSmallIntegerField(
         null=True, blank=True, verbose_name=_('set notifications frequency'))
     update_notification_recipient_email = models.EmailField(
@@ -338,7 +339,7 @@ class Dataset(ExtendedModel):
 
     @property
     def formats(self):
-        items = [x.formats_list for x in self.resources.all() if x.formats_list]
+        items = [x.formats_list for x in self.resources.filter(status='published') if x.formats_list]
         return sorted(set([item for sublist in items for item in sublist]))
 
     @property
@@ -546,7 +547,14 @@ class Dataset(ExtendedModel):
     @property
     def regions(self):
         resources_ids = list(self.resources.values_list('pk', flat=True))
-        return Region.objects.filter(resource__pk__in=resources_ids).distinct()
+        q = Q(resource__pk__in=resources_ids)
+        if self.resources.filter(status='published', regions__isnull=True).exists():
+            q |= Q(region_id=settings.DEFAULT_REGION_ID)
+        return Region.objects.filter(q).distinct()
+
+    @property
+    def regions_str(self):
+        return '; '.join(list(self.regions.values_list('hierarchy_label_i18n', flat=True)))
 
     @cached_property
     def showcases_published(self):

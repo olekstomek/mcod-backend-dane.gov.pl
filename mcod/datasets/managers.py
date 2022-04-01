@@ -3,12 +3,24 @@ from dateutil.relativedelta import relativedelta
 
 from django.apps import apps
 from django.db.models import Count, Prefetch, Q, Max
-from model_utils.managers import SoftDeletableManager, SoftDeletableQuerySet
+from mcod.core.managers import SoftDeletableManager, SoftDeletableQuerySet
 
 from mcod.datasets.utils import _batch_qs
 
 
 class DatasetQuerySet(SoftDeletableQuerySet):
+
+    def autocomplete(self, user, query=None):
+        if not user.is_authenticated:
+            return self.none()
+
+        kwargs = {'status': self.model.STATUS.published}
+        if not user.is_superuser:
+            kwargs['organization_id__in'] = user.organizations.all()
+        if query:
+            kwargs['title__icontains'] = query
+        return self.filter(**kwargs)
+
     def _with_metadata_prefetched(self, queryset):
         resource_model = apps.get_model('resources', 'Resource')
         tag_model = apps.get_model('tags', 'Tag')
@@ -137,6 +149,9 @@ class DatasetQuerySet(SoftDeletableQuerySet):
 
 class DatasetManager(SoftDeletableManager):
     _queryset_class = DatasetQuerySet
+
+    def autocomplete(self, user, query=None):
+        return super().get_queryset().autocomplete(user, query=query)
 
     def with_metadata_fetched(self):
         return super().get_queryset().with_metadata_fetched()

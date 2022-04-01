@@ -1,6 +1,6 @@
 from django.test import Client
 from django.urls import reverse
-from django.utils.encoding import smart_text
+from django.utils.encoding import smart_str
 from pytest_bdd import scenarios
 
 from mcod.datasets.models import User
@@ -35,10 +35,10 @@ class TestUserAdmin:
         client.force_login(active_editor)
         response = client.get(active_editor.admin_change_url)
         assert 200 == response.status_code
-        assert 'id_email' in smart_text(response.content)
-        assert '"id_is_staff"' not in smart_text(response.content)
-        assert 'id_is_superuser' not in smart_text(response.content)
-        assert 'id_state' not in smart_text(response.content)
+        assert 'id_email' in smart_str(response.content)
+        assert '"id_is_staff"' not in smart_str(response.content)
+        assert 'id_is_superuser' not in smart_str(response.content)
+        assert 'id_state' not in smart_str(response.content)
 
     def test_editor_cant_change_himself_to_be_a_superuser_with_post_method(self, active_editor):
         client = Client()
@@ -54,7 +54,7 @@ class TestUserAdmin:
             follow=True
         )
         assert 200 == response.status_code
-        assert 'To pole jest wymagane.' not in smart_text(response.content)
+        assert 'To pole jest wymagane.' not in smart_str(response.content)
         u = User.objects.get(id=active_editor.id)
         assert not u.is_superuser
 

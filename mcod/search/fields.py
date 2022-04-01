@@ -13,14 +13,17 @@ def get_advanced_options(adv):
     return op, suffix
 
 
-def nested_query_with_advanced_opts(query, path, lang, op, suffix=''):
+def nested_query_with_advanced_opts(query, path, lang, op, suffix='', analyzer=None):
+    opts = {
+        'query': query,
+        'operator': op,
+        'fuzzy_transpositions': False
+    }
+    if analyzer is not None:
+        opts['analyzer'] = analyzer
     return Q('nested', path=f"{path}{suffix}", query={
         'match': {
-            f'{path}{suffix}.{lang}': {
-                'query': query,
-                'operator': op,
-                'fuzzy_transpositions': False
-            }
+            f'{path}{suffix}.{lang}': opts
         }
     })
 

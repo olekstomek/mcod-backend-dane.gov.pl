@@ -1,11 +1,9 @@
-'use strict';
-
+/* globals SelectFilter, DateTimeShortcuts */
 import $ from 'jquery';
-import './jquery.djnutils.js';
-import {createSortable, updatePositions} from './sortable';
-import regexQuote from './regexquote';
-import DateTimeShortcuts from 'django/date-time-shortcuts';
-import SelectFilter from 'django/select-filter';
+import './jquery.djnutils';
+import { createSortable, updatePositions } from "./sortable";
+import regexQuote from "./regexquote";
+import grp$ from "./grp$";
 
 var DJNesting = (typeof window.DJNesting != 'undefined')
                ? window.DJNesting : {};
@@ -24,20 +22,24 @@ DJNesting.updateFormAttributes = function($elem, search, replace, selector) {
             'img', '.djn-group', '.djn-inline-form', '.cropduster-form',
             '.dal-forward-conf'].join(',');
     }
-    $elem.find(selector).andSelf().each(function() {
+    var addBackMethod = ($.fn.addBack) ? 'addBack' : 'andSelf';
+    $elem.find(selector)[addBackMethod]().each(function() {
         var $node = $(this),
-            attrs = ['id', 'name', 'for', 'href', 'class', 'onclick'];
+            attrs = ['id', 'name', 'for', 'href', 'class', 'onclick', 'data-inline-formset'];
 
         $.each(attrs, function(i, attrName) {
             var attrVal = $node.attr(attrName);
             if (attrVal) {
                 $node.attr(attrName, attrVal.replace(search, replace));
+                if (attrName === 'data-inline-formset') {
+                    $node.data('inlineFormset', JSON.parse($node.attr(attrName)));
+                }
             }
         });
     });
     // update prepopulate ids for function initPrepopulatedFields
     $elem.find('.prepopulated_field').each(function() {
-        var $node = $(this);
+        var $node = grp$(this);
         var dependencyIds = $.makeArray($node.data('dependency_ids') || []);
         $node.data('dependency_ids', $.map(dependencyIds, function(id) {
             return id.replace(search, replace);
@@ -77,12 +79,12 @@ DJNesting.initRelatedFields = function(prefix, groupData) {
     $inline.djangoFormsetForms().each(function(i, form) {
         $.each(lookupFields.fk || [], function(i, fk) {
             $(form).djangoFormField(fk).each(function() {
-                $(this).grp_related_fk({lookup_url: lookupUrls.related});
+                grp$(this).grp_related_fk({lookup_url: lookupUrls.related});
             });
         });
         $.each(lookupFields.m2m || [], function(i, m2m) {
             $(form).djangoFormField(m2m).each(function() {
-                $(this).grp_related_m2m({lookup_url: lookupUrls.m2m});
+                grp$(this).grp_related_m2m({lookup_url: lookupUrls.m2m});
             });
         });
         $.each(lookupFields.generic || [], function() {
@@ -94,9 +96,9 @@ DJNesting.initRelatedFields = function(prefix, groupData) {
                     $this.parent().find('a.related-lookup').remove();
                     $this.parent().find('.grp-placeholder-related-generic').remove();
                 }
-                $this.grp_related_generic({
-                    content_type: '#id_' + prefix + index + contentType,
-                    object_id: '#id_' + prefix + index + objectId,
+                grp$($this).grp_related_generic({
+                    content_type: `#id_${prefix}-${index}-${contentType}`,
+                    object_id: `#id_${prefix}-${index}-${objectId}`,
                     lookup_url: lookupUrls.related
                 });
             });
@@ -125,7 +127,7 @@ DJNesting.initAutocompleteFields = function(prefix, groupData) {
                 if ($('#' + id + '-autocomplete').length) {
                     return;
                 }
-                $this.grp_autocomplete_fk({
+                grp$($this).grp_autocomplete_fk({
                     lookup_url: lookupUrls.related,
                     autocomplete_lookup_url: lookupUrls.autocomplete
                 });
@@ -138,7 +140,7 @@ DJNesting.initAutocompleteFields = function(prefix, groupData) {
                 if ($('#' + id + '-autocomplete').length) {
                     return;
                 }
-                $this.grp_autocomplete_m2m({
+                grp$($this).grp_autocomplete_m2m({
                     lookup_url: lookupUrls.m2m,
                     autocomplete_lookup_url: lookupUrls.autocomplete
                 });
@@ -153,9 +155,9 @@ DJNesting.initAutocompleteFields = function(prefix, groupData) {
                 if ($('#' + $this.attr('id') + '-autocomplete').length) {
                     return;
                 }
-                $this.grp_autocomplete_generic({
-                    content_type: '#id_' + prefix + index + contentType,
-                    object_id: '#id_' + prefix + index + objectId,
+                grp$($this).grp_autocomplete_generic({
+                    content_type: `#id_${prefix}-${index}-${contentType}`,
+                    object_id: `#id_${prefix}-${index}-${objectId}`,
                     lookup_url: lookupUrls.related,
                     autocomplete_lookup_url: lookupUrls.m2m
                 });
@@ -171,7 +173,8 @@ DJNesting.DjangoInlines = {
         row.find('.prepopulated_field').each(function() {
             var field = $(this),
                 input = (field.is(':input') ? field : field.find(':input')),
-                dependencyList = input.data('dependency_list') || [],
+                $input = grp$(input),
+                dependencyList = $input.data('dependency_list') || [],
                 formPrefix = input.djangoFormPrefix(),
                 dependencies = [];
             if (!formPrefix || formPrefix.match(/__prefix__/)) {
@@ -181,13 +184,13 @@ DJNesting.DjangoInlines = {
                 dependencies.push('#id_' + formPrefix + fieldName);
             });
             if (dependencies.length) {
-                input.prepopulate(dependencies, input.attr('maxlength'));
+                $input.prepopulate(dependencies, input.attr('maxlength'));
             }
         });
     },
     reinitDateTimeShortCuts: function() {
         // Reinitialize the calendar and clock widgets by force
-        if (typeof DateTimeShortcuts !== 'undefined') {
+        if (typeof window.DateTimeShortcuts !== 'undefined') {
             $('.datetimeshortcuts').remove();
             DateTimeShortcuts.init();
         }
@@ -195,19 +198,85 @@ DJNesting.DjangoInlines = {
     updateSelectFilter: function($form) {
         // If any SelectFilter widgets are a part of the new form,
         // instantiate a new SelectFilter instance for it.
-        if (typeof SelectFilter !== 'undefined') {
+        if (typeof window.SelectFilter !== 'undefined') {
             $form.find('.selectfilter').each(function(index, value) {
                 var namearr = value.name.split('-');
-                SelectFilter.init(value.id, namearr[namearr.length - 1], false, DJNesting.adminStaticPrefix);
+                SelectFilter.init(value.id, namearr[namearr.length - 1], false);
             });
             $form.find('.selectfilterstacked').each(function(index, value) {
                 var namearr = value.name.split('-');
-                SelectFilter.init(value.id, namearr[namearr.length - 1], true, DJNesting.adminStaticPrefix);
+                SelectFilter.init(value.id, namearr[namearr.length - 1], true);
             });
         }
     }
 };
 
-window.DJNesting = DJNesting;
+function patchSelectFilter() {
+    window.SelectFilter.init = (function(oldFn) {
+        return function init(field_id, field_name, is_stacked) {
+            if (field_id.match(/\-empty\-/)) {
+                return;
+            } else {
+                oldFn.apply(this, arguments);
+            }
+        };
+    }(window.SelectFilter.init));
+}
+
+if (typeof window.SelectFilter !== 'undefined') {
+    patchSelectFilter();
+} else {
+    setTimeout(function() {
+        if (typeof window.SelectFilter !== 'undefined') {
+            patchSelectFilter();
+        }
+    }, 12);
+}
+
+const djangoFuncs = ['prepopulate', 'djangoAdminSelect2'];
+
+djangoFuncs.forEach((funcName) => {
+    (function patchDjangoFunction(callCount) {
+        if (callCount > 2) {
+            return;
+        }
+        if (typeof $.fn[funcName] === 'undefined') {
+            return setTimeout(() => patchDjangoFunction(callCount++), 12);
+        }
+        $.fn[funcName] = (function(oldFn) {
+            return function django_fn_patch()  {
+                return oldFn.apply(
+                    this.filter(
+                        ':not([id*="-empty-"]):not([id$="-empty"]):not([id*="__prefix__"])'),
+                        arguments);
+            }
+        }($.fn[funcName]));
+    }(0));
+});
+
+const grpFuncs = [
+    'grp_autocomplete_fk', 'grp_autocomplete_generic', 'grp_autocomplete_m2m',
+    'grp_collapsible', 'grp_collapsible_group', 'grp_inline', 'grp_related_fk',
+    'grp_related_generic', 'grp_related_m2m', 'grp_timepicker', 'datepicker',
+    'prepopulate', 'djangoAdminSelect2'];
+
+grpFuncs.forEach((funcName) => {
+    (function patchGrpFunction(callCount) {
+        if (callCount > 2) {
+            return;
+        }
+        if (typeof window.grp === 'undefined' || typeof window.grp.jQuery.fn[funcName] === 'undefined') {
+            return setTimeout(() => patchGrpFunction(callCount++), 12);
+        }
+        window.grp.jQuery.fn[funcName] = (function(oldFn) {
+            return function grp_fn_patch()  {
+                return oldFn.apply(
+                    this.filter(
+                        ':not([id*="-empty-"]):not([id$="-empty"]):not([id*="__prefix__"])'),
+                        arguments);
+            }
+        }(window.grp.jQuery.fn[funcName]));
+    }(0));
+});
 
 export default DJNesting;

@@ -1,5 +1,4 @@
 from django.test import Client
-from django.urls import reverse
 from pytest_bdd import scenarios
 
 from mcod.showcases.models import Showcase
@@ -45,7 +44,7 @@ def test_save_model_given_created_by(admin, another_admin):
     # add 1 showcase
     client = Client()
     client.force_login(admin)
-    response = client.post(reverse('admin:showcases_showcase_add'), obj, follow=True)
+    response = client.post(Showcase.get_admin_add_url(), obj, follow=True)
     assert response.status_code == 200
     ap1 = Showcase.objects.last()
     assert ap1.created_by.id == admin.id
@@ -53,7 +52,7 @@ def test_save_model_given_created_by(admin, another_admin):
     # add 2 showcase
     client = Client()
     client.force_login(another_admin)
-    response = client.post(reverse('admin:showcases_showcase_add'), obj2, follow=True)
+    response = client.post(Showcase.get_admin_add_url(), obj2, follow=True)
     assert response.status_code == 200
     ap2 = Showcase.objects.last()
     assert ap2.created_by.id == another_admin.id
@@ -62,7 +61,7 @@ def test_save_model_given_created_by(admin, another_admin):
     # change 1 showcase
     client = Client()
     client.force_login(another_admin)
-    response = client.post(reverse('admin:showcases_showcase_change', args=[ap1.id]), obj3, follow=True)
+    response = client.post(ap1.admin_change_url, obj3, follow=True)
     assert response.status_code == 200
 
     # creator of app2 should be still admin
@@ -84,7 +83,7 @@ def test_add_tags_to_showcases(admin, tag, tag_pl, showcase):
     assert tag_pl not in showcase.tags.all()
     client = Client()
     client.force_login(admin)
-    client.post(reverse('admin:showcases_showcase_change', args=[showcase.id]), data, follow=True)
+    client.post(showcase.admin_change_url, data, follow=True)
     obj = Showcase.objects.get(id=showcase.id)
     assert obj.slug == 'name'
     assert tag_pl in showcase.tags.all()

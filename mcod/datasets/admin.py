@@ -5,6 +5,7 @@ from django.core.exceptions import PermissionDenied
 from django.core.paginator import EmptyPage, InvalidPage, Paginator
 from django.db.models import Subquery, OuterRef
 from django.http import JsonResponse
+from django.template.defaultfilters import yesno
 from django.urls import path
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
@@ -19,6 +20,7 @@ from mcod.lib.admin_mixins import (
     TrashMixin,
     InlineModelAdmin
 )
+from mcod.lib.utils import is_django_ver_lt
 from mcod.resources.forms import ResourceListForm, AddResourceForm, ResourceInlineFormset
 from mcod.resources.models import Resource
 from mcod.unleash import is_enabled
@@ -50,15 +52,17 @@ class PaginationInline(TabularInline):
         class PaginationFormSet(formset_class):
             def __init__(self, *args, **kwargs):
                 super().__init__(*args, **kwargs)
+                default_first_page = '0' if is_django_ver_lt(3, 2) else '1'
                 queryset = self.queryset
                 paginator = Paginator(queryset, self.per_page)
                 try:
-                    page_num = int(request.GET.get(self.page_param, '0'))
+                    page_num = int(request.GET.get(self.page_param, default_first_page))
                 except ValueError:
-                    page_num = 0
+                    page_num = int(default_first_page)
 
                 try:
-                    page = paginator.page(page_num + 1)
+                    _paginator_page = page_num + 1 if is_django_ver_lt(3, 2) else page_num
+                    page = paginator.page(_paginator_page)
                 except (EmptyPage, InvalidPage):
                     page = paginator.page(paginator.num_pages)
 
@@ -208,6 +212,7 @@ class AddResourceStacked(InlineModelAdmin):
 
     has_dynamic_data = ['has_dynamic_data'] if is_enabled('S43_dynamic_data.be') else []
     has_high_value_data = ['has_high_value_data'] if is_enabled('S41_resource_has_high_value_data.be') else []
+    has_research_data = ['has_research_data'] if is_enabled('S47_research_data.be') else []
     regions = ['regions_'] if\
         is_enabled('S45_forms_unification.be') and is_enabled('S37_resources_admin_region_data.be') else []
     _fields = (
@@ -220,6 +225,7 @@ class AddResourceStacked(InlineModelAdmin):
         'special_signs',
         *has_dynamic_data,
         *has_high_value_data,
+        *has_research_data,
     )
 
     fieldsets = (
@@ -268,12 +274,10 @@ class AddResourceStacked(InlineModelAdmin):
 
 
 class OrganizationFilter(AutocompleteFilter):
-    field_name = 'organization'  # field name - ForeignKey to Organization model
-    autocomplete_url = 'organization-autocomplete'  # url name of Organization autocomplete view
-    is_placeholder_title = False  # filter title will be shown as placeholder
-    widget_attrs = {
-        'data-placeholder': _('Filter by institution name')
-    }
+    autocomplete_url = 'organization-autocomplete'
+    field_name = 'organization'
+    is_placeholder_title = True
+    title = _('Filter by institution name')
 
 
 @admin.register(Dataset)
@@ -328,20 +332,16 @@ class DatasetAdmin(HistoryMixin, ModelAdmin):
         )
 
     def has_dynamic_data_info(self, obj):
-        if obj.has_dynamic_data is True:
-            return 'Tak'
-        elif obj.has_dynamic_data is False:
-            return 'Nie'
-        return '-'
+        return yesno(obj.has_dynamic_data, 'Tak,Nie,-')
     has_dynamic_data_info.short_description = _('dynamic data')
 
     def has_high_value_data_info(self, obj):
-        if obj.has_high_value_data is True:
-            return 'Tak'
-        elif obj.has_high_value_data is False:
-            return 'Nie'
-        return '-'
+        return yesno(obj.has_high_value_data, 'Tak,Nie,-')
     has_high_value_data_info.short_description = _('has high value data')
+
+    def has_research_data_info(self, obj):
+        return yesno(obj.has_research_data, 'Tak,Nie,-')
+    has_research_data_info.short_description = _('has research data')
 
     def update_frequency_display(self, obj):
         return obj.frequency_display
@@ -364,6 +364,9 @@ class DatasetAdmin(HistoryMixin, ModelAdmin):
         has_high_value_data = []
         if is_enabled('S35_high_value_data.be'):
             has_high_value_data = ['has_high_value_data_info'] if obj and obj.is_imported else ['has_high_value_data']
+        has_research_data = []
+        if is_enabled('S47_research_data.be'):
+            has_research_data = ['has_research_data_info'] if obj and obj.is_imported else ['has_research_data']
         general_fields = [
             'notes',
             'url',
@@ -377,6 +380,7 @@ class DatasetAdmin(HistoryMixin, ModelAdmin):
             'organization',
             category_field,
             *has_high_value_data,
+            *has_research_data,
         ]
         if is_enabled('S41_resource_bulk_download.be'):
             general_fields += ['archived_resources_files_media_url']
@@ -454,6 +458,7 @@ class DatasetAdmin(HistoryMixin, ModelAdmin):
         data = {
             'has_high_value_data': obj.has_high_value_data,
             'has_dynamic_data': obj.has_dynamic_data,
+            'has_research_data': obj.has_research_data,
         } if obj else {}
         return JsonResponse(data)
 

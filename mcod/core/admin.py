@@ -2,6 +2,8 @@ from auditlog.admin import (
     ResourceTypeFilter as BaseResourceTypeFilter,
 )
 from auditlog.models import LogEntry as BaseLogEntry
+from dal import autocomplete
+from django.apps import apps
 from django.contrib import admin
 from django.contrib.auth.models import Group
 from django.utils import timezone
@@ -10,6 +12,13 @@ from django.utils.translation import gettext_lazy as _
 
 from mcod.histories.models import LogEntry
 from mcod.lib.admin_mixins import LogEntryAdmin as BaseLogEntryAdmin
+
+
+class AdminAutocomplete(autocomplete.Select2QuerySetView):
+    model = 'users.User'
+
+    def get_queryset(self):
+        return apps.get_model(self.model).objects.autocomplete(self.request.user, self.q)
 
 
 class ResourceTypeFilter(BaseResourceTypeFilter):

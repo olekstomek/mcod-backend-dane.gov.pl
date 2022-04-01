@@ -2,7 +2,6 @@
 from functools import partial
 
 import falcon
-from dal import autocomplete
 from django.apps import apps
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.http import JsonResponse
@@ -181,25 +180,6 @@ class DatasetCommentsView(JsonAPIView):
             data = cleaned['data']['attributes']
             model = apps.get_model('suggestions.DatasetComment')
             self.response.context.data = model.objects.create(dataset_id=id, **data)
-
-
-class DatasetAutocompleteAdminView(autocomplete.Select2QuerySetView):
-    def get_queryset(self):
-        # Don't forget to filter out results depending on the visitor !
-        user = self.request.user
-
-        if not user.is_authenticated:
-            return Dataset.objects.none()
-
-        qs = Dataset.objects.filter(status=Dataset.STATUS.published)
-
-        if not user.is_superuser:
-            qs = qs.filter(organization_id__in=user.organizations.all())
-
-        if self.q:
-            qs = qs.filter(title__icontains=self.q)
-
-        return qs
 
 
 class CSVMetadataView(BaseView):

@@ -1,5 +1,5 @@
 from django.test import Client
-from django.utils.encoding import smart_text
+from django.utils.encoding import smart_str
 from pytest_bdd import scenarios
 
 from mcod.unleash import is_enabled
@@ -9,6 +9,7 @@ scenarios(
     'features/admin/dataset_details.feature',
     'features/admin/datasets_list.feature',
     'features/forms.feature',
+    'features/admin/autocomplete.feature',
 )
 if is_enabled('S41_resource_has_high_value_data.be'):
     scenarios('features/admin/custom_urls.feature')
@@ -20,13 +21,13 @@ def test_deleted_resource_are_not_shown_in_dataset_resource_inline(dataset_with_
     client = Client()
     client.force_login(admin)
     response = client.get(dataset.admin_change_url)
-    assert resource.title in smart_text(response.content)
+    assert resource.title in smart_str(response.content)
     resource.delete()
     assert resource.is_removed is True
     client = Client()
     client.force_login(admin)
     response = client.get(dataset.admin_change_url)
-    assert resource.title not in smart_text(response.content)
+    assert resource.title not in smart_str(response.content)
 
 
 def test_resources_are_also_deleted_after_dataset_delete(db, dataset_with_resources, admin):
@@ -36,7 +37,7 @@ def test_resources_are_also_deleted_after_dataset_delete(db, dataset_with_resour
     client = Client()
     client.force_login(admin)
     response = client.get(dataset.admin_change_url)
-    assert resource.title in smart_text(response.content)
+    assert resource.title in smart_str(response.content)
     assert resource.status == 'published'
     assert dataset.status == 'published'
     dataset.delete()

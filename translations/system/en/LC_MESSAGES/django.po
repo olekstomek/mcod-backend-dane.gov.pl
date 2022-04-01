@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-01-27 12:51+0100\n"
+"POT-Creation-Date: 2022-03-19 17:21+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -218,6 +218,12 @@ msgstr ""
 msgid "Datasets being used to build application"
 msgstr ""
 
+msgid "Decision not taken"
+msgstr ""
+
+msgid "decision"
+msgstr ""
+
 msgid "External public data used"
 msgstr ""
 
@@ -297,9 +303,6 @@ msgid "keywords"
 msgstr ""
 
 msgid "report date"
-msgstr ""
-
-msgid "decision"
 msgstr ""
 
 msgid "decision date"
@@ -399,6 +402,9 @@ msgid "Color"
 msgstr ""
 
 msgid "acc: Category"
+msgstr ""
+
+msgid "Unprocessable entity"
 msgstr ""
 
 msgid "Date from"
@@ -617,6 +623,15 @@ msgstr ""
 msgid "{input!r} cannot be formatted as a timedelta."
 msgstr ""
 
+msgid "not specified"
+msgstr ""
+
+msgid "YES"
+msgstr ""
+
+msgid "NO"
+msgstr ""
+
 msgid "malformed query string"
 msgstr ""
 
@@ -702,6 +717,9 @@ msgstr ""
 msgid "has high value data"
 msgstr ""
 
+msgid "has research data"
+msgstr ""
+
 msgid "Update frequency"
 msgstr ""
 
@@ -763,6 +781,11 @@ msgid "Text area is filled, license must be selected"
 msgstr ""
 
 msgid ""
+"You can't enter custom license responsibilities and select default CC BY 4.0 "
+"license responsibilities at the same time. Please choose one."
+msgstr ""
+
+msgid ""
 "Chosen conditions for re-use mean that they contain personal data. Please "
 "contact the administrator at kontakt@dane.gov.pl."
 msgstr ""
@@ -801,6 +824,76 @@ msgstr ""
 msgid "article"
 msgstr ""
 
+msgid ""
+"The user should inform about the source, time of creation and obtaining "
+"private data from the entity providing the data (supplier)"
+msgstr ""
+
+msgid ""
+"The user should inform about the processing of the used private data (if he "
+"modifies it in any way)"
+msgstr ""
+
+msgid ""
+"The scope of the responsibility of the entity providing private data "
+"(suppliers) for the provided data"
+msgstr ""
+
+msgid ""
+"Conditions for the use of private data with the features of a work or "
+"subject of related rights within the meaning of the Act of February 4, 1994 "
+"on copyright and related rights or constituting a database within the "
+"meaning of the Act of July 27, 2001 on the protection of databases, or "
+"covered by plant variety rights within the meaning of the Act of 26 June "
+"2003 on the legal protection of plant varieties, to which the entity "
+"providing private data (suppliers) has rights (Article 36 (2) (1) of the Act "
+"of 11 August 2021 on open data and re-use of public sector information)"
+msgstr ""
+
+msgid ""
+"The user should inform about the source, time of creation and obtaining "
+"public sector information from the obliged entity (supplier)"
+msgstr ""
+
+msgid ""
+"The user should inform about the processing of public sector information to "
+"re-use (when modifying it in any way)"
+msgstr ""
+
+msgid ""
+"The scope of the responsibility of the obliged entity (supplier) for shared "
+"public sector information"
+msgstr ""
+
+msgid ""
+"Conditions for the re-use of public sector information with the features of "
+"a work or subject of related rights within the meaning of the provisions of "
+"the Act of February 4, 1994 on copyright and related rights or constituting "
+"a database within the meaning of the provisions of the Act of July 27, 2001 "
+"on the protection of databases or covered by plant variety rights within the "
+"meaning of the Act of 26 June 2003 on the legal protection of plant "
+"varieties to which the obligated entity (suppliers) has rights (14 (2) of "
+"the Act of 11 August 2021 on open data and re-use public sector information)"
+msgstr ""
+
+msgid ""
+"Conditions for the re-use of public sector information constituting or "
+"containing personal data (Article 15 (1) (4) of the Act of 11 August 2021 on "
+"open data and re-use of public sector information)"
+msgstr ""
+
+msgid ""
+"The scope of the responsibility of the entity providing private data "
+"(suppliers) for the shared data in accordance with the terms of the CC BY "
+"4.0 license"
+msgstr ""
+
+msgid ""
+"The scope of the responsibility of the obliged entity (supplier) providing "
+"public sector information in accordance with the terms of the CC BY 4.0 "
+"license"
+msgstr ""
+
 msgid "external identifier"
 msgstr ""
 
@@ -813,29 +906,19 @@ msgstr ""
 msgid "Url"
 msgstr ""
 
-msgid ""
-"Conditions for using public information that meets the characteristics of "
-"the work or constitute a database (Article 13 paragraph 2 of the Act on the "
-"re-use of public sector information)"
+msgid "Condition for data with features of work with copy rights or database"
 msgstr ""
 
-msgid ""
-"Conditions for using public sector information containing personal data "
-"(Article 14 paragraph 1 point 4 of the Act on the re-use of public Sector "
-"Information)"
+msgid "Condition for data containing personal data"
 msgstr ""
 
-msgid ""
-"The recipient should inform about the processing of the information when it "
-"modifies it"
+msgid "Condition for possible processing of data"
 msgstr ""
 
-msgid "The scope of the provider's responsibility for the information provided"
+msgid "Condition for scope of responsibilities for data"
 msgstr ""
 
-msgid ""
-"The recipient should inform about the date, time of completion and obtaining "
-"information from the obliged entity"
+msgid "Condition for informing about the source of data"
 msgstr ""
 
 msgid "Institution"
@@ -869,6 +952,21 @@ msgstr ""
 msgid "The value must be between %(min)s and %(max)s"
 msgstr ""
 
+#, python-format
+msgid " (version %(version)s)"
+msgstr ""
+
+#, python-format
+msgid "On the data set %(title)s%(version)s [%(url)s] was posted a comment:"
+msgstr ""
+
+#, python-format
+msgid "A comment was posted on the data set %(title)s%(version)s"
+msgstr ""
+
+msgid "This dataset can be used under following conditions: "
+msgstr ""
+
 msgid "id"
 msgstr ""
 
@@ -897,11 +995,6 @@ msgid "modified_by"
 msgstr ""
 
 msgid "The number of followers"
-msgstr ""
-
-msgid ""
-"This dataset is public information, it can be reused under the following "
-"conditions: "
 msgstr ""
 
 msgid "Dataset URL"
@@ -934,19 +1027,10 @@ msgstr ""
 msgid "Dataset has dynamic data"
 msgstr ""
 
+msgid "Dataset has research data"
+msgstr ""
+
 msgid "last import timestamp"
-msgstr ""
-
-#, python-format
-msgid " (version %(version)s)"
-msgstr ""
-
-#, python-format
-msgid "On the data set %(title)s%(version)s [%(url)s] was posted a comment:"
-msgstr ""
-
-#, python-format
-msgid "A comment was posted on the data set %(title)s%(version)s"
 msgstr ""
 
 msgid "Discourse Integration"
@@ -1857,9 +1941,6 @@ msgstr ""
 msgid "Decision taken"
 msgstr ""
 
-msgid "Decision not taken"
-msgstr ""
-
 msgid "Task for CSV generation queued"
 msgstr ""
 
@@ -1971,6 +2052,33 @@ msgstr ""
 msgid "You may edit it again below."
 msgstr ""
 
+#, python-format
+msgid "Add %s"
+msgstr ""
+
+#, python-format
+msgid "Change %s"
+msgstr ""
+
+#, python-format
+msgid "View %s"
+msgstr ""
+
+msgid "Correct Validation"
+msgstr ""
+
+msgid "Validation in progress"
+msgstr ""
+
+msgid "Validation failed"
+msgstr ""
+
+msgid "No validation"
+msgstr ""
+
+msgid "Translation ({lang_code.upper()})"
+msgstr ""
+
 msgid "Delete selected objects"
 msgstr ""
 
@@ -2002,39 +2110,6 @@ msgstr ""
 
 #, python-format
 msgid "Change history: %s"
-msgstr ""
-
-msgid "Translation ({lang_code.upper()})"
-msgstr ""
-
-msgid "Correct Validation"
-msgstr ""
-
-msgid "Validation in progress"
-msgstr ""
-
-msgid "Validation failed"
-msgstr ""
-
-msgid "No validation"
-msgstr ""
-
-msgid "Ordered by"
-msgstr ""
-
-msgid "PENDING"
-msgstr ""
-
-#, python-format
-msgid "Add %s"
-msgstr ""
-
-#, python-format
-msgid "Change %s"
-msgstr ""
-
-#, python-format
-msgid "View %s"
 msgstr ""
 
 msgid "The requested resource could not be found"
@@ -2104,15 +2179,6 @@ msgid "Page must be greater then 1"
 msgstr ""
 
 msgid "Page size mus be greater then 0"
-msgstr ""
-
-msgid "YES"
-msgstr ""
-
-msgid "NO"
-msgstr ""
-
-msgid "not specified"
 msgstr ""
 
 msgid "Licenses"
@@ -2195,6 +2261,9 @@ msgid ""
 "You will receive an activation link to the e-mail address \"%(email)s\"."
 msgstr ""
 
+msgid "Activating the newsletter of dane.gov.pl portal"
+msgstr ""
+
 msgid "Awaits"
 msgstr ""
 
@@ -2238,9 +2307,6 @@ msgid "submissions"
 msgstr ""
 
 msgid "Your email address was removed from our mailing list"
-msgstr ""
-
-msgid "Activating the newsletter of dane.gov.pl portal"
 msgstr ""
 
 msgid "Dear Sir or Madam,"
@@ -2571,10 +2637,16 @@ msgstr ""
 msgid "Longitude"
 msgstr ""
 
+msgid "Ordered by"
+msgstr ""
+
 msgid "Generated report file"
 msgstr ""
 
 msgid "File size"
+msgstr ""
+
+msgid "PENDING"
 msgstr ""
 
 msgid ""
@@ -2787,12 +2859,6 @@ msgstr ""
 msgid "Data date"
 msgstr ""
 
-msgid ""
-"You can't set status of this resource to published, because it's dataset is "
-"still a draft. Set status of this resource to draft or set stauts to "
-"published for that dataset: "
-msgstr ""
-
 #, python-format
 msgid "Invalid file extension: %(ext)s."
 msgstr ""
@@ -2887,6 +2953,10 @@ msgstr ""
 msgid "Resource"
 msgstr ""
 
+#, python-format
+msgid "A comment was posted on the resource %(title)s"
+msgstr ""
+
 msgid "link"
 msgstr ""
 
@@ -2938,14 +3008,13 @@ msgstr ""
 msgid "Resource has dynamic data"
 msgstr ""
 
+msgid "Resource has research data"
+msgstr ""
+
 msgid "Download URL"
 msgstr ""
 
 msgid "symbol"
-msgstr ""
-
-#, python-format
-msgid "A comment was posted on the resource %(title)s"
 msgstr ""
 
 msgid "Numeric"
@@ -3308,9 +3377,6 @@ msgstr ""
 msgid "Desktop Application"
 msgstr ""
 
-msgid "attachement"
-msgstr ""
-
 msgid "showcase"
 msgstr ""
 
@@ -3391,6 +3457,9 @@ msgstr ""
 msgid "Publication finished"
 msgstr ""
 
+msgid "Resource demand reported"
+msgstr ""
+
 msgid "Title, type, domain od propossed data"
 msgstr ""
 
@@ -3446,6 +3515,15 @@ msgid "Accepted dataset submission"
 msgstr ""
 
 msgid "Accepted dataset submissions"
+msgstr ""
+
+#, python-format
+msgid ""
+"On the accepted dataset submission %(title)s [%(url)s] was posted a comment:"
+msgstr ""
+
+#, python-format
+msgid "A comment was posted on the accepted dataset submission %(title)s"
 msgstr ""
 
 msgid "Dataset submission - Trash"
@@ -3518,18 +3596,6 @@ msgid "Dislike"
 msgstr ""
 
 msgid "Feedback"
-msgstr ""
-
-msgid "Resource demand reported"
-msgstr ""
-
-#, python-format
-msgid ""
-"On the accepted dataset submission %(title)s [%(url)s] was posted a comment:"
-msgstr ""
-
-#, python-format
-msgid "A comment was posted on the accepted dataset submission %(title)s"
 msgstr ""
 
 msgid "Valid values are 'plus' and 'minus'"
@@ -3645,9 +3711,6 @@ msgid "Add another %(verbose_name)s"
 msgstr ""
 
 msgid "Remove"
-msgstr ""
-
-msgid "Conditions for reusing information in this set"
 msgstr ""
 
 #, python-format
@@ -4316,6 +4379,86 @@ msgid "Explore subpages of '%(title)s'"
 msgstr ""
 
 msgid "Explore"
+msgstr ""
+
+#, python-format
+msgid "Editing video %(title)s"
+msgstr ""
+
+msgid "Editing"
+msgstr ""
+
+msgid "Saving..."
+msgstr ""
+
+msgid "Delete video"
+msgstr ""
+
+msgid "Thumbnail"
+msgstr ""
+
+msgid "Video thumbnail"
+msgstr ""
+
+msgid "Filesize"
+msgstr ""
+
+msgid "File not found"
+msgstr ""
+
+msgid "Duration"
+msgstr ""
+
+msgid "Usage"
+msgstr ""
+
+#, python-format
+msgid "Used %(usage_count)s time"
+msgid_plural "Used %(usage_count)s times"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "Transcodes"
+msgstr ""
+
+msgid ""
+"If you wish to generate HTML5 compliant transcodes use the form below. This "
+"may take a while depending on the length of the video."
+msgstr ""
+
+msgid "Available Transcodes"
+msgstr ""
+
+#, python-format
+msgid "%(media_format)s (%(quality)s quality)"
+msgstr ""
+
+msgid "(Processing... hold tight)"
+msgstr ""
+
+msgid "ERROR:"
+msgstr ""
+
+msgid "Create transcode"
+msgstr ""
+
+msgid ""
+"Ffmpeg is not found on your server or you have disabled transcodes. Please "
+"install Ffmepg and make sure that transcoding is enabled if you wish to "
+"transcode videos into an HTML5 video compliant format."
+msgstr ""
+
+msgid "Tracks"
+msgstr ""
+
+msgid ""
+"You can add/edit subtitles or accessibility captions for this video. For "
+"information about the filetype that should be used see the mozilla docs on "
+"<a href=\"https://developer.mozilla.org/en-US/docs/Web/API/WebVTT_API"
+"\">WebVTT</a>"
+msgstr ""
+
+msgid "Add tracks"
 msgstr ""
 
 msgid "The data cannot be displayed correctly. Change the data type."

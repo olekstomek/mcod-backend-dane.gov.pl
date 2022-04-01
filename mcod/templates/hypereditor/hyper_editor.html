@@ -432,19 +432,31 @@
             '<a class="ql-action"></a>',
             '<a class="ql-remove"></a>',
         ].join('');
+        var footer_nav_div = parent.document.getElementsByName('footer_nav');
 
-        const toolbarOptions = {
+        var tmpOptions = {
             container: [
                 [{header: [1, 2, 3, false]}],
                 ['bold', 'italic', 'underline', 'link'],
-                [{list: 'ordered'}, {list: 'bullet'}, {% if S42_head_footer_manage %}{menuList: 'bullet'}{% endif %}],
+                [{list: 'ordered'}, {list: 'bullet'}],
                 [{language: ['pl', 'en', false]}],
                 [{fontSize: [16, 18, 20, 22, 24, 26, 28, 30, false]}],
                 [{fontColor: ["blue", "black", "grey", "grey-light", "red", "yellow", "green", "white", false]}],
                 ['clean']
             ]
         };
+        {% if S42_head_footer_manage %}
+        if(footer_nav_div.length > 0 && footer_nav_div[0].parentNode.getElementsByTagName('iframe').length > 0){
+            tmpOptions = {
+                container: [
+                    ['bold', 'link'],
+                    [{list: 'bullet'}, {menuList: 'bullet'}],
+                ]
+            };
+        }
+        {% endif %}
 
+        const toolbarOptions = tmpOptions;
         class CustomTheme extends SnowTheme {
 
             extendToolbar(toolbar) {

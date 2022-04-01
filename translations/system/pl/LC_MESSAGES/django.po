@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-02-23 13:35+0100\n"
+"POT-Creation-Date: 2022-03-21 12:05+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -224,6 +224,12 @@ msgstr "Usuń wybrane propozycje aplikacji"
 msgid "Datasets being used to build application"
 msgstr "Zbiory danych które zostały wykorzystane do budowy"
 
+msgid "Decision not taken"
+msgstr "Decyzja niepodjęta"
+
+msgid "decision"
+msgstr "decyzja"
+
 msgid "External public data used"
 msgstr "Wykorzystane dane publiczne spoza portalu"
 
@@ -304,9 +310,6 @@ msgstr "słowa kluczowe"
 
 msgid "report date"
 msgstr "data zgłoszenia"
-
-msgid "decision"
-msgstr "decyzja"
 
 msgid "decision date"
 msgstr "data decyzji"
@@ -737,6 +740,9 @@ msgstr "Zawiera dane dynamiczne"
 msgid "has high value data"
 msgstr "zawiera dane o wysokiej wartości"
 
+msgid "has research data"
+msgstr "zawiera dane badawcze"
+
 msgid "Update frequency"
 msgstr "Częstotliwość aktualizacji"
 
@@ -953,16 +959,17 @@ msgid ""
 "(suppliers) for the shared data in accordance with the terms of the CC BY "
 "4.0 license"
 msgstr ""
-"Zakres odpowiedzialności podmiotu udostępniającego dane prywatne (dostawcy) za"
-" udostępniane dane zgodny z warunkami licencji CC BY 4.0"
+"Zakres odpowiedzialności podmiotu udostępniającego dane prywatne (dostawcy) "
+"za udostępniane dane zgodny z warunkami licencji CC BY 4.0"
 
 msgid ""
 "The scope of the responsibility of the obliged entity (supplier) providing "
 "public sector information in accordance with the terms of the CC BY 4.0 "
 "license"
 msgstr ""
-"Zakres odpowiedzialności podmiotu udostępniającego informacje sektora publicznego (dostawcy)"
-" za  udostępniane dane zgodny z warunkami licencji CC BY 4.0"
+"Zakres odpowiedzialności podmiotu udostępniającego informacje sektora "
+"publicznego (dostawcy) za  udostępniane dane zgodny z warunkami licencji CC "
+"BY 4.0"
 
 msgid "external identifier"
 msgstr "zewnętrzny identyfikator"
@@ -1023,6 +1030,22 @@ msgstr "zbiór danych"
 msgid "The value must be between %(min)s and %(max)s"
 msgstr "Wartość musi być pomiędzy %(min)s a %(max)s"
 
+#, python-format
+msgid " (version %(version)s)"
+msgstr " (wersja %(version)s)"
+
+#, python-format
+msgid "On the data set %(title)s%(version)s [%(url)s] was posted a comment:"
+msgstr "Do zbioru %(title)s%(version)s [%(url)s] została zgłoszona uwaga:"
+
+#, python-format
+msgid "A comment was posted on the data set %(title)s%(version)s"
+msgstr "Zgłoszono uwagę do zbioru %(title)s%(version)s"
+
+msgid "This dataset can be used under following conditions: "
+msgstr ""
+"Ten zbiór danych może być ponownie wykorzystywany pod poniższymi warunkami: "
+
 msgid "id"
 msgstr ""
 
@@ -1052,11 +1075,6 @@ msgstr "zmodyfikowany przez"
 
 msgid "The number of followers"
 msgstr "Liczba obserwujących"
-
-msgid ""
-"This dataset can be used under following conditions: "
-msgstr ""
-"Ten zbiór danych może być ponownie wykorzystywany pod poniższymi warunkami: "
 
 msgid "Dataset URL"
 msgstr "URL zbioru"
@@ -1088,20 +1106,14 @@ msgstr "Zbiór zawiera dane o wysokiej wartości"
 msgid "Dataset has dynamic data"
 msgstr "Zbiór zawiera dane dynamiczne"
 
+msgid "Dataset has research data"
+msgstr "Zbiór zawiera dane badawcze"
+
+msgid "Dataset regions"
+msgstr "Regiony zbiorów danych"
+
 msgid "last import timestamp"
 msgstr "data ostatniego importu"
-
-#, python-format
-msgid " (version %(version)s)"
-msgstr " (wersja %(version)s)"
-
-#, python-format
-msgid "On the data set %(title)s%(version)s [%(url)s] was posted a comment:"
-msgstr "Do zbioru %(title)s%(version)s [%(url)s] została zgłoszona uwaga:"
-
-#, python-format
-msgid "A comment was posted on the data set %(title)s%(version)s"
-msgstr "Zgłoszono uwagę do zbioru %(title)s%(version)s"
 
 msgid "Discourse Integration"
 msgstr "Integracja Discourse"
@@ -2073,9 +2085,6 @@ msgstr "Wybierz %s do obejrzenia"
 msgid "Decision taken"
 msgstr "Decyzja podjęta"
 
-msgid "Decision not taken"
-msgstr "Decyzja niepodjęta"
-
 msgid "Task for CSV generation queued"
 msgstr "Tworzenie pliku CSV dodane do kolejki zadań"
 
@@ -2211,6 +2220,33 @@ msgstr "%(name)s \"%(obj)s\" usunięte pomyślnie."
 msgid "You may edit it again below."
 msgstr "Poniżej możesz ponownie edytować."
 
+#, python-format
+msgid "Add %s"
+msgstr "Dodaj %s"
+
+#, python-format
+msgid "Change %s"
+msgstr "Zmień %s"
+
+#, python-format
+msgid "View %s"
+msgstr "Obejrzyj %s"
+
+msgid "Correct Validation"
+msgstr "Poprawna walidacja"
+
+msgid "Validation in progress"
+msgstr "Walidacja w toku"
+
+msgid "Validation failed"
+msgstr "Błąd walidacji"
+
+msgid "No validation"
+msgstr "Brak walidacji"
+
+msgid "Translation ({lang_code.upper()})"
+msgstr "Tłumaczenie ({lang_code.upper()})"
+
 msgid "Delete selected objects"
 msgstr "Usuń wybrane obiekty"
 
@@ -2245,39 +2281,6 @@ msgstr "Usunięte:"
 #, python-format
 msgid "Change history: %s"
 msgstr "Historia zmian: %s"
-
-msgid "Translation ({lang_code.upper()})"
-msgstr "Tłumaczenie ({lang_code.upper()})"
-
-msgid "Correct Validation"
-msgstr "Poprawna walidacja"
-
-msgid "Validation in progress"
-msgstr "Walidacja w toku"
-
-msgid "Validation failed"
-msgstr "Błąd walidacji"
-
-msgid "No validation"
-msgstr "Brak walidacji"
-
-msgid "Ordered by"
-msgstr "Zlecone przez"
-
-msgid "PENDING"
-msgstr "W oczekiwaniu"
-
-#, python-format
-msgid "Add %s"
-msgstr "Dodaj %s"
-
-#, python-format
-msgid "Change %s"
-msgstr "Zmień %s"
-
-#, python-format
-msgid "View %s"
-msgstr "Obejrzyj %s"
 
 msgid "The requested resource could not be found"
 msgstr ""
@@ -2431,6 +2434,9 @@ msgid ""
 "You will receive an activation link to the e-mail address \"%(email)s\"."
 msgstr "Na podany adres e-mail \"%(email)s\" otrzymasz link aktywacyjny."
 
+msgid "Activating the newsletter of dane.gov.pl portal"
+msgstr "Aktywacja newslettera portalu dane.gov.pl"
+
 msgid "Awaits"
 msgstr "Oczekuje"
 
@@ -2476,9 +2482,6 @@ msgstr "potwierdzenia wysyłki"
 
 msgid "Your email address was removed from our mailing list"
 msgstr "Twój adres email został usunięty z naszej listy mailingowej"
-
-msgid "Activating the newsletter of dane.gov.pl portal"
-msgstr "Aktywacja newslettera portalu dane.gov.pl"
 
 msgid "Dear Sir or Madam,"
 msgstr "Szanowni Państwo,"
@@ -2814,11 +2817,17 @@ msgstr "Szerokość geograficzna"
 msgid "Longitude"
 msgstr "Długość geograficzna"
 
+msgid "Ordered by"
+msgstr "Zlecone przez"
+
 msgid "Generated report file"
 msgstr "Wygenerowany plik raportu"
 
 msgid "File size"
 msgstr "Rozmiar pliku"
+
+msgid "PENDING"
+msgstr "W oczekiwaniu"
 
 msgid ""
 "The task of generating the report has been commissioned. The report may "
@@ -3043,15 +3052,6 @@ msgstr "Źródło danych"
 msgid "Data date"
 msgstr "Dane na dzień"
 
-msgid ""
-"You can't set status of this resource to published, because it's dataset is "
-"still a draft. Set status of this resource to draft or set stauts to "
-"published for that dataset: "
-msgstr ""
-"Nie można ustawić status opublikowany dla tego zasobu, ponieważ zbiór do "
-"którego przynależy ma status szkic. Pozostaw status szkic lub zmień status "
-"zbioru: "
-
 #, python-format
 msgid "Invalid file extension: %(ext)s."
 msgstr "Niepoprawne rozszerzenie pliku: %(ext)s."
@@ -3149,6 +3149,10 @@ msgstr "zasób"
 msgid "Resource"
 msgstr "Zasób"
 
+#, python-format
+msgid "A comment was posted on the resource %(title)s"
+msgstr "Zgłoszono uwagę do zasobu %(title)s"
+
 msgid "link"
 msgstr ""
 
@@ -3200,15 +3204,17 @@ msgstr "Zasób zawiera dane o wysokiej wartości"
 msgid "Resource has dynamic data"
 msgstr "Zasób zawiera dane dynamiczne"
 
+msgid "Resource has research data"
+msgstr "Zasób zawiera dane badawcze"
+
+msgid "Resource regions"
+msgstr "Regiony danych"
+
 msgid "Download URL"
 msgstr "URL pliku (do pobrania)"
 
 msgid "symbol"
 msgstr "symbol"
-
-#, python-format
-msgid "A comment was posted on the resource %(title)s"
-msgstr "Zgłoszono uwagę do zasobu %(title)s"
 
 msgid "Numeric"
 msgstr "Pole numeryczne"
@@ -3662,6 +3668,9 @@ msgstr ""
 msgid "Publication finished"
 msgstr "Publikacja zakończona"
 
+msgid "Resource demand reported"
+msgstr "Zgłoszono zapotrzebowanie na zasoby"
+
 msgid "Title, type, domain od propossed data"
 msgstr "Nazwa, rodzaj, dziedzina proponowanych danych"
 
@@ -3718,6 +3727,16 @@ msgstr "Zaakceptowana propozycja nowych danych"
 
 msgid "Accepted dataset submissions"
 msgstr "Zaakceptowane propozycje nowych danych"
+
+#, python-format
+msgid ""
+"On the accepted dataset submission %(title)s [%(url)s] was posted a comment:"
+msgstr ""
+"Do propozycji nowych danych %(title)s [%(url)s] został zgłoszony komentarz:"
+
+#, python-format
+msgid "A comment was posted on the accepted dataset submission %(title)s"
+msgstr "Został dodany komentarz do propozycji nowych danych %(title)s"
 
 msgid "Dataset submission - Trash"
 msgstr "Propozycja nowych danych - Kosz"
@@ -3790,19 +3809,6 @@ msgstr ""
 
 msgid "Feedback"
 msgstr ""
-
-msgid "Resource demand reported"
-msgstr "Zgłoszono zapotrzebowanie na zasoby"
-
-#, python-format
-msgid ""
-"On the accepted dataset submission %(title)s [%(url)s] was posted a comment:"
-msgstr ""
-"Do propozycji nowych danych %(title)s [%(url)s] został zgłoszony komentarz:"
-
-#, python-format
-msgid "A comment was posted on the accepted dataset submission %(title)s"
-msgstr "Został dodany komentarz do propozycji nowych danych %(title)s"
 
 msgid "Valid values are 'plus' and 'minus'"
 msgstr ""
@@ -4630,6 +4636,94 @@ msgstr "Odkryj podstrony '%(title)s'"
 msgid "Explore"
 msgstr "Odkryj"
 
+#, python-format
+msgid "Editing video %(title)s"
+msgstr "Edycja wideo %(title)s"
+
+msgid "Editing"
+msgstr "Edytowanie"
+
+msgid "Saving..."
+msgstr "Zapisywanie..."
+
+msgid "Delete video"
+msgstr "Usuń wideo"
+
+msgid "Thumbnail"
+msgstr "Miniaturka"
+
+msgid "Video thumbnail"
+msgstr "Miniaturka wideo"
+
+msgid "Filesize"
+msgstr "Rozmiar pliku"
+
+msgid "File not found"
+msgstr "Nie znaleziono pliku"
+
+msgid "Duration"
+msgstr "Czas trwania"
+
+msgid "Usage"
+msgstr "Użycie"
+
+#, python-format
+msgid "Used %(usage_count)s time"
+msgid_plural "Used %(usage_count)s times"
+msgstr[0] "Użyto 1 raz"
+msgstr[1] "Użyto %(usage_count)s razy"
+msgstr[2] "Użyto %(usage_count)s razy"
+msgstr[3] "Użyto %(usage_count)s razy"
+
+msgid "Transcodes"
+msgstr "Transkodowania"
+
+msgid ""
+"If you wish to generate HTML5 compliant transcodes use the form below. This "
+"may take a while depending on the length of the video."
+msgstr "Jeśli chcesz wygenerować pliki po transkodowaniu zgodne z HTML5,"
+" skorzystaj z poniższego formularza. Może to chwilę potrwać w zależności od długości wideo."
+
+msgid "Available Transcodes"
+msgstr "Dostępne rodzaje transkodowania"
+
+#, python-format
+msgid "%(media_format)s (%(quality)s quality)"
+msgstr ""
+
+msgid "(Processing... hold tight)"
+msgstr "(Trwa przetwarzanie...)"
+
+msgid "ERROR:"
+msgstr "BŁĄÐ:"
+
+msgid "Create transcode"
+msgstr "Utwórz transkodowany plik"
+
+msgid ""
+"Ffmpeg is not found on your server or you have disabled transcodes. Please "
+"install Ffmepg and make sure that transcoding is enabled if you wish to "
+"transcode videos into an HTML5 video compliant format."
+msgstr "Ffmpeg nie został znaleziony na twoim serwerze lub masz wyłączone transkodowanie."
+" Zainstaluj Ffmpeg i upewnij się, że transkodowanie jest włączone,"
+" jeśli chcesz transkodować plik wideo do formatu wideo zgodnego z HTML5."
+
+msgid "Tracks"
+msgstr "Ścieżki tekstowe"
+
+msgid ""
+"You can add/edit subtitles or accessibility captions for this video. For "
+"information about the filetype that should be used see the mozilla docs on "
+"<a href=\"https://developer.mozilla.org/en-US/docs/Web/API/WebVTT_API"
+"\">WebVTT</a>"
+msgstr "Możesz dodać/edytować napisy tego wideo. "
+ "Aby uzyskać informacje o typie pliku z napisami, który powinien być używany,"
+ " zobacz dokumentację Mozilli na temat <a href=\"https://developer.mozilla.org/en-US/docs/Web/API/WebVTT_API"
+"\">WebVTT</a>"
+
+msgid "Add tracks"
+msgstr "Dodaj ścieżkę"
+
 msgid "The data cannot be displayed correctly. Change the data type."
 msgstr "Dane nie mogą być poprawnie wyświetlone. Zmień typ danych."
 
@@ -4991,6 +5085,3 @@ msgstr "Liczba wyników wzrosła"
 
 msgid "Results decresed"
 msgstr "Liczba wyników zmalała"
-
-msgid "attachement"
-msgstr "załącznik"

@@ -1,5 +1,5 @@
 from django.contrib import admin, messages
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from mcod.newsletter.models import Newsletter, Submission, Subscription
 from mcod.newsletter.forms import NewsletterAdminForm

@@ -5,7 +5,7 @@ from pytest_bdd import scenarios
 from bs4 import BeautifulSoup
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.test import Client
-from django.utils.encoding import smart_text
+from django.utils.encoding import smart_str
 
 from mcod.datasets.models import Dataset
 from mcod.organizations.models import Organization
@@ -207,7 +207,7 @@ class TestDatasetsUserRoles(object):
         active_editor.organizations.set([institution])
         response = client.get("/")
         assert response.status_code == 200
-        assert '/datasets/' in smart_text(response.content)
+        assert '/datasets/' in smart_str(response.content)
 
     def test_editor_can_go_to_datasets_in_admin_panel(self, active_editor, institution):
         client = Client()
@@ -221,7 +221,7 @@ class TestDatasetsUserRoles(object):
         client.force_login(admin)
         response = client.get("/")
         assert response.status_code == 200
-        assert '/datasets/' in smart_text(response.content)
+        assert '/datasets/' in smart_str(response.content)
 
     def test_admin_can_go_to_datasets_in_admin_panel(self, admin):
         client = Client()

@@ -2,6 +2,8 @@ import libarchive
 import os
 import tempfile
 
+import rarfile
+
 from mcod import settings
 
 
@@ -25,22 +27,29 @@ class ArchiveReader(object):
         root_dir = os.path.realpath(destiny_path or self.tmp_dir)
 
         files = []
+        if rarfile.is_rarfile(source):
+            with rarfile.RarFile(source) as rf:
+                rf.extractall(path=root_dir)
+            for root, dirs, files_ in os.walk(root_dir):
+                for filename in files_:
+                    files.append(os.path.abspath(os.path.join(root, filename)))
 
-        with libarchive.file_reader(source) as arch:
-            for entry in arch:
-                entry_path = self._get_entry_path(entry)
-                if entry.isdir:
-                    os.makedirs(os.path.join(root_dir, entry_path), exist_ok=True)
-                else:
-                    path, extr_file = os.path.split(entry_path)
-                    if path and not os.path.isdir(os.path.join(root_dir, path)):
-                        os.makedirs(os.path.join(root_dir, path), exist_ok=True)
-                    resource_path = os.path.join(root_dir, path, extr_file)
+        else:
+            with libarchive.file_reader(source) as arch:
+                for entry in arch:
+                    entry_path = self._get_entry_path(entry)
+                    if entry.isdir:
+                        os.makedirs(os.path.join(root_dir, entry_path), exist_ok=True)
+                    else:
+                        path, extr_file = os.path.split(entry_path)
+                        if path and not os.path.isdir(os.path.join(root_dir, path)):
+                            os.makedirs(os.path.join(root_dir, path), exist_ok=True)
+                        resource_path = os.path.join(root_dir, path, extr_file)
 
-                    with open(resource_path, 'wb') as f:
-                        for block in entry.get_blocks():
-                            f.write(block)
-                    files.append(resource_path)
+                        with open(resource_path, 'wb') as f:
+                            for block in entry.get_blocks():
+                                f.write(block)
+                        files.append(resource_path)
 
         self.files = tuple(files)
 

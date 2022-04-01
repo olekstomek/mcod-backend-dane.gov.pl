@@ -455,6 +455,8 @@ def get_data(resource):
         data['has_dynamic_data'] = False
     if is_enabled('S41_resource_has_high_value_data.be'):
         data['has_high_value_data'] = False
+    if is_enabled('S47_research_data.be'):
+        data['has_research_data'] = False
     return data
 
 
@@ -468,6 +470,7 @@ def form_data_is(admin_context, institution, tag_pl, tag_en, categories, buzzfee
             "customfields": None,
             "has_dynamic_data": False,
             "has_high_value_data": False,
+            "has_research_data": False,
             "license_condition_db_or_copyrighted": None,
             "license_condition_modification": None,
             "license_condition_original": None,
@@ -524,6 +527,11 @@ def admin_request_logged_user_with_id(admin_context, user_type, user_params):
     assert _factory is not None
     data = json.loads(user_params)
     admin_context.admin.user = _factory(**data)
+
+
+@given('admin\'s request user is unauthenticated')
+def admin_request_user_unauthenticated(admin_context):
+    admin_context.admin.user = None
 
 
 @when(parsers.parse('admin\'s request posted {data_type} data is {req_post_data}'))
@@ -786,6 +794,13 @@ def api_request_post_data(admin_context, data_type, req_post_data):
         })
         default_post_data['institution']['datasets-2-0-has_high_value_data'] = False
         default_post_data['resource']['has_high_value_data'] = False
+    if is_enabled('S47_research_data.be'):
+        default_post_data['dataset'].update({
+            "has_research_data": False,
+            "resources-2-0-has_research_data": False,
+        })
+        default_post_data['institution']['datasets-2-0-has_research_data'] = False
+        default_post_data['resource']['has_research_data'] = False
 
     assert data_type in default_post_data.keys()
     default_post_data["datasets-2-0-tags_pl"] = []
@@ -883,6 +898,15 @@ def admin_response_page_contains(admin_context, contained_value):
     assert contained_value in content, f'Page content should contain phrase: \"{contained_value}\"'
 
 
+@then(parsers.parse('admin\'s response body field {field} is {value}'))
+@then('admin\'s response body field <field> is <value>')
+def admin_response_body_field(admin_context, field, value):
+    data = admin_context.response.json()
+    values = [str(value) for value in dpath.util.values(data, field)]
+    assert set(values) == {value}, 'value should be {}, but is {}. Full response: {}'.format(
+        {value}, set(values), data)
+
+
 @then(parsers.parse('admin\'s response page form contains {contained_value} and {another_value}'))
 @then('admin\'s response page form contains <contained_value> and <another_value>')
 def admin_response_page_contains_values(admin_context, contained_value, another_value):
@@ -906,7 +930,8 @@ def admin_response_resolved_url_name_is(admin_context, url_name):
 
 def get_response(admin_context):
     client = Client()
-    client.force_login(admin_context.admin.user)
+    if admin_context.admin.user:
+        client.force_login(admin_context.admin.user)
     translation.activate('pl')
     if admin_context.admin.method == 'POST':
         response = client.post(

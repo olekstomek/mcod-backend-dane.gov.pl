@@ -16,7 +16,7 @@ from wagtail.admin.edit_handlers import (FieldPanel, FieldRowPanel,
                                          TabbedInterface)
 from wagtail.api import APIField
 from wagtail.api.v2.serializers import StreamField as StreamFieldSerializer
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from wagtail.core.fields import RichTextField
 from rest_framework.fields import CharField
 from wagtail.core.models import Orderable

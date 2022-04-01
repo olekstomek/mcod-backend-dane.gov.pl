@@ -1,6 +1,3 @@
-# from django.shortcuts import render
-
-# Create your views here.
 from dal import autocomplete
 
 from mcod.regions.api import PeliasApi

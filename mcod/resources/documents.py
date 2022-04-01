@@ -100,6 +100,7 @@ class ResourceDocument(ExtendedDocument):
     computed_views_count = fields.IntegerField()
     has_dynamic_data = fields.BooleanField()
     has_high_value_data = fields.BooleanField()
+    has_research_data = fields.BooleanField()
     if is_enabled('S37_resources_admin_region_data.be'):
         regions = regions_field(attr='all_regions')
     if is_enabled('S40_new_file_model.be'):

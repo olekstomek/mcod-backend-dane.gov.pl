@@ -6,7 +6,7 @@ import pandas as pd
 import param
 from bokeh.models.widgets.markups import Div
 from django.template.loader import render_to_string
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 from panel.util import as_unicode
 from panel.util import isIn
 from panel.widgets import RadioButtonGroup

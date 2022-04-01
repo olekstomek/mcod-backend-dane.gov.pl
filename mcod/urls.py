@@ -10,14 +10,16 @@ from wagtail.admin import urls as wagtailadmin_urls
 from wagtail.documents import urls as wagtaildocs_urls
 from wagtail.documents.api.v2.views import DocumentsAPIViewSet
 from bokeh.server.django import static_extensions
+
 from mcod.cms.views import revisions_view
-from mcod.datasets.views import DatasetAutocompleteAdminView, ConditionLabelsAdminView
+from mcod.datasets.views import ConditionLabelsAdminView
 from mcod.regions.views import RegionsAutocomplete
-from mcod.organizations.views import InstitutionAutocompleteAdminView, InstitutionTypeAdminView
-from mcod.users.views import AdminAutocomplete, CustomAdminLoginView
+from mcod.organizations.views import InstitutionTypeAdminView
+from mcod.users.views import CustomAdminLoginView
 from mcod.cms import urls as cms_urls
 from mcod.cms.api.router import CmsApiRouter
 from mcod.cms.api.views import CmsPagesViewSet, ImagesViewSet, OEmbedApiViewSet
+from mcod.core.admin import AdminAutocomplete
 
 
 panel_app_config = apps.get_app_config('mcod.pn_apps')
@@ -55,12 +57,12 @@ else:
         ),
         path(
             'organization-autocomplete/',
-            InstitutionAutocompleteAdminView.as_view(),
+            AdminAutocomplete.as_view(model='organizations.Organization'),
             name='organization-autocomplete',
         ),
         path(
             'dataset-autocomplete/',
-            DatasetAutocompleteAdminView.as_view(),
+            AdminAutocomplete.as_view(model='datasets.Dataset'),
             name='dataset-autocomplete',
         ),
         path(

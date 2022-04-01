@@ -7,7 +7,7 @@ from django.conf import settings
 from django.db.models import QuerySet
 from django.test import Client
 from django.utils import translation
-from django.utils.encoding import smart_text
+from django.utils.encoding import smart_str
 
 from mcod.articles.models import Article
 
@@ -83,7 +83,7 @@ class TestArticleUserRoles(object):
         client.force_login(active_editor)
         response = client.get("/")
         assert response.status_code == 200
-        assert '/articles/' not in smart_text(response.content)
+        assert '/articles/' not in smart_str(response.content)
 
     def test_editor_cant_go_to_articles_in_admin_panel(self, active_editor):
         client = Client()
@@ -96,7 +96,7 @@ class TestArticleUserRoles(object):
         client.force_login(admin)
         response = client.get("/")
         assert response.status_code == 200
-        assert '/articles' in smart_text(response.content)
+        assert '/articles' in smart_str(response.content)
 
     def test_admin_can_go_to_articles_in_admin_panel(self, admin):
         client = Client()

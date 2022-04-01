@@ -6,7 +6,6 @@ from functools import partial
 
 import falcon
 # from cache_memoize import cache_memoize
-from dal import autocomplete
 from django.contrib.auth import authenticate, login, logout, get_user_model
 from django.contrib.auth.views import LoginView as DjangoLoginView
 from django.contrib.auth.password_validation import validate_password as dj_validate_password
@@ -509,16 +508,6 @@ class ResendActivationEmailView(JsonAPIView):
                     description=_('Email cannot be sent'),
                     code='email_send_error'
                 )
-
-
-class AdminAutocomplete(autocomplete.Select2QuerySetView):
-    def get_queryset(self):
-        if not self.request.user.is_superuser:
-            return User.objects.none()
-        qs = User.objects.filter(is_superuser=True)
-        if self.q:
-            qs = qs.filter(email__icontains=self.q)
-        return qs
 
 
 class CustomAdminLoginView(DjangoLoginView):

@@ -111,6 +111,10 @@ class DataAggregations(ExtSchema):
                 'field': 'has_high_value_data',
                 'size': 100
             },
+            'by_has_research_data': {
+                'field': 'has_research_data',
+                'size': 100
+            },
             'by_showcase_category': {
                 'field': 'showcase_category',
                 'size': 10
@@ -261,6 +265,14 @@ class ApiSearchRequest(ListingSchema):
         doc_base_url='/search',
         doc_field_name='has_high_value_data'
     )
+    if is_enabled('S47_research_data.be'):
+        has_research_data = fields.FilterField(
+            BooleanTermSchema,
+            query_field='has_research_data',
+            doc_template='docs/generic/fields/boolean_term_field.html',
+            doc_base_url='/search',
+            doc_field_name='has_research_data'
+        )
     if is_enabled('S39_filter_by_geodata.be'):
         regions = fields.FilterField(RegionsFilterSchema)
     if is_enabled('S39_showcases.be'):
@@ -386,17 +398,12 @@ class ApiSuggestRequest(CommonSchema):
         ms = MultiSearch(index=settings.ELASTICSEARCH_COMMON_ALIAS_NAME)
 
         for model in models:
+            query = Search(index=settings.ELASTICSEARCH_COMMON_ALIAS_NAME)
             if is_enabled('S39_filter_by_geodata.be') and model in self._completion_models:
-                sug_query = Search(index=f'{model}s')
-                sug_query = sug_query.suggest('title', phrase,
-                                              completion={'field': f'title.{lang}.suggest', 'size': per_model})
-                res = sug_query.execute()
-                suggestions = res.suggest['title'][0]
-                ids = [sug['_id'] for sug in suggestions['options']]
-                query = Search(index=settings.ELASTICSEARCH_COMMON_ALIAS_NAME)
-                query = query.filter('term', model=model).query('ids', values=ids)
+                query = query.filter('term', model=model).query(
+                    nested_query_with_advanced_opts(phrase, 'hierarchy_label', lang, 'and', suffix, 'standard')
+                ).extra(size=per_model)
             else:
-                query = Search(index=settings.ELASTICSEARCH_COMMON_ALIAS_NAME)
                 query = query.filter('term', model=model).filter('term', status='published')
                 query = query.query('bool',
                                     should=[nested_query_with_advanced_opts(phrase, field, lang, op, suffix)

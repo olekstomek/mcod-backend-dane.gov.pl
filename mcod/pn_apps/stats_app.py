@@ -23,7 +23,7 @@ from django.db.models import (
 )
 from django.db.models.functions import Trunc, Coalesce, Cast
 from django.utils.translation import activate
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 from user_agents import parse
 
 from mcod.categories.models import Category

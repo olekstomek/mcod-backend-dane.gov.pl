@@ -253,6 +253,7 @@ HARVESTER_XML_VERSION_TO_SCHEMA_PATH = {
     '1.3': HARVESTER_DATA_DIR.path('xml_import_otwarte_dane_1_3.xsd').root,
     '1.4': HARVESTER_DATA_DIR.path('xml_import_otwarte_dane_1_4.xsd').root,
     '1.5': HARVESTER_DATA_DIR.path('xml_import_otwarte_dane_1_5.xsd').root,
+    '1.6': HARVESTER_DATA_DIR.path('xml_import_otwarte_dane_1_6.xsd').root,
 }
 
 HARVESTER_IMPORTERS = {
@@ -1271,6 +1272,8 @@ DYNAMIC_DATA_MANUAL_URL = env(
     'DYNAMIC_DATA_MANUAL_URL', default='/pl/knowledgebase/useful-materials/dane-dynamiczne')
 HIGH_VALUE_DATA_MANUAL_URL = env(
     'HIGH_VALUE_DATA_MANUAL_URL', default='/pl/knowledgebase/useful-materials/dane-o-wysokiej-wartosci')
+RESEARCH_DATA_MANUAL_URL = env(
+    'RESEARCH_DATA_MANUAL_URL', default='/pl/knowledgebase/useful-materials/dane-badawcze')
 TOURPICKER_URL = f'{BASE_URL}?tourPicker=1'
 API_URL_INTERNAL = env('API_URL_INTERNAL', default='http://mcod-api:8000')
 
@@ -1539,12 +1542,13 @@ DESCRIPTION_FIELD_MAX_LENGTH = 10000
 DESCRIPTION_FIELD_MIN_LENGTH = 20
 
 SHACL_SHAPES = {
-    # 'count': SHACL_SHAPES_DIR.join('dcat-ap.shapes.ttl').root,
-    # 'vocab': SHACL_SHAPES_DIR.join('dcat-ap-mdr-vocabularies.shapes.ttl').root,
-    # 'classes': SHACL_SHAPES_DIR.join('dcat-ap-mandatory-classes.shapes.ttl').root,
-    'shapes': SHACL_SHAPES_DIR.path('dcat-ap_2.0.1_shacl_shapes.ttl').root,
-    'mdr-vocabularies': SHACL_SHAPES_DIR.path('dcat-ap_2.0.1_shacl_mdr-vocabularies.shape.ttl').root,
-    'deprecateduris': SHACL_SHAPES_DIR.path('dcat-ap_2.0.1_shacl_deprecateduris.ttl').root,
+    'deprecateduris': SHACL_SHAPES_DIR.path('dcat-ap_2.1.0_shacl_deprecateduris.ttl').root,
+    'imports': SHACL_SHAPES_DIR.path('dcat-ap_2.1.0_shacl_imports.ttl').root,
+    'mdr-vocabularies': SHACL_SHAPES_DIR.path('dcat-ap_2.1.0_shacl_mdr-vocabularies.shape.ttl').root,
+    'mdr_imports': SHACL_SHAPES_DIR.path('dcat-ap_2.1.0_shacl_mdr_imports.ttl').root,
+    'range': SHACL_SHAPES_DIR.path('dcat-ap_2.1.0_shacl_range.ttl').root,
+    'shapes': SHACL_SHAPES_DIR.path('dcat-ap_2.1.0_shacl_shapes.ttl').root,
+    'shapes_recommended': SHACL_SHAPES_DIR.path('dcat-ap_2.1.0_shacl_shapes_recommended_modified.ttl').root,
 }
 
 NOTIFICATIONS_NOTIFICATION_MODEL = 'schedules.Notification'
@@ -1606,3 +1610,8 @@ DATASET_ARCHIVE_FILES_TASK_DELAY = env('DATASET_ARCHIVE_FILES_TASK_DELAY', defau
 ALLOWED_MINIMUM_SPACE = 1024*1024*1024*env('ALLOWED_MINIMUM_FREE_GB', default=20)
 
 WAGTAILVIDEOS_VIDEO_MODEL = 'cms.CustomVideo'
+
+X_FRAME_OPTIONS = 'SAMEORIGIN'
+
+#  https://docs.djangoproject.com/en/3.2/releases/3.2/#customizing-type-of-auto-created-primary-keys
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'

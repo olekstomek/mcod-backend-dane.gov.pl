@@ -122,6 +122,8 @@ class ResourceApiAttrs(ObjectAttrs, HighlightObjectMixin):
         has_dynamic_data = fields.Boolean()
     if is_enabled('S35_high_value_data.be'):
         has_high_value_data = fields.Boolean()
+    if is_enabled('S47_research_data.be'):
+        has_research_data = fields.Boolean()
     if is_enabled('S37_resources_admin_region_data.be'):
         regions = fields.Method('get_regions')
     if is_enabled('S40_new_file_model.be'):
@@ -470,6 +472,10 @@ class ResourceXMLSerializer(schemas.ExtSchema):
         has_high_value_data = fields.Bool()
     if is_enabled('S43_dynamic_data.be'):
         has_dynamic_data = fields.Bool()
+    if is_enabled('S47_research_data.be'):
+        has_research_data = fields.Bool()
+    if is_enabled('S37_resources_admin_region_data.be'):
+        all_regions = fields.Nested(RegionSchema, data_key='regions', many=True)
 
 
 class ResourceCSVMetadataSerializer(schemas.ExtSchema):
@@ -492,6 +498,10 @@ class ResourceCSVMetadataSerializer(schemas.ExtSchema):
         has_high_value_data = fields.MetaDataNullBoolean(data_key=_('Resource has high value data'))
     if is_enabled('S43_dynamic_data.be'):
         has_dynamic_data = fields.MetaDataNullBoolean(data_key=_('Resource has dynamic data'))
+    if is_enabled('S47_research_data.be'):
+        has_research_data = fields.MetaDataNullBoolean(data_key=_('Resource has research data'))
+    if is_enabled('S37_resources_admin_region_data.be'):
+        regions = fields.Str(data_key=_('Resource regions'), attribute='all_regions_str')
     download_url = fields.Url(data_key=_('Download URL'))
     data_special_signs = fields.Nested(SpecialSignSchema, data_key=_('special signs'), many=True)
 

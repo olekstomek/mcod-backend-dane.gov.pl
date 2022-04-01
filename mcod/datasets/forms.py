@@ -3,7 +3,6 @@ from mcod.lib.field_validators import ContainsLetterValidator
 from mcod.lib.widgets import CKEditorWidget
 from django import forms
 from django.contrib.postgres.forms.jsonb import JSONField
-from django.urls import reverse
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 
@@ -101,6 +100,18 @@ class DatasetForm(ModelFormWithKeywords):
                 'wartości.<br><br>Jeżeli chcesz się więcej dowiedzieć na temat danych wysokiej wartości '
                 '<a href="%(url)s" target="_blank">przejdź do strony</a>') % {
                 'url': f'{settings.BASE_URL}{settings.HIGH_VALUE_DATA_MANUAL_URL}'},
+            widget=CheckboxSelect(attrs={'class': 'inline'}),
+        )
+    if is_enabled('S47_research_data.be'):
+        has_research_data = forms.ChoiceField(
+            required=True,
+            label=_('has research data').capitalize(),
+            choices=[(True, _('Yes')), (False, _('No'))],
+            help_text=(
+                'Zaznaczenie TAK spowoduje oznaczenie wszystkich nowo dodanych danych w zbiorze jako dane badawcze.'
+                '<br><br>Jeżeli chcesz się więcej dowiedzieć na temat danych badawczych '
+                '<a href="%(url)s" target="_blank">przejdź do strony</a>') % {
+                'url': f'{settings.BASE_URL}{settings.RESEARCH_DATA_MANUAL_URL}'},
             widget=CheckboxSelect(attrs={'class': 'inline'}),
         )
 
@@ -210,7 +221,7 @@ class DatasetForm(ModelFormWithKeywords):
                 )
 
                 error_message += "<a href='{}'>{}</a>".format(
-                    reverse('admin:organizations_organization_change', args=[organization.id]),
+                    organization.admin_change_url,
                     organization.title
                 )
 
@@ -239,7 +250,7 @@ class TrashDatasetForm(forms.ModelForm):
             )
 
             error_message += "<a href='{}'>{}</a>".format(
-                reverse('admin:organizations_organizationtrash_change', args=[organization.id]),
+                organization.admin_trash_change_url,
                 organization.title
             )
 

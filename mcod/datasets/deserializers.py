@@ -250,6 +250,13 @@ class DatasetApiSearchRequest(ListingSchema):
             doc_base_url='/datasets',
             doc_field_name='has_high_value_data',
         )
+    if is_enabled('S47_research_data.be'):
+        has_research_data = search_fields.FilterField(
+            BooleanTermSchema,
+            doc_template='docs/generic/fields/boolean_term_field.html',
+            doc_base_url='/datasets',
+            doc_field_name='has_research_data',
+        )
 
     class Meta:
         strict = True

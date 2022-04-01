@@ -268,6 +268,7 @@ class XMLResourceSchema(ResourceMixin, XMLPreProcessedSchema):
     special_signs = List(Str())
     has_dynamic_data = Bool(data_key='hasDynamicData', allow_none=True)
     has_high_value_data = Bool(data_key='hasHighValueData', allow_none=True)
+    has_research_data = Bool(data_key='hasResearchData', allow_none=True)
 
     class Meta:
         ordered = True
@@ -324,6 +325,7 @@ class XMLDatasetSchema(XMLPreProcessedSchema):
     tags = Nested(XMLTagSchema, many=True)
     has_dynamic_data = Bool(data_key='hasDynamicData', allow_none=True)
     has_high_value_data = Bool(data_key='hasHighValueData', allow_none=True)
+    has_research_data = Bool(data_key='hasResearchData', allow_none=True)
 
     class Meta:
         ordered = True

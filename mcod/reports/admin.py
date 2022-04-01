@@ -22,12 +22,10 @@ from mcod.unleash import is_enabled
 
 
 class UserFilter(AutocompleteFilter):
-    field_name = 'ordered_by'
     autocomplete_url = 'admin-autocomplete'
-    is_placeholder_title = False
-    widget_attrs = {
-        'data-placeholder': _('Ordered by')
-    }
+    field_name = 'ordered_by'
+    is_placeholder_title = True
+    title = _('Ordered by')
 
 
 class ReportsAdmin(ModelAdmin):

@@ -1,10 +1,8 @@
-'use strict';
-
 import $ from 'jquery';
 import regexQuote from './regexquote';
 import './jquery.ui.nestedsortable';
 
-export function updatePositions(prefix) {
+function updatePositions(prefix) {
     var position = 0,  // the value of the position formfield
         count = 1,     // The count displayed in stacked inline headers
         $group = $('#' + prefix + '-group'),
@@ -87,7 +85,8 @@ export function updatePositions(prefix) {
     });
 }
 
-export function createSortable($group) {
+function createSortable($group) {
+    const isPolymorphic = $group.is('.djn-is-polymorphic');
     return $group.find('> .djn-items, > .djn-fieldset > .djn-items, > .tabular > .module > .djn-items').nestedSortable({
         handle: [
             '> h3.djn-drag-handler',
@@ -129,6 +128,9 @@ export function createSortable($group) {
             },
             update: function(instance, $placeholder) {
                 var $currItem = instance.currentItem;
+                if (!$currItem) {
+                    return;
+                }
                 var opts = instance.options;
                 // 1. If a className is set as 'placeholder option, we
                 //    don't force sizes - the class is responsible for that
@@ -160,12 +162,20 @@ export function createSortable($group) {
         },
         helper: 'clone',
         opacity: 0.6,
-        maxLevels: 3,
+        maxLevels: 0,
         connectWith: '.djn-items',
         tolerance: 'intersection',
         // Don't allow dragging beneath an inline that is marked for deletion
         isAllowed: function(currentItem, parentItem) {
             if (parentItem && parentItem.hasClass('predelete')) {
+                return false;
+            }
+            const $parentGroup = parentItem.closest('.djn-group');
+            const parentModel = $parentGroup.data('inlineModel');
+            const childModels = $parentGroup.djnData('childModels');
+            const currentModel = currentItem.data('inlineModel');
+            const isPolymorphicChild = (childModels && childModels.indexOf(currentModel) !== -1);
+            if (currentModel !== parentModel && !isPolymorphicChild) {
                 return false;
             }
             return true;
@@ -217,3 +227,5 @@ export function createSortable($group) {
         }
     });
 }
+
+export {updatePositions, createSortable};

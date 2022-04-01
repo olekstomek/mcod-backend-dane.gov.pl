@@ -1,6 +1,6 @@
 {% load i18n static admin_modify suit_tags admin_urls %}
 <div class="inline-group {{ inline_admin_formset.opts.suit_classes }}" id="{{ inline_admin_formset.formset.prefix }}-group">
-  <div class="tabular inline-related {% if forloop.last %}last-related{% endif %}">
+  <div class="tabular inline-related">
 {{ inline_admin_formset.formset.management_form }}
 <fieldset class="module">
    <h2>{% trans 'Datasets list' %}</h2>
@@ -23,8 +23,8 @@
         {% if inline_admin_form.form.non_field_errors %}
         <tr><td colspan="{{ inline_admin_form|cell_count }}"><div class="control-group error"><div class="help-block">{{ inline_admin_form.form.non_field_errors }}</div></div></td></tr>
         {% endif %}
-        <tr class="form-row {% cycle "row1" "row2" %} {% if inline_admin_form.original or inline_admin_form.show_url %}has_original{% endif %}{% if forloop.last %} empty-form{% endif %}"
-             id="{{ inline_admin_formset.formset.prefix }}-{% if not forloop.last %}{{ forloop.counter0 }}{% else %}empty{% endif %}">
+        <tr class="form-row {% cycle "row1" "row2" %} {% if inline_admin_form.original or inline_admin_form.show_url %}has_original{% endif %}{% if forloop.last and inline_admin_formset.has_add_permission %} empty-form{% endif %}"
+             id="{{ inline_admin_formset.formset.prefix }}-{% if forloop.last and inline_admin_formset.has_add_permission %}empty{% else %}{{ forloop.counter0 }}{% endif %}">
         {% if inline_admin_formset.formset.can_delete %}
           <td class="delete">{% if inline_admin_form.original %}{{ inline_admin_form.deletion_field.field }}{% endif %}</td>
         {% endif %}
@@ -82,6 +82,7 @@
     $(document).ready(function($) {
         var rows = "#{{ inline_admin_formset.formset.prefix }}-group .tabular.inline-related tbody tr";
         var alternatingRows = function(row) {
+            // TODO: django 3.1 removes row1 and row2 css classes
             $(rows).not(".add-row").removeClass("row1 row2")
                 .filter(":even").addClass("row1").end()
                 .filter(rows + ":odd").addClass("row2");

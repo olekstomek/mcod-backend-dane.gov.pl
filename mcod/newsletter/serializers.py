@@ -1,5 +1,5 @@
 from marshmallow import pre_dump
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from mcod.core.api import fields
 from mcod.core.api.jsonapi.serializers import ObjectAttrs, TopLevel

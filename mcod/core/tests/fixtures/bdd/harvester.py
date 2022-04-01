@@ -114,10 +114,11 @@ def datasource_imported_resources(obj_id):
 
 
 @when(parsers.parse('xml datasource with id {obj_id:d} of version {version} finishes importing objects'))
+@when('xml datasource with id <obj_id> of version <version> finishes importing objects')
 @requests_mock.Mocker(kw='mock_request')
 def xml_datasource_finishes_import(
         obj_id, version, harvester_decoded_xml_1_2_import_data, harvester_decoded_xml_1_4_import_data,
-        harvester_decoded_xml_1_5_import_data, **kwargs):
+        harvester_decoded_xml_1_5_import_data, harvester_decoded_xml_1_6_import_data, **kwargs):
     mock_request = kwargs['mock_request']
     obj = DataSource.objects.get(pk=obj_id)
     simple_csv_path = os.path.join(settings.TEST_SAMPLES_PATH, 'simple.csv')
@@ -141,6 +142,7 @@ def xml_datasource_finishes_import(
         '1.2': harvester_decoded_xml_1_2_import_data,
         '1.4': harvester_decoded_xml_1_4_import_data,
         '1.5': harvester_decoded_xml_1_5_import_data,
+        '1.6': harvester_decoded_xml_1_6_import_data,
     }
     with patch('mcod.harvester.utils.urlretrieve') as mock_urlretrieve:
         with patch('mcod.harvester.utils.decode_xml') as mock_to_dict:
@@ -150,14 +152,15 @@ def xml_datasource_finishes_import(
 
 
 @then(parsers.parse('xml datasource with id {obj_id:d} of version {version} created all data in db'))
+@then('xml datasource with id <obj_id> of version <version> created all data in db')
 def xml_datasource_imported_resources(obj_id, version):
-    source_import = DataSourceImport.objects.get(datasource_id=obj_id)
-    assert source_import.error_desc == ''
-    assert source_import.status == 'ok'
-    assert source_import.datasets_count == 1
-    assert source_import.datasets_created_count == 1
-    assert source_import.resources_count == 2
-    assert source_import.resources_created_count == 2
+    obj = DataSourceImport.objects.get(datasource_id=obj_id)
+    assert obj.error_desc == ''
+    assert obj.status == 'ok'
+    assert obj.datasets_count == 1
+    assert obj.datasets_created_count == 1
+    assert obj.resources_count == 2
+    assert obj.resources_created_count == 2
     dataset = Dataset.objects.get(source_id=obj_id)
     res = Resource.objects.filter(dataset__source_id=obj_id)
     assert dataset.ext_ident == 'zbior_extId_1'
@@ -176,6 +179,9 @@ def xml_datasource_imported_resources(obj_id, version):
         assert dataset.has_dynamic_data
         assert set(res.values_list('has_dynamic_data', flat=True)) == {True, None}
         assert set(res.values_list('has_high_value_data', flat=True)) == {False, None}
+    elif version == '1.6':
+        assert dataset.has_research_data
+        assert set(res.values_list('has_research_data', flat=True)) == {True, None}
 
 
 @patch('rdflib.plugins.stores.sparqlconnector.urlopen')

@@ -283,6 +283,7 @@ def save_as_xml(file, data):
             'categories': 'category',
             'types': 'type',
             'special_signs': 'special_sign',
+            'regions': 'region'
         }.get(parent, 'item')
 
     xml = dicttoxml(data, attr_type=False, item_func=custom_item_func, custom_root='catalog')
