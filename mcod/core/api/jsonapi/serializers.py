@@ -2,7 +2,7 @@ from collections.abc import Sequence
 
 from django.apps import apps
 from django.core import paginator
-from django.db.models import QuerySet, Manager
+from django.db.models import QuerySet, Manager, Q
 from django.utils.timezone import now
 from django.utils.translation import get_language
 from elasticsearch_dsl import (
@@ -358,14 +358,17 @@ class ExtAggregation(schemas.ExtSchema):
             model_str = getattr(_meta_cls, 'model')
             field_name = getattr(_meta_cls, 'title_field', 'name')
             if model_str:
+                filter_field = getattr(_meta_cls, 'filter_field', 'pk')
+                id_field = getattr(_meta_cls, 'id_field', 'id')
                 model = apps.get_model(model_str)
                 _data = {item['key']: item['doc_count'] for item in data}
                 data = []
-                for item in model.objects.filter(pk__in=_data.keys()).values('id', field_name):
+                q = Q(**{f'{filter_field}__in': _data.keys()})
+                for item in model.objects.filter(q).values(id_field, field_name):
                     data.append({
-                        'id': item['id'],
+                        id_field: item[id_field],
                         'title': item[field_name],
-                        'doc_count': _data[item['id']]
+                        'doc_count': _data[item[id_field]]
                     })
 
         return data

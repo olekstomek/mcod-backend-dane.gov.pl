@@ -6,6 +6,9 @@ from mcod.core.api.schemas import (
     NumberTermSchema,
     StringMatchSchema,
 )
+from mcod.unleash import is_enabled
+
+IS_ANONYMOUS = is_enabled('S47_anonymize_history.be')
 
 
 class HistoryApiRequest(CommonSchema):
@@ -18,7 +21,7 @@ class HistoryApiRequest(CommonSchema):
         ordered = True
 
 
-class HistoryApiSearchRequest(ListingSchema):
+class LogEntryApiSearchRequest(ListingSchema):
     id = search_fields.FilterField(
         NumberTermSchema,
         doc_template='docs/generic/fields/number_term_field.html',
@@ -30,6 +33,7 @@ class HistoryApiSearchRequest(ListingSchema):
         doc_template='docs/generic/fields/string_match_field.html',
         doc_base_url='/histories',
         doc_field_name='action',
+        query_field='action_name',
     )
     change_user_id = search_fields.FilterField(
         NumberTermSchema,
@@ -49,7 +53,7 @@ class HistoryApiSearchRequest(ListingSchema):
         doc_base_url='/histories',
         doc_field_name='message',
     )
-    q = search_fields.MultiMatchField(extra_fields=['table_name', 'action'])
+    q = search_fields.MultiMatchField(extra_fields=['table_name', 'action_name'])
     row_id = search_fields.FilterField(
         NumberTermSchema,
         doc_template='docs/generic/fields/number_term_field.html',
@@ -77,13 +81,8 @@ class HistoryApiSearchRequest(ListingSchema):
         strict = True
         ordered = True
 
-
-class LogEntryApiSearchRequest(HistoryApiSearchRequest):
-    action = search_fields.FilterField(
-        StringMatchSchema,
-        doc_template='docs/generic/fields/string_match_field.html',
-        doc_base_url='/histories',
-        doc_field_name='action',
-        query_field='action_name',
-    )
-    q = search_fields.MultiMatchField(extra_fields=['table_name', 'action_name'])
+    def get_queryset(self, queryset, data):
+        queryset = super().get_queryset(queryset, data)
+        if IS_ANONYMOUS:
+            return queryset.filter('term', table_name='dataset').exclude('terms', change_user_id=[1])
+        return queryset.exclude('terms', change_user_id=[1])

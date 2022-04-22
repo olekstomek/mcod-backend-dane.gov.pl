@@ -1,6 +1,6 @@
 from django.apps import apps
 from django.utils.translation import get_language
-from marshmallow import missing
+from marshmallow import missing, pre_dump
 
 from mcod import settings
 from mcod.core.api import fields
@@ -25,8 +25,8 @@ from mcod.datasets.serializers import (
 )
 from mcod.lib.serializers import TranslatedStr, KeywordsList
 from mcod.organizations.serializers import DataSourceAttr
-from mcod.regions.serializers import RegionSchema
-from mcod.resources.serializers import GeoTileAggregation
+from mcod.regions.serializers import RegionSchema, RegionAggregationSerializer
+from mcod.resources.serializers import GeoTileAggregation, GeoRegionAggregation
 from mcod.showcases.serializers import (
     ShowcaseCategoryAggregation,
     ShowcasePlatformAggregation,
@@ -231,6 +231,43 @@ class CommonObjectApiAggregations(ExtSchema):
         many=True,
         attribute='_filter_by_showcase_platforms.by_showcase_platforms.buckets')
     by_tiles = fields.Nested(GeoTileAggregation, many=True)
+    by_regions = fields.Nested(
+        RegionAggregationSerializer,
+        many=True,
+        attribute='_filter_by_regions.by_regions.inner.inner.buckets'
+    )
+    map_by_regions = fields.Nested(
+        GeoRegionAggregation,
+        many=True,
+    )
+
+    @pre_dump(pass_many=True)
+    def prepare_data(self, data, **kwargs):
+        regions_data = []
+        if is_enabled('S48_by_region_aggregation.be'):
+            regions_agg = getattr(data, 'regions_agg', None)
+            unique_regions = regions_agg.resources_regions.bbox_regions.top_regions.unique_regions.buckets if \
+                regions_agg and not hasattr(regions_agg, 'model_types') else []
+            if hasattr(regions_agg, 'model_types'):
+                regions_data.append({
+                    'region_name': regions_agg.resources_regions.single_region.region_data.hits[0].hierarchy_label,
+                    'doc_count': regions_agg.doc_count,
+                    'resources_count': regions_agg.model_types.buckets.resources.doc_count,
+                    'datasets_count': regions_agg.model_types.buckets.datasets.doc_count,
+                    'centroid': [regions_agg.resources_regions.single_region.region_data.hits[0].coords.lon,
+                                 regions_agg.resources_regions.single_region.region_data.hits[0].coords.lat]
+                })
+            for bucket in unique_regions:
+                regions_data.append({
+                    'region_name': bucket.region_data.hits[0].hierarchy_label,
+                    'doc_count': bucket.doc_count,
+                    'resources_count': bucket.model_types.buckets.resources.doc_count,
+                    'datasets_count': bucket.model_types.buckets.datasets.doc_count,
+                    'centroid': [bucket.region_data.hits[0].coords.lon, bucket.region_data.hits[0].coords.lat]
+                })
+        if regions_data:
+            setattr(data, 'map_by_regions', regions_data)
+        return data
 
 
 class CommonObjectApiMetaSchema(TopLevelMeta):

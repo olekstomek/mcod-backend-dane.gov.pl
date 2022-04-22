@@ -27,6 +27,7 @@ from mcod.core.models import SoftDeletableModel
 from mcod.core.serializers import csv_serializers_registry as csr
 from mcod.core.registries import rdf_serializers_registry as rsr
 from mcod.core.signals import permanently_remove_related_objects
+from mcod.core.utils import sizeof_fmt
 from mcod.watchers.models import Subscription, ModelWatcher
 from mcod.watchers.tasks import update_model_watcher_task
 
@@ -171,6 +172,10 @@ class BaseExtendedModel(LogMixin, AdminMixin, ApiMixin, StatusModel, TimeStamped
     @classmethod
     def get_rdf_serializer_schema(cls):
         return rsr.get_serializer(cls)
+
+    @classmethod
+    def sizeof_fmt(cls, file_size):
+        return sizeof_fmt(file_size)
 
     def to_csv(self, _schema=None):
         _schema = _schema or self.get_csv_serializer_schema()

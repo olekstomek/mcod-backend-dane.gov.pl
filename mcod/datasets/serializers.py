@@ -27,7 +27,7 @@ from mcod.lib.extended_graph import ExtendedGraph
 from mcod.lib.serializers import TranslatedStr, KeywordsList
 from mcod.organizations.serializers import InstitutionXMLSerializer, InstitutionCSVMetadataSerializer
 from mcod.resources.serializers import ResourceRDFMixin, ResourceXMLSerializer, ResourceCSVMetadataSerializer
-from mcod.regions.serializers import RegionSchema, RDFRegionSchema
+from mcod.regions.serializers import RegionSchema, RegionBaseSchema, RDFRegionSchema
 from mcod.unleash import is_enabled
 from mcod.watchers.serializers import SubscriptionMixin
 
@@ -529,7 +529,7 @@ class DatasetXMLSerializer(ExtSchema):
     license = fields.Str(attribute='license_name')
     conditions = fields.Str(attribute='formatted_condition_descriptions')
     organization = fields.Method('get_organization')
-    resources = fields.Method('get_resources')
+    resources = fields.Nested(ResourceXMLSerializer, attribute='published_resources', many=True)
 
     source = fields.Nested(SourceXMLSchema)
     if is_enabled('S41_resource_has_high_value_data.be'):
@@ -539,7 +539,7 @@ class DatasetXMLSerializer(ExtSchema):
     if is_enabled('S47_research_data.be'):
         has_research_data = fields.Bool()
     if is_enabled('S37_resources_admin_region_data.be'):
-        regions = fields.Nested(RegionSchema, many=True)
+        regions = fields.Nested(RegionBaseSchema, many=True)
 
     def get_organization(self, dataset):
         context = {
@@ -547,9 +547,6 @@ class DatasetXMLSerializer(ExtSchema):
             'published_resources_count': dataset.organization_published_resources__count,
         }
         return InstitutionXMLSerializer(many=False, context=context).dump(dataset.organization)
-
-    def get_resources(self, dataset):
-        return ResourceXMLSerializer(many=True).dump(dataset.published_resources)
 
 
 class DatasetResourcesCSVSerializer(CSVSerializer):

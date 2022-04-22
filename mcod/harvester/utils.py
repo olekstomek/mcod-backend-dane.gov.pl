@@ -125,13 +125,15 @@ def get_xml_schema_version(*, xml_path=None, xml_url=None):
 
 
 def get_xml_schema_path(version):
-    if version == '1.3' and not is_enabled('S37_validate_resource_link_scheme_harvester.be'):
-        raise KeyError(version)
-    if version == '1.4' and not is_enabled('S41_xml_harvester_special_signs.be'):
-        raise KeyError(version)
-    if version == '1.5' and not is_enabled('S43_xml_harvester_high_value_dynamic_data.be'):
-        raise KeyError(version)
-    if version == '1.6' and not is_enabled('S47_xml_harvester_research_data.be'):
+    versions = {
+        '1.3': 'S37_validate_resource_link_scheme_harvester.be',
+        '1.4': 'S41_xml_harvester_special_signs.be',
+        '1.5': 'S43_xml_harvester_high_value_dynamic_data.be',
+        '1.6': 'S47_xml_harvester_research_data.be',
+        '1.7': 'S48_xml_harvester_resource_supplements.be',
+    }
+    flag = versions.get(version)
+    if flag and not is_enabled(flag):
         raise KeyError(version)
     return settings.HARVESTER_XML_VERSION_TO_SCHEMA_PATH[version]
 

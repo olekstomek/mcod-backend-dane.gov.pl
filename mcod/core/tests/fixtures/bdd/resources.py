@@ -23,7 +23,9 @@ from mcod.counters.tasks import save_counters
 from mcod.datasets.factories import DatasetFactory
 from mcod.harvester.factories import DataSourceFactory
 from mcod.resources.archives import ArchiveReader, UnsupportedArchiveError
-from mcod.resources.factories import ChartFactory, ResourceFactory, TaskResultFactory, ResourceFileFactory
+from mcod.resources.factories import (
+    ChartFactory, ResourceFactory, TaskResultFactory, ResourceFileFactory, SupplementFactory,
+)
 from mcod.resources.file_validation import analyze_file, check_support
 from mcod.unleash import is_enabled
 
@@ -46,6 +48,10 @@ def httpsserver_custom(request):
 def create_res(ds, editor, **kwargs):
     from mcod.resources.models import Resource, ResourceFile
     _fname = kwargs.pop('filename')
+    copyfile(
+        os.path.join(settings.TEST_SAMPLES_PATH, _fname),
+        os.path.join(settings.RESOURCES_MEDIA_ROOT, _fname)
+    )
     _kwargs = {
         'title': 'Analysis of fake news sites and viral posts',
         'description': 'Over the past four years, BuzzFeed News has maintained lists of sites that '
@@ -88,40 +94,36 @@ def create_res(ds, editor, **kwargs):
     return res
 
 
+def create_geo_res(ds, editor, **kwargs):
+    data = {
+        'filename': 'geo.csv',
+        'title': 'Geo tab test',
+        'description': 'more than 20 characters'
+    }
+    data.update(kwargs)
+    return create_res(ds, editor, **data)
+
+
+def create_res_with_regions(res_id, dataset_id, main_region, additional_regions, **kwargs):
+    resource = ResourceFactory.create(id=res_id, dataset_id=dataset_id, **kwargs)
+    resource.regions.set([main_region])
+    resource.regions.add(*additional_regions, through_defaults={'is_additional': True})
+    resource.save()
+
+
 @pytest.fixture
 def buzzfeed_fakenews_resource(buzzfeed_dataset, buzzfeed_editor, mocker):
-    _name = 'buzzfeed-2018-fake-news-1000-lines.csv'
-    copyfile(
-        os.path.join(settings.TEST_SAMPLES_PATH, _name),
-        os.path.join(settings.RESOURCES_MEDIA_ROOT, _name)
-    )
-    return create_res(buzzfeed_dataset, buzzfeed_editor, filename=_name)
+    return create_res(buzzfeed_dataset, buzzfeed_editor, filename='buzzfeed-2018-fake-news-1000-lines.csv')
 
 
 @pytest.fixture
 def resource_with_date_and_datetime(buzzfeed_dataset, buzzfeed_editor, mocker):
-    _name = 'date_and_datetime.csv'
-    copyfile(
-        os.path.join(settings.TEST_SAMPLES_PATH, _name),
-        os.path.join(settings.RESOURCES_MEDIA_ROOT, _name)
-    )
-
-    return create_res(buzzfeed_dataset, buzzfeed_editor, filename=_name)
+    return create_res(buzzfeed_dataset, buzzfeed_editor, filename='date_and_datetime.csv')
 
 
 @pytest.fixture
 def geo_tabular_data_resource(buzzfeed_dataset, buzzfeed_editor, mocker):
-    _name = 'geo.csv'
-    copyfile(
-        os.path.join(settings.TEST_SAMPLES_PATH, _name),
-        os.path.join(settings.RESOURCES_MEDIA_ROOT, _name)
-    )
-    res_attrs = {
-        'filename': _name,
-        'title': 'Geo tab test',
-        'description': 'more than 20 characters'
-    }
-    return create_res(buzzfeed_dataset, buzzfeed_editor, **res_attrs)
+    return create_geo_res(buzzfeed_dataset, buzzfeed_editor)
 
 
 @pytest.fixture
@@ -219,17 +221,12 @@ def remote_file_resource_with_forced_file_type(remote_file_resource):
 
 @pytest.fixture
 def local_file_resource(buzzfeed_dataset, buzzfeed_editor, mocker):
-    _name = 'geo.csv'
-    copyfile(
-        os.path.join(settings.TEST_SAMPLES_PATH, _name),
-        os.path.join(settings.RESOURCES_MEDIA_ROOT, _name)
-    )
-    res_attrs = {
-        'filename': _name,
+    kwargs = {
+        'filename': 'geo.csv',
         'title': 'Local file resource',
         'description': 'Local file resource'
     }
-    res = create_res(buzzfeed_dataset, buzzfeed_editor, **res_attrs)
+    res = create_res(buzzfeed_dataset, buzzfeed_editor, **kwargs)
     ChartFactory.create(resource=res, is_default=True)
     return res
 
@@ -406,6 +403,12 @@ def resource_with_buzzfeed_file(buzzfeed_fakenews_resource):
     return buzzfeed_fakenews_resource
 
 
+@given(parsers.parse('geo_tabular_data_resource with params {params}'))
+def geo_tabular_data_resource_with_params(buzzfeed_dataset, buzzfeed_editor, params):
+    data = json.loads(params)
+    return create_geo_res(buzzfeed_dataset, buzzfeed_editor, **data)
+
+
 @given(parsers.parse('resource created at {created}'))
 def resources_created_at(created):
     date = parser.parse(created)
@@ -566,13 +569,6 @@ def draft_resource():
 def removed_resource():
     res = ResourceFactory.create(is_removed=True, title='Removed resource')
     return res
-
-
-#
-# @given(parsers.parse('resource with id {resource_id:d}'))
-# def resource_with_id(resource_id):
-#     res = ResourceFactory.create(id=resource_id, title='resource %s' % resource_id)
-#     return res
 
 
 @given(parsers.parse('second resource with id {resource_id:d}'))
@@ -859,10 +855,18 @@ def resourced_is_visited_and_counter_incremented(res_id):
 
 @given(parsers.parse('resource with id {res_id} dataset id {dataset_id} and single main region'))
 def resource_with_region(res_id, dataset_id, main_region, additional_regions):
+    create_res_with_regions(res_id, dataset_id, main_region, additional_regions)
+
+
+@given(parsers.parse('draft resource with id {res_id} dataset id {dataset_id} and single main region'))
+def draft_resource_with_region(res_id, dataset_id, main_region, additional_regions):
+    create_res_with_regions(res_id, dataset_id, main_region, additional_regions, status='draft')
+
+
+@given(parsers.parse('resource with id {res_id} dataset id {dataset_id} and supplement with id {supplement_id}'))
+def resource_with_supplement(res_id, dataset_id, supplement_id):
     resource = ResourceFactory.create(id=res_id, dataset_id=dataset_id)
-    resource.regions.set([main_region])
-    resource.regions.add(*additional_regions, through_defaults={'is_additional': True})
-    resource.save()
+    SupplementFactory.create(id=supplement_id, resource_id=resource.id)
 
 
 @when(parsers.parse('resource with id {obj_id} is revalidated'))

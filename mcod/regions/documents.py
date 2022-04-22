@@ -14,7 +14,8 @@ def regions_field(**kwargs):
         'name': TranslatedTextField('name'),
         'hierarchy_label': TranslatedTextField('hierarchy_label'),
         'bbox': fields.GeoShapeField('wkt_bbox'),
-        'coords': fields.GeoPointField()
+        'coords': fields.GeoPointField(),
+        'hierarchy_level': fields.IntegerField()
     }, **kwargs)
 
 
@@ -26,6 +27,7 @@ class RegionDocument(Document):
     model = fields.KeywordField()
     created = fields.DateField()
     bbox = fields.GeoShapeField('envelope')
+    hierarchy_level = fields.IntegerField()
 
     class Index:
         name = mcs.ELASTICSEARCH_INDEX_NAMES['regions']
@@ -37,3 +39,6 @@ class RegionDocument(Document):
 
     def prepare_model(self, instance):
         return instance._meta.model_name
+
+    def get_queryset(self):
+        return super().get_queryset().all_assigned_regions()

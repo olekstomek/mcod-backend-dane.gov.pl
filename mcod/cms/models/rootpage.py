@@ -36,8 +36,6 @@ class RootPage(BasePage):
                                          verbose_name='Blok nad sekcją "Aktualności"',
                                          help_text='TODO: napisać'
                                          )
-    header_gov = LocalizedHyperField(default=None, blank=True, null=True, verbose_name='Górny nagłówek - sekcja mój gov')
-    header_gov_en = LocalizedHyperField(default=None, blank=True, null=True, verbose_name='Górny nagłówek - sekcja mój gov')
 
     footer_nav = LocalizedHyperField(default=None, blank=True, null=True, verbose_name='Stopka - sekcja nawigacji')
     footer_nav_en = LocalizedHyperField(default=None, blank=True, null=True, verbose_name='Stopka - sekcja nawigacji')
@@ -74,15 +72,12 @@ class RootPage(BasePage):
 
     i18n_fields = BasePage.i18n_fields + ['over_login_section_cb', 'over_search_field_cb', 'over_latest_news_cb']
     if header_and_nav_management:
-        i18n_fields += ['header_gov', 'footer_nav', 'footer_logos']
-        api_fields += [APIField('header_gov', serializer=HyperEditorJSONField(source='header_gov_i18n')),
-                       APIField('footer_nav', serializer=HyperEditorJSONField(source='footer_nav_i18n')),
+        i18n_fields += ['footer_nav', 'footer_logos']
+        api_fields += [APIField('footer_nav', serializer=HyperEditorJSONField(source='footer_nav_i18n')),
                        APIField('footer_logos', serializer=StreamFieldSerializer(source='footer_logos_i18n'))]
-        content_panels_pl += [HyperFieldPanel('header_gov'),
-                              HyperFieldPanel('footer_nav'),
+        content_panels_pl += [HyperFieldPanel('footer_nav'),
                               StreamFieldPanel('footer_logos')]
-        content_panels_en += [HyperFieldPanel('header_gov_en'),
-                              HyperFieldPanel('footer_nav_en'),
+        content_panels_en += [HyperFieldPanel('footer_nav_en'),
                               StreamFieldPanel('footer_logos_en')]
 
     class Meta:
@@ -92,5 +87,5 @@ class RootPage(BasePage):
     def get_copyable_fields(self):
         page_fields = ['over_login_section_cb', 'over_search_field_cb', 'over_latest_news_cb']
         if self.header_and_nav_management:
-            page_fields += ['header_gov', 'footer_nav', 'footer_logos']
+            page_fields += ['footer_nav', 'footer_logos']
         return super().get_copyable_fields() + page_fields

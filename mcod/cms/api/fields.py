@@ -357,6 +357,10 @@ class TagsField(drff.Field):
 
 class LocalizedHyperField(HyperField):
 
+    def __init__(self, *args, **kwargs):
+        self.default_classes = kwargs.pop('default_classes', {})
+        super().__init__(*args, **kwargs)
+
     def get_uploaded_video(self, block_settings):
         if is_enabled('S45_cms_embed_od_videos.be'):
             od_pattern = [pattern for pattern in settings.OD_EMBED['urls'] if re.match(
@@ -378,6 +382,22 @@ class LocalizedHyperField(HyperField):
         # https://docs.djangoproject.com/en/3.0/releases/3.0/#features-removed-in-3-0
         return self.to_python(value)
 
+    def update_general_settings(self, block):
+        if is_enabled('S42_cms_header_nav_manage.be'):
+            for block_type, default_classes_str in self.default_classes.items():
+                if block['settings'].get(block_type) and 'id' in block:
+                    classes = [
+                        class_name
+                        for class_name in block['general'].get('classes', '').split(' ')
+                        if class_name
+                    ]
+                    classes.extend([
+                        class_name
+                        for class_name in default_classes_str.split(' ')
+                        if class_name not in classes
+                    ])
+                    block['general']['classes'] = ' '.join(classes)
+
     def to_python(self, value):
         """
         Injects image's alt_pl or alt_en depending on current language,
@@ -392,6 +412,7 @@ class LocalizedHyperField(HyperField):
             while visit_queue:
                 block = visit_queue.popleft()
                 if isinstance(block.get('settings'), dict):
+                    self.update_general_settings(block)
                     all_blocks_settings.append(block['settings'])
 
                 try:

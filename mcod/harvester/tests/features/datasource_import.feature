@@ -14,6 +14,7 @@ Feature: Datasource import
     | 101    | 1.2     |
     | 101    | 1.5     |
     | 101    | 1.6     |
+    | 101    | 1.7     |
 
   Scenario: DCAT resources are properly imported
     Given active dcat_datasource with id 101 for data {"api_url": "http://api.mock-portal.pl/dcat/endpoint"}

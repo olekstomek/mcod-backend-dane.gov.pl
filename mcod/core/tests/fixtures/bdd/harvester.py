@@ -118,13 +118,18 @@ def datasource_imported_resources(obj_id):
 @requests_mock.Mocker(kw='mock_request')
 def xml_datasource_finishes_import(
         obj_id, version, harvester_decoded_xml_1_2_import_data, harvester_decoded_xml_1_4_import_data,
-        harvester_decoded_xml_1_5_import_data, harvester_decoded_xml_1_6_import_data, **kwargs):
+        harvester_decoded_xml_1_5_import_data, harvester_decoded_xml_1_6_import_data,
+        harvester_decoded_xml_1_7_import_data, **kwargs):
     mock_request = kwargs['mock_request']
     obj = DataSource.objects.get(pk=obj_id)
     simple_csv_path = os.path.join(settings.TEST_SAMPLES_PATH, 'simple.csv')
     with open(simple_csv_path, 'rb') as tmp_file:
         mock_request.get('http://mock-resource.com.pl/simple.csv',
                          headers={'content-type': 'application/csv'}, content=tmp_file.read())
+    txt_path = os.path.join(settings.TEST_SAMPLES_PATH, 'example.txt')
+    with open(txt_path, 'rb') as txt:
+        mock_request.get('https://mock-resource.com.pl/example.txt',
+                         headers={'content-type': 'text/plain'}, content=txt.read())
     mock_request.post(settings.SPARQL_UPDATE_ENDPOINT)
     xml_data_path = os.path.join(settings.TEST_SAMPLES_PATH, 'harvester', f'import_example{version}.xml')
     with open(xml_data_path, 'rb') as xml_resp_data:
@@ -143,6 +148,7 @@ def xml_datasource_finishes_import(
         '1.4': harvester_decoded_xml_1_4_import_data,
         '1.5': harvester_decoded_xml_1_5_import_data,
         '1.6': harvester_decoded_xml_1_6_import_data,
+        '1.7': harvester_decoded_xml_1_7_import_data,
     }
     with patch('mcod.harvester.utils.urlretrieve') as mock_urlretrieve:
         with patch('mcod.harvester.utils.decode_xml') as mock_to_dict:
@@ -171,17 +177,20 @@ def xml_datasource_imported_resources(obj_id, version):
     assert dataset.keywords_list == [{'name': '2028_tagPL', 'language': 'pl'}]
     assert set(res.values_list('ext_ident', flat=True)) == {'zasob_extId_zasob_1', 'zasob_extId_zasob_2'}
     assert set(res.values_list('title', flat=True)) == {'ZASOB CSV LOCAL', 'ZASOB csv REMOTE'}
-    if version == '1.4':  # from this version special_signs of resources are imported also.
+    ver_no = int(version.split('.')[1])  # version as string ('1.4') to version number (4)
+    if ver_no == 4:  # from 1.4 version special_signs of resources are imported also.
         for resource in res:
-            assert resource.special_signs_symbols_list == '-'
-    elif version == '1.5':  # from this version has_high_value_data, has_dynamic_data attrs are imported also.
+            assert resource.special_signs_symbols_list == ['-']
+    if ver_no >= 5:  # from 1.5 version: has_high_value_data, has_dynamic_data attrs are imported also.
         assert dataset.has_high_value_data
         assert dataset.has_dynamic_data
         assert set(res.values_list('has_dynamic_data', flat=True)) == {True, None}
         assert set(res.values_list('has_high_value_data', flat=True)) == {False, None}
-    elif version == '1.6':
+    if ver_no >= 6:  # from 1.6 has_research_data is imported.
         assert dataset.has_research_data
         assert set(res.values_list('has_research_data', flat=True)) == {True, None}
+    if ver_no >= 7:  # from 1.7 supplements are imported.
+        assert res.get(title='ZASOB csv REMOTE').supplements.count() == 1
 
 
 @patch('rdflib.plugins.stores.sparqlconnector.urlopen')

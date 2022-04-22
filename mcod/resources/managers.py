@@ -160,3 +160,7 @@ class ResourceFileManager(Manager):
             resource__dataset_id=dataset_id,
             resource__status='published', resource__is_removed=False
         ).values_list('file', 'resource_id', 'resource__title')
+
+
+class SupplementManager(SoftDeletableManager):
+    pass

@@ -754,6 +754,11 @@ def api_request_post_data(admin_context, data_type, req_post_data):
             "Resource_link_tasks-MIN_NUM_FORMS": "0",
             "Resource_link_tasks-TOTAL_FORMS": "3",
 
+            "supplements-INITIAL_FORMS": "0",
+            "supplements-MAX_NUM_FORMS": "10",
+            "supplements-MIN_NUM_FORMS": "0",
+            "supplements-TOTAL_FORMS": "0",
+
             "_save": "",
             "from_resource": "",
             "title_en": "",
@@ -810,9 +815,9 @@ def api_request_post_data(admin_context, data_type, req_post_data):
     admin_context.obj = data
 
 
-@when(parsers.parse('admin\'s request posted file data is {req_post_files}'))
-@when('admin\'s request posted file data is <req_post_files>')
-def api_request_post_file(admin_context, req_post_files):
+@when(parsers.parse('admin\'s request posted files {req_post_files}'))
+@when('admin\'s request posted files <req_post_files>')
+def api_request_post_files(admin_context, req_post_files):
     post_file_names = json.loads(req_post_files)
     posted_files = {}
     for field_name, file_name in post_file_names.items():

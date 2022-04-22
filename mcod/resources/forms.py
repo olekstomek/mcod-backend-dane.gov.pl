@@ -1,3 +1,4 @@
+import magic
 import os
 
 from dateutil.utils import today
@@ -19,7 +20,7 @@ from mcod.lib.widgets import (
     ResourceDataSchemaWidget,
     ResourceMapsAndPlotsWidget,
 )
-from mcod.resources.models import Resource, supported_formats_choices, ResourceFile
+from mcod.resources.models import Resource, supported_formats_choices, ResourceFile, Supplement
 from mcod.special_signs.models import SpecialSign
 from mcod.unleash import is_enabled
 
@@ -382,3 +383,33 @@ class ResourceInlineFormset(forms.models.BaseInlineFormSet):
                 if f.name == 'regions':
                     f.save_form_data(instance, regions_data)
         return instance
+
+
+class SupplementForm(forms.ModelForm):
+
+    class Meta:
+        model = Supplement
+        fields = '__all__'
+        labels = {
+            'file': _('Add file'),
+            'name': _('Document name'),
+            'name_en': _('Document name') + ' (EN)',
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # hack to validate empty forms in formset, more:
+        # https://stackoverflow.com/questions/4481366/django-and-empty-formset-are-valid
+        self.empty_permitted = False
+
+    def clean_file(self):
+        file = self.cleaned_data.get('file')
+        if file:
+            file_error = _('The wrong document format was selected!')
+            mime = magic.from_buffer(file.read(2048), mime=True)
+            if mime not in settings.ALLOWED_RESOURCE_SUPPLEMENT_MIMETYPES:
+                self.add_error('file', file_error)
+            has_txt_extension = file.name.lower().endswith('.txt')
+            if mime == 'text/plain' and not has_txt_extension:
+                self.add_error('file', file_error)
+        return file

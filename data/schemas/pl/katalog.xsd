@@ -96,6 +96,7 @@
                 </xs:simpleType>
             </xs:element>
             <xs:element type="regionsType" name="regions"/>
+            <xs:element type="supplementsType" name="supplements"/>
         </xs:all>
     </xs:complexType>
     <xs:complexType name="resourcesType">
@@ -264,6 +265,18 @@
     <xs:complexType name="regionsType">
         <xs:sequence>
             <xs:element type="regionType" name="region" maxOccurs="unbounded" minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="supplementType">
+        <xs:all>
+            <xs:element type="xs:string" name="name"/>
+            <xs:element type="xs:anyURI" name="file_url"/>
+            <xs:element type="xs:string" name="file_size"/>
+        </xs:all>
+    </xs:complexType>
+    <xs:complexType name="supplementsType">
+        <xs:sequence>
+            <xs:element type="supplementType" name="supplement" maxOccurs="unbounded" minOccurs="0"/>
         </xs:sequence>
     </xs:complexType>
 </xs:schema>

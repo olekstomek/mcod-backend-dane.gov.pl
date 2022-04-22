@@ -169,6 +169,16 @@ class ChartFactory(factory.django.DjangoModelFactory):
         model = models.Chart
 
 
+class SupplementFactory(factory.django.DjangoModelFactory):
+    name = factory.Faker('text', max_nb_chars=200, locale='pl_PL')
+    file = factory.django.FileField(from_func=get_csv_file, filename='{}.txt'.format(str(uuid.uuid4())))
+    resource = factory.SubFactory(ResourceFactory)
+    order = 0
+
+    class Meta:
+        model = models.Supplement
+
+
 class TaskResultFactory(factory.django.DjangoModelFactory):
     task_id = factory.Faker('uuid4')
     status = factory.Faker('random_element', elements=_TASK_STATUSES)
@@ -215,3 +225,4 @@ factories_registry.register('resource', ResourceFactory)
 factories_registry.register('resourcefile', ResourceFileFactory)
 factories_registry.register('chart', ChartFactory)
 factories_registry.register('task result', TaskResultFactory)
+factories_registry.register('supplement', SupplementFactory)

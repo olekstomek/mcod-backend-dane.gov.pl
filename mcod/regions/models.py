@@ -1,14 +1,18 @@
 from decimal import Decimal
+
 from django.contrib.postgres.fields import JSONField
 from django.contrib.postgres.indexes import GinIndex
 from django.db import models
+from django.dispatch import receiver
 from django.utils.translation import gettext_lazy as _
 from modeltrans.fields import TranslationField
 
+from mcod.core.api.search.tasks import update_related_task, bulk_delete_documents_task
 from mcod.core.db.models import BaseExtendedModel
-from mcod.regions.managers import RegionManager
-from django_elasticsearch_dsl.registries import registry
 from mcod.regions.api import PlaceholderApi
+from mcod.regions.managers import RegionManager
+from mcod.regions.signals import regions_updated
+
 
 # Create your models here.
 
@@ -17,9 +21,12 @@ class RegionManyToManyField(models.ManyToManyField):
 
     def save_form_data(self, instance, data):
         pks = frozenset(data)
+        instance._original_regions = list(getattr(instance, self.attname).values_list('pk', flat=True))
         main_regions, additional_regions = self.save_regions_data(pks)
-        getattr(instance, self.attname).set(main_regions)
+        getattr(instance, self.attname).clear()
+        getattr(instance, self.attname).add(*main_regions)
         getattr(instance, self.attname).add(*additional_regions, through_defaults={'is_additional': True})
+        regions_updated.send('resource.Resource', instance)
 
     def value_from_object(self, obj):
         return [] if obj.pk is None else list(getattr(obj, self.attname).filter(
@@ -39,10 +46,6 @@ class RegionManyToManyField(models.ManyToManyField):
             to_create_regions_ids = set(all_regions_ids).difference(set(existing_regions_ids))
             to_create_regions = {reg_id: reg_data[str(reg_id)] for reg_id in to_create_regions_ids}
             created_regions = Region.objects.create_new_regions(to_create_regions)
-            if created_regions:
-                docs = registry.get_documents((Region,))
-                for doc in docs:
-                    doc().update(created_regions)
             all_regions = list(existing_regions) + created_regions
             for reg in all_regions:
                 if str(reg.region_id) in values:
@@ -53,6 +56,13 @@ class RegionManyToManyField(models.ManyToManyField):
 
 
 class Region(BaseExtendedModel):
+    HIERARCHY_MAPPING = {
+        'country': 5,
+        'region': 4,
+        'county': 3,
+        'localadmin': 2,
+        'locality': 1
+    }
     REGION_TYPES = (('locality', _('locality')),
                     ('localadmin', _('localadmin')),
                     ('county', _('county')),
@@ -91,6 +101,10 @@ class Region(BaseExtendedModel):
     def geonames_url(self):
         return f'http://sws.geonames.org/{self.geonames_id}/' if self.geonames_id is not None else None
 
+    @property
+    def hierarchy_level(self):
+        return self.HIERARCHY_MAPPING[self.region_type]
+
     def __str__(self):
         return self.hierarchy_label_i18n
 
@@ -111,3 +125,18 @@ class ResourceRegion(models.Model):
         unique_together = [
             ('region', 'resource'),
         ]
+
+
+@receiver(regions_updated, sender='resource.Resource')
+def update_search_regions(sender, instance, *args, **kwargs):
+    if instance.is_published:
+        current = set(instance.regions.values_list('pk', flat=True))
+        original = set(instance._original_regions)
+        new = current.difference(original)
+        deleted = original.difference(current)
+        to_update = Region.objects.assigned_regions(new)
+        to_delete = Region.objects.unassigned_regions(deleted)
+        if to_delete:
+            bulk_delete_documents_task.s('regions', 'Region', to_delete).apply_async(countdown=2)
+        if to_update:
+            update_related_task.s('regions', 'Region', to_update).apply_async(countdown=2)

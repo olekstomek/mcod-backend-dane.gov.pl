@@ -170,20 +170,23 @@ class SearchView(JsonAPIView):
                     search_date_range[limit] = data.aggregations[agg_name]['value_as_string'][:10]
             if search_date_range:
                 data.aggregations['search_date_range'] = search_date_range
-            tiles = []
-            for agg_name in data.aggregations._d_.keys():
-                if agg_name.startswith('tile'):
-                    agg = getattr(data.aggregations, agg_name)
-                    tile = {
-                        'tile_name': agg_name,
-                        'doc_count': agg.doc_count,
-                    }
-                    if agg.doc_count != 0:
-                        tile['centroid'] = [agg.resources_regions.tile_regions.centroid.location.lon,
-                                            agg.resources_regions.tile_regions.centroid.location.lat]
-                        tiles.append(tile)
-            if tiles:
-                data.aggregations.by_tiles = tiles
+            regions_data = []
+            if not is_enabled('S48_by_region_aggregation.be'):
+                for agg_name in data.aggregations._d_.keys():
+                    if agg_name.startswith('tile'):
+                        agg = getattr(data.aggregations, agg_name)
+                        tile = {
+                            'tile_name': agg_name,
+                            'doc_count': agg.doc_count,
+                            'resources_count': agg.model_types.buckets.resources.doc_count,
+                            'datasets_count': agg.model_types.buckets.datasets.doc_count,
+                        }
+                        if agg.doc_count != 0:
+                            tile['centroid'] = [agg.resources_regions.tile_regions.centroid.location.lon,
+                                                agg.resources_regions.tile_regions.centroid.location.lat]
+                            regions_data.append(tile)
+            if regions_data:
+                setattr(data.aggregations, 'by_tiles', regions_data)
             return data
 
 

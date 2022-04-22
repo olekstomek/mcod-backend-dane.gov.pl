@@ -7,6 +7,8 @@ from django.core.paginator import Paginator
 from django.db.models import Manager
 from django.contrib.contenttypes.models import ContentType
 
+from mcod.unleash import is_enabled
+
 logger = logging.getLogger('mcod')
 
 
@@ -95,7 +97,10 @@ class HistoryManager(Manager):
 
 class LogEntryManager(BaseLogEntryManager):
 
+    resource_supplements = is_enabled('S48_resource_supplements.be')
+
     def for_admin_panel(self, exclude_models=None):
+        supplement = ['supplement'] if self.resource_supplements else []
         models = [
             'application',
             'article',
@@ -106,6 +111,7 @@ class LogEntryManager(BaseLogEntryManager):
             'reports_report',
             'resource',
             'showcase',
+            *supplement,
             'tag',
             'user',
             'user_following_application',

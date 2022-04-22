@@ -651,3 +651,25 @@ p.irreversible-deletion-warning {
 .inner-two-columns .inner-center-column .tab-content { /* ODSOFT-2924 */
 	overflow: auto;
 }
+.deletelink, #duplicate_button {
+	padding: 0px;
+}
+
+.btn.extra-btn {
+	padding-left: 0px;
+	padding-right: 0px;
+}
+
+li.disabledTab {
+	cursor: not-allowed;
+}
+
+a.disabledTab {
+	pointer-events: none;
+	cursor: not-allowed;
+}
+/* Fixes error described in ODSOFT-2926, caused by setting: display: flex; */
+/* https://github.com/darklow/django-suit/compare/v.0.2.26...v.0.2.28 */
+.suit-columns { /* ODSOFT-2926 */
+	display: block;
+}

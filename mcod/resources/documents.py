@@ -92,6 +92,15 @@ class ResourceDocument(ExtendedDocument):
             'description': TranslatedTextField('description')
         }
     )
+    if is_enabled('S48_resource_supplements.be'):
+        supplement_docs = fields.NestedField(
+            properties={
+                'id': fields.IntegerField(),
+                'name': TranslatedTextField('name'),
+                'file_url': fields.TextField(),
+                'file_size': fields.LongField()
+            }
+        )
     is_chart_creation_blocked = fields.BooleanField()
 
     license_code = fields.IntegerField()

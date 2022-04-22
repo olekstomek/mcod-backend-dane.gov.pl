@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-03-19 17:21+0100\n"
+"POT-Creation-Date: 2022-04-04 17:24+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -693,6 +693,9 @@ msgstr ""
 msgid "{} - trash"
 msgstr ""
 
+msgid "Resources list"
+msgstr ""
+
 msgid "Tabular data validation status"
 msgstr ""
 
@@ -1030,6 +1033,9 @@ msgstr ""
 msgid "Dataset has research data"
 msgstr ""
 
+msgid "Dataset regions"
+msgstr ""
+
 msgid "last import timestamp"
 msgstr ""
 
@@ -1044,6 +1050,9 @@ msgstr ""
 
 msgctxt "masculine"
 msgid "created by"
+msgstr ""
+
+msgid "Add next element"
 msgstr ""
 
 msgid "communique"
@@ -2723,6 +2732,12 @@ msgstr ""
 msgid "TabularView"
 msgstr ""
 
+msgid "Add document"
+msgstr ""
+
+msgid "document"
+msgstr ""
+
 #, python-brace-format
 msgid ""
 "During the verification of column \"{colname}\" with the \"{rule}\" rule no "
@@ -2749,6 +2764,9 @@ msgid "Quality verification"
 msgstr ""
 
 msgid "Maps and plots"
+msgstr ""
+
+msgid "Supplements"
 msgstr ""
 
 msgid "Special Signs"
@@ -2868,6 +2886,15 @@ msgid ""
 "Please first restore dataset: "
 msgstr ""
 
+msgid "Add file"
+msgstr ""
+
+msgid "Document name"
+msgstr ""
+
+msgid "The wrong document format was selected!"
+msgstr ""
+
 msgid "File does not exist"
 msgstr ""
 
@@ -2957,6 +2984,12 @@ msgstr ""
 msgid "A comment was posted on the resource %(title)s"
 msgstr ""
 
+msgid "supplement"
+msgstr ""
+
+msgid "supplements"
+msgstr ""
+
 msgid "link"
 msgstr ""
 
@@ -3011,7 +3044,13 @@ msgstr ""
 msgid "Resource has research data"
 msgstr ""
 
+msgid "Resource regions"
+msgstr ""
+
 msgid "Download URL"
+msgstr ""
+
+msgid "Resource supplements (name, url, file size)"
 msgstr ""
 
 msgid "symbol"
@@ -3782,9 +3821,6 @@ msgstr ""
 msgid "Select a page item"
 msgstr ""
 
-msgid "Add next element"
-msgstr ""
-
 msgid "XML validation was unsuccessful!"
 msgstr ""
 
@@ -3864,9 +3900,6 @@ msgid ""
 msgstr ""
 
 msgid "unavailable tab - the resource does not have a tabular view"
-msgstr ""
-
-msgid "Resources list"
 msgstr ""
 
 msgid "Row number"

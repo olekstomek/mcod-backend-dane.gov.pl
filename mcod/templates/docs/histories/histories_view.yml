@@ -6,10 +6,10 @@ summary: Returns list of histories
 description: |
   {% spaceless %}
       <p>Gives the ability to browse, filter and search histories.</p>
-      {% include "docs/applications/obj_description.html" %}
+      {% include "docs/histories/obj_description.html" %}
   {% endspaceless %}
 parameters:
-  schema: HistoryApiSearchRequest
+  schema: LogEntryApiSearchRequest
 responses:
   200:
     description: valid response in jsonapi format

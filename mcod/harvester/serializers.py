@@ -9,6 +9,7 @@ from marshmallow.fields import Bool, Date, DateTime, Int, List, Nested, Str, URL
 from mcod import settings
 from mcod.core.api.rdf.profiles.dcat_ap import DCATDatasetDeserializer
 from mcod.datasets.models import Dataset
+from mcod.resources.link_validation import download_file
 from mcod.resources.models import Resource, supported_formats_choices
 from mcod.unleash import is_enabled
 
@@ -130,6 +131,42 @@ class XMLPreProcessedSchema(PreProcessedSchema):
                 data['title']['english'] = title_en.strip()
             if title_pl:
                 data['title']['polish'] = title_pl.strip()
+
+
+class XMLSupplementSchema(XMLPreProcessedSchema):
+    name_pl = Str()
+    name_en = Str()
+    url = URL()
+
+    class Meta:
+        unknown = EXCLUDE
+
+    @validates_schema
+    def validate_file(self, data, **kwargs):
+        value = data.get('url')
+        if value and "://" in value:
+            scheme = value.split("://")[0].lower()
+            if scheme != 'https':
+                raise ValidationError(_('Required scheme is https://'), field_name='url')
+        if 'download_file_exc' in self.context:
+            raise ValidationError(self.context['download_file_exc'], field_name='url')
+        if self.context.get('format') not in ['doc', 'docx', 'odt', 'pdf', 'txt']:
+            raise ValidationError(_('Invalid file format'), field_name='url')
+
+    def prepare_data(self, data, **kwargs):
+        if 'name' in data and isinstance(data.get('name'), dict):
+            data['name_en'] = data['name'].get('english', '')
+            data['name_pl'] = data['name'].get('polish', '')
+        try:
+            file_type, options = download_file(data.get('url'))
+            if 'filename' in options:
+                data['filename'] = options['filename']
+            if 'content' in options:
+                data['content'] = options['content']
+            self.context['format'] = options.get('format')
+        except Exception as exc:
+            self.context['download_file_exc'] = str(exc)
+        return data
 
 
 class ResourceSchema(ResourceMixin, CKANPreProcessedSchema):
@@ -269,6 +306,7 @@ class XMLResourceSchema(ResourceMixin, XMLPreProcessedSchema):
     has_dynamic_data = Bool(data_key='hasDynamicData', allow_none=True)
     has_high_value_data = Bool(data_key='hasHighValueData', allow_none=True)
     has_research_data = Bool(data_key='hasResearchData', allow_none=True)
+    supplements = Nested(XMLSupplementSchema, many=True)
 
     class Meta:
         ordered = True
@@ -285,6 +323,10 @@ class XMLResourceSchema(ResourceMixin, XMLPreProcessedSchema):
         special_signs = data.pop('specialSigns', {})
         if 'specialSign' in special_signs:
             data['special_signs'] = special_signs['specialSign']
+        supplements = data.pop('supplements', {})
+        if 'supplement' in supplements:
+            data['supplements'] = supplements['supplement']
+
         return data
 
     @validates_schema

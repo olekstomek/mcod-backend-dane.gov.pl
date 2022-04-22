@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-03-21 12:05+0100\n"
+"POT-Creation-Date: 2022-04-04 17:24+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -716,6 +716,9 @@ msgstr "Opublikowany"
 msgid "{} - trash"
 msgstr "{} - kosz"
 
+msgid "Resources list"
+msgstr "Zasoby"
+
 msgid "Tabular data validation status"
 msgstr "Status walidacji danych"
 
@@ -1110,7 +1113,7 @@ msgid "Dataset has research data"
 msgstr "Zbiór zawiera dane badawcze"
 
 msgid "Dataset regions"
-msgstr "Regiony zbiorów danych"
+msgstr "Lokalizacje zbiorów danych"
 
 msgid "last import timestamp"
 msgstr "data ostatniego importu"
@@ -1127,6 +1130,9 @@ msgstr "data utworzenia"
 msgctxt "masculine"
 msgid "created by"
 msgstr "utworzony przez"
+
+msgid "Add next element"
+msgstr "Dodaj kolejny element"
 
 msgid "communique"
 msgstr "komunikat"
@@ -2788,7 +2794,7 @@ msgid "Unauthorized"
 msgstr ""
 
 msgid "Regions"
-msgstr "Regiony"
+msgstr "Lokalizacja danych"
 
 msgid "locality"
 msgstr "Miejscowość"
@@ -2905,6 +2911,12 @@ msgstr "Status pliku"
 msgid "TabularView"
 msgstr "Widok tabelaryczny"
 
+msgid "Add document"
+msgstr ""
+
+msgid "document"
+msgstr "dokument"
+
 #, python-brace-format
 msgid ""
 "During the verification of column \"{colname}\" with the \"{rule}\" rule no "
@@ -2934,6 +2946,9 @@ msgstr "Weryfikacja jakości"
 
 msgid "Maps and plots"
 msgstr "Mapy i wykresy"
+
+msgid "Supplements"
+msgstr "Dokumenty uzupełniające"
 
 msgid "Special Signs"
 msgstr "Znaki umowne"
@@ -3063,6 +3078,15 @@ msgstr ""
 "Nie możesz przywrócić tego zasobu, ponieważ zbiór do którego przynależy "
 "nadal jest w koszu. Przywróć najpierw zbiór: "
 
+msgid "Add file"
+msgstr "Dodaj plik"
+
+msgid "Document name"
+msgstr "Nazwa dokumentu"
+
+msgid "The wrong document format was selected!"
+msgstr "Dokonano wyboru niewłaściwego formatu dokumentu!"
+
 msgid "File does not exist"
 msgstr "Plik nie istnieje"
 
@@ -3153,6 +3177,12 @@ msgstr "Zasób"
 msgid "A comment was posted on the resource %(title)s"
 msgstr "Zgłoszono uwagę do zasobu %(title)s"
 
+msgid "supplement"
+msgstr "dokument uzupełniający"
+
+msgid "supplements"
+msgstr "dokumenty uzupełniające"
+
 msgid "link"
 msgstr ""
 
@@ -3208,10 +3238,13 @@ msgid "Resource has research data"
 msgstr "Zasób zawiera dane badawcze"
 
 msgid "Resource regions"
-msgstr "Regiony danych"
+msgstr "Lokalizacje danych"
 
 msgid "Download URL"
 msgstr "URL pliku (do pobrania)"
+
+msgid "Resource supplements (name, url, file size)"
+msgstr "Dokumenty uzupełniające zasobu (nazwa, url, rozmiar pliku)"
 
 msgid "symbol"
 msgstr "symbol"
@@ -3941,6 +3974,9 @@ msgid ""
 "permission to delete the following types of\n"
 "            objects:"
 msgstr ""
+"Usunięcie %(object_name)s '%(escaped_object)s' spowoduje skasowanie "
+"obiektów, które są z nim powiązane. Niestety nie posiadasz uprawnień do "
+"usunięcia następujących typów obiektów:"
 
 #, python-format
 msgid ""
@@ -4004,9 +4040,6 @@ msgstr "Adres URL"
 
 msgid "Select a page item"
 msgstr "Zaznacz element strony"
-
-msgid "Add next element"
-msgstr "Dodaj kolejny element"
 
 msgid "XML validation was unsuccessful!"
 msgstr "Walidacja XML zakończona niepowodzeniem!"
@@ -4092,9 +4125,6 @@ msgstr ""
 
 msgid "unavailable tab - the resource does not have a tabular view"
 msgstr "zakładka niedostępna – zasób nie posiada widoku tabelarycznego"
-
-msgid "Resources list"
-msgstr "Zasoby"
 
 msgid "Row number"
 msgstr "Numer wiersza"
@@ -4681,8 +4711,10 @@ msgstr "Transkodowania"
 msgid ""
 "If you wish to generate HTML5 compliant transcodes use the form below. This "
 "may take a while depending on the length of the video."
-msgstr "Jeśli chcesz wygenerować pliki po transkodowaniu zgodne z HTML5,"
-" skorzystaj z poniższego formularza. Może to chwilę potrwać w zależności od długości wideo."
+msgstr ""
+"Jeśli chcesz wygenerować pliki po transkodowaniu zgodne z HTML5, skorzystaj "
+"z poniższego formularza. Może to chwilę potrwać w zależności od długości "
+"wideo."
 
 msgid "Available Transcodes"
 msgstr "Dostępne rodzaje transkodowania"
@@ -4704,9 +4736,11 @@ msgid ""
 "Ffmpeg is not found on your server or you have disabled transcodes. Please "
 "install Ffmepg and make sure that transcoding is enabled if you wish to "
 "transcode videos into an HTML5 video compliant format."
-msgstr "Ffmpeg nie został znaleziony na twoim serwerze lub masz wyłączone transkodowanie."
-" Zainstaluj Ffmpeg i upewnij się, że transkodowanie jest włączone,"
-" jeśli chcesz transkodować plik wideo do formatu wideo zgodnego z HTML5."
+msgstr ""
+"Ffmpeg nie został znaleziony na twoim serwerze lub masz wyłączone "
+"transkodowanie. Zainstaluj Ffmpeg i upewnij się, że transkodowanie jest "
+"włączone, jeśli chcesz transkodować plik wideo do formatu wideo zgodnego z "
+"HTML5."
 
 msgid "Tracks"
 msgstr "Ścieżki tekstowe"
@@ -4716,9 +4750,10 @@ msgid ""
 "information about the filetype that should be used see the mozilla docs on "
 "<a href=\"https://developer.mozilla.org/en-US/docs/Web/API/WebVTT_API"
 "\">WebVTT</a>"
-msgstr "Możesz dodać/edytować napisy tego wideo. "
- "Aby uzyskać informacje o typie pliku z napisami, który powinien być używany,"
- " zobacz dokumentację Mozilli na temat <a href=\"https://developer.mozilla.org/en-US/docs/Web/API/WebVTT_API"
+msgstr ""
+"Możesz dodać/edytować napisy tego wideo. Aby uzyskać informacje o typie "
+"pliku z napisami, który powinien być używany, zobacz dokumentację Mozilli na "
+"temat <a href=\"https://developer.mozilla.org/en-US/docs/Web/API/WebVTT_API"
 "\">WebVTT</a>"
 
 msgid "Add tracks"

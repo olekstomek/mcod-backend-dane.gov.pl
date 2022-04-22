@@ -42,14 +42,14 @@ class Menu(SuitMenu):
 
     def activate_models(self, app, match_by_name=False):
         super().activate_models(app, match_by_name=match_by_name)
-        if self.request.path in ('/showcases/showcaseproposal/', '/suggestions/datasetsubmission/'):
+        if any(self.request.path.startswith(url) for url in ['/showcases/showcaseproposal/', '/suggestions/datasetsubmission/']):
             # fix inactive links in menu.
             for model in app['models']:
-                if (self.request.path == '/showcases/showcaseproposal/' and
+                if (self.request.path.startswith('/showcases/showcaseproposal/') and
                         model.get('name') == 'showcases.showcaseproposal'):
                     model['is_active'] = True
 
-                if (self.request.path == '/suggestions/datasetsubmission/' and
+                elif (self.request.path.startswith('/suggestions/datasetsubmission/') and
                         model.get('name') == 'suggestions.datasetsubmission'):
                     model['is_active'] = True
 

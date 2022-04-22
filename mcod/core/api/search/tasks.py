@@ -19,6 +19,14 @@ def _instance(app_label, object_name, instance_id):
     return instance
 
 
+def bulk_update_documents(app_label, object_name, ids_list, action='index'):
+    model = apps.get_model(app_label, object_name)
+    docs = registry.get_documents((model,))
+    instances = model.objects.filter(pk__in=ids_list)
+    for doc in docs:
+        doc().update(instances, action=action)
+
+
 @shared_task
 def update_document_task(app_label, object_name, instance_id):
     instance = _instance(app_label, object_name, instance_id)
@@ -43,12 +51,12 @@ def update_with_related_task(app_label, object_name, instance_id):
 
 
 @shared_task
-def update_related_task(app_label, object_name, pk_set):
+def update_related_task(app_label, object_name, pk_set, **kwargs):
     model = apps.get_model(app_label, object_name)
     docs = registry.get_documents((model,))
     for doc in docs:
         qs = model.objects.filter(pk__in=pk_set)
-        doc().update(qs.iterator())
+        doc().update(qs.iterator(), **kwargs)
     return {
         'app': model._meta.app_label,
         'model': model._meta.object_name,
@@ -110,3 +118,8 @@ def null_field_in_related_task(app_label, object_name, instance_id):
             setattr(rel_inst, field_name, None)
             doc_instance = doc(related_instance_to_ignore=instance)
             doc_instance.update(rel_inst)
+
+
+@shared_task
+def bulk_delete_documents_task(app_label, object_name, ids_list):
+    return update_related_task(app_label, object_name, ids_list, action='delete')

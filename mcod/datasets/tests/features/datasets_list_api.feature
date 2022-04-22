@@ -179,8 +179,10 @@ Feature: Datasets list API
     When api request method is GET
     And api request path is /1.4/datasets/?id=998
     And send api request and fetch the response
-    Then api's response body field data/[0]/attributes/regions/[0]/name is Warszawa
-    And api's response body field data/[0]/attributes/regions/[0]/region_id is 101752777
+    Then api's response body field data/[0]/attributes/regions/[0]/name is Polska
+    And api's response body field data/[0]/attributes/regions/[0]/region_id is 85633723
+    And api's response body field data/[0]/attributes/regions/[1]/name is Warszawa
+    And api's response body field data/[0]/attributes/regions/[1]/region_id is 101752777
 
   Scenario: Dataset without regions has poland as assigned region
     Given dataset with id 999 and 3 resources

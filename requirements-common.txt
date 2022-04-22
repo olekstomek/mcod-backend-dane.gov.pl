@@ -1,6 +1,6 @@
 wheel==0.35.1
 tzlocal==2.1  # https://github.com/agronholm/apscheduler/discussions/570#discussioncomment-1562516
-unleashclient==4.4.1
+unleashclient==5.1.1
 pyyaml==5.1
 ipython==8.0
 lxml==4.6.2

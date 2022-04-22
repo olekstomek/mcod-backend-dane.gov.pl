@@ -13,9 +13,10 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 from django_celery_results.models import TaskResult
 
-from mcod.lib.admin_mixins import HistoryMixin, ModelAdmin, TrashMixin
+from mcod.histories.models import LogEntry
+from mcod.lib.admin_mixins import HistoryMixin, ModelAdmin, SortableStackedInline, TrashMixin
 from mcod.lib.helpers import get_paremeters_from_post
-from mcod.resources.forms import ChangeResourceForm, AddResourceForm, TrashResourceForm
+from mcod.resources.forms import ChangeResourceForm, AddResourceForm, SupplementForm, TrashResourceForm
 from mcod.resources.models import (
     Resource,
     ResourceFile,
@@ -28,6 +29,7 @@ from mcod.resources.models import (
     RESOURCE_TYPE_FILE_CHANGE,
     RESOURCE_TYPE_WEBSITE,
     supported_formats_choices,
+    Supplement,
 )
 from mcod.unleash import is_enabled
 
@@ -63,7 +65,7 @@ class FormatFilter(admin.SimpleListFilter):
             elif val == 'csv':
                 query.add(~Q(csv_file=None), Q.OR)
                 query.add(~Q(csv_file=''), Q.AND)
-        return queryset.filter(query)
+        return queryset.filter(query).distinct()
 
 
 class TaskStatus(admin.SimpleListFilter):
@@ -153,6 +155,34 @@ class DataTaskResultInline(TaskResultInline):
     suit_classes = 'suit-tab suit-tab-data'
 
 
+class SupplementInline(SortableStackedInline):
+    add_text = _('Add document')
+    fields = ['file', 'name', 'name_en']
+    form = SupplementForm
+    description = 'Pliki dokumentów mające na celu uzupełnienie danych znajdujących się w zasobie.'
+    extra = 0
+    max_num = 10
+    model = Supplement
+    suit_classes = 'suit-tab suit-tab-supplements'
+    suit_form_inlines_hide_original = True
+    verbose_name = _('document')
+
+    def get_readonly_fields(self, request, obj=None):
+        if obj and obj.is_imported:
+            return ['name', 'name_en', 'file']
+        return super().get_readonly_fields(request, obj=obj)
+
+    def has_add_permission(self, request, obj=None):
+        if obj and obj.is_imported:
+            return False
+        return super().has_add_permission(request, obj=obj)
+
+    def has_delete_permission(self, request, obj=None):
+        if obj and obj.is_imported:
+            return False
+        return super().has_delete_permission(request, obj=obj)
+
+
 def get_colname(col, table_schema):
     fields = table_schema.get('fields')
     col_index = int(col.replace("col", "")) - 1
@@ -203,43 +233,40 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):
     lang_fields = True
     soft_delete = True
     TYPE_FILTER = TypeFilter
+    resource_supplements = is_enabled('S48_resource_supplements.be')
+    is_inlines_js_upgraded = is_enabled('S48_resource_inlines_js_upgrade.be')
 
-    def change_suit_form_tabs(self, obj):
-        form_tabs = [
+    def get_suit_form_tabs(self, obj=None):
+        tabs = [
             ('general', _('General')),
             *self.get_translations_tabs(),
-            ('file', _('File validation')),
-            ('link', _('Link validation')),
-            ('data', _('Data validation')),
-
         ]
+        if obj:
+            tabs.extend([
+                ('file', _('File validation')),
+                ('link', _('Link validation')),
+                ('data', _('Data validation')),
+            ])
+            if obj.tabular_data_schema and obj.format != 'shp':
+                tabs.append(('types', _("Change of type")))
+            resource_validation_tab = ('rules', _('Quality verification'), 'disabled')
 
-        if obj.tabular_data_schema and obj.format != 'shp':
-            form_tabs.append(('types', _("Change of type")))
+            if (settings.RESOURCE_VALIDATION_TOOL_ENABLED
+                    and obj.tabular_data_schema
+                    and obj.format != 'shp'
+                    and obj.has_data):
+                resource_validation_tab = ('rules', _('Quality verification'))
+            tabs.append(resource_validation_tab)
 
-        resource_validation_tab = ('rules', _('Quality verification'), 'disabled')
+            maps_and_plots_tab = ("maps_and_plots", _("Maps and plots"), 'disabled')
+            if obj.tabular_data_schema:
+                maps_and_plots_tab = ("maps_and_plots", _("Maps and plots"))
+            tabs.append(maps_and_plots_tab)
+        if self.resource_supplements:
+            tabs.append(('supplements', _('Supplements')))
+        return tabs
 
-        if (settings.RESOURCE_VALIDATION_TOOL_ENABLED
-                and obj.tabular_data_schema
-                and obj.format != 'shp'
-                and obj.has_data):
-            resource_validation_tab = ('rules', _('Quality verification'))
-
-        form_tabs.append(resource_validation_tab)
-
-        maps_and_plots_tab = ("maps_and_plots", _("Maps and plots"), 'disabled')
-        if obj.tabular_data_schema:
-            maps_and_plots_tab = ("maps_and_plots", _("Maps and plots"))
-        form_tabs.append(maps_and_plots_tab)
-
-        return form_tabs
-
-    @property
-    def add_suit_form_tabs(self):
-        return (
-            ('general', _('General')),
-            *self.get_translations_tabs()
-        )
+    dataset_fields = ('dataset', 'regions') if is_enabled('S37_resources_admin_region_data.be') else ('dataset',)
 
     has_dynamic_data_fieldset = [(None, {
         'classes': ('suit-tab', 'suit-tab-general'),
@@ -265,7 +292,7 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):
         }),
         (None, {
             'classes': ('suit-tab', 'suit-tab-general'),
-            'fields': ('dataset',),
+            'fields': dataset_fields,
         }),
         (None, {
             'classes': ('suit-tab', 'suit-tab-general'),
@@ -337,6 +364,8 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):
         DataTaskResultInline,
         LinkTaskResultInline,
     ]
+    if is_enabled('S48_resource_supplements.be'):
+        inlines.append(SupplementInline)
     suit_form_includes = (
         ('widgets/resource_data_types_actions.html', 'bottom', 'types'),
         ('widgets/resource_data_rules_actions.html', 'bottom', 'rules'),
@@ -352,45 +381,6 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):
         if obj and obj.is_imported:
             return True  # required to display content in "data validation tabs" properly.
         return super().has_change_permission(request, obj=obj)
-
-    def tabular_data_rules_fieldset(self, obj):
-        fieldsets = []
-        if obj.has_data:
-            fieldsets = [(
-                None,
-                {
-                    'classes': ('suit-tab', 'suit-tab-rules', 'full-width'),
-                    'fields': (
-                        'data_rules',
-                    )
-                }
-            ), ]
-        return fieldsets
-
-    def tabular_data_schema_fieldset(self, obj):
-        fieldsets = []
-        if obj.tabular_data_schema:
-            fieldsets = [(
-                None,
-                {
-                    'classes': ('suit-tab', 'suit-tab-types', 'full-width'),
-                    'fields': (
-                        'tabular_data_schema',
-                    )
-                }
-            ), ]
-        return fieldsets
-
-    def maps_and_plots_fieldset(self, obj):
-        fields = ('maps_and_plots', 'is_chart_creation_blocked', )
-        fieldsets = [(
-            None,
-            {
-                'classes': ('suit-tab', 'suit-tab-maps_and_plots', 'full-width'),
-                'fields': fields,
-            }
-        ), ]
-        return fieldsets if obj.tabular_data_schema else []
 
     def get_fieldsets(self, request, obj=None):
         if obj:
@@ -448,7 +438,7 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):
             )
             if not obj.csv_converted_file:
                 tab_general_fields = (x for x in tab_general_fields if x != csv_file[0])
-            change_fieldsets = [
+            fieldsets = [
                 (
                     None,
                     {
@@ -457,20 +447,43 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):
                     }
                 ),
             ]
-            fieldsets = (
-                change_fieldsets +
-                self.tabular_data_rules_fieldset(obj) +
-                self.tabular_data_schema_fieldset(obj) +
-                self.maps_and_plots_fieldset(obj)
-            )
+            if obj.has_data:
+                fieldsets.append(
+                    (
+                        None,
+                        {
+                            'classes': ('suit-tab', 'suit-tab-rules', 'full-width'),
+                            'fields': (
+                                'data_rules',
+                            )
+                        }
+                    )
+                )
+            if obj.tabular_data_schema:
+                fieldsets.extend(
+                    [
+                        (
+                            None,
+                            {
+                                'classes': ('suit-tab', 'suit-tab-types', 'full-width'),
+                                'fields': (
+                                    'tabular_data_schema',
+                                )
+                            }
+                        ),
+                        (
+                            None,
+                            {
+                                'classes': ('suit-tab', 'suit-tab-maps_and_plots', 'full-width'),
+                                'fields': ('maps_and_plots', 'is_chart_creation_blocked',),
+                            }
+                        )
+                    ]
+                )
         else:
-            fieldsets = self.add_fieldsets
-            fieldsets[2][1]['fields'] = ('dataset', 'regions') if is_enabled(
-                'S37_resources_admin_region_data.be') else ('dataset', )
-            fieldsets = tuple(fieldsets)
+            fieldsets = tuple(self.add_fieldsets)
 
         fieldsets += tuple(self.get_translations_fieldsets())
-
         return fieldsets
 
     def get_form(self, request, obj=None, **kwargs):
@@ -482,6 +495,15 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):
             defaults['form'] = self.add_form
         defaults.update(kwargs)
         return super().get_form(request, obj=obj, **defaults)
+
+    def get_history(self, obj):
+        history = super().get_history(obj)
+        if self.resource_supplements:
+            supplements = Supplement.raw.filter(resource=obj)
+            supplements_history = LogEntry.objects.get_for_objects(supplements)
+            all_history = history.distinct() | supplements_history
+            return all_history.order_by('-timestamp')
+        return history
 
     def get_readonly_fields(self, request, obj=None):
         readonly_fields = self.change_readonly_fields if obj and obj.id else self.add_readonly_fields
@@ -508,11 +530,21 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):
 
     def render_change_form(self, request, context, add=False, change=False, form_url='', obj=None):
         extra = {
-            'suit_form_tabs': self.change_suit_form_tabs(obj) if obj else self.add_suit_form_tabs,
+            'suit_form_tabs': self.get_suit_form_tabs(obj=obj),
         }
         if obj and obj.is_imported:
             extra['show_save'] = False
             extra['show_save_and_continue'] = False
+        media = context.get('media')
+        if media and self.is_inlines_js_upgraded:
+            _new_js_lists = []
+            for js_list in media._js_lists:
+                new_js_list = [x for x in js_list if x not in ['admin/js/inlines.min.js', 'admin/js/inlines.js']]
+                if len(new_js_list) < len(js_list):
+                    new_js_list.append('admin/js/inlines_orig.js')
+                _new_js_lists.append(new_js_list)
+            media._js_lists = _new_js_lists
+            context['media'] = media
         context.update(extra)
         return super().render_change_form(request, context, add=add, change=change, form_url=form_url, obj=obj)
 
@@ -590,6 +622,16 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):
     link_status.short_description = format_html('<i class="fas fa-link" title="{}"></i>'.format(
         _('Link validation status')))
 
+    def save_formset(self, request, form, formset, change):
+        if self.resource_supplements:
+            instances = formset.save(commit=False)
+            for instance in instances:
+                if isinstance(instance, Supplement):
+                    if not instance.id:
+                        instance.created_by = request.user
+                    instance.modified_by = request.user
+        super().save_formset(request, form, formset, change)
+
     def save_model(self, request, obj, form, change):
         if not obj.id:
             obj.created_by = request.user
@@ -657,7 +699,6 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):
         return HttpResponseRedirect(resource.admin_change_url)
 
     def response_change(self, request, obj):
-
         if '_verify_rules' in request.POST:
             rules = get_paremeters_from_post(request.POST)
             results = obj.verify_rules(rules)

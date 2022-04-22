@@ -1,11 +1,49 @@
 from decimal import Decimal
+from django.conf import settings
 from django.db import models
+from django.db.models import Q, F, Case, When, Value
 from django.apps import apps
 
 from mcod.regions.api import PeliasApi
+from mcod.unleash import is_enabled
+
+
+class RegionQueryset(models.QuerySet):
+
+    def count_resources(self):
+        return self.annotate(
+            resources_count=models.Count('resource', filter=Q(
+                resource__status='published',
+                resource__is_removed=False,
+                resource__is_permanently_removed=False)))
+
+    def _filter_by_res_count(self, ids, count_val):
+        count_q = Q(resources_count=count_val) if count_val == 0 else Q(resources_count__gte=count_val)
+        return list(self.filter(pk__in=ids).count_resources().filter(count_q).values_list('pk', flat=True))
+
+    def unassigned_regions(self, region_ids):
+        return self._filter_by_res_count(region_ids, 0)
+
+    def assigned_regions(self, region_ids):
+        return self._filter_by_res_count(region_ids, 1)
+
+    def all_assigned_regions(self):
+        return self.count_resources().filter(
+            Q(resources_count__gte=1) | Q(region_id=settings.DEFAULT_REGION_ID))
+
+    def annotate_is_additional(self, default_is_additional):
+        return self.annotate(is_additional=Case(
+            When(region_id=settings.DEFAULT_REGION_ID,
+                 then=Value(default_is_additional)),
+            default=F('resourceregion__is_additional'),
+            output_field=models.BooleanField()
+        ))
 
 
 class RegionManager(models.Manager):
+
+    def get_queryset(self):
+        return RegionQueryset(self.model, using=self._db)
 
     def create_new_regions(self, to_create_regions):
         pelias = PeliasApi()
@@ -46,3 +84,37 @@ class RegionManager(models.Manager):
             to_create_regions_obj.append(region(**region_props))
         created_regions = self.bulk_create(to_create_regions_obj)
         return created_regions
+
+    def unassigned_regions(self, region_ids):
+        return self.get_queryset().unassigned_regions(region_ids)
+
+    def assigned_regions(self, region_ids):
+        return self.get_queryset().assigned_regions(region_ids)
+
+    def all_assigned_regions(self):
+        return self.get_queryset().all_assigned_regions()
+
+    def annotate_is_additional(self, default_is_additional=False):
+        return self.get_queryset().annotate_is_additional(default_is_additional)
+
+    def for_dataset_with_id(self, dataset_id, has_no_region_resources):
+        q = Q(resourceregion__resource__dataset_id=dataset_id,
+              resourceregion__resource__is_removed=False,
+              resourceregion__resource__status='published')
+        default_is_additional = False
+        is_enabled_region_aggregation = is_enabled('S48_by_region_aggregation.be')
+        if is_enabled_region_aggregation or has_no_region_resources:
+            default_is_additional = (is_enabled_region_aggregation and not has_no_region_resources) or \
+                                    (not is_enabled_region_aggregation and not has_no_region_resources)
+            q |= Q(region_id=settings.DEFAULT_REGION_ID)
+        return self.get_queryset().filter(q).annotate_is_additional(default_is_additional).distinct().order_by('pk')
+
+    def for_resource_with_id(self, resource_id, has_other_regions):
+        q = Q(resourceregion__resource_id=resource_id)
+        default_is_additional = False
+        if is_enabled('S48_by_region_aggregation.be'):
+            default_is_additional = has_other_regions
+            q |= Q(region_id=settings.DEFAULT_REGION_ID)
+        elif not has_other_regions:
+            q |= Q(region_id=settings.DEFAULT_REGION_ID)
+        return self.get_queryset().filter(q).annotate_is_additional(default_is_additional).order_by('pk')

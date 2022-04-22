@@ -1,6 +1,7 @@
 import pytest
+import dpath.util
 from django.apps import apps
-from pytest_bdd import then
+from pytest_bdd import then, parsers
 
 
 @pytest.fixture
@@ -103,3 +104,11 @@ def resource_has_assigned_regions():
     ).values_list('region_id', flat=True).order_by('region_id'))
     assert main_regions == expected_main
     assert additional_regions == expected_additional
+
+
+@then(parsers.parse("has assigned {field_values} as {field_name} for regions"))
+def has_regions_names_assigned(field_values, field_name, context):
+    values = [x.strip() for x in field_values.split(',')]
+    items = dpath.util.values(context.response.json, 'data/[0]/attributes/regions')
+    current_values = [str(item[field_name]) for item in items[0]]
+    assert set(values).issubset(set(current_values))

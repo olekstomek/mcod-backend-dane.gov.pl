@@ -546,11 +546,9 @@ class Dataset(ExtendedModel):
 
     @property
     def regions(self):
-        resources_ids = list(self.resources.values_list('pk', flat=True))
-        q = Q(resource__pk__in=resources_ids)
-        if self.resources.filter(status='published', regions__isnull=True).exists():
-            q |= Q(region_id=settings.DEFAULT_REGION_ID)
-        return Region.objects.filter(q).distinct()
+        has_no_region_resources = \
+            self.resources.filter(status='published', is_removed=False, regions__isnull=True).exists()
+        return Region.objects.for_dataset_with_id(self.pk, has_no_region_resources=has_no_region_resources)
 
     @property
     def regions_str(self):

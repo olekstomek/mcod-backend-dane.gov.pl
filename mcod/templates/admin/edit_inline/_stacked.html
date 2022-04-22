@@ -1,10 +1,11 @@
 {% load i18n static admin_urls suit_tags %}
 <div class="inline-group {{ inline_admin_formset.opts.suit_classes }}" id="{{ inline_admin_formset.formset.prefix }}-group">
   <h2>{{ inline_admin_formset.opts.verbose_name_plural|capfirst }}</h2>
+  {% if inline_admin_formset.opts.description %}<h6>{{ inline_admin_formset.opts.description }}</h6>{% endif %}
 {{ inline_admin_formset.formset.management_form }}
 {{ inline_admin_formset.formset.non_form_errors }}
 
-{% for inline_admin_form in inline_admin_formset %}<div class="inline-related{% if forloop.last %} empty-form last-related{% endif %}" id="{{ inline_admin_formset.formset.prefix }}-{% if not forloop.last %}{{ forloop.counter0 }}{% else %}empty{% endif %}">
+{% for inline_admin_form in inline_admin_formset %}<div class="inline-related{% if forloop.last and inline_admin_formset.has_add_permission %} empty-form last-related{% endif %}" id="{{ inline_admin_formset.formset.prefix }}-{% if not forloop.last %}{{ forloop.counter0 }}{% else %}empty{% endif %}">
   <h3><b>{{ inline_admin_formset.opts.verbose_name|title }}:</b>&nbsp;<span class="inline_label">{% if inline_admin_form.original %}
     {% if '1.8'|django_version_gte and inline_admin_form.model_admin.show_change_link and inline_admin_form.model_admin.has_registered_model %} <a href="{% url inline_admin_form.model_admin.opts|admin_urlname:'change' inline_admin_form.original.pk|admin_urlquote %}" class="inlinechangelink">{{ inline_admin_form.original }}</a>
     {% else %}
@@ -69,7 +70,7 @@
         };
         $(rows).formset({
             prefix: "{{ inline_admin_formset.formset.prefix }}",
-            addText: "{% trans 'Add next element' %}",
+            addText: "{{ inline_admin_formset.opts.add_text|default:"Add another" }}",
             formCssClass: "dynamic-{{ inline_admin_formset.formset.prefix }}",
             deleteCssClass: "inline-deletelink",
             deleteText: "{% trans "Remove" %}",

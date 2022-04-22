@@ -45,6 +45,7 @@ class PaginationInline(TabularInline):
     template = 'admin/resources/tabular_paginated.html'
     per_page = 20
     page_param = 'p'
+    verbose_name_plural = _('Resources list')
 
     def get_formset(self, request, obj=None, **kwargs):
         formset_class = super().get_formset(request, obj, **kwargs)

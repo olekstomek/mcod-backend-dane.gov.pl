@@ -33,6 +33,17 @@ _iso8601_datetime_re = re.compile(
 )
 
 
+def anonymize_email(value):
+    name, domain = value.split('@') if '@' in value else (None, None)
+    if name and domain:
+        name_len = len(name) - 1
+        domain_len = len(domain) - 1
+        name = name[0] + '*' * name_len
+        domain = domain[0] + '*' * domain_len
+        return f'{name}@{domain}'
+    return value
+
+
 def flatten_list(list_, split_delimeter=None):
     def split(el):
         if split_delimeter and isinstance(el, (str, bytes)):
@@ -283,7 +294,8 @@ def save_as_xml(file, data):
             'categories': 'category',
             'types': 'type',
             'special_signs': 'special_sign',
-            'regions': 'region'
+            'regions': 'region',
+            'supplements': 'supplement',
         }.get(parent, 'item')
 
     xml = dicttoxml(data, attr_type=False, item_func=custom_item_func, custom_root='catalog')

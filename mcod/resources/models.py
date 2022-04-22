@@ -41,10 +41,9 @@ from mcod.core import storages
 from mcod.core.api.rdf import signals as rdf_signals
 from mcod.core.api.rdf.tasks import update_graph_task
 from mcod.core.api.search import signals as search_signals
-from mcod.core.api.search.tasks import update_with_related_task
+from mcod.core.api.search.tasks import update_with_related_task, bulk_delete_documents_task, update_related_task
 from mcod.core.db.managers import TrashManager
 from mcod.core.db.models import ExtendedModel, update_watcher, TrashModelBase
-from mcod.core.utils import sizeof_fmt
 from mcod.counters.models import ResourceDownloadCounter, ResourceViewCounter
 from mcod.datasets.models import Dataset
 from mcod.regions.models import RegionManyToManyField, Region
@@ -58,7 +57,8 @@ from mcod.resources.managers import (
     ChartManager,
     ResourceManager,
     ResourceRawManager,
-    ResourceFileManager
+    ResourceFileManager,
+    SupplementManager,
 )
 from mcod.resources.score_computation import get_score
 from mcod.resources.signals import revalidate_resource, update_chart_resource, update_dataset_file_archive
@@ -857,10 +857,6 @@ class Resource(ExtendedModel):
         removed_file_path = os.path.join(removed_files_dir, file_name)
         return shutil.move(file_path, removed_file_path)
 
-    @classmethod
-    def sizeof_fmt(cls, file_size):
-        return sizeof_fmt(file_size)
-
     def get_openness_score(self, format_=None):
         format_ = format_ or self.format
         if is_enabled('S40_new_file_model.be'):
@@ -885,6 +881,10 @@ class Resource(ExtendedModel):
     @property
     def file_size_human_readable(self):
         return self.sizeof_fmt(self.file_size or 0)
+
+    @property
+    def file_size_human_readable_or_empty_str(self):
+        return self.file_size_human_readable if self.file_size else ''
 
     @property
     def title_as_link(self):
@@ -1006,12 +1006,13 @@ class Resource(ExtendedModel):
     def special_signs_symbols(self):
         return '\n'.join([f'{x.symbol} ({x.description})' for x in self.data_special_signs])
 
+    @cached_property
+    def supplement_docs(self):
+        return self.supplements.all()
+
     @property
     def all_regions(self):
-        res_regions = self.regions.all()
-        if not res_regions.exists():
-            res_regions = Region.objects.filter(region_id=settings.DEFAULT_REGION_ID)
-        return res_regions
+        return Region.objects.for_resource_with_id(self.pk, has_other_regions=self.regions.all().exists())
 
     @property
     def all_regions_str(self):
@@ -1218,6 +1219,16 @@ class Resource(ExtendedModel):
             update_with_related_task.s('resources', 'Resource', self.pk).apply_async()
             update_graph_task.s('resources', 'Resource', self.pk).apply_async(countdown=1)
 
+    @property
+    def regions_to_conceal(self):
+        ids = list(self.all_regions.values_list('pk', flat=True))
+        return Region.objects.unassigned_regions(ids)
+
+    @property
+    def regions_to_publish(self):
+        ids = list(self.all_regions.values_list('pk', flat=True))
+        return Region.objects.assigned_regions(ids)
+
 
 class Chart(ExtendedModel):
     SIGNALS_MAP = {
@@ -1382,6 +1393,72 @@ class ResourceFile(models.Model):
         return self.file.name
 
 
+class Supplement(ExtendedModel):
+    name = models.CharField(max_length=200, verbose_name=_('name'))
+    file = models.FileField(
+        verbose_name=_('file'), storage=storages.get_storage('resources'),
+        upload_to='%Y%m%d', max_length=2000)
+    resource = models.ForeignKey(Resource, on_delete=models.CASCADE, related_name='supplements')
+    order = models.PositiveIntegerField(verbose_name=_('order'))
+    created_by = models.ForeignKey(
+        User,
+        models.DO_NOTHING,
+        blank=False,
+        editable=False,
+        null=True,
+        verbose_name=_('created by'),
+        related_name='supplements_created'
+    )
+    modified_by = models.ForeignKey(
+        User,
+        models.DO_NOTHING,
+        blank=False,
+        editable=False,
+        null=True,
+        verbose_name=_('modified by'),
+        related_name='supplements_modified'
+    )
+    i18n = TranslationField(fields=('name', ))
+    objects = SupplementManager()
+
+    class Meta:
+        ordering = ('order',)
+        verbose_name = _('supplement')
+        verbose_name_plural = _('supplements')
+
+    def __str__(self):
+        return self.name
+
+    @property
+    def file_size(self):
+        try:
+            return self.file.size
+        except FileNotFoundError:
+            return None
+
+    @property
+    def file_size_human_readable(self):
+        return self.sizeof_fmt(self.file_size or 0)
+
+    @property
+    def file_size_human_readable_or_empty_str(self):
+        return self.file_size_human_readable if self.file_size else ''
+
+    @property
+    def file_url(self):
+        return self._get_api_url(self.file.url)
+
+    def save_file(self, content, filename):
+        dt = self.created.date() if self.created else now().date()
+        subdir = dt.isoformat().replace("-", "")
+        dest_dir = os.path.join(self.file.storage.location, subdir)
+        os.makedirs(dest_dir, exist_ok=True)
+        file_path = os.path.join(dest_dir, filename)
+        with open(file_path, 'wb') as f:
+            f.write(content.read())
+        return '%s/%s' % (subdir, filename)
+
+
 class ResourceTrash(Resource, metaclass=TrashModelBase):
     class Meta:
         proxy = True
@@ -1478,6 +1555,19 @@ def resource_special_signs_changed(sender, instance, *args, **kwargs):
 def process_created_file(sender, instance, created, *args, **kwargs):
     if instance.file and instance.is_main and created and instance.resource.is_published:
         process_resource_res_file_task.s(instance.id, update_file_archive=True).apply_async(countdown=2)
+
+
+@receiver(core_signals.notify_removed, sender=Resource)
+def remove_regions(sender, instance, *args, **kwargs):
+    if is_enabled('S37_resources_admin_region_data.be'):
+        bulk_delete_documents_task.s('regions', 'Region', instance.regions_to_conceal).apply_async(countdown=2)
+
+
+@receiver(core_signals.notify_restored, sender=Resource)
+@receiver(core_signals.notify_published, sender=Resource)
+def restore_regions(sender, instance, *args, **kwargs):
+    if is_enabled('S37_resources_admin_region_data.be'):
+        update_related_task.s('regions', 'Region', instance.regions_to_publish).apply_async(countdown=2)
 
 
 core_signals.notify_published.connect(update_watcher, sender=Resource)

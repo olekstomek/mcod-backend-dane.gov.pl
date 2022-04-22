@@ -105,6 +105,7 @@
               <div>
                  <div class="control-label">
                      <label for="id_{{ item.name }}">{{ item.name }}:</label>
+                     <p class="help-constance">{{ item.help_text|linebreaksbr }}</p>
                      <span class="default-constance">{% if item.modified %}(default: {{ item.default }}){% endif %}</span>
                  </div>
                  <div class="controls">

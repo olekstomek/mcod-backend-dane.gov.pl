@@ -1,12 +1,12 @@
 from django.contrib import admin
 from django.utils.translation import gettext_lazy as _, pgettext_lazy
-from suit.admin import SortableStackedInline
 
 from mcod.guides.forms import GuideForm, GuideItemForm
 from mcod.guides.models import Guide, GuideItem, GuideTrash
 from mcod.lib.admin_mixins import (
     HistoryMixin,
     ModelAdmin,
+    SortableStackedInline,
     TrashMixin,
 )
 
@@ -37,22 +37,25 @@ class GuideAdminMixin:
 
 
 class GuideItemInline(SortableStackedInline):
+    add_text = _('Add next element')
+    fields = [
+        'title',
+        'title_en',
+        'content',
+        'content_en',
+        'route',
+        'css_selector',
+        'position',
+        'is_optional',
+        'is_clickable',
+        'is_expandable',
+    ]
+    extra = 0
     form = GuideItemForm
-    fields = ['title', 'title_en', 'content', 'content_en', 'route', 'css_selector', 'position', 'is_optional',
-              'is_clickable', 'is_expandable']
     min_num = 1
     model = GuideItem
-    sortable = 'order'
-    template = 'admin/guides/guide_item/stacked.html'
-    extra = 0
     verbose_name = _('communique')
     verbose_name_plural = ''
-
-    def get_formset(self, request, obj=None, **kwargs):
-        # https://stackoverflow.com/questions/1206903/how-do-i-require-an-inline-in-the-django-admin/53868121#53868121
-        formset = super().get_formset(request, obj=obj, **kwargs)
-        formset.validate_min = True
-        return formset
 
 
 @admin.register(Guide)

@@ -1,5 +1,6 @@
 {% load static  core_tags %}
-{% is_unleash_enabled "S42_cms_header_nav_manage.be" as S42_head_footer_manage %}
+{% is_unleash_enabled "S42_cms_header_nav_manage.be" as S42_cms_header_nav_manage %}
+{% is_unleash_enabled "S48_aria_label_added_to_hypereditor_links_opened_in_new_tab.be" as S48_aria_label_added_to_hypereditor_links_opened_in_new_tab %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -23,54 +24,87 @@
         const LinkBlot = Quill.import('formats/link');
         const ListBlot = Quill.import('formats/list');
         const icons = Quill.import('ui/icons');
-        function isStringified(value) {
-          try {
-            JSON.parse(value);
-          } catch (e) {
-            return false;
-          }
-          return true;
+        const LINK_FOOTER_CLASS = 'page-footer__list-item';
+
+        function jsonTryParse(value) {
+            try {
+                return JSON.parse(value);
+            } catch (e) {
+                return value;
+            }
         }
+
+        function getLinkAriaLabel(innerText, title, openInNewTab) {
+            let result = "";
+            if (openInNewTab && innerText) {
+                result += `${innerText}. `;
+                if (title) {
+                    result += `${title}. `;
+                }
+                result += "Otwiera się w nowym oknie";
+            }
+            return result;
+        }
+
+        function isInsideFooter() {
+            // optional chaining (?.) is too new to use it
+            let field = window.frameElement.parentElement.querySelector("div.hyper_form_field");
+            return field && field.getAttribute("data-contentpath") === "footer_nav";
+        }
+
+        var footer_nav_div = parent.document.getElementsByName('footer_nav');
         class CustomLinkBlot extends LinkBlot {
             static create(value) {
                 const node = super.create();
-                    let newValue;
-                    if (isStringified(value)) {
-                        newValue = JSON.parse(value);
+                let newValue = jsonTryParse(value);
+                if (typeof(newValue) !== 'string') {
+                    {% if S48_aria_label_added_to_hypereditor_links_opened_in_new_tab %}
+                    if (newValue.target === '_blank' && !newValue.ariaLabel) {
+                        let linkAriaLabel = getLinkAriaLabel(newValue.innerText, newValue.title, true);
+                        if (linkAriaLabel) {
+                            newValue.ariaLabel = linkAriaLabel;
+                        }
                     }
-                    else {
-                        newValue = value;
+                    {% endif %}
+                    if (newValue.ariaLabel) {
+                        node.setAttribute("aria-label", newValue.ariaLabel);
                     }
-                    if (typeof(newValue) !== 'string') {
-                        node.setAttribute('href', newValue.href);
-                        if(newValue.title == null){
-                            node.setAttribute('title', '');
-                        }
-                        else{
-                            node.setAttribute('title', newValue.title);
-                        }
-                        if((newValue.css_classes == null || newValue.css_classes == '') && node.hasAttribute('class')){
-                            node.removeAttribute('class');
-                        }
-                        else if(newValue.css_classes != null && newValue.css_classes != ''){
-                            node.setAttribute('class', newValue.css_classes);
-                        }
-                        if(newValue.target == false){
-                            node.setAttribute('target', '_self');
-                        }
-                        else if(typeof(newValue.target) === 'string'){
-                            node.setAttribute('target', newValue.target);
-                        }
-                        if(newValue.is_menu == false && node.hasAttribute('role')){
-                            node.removeAttribute('role');
-                        }
-                        else if(newValue.is_menu === true || typeof(newValue.is_menu) === 'string'){
-                            node.setAttribute('role', 'menuitem');
-                        }
-                        return node;
+
+                    node.setAttribute('href', newValue.href);
+                    if(newValue.title == null){
+                        node.setAttribute('title', '');
                     }
-                    node.setAttribute('href', newValue);
+                    else{
+                        node.setAttribute('title', newValue.title);
+                    }
+                    if(isInsideFooter()){
+                        if(!newValue.css_classes.includes(LINK_FOOTER_CLASS)){
+                            newValue.css_classes += ` ${LINK_FOOTER_CLASS}`;
+                            newValue.css_classes = newValue.css_classes.trim();
+                        }
+                    }
+                    if (newValue.css_classes) {
+                        node.setAttribute('class', newValue.css_classes);
+                    } else if (node.hasAttribute('class')) {
+                        node.removeAttribute('class');
+                    }
+
+                    if(newValue.target === false){
+                        node.setAttribute('target', '_self');
+                    }
+                    else if(typeof(newValue.target) === 'string'){
+                        node.setAttribute('target', newValue.target);
+                    }
+                    if(newValue.is_menu === false && node.hasAttribute('role')){
+                        node.removeAttribute('role');
+                    }
+                    else if(newValue.is_menu === true || typeof(newValue.is_menu) === 'string'){
+                        node.setAttribute('role', 'menuitem');
+                    }
                     return node;
+                }
+                node.setAttribute('href', newValue);
+                return node;
             }
             static formats(domNode) {
                 let classes = '';
@@ -78,10 +112,14 @@
                     classes = domNode.getAttribute('class');
                 }
                 return JSON.stringify({
+                    innerText: domNode.innerText,
                     href: domNode.getAttribute('href'),
                     title: domNode.getAttribute('title'),
                     target: domNode.getAttribute('target'),
                     is_menu: domNode.getAttribute('role'),
+                    {% if S48_aria_label_added_to_hypereditor_links_opened_in_new_tab %}
+                    ariaLabel: domNode.getAttribute('aria-label'),
+                    {% endif %}
                     css_classes: classes
                 });
             }
@@ -89,34 +127,35 @@
                 if (name !== this.statics.blotName || !value) {
                     return super.format(name, value);
                 }
-                let newValue;
-                if (isStringified(value)) {
-                    newValue = JSON.parse(value);
-                }
-                else {
-                    newValue = value;
-                }
+                let newValue = jsonTryParse(value);
                 if (typeof(newValue) !== 'string') {
+                    if (newValue.ariaLabel) {
+                        this.domNode.setAttribute("aria-label", newValue.ariaLabel);
+                    } else if(this.domNode.hasAttribute("aria-label")) {
+                        this.domNode.removeAttribute('aria-label');
+                    }
+
                     this.domNode.setAttribute('href', newValue.href);
                     this.domNode.setAttribute('title', newValue.title);
-                    {% if S42_head_footer_manage %}
-                    if(newValue.css_classes == '' && this.domNode.hasAttribute('class')){
+
+                    {% if S42_cms_header_nav_manage %}
+                    if (newValue.css_classes) {
+                        this.domNode.setAttribute('class', newValue.css_classes);
+                    } else if (node.hasAttribute('class')) {
                         this.domNode.removeAttribute('class');
                     }
-                    else{
-                        this.domNode.setAttribute('class', newValue.css_classes);
-                    }
-                    if(newValue.is_menu == false && this.domNode.hasAttribute('role')){
+
+                    if(newValue.is_menu === false && this.domNode.hasAttribute('role')){
                         this.domNode.removeAttribute('role');
                     }
-                    else if(newValue.is_menu == true){
+                    else if(newValue.is_menu === true){
                         this.domNode.setAttribute('role', 'menuitem');
                     }
                     {% endif %}
-                    if(newValue.target == false){
+                    if(newValue.target === false){
                         this.domNode.setAttribute('target', '_self');
                     }
-                    else if(newValue.target == true){
+                    else if(newValue.target === true){
                         this.domNode.setAttribute('target', '_blank');
                     }
                 }
@@ -125,7 +164,7 @@
                 }
             }
         }
-        {% if S42_head_footer_manage %}
+        {% if S42_cms_header_nav_manage %}
             class CustomListBlot extends ListBlot {
                 static create(value) {
                     let tagName = value === 'ordered' ? 'OL' : 'UL';
@@ -188,7 +227,7 @@
                     }
                     else {
                         let classes = this.preview.className;
-                        let added_classes = classes.replace("ql-preview",'');
+                        let added_classes = classes.replace("ql-preview", "").trim();
                         this.edit('link', JSON.stringify({'href': this.preview.textContent, 'title': this.preview.title, 'target': this.preview.target, 'is_menu': this.preview.getAttribute('role'), 'css_classes': added_classes}));
                     }
                     event.preventDefault();
@@ -218,16 +257,12 @@
                                 this.preview.textContent = preview['href'];
                                 this.preview.setAttribute('title', preview['title']);
                                 this.preview.setAttribute('target', preview['target']);
-                                {% if S42_head_footer_manage %}
+                                {% if S42_cms_header_nav_manage %}
                                 if(preview['is_menu'] != null){
                                     this.preview.setAttribute('role', preview['is_menu']);
                                 }
                                 if(this.preview.hasAttribute('class')){
-                                    let new_classes = preview['css_classes'];
-                                    if(preview['css_classes'].length && !(/^\s/.test(new_classes))){
-                                        new_classes = ' '+new_classes
-                                    }
-                                    this.preview.className += new_classes;
+                                    this.preview.className = `ql-preview ${preview['css_classes']}`;
                                 }
                                 {% endif %}
                                 this.show();
@@ -248,49 +283,50 @@
             }
 
             edit(mode = 'link', preview = null) {
-                let newPreview = preview;
-                if (isStringified(preview)) {
-                    newPreview = JSON.parse(preview);
-                };
+                let newPreview = jsonTryParse(preview);
                 this.root.classList.remove('ql-hidden');
                 this.root.classList.add('ql-editing');
+                this.linkInnerText = "";
                 if (newPreview != null) {
                     if(typeof(newPreview) !== 'string'){
+                        if (this.linkRange) {
+                            this.linkInnerText = this.quill.getText(this.linkRange);
+                        }
+
                         this.textbox.value = newPreview.href;
-                        if(newPreview.target == '_self' || newPreview.target == ''){
+                        if(newPreview.target === '_self' || newPreview.target === ''){
                             this.target_checkbox.checked = false;
                         }
                         else{
                             this.target_checkbox.checked = true;
                         }
-                        {% if S42_head_footer_manage %}
-                        if(newPreview.is_menu == 'menuitem'){
+                        {% if S42_cms_header_nav_manage %}
+                        if(newPreview.is_menu === 'menuitem'){
                             this.role_checkbox.checked = true;
                         }
                         else{
                             this.role_checkbox.checked = false;
                         }
                         {% endif %}
-                        if(newPreview.title == null){
-                            this.title_textbox.value = newPreview['href'];
-                        }
-                        else{
+                        if(newPreview.title){
                             this.title_textbox.value = newPreview['title'];
+                        } else {
+                            this.title_textbox.value = '';
                         }
-                        {% if S42_head_footer_manage %}
-                        if(newPreview.css_classes == null){
-                            this.classes_textbox.value = '';
-                        }
-                        else{
+                        {% if S42_cms_header_nav_manage %}
+                        if(newPreview.css_classes){
                             this.classes_textbox.value = newPreview['css_classes'];
+                        } else {
+                            this.classes_textbox.value = '';
                         }
                         {% endif %}
                     }
                     else{
+                        this.linkInnerText = newPreview;
                         this.textbox.value = newPreview;
-                        this.title_textbox.value = newPreview;
+                        this.title_textbox.value = '';
                         this.target_checkbox.checked = true;
-                        {% if S42_head_footer_manage %}
+                        {% if S42_cms_header_nav_manage %}
                         this.role_checkbox.checked = false;
                         this.classes_textbox.value = '';
                         {% endif %}
@@ -300,7 +336,7 @@
                     this.textbox.value = '';
                     this.title_textbox.value = '';
                     this.target_checkbox.checked = true;
-                    {% if S42_head_footer_manage %}
+                    {% if S42_cms_header_nav_manage %}
                     this.role_checkbox.checked = false;
                     this.classes_textbox.value = '';
                     {% endif %}
@@ -325,13 +361,30 @@
                 let { value } = this.textbox;
                 let title_value = this.title_textbox.value;
                 let target_value = this.target_checkbox.checked;
-                {% if S42_head_footer_manage %}
+                {% if S42_cms_header_nav_manage %}
                 let role_value = this.role_checkbox.checked;
-                let classes_value = this.classes_textbox.value;
+                let css_classes = this.classes_textbox.value.trim();
                 {% else %}
                 let role_value = null;
-                let classes_value = null;
+                let css_classes = '';
                 {% endif %}
+
+                {% if S42_cms_header_nav_manage %}
+                    if (isInsideFooter() && !css_classes.includes(LINK_FOOTER_CLASS)) {
+                        css_classes += ` ${LINK_FOOTER_CLASS}`;
+                        css_classes = css_classes.trim();
+                    }
+                {% endif %}
+
+                let linkData = {'href': value, 'title': title_value, 'target': target_value, 'is_menu': role_value, 'css_classes': css_classes};
+
+                {% if S48_aria_label_added_to_hypereditor_links_opened_in_new_tab %}
+                let linkAriaLabel = getLinkAriaLabel(this.linkInnerText, title_value, target_value);
+                if (linkAriaLabel) {
+                    linkData.ariaLabel = linkAriaLabel;
+                }
+                {% endif %}
+
                 switch (this.root.getAttribute('data-mode')) {
                     case 'link': {
                         const { scrollTop } = this.quill.root;
@@ -339,14 +392,14 @@
                             this.quill.formatText(
                                 this.linkRange,
                                 'link',
-                                JSON.stringify({'href': value, 'title': title_value, 'target': target_value, 'is_menu': role_value, 'css_classes': classes_value}),
+                                JSON.stringify(linkData),
                                 'user',
                             );
                             delete this.linkRange;
                         }
                         else {
                             this.restoreFocus();
-                            this.quill.format('link', JSON.stringify({'href': value, 'title': title_value, 'target': target_value, 'is_menu': role_value, 'css_classes': classes_value}), 'user');
+                            this.quill.format('link', JSON.stringify(linkData), 'user');
                         }
                         this.preview.className = 'ql-preview';
                         this.quill.root.scrollTop = scrollTop;
@@ -378,7 +431,7 @@
                 this.title_textbox.value = '';
                 this.textbox.value = '';
                 this.target_checkbox.checked = true;
-                {% if S42_head_footer_manage %}
+                {% if S42_cms_header_nav_manage %}
                 this.role_checkbox.checked = false;
                 this.classes_textbox.value = '';
                 {% endif %}
@@ -427,12 +480,11 @@
             '<input type="text" data-formula="e=mc^2" data-link="https://example.com" data-video="Embed URL">',
             '<label for="url-title">Podpowiedź po najechaniu na odnośnik:</label><input id="url-title" type="text">',
             '<label for="url-target" id="target-label">Otwórz odnośnik w nowej karcie:</label><input id="url-target" type="checkbox" checked="checked">',
-            {% if S42_head_footer_manage %}'<label for="url-css-classes">Dodatkowe klasy css:</label><input id="url-css-classes" type="text">',
+            {% if S42_cms_header_nav_manage %}'<label for="url-css-classes">Dodatkowe klasy css:</label><input id="url-css-classes" type="text">',
             '<label for="url-is-menu" id="is-menu-label">Odnośnik jest elementem menu:</label><input id="url-is-menu" type="checkbox">',{% endif %}
             '<a class="ql-action"></a>',
             '<a class="ql-remove"></a>',
         ].join('');
-        var footer_nav_div = parent.document.getElementsByName('footer_nav');
 
         var tmpOptions = {
             container: [
@@ -445,11 +497,11 @@
                 ['clean']
             ]
         };
-        {% if S42_head_footer_manage %}
-        if(footer_nav_div.length > 0 && footer_nav_div[0].parentNode.getElementsByTagName('iframe').length > 0){
+        {% if S42_cms_header_nav_manage %}
+        if(isInsideFooter()){
             tmpOptions = {
                 container: [
-                    ['bold', 'link'],
+                    ['link'],
                     [{list: 'bullet'}, {menuList: 'bullet'}],
                 ]
             };

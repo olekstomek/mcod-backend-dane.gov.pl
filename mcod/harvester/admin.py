@@ -37,7 +37,6 @@ class DataSourceDatasets(PaginationInline):
     can_add = False
     can_change = False
     can_delete = False
-    template = 'admin/harvester/datasource-datasets-list.html'
     show_change_link = False
     max_num = 0
     min_num = 0
@@ -46,6 +45,7 @@ class DataSourceDatasets(PaginationInline):
     model = Dataset
     fields = ['_title', 'modified', 'organization_title', 'categories_titles']
     page_param = 'r'  # number of page for paginated results.
+    verbose_name_plural = ''
 
     def has_add_permission(self, request, obj=None):
         return False
@@ -86,6 +86,7 @@ class DataSourceImports(PaginationInline):
 
     model = DataSourceImport
     ordering = ('-id', )
+    verbose_name_plural = ''
 
     def has_add_permission(self, request, obj=None):
         return False

@@ -85,8 +85,8 @@ Feature: Global Search API
     And api request path is <request_path>
     Then send api request and fetch the response
     And api's response status code is 200
-    And api's response body field data/[0]/attributes/regions/[0]/name is Warszawa
-    And api's response body field data/[0]/attributes/regions/[0]/region_id is 101752777
+    And has assigned Polska,Warszawa as name for regions
+    And has assigned 85633723,101752777 as region_id for regions
 
       Examples:
       | request_path                                                                                                    |
@@ -105,3 +105,14 @@ Feature: Global Search API
       | /1.4/search?page=1&per_page=20&q=tsti&sort=relevance&model[terms]=institution |
       | /1.4/search?page=1&per_page=20&q=TSTI&sort=relevance&model[terms]=institution |
       | /1.4/search?page=1&per_page=20&q=TSti&sort=relevance&model[terms]=institution |
+
+  Scenario: Search filtered facet returns region aggregation
+    Given dataset with id 998
+    And resource with id 999 dataset id 998 and single main region
+    And 3 resources
+    When api request method is GET
+    And api request path is /1.4/search?model[terms]=dataset,resource&per_page=1&filtered_facet[by_regions]=101752777
+    Then send api request and fetch the response
+    And api's response status code is 200
+    And api's response body field meta/aggregations/by_regions/[0]/id is 101752777
+    And api's response body field meta/aggregations/by_regions/[0]/title is Warszawa, Gmina Warszawa, pow. Warszawa, woj. Mazowieckie

@@ -29,5 +29,5 @@ Feature: Dataset resources list API
     And resource with id 999 dataset id 998 and single main region
     When api request path is /1.4/datasets/998/resources
     And send api request and fetch the response
-    Then api's response body field data/[0]/attributes/regions/[0]/name is Warszawa
-    And api's response body field data/[0]/attributes/regions/[0]/region_id is 101752777
+    Then has assigned Polska,Warszawa as name for regions
+    And has assigned 85633723,101752777 as region_id for regions

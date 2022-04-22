@@ -2,7 +2,8 @@
 Feature: Dataset resources download XML Metadata
 
   Scenario Outline: Metadata for single dataset can be downloaded as xml file
-    Given dataset with id 1004 and 3 resources
+    Given dataset with id 1004 and 2 resources
+    And resource with id 999 dataset id 1004 and supplement with id 999
     When api request method is GET
     And api request language is <lang_code>
     And api request path is /datasets/1004/resources/metadata.xml

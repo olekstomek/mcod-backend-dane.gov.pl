@@ -173,8 +173,9 @@ def process_resource_file_data_task(resource_id, **kwargs):
         return json.dumps({})
     if not resource.data:
         raise Exception("Nieobsługiwany format danych lub błąd w jego rozpoznaniu.")
-
-    tds = resource.tabular_data_schema or resource.data.get_schema(revalidate=True)
+    tds = resource.tabular_data_schema
+    if not tds or tds.get('missingValues') != resource.special_signs_symbols_list:
+        tds = resource.data.get_schema(revalidate=True)
     if resource.from_resource and resource.from_resource.tabular_data_schema:
         old_fields = deepcopy(resource.from_resource.tabular_data_schema.get('fields'))
         for f in old_fields:

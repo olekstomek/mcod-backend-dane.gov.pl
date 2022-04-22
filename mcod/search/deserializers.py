@@ -159,6 +159,14 @@ class DataAggregations(ExtSchema):
     )
 
 
+class DataFilteredAggregations(ExtSchema):
+
+    by_regions = fields.FilteredAggregationField(
+        nested_path='regions',
+        field='regions.region_id'
+    )
+
+
 class ApiSearchRequest(ListingSchema):
     q = CommonSearchField(
         doc_template='docs/generic/fields/query_field.html',
@@ -177,6 +185,8 @@ class ApiSearchRequest(ListingSchema):
     )
 
     facet = fields.FacetField(DataAggregations)
+
+    filtered_facet = fields.FacetField(DataFilteredAggregations)
 
     id = fields.FilterField(
         StringTermSchema,

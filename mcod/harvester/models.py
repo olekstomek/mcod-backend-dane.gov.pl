@@ -7,6 +7,7 @@ from urllib.parse import urlencode
 from django.apps import apps
 from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.core.files import File
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.validators import validate_email
 from django.db import models
 from django.db.models import Q
@@ -177,6 +178,10 @@ class DataSource(AdminMixin, LogMixin, SoftDeletableModel, TimeStampedModel):
     @cached_property
     def resource_model(self):
         return apps.get_model('resources.Resource')
+
+    @cached_property
+    def resource_supplement_model(self):
+        return apps.get_model('resources.Supplement')
 
     @cached_property
     def tag_model(self):
@@ -363,6 +368,7 @@ class DataSource(AdminMixin, LogMixin, SoftDeletableModel, TimeStampedModel):
                 dataset.categories.set(categories)
 
                 for rd in resources_data:
+                    supplements = rd.pop('supplements', [])
                     resource, created = self._update_or_create_resource(dataset, rd)
                     r_imported += 1
                     if resource:
@@ -370,6 +376,11 @@ class DataSource(AdminMixin, LogMixin, SoftDeletableModel, TimeStampedModel):
                             r_created += 1
                         else:
                             r_updated += 1
+                        for sd in supplements:
+                            self._update_or_create_resource_supplement(resource, sd)
+                        supplement_names = [x['name_pl'] for x in supplements]
+                        for obj in resource.supplements.exclude(name_pl__in=supplement_names):
+                            obj.delete()
         return ds_imported, ds_created, ds_updated, r_imported, r_created, r_updated
 
     def _update_or_create_dataset(self, data):
@@ -391,6 +402,20 @@ class DataSource(AdminMixin, LogMixin, SoftDeletableModel, TimeStampedModel):
         if obj and modified:  # TODO: find a better way to save modification date with value from data.
             self.dataset_model.raw.filter(id=obj.id).update(modified=modified)
         return obj, created
+
+    def _update_or_create_resource_supplement(self, resource, data):
+        _file = SimpleUploadedFile(
+            data['filename'], data['content'].read()) if 'filename' in data and 'content' in data else None
+        defaults = {
+            'file': _file,
+            'name_en': data['name_en'],
+            'order': 0,
+            'created_by': self.import_user,
+            'modified_by': self.import_user,
+            'modified': resource.modified,
+        }
+        return self.resource_supplement_model.objects.update_or_create(
+            resource=resource, name=data['name_pl'], defaults=defaults)
 
     def _get_dataset_category(self, data):
         if self.is_ckan:

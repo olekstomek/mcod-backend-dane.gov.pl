@@ -19,12 +19,11 @@ from mcod.core.api.jsonapi.serializers import (
 from mcod.core.api.rdf.schemas import ResponseSchema as RDFResponseSchema
 from mcod.core.api.schemas import ExtSchema
 from mcod.core.serializers import CSVSerializer, ListWithoutNoneStrElement
-from mcod.core.utils import sizeof_fmt
 from mcod.lib.extended_graph import ExtendedGraph
 from mcod.lib.serializers import TranslatedStr
 from mcod.core.api.rdf.schema_mixins import ProfilesMixin
 from mcod.resources.models import Resource
-from mcod.regions.serializers import RegionSchema
+from mcod.regions.serializers import RegionSchema, RegionBaseSchema
 from mcod.watchers.serializers import SubscriptionMixin
 from mcod.unleash import is_enabled
 
@@ -81,6 +80,12 @@ class SpecialSignSchema(ExtSchema):
     description = TranslatedStr()
 
 
+class SupplementSchema(ExtSchema):
+    name = TranslatedStr()
+    file_url = fields.Url()
+    file_size = fields.Str(attribute='file_size_human_readable_or_empty_str')
+
+
 class ResourceFileSchema(ExtSchema):
     file_size = fields.Integer()
     download_url = fields.Str()
@@ -128,6 +133,8 @@ class ResourceApiAttrs(ObjectAttrs, HighlightObjectMixin):
         regions = fields.Method('get_regions')
     if is_enabled('S40_new_file_model.be'):
         files = fields.Method('get_files')
+    if is_enabled('S48_resource_supplements.be'):
+        supplement_docs = fields.Nested(SupplementSchema, data_key='supplements', many=True)
 
     class Meta:
         relationships_schema = ResourceApiRelationships
@@ -311,10 +318,19 @@ class GeoApiAttrs(ObjectAttrs, GeoShapeObject):
         meta_schema = GeoApiAttrsMeta
 
 
-class GeoTileAggregation(schemas.ExtSchema):
-    tile_name = fields.String()
+class BaseGeoAggregation(schemas.ExtSchema):
     doc_count = fields.Integer()
     centroid = fields.List(fields.Float)
+    resources_count = fields.Integer()
+    datasets_count = fields.Integer()
+
+
+class GeoTileAggregation(BaseGeoAggregation):
+    tile_name = fields.String()
+
+
+class GeoRegionAggregation(BaseGeoAggregation):
+    region_name = TranslatedStr()
 
 
 class GeoTileShapesAggregation(GeoTileAggregation):
@@ -463,7 +479,7 @@ class ResourceXMLSerializer(schemas.ExtSchema):
     created = fields.DateTime(format='iso8601')
     data_date = fields.Date()
     type = fields.Function(lambda resource: resource.get_type_display())
-    file_size = fields.Function(lambda obj: sizeof_fmt(obj.file_size) if obj.file_size else '')
+    file_size = fields.Str(attribute='file_size_human_readable_or_empty_str')
 
     visualization_types = ListWithoutNoneStrElement(fields.Str())
     download_url = fields.Str()
@@ -475,7 +491,9 @@ class ResourceXMLSerializer(schemas.ExtSchema):
     if is_enabled('S47_research_data.be'):
         has_research_data = fields.Bool()
     if is_enabled('S37_resources_admin_region_data.be'):
-        all_regions = fields.Nested(RegionSchema, data_key='regions', many=True)
+        all_regions = fields.Nested(RegionBaseSchema, data_key='regions', many=True)
+    if is_enabled('S48_resource_supplements.be'):
+        supplement_docs = fields.Nested(SupplementSchema, data_key='supplements', many=True)
 
 
 class ResourceCSVMetadataSerializer(schemas.ExtSchema):
@@ -487,7 +505,7 @@ class ResourceCSVMetadataSerializer(schemas.ExtSchema):
     openness_score = fields.Int(data_key=_('Openness score'))
     resource_type = fields.Function(lambda obj: obj.get_type_display(), data_key=_('Type'))
     format = fields.Str(data_key=_('File format'), default='')
-    file_size = fields.Function(lambda obj: sizeof_fmt(obj.file_size) if obj.file_size else '', data_key=_('File size'))
+    file_size = fields.Str(attribute='file_size_human_readable_or_empty_str', data_key=_('File size'))
     views_count = fields.Int(attribute='computed_views_count', data_key=_("Resource views count"))
     downloads_count = fields.Int(attribute='computed_downloads_count',
                                  data_key=_("Resource downloads count"))
@@ -504,6 +522,11 @@ class ResourceCSVMetadataSerializer(schemas.ExtSchema):
         regions = fields.Str(data_key=_('Resource regions'), attribute='all_regions_str')
     download_url = fields.Url(data_key=_('Download URL'))
     data_special_signs = fields.Nested(SpecialSignSchema, data_key=_('special signs'), many=True)
+    if is_enabled('S48_resource_supplements.be'):
+        supplements = fields.Method('get_supplements', data_key=_('Resource supplements (name, url, file size)'))
+
+    def get_supplements(self, obj):
+        return ';'.join([f'{x.name_i18n}, {x.file_url}, {x.file_size_human_readable}' for x in obj.supplement_docs])
 
     @ma.post_dump(pass_many=False)
     def prepare_nested_data(self, data, **kwargs):

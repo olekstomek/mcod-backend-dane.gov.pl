@@ -38,3 +38,11 @@ Feature: Search suggestions
     And send api request and fetch the response
     Then api's response status code is 200
     And api's response data has length 0
+
+  Scenario: Unpublished resources regions are not visible as suggestion
+    Given dataset with id 998
+    And draft resource with id 111 dataset id 998 and single main region
+    When api request path is /search/suggest/?models=region&q=Warsz
+    And send api request and fetch the response
+    Then api's response status code is 200
+    And api's response data has length 0

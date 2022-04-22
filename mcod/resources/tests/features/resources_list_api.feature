@@ -6,7 +6,7 @@ Feature: Resources list API
     When api request path is <request_path>
     And send api request and fetch the response
     Then api's response status code is 200
-    And api's response body field /data/[0]/attributes has fields created,data_date,description,format,modified,openness_score,title,verified,visualization_types
+    And api's response body field /data/[0]/attributes has fields created,data_date,description,format,modified,openness_score,title,verified,visualization_types,supplements
 
     Examples:
       | request_path    |
@@ -185,5 +185,5 @@ Feature: Resources list API
     And resource with id 999 dataset id 998 and single main region
     When api request path is /1.4/resources/?id=999
     And send api request and fetch the response
-    Then api's response body field data/[0]/attributes/regions/[0]/name is Warszawa
-    And api's response body field data/[0]/attributes/regions/[0]/region_id is 101752777
+    Then has assigned Polska,Warszawa as name for regions
+    And has assigned 85633723,101752777 as region_id for regions

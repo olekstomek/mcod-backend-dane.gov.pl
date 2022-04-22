@@ -42,6 +42,7 @@
 						<region_id>85633723</region_id>
 					</region>
 				</regions>
+                <supplements/>
 			</resource>
 			<resource>
 				<downloads_count>470</downloads_count>
@@ -69,6 +70,7 @@
 						<region_id>85633723</region_id>
 					</region>
 				</regions>
+                <supplements/>
 			</resource>
 		</resources>
 		<verified>2021-05-09T11:24:26Z</verified>
@@ -147,6 +149,7 @@
 						<region_id>85633723</region_id>
 					</region>
 				</regions>
+                <supplements/>
 			</resource>
 			<resource>
 				<downloads_count>480</downloads_count>
@@ -174,6 +177,7 @@
 						<region_id>85633723</region_id>
 					</region>
 				</regions>
+                <supplements/>
 			</resource>
 		</resources>
 		<verified>2021-05-09T11:24:36Z</verified>

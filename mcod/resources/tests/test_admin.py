@@ -350,69 +350,6 @@ class TestResourceChangeType(object):
             assert resp.status_code == 200
             assert '#types' in resp.content.decode()
 
-    def test_change_type_is_run_successfully(self, geo_tabular_data_resource, admin):
-        client = Client()
-        client.force_login(admin)
-        data = {
-            'title': ['test geo csv'], 'description': ['<p>more than 20 characters</p>'],
-            'dataset': [geo_tabular_data_resource.dataset_id],
-            'data_date': [datetime.date(2021, 5, 4)], 'status': ['published'], 'show_tabular_view': ['on'],
-            'schema_type_0': ['string'],
-            'schema_type_1': ['string'], 'schema_type_2': ['number'], 'schema_type_3': ['integer'],
-            'geo_0': [''], 'geo_1': [''], 'geo_2': [''], 'geo_3': [''], 'title_en': [''], 'description_en': [''],
-            'slug_en': [''], 'Resource_file_tasks-TOTAL_FORMS': ['4'], 'Resource_file_tasks-INITIAL_FORMS': ['1'],
-            'Resource_file_tasks-MIN_NUM_FORMS': ['0'], 'Resource_file_tasks-MAX_NUM_FORMS': ['1000'],
-            'Resource_data_tasks-TOTAL_FORMS': ['4'], 'Resource_data_tasks-INITIAL_FORMS': ['1'],
-            'Resource_data_tasks-MIN_NUM_FORMS': ['0'], 'Resource_data_tasks-MAX_NUM_FORMS': ['1000'],
-            'Resource_link_tasks-TOTAL_FORMS': ['4'], 'Resource_link_tasks-INITIAL_FORMS': ['1'],
-            'Resource_link_tasks-MIN_NUM_FORMS': ['0'], 'Resource_link_tasks-MAX_NUM_FORMS': ['1000'],
-            '_change_type': ''}
-        if is_enabled('S41_resource_has_high_value_data.be'):
-            data['has_high_value_data'] = False
-        if is_enabled('S43_dynamic_data.be'):
-            data['has_dynamic_data'] = False
-        if is_enabled('S47_research_data.be'):
-            data['has_research_data'] = False
-        resp = client.post(
-            reverse('admin:resources_resource_change', kwargs={'object_id': geo_tabular_data_resource.id}), data=data,
-            follow=True
-        )
-        content = resp.content.decode()
-        assert _('Data type changed') in content
-
-
-class TestResourceMapSave(object):
-
-    def test_map_save_is_run_successfully(self, geo_tabular_data_resource, admin):
-        geo_tabular_data_resource.revalidate()
-        geo_tabular_data_resource.refresh_from_db()
-        client = Client()
-        client.force_login(admin)
-        data = {
-            'title': ['test geo csv'], 'description': ['<p>more than 20 characters</p>'],
-            'dataset': [geo_tabular_data_resource.dataset_id],
-            'data_date': [datetime.date(2021, 5, 4)], 'status': ['published'], 'show_tabular_view': ['on'],
-            'schema_type_0': ['string'],
-            'schema_type_1': ['string'], 'schema_type_2': ['integer'], 'schema_type_3': ['integer'],
-            'geo_0': [''], 'geo_1': ['label'], 'geo_2': ['l'], 'geo_3': ['b'], 'title_en': [''], 'description_en': [''],
-            'slug_en': [''], 'Resource_file_tasks-TOTAL_FORMS': ['4'], 'Resource_file_tasks-INITIAL_FORMS': ['1'],
-            'Resource_file_tasks-MIN_NUM_FORMS': ['0'], 'Resource_file_tasks-MAX_NUM_FORMS': ['1000'],
-            'Resource_data_tasks-TOTAL_FORMS': ['4'], 'Resource_data_tasks-INITIAL_FORMS': ['1'],
-            'Resource_data_tasks-MIN_NUM_FORMS': ['0'], 'Resource_data_tasks-MAX_NUM_FORMS': ['1000'],
-            'Resource_link_tasks-TOTAL_FORMS': ['4'], 'Resource_link_tasks-INITIAL_FORMS': ['1'],
-            'Resource_link_tasks-MIN_NUM_FORMS': ['0'], 'Resource_link_tasks-MAX_NUM_FORMS': ['1000'],
-            '_map_save': [''],
-        }
-        if is_enabled('S41_resource_has_high_value_data.be'):
-            data['has_high_value_data'] = False
-        if is_enabled('S43_dynamic_data.be'):
-            data['has_dynamic_data'] = False
-        if is_enabled('S47_research_data.be'):
-            data['has_research_data'] = False
-        resp = client.post(geo_tabular_data_resource.admin_change_url, data=data, follow=True)
-        content = resp.content.decode()
-        assert _('Map definition saved') in content
-
 
 class TestResourceChangeList(object):
 

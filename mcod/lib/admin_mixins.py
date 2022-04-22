@@ -26,6 +26,7 @@ from rules.contrib.admin import (
     ObjectPermissionsModelAdmin as BaseObjectPermissionsModelAdmin,
     ObjectPermissionsStackedInline as BaseObjectPermissionsStackedInline,
 )
+from suit.admin import SortableStackedInline as BaseSortableStackedInline
 
 from mcod import settings
 from mcod.histories.models import History, LogEntry
@@ -434,6 +435,17 @@ class ListDisplayMixin:
 
 class TabularInline(ListDisplayMixin, AdminListMixin, admin.TabularInline):
     pass
+
+
+class SortableStackedInline(BaseSortableStackedInline):
+
+    template = 'admin/edit_inline/_stacked.html'
+
+    def get_formset(self, request, obj=None, **kwargs):
+        # https://stackoverflow.com/questions/1206903/how-do-i-require-an-inline-in-the-django-admin/53868121#53868121
+        formset = super().get_formset(request, obj=obj, **kwargs)
+        formset.validate_min = True
+        return formset
 
 
 class LangFieldsOnlyMixin:

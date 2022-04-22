@@ -20,3 +20,19 @@ Feature: Resource details page in admin panel
     Given resource with id 999 imported from ckan named Test Source with url http://example.com and type api
     When admin's page /resources/resource/999/change/ is requested
     Then admin's response page not contains forced_file_type
+
+  Scenario: Change type is run successfully
+    Given dataset with id 999
+    And geo_tabular_data_resource with params {"id": 999, "dataset_id": 999}
+    When admin's request method is POST
+    And admin's request posted resource data is {"title": "test geo csv", "description": "<p>more than 20 characters</p>", "dataset": 999, "data_date": "2021-05-04", "status": "published", "show_tabular_view": "on", "schema_type_0": "string", "schema_type_1": "string", "schema_type_2": "number", "schema_type_3": "integer", "geo_0": "", "geo_1": "", "geo_2": "", "geo_3": "", "_change_type": ""}
+    And admin's page /resources/resource/999/change/ is requested
+    Then admin's response page contains Zmieniono typ danych
+
+  Scenario: Map save is run successfully
+    Given dataset with id 999
+    And geo_tabular_data_resource with params {"id": 999, "dataset_id": 999}
+    When admin's request method is POST
+    And admin's request posted resource data is {"title": "test geo csv", "description": "<p>more than 20 characters</p>", "dataset": 999, "data_date": "2021-05-04", "status": "published", "show_tabular_view": "on", "schema_type_0": "string", "schema_type_1": "string", "schema_type_2": "integer", "schema_type_3": "integer", "geo_0": "", "geo_1": "label", "geo_2": "l", "geo_3": "b", "_map_save": ""}
+    And admin's page /resources/resource/999/change/ is requested
+    Then admin's response page contains Zapisano definicję mapy

@@ -730,6 +730,22 @@ class TermsAggregationField(AggregationField):
         return res
 
 
+class FilteredAggregationField(AggregationField):
+
+    def q(self, value):
+        _path = self._metadata.get('nested_path', None)
+        _field = self._metadata.get('field')
+        facet_name = f'by_{_field}' if _path is None else f'by_{_path.split(".")[-1]}'
+        kw = {
+            'size': self._metadata.get('size', 500),
+            'min_doc_count': self._metadata.get('min_doc_count', 1),
+        }
+        terms_facet = TermsFacet(field=_field, **kw)
+        filter_facet = FilterFacet(term={_field: value}, aggs={'inner': terms_facet.get_aggregation()})
+        facet = NestedFacet(_path, filter_facet) if _path else filter_facet
+        return [(facet_name, facet)]
+
+
 class ColumnMetricAggregationField(ElasticField, fields.String):
     def __init__(self, aggregation_type, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -808,7 +824,7 @@ class TileAggregationMixin:
         return queryset
 
 
-class AggregatedBboxField(TileAggregationMixin, ElasticField, fields.BoundingBox):
+class BaseBboxField(ElasticField, fields.BoundingBox):
     relation_type = 'intersects'
 
     @property
@@ -839,6 +855,10 @@ class AggregatedBboxField(TileAggregationMixin, ElasticField, fields.BoundingBox
             return value
 
 
+class AggregatedBboxField(TileAggregationMixin, BaseBboxField):
+    pass
+
+
 class GeoShapeField(AggregatedBboxField):
 
     relation_type = 'within'
@@ -859,7 +879,10 @@ class GeoShapeField(AggregatedBboxField):
                 "tile_regions", A("filter", filter=bbox_q & main_bbox_q).metric(
                     'centroid', GeoCentroid(field="regions.coords"))
             )
-        )
+        ).metric('model_types', A('filters', filters={
+            'resources': Q('match', model='resource'),
+            'datasets': Q('match', model='dataset')
+        })).metric("others", A("top_hits", size=10))
 
     def q(self, value):
         bbox = self.bbox(value)
@@ -869,6 +892,60 @@ class GeoShapeField(AggregatedBboxField):
             return q, aggs
         else:
             return value
+
+
+class RegionsGeoShapeField(BaseBboxField):
+
+    relation_type = 'within'
+
+    def aggregate_bbox_regions(self, bbox, nested_agg):
+        main_bbox_q = self.get_geo_shape_query(bbox)
+        nested_bbox_q = Q('nested', path=self.search_path, query=main_bbox_q)
+        return A('filter', filter=nested_bbox_q).metric(
+            'resources_regions',
+            Nested(path='regions').metric(
+                "bbox_regions", A("filter", filter=main_bbox_q).metric(*nested_agg)
+            )
+        )
+
+    def q(self, value):
+        bbox = self.bbox(value)
+        if bbox:
+            q = self.get_geo_shape_query(bbox)
+            return q, bbox
+        return value
+
+    def _prepare_queryset(self, queryset, data):
+        q, bbox = data
+        cloned_queryset = queryset._clone()
+        cloned_queryset = super()._prepare_queryset(cloned_queryset, q)
+        top_hierarchy = self.get_top_hierarchy(cloned_queryset, bbox)
+        queryset = self.query_top_hierarchy(queryset, top_hierarchy, q)
+        top_regions_agg = self.get_regions_aggregation(bbox, top_hierarchy)
+        queryset.aggs.bucket('regions_agg', top_regions_agg)
+        return queryset
+
+    def query_top_hierarchy(self, queryset, top_hierarchy, q):
+        nested_hierarchy_q = Q('nested', path=self.search_path,
+                               query=Q('match', **{'regions.hierarchy_level': top_hierarchy}) & q)
+        return queryset.query(nested_hierarchy_q)
+
+    def get_top_hierarchy(self, queryset, bbox):
+        top_hierarchy_agg = self.aggregate_bbox_regions(
+            bbox, ('top_hierarchy', A('max', field='regions.hierarchy_level')))
+        queryset.aggs.bucket('top_agg', top_hierarchy_agg)
+        c_resp = queryset.execute()
+        return c_resp.aggregations.top_agg.resources_regions.bbox_regions.top_hierarchy.value
+
+    def get_regions_aggregation(self, bbox, top_hierarchy):
+        top_regions_agg = self.aggregate_bbox_regions(bbox, (
+            'top_regions', A('filter', filter=Q('match', **{'regions.hierarchy_level': int(top_hierarchy)})).metric(
+                'unique_regions', A('terms', field='regions.region_id').metric(
+                    'region_data', A("top_hits", size=1)).metric(
+                    'model_types', A('filters', filters={'resources': Q('match', _index='resources'),
+                                                         'datasets': Q('match', _index='datasets')})))
+        ))
+        return top_regions_agg
 
 
 class BBoxField(AggregatedBboxField):
@@ -928,7 +1005,10 @@ class TileAggregatedTermsField(TileAggregationMixin, TermsField):
                 "tile_regions", A("filter", filter=bbox_q & region_q).metric(
                     'centroid', GeoCentroid(field="regions.coords"))
             )
-        )
+        ).metric('model_types', A('filters', filters={
+            'resources': Q('match', model='resource'),
+            'datasets': Q('match', model='dataset')
+        })).metric("others", A("top_hits", size=10))
 
     def q(self, value):
         q = super().q(value)
@@ -941,6 +1021,29 @@ class TileAggregatedTermsField(TileAggregationMixin, TermsField):
         except IndexError:
             aggs = []
         return q, aggs
+
+
+class RegionAggregatedTermsField(TermsField):
+
+    def get_aggregations(self, q):
+        nested_q = Q('nested', path=self.search_path, query=q)
+        agg = Filter(filter=nested_q).metric(
+            'resources_regions',
+            Nested(path='regions').metric(
+                "single_region", A("filter", filter=q).metric(
+                    'region_data', A("top_hits", size=1))
+            )
+        ).metric('model_types', A('filters', filters={
+            'resources': Q('match', model='resource'),
+            'datasets': Q('match', model='dataset')
+        }))
+        return 'regions_agg', agg
+
+    def _prepare_queryset(self, queryset, data):
+        queryset = super()._prepare_queryset(queryset, data)
+        aggs = self.get_aggregations(data)
+        queryset.aggs.bucket(*aggs)
+        return queryset
 
 
 class NoDataField(ElasticField, fields.Boolean):

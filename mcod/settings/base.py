@@ -254,6 +254,7 @@ HARVESTER_XML_VERSION_TO_SCHEMA_PATH = {
     '1.4': HARVESTER_DATA_DIR.path('xml_import_otwarte_dane_1_4.xsd').root,
     '1.5': HARVESTER_DATA_DIR.path('xml_import_otwarte_dane_1_5.xsd').root,
     '1.6': HARVESTER_DATA_DIR.path('xml_import_otwarte_dane_1_6.xsd').root,
+    '1.7': HARVESTER_DATA_DIR.path('xml_import_otwarte_dane_1_7.xsd').root,
 }
 
 HARVESTER_IMPORTERS = {
@@ -786,6 +787,8 @@ CELERY_TASK_ROUTES = {
     'mcod.core.api.search.tasks.delete_document_task': {'queue': 'indexing'},
     'mcod.core.api.search.tasks.delete_with_related_task': {'queue': 'indexing'},
     'mcod.core.api.search.tasks.delete_related_documents_task': {'queue': 'indexing'},
+    'mcod.core.api.search.tasks.update_related_task': {'queue': 'indexing'},
+    'mcod.core.api.search.tasks.bulk_delete_documents_task': {'queue': 'indexing'},
     'mcod.resources.tasks.process_resource_data_indexing_task': {'queue': 'indexing_data'},
     'mcod.resources.tasks.check_link_protocol': {'queue': 'periodic'},
     'mcod.resources.tasks.process_resource_from_url_task': {'queue': 'resources'},
@@ -1181,6 +1184,21 @@ ARCHIVE_CONTENT_TYPES = {
 }
 ARCHIVE_EXTENSIONS = {'bz', 'bz2', 'gz', 'rar', 'tar', 'zip', '7z'}
 ALLOWED_CONTENT_TYPES = [x[1] for x in SUPPORTED_CONTENT_TYPES] + list(ARCHIVE_CONTENT_TYPES)
+ALLOWED_RESOURCE_SUPPLEMENT_MIMETYPES = env.list(
+    'ALLOWED_RESOURCE_SUPPLEMENT_MIMETYPES',
+    default=[
+        # .doc, .docx
+        'application/msword',
+        'application/vnd.ms-word',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        # .pdf
+        'application/pdf',
+        # .txt
+        'text/plain',
+        # .odt
+        'application/vnd.oasis.opendocument.text',
+    ]
+)
 
 FILE_UPLOAD_MAX_MEMORY_SIZE = 1073741824  # 1Gb
 FILE_UPLOAD_PERMISSIONS = 0o644
@@ -1221,27 +1239,27 @@ CONSTANCE_DATABASE_PREFIX = 'constance:mcod:'
 CONSTANCE_DATABASE_CACHE_BACKEND = 'default'
 
 CONSTANCE_CONFIG = {
-    'NO_REPLY_EMAIL': ('no-reply@dane.gov.pl', '', str),
-    'CONTACT_MAIL': ('kontakt@dane.gov.pl', '', str),
-    'SUGGESTIONS_EMAIL': ("uwagi@dane.gov.pl", '', str),
-    'ACCOUNTS_EMAIL': ("konta@dane.gov.pl", '', str),
-    'FOLLOWINGS_EMAIL': ("obserwowane@dane.gov.pl", '', str),
-    'NEWSLETTER_EMAIL': ('newsletter@dane.gov.pl', '', str),
-    'TESTER_EMAIL': ('no-reply@dane.gov.pl', '', str),
-    'MANUAL_URL': ('https://dane.gov.pl/article/1226', '', str),
-    'DATE_FORMATS': ("||".join(DATE_BASE_FORMATS), "", str),
-    'TIME_FORMATS': ("||".join(TIME_BASE_FORMATS), "", str),
-    'CATALOG__TITLE_PL': ('Portal z danymi publicznymi', '', str),
-    'CATALOG__TITLE_EN': ("Poland's Open Data Portal", '', str),
-    'CATALOG__DESCRIPTION_PL': ('Dane o szczególnym znaczeniu dla rozwoju innowacyjności w państwie i rozwoju społeczeństwa informacyjnego w jednym miejscu', '', str),  # noqa: E501
-    'CATALOG__DESCRIPTION_EN': ('Data of particular importance for the development of innovation in the country and the development of the information society gathered in one location', '', str),  # noqa: E501
-    'CATALOG__ISSUED': (date(2014, 4, 30), "", date),
-    'CATALOG__PUBLISHER__NAME_PL': ('KPRM', '', str),
-    'CATALOG__PUBLISHER__NAME_EN': ('KPRM', '', str),
-    'CATALOG__PUBLISHER__EMAIL': ('kontakt@dane.gov.pl', '', str),
-    'CATALOG__PUBLISHER__HOMEPAGE': ('https://dane.gov.pl', '', str),
-    'DATASET__CONTACT_POINT__FN': ('KPRM', '', str),
-    'DATASET__CONTACT_POINT__HAS_EMAIL': ('mailto:kontakt@dane.gov.pl', '', str),
+    'NO_REPLY_EMAIL': ('no-reply@dane.gov.pl', 'Adres email z którego wysyłane są maile z następującymi powiadomieniami z aplikacji:\n- utworzenie propozycji nowych danych\n- utworzenie zgłoszenia PoCoTo\n- przypomnienie o dacie aktualizacji zbioru danych', str),  # noqa: E501
+    'CONTACT_MAIL': ('kontakt@dane.gov.pl', 'Adres email na który wysyłane są maile z powiadomieniami z aplikacji', str),
+    'SUGGESTIONS_EMAIL': ("uwagi@dane.gov.pl", 'Adres email z którego wysyłane są maile z komentarzami/uwagami do zbiorów, zasobów i zaakceptowanych propozycji nowych danych', str),  # noqa: E501
+    'ACCOUNTS_EMAIL': ("konta@dane.gov.pl", 'Adres email z którego do użytkownika wysyłane są maile do przypomnienia hasła oraz aktywacji konta po rejestracji', str),  # noqa: E501
+    'FOLLOWINGS_EMAIL': ("obserwowane@dane.gov.pl", 'Adres email z którego do użytkownika wysyłane są maile z informacjami dotyczącymi aktywności obserwowanych obiektów', str),  # noqa: E501
+    'NEWSLETTER_EMAIL': ('newsletter@dane.gov.pl', 'Adres email z którego do użytkownika wysyłane są maile związane z newsletterem', str),  # noqa: E501
+    'TESTER_EMAIL': ('no-reply@dane.gov.pl', 'Adres email na który wysyłane są maile z powiadomieniami z aplikacji (tylko w trybie DEBUG - środowiska deweloperskie)', str),  # noqa: E501
+    'MANUAL_URL': ('https://dane.gov.pl/article/1226', 'Adres www przewodnika dla dostawców widocznego w stopce panelu administracyjnego.', str),  # noqa: E501
+    'DATE_FORMATS': ("||".join(DATE_BASE_FORMATS), "Dozwolone formaty dla pól typu 'date' oraz 'datetime' (dane tabelaryczne)", str),  # noqa: E501
+    'TIME_FORMATS': ("||".join(TIME_BASE_FORMATS), "Dozwolone formaty dla pól typu 'time' (dane tabelaryczne)", str),  # noqa: E501
+    'CATALOG__TITLE_PL': ('Portal z danymi publicznymi', 'Wartość pola Catalog -> <dct:title xml:lang="pl"> w API (końcówka /catalog.rdf)', str),  # noqa: E501
+    'CATALOG__TITLE_EN': ("Poland's Open Data Portal", 'Wartość pola Catalog -> <dct:title xml:lang="en"> w API (końcówka /catalog.rdf)', str),  # noqa: E501
+    'CATALOG__DESCRIPTION_PL': ('Dane o szczególnym znaczeniu dla rozwoju innowacyjności w państwie i rozwoju społeczeństwa informacyjnego w jednym miejscu', 'Wartość pola Catalog -> <dct:description xml:lang="pl"> w API (końcówka /catalog.rdf)', str),  # noqa: E501
+    'CATALOG__DESCRIPTION_EN': ('Data of particular importance for the development of innovation in the country and the development of the information society gathered in one location', 'Wartość pola Catalog -> <dct:description xml:lang="en"> w API (końcówka /catalog.rdf)', str),  # noqa: E501
+    'CATALOG__ISSUED': (date(2014, 4, 30), 'Wartość pola Catalog -> <dct:issued> w API (końcówka /catalog.rdf)', date),
+    'CATALOG__PUBLISHER__NAME_PL': ('KPRM', 'Wartość pola CatalogPublisher -> <foaf:name xml:lang="pl"> w API (końcówka /catalog.rdf)', str),  # noqa: E501
+    'CATALOG__PUBLISHER__NAME_EN': ('KPRM', 'Wartość pola CatalogPublisher -> <foaf:name xml:lang="en"> w API (końcówka /catalog.rdf)', str),  # noqa: E501
+    'CATALOG__PUBLISHER__EMAIL': ('kontakt@dane.gov.pl', 'Wartość pola CatalogPublisher -> <foaf:mbox> w API (końcówka /catalog.rdf)', str),  # noqa: E501
+    'CATALOG__PUBLISHER__HOMEPAGE': ('https://dane.gov.pl', 'Wartość pola CatalogPublisher -> <foaf:homepage> w API (końcówka /catalog.rdf)', str),  # noqa: E501
+    'DATASET__CONTACT_POINT__FN': ('KPRM', 'Wartość pola VcardKind -> <vcard:fn> w API (końcówka /catalog.rdf)', str),
+    'DATASET__CONTACT_POINT__HAS_EMAIL': ('mailto:kontakt@dane.gov.pl', 'Wartość pola VcardKind -> <vcard:hasEmail> w API (końcówka /catalog.rdf)', str),  # noqa: E501
 }
 
 CONSTANCE_CONFIG_FIELDSETS = OrderedDict((
@@ -1569,6 +1587,8 @@ DISCOURSE_API_USER = env('DISCOURSE_API_USER', default='system')
 DISCOURSE_API_KEY = env('DISCOURSE_API_KEY', default='')
 DISCOURSE_SSO_SECRET = env('DISCOURSE_SSO_SECRET', default='')
 DISCOURSE_SSO_REDIRECT = env('DISCOURSE_SSO_REDIRECT', default=f'{DISCOURSE_HOST}/session/sso_login')
+DISCOURSE_CONNECT_URL = f'{ADMIN_URL}/discourse/connect/start'
+DISCOURSE_LOGOUT_REDIRECT = f'{BASE_URL}/pl/user/logout'
 
 LICENSES_LINKS = {
     "CC0 1.0": "https://creativecommons.org/publicdomain/zero/1.0/",
