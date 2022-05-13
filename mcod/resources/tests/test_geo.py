@@ -1,14 +1,19 @@
-import shapefile
 import pytest
 import requests_mock
+import shapefile
 from django.conf import settings
 
-from mcod.resources.geo import (
-    are_shapefiles, analyze_shapefile, ShapeTransformer,
-    clean_house_number, median_point, geocode,
-    extract_coords_from_uaddress, ExtractUAddressError
-)
 from mcod.resources.archives import ArchiveReader
+from mcod.resources.geo import (
+    ExtractUAddressError,
+    ShapeTransformer,
+    analyze_shapefile,
+    are_shapefiles,
+    clean_house_number,
+    extract_coords_from_uaddress,
+    geocode,
+    median_point,
+)
 
 
 def test_are_shapefiles_all_shape_files_available():

@@ -4,7 +4,7 @@ from django.utils.translation import gettext as _
 from mcod import settings
 
 
-class McodPasswordValidator(object):
+class McodPasswordValidator:
     def validate(self, password, user=None):
         special_characters = settings.SPECIAL_CHARS
         if not any(char.isdigit() for char in password):

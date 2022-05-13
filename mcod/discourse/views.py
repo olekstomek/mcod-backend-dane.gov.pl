@@ -1,10 +1,10 @@
-from django.urls import reverse_lazy
+from discourse_django_sso.views import SSOProviderView as BaseSSOProviderView
 from django.conf import settings
 from django.http.response import HttpResponseBadRequest, HttpResponseRedirect
+from django.urls import reverse_lazy
 
-from discourse_django_sso.views import SSOProviderView as BaseSSOProviderView
-from mcod.discourse.forms import ForumLoginForm
 from mcod.discourse import utils
+from mcod.discourse.forms import ForumLoginForm
 from mcod.users.views import CustomAdminLoginView
 
 

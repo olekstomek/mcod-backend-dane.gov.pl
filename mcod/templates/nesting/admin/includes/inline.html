@@ -1,4 +1,4 @@
-{% load suit_tags %}
+{% load suit_tags core_tags %}
 <fieldset class="module aligned djn-module{{ fieldset.name|yesno:' with-legend, first' }} {{ fieldset.classes }}{% if inline_admin_form.form.inlines %} has-inlines{% endif %}">
     {% if fieldset.name %}
         <h2 class="legend">{{ fieldset.name }}
@@ -18,7 +18,7 @@
                 class="field-box{% if field.field.name %} field-{{ field.field.name }}{% endif %}"{% endif %}>
 
             <div class="control-label">
-                {{ field.label_tag }}
+                {{ field.label_tag|add_required_span_tag }}
             </div>
             <div class="controls">
             {# if multi-fields and first field #}

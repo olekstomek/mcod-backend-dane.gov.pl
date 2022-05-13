@@ -1,5 +1,5 @@
 from mcod.core.db.managers import TrashManager
-from mcod.core.managers import SoftDeletableQuerySet, SoftDeletableManager, TrashQuerySet
+from mcod.core.managers import SoftDeletableManager, SoftDeletableQuerySet, TrashQuerySet
 
 
 class MeetingQuerySetMixin:

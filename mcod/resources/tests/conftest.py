@@ -5,7 +5,6 @@ from pytest_bdd import given, parsers, then
 from mcod.core.tests.fixtures import *  # noqa
 from mcod.core.tests.fixtures.bdd.common import prepare_file
 from mcod.resources.models import Resource, ResourceFile
-from mcod.unleash import is_enabled
 
 
 @given('I have buzzfeed resource with tabular data')
@@ -45,18 +44,14 @@ def no_data_resource(dataset):
     resource.title = "No data resource"
     resource.type = "file"
     resource.format = 'JPG'
-    if not is_enabled('S40_new_file_model.be'):
-        resource.file = File(open(prepare_file('buzzfeed-logo.jpg'), 'rb'))
-        resource.file.open('rb')
     resource.dataset = dataset
     resource.save()
-    if is_enabled('S40_new_file_model.be'):
-        ResourceFile.objects.create(
-            file=File(open(prepare_file('buzzfeed-logo.jpg'), 'rb')),
-            is_main=True,
-            resource=resource,
-            format='JPG'
-        )
+    ResourceFile.objects.create(
+        file=File(open(prepare_file('buzzfeed-logo.jpg'), 'rb')),
+        is_main=True,
+        resource=resource,
+        format='JPG'
+    )
     resource = Resource.objects.get(pk=resource.pk)
     return resource
 

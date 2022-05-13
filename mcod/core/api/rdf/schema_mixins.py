@@ -5,18 +5,21 @@ import mcod.core.api.rdf.namespaces as ns
 from mcod.datasets.models import Dataset
 from mcod.organizations.models import Organization
 from mcod.resources.models import Resource
-from .profiles import dcat_ap, schemaorg
+
+from .profiles import dcat_ap, dcat_ap_pl, schemaorg
 
 
 class ProfilesMixin:
     DEFAULT_PROFILE = 'dcat_ap'
     DCAT_AP = 'dcat_ap'
+    DCAT_AP_PL = 'dcat_ap_pl'
     SCHEMA_ORG = 'schemaorg'
-    SUPPORTED_PROFILES = (DCAT_AP, SCHEMA_ORG)
+    SUPPORTED_PROFILES = (DCAT_AP, DCAT_AP_PL, SCHEMA_ORG)
 
     BINDS = {
         DCAT_AP: ns.NAMESPACES,
-        SCHEMA_ORG: {'schema': ns.NAMESPACES['schema']}
+        DCAT_AP_PL: ns.DCAT_AP_PL_NAMESPACES,
+        SCHEMA_ORG: {'schema': ns.NAMESPACES['schema']},
     }
 
     def __init__(self, *args, **kwargs):
@@ -38,6 +41,11 @@ class ProfilesMixin:
                 Dataset: dcat_ap.DCATDataset,
                 Resource: dcat_ap.DCATDistribution,
             },
+            self.DCAT_AP_PL: {
+                Organization: dcat_ap_pl.ExtendedFOAFAgent,
+                Dataset: dcat_ap_pl.ExtendedDCATDataset,
+                Resource: dcat_ap_pl.ExtendedDCATDistribution,
+            },
             self.SCHEMA_ORG: {
                 Organization: schemaorg.SCHEMAOrganization,
                 Dataset: schemaorg.SCHEMADataset,
@@ -48,6 +56,7 @@ class ProfilesMixin:
     def get_rdf_class_for_catalog(self):
         return {
             self.DCAT_AP: dcat_ap.DCATCatalog,
+            self.DCAT_AP_PL: dcat_ap_pl.ExtendedDCATCatalog,
             self.SCHEMA_ORG: schemaorg.SCHEMACatalog,
         }[self.profile]
 

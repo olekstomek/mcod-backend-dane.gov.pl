@@ -1,4 +1,4 @@
-from bokeh.core.properties import List, Either, String, Tuple, Bool, Int
+from bokeh.core.properties import Bool, Either, Int, List, String, Tuple
 from bokeh.models.widgets import InputWidget, RadioButtonGroup
 
 
@@ -15,7 +15,6 @@ class BootstrapSelect(InputWidget):
     value = List(Tuple(Either(Int, String), String))
     actions_box = Bool(default=False)
     live_search = Bool(default=False)
-    # show_subtext = Bool(default=False)
     select_all_at_start = Bool(default=False)
     count_selected_text = String(default='')
     none_selected_text = String(default='')

@@ -1,22 +1,22 @@
-from django.utils.translation import gettext_lazy as _, get_language
+from django.utils.translation import get_language, gettext_lazy as _
 from elasticsearch_dsl.query import Term
-from marshmallow import validates, ValidationError
+from marshmallow import ValidationError, validates
 
 from mcod.core.api import fields as core_fields
-from mcod.core.api.jsonapi.deserializers import TopLevel, ObjectAttrs
+from mcod.core.api.jsonapi.deserializers import ObjectAttrs, TopLevel
 from mcod.core.api.schemas import (
     BooleanTermSchema,
     CommonSchema,
     DateTermSchema,
     ExtSchema,
-    GeoShapeSchema,
     GeoDistanceSchema,
+    GeoShapeSchema,
     ListingSchema,
     ListTermsSchema,
     NumberTermSchema,
+    RegionIdTermsSchema,
     StringMatchSchema,
     StringTermSchema,
-    RegionIdTermsSchema
 )
 from mcod.core.api.search import fields as search_fields
 from mcod.unleash import is_enabled
@@ -236,20 +236,18 @@ class DatasetApiSearchRequest(ListingSchema):
         description='Allow the client to customize which related resources should be returned in included section.',
         allowEmptyValue=True,
     )
-    if is_enabled('S43_dynamic_data.be'):
-        has_dynamic_data = search_fields.FilterField(
-            BooleanTermSchema,
-            doc_template='docs/generic/fields/boolean_term_field.html',
-            doc_base_url='/datasets',
-            doc_field_name='has_dynamic_data',
-        )
-    if is_enabled('S41_resource_has_high_value_data.be'):
-        has_high_value_data = search_fields.FilterField(
-            BooleanTermSchema,
-            doc_template='docs/generic/fields/boolean_term_field.html',
-            doc_base_url='/datasets',
-            doc_field_name='has_high_value_data',
-        )
+    has_dynamic_data = search_fields.FilterField(
+        BooleanTermSchema,
+        doc_template='docs/generic/fields/boolean_term_field.html',
+        doc_base_url='/datasets',
+        doc_field_name='has_dynamic_data',
+    )
+    has_high_value_data = search_fields.FilterField(
+        BooleanTermSchema,
+        doc_template='docs/generic/fields/boolean_term_field.html',
+        doc_base_url='/datasets',
+        doc_field_name='has_high_value_data',
+    )
     if is_enabled('S47_research_data.be'):
         has_research_data = search_fields.FilterField(
             BooleanTermSchema,

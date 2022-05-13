@@ -1,4 +1,5 @@
 import os
+
 from django.conf import settings
 from django.contrib.staticfiles import utils
 from django.contrib.staticfiles.finders import BaseFinder

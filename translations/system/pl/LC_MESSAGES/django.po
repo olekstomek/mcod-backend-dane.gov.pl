@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-04-04 17:24+0200\n"
+"POT-Creation-Date: 2022-04-29 10:40+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -731,6 +731,9 @@ msgstr "Status walidacji linku"
 msgid "Filter by institution name"
 msgstr "Filtruj według nazwy instytucji"
 
+msgid "Supplements"
+msgstr "Dokumenty uzupełniające"
+
 msgid "Conditions"
 msgstr "Warunki"
 
@@ -754,6 +757,12 @@ msgstr "Dostępne kategorie"
 
 msgid "Selected categories"
 msgstr "Wybrane kategorie"
+
+msgid "Add document"
+msgstr "Dodaj dokument"
+
+msgid "document"
+msgstr "dokument"
 
 msgid ""
 "Couldn't restore following datasets, because their related organizations are "
@@ -908,6 +917,19 @@ msgstr ""
 
 msgid ""
 "The user should inform about the source, time of creation and obtaining "
+"private data from the entity providing the data (supplier) <br><br> The user "
+"should inform about the processing of the used private data (if he modifies "
+"it in any way) <br><br> The scope of the responsibility of the entity "
+"providing private data (suppliers) for the provided data"
+msgstr ""
+"Użytkownik powinien poinformować o źródle, czasie wytworzenia i pozyskania "
+"danych prywatnych od podmiotu udostępniającego dane (dostawcy) <br><br> "
+"Użytkownik powinien poinformować o przetworzeniu wykorzystywanych danych "
+"prywatnych (gdy je jakkolwiek modyfikuje) <br><br> Zakres odpowiedzialności "
+"podmiotu udostępniającego dane prywatne (dostawcy) za  udostępniane dane"
+
+msgid ""
+"The user should inform about the source, time of creation and obtaining "
 "public sector information from the obliged entity (supplier)"
 msgstr ""
 "Użytkownik powinien poinformować o źródle, czasie wytworzenia i pozyskania "
@@ -956,6 +978,20 @@ msgstr ""
 "stanowiących lub zawierających dane osobowe ( art. 15 ust. 1 pkt 4 ustawy z "
 "dnia 11 sierpnia 2021 r. o otwartych danych i ponownym wykorzystywaniu "
 "informacji sektora publicznego)"
+
+msgid ""
+"The user should inform about the source, time of creation and obtaining "
+"public sector information from the obliged entity (supplier) <br><br> The "
+"user should inform about the processing of public sector information to re-"
+"use (when modifying it in any way) <br><br> The scope of the responsibility "
+"of the obliged entity (supplier) for shared public sector information"
+msgstr ""
+"Użytkownik powinien poinformować o źródle, czasie wytworzenia i pozyskania "
+"informacji sektora publicznego od podmiotu zobowiązanego (dostawcy) <br><br> "
+"Użytkownik powinien poinformować o przetworzeniu informacji sektora "
+"publicznego ponownie wykorzystywanych (gdy je jakkolwiek modyfikuje) "
+"<br><br> Zakres odpowiedzialności podmiotu zobowiązanego (dostawcy) za "
+"udostępniane informacje sektora publicznego"
 
 msgid ""
 "The scope of the responsibility of the entity providing private data "
@@ -1023,6 +1059,9 @@ msgstr "licznik pobrań"
 msgid "Controlled Vocabularies"
 msgstr ""
 
+msgid "Custom CC BY 40 conditions"
+msgstr "Indywidualne warunki licencji w ramach zakresu"
+
 msgid "modified"
 msgstr "zmodyfikowany"
 
@@ -1048,6 +1087,21 @@ msgstr "Zgłoszono uwagę do zbioru %(title)s%(version)s"
 msgid "This dataset can be used under following conditions: "
 msgstr ""
 "Ten zbiór danych może być ponownie wykorzystywany pod poniższymi warunkami: "
+
+msgid "language"
+msgstr "język"
+
+msgid "order"
+msgstr "kolejność"
+
+msgid "supplement"
+msgstr "dokument uzupełniający"
+
+msgid "supplements"
+msgstr "dokumenty uzupełniające"
+
+msgid "file"
+msgstr "plik"
 
 msgid "id"
 msgstr ""
@@ -1114,6 +1168,9 @@ msgstr "Zbiór zawiera dane badawcze"
 
 msgid "Dataset regions"
 msgstr "Lokalizacje zbiorów danych"
+
+msgid "Dataset supplements (name, language, url, file size)"
+msgstr "Dokumenty uzupełniające zbioru (nazwa, język, url, rozmiar pliku)"
 
 msgid "last import timestamp"
 msgstr "data ostatniego importu"
@@ -1193,9 +1250,6 @@ msgstr "znacznik css"
 
 msgid "position"
 msgstr "pozycja"
-
-msgid "order"
-msgstr "kolejność"
 
 msgid "optional communique"
 msgstr "komunikat opcjonalny"
@@ -1938,6 +1992,9 @@ msgstr "importy źródła danych"
 msgid "Required scheme is https://"
 msgstr "Wymagany format protokołu to https://"
 
+msgid "Invalid file format"
+msgstr "Niepoprawny format pliku"
+
 #, python-format
 msgid "Unsupported format: %(format)s."
 msgstr "Nieobsługiwany format: %(format)s."
@@ -2405,9 +2462,6 @@ msgstr "polski"
 msgid "english"
 msgstr "angielski"
 
-msgid "language"
-msgstr "język"
-
 msgid "email"
 msgstr ""
 
@@ -2457,9 +2511,6 @@ msgstr "planowany termin rozesłania"
 
 msgid "sending date"
 msgstr "data i godzina rozesłania"
-
-msgid "file"
-msgstr "plik"
 
 msgid "newsletter"
 msgstr ""
@@ -2899,6 +2950,14 @@ msgstr "Zbiorczy raport dzienny"
 msgid "Summary daily reports"
 msgstr "Zbiorcze raporty dzienne"
 
+msgctxt "Metabase Dashboard"
+msgid "Dashboard"
+msgstr "Dashboard"
+
+msgctxt "Metabase Dashboards"
+msgid "Dashboards"
+msgstr "Dashboardy"
+
 msgid "Filter by dataset name"
 msgstr "Filtruj według nazwy zbioru"
 
@@ -2910,12 +2969,6 @@ msgstr "Status pliku"
 
 msgid "TabularView"
 msgstr "Widok tabelaryczny"
-
-msgid "Add document"
-msgstr ""
-
-msgid "document"
-msgstr "dokument"
 
 #, python-brace-format
 msgid ""
@@ -2946,9 +2999,6 @@ msgstr "Weryfikacja jakości"
 
 msgid "Maps and plots"
 msgstr "Mapy i wykresy"
-
-msgid "Supplements"
-msgstr "Dokumenty uzupełniające"
 
 msgid "Special Signs"
 msgstr "Znaki umowne"
@@ -3177,12 +3227,6 @@ msgstr "Zasób"
 msgid "A comment was posted on the resource %(title)s"
 msgstr "Zgłoszono uwagę do zasobu %(title)s"
 
-msgid "supplement"
-msgstr "dokument uzupełniający"
-
-msgid "supplements"
-msgstr "dokumenty uzupełniające"
-
 msgid "link"
 msgstr ""
 
@@ -3243,8 +3287,8 @@ msgstr "Lokalizacje danych"
 msgid "Download URL"
 msgstr "URL pliku (do pobrania)"
 
-msgid "Resource supplements (name, url, file size)"
-msgstr "Dokumenty uzupełniające zasobu (nazwa, url, rozmiar pliku)"
+msgid "Resource supplements (name, language, url, file size)"
+msgstr "Dokumenty uzupełniające zasobu (nazwa, język, url, rozmiar pliku)"
 
 msgid "symbol"
 msgstr "symbol"
@@ -3473,9 +3517,6 @@ msgstr ""
 
 msgid "Data suggestions"
 msgstr "Propozycje nowych danych"
-
-msgid "CSV Reports"
-msgstr "Raporty CSV"
 
 msgid "Users reports"
 msgstr "Raporty użytkowników"
@@ -4414,14 +4455,6 @@ msgstr "Został dodany komentarz do propozycji nowych danych"
 msgid "A COMMENT WAS POSTED ON THE ACCEPTED DATASET SUBMISSION"
 msgstr "ZOSTAŁ DODANY KOMENTARZ DO PROPOZYCJI NOWYCH DANYCH"
 
-msgid ""
-"Wiadomość została wygenerowana automatycznie przez oprogramowanie portalu na "
-"podstawie złożonej przez użytkownika propozycji aplikacji. Prosimy nie "
-"używać funkcji Odpowiedz nadawcy.<br><br>Kontakt z Zespołem portalu Dane.gov."
-"pl: <a href=\"mailto:kontakt@dane.gov.pl\" target=\"_blank\">kontakt@dane."
-"gov.pl</a>"
-msgstr ""
-
 msgid "Registration confirmation"
 msgstr "Potwierdzenie rejestracji"
 
@@ -4519,19 +4552,19 @@ msgstr ""
 "chwili. Proszę skorzystać z funkcji “Reset hasła” dostępnej na portalu "
 "podczas logowania."
 
+msgid ""
+"Wiadomość została wygenerowana automatycznie przez oprogramowanie portalu na "
+"podstawie złożonej przez użytkownika propozycji aplikacji. Prosimy nie "
+"używać funkcji Odpowiedz nadawcy.<br><br>Kontakt z Zespołem portalu Dane.gov."
+"pl: <a href=\"mailto:kontakt@dane.gov.pl\" target=\"_blank\">kontakt@dane."
+"gov.pl</a>"
+msgstr ""
+
 msgid "A comment was posted on the resource"
 msgstr "Została zgłoszona uwaga do zasobu"
 
 msgid "A COMMENT WAS POSTED ON THE RESOURCE"
 msgstr "ZOSTAŁA ZGŁOSZONA UWAGA DO ZASOBU"
-
-#, python-format
-msgid ""
-"One the resource %(title)s from data set %(dataset_title)s [%(url)s] was "
-"posted a comment:"
-msgstr ""
-"Do zasobu %(title)s ze zbioru %(dataset_title)s [%(url)s] została zgłoszona "
-"uwaga "
 
 #, python-format
 msgid ""

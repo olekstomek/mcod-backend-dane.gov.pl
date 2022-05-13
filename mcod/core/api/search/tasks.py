@@ -3,7 +3,6 @@ from celery.utils.log import get_task_logger
 from django.apps import apps
 from django_elasticsearch_dsl.registries import registry
 
-# from mcod.core.db.elastic import update_common_doc
 from mcod.core.db.elastic import ProxyDocumentRegistry
 
 logger = get_task_logger('index_tasks')

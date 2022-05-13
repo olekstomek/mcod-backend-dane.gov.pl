@@ -3,8 +3,8 @@ import io
 import pandas as pd
 from falcon.media import BaseHandler
 
-from mcod.settings import RDF_FORMAT_TO_MIMETYPE
 from mcod.core.utils import save_as_csv, save_as_xml
+from mcod.settings import RDF_FORMAT_TO_MIMETYPE
 
 
 class RDFHandler(BaseHandler):
@@ -16,7 +16,7 @@ class RDFHandler(BaseHandler):
         if not hasattr(media, 'serialize'):
             return media
         if content_type not in RDF_FORMAT_TO_MIMETYPE.values():
-            content_type = RDF_FORMAT_TO_MIMETYPE['json-ld']
+            content_type = RDF_FORMAT_TO_MIMETYPE['jsonld']
 
         if content_type == 'application/ld+json':
             result = media.serialize(format=content_type, auto_compact=True, encoding="utf-8")
@@ -87,7 +87,6 @@ class ExportHandler(BaseHandler):
     def to_xlsx(self, context):
         output = io.BytesIO()
         writer = pd.ExcelWriter(output, engine='xlsxwriter')  # https://stackoverflow.com/a/28065603
-        # writer.book.filename = output
         csv_output = self._as_csv(context)
         csv_output.seek(0)
         pd.read_csv(csv_output, sep=';').to_excel(writer, index=False)

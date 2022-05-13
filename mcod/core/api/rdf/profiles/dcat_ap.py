@@ -2,12 +2,12 @@ import hashlib
 from functools import partial
 
 from constance import config
-from rdflib import URIRef, Literal, XSD, RDF, BNode
+from rdflib import RDF, XSD, BNode, Literal, URIRef
 from rdflib.term import _is_valid_uri
 
 import mcod.core.api.rdf.namespaces as ns
 from mcod import settings
-from mcod.core.api.rdf.profiles.common import RDFClass, RDFNestedField, CATALOG_URL
+from mcod.core.api.rdf.profiles.common import CATALOG_URL, RDFClass, RDFNestedField
 from mcod.lib.rdf.rdf_field import RDFField
 from mcod.unleash import is_enabled
 
@@ -99,6 +99,8 @@ class DCATDistribution(RDFClass):
     language_pl = RDFNestedField('DCTLinguisticSystem', predicate=ns.DCT.language)
     language_en = RDFNestedField('DCTLinguisticSystem', predicate=ns.DCT.language)
     status = RDFNestedField('SKOSConcept', predicate=ns.ADMS.status)
+    if is_enabled('S48_resource_supplements.be'):
+        supplements = RDFNestedField('FOAFDocument', predicate=ns.FOAF.page, many=True)
 
     title_pl = RDFField(predicate=ns.DCT.title, object_type=partial(Literal, lang='pl'))
     title_en = RDFField(predicate=ns.DCT.title, object_type=partial(Literal, lang='en'), allow_null=False)
@@ -135,6 +137,9 @@ class DCATDistribution(RDFClass):
             'title_en': 'Completed',
         }
 
+    def get_supplements_subject(self, data):
+        return URIRef(data['file_url'])
+
     def get_language_pl_data(self, data):
         return {
             'subject': URIRef(VOCABULARIES['language'] + 'POL'),
@@ -156,6 +161,8 @@ class DCATDataset(RDFClass):
     contact_point = RDFNestedField('VCARDKind', predicate=ns.DCAT.contactPoint)
     categories = RDFNestedField('SKOSConcept', predicate=ns.DCAT.theme, many=True)
     landing_page = RDFNestedField('FOAFDocument', predicate=ns.DCAT.landingPage)
+    if is_enabled('S49_dataset_supplements.be'):
+        supplements = RDFNestedField('FOAFDocument', predicate=ns.FOAF.page, many=True)
     update_frequency = RDFNestedField('DCTFrequency', predicate=ns.DCT.accrualPeriodicity)
     language_pl = RDFNestedField('DCTLinguisticSystem', predicate=ns.DCT.language)
     language_en = RDFNestedField('DCTLinguisticSystem', predicate=ns.DCT.language)
@@ -205,6 +212,9 @@ class DCATDataset(RDFClass):
             'scheme': URIRef(VOCABULARIES['language'].rstrip('/'))
         }
 
+    def get_supplements_subject(self, data):
+        return URIRef(data['file_url'])
+
     def get_categories_subject(self, data):
         return URIRef(VOCABULARIES['theme'] + data['code'])
 
@@ -242,7 +252,7 @@ class DCATDataset(RDFClass):
 class DCATCatalog(RDFClass):
     rdf_type = RDFField(predicate=RDF.type, object=ns.DCAT.Catalog)
 
-    publisher = RDFNestedField('FOAFAgent', predicate=ns.DCT.publisher)   # TODO warning, brak słownika kontrolowanego
+    publisher = RDFNestedField('FOAFAgent', predicate=ns.DCT.publisher)
     language_pl = RDFNestedField('DCTLinguisticSystem', predicate=ns.DCT.language)
     language_en = RDFNestedField('DCTLinguisticSystem', predicate=ns.DCT.language)
     homepage = RDFNestedField('FOAFDocument', predicate=ns.FOAF.homepage)
@@ -317,7 +327,6 @@ class DCATCatalog(RDFClass):
 
 
 class DCATVocabularyField(RDFField):
-
     def __init__(self, vocabulary_name, object_type=URIRef, *args, **kwargs):
         self.vocabulary_name = vocabulary_name
         super().__init__(object_type=object_type, *args, **kwargs)
@@ -329,10 +338,8 @@ class DCATVocabularyField(RDFField):
 
 
 class LicenseDCATVocabularyField(DCATVocabularyField):
-
     def __init__(self, predicate=ns.DCT.license, vocabulary_name='license', *args, **kwargs):
-        super(LicenseDCATVocabularyField, self).__init__(
-            predicate=predicate, vocabulary_name=vocabulary_name, *args, **kwargs)
+        super().__init__(predicate=predicate, vocabulary_name=vocabulary_name, *args, **kwargs)
 
     def parse_value(self, value):
         parsed_value = super().parse_value(value)
@@ -343,7 +350,6 @@ class LicenseDCATVocabularyField(DCATVocabularyField):
 
 
 class BaseDCATDeserializer(RDFClass):
-
     ext_ident = RDFField(predicate=ns.DCT.identifier)
     title_pl = RDFField(predicate=ns.DCT.title, object_type=partial(Literal, lang='pl'), try_non_lang=True)
     title_en = RDFField(predicate=ns.DCT.title, object_type=partial(Literal, lang='en'))
@@ -365,10 +371,6 @@ class DCATDistributionDeserializer(BaseDCATDeserializer):
 
     format = DCATVocabularyField(predicate=ns.DCT['format'], vocabulary_name='file-type')
     file_mimetype = DCATVocabularyField(predicate=ns.DCAT.mediaType, vocabulary_name='media-type')
-    description_pl = RDFField(predicate=ns.DCT.description, object_type=partial(Literal, lang='pl'))
-    description_en = RDFField(predicate=ns.DCT.description, object_type=partial(Literal, lang='en'))
-    created = RDFField(predicate=ns.DCT.issued, object_type=partial(Literal, datatype=XSD.dateTime))
-    modified = RDFField(predicate=ns.DCT.modified, object_type=partial(Literal, datatype=XSD.dateTime))
     link = RDFField(predicate=ns.DCAT.accessURL, object_type=URIRef)
     license = LicenseDCATVocabularyField()
 

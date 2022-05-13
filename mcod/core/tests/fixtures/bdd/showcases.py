@@ -1,10 +1,9 @@
 from django.apps import apps
-from pytest_bdd import given, when, then
-from pytest_bdd import parsers
+from pytest_bdd import given, parsers, then, when
 
-from mcod.showcases.factories import ShowcaseFactory
 from mcod.datasets.factories import DatasetFactory
 from mcod.resources.factories import ResourceFactory
+from mcod.showcases.factories import ShowcaseFactory
 
 
 @given(parsers.parse('showcase'))
@@ -12,19 +11,9 @@ def showcase():
     return ShowcaseFactory.create()
 
 
-# @given(parsers.parse('draft showcase'))
-# def draft_showcase():
-#     return ShowcaseFactory.create(status='draft', title='Draft showcase')
-
-
 @given(parsers.parse('removed showcase'))
 def removed_showcase():
     return ShowcaseFactory.create(is_removed=True, title='Removed showcase')
-
-
-# @given(parsers.parse('showcase with id {showcase_id:d}'))
-# def showcase_with_id(application_id):
-#     return ShowcaseFactory.create(id=showcase_id, title='showcase %s' % showcase_id)
 
 
 @given(parsers.parse('second showcase with id {showcase_id:d}'))

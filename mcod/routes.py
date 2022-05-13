@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from mcod.academy import views as academy_views
 from mcod.applications import views as app_views
 from mcod.articles import views as article_views
@@ -10,22 +9,15 @@ from mcod.laboratory import views as laboratory_views
 from mcod.newsletter import views as newsletter_views
 from mcod.organizations import views as org_views
 from mcod.resources import views as res_views
+from mcod.schedules import views as schedules_views
+from mcod.search import views as search_views
 from mcod.searchhistories import views as searchhistory_views
+from mcod.showcases import views as showcases_views
+from mcod.suggestions import views as submission_views
 from mcod.tools import views as tools_views
 from mcod.unleash import is_enabled
 from mcod.users import views as user_views
 from mcod.watchers import views as watcher_views
-from mcod.schedules import views as schedules_views
-from mcod.search import views as search_views
-from mcod.showcases import views as showcases_views
-from mcod.suggestions import views as submission_views
-
-
-dataset_showcases = [
-    ('/datasets/{id:int}/showcases', showcases_views.DatasetShowcasesApiView()),
-    ('/datasets/{id:int},{slug}/showcases', showcases_views.DatasetShowcasesApiView()),
-] if is_enabled('S42_dataset_showcases.be') else []
-
 
 routes = [
     # Tools & utilities
@@ -58,15 +50,6 @@ routes = [
     ('/auth/subscriptions/{id:int}/notifications', watcher_views.SubscriptionNotificationsView()),
     ('/auth/notifications', watcher_views.NotificationsView()),
     ('/auth/notifications/status', watcher_views.NotificationsStatusView()),
-    # ('/auth/notifications/{id:int}', watcher_views.NotificationView()),
-    # Applications
-    ('/applications', app_views.ApplicationSearchApiView()),
-    ('/applications/{id:int}', app_views.ApplicationApiView()),
-    ('/applications/{id:int},{slug}', app_views.ApplicationApiView()),
-    ('/applications/{id:int}/datasets', app_views.ApplicationDatasetsView()),
-    ('/applications/{id:int},{slug}/datasets', app_views.ApplicationDatasetsView()),
-    ('/applications/suggest', app_views.ApplicationSubmitView()),
-    ('/applications/submissions', app_views.ApplicationSubmitView()),
     # Articles
     ('/articles', article_views.ArticlesView()),
     ('/articles/{id:int}', article_views.ArticleView()),
@@ -91,6 +74,11 @@ routes = [
     ('/catalog/dataset/{id:int}/resource/{res_id:int}', res_views.ResourceRDFView()),
     ('/catalog/dataset/{id:int}/resource/{res_id:int},{slug}.{rdf_format:rdf_format}', res_views.ResourceRDFView()),
     ('/catalog/dataset/{id:int}/resource/{res_id:int},{slug}', res_views.ResourceRDFView()),
+    # RDF Vocabularies
+    ('/vocab/openness-score', res_views.VocabOpennessScoreRDFView()),
+    ('/vocab/openness-score/{entry_name}', res_views.VocabEntryOpennessScoreRDFView()),
+    ('/vocab/special-sign', res_views.VocabSpecialSignRDFView()),
+    ('/vocab/special-sign/{entry_name}', res_views.VocabEntrySpecialSignRDFView()),
 
     # Datasets
     ('/datasets', dataset_views.DatasetSearchView()),
@@ -98,9 +86,12 @@ routes = [
     ('/datasets/{id:int},{slug}', dataset_views.DatasetApiView()),
     ('/datasets/{id:int}/resources', dataset_views.DatasetResourceSearchApiView()),
     ('/datasets/{id:int},{slug}/resources', dataset_views.DatasetResourceSearchApiView()),
-    *dataset_showcases,
+    ('/datasets/{id:int}/showcases', showcases_views.DatasetShowcasesApiView()),
+    ('/datasets/{id:int},{slug}/showcases', showcases_views.DatasetShowcasesApiView()),
     ('/datasets/{id:int}/comments', dataset_views.DatasetCommentsView()),
     ('/datasets/{id:int},{slug}/comments', dataset_views.DatasetCommentsView()),
+    ('/datasets/{id:int}/resources/files/download', dataset_views.DatasetResourcesFilesBulkDownloadView()),
+    ('/datasets/{id:int},{slug}/resources/files/download', dataset_views.DatasetResourcesFilesBulkDownloadView()),
 
     # Resources
     ('/resources', res_views.ResourcesView()),
@@ -115,10 +106,8 @@ routes = [
     ('/resources/{id:int},{slug}', res_views.ResourceView()),
     ('/resources/{id:int}/data', res_views.ResourceTableView()),
     ('/resources/{id:int},{slug}/data', res_views.ResourceTableView()),
-    # ('/resources/{id:int}/table', res_views.ResourceTableView()),
     ('/resources/{id:int}/data/{row_id:uuid}', res_views.ResourceTableRowView()),
     ('/resources/{id:int},{slug}/data/{row_id:uuid}', res_views.ResourceTableRowView()),
-    # ('/resources/{id:int}/data/{row_id:uuid}', res_views.ResourceTableRowView()),
     ('/resources/{id:int}/data/spec', res_views.ResourceTableSpecView()),
     ('/resources/{id:int},{slug}/data/spec', res_views.ResourceTableSpecView()),
     ('/resources/{id:int}/data/spec/{version}', res_views.ResourceTableSpecView()),
@@ -221,22 +210,25 @@ routes = [
     # Guides
     ('/guides', guides_views.GuidesView()),
     ('/guides/{id:int}', guides_views.GuideView()),
+
+    ('/showcases', showcases_views.ShowcasesApiView()),
+    ('/showcases/{id:int}', showcases_views.ShowcaseApiView()),
+    ('/showcases/{id:int},{slug}', showcases_views.ShowcaseApiView()),
+    ('/showcases/{id:int}/datasets', showcases_views.ShowcaseDatasetsView()),
+    ('/showcases/{id:int},{slug}/datasets', showcases_views.ShowcaseDatasetsView()),
+    ('/showcases/suggest', showcases_views.ShowcaseProposalView()),
 ]
 
-if is_enabled('S39_showcases.be'):
+if not is_enabled('S49_delete_application_app.be'):
     routes.extend([
-        ('/showcases', showcases_views.ShowcasesApiView()),
-        ('/showcases/{id:int}', showcases_views.ShowcaseApiView()),
-        ('/showcases/{id:int},{slug}', showcases_views.ShowcaseApiView()),
-        ('/showcases/{id:int}/datasets', showcases_views.ShowcaseDatasetsView()),
-        ('/showcases/{id:int},{slug}/datasets', showcases_views.ShowcaseDatasetsView()),
-        ('/showcases/suggest', showcases_views.ShowcaseProposalView()),
-    ])
-
-if is_enabled('S41_resource_bulk_download.be'):
-    routes.extend([
-        ('/datasets/{id:int}/resources/files/download', dataset_views.DatasetResourcesFilesBulkDownloadView()),
-        ('/datasets/{id:int},{slug}/resources/files/download', dataset_views.DatasetResourcesFilesBulkDownloadView())
+        # Applications
+        ('/applications', app_views.ApplicationSearchApiView()),
+        ('/applications/{id:int}', app_views.ApplicationApiView()),
+        ('/applications/{id:int},{slug}', app_views.ApplicationApiView()),
+        ('/applications/{id:int}/datasets', app_views.ApplicationDatasetsView()),
+        ('/applications/{id:int},{slug}/datasets', app_views.ApplicationDatasetsView()),
+        ('/applications/suggest', app_views.ApplicationSubmitView()),
+        ('/applications/submissions', app_views.ApplicationSubmitView()),
     ])
 
 routes.extend(list(map(lambda x: ("/{api_version}" + x[0], *x[1:]), routes)))

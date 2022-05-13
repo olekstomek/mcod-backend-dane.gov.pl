@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from functools import partial
 
 import falcon
@@ -8,7 +7,7 @@ from elasticsearch_dsl.query import Q
 from mcod.articles.deserializers import ArticleApiRequest, ArticleApiSearchRequest
 from mcod.articles.documents import ArticleDocument
 from mcod.articles.serializers import ArticleApiResponse
-from mcod.core.api.handlers import SearchHdlr, RetrieveOneHdlr
+from mcod.core.api.handlers import RetrieveOneHdlr, SearchHdlr
 from mcod.core.api.hooks import login_optional
 from mcod.core.api.views import JsonAPIView
 from mcod.core.versioning import versioned

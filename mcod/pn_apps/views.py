@@ -1,11 +1,13 @@
-import os
 import logging
-from bokeh.embed import server_document
+import os
 from time import time
+
+from bokeh.embed import server_document
+from django.conf import settings
 from django.http import HttpRequest, HttpResponse, HttpResponseNotFound
 from django.shortcuts import render
 from django.utils.translation import gettext_lazy as _
-from django.conf import settings
+
 from mcod.pn_apps.utils import chart_thumb_path
 
 extra_js = os.environ.get("BOKEH_EXTRA_JS")

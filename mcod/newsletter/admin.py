@@ -1,9 +1,9 @@
 from django.contrib import admin, messages
 from django.utils.translation import gettext_lazy as _
 
-from mcod.newsletter.models import Newsletter, Submission, Subscription
-from mcod.newsletter.forms import NewsletterAdminForm
 from mcod.lib.admin_mixins import HistoryMixin, ModelAdmin
+from mcod.newsletter.forms import NewsletterAdminForm
+from mcod.newsletter.models import Newsletter, Submission, Subscription
 
 
 class NewsletterAdmin(HistoryMixin, ModelAdmin):

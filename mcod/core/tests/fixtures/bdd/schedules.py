@@ -1,15 +1,15 @@
 import json
+
 from pytest_bdd import given, parsers, then, when
 
+from mcod.core.tests.fixtures.bdd.common import create_object
 from mcod.schedules.factories import (  # noqa
     NotificationFactory,
     ScheduleFactory,
     UserScheduleFactory,
-    UserScheduleItemFactory,
     UserScheduleItemCommentFactory,
+    UserScheduleItemFactory,
 )
-
-from mcod.core.tests.fixtures.bdd.common import create_object
 from mcod.schedules.tasks import send_schedule_notifications_task
 
 

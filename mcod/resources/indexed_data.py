@@ -1,33 +1,32 @@
-import uuid
 import os
-
-import shapefile
-
+import uuid
 from collections import OrderedDict, namedtuple
 from datetime import datetime, time
+
+import shapefile
+from constance import config as constance_config
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 from django_elasticsearch_dsl import Index
 from elasticsearch import exceptions as es_exceptions
 from elasticsearch.helpers import bulk
-from elasticsearch_dsl import field as dsl_field, Document
+from elasticsearch_dsl import Document, field as dsl_field
 from elasticsearch_dsl.connections import Connections
 from goodtables import validate as validate_table
-from constance import config as constance_config
 from tableschema import config
 
 from mcod import settings
 from mcod.core.api import fields as api_fields
 from mcod.core.api.search.analyzers import polish_analyzer
 from mcod.resources.archives import ArchiveReader
-from mcod.resources.goodtables_checks import ZERO_DATA_ROWS
 from mcod.resources.geo import (
     ShapeTransformer,
-    median_point,
-    geocode,
     clean_house_number,
-    extract_coords_from_uaddress
+    extract_coords_from_uaddress,
+    geocode,
+    median_point,
 )
+from mcod.resources.goodtables_checks import ZERO_DATA_ROWS
 from mcod.resources.type_guess import Table
 
 es_connections = Connections()
@@ -50,7 +49,7 @@ def get_float_or_none(value):
     return val
 
 
-class IndexedData(object):
+class IndexedData:
     _type = None
 
     def __init__(self, resource):

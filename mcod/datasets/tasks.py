@@ -1,20 +1,18 @@
 import logging
 import os
 import zipfile
-from shutil import disk_usage
 from datetime import datetime
+from shutil import disk_usage
 
 from celery import shared_task
+from celery_singleton import Singleton
 from dateutil.relativedelta import relativedelta
 from django.apps import apps
 from django.conf import settings
-
 from django.utils import translation
-from celery_singleton import Singleton
 
-from mcod.core.utils import save_as_csv, save_as_xml, clean_filename
 from mcod.core import storages
-
+from mcod.core.utils import clean_filename, save_as_csv, save_as_xml
 
 logger = logging.getLogger('mcod')
 
@@ -58,7 +56,7 @@ def create_catalog_metadata_file(qs_data, schema, extension, save_serialized_dat
 
 @shared_task
 def create_catalog_metadata_files():
-    from mcod.datasets.serializers import DatasetXMLSerializer, DatasetResourcesCSVSerializer
+    from mcod.datasets.serializers import DatasetResourcesCSVSerializer, DatasetXMLSerializer
     dataset_model = apps.get_model('datasets', 'Dataset')
     qs_data = dataset_model.objects.with_metadata_fetched_as_list()
 

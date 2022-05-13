@@ -10,7 +10,6 @@ from mcod.core.tests.helpers.openapi_wrappers import FalconOpenAPIWrapper
 from mcod.core.utils import jsonapi_validator
 from mcod.resources.models import Resource
 from mcod.settings.test import API_URL
-from mcod.unleash import is_enabled
 
 
 @pytest.fixture
@@ -62,12 +61,14 @@ def validate_response(resource, valid_response):
     assert links['next'] == 'http://api.test.mcod/resources/{}/data?page=2'.format(_rid)
 
 
-scenarios("features/resources_list_api.feature")
-if is_enabled('S40_new_file_model.be'):
-    scenarios("features/resource_list_api_other_files_not_in_res.feature")
-scenarios("features/tabular_view_test.feature")
-scenarios("features/resource_details_api.feature")
-scenarios('features/resource_comment.feature')
+scenarios(
+    "features/resource_reindexing.feature",
+    "features/resources_list_api.feature",
+    "features/resource_list_api_other_files_not_in_res.feature",
+    "features/tabular_view_test.feature",
+    "features/resource_details_api.feature",
+    "features/resource_comment.feature",
+)
 
 
 @pytest.mark.elasticsearch
@@ -107,7 +108,6 @@ def test_tabular_data_api14(buzzfeed_fakenews_resource, client14, mocker):
     assert validated_data[0]['resource']['id'] == str(_rid)
     data = resp.json['data'][1]
     assert data['type'] == 'row'
-    # assert data['id'] == 'b97a04f7-2549-590e-b9ac-821ed67342fd' # obsolete.
     assert data['id'] == 'a20713b6-2a0b-582e-b1c2-75a095bace86'
     assert data['meta']['row_no'] == 2
     assert data['attributes']['col3']['val'] == '2,290,000.00'

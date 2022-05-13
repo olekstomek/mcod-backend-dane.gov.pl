@@ -1,6 +1,7 @@
-from mcod.pn_apps.bokeh.layouts import ExtendedColumn as BkExtendedColumn
-from panel.layout import ListPanel
 import param
+from panel.layout import ListPanel
+
+from mcod.pn_apps.bokeh.layouts import ExtendedColumn as BkExtendedColumn
 
 
 class ExtendedColumn(ListPanel):

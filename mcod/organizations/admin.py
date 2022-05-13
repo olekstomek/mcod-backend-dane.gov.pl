@@ -1,15 +1,19 @@
-import nested_admin
 from django.contrib import admin
 from django.utils.html import format_html
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 
-from mcod.datasets.forms import DatasetForm, DatasetStackedNoSaveForm
-from mcod.datasets.models import Dataset
+from mcod.datasets.forms import (
+    DatasetForm,
+    DatasetStackedNoSaveForm,
+    SupplementForm as DatasetSupplementForm,
+)
+from mcod.datasets.models import Dataset, Supplement as DatasetSupplement
 from mcod.lib.admin_mixins import (
     HistoryMixin,
     ObjectPermissionsModelAdmin,
     ObjectPermissionsStackedInline,
+    SortableNestedStackedInline,
     TrashMixin,
 )
 from mcod.organizations.forms import OrganizationForm
@@ -17,7 +21,6 @@ from mcod.organizations.models import Organization, OrganizationTrash
 from mcod.organizations.views import OrganizationAutocompleteJsonView
 from mcod.unleash import is_enabled
 from mcod.users.forms import FilteredSelectMultipleCustom
-from mcod.users.models import User
 
 
 class ChangeDatasetStacked(ObjectPermissionsStackedInline):
@@ -78,50 +81,105 @@ class ChangeDatasetStacked(ObjectPermissionsStackedInline):
     _title.short_description = _('title')
 
 
+class ChangeDatasetNestedStacked(ChangeDatasetStacked):
+    template = 'admin/datasets/nested-inline-list.html'
+
+
 class AddDatasetStacked(ObjectPermissionsStackedInline):
     template = 'admin/datasets/inline-new.html'
-    show_change_link = False
     use_translated_fields = True
     prepopulated_fields = {"slug": ("title",)}
     model = Dataset
     extra = 0
     form = DatasetForm
     suit_classes = 'suit-tab suit-tab-datasets'
-    has_dynamic_data = ['has_dynamic_data'] if is_enabled('S43_dynamic_data.be') else []
-    has_high_value_data = ['has_high_value_data'] if is_enabled('S41_resource_has_high_value_data.be') else []
     has_research_data = ['has_research_data'] if is_enabled('S47_research_data.be') else []
-    slug = ['slug'] if is_enabled('S45_forms_unification.be') else []
-    image_alt = ['image_alt'] if is_enabled('S45_forms_unification.be') else []
-    frequency_fields = [
-        'is_update_notification_enabled',
-        'update_notification_frequency',
-        'update_notification_recipient_email',
-    ] if is_enabled('S45_forms_unification.be') else []
-    fields = (
-        'title',
-        *slug,
-        'notes',
-        'url',
-        'image',
-        *image_alt,
-        'customfields',
-        'update_frequency',
-        *frequency_fields,
-        'categories',
-        'status',
-        'tags_pl',
-        'tags_en',
+    license_fields = [
+        'license_condition_default_cc40',
+        'license_condition_custom_description',
+    ] if is_enabled('S49_cc_by_40_conditions_unification.be') else [
         'license_condition_source',
         'license_condition_modification',
         'license_condition_responsibilities',
         'license_condition_cc40_responsibilities',
-        'license_condition_db_or_copyrighted',
-        'license_chosen',
-        'license_condition_personal_data',
-        *has_dynamic_data,
-        *has_high_value_data,
-        *has_research_data,
-    )
+    ]
+    if is_enabled('S49_nested_dataset_admin.be'):
+        fieldsets = [
+            (
+                None,
+                {
+                    'fields': (
+                        'title',
+                        'title_en',
+                        'slug',
+                        'slug_en',
+                        'notes',
+                        'notes_en',
+                        'url',
+                        'image',
+                        'image_alt',
+                        'image_alt_en',
+                        'customfields',
+                        'update_frequency',
+                        'is_update_notification_enabled',
+                        'update_notification_frequency',
+                        'update_notification_recipient_email',
+                        'categories',
+                        'status',
+                        'tags_pl',
+                        'tags_en',
+                    )
+                }
+            ),
+            (
+                _('Terms of use'),
+                {
+                    'classes': ('collapse', ),
+                    'fields': (
+                        *license_fields,
+                        'license_condition_db_or_copyrighted',
+                        'license_chosen',
+                        'license_condition_personal_data',
+                    )
+                }
+            ),
+            (
+                None,
+                {
+                    'fields': (
+                        'has_dynamic_data',
+                        'has_high_value_data',
+                        *has_research_data,
+                    )
+                }
+            ),
+        ]
+    else:
+        fields = (
+            'title',
+            'slug',
+            'notes',
+            'url',
+            'image',
+            'image_alt',
+            'customfields',
+            'update_frequency',
+            'is_update_notification_enabled',
+            'update_notification_frequency',
+            'update_notification_recipient_email',
+            'categories',
+            'status',
+            'tags_pl',
+            'tags_en',
+            *license_fields,
+            'license_condition_db_or_copyrighted',
+            'license_chosen',
+            'license_condition_personal_data',
+            'has_dynamic_data',
+            'has_high_value_data',
+            *has_research_data,
+        )
+
     autocomplete_fields = ['tags', ]
 
     def get_formset(self, request, obj=None, **kwargs):
@@ -151,15 +209,27 @@ class AddDatasetStacked(ObjectPermissionsStackedInline):
 
     def get_prepopulated_fields(self, request, obj=None):
         fields = super().get_prepopulated_fields(request, obj)
-        if is_enabled('S45_forms_unification.be'):
-            fields['slug_en'] = ("title_en",)
+        fields['slug_en'] = ("title_en",)
         return fields
 
 
-class UserInline(nested_admin.NestedStackedInline):
-    model = User.organizations.through
-    extra = 1
-    suit_classes = 'suit-tab suit-tab-users'
+class DatasetSupplementInline(SortableNestedStackedInline):
+    model = DatasetSupplement
+    form = DatasetSupplementForm
+    fields = ['file', 'name', 'name_en', 'language', 'order']
+    extra = 0
+    max_num = 10
+    sortable_field_name = 'order'
+    template = 'nesting/admin/inlines/_stacked.html'
+    suit_classes = 'suit-tab suit-tab-datasets'
+    verbose_name_plural = ''
+
+
+class AddDatasetNestedStacked(AddDatasetStacked):
+    template = 'nesting/admin/inlines/_stacked.html'
+    inlines = [DatasetSupplementInline]
+    extra = 0
+    verbose_name_plural = ''
 
 
 @admin.register(Organization)
@@ -167,7 +237,11 @@ class OrganizationAdmin(HistoryMixin, ObjectPermissionsModelAdmin):
     actions_on_top = True
     export_to_csv = True
     form = OrganizationForm
+    nested_admin = is_enabled('S49_nested_dataset_admin.be')
     inlines = [
+        ChangeDatasetNestedStacked,
+        AddDatasetNestedStacked,
+    ] if nested_admin else [
         ChangeDatasetStacked,
         AddDatasetStacked,
     ]
@@ -255,13 +329,6 @@ class OrganizationAdmin(HistoryMixin, ObjectPermissionsModelAdmin):
             "description_html",
             "image",
         )
-        general_tab = (
-            None,
-            {
-                'classes': ('suit-tab', 'suit-tab-general',),
-                'fields': superuser_general_fields if request.user.is_superuser else general_fields,
-            }
-        )
         superuser_contact_fields = (
             "postal_code",
             "city",
@@ -284,36 +351,43 @@ class OrganizationAdmin(HistoryMixin, ObjectPermissionsModelAdmin):
             "tel",
             "fax",
         )
-        contact_tab = (
-            _('Contact details'),
-            {
-                'classes': ('suit-tab', 'suit-tab-contact',),
-                'fields': superuser_contact_fields if request.user.is_superuser else contact_fields,
-            }
-        )
-        users_tab = (
-            _('Users'),
-            {
-                'classes': ('suit-tab', 'suit-tab-users',),
-                'fields': (
-                    'users',
-                )
-            }
-        )
-        general_tab2 = (
-            None,
-            {
-                'classes': ('suit-tab', 'suit-tab-general',),
-                'fields': (
-                    "epuap",
-                    "regon",
-                    "website",
-                )
-            }
-        )
-        fieldsets = [general_tab, contact_tab, users_tab, general_tab2]
-
-        return fieldsets + self.get_translations_fieldsets()
+        return [
+            (
+                None,
+                {
+                    'classes': ('suit-tab', 'suit-tab-general',),
+                    'fields': superuser_general_fields if request.user.is_superuser else general_fields,
+                }
+            ),
+            (
+                None,
+                {
+                    'classes': ('suit-tab', 'suit-tab-general',),
+                    'fields': (
+                        "epuap",
+                        "regon",
+                        "website",
+                    )
+                }
+            ),
+            (
+                _('Contact details'),
+                {
+                    'classes': ('suit-tab', 'suit-tab-contact',),
+                    'fields': superuser_contact_fields if request.user.is_superuser else contact_fields,
+                }
+            ),
+            (
+                _('Users'),
+                {
+                    'classes': ('suit-tab', 'suit-tab-users',),
+                    'fields': (
+                        'users',
+                    )
+                }
+            ),
+            *self.get_translations_fieldsets(),
+        ]
 
     def get_readonly_fields(self, request, obj=None):
         if not request.user.is_superuser:

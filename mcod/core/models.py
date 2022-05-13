@@ -1,7 +1,7 @@
 from django.db import models
 
 from mcod.core.db.managers import PermanentlyRemovedManager, TrashManager
-from mcod.core.managers import SoftDeletableManager, RawManager
+from mcod.core.managers import RawManager, SoftDeletableManager
 
 
 class SoftDeletableModel(models.Model):

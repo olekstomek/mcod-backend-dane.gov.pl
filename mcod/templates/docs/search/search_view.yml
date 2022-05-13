@@ -5,12 +5,7 @@ tags:
 summary: Search
 description: |
   {% spaceless %}
-      {% is_unleash_enabled "S39_showcases.be" as S39_showcases %}
-      {% if S39_showcases %}
       <p>Gives the ability to filter and search objects of various types: articles, datasets, institutions, resources, showcases.</p>
-      {% else %}
-      <p>Gives the ability to filter and search objects of various types: applications, articles, datasets, institutions, resources.</p>
-      {% endif %}
       {% include "docs/search/search_view_description.html" %}
   {% endspaceless %}
 parameters:

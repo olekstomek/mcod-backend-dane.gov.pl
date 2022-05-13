@@ -2,8 +2,14 @@ from django.utils.translation import gettext_lazy as _
 from marshmallow import post_dump
 
 from mcod.core.api import fields
-from mcod.core.api.jsonapi.serializers import \
-    Relationships, ObjectAttrs, TopLevel, Relationship, Aggregation, HighlightObjectMixin
+from mcod.core.api.jsonapi.serializers import (
+    Aggregation,
+    HighlightObjectMixin,
+    ObjectAttrs,
+    Relationship,
+    Relationships,
+    TopLevel,
+)
 from mcod.core.api.schemas import ExtSchema
 from mcod.core.serializers import CSVSerializer
 from mcod.lib.serializers import TranslatedStr

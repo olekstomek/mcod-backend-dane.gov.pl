@@ -1,6 +1,9 @@
 import pytest
 from django.contrib.auth import get_user_model
-from django.contrib.auth.password_validation import validate_password, get_default_password_validators
+from django.contrib.auth.password_validation import (
+    get_default_password_validators,
+    validate_password,
+)
 from django.core.exceptions import ValidationError
 from marshmallow.validate import ValidationError as mmValidationError
 
@@ -30,7 +33,7 @@ def test_password_validators_help_text():
 
 
 @pytest.mark.run
-class TestFieldsValidators(object):
+class TestFieldsValidators:
     def test_base64_validator(self, base64_image):
         validator = field_validators.Base64()
         with pytest.raises(mmValidationError) as e:

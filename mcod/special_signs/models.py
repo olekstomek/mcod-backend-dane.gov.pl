@@ -1,10 +1,10 @@
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-from modeltrans.fields import TranslationField
 from model_utils import FieldTracker
+from modeltrans.fields import TranslationField
 
-from mcod.special_signs.managers import SpecialSignManager, SpecialSignTrashManager
 from mcod.core.db.models import ExtendedModel
+from mcod.special_signs.managers import SpecialSignManager, SpecialSignTrashManager
 
 
 class SpecialSign(ExtendedModel):

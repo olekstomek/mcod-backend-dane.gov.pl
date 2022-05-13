@@ -1,7 +1,7 @@
 from django.conf import settings
 
-from mcod.discourse.tests.utils import discourse_response_mocker
 from mcod.discourse.client import DiscourseClient
+from mcod.discourse.tests.utils import discourse_response_mocker
 
 
 class TestDiscourseClient:

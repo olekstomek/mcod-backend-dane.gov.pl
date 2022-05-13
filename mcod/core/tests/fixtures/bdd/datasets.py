@@ -1,30 +1,38 @@
-import json
-import time
 import csv
 import io
+import json
 import os
+import time
 import xml.etree.ElementTree as ET
 import zipfile
+from datetime import date
 
 import pytest
 import xmlschema
 from dateutil import parser
+from dateutil.relativedelta import relativedelta
 from django.apps import apps
 from django.conf import settings
-
 from django.test import override_settings
-from pytest_bdd import given, when, then
-from pytest_bdd import parsers
-from dateutil.relativedelta import relativedelta
-from datetime import date
+from pytest_bdd import given, parsers, then, when
 
 from mcod.categories.factories import CategoryFactory
-from mcod.core.tests.fixtures.bdd.common import prepare_file, prepare_dbf_file, copyfile, create_object
-from mcod.datasets.factories import DatasetFactory
+from mcod.core.tests.fixtures.bdd.common import (
+    copyfile,
+    create_object,
+    prepare_dbf_file,
+    prepare_file,
+)
+from mcod.datasets.factories import DatasetFactory, SupplementFactory as DatasetSupplementFactory
 from mcod.datasets.tasks import send_dataset_update_reminder
 from mcod.harvester.factories import DataSourceFactory
-from mcod.resources.factories import ChartFactory, ResourceFactory
+from mcod.resources.factories import (
+    ChartFactory,
+    ResourceFactory,
+    SupplementFactory as ResourceSupplementFactory,
+)
 from mcod.showcases.factories import ShowcaseFactory
+from mcod.special_signs.factories import SpecialSignFactory
 from mcod.tags.factories import TagFactory
 
 
@@ -35,23 +43,10 @@ def dataset():
     return _dataset
 
 
-#
-# @given(parsers.parse('draft dataset'))
-# def draft_dataset():
-#     _dataset = DatasetFactory.create(status="draft", title='Draft dataset')
-#     return _dataset
-
-
 @given(parsers.parse('removed dataset'))
 def removed_dataset():
     _dataset = DatasetFactory.create(is_removed=True, title='Removed dataset')
     return _dataset
-
-
-# @given(parsers.parse('dataset with id {dataset_id:d}'))
-# def dataset_with_id(dataset_id):
-#     _dataset = DatasetFactory.create(id=dataset_id, title='dataset %s' % dataset_id)
-#     return _dataset
 
 
 @given(parsers.parse('second dataset with id {dataset_id:d}'))
@@ -64,14 +59,6 @@ def second_dataset_with_id(dataset_id):
 def another_dataset_with_id(dataset_id):
     _dataset = DatasetFactory.create(id=dataset_id, title='Another dataset %s' % dataset_id)
     return _dataset
-
-
-#
-# @given(parsers.parse('draft dataset with id {dataset_id:d}'))
-# def draft_dataset_with_id(dataset_id):
-#     _dataset = DatasetFactory.create(id=dataset_id, title='Draft dataset {}'.format(dataset_id),
-#                                      status='draft')
-#     return _dataset
 
 
 @given(parsers.parse('dataset with resources'))
@@ -141,6 +128,25 @@ def dataset_with_resource():
     _dataset = DatasetFactory.create()
     ResourceFactory.create(dataset=_dataset)
     CategoryFactory.create_batch(2, datasets=(_dataset,))
+    return _dataset
+
+
+@given(parsers.parse('dataset with resource with special signs'))
+def dataset_with_resource_with_special_signs():
+    _dataset = DatasetFactory.create()
+    _resource = ResourceFactory.create(dataset=_dataset)
+    CategoryFactory.create_batch(2, datasets=(_dataset,))
+    SpecialSignFactory.create_batch(2, special_signs_resources=(_resource,))
+    return _dataset
+
+
+@pytest.fixture
+def dataset_with_supplements_plus_resource_with_supplements():
+    _dataset = DatasetFactory.create()
+    _resource = ResourceFactory.create(dataset=_dataset)
+    CategoryFactory.create_batch(2, datasets=(_dataset,))
+    ResourceSupplementFactory.create_batch(2, resource=_resource)
+    DatasetSupplementFactory.create_batch(2, dataset=_dataset)
     return _dataset
 
 

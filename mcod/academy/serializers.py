@@ -34,7 +34,6 @@ class CourseApiAttrs(ObjectAttrs, HighlightObjectMixin):
     state_name = fields.Str()
 
     class Meta:
-        # relationships_schema = ApplicationApiRelationships
         object_type = 'course'
         url_template = '{api_url}/courses/{ident}'
         model = 'academy.Course'
@@ -61,4 +60,3 @@ class CourseApiAttrs(ObjectAttrs, HighlightObjectMixin):
 class CourseApiResponse(SubscriptionMixin, TopLevel):
     class Meta:
         attrs_schema = CourseApiAttrs
-        # aggs_schema = CourseApiAggs

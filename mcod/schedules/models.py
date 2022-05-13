@@ -7,8 +7,8 @@ from django.dispatch import receiver
 from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
-from modeltrans.fields import TranslationField
 from model_utils import FieldTracker
+from modeltrans.fields import TranslationField
 from notifications.base.models import AbstractNotification
 from notifications.signals import notify
 
@@ -24,7 +24,6 @@ from mcod.schedules.managers import (
     UserScheduleManager,
     UserScheduleTrashManager,
 )
-
 
 YES = _('Yes')
 NO = _('No')

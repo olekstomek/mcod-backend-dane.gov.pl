@@ -13,7 +13,7 @@ from mcod.unleash import is_enabled
 
 class ExtSchemaMeta(SchemaMeta):
     def __new__(mcs, name, bases, attrs):
-        klass = super(ExtSchemaMeta, mcs).__new__(mcs, name, bases, attrs)
+        klass = super().__new__(mcs, name, bases, attrs)
         klass.prepare()
         return klass
 
@@ -237,57 +237,3 @@ class RegionIdTermsSchema(ExtSchema):
 
     class Meta:
         default_field = 'terms'
-
-#
-# class JsonApiRequestData(ExtSchema):
-#     _type = fields.Str(data_key='type', attribute='type', required=True)
-#
-#     def __init__(
-#             self, only=None, exclude=(), many=False, context=None,
-#             load_only=(), dump_only=(), partial=False, unknown=None,
-#     ):
-#         super().__init__(only=only, exclude=exclude, many=many, context=context,
-#                          load_only=load_only, dump_only=dump_only,
-#                          partial=partial, unknown=unknown)
-#
-#         _meta = getattr(self, 'Meta', None)
-#
-#         rel_cls = getattr(_meta, 'relationships_cls', None)
-#         self.fields['attributes'] = fields.Nested(
-#             getattr(_meta, 'attrs_cls'), name='attributes')
-#         if 'relationships' not in self.fields:
-#             self.fields['relationships'] = fields.Nested(rel_cls, name='relationships')
-#
-#         _type = getattr(_meta, '_type', None)
-#
-#         if _type:
-#             self.fields['_type'] = fields.Str(required=True, missing=_type,
-#                                               default=_type, data_key='type')
-#
-#     @pre_dump(pass_many=False)
-#     def prepare_attributes(self, data):
-#         setattr(data, 'attributes', data)
-#         return data
-#
-# class JsonApiRequestSchema(CommonSchema):
-#     def __init__(
-#             self, only=None, exclude=(), many=False, context=None,
-#             load_only=(), dump_only=(), partial=False, unknown=None,
-#     ):
-#         super().__init__(only=only, exclude=exclude, many=many, context=context,
-#                          load_only=load_only, dump_only=dump_only,
-#                          partial=partial, unknown=unknown)
-#
-#         _meta = getattr(self, 'Meta', None)
-#
-#         if not issubclass(self._data_cls, REQData):
-#             raise Exception("{} must be a subclass of ResponseData".format(self._data_cls.__class__))
-#
-#         setattr(self._data_cls.Meta, 'attrs_cls', getattr(_meta, 'attrs_cls', DummyAttributes))
-#         setattr(self._data_cls.Meta, 'relationship_cls', getattr(_meta, 'relationship_cls', DummyRelationship))
-#         setattr(self._data_cls.Meta, '_type', getattr(_meta, '_type', None))
-#
-#         self.fields['data'] = fields.Nested(self._data_cls,
-#                                             name='data',
-#                                             many=self.many,
-#                                             data_key='data')

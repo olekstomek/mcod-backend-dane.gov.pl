@@ -1,14 +1,13 @@
 from django.contrib import admin
 from django.utils.translation import gettext_lazy as _
 
-from mcod.academy.forms import CourseAdminForm, CourseModuleAdminFormSet, CourseModuleInlineAdminForm
-from mcod.academy.models import Course, CourseModule, CourseTrash
-from mcod.lib.admin_mixins import (
-    HistoryMixin,
-    ModelAdmin,
-    TabularInline,
-    TrashMixin,
+from mcod.academy.forms import (
+    CourseAdminForm,
+    CourseModuleAdminFormSet,
+    CourseModuleInlineAdminForm,
 )
+from mcod.academy.models import Course, CourseModule, CourseTrash
+from mcod.lib.admin_mixins import HistoryMixin, ModelAdmin, TabularInline, TrashMixin
 
 
 class CourseModuleInline(TabularInline):

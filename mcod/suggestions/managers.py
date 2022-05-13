@@ -1,5 +1,9 @@
-from mcod.core.db.managers import TrashManager, DecisionSortableManagerMixin, DecisionSortableSoftDeletableQuerySet, \
-    DecisionSortableTrashQuerySet
+from mcod.core.db.managers import (
+    DecisionSortableManagerMixin,
+    DecisionSortableSoftDeletableQuerySet,
+    DecisionSortableTrashQuerySet,
+    TrashManager,
+)
 from mcod.core.managers import SoftDeletableManager
 
 

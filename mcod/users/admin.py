@@ -9,15 +9,21 @@ from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
 from django_admin_multiple_choice_list_filter.list_filters import MultipleChoiceListFilter
 
-from mcod.lib.admin_mixins import (
-    HistoryMixin,
-    MCODChangeList,
-    ModelAdmin,
-    TrashMixin,
-    UserAdmin,
+from mcod.lib.admin_mixins import HistoryMixin, MCODChangeList, ModelAdmin, TrashMixin, UserAdmin
+from mcod.users.forms import (
+    FilteredSelectMultipleCustom,
+    MeetingForm,
+    UserChangeForm,
+    UserCreationForm,
 )
-from mcod.users.forms import MeetingForm, UserCreationForm, UserChangeForm, FilteredSelectMultipleCustom
-from mcod.users.models import ACADEMY_PERMS_CODENAMES, LABS_PERMS_CODENAMES, User, Meeting, MeetingFile, MeetingTrash
+from mcod.users.models import (
+    ACADEMY_PERMS_CODENAMES,
+    LABS_PERMS_CODENAMES,
+    Meeting,
+    MeetingFile,
+    MeetingTrash,
+    User,
+)
 
 
 class UserChangeList(MCODChangeList):

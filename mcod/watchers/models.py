@@ -1,5 +1,5 @@
 from operator import itemgetter
-from urllib.parse import urlsplit, urlunsplit, parse_qsl
+from urllib.parse import parse_qsl, urlsplit, urlunsplit
 
 import dpath.util
 import requests
@@ -9,7 +9,7 @@ from django.contrib.postgres.fields import JSONField
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.db import models
-from django.db.models.signals import pre_save, post_save, post_delete
+from django.db.models.signals import post_delete, post_save, pre_save
 from django.dispatch import receiver
 from django.utils.functional import cached_property
 from django.utils.timezone import now
@@ -105,18 +105,6 @@ class SubscribedObjectDoesNotExist(Exception):
 
 
 class DuplicateSubscriptionName(Exception):
-    pass
-
-
-class UnknownView(Exception):
-    pass
-
-
-class InvalidUrl(Exception):
-    pass
-
-
-class UrlDictError(Exception):
     pass
 
 

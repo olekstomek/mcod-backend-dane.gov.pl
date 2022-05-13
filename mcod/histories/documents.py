@@ -3,9 +3,9 @@ import json
 from django_elasticsearch_dsl import fields
 from django_elasticsearch_dsl.registries import registry
 
-from mcod.histories.models import History, LogEntry
 from mcod import settings as mcs
 from mcod.core.db.elastic import Document
+from mcod.histories.models import History, LogEntry
 
 
 @registry.register_document

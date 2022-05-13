@@ -5,7 +5,6 @@ from pytest_bdd import scenarios
 
 from mcod.datasets.models import User
 
-
 scenarios('features/admin.feature')
 scenarios('features/admin_forms.feature')
 scenarios('features/meetings.feature')

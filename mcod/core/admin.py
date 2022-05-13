@@ -1,6 +1,4 @@
-from auditlog.admin import (
-    ResourceTypeFilter as BaseResourceTypeFilter,
-)
+from auditlog.admin import ResourceTypeFilter as BaseResourceTypeFilter
 from auditlog.models import LogEntry as BaseLogEntry
 from dal import autocomplete
 from django.apps import apps

@@ -1,29 +1,28 @@
 from django.utils.translation import get_language, gettext_lazy as _
-from elasticsearch_dsl import Search, MultiSearch
-from marshmallow import validates, ValidationError, validate
+from elasticsearch_dsl import MultiSearch, Search
+from marshmallow import ValidationError, validate, validates
 
 from mcod import settings
-from mcod.core.api.jsonapi.deserializers import TopLevel, ObjectAttrs
 from mcod.core.api import fields as core_fields
+from mcod.core.api.jsonapi.deserializers import ObjectAttrs, TopLevel
 from mcod.core.api.schemas import (
+    BooleanTermSchema,
     CommonSchema,
     DateTermSchema,
     ExtSchema,
     ListingSchema,
     ListTermsSchema,
     NumberTermSchema,
-    StringTermSchema,
     StringMatchSchema,
-    BooleanTermSchema
+    StringTermSchema,
 )
 from mcod.core.api.search import fields
 from mcod.datasets.deserializers import (
-    InstitutionFilterSchema,
-    CategoryFilterSchema as DatasetCategoryFilterSchema,
     CategoriesFilterSchema as DatasetCategoriesFilterSchema,
-    RegionsFilterSchema
+    CategoryFilterSchema as DatasetCategoryFilterSchema,
+    InstitutionFilterSchema,
+    RegionsFilterSchema,
 )
-
 from mcod.search.fields import (
     CommonSearchField,
     get_advanced_options,
@@ -260,14 +259,13 @@ class ApiSearchRequest(ListingSchema):
         doc_base_url='/search',
         doc_field_name='update_frequency'
     )
-    if is_enabled('S43_dynamic_data.be'):
-        has_dynamic_data = fields.FilterField(
-            BooleanTermSchema,
-            query_field='has_dynamic_data',
-            doc_template='docs/generic/fields/boolean_term_field.html',
-            doc_base_url='/search',
-            doc_field_name='has_dynamic_data'
-        )
+    has_dynamic_data = fields.FilterField(
+        BooleanTermSchema,
+        query_field='has_dynamic_data',
+        doc_template='docs/generic/fields/boolean_term_field.html',
+        doc_base_url='/search',
+        doc_field_name='has_dynamic_data'
+    )
     has_high_value_data = fields.FilterField(
         BooleanTermSchema,
         query_field='has_high_value_data',
@@ -285,27 +283,27 @@ class ApiSearchRequest(ListingSchema):
         )
     if is_enabled('S39_filter_by_geodata.be'):
         regions = fields.FilterField(RegionsFilterSchema)
-    if is_enabled('S39_showcases.be'):
-        showcase_category = fields.FilterField(
-            StringTermSchema,
-            doc_template='docs/generic/fields/string_term_field.html',
-            doc_base_url='/search',
-            doc_field_name='showcase_category',
-        )
-        showcase_types = fields.FilterField(
-            StringTermSchema,
-            query_field='showcase_types',
-            doc_template='docs/generic/fields/string_term_field.html',
-            doc_base_url='/search',
-            doc_field_name='showcase types'
-        )
-        showcase_platforms = fields.FilterField(
-            StringTermSchema,
-            query_field='showcase_platforms',
-            doc_template='docs/generic/fields/string_term_field.html',
-            doc_base_url='/search',
-            doc_field_name='showcase platforms'
-        )
+
+    showcase_category = fields.FilterField(
+        StringTermSchema,
+        doc_template='docs/generic/fields/string_term_field.html',
+        doc_base_url='/search',
+        doc_field_name='showcase_category',
+    )
+    showcase_types = fields.FilterField(
+        StringTermSchema,
+        query_field='showcase_types',
+        doc_template='docs/generic/fields/string_term_field.html',
+        doc_base_url='/search',
+        doc_field_name='showcase types'
+    )
+    showcase_platforms = fields.FilterField(
+        StringTermSchema,
+        query_field='showcase_platforms',
+        doc_template='docs/generic/fields/string_term_field.html',
+        doc_base_url='/search',
+        doc_field_name='showcase platforms'
+    )
 
     @validates('q')
     def validate_q(self, queries, down_limit=2, up_limit=3000):
@@ -390,7 +388,7 @@ class ApiSuggestRequest(CommonSchema):
     def __init__(self, *args, **kwargs):
         if is_enabled('S39_filter_by_geodata.be'):
             self._supported_models.add('region')
-        super(ApiSuggestRequest, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def get_queryset(self, queryset, data):
         phrase = data.get('q')

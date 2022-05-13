@@ -2,8 +2,8 @@ from django.conf import settings
 from marshmallow import pre_dump
 
 from mcod.core.api import fields
-from mcod.core.api.schemas import ExtSchema
 from mcod.core.api.jsonapi.serializers import ExtAggregation
+from mcod.core.api.schemas import ExtSchema
 from mcod.lib.serializers import TranslatedStr
 from mcod.regions.models import Region
 
@@ -34,9 +34,17 @@ class RDFRegionSchema(DefaultRegionMixin, ExtSchema):
 
 class RegionAggregationSerializer(ExtAggregation):
     id = fields.String(attribute='region_id')
+    bbox = fields.List(fields.List(fields.Float()))
+
+    def _get_item_data(self, item, data, id_field, field_name, additional_attributes):
+        item_data = super()._get_item_data(item, data, id_field, field_name, additional_attributes)
+        bbox = item_data['bbox']
+        item_data['bbox'] = [[bbox[0], bbox[3]], [bbox[2], bbox[1]]]
+        return item_data
 
     class Meta:
         model = 'regions.Region'
         title_field = 'hierarchy_label_i18n'
         filter_field = 'region_id'
         id_field = 'region_id'
+        additional_attributes = ['bbox']

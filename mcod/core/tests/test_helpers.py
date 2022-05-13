@@ -1,5 +1,6 @@
 import pytest
 from namedlist import namedlist
+
 from mcod.lib.helpers import change_namedlist
 
 

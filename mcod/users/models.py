@@ -1,27 +1,31 @@
-from uuid import uuid4
-
-import time
 import logging
+import time
+from uuid import uuid4
 
 from constance import config
 from django.apps import apps
 from django.conf import settings
+from django.contrib.auth.models import (
+    AbstractBaseUser,
+    BaseUserManager,
+    Permission,
+    PermissionsMixin,
+)
 from django.contrib.postgres.fields import JSONField
-from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin, Permission
 from django.contrib.sessions.backends.cache import KEY_PREFIX
 from django.core.cache import caches
 from django.core.paginator import Paginator
 from django.db import models, transaction
 from django.db.models import Case, Count, When
-from django.db.models.signals import pre_save, post_save, post_delete
+from django.db.models.signals import post_delete, post_save, pre_save
 from django.dispatch import receiver
 from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.crypto import constant_time_compare
 from django.utils.functional import cached_property
-from django.utils.translation import gettext_lazy as _, override, pgettext_lazy, get_language
-from modeltrans.fields import TranslationField
+from django.utils.translation import get_language, gettext_lazy as _, override, pgettext_lazy
 from model_utils import FieldTracker
+from modeltrans.fields import TranslationField
 
 from mcod.core import storages
 from mcod.core.api.search.tasks import update_document_task
@@ -30,9 +34,14 @@ from mcod.core.db.models import ExtendedModel, TimeStampedModel, TrashModelBase
 from mcod.core.managers import SoftDeletableQuerySet
 from mcod.core.models import SoftDeletableModel
 from mcod.lib.jwt import decode_jwt_token
-from mcod.watchers.models import Notification, MODEL_TO_OBJECT_NAME
-from mcod.users.managers import MeetingTrashManager, MeetingFileManager, MeetingFileTrashManager, MeetingManager
+from mcod.users.managers import (
+    MeetingFileManager,
+    MeetingFileTrashManager,
+    MeetingManager,
+    MeetingTrashManager,
+)
 from mcod.users.signals import user_changed
+from mcod.watchers.models import MODEL_TO_OBJECT_NAME, Notification
 
 TOKEN_TYPES = (
     (0, _('Email validation token')),
@@ -249,7 +258,7 @@ class User(AdminMixin, ApiMixin, AbstractBaseUser, PermissionsMixin, SoftDeletab
         if not session_data:
             return False
 
-        if not set(('_auth_user_hash', '_auth_user_id')) <= set(session_data):
+        if not {'_auth_user_hash', '_auth_user_id'} <= set(session_data):
             return False
 
         if session_data['_auth_user_id'] != str(self.id):

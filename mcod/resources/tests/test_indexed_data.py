@@ -1,5 +1,7 @@
-import pytest
 import datetime
+
+import pytest
+
 from mcod.resources.indexed_data import prepare_item
 
 

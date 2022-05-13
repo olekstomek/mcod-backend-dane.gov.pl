@@ -1,10 +1,8 @@
-from falcon import HTTP_OK, HTTP_NOT_FOUND
-from pytest_bdd import scenarios
 import pytest
-
+from falcon import HTTP_NOT_FOUND, HTTP_OK
+from pytest_bdd import scenarios
 
 from mcod.suggestions.tasks import deactivate_accepted_dataset_submissions, send_data_suggestion
-
 
 scenarios(
     'features/api/accepteddatasetsubmission_list.feature',

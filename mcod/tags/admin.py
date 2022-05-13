@@ -2,11 +2,7 @@ from django.contrib import admin
 from django.utils.translation import gettext_lazy as _
 
 from mcod import settings
-from mcod.lib.admin_mixins import (
-    HistoryMixin,
-    ModelAdmin,
-    TagAutocompleteMixin,
-)
+from mcod.lib.admin_mixins import HistoryMixin, ModelAdmin, TagAutocompleteMixin
 from mcod.tags.forms import TagForm
 from mcod.tags.models import Tag
 

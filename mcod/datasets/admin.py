@@ -3,7 +3,7 @@ from django.contrib import admin
 from django.contrib.admin.views.main import ChangeList
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import EmptyPage, InvalidPage, Paginator
-from django.db.models import Subquery, OuterRef
+from django.db.models import OuterRef, Subquery
 from django.http import JsonResponse
 from django.template.defaultfilters import yesno
 from django.urls import path
@@ -11,18 +11,33 @@ from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 from django_celery_results.models import TaskResult
 
-from mcod.datasets.forms import DatasetForm, TrashDatasetForm
-from mcod.datasets.models import Dataset, DatasetTrash, UPDATE_NOTIFICATION_FREQUENCY_DEFAULT_VALUES
+from mcod.datasets.forms import DatasetForm, SupplementForm, TrashDatasetForm
+from mcod.datasets.models import (
+    UPDATE_NOTIFICATION_FREQUENCY_DEFAULT_VALUES,
+    Dataset,
+    DatasetTrash,
+    Supplement,
+)
+from mcod.histories.models import LogEntry
 from mcod.lib.admin_mixins import (
     HistoryMixin,
     ModelAdmin,
+    NestedModelAdmin,
+    NestedStackedInline,
+    SortableNestedStackedInline,
+    SortableStackedInline,
+    StackedInline,
     TabularInline,
     TrashMixin,
-    InlineModelAdmin
 )
 from mcod.lib.utils import is_django_ver_lt
-from mcod.resources.forms import ResourceListForm, AddResourceForm, ResourceInlineFormset
-from mcod.resources.models import Resource
+from mcod.resources.forms import (
+    AddResourceForm,
+    ResourceInlineFormset,
+    ResourceListForm,
+    SupplementForm as ResourceSupplementForm,
+)
+from mcod.resources.models import Resource, Supplement as ResourceSupplement
 from mcod.unleash import is_enabled
 from mcod.users.forms import FilteredSelectMultipleCustom
 
@@ -183,10 +198,12 @@ class ChangeResourceStacked(PaginationInline):
     _title.short_description = _("title")
 
 
-class AddResourceStacked(InlineModelAdmin):
-    template = 'admin/resources/inline-new.html'
+class ChangeResourceNestedStacked(ChangeResourceStacked):
+    template = 'admin/resources/nested-inline-list.html'
 
-    show_change_link = False
+
+class AddResourceMixin:
+    template = 'admin/resources/inline-new.html'
     use_translated_fields = True
 
     add_fieldsets = [
@@ -211,21 +228,20 @@ class AddResourceStacked(InlineModelAdmin):
 
     add_readonly_fields = ()
 
-    has_dynamic_data = ['has_dynamic_data'] if is_enabled('S43_dynamic_data.be') else []
-    has_high_value_data = ['has_high_value_data'] if is_enabled('S41_resource_has_high_value_data.be') else []
     has_research_data = ['has_research_data'] if is_enabled('S47_research_data.be') else []
-    regions = ['regions_'] if\
-        is_enabled('S45_forms_unification.be') and is_enabled('S37_resources_admin_region_data.be') else []
+    regions = ['regions_'] if is_enabled('S37_resources_admin_region_data.be') else []
     _fields = (
         'title',
+        'title_en',
         'description',
+        'description_en',
         'dataset',
         *regions,
         'data_date',
         'status',
         'special_signs',
-        *has_dynamic_data,
-        *has_high_value_data,
+        'has_dynamic_data',
+        'has_high_value_data',
         *has_research_data,
     )
 
@@ -245,8 +261,7 @@ class AddResourceStacked(InlineModelAdmin):
     )
     model = Resource
     form = AddResourceForm
-    if is_enabled('S40_new_file_model.be'):
-        formset = ResourceInlineFormset
+    formset = ResourceInlineFormset
 
     extra = 0
     suit_classes = 'suit-tab suit-tab-resources'
@@ -260,18 +275,39 @@ class AddResourceStacked(InlineModelAdmin):
         initial['switcher'] = 'file'
         return initial
 
+    def has_add_permission(self, request, obj=None):
+        if obj and obj.is_imported:
+            return False
+        return super().has_add_permission(request, obj=obj)
+
     def save_model(self, request, obj, form, change):
         if not obj.created_by:
             obj.created_by = request.user
         obj.modified_by = request.user
         super().save_model(request, obj, form, change)
 
-    def get_fieldsets(self, request, obj=None):
-        fieldsets = super().get_fieldsets(request, obj)
-        if is_enabled('S45_forms_unification.be'):
-            extended_fields = self.extend_by_lang_fields(fieldsets[1][1]['fields'])
-            fieldsets[1][1]['fields'] = extended_fields
-        return fieldsets
+
+class AddResourceStacked(AddResourceMixin, StackedInline):
+    pass
+
+
+class ResourceSupplementInline(SortableNestedStackedInline):
+    model = ResourceSupplement
+    form = ResourceSupplementForm
+    fields = ['file', 'name', 'name_en', 'language', 'order']
+    extra = 0
+    max_num = 10
+    sortable_field_name = 'order'
+    template = 'nesting/admin/inlines/_stacked.html'
+    suit_classes = 'suit-tab suit-tab-resources'
+    verbose_name_plural = ''
+
+
+class AddResourceNestedStacked(AddResourceMixin, NestedStackedInline):
+    template = 'nesting/admin/inlines/_stacked.html'
+    inlines = [ResourceSupplementInline]
+    extra = 0
+    verbose_name_plural = ''
 
 
 class OrganizationFilter(AutocompleteFilter):
@@ -281,17 +317,14 @@ class OrganizationFilter(AutocompleteFilter):
     title = _('Filter by institution name')
 
 
-@admin.register(Dataset)
-class DatasetAdmin(HistoryMixin, ModelAdmin):
+class DatasetAdminMixin(HistoryMixin):
     actions_on_top = True
     autocomplete_fields = ['tags', 'organization']
     check_imported_obj_perms = True
+    dataset_supplements = is_enabled('S49_dataset_supplements.be')
     export_to_csv = True
     form = DatasetForm
-    inlines = [
-        ChangeResourceStacked,
-        AddResourceStacked,
-    ]
+    is_inlines_js_upgraded = is_enabled('S48_resource_inlines_js_upgrade.be')
     list_display = [
         'title',
         'organization',
@@ -310,6 +343,7 @@ class DatasetAdmin(HistoryMixin, ModelAdmin):
         "slug": ("title", ),
     }
     readonly_fields = [
+        'archived_resources_files_media_url',
         'created_by',
         'created',
         'modified',
@@ -319,18 +353,29 @@ class DatasetAdmin(HistoryMixin, ModelAdmin):
     search_fields = ["title", ]
     soft_delete = True
     suit_form_includes = (
-        ('admin/datasets/licences/custom_include.html', 'top', 'licenses'),
+        ('admin/datasets/licenses/custom_include.html', 'top', 'licenses'),
     )
 
     @property
     def suit_form_tabs(self):
+        supplements = [('supplements', _('Supplements'))] if self.dataset_supplements else []
         return (
             ('general', _('General')),
             *self.get_translations_tabs(),
             ('licenses', _('Conditions')),
             ('tags', _('Tags')),
             ('resources', _('Resources')),
+            *supplements,
         )
+
+    def get_history(self, obj):
+        history = super().get_history(obj)
+        if self.dataset_supplements:
+            supplements = Supplement.raw.filter(dataset=obj)
+            supplements_history = LogEntry.objects.get_for_objects(supplements)
+            all_history = history.distinct() | supplements_history
+            return all_history.order_by('-timestamp')
+        return history
 
     def has_dynamic_data_info(self, obj):
         return yesno(obj.has_dynamic_data, 'Tak,Nie,-')
@@ -359,43 +404,43 @@ class DatasetAdmin(HistoryMixin, ModelAdmin):
                 'update_notification_frequency',
                 'update_notification_recipient_email',
             ]
-        has_dynamic_data = []
-        if is_enabled('S43_dynamic_data.be'):
-            has_dynamic_data = ['has_dynamic_data_info'] if obj and obj.is_imported else ['has_dynamic_data']
-        has_high_value_data = []
-        if is_enabled('S35_high_value_data.be'):
-            has_high_value_data = ['has_high_value_data_info'] if obj and obj.is_imported else ['has_high_value_data']
+        has_dynamic_data = ['has_dynamic_data_info'] if obj and obj.is_imported else ['has_dynamic_data']
+        has_high_value_data = ['has_high_value_data_info'] if obj and obj.is_imported else ['has_high_value_data']
         has_research_data = []
         if is_enabled('S47_research_data.be'):
             has_research_data = ['has_research_data_info'] if obj and obj.is_imported else ['has_research_data']
-        general_fields = [
-            'notes',
-            'url',
-            'image',
-            'image_alt',
-            'dataset_logo',
-            'customfields',
-            *has_dynamic_data,
-            update_frequency_field,
-            *frequency_fields,
-            'organization',
-            category_field,
-            *has_high_value_data,
-            *has_research_data,
-        ]
-        if is_enabled('S41_resource_bulk_download.be'):
-            general_fields += ['archived_resources_files_media_url']
-        general_fields += ['status', 'created_by', 'created', 'modified', 'verified']
-
+        license_fields = ['license_condition_default_cc40', 'license_condition_custom_description'] if\
+            is_enabled('S49_cc_by_40_conditions_unification.be') else\
+            ['license_condition_source', 'license_condition_modification',
+             'license_condition_responsibilities', 'license_condition_cc40_responsibilities']
         return [
             (
                 None,
                 {
                     'classes': ('suit-tab', 'suit-tab-general',),
-                    'fields': (
+                    'fields': [
                         'title',
                         'slug',
-                    )
+                        'notes',
+                        'url',
+                        'image',
+                        'image_alt',
+                        'dataset_logo',
+                        'customfields',
+                        *has_dynamic_data,
+                        update_frequency_field,
+                        *frequency_fields,
+                        'organization',
+                        category_field,
+                        *has_high_value_data,
+                        *has_research_data,
+                        'archived_resources_files_media_url',
+                        'status',
+                        'created_by',
+                        'created',
+                        'modified',
+                        'verified',
+                    ]
                 }
             ),
             (
@@ -408,32 +453,15 @@ class DatasetAdmin(HistoryMixin, ModelAdmin):
             (
                 None,
                 {
-                    'classes': ('suit-tab', 'suit-tab-general',),
-                    'fields': general_fields
-                }
-            ),
-            (
-                None,
-                {
                     'classes': ('suit-tab', 'suit-tab-licenses',),
-                    'fields': (
-                        'license_condition_source',
-                        'license_condition_modification',
-                        'license_condition_responsibilities',
-                        'license_condition_cc40_responsibilities',
+                    'fields': license_fields + [
                         'license_condition_db_or_copyrighted',
                         'license_chosen',
                         'license_condition_personal_data',
-                    ),
+                    ],
                 }
             )
         ] + self.get_translations_fieldsets()
-
-    def get_readonly_fields(self, request, obj=None):
-        readonly_fields = super().get_readonly_fields(request, obj)
-        archived_resources = ['archived_resources_files_media_url'] if is_enabled('S41_resource_bulk_download.be') else []
-        readonly_fields = archived_resources + readonly_fields
-        return readonly_fields
 
     def categories_list(self, instance):
         return instance.categories_list_as_html
@@ -466,9 +494,8 @@ class DatasetAdmin(HistoryMixin, ModelAdmin):
     def get_urls(self):
         urls = super().get_urls()
         custom_urls = [
-            path('<path:object_id>/details/', self.get_dataset_details,
-                 name='dataset-details')
-        ] if is_enabled('S41_resource_has_high_value_data.be') else []
+            path('<path:object_id>/details/', self.get_dataset_details, name='dataset-details'),
+        ]
         return custom_urls + urls
 
     def render_change_form(self, request, context, **kwargs):
@@ -478,6 +505,17 @@ class DatasetAdmin(HistoryMixin, ModelAdmin):
                 'show_save': False,
                 'show_save_and_continue': False,
             })
+
+        media = context.get('media')
+        if media and self.is_inlines_js_upgraded:
+            _new_js_lists = []
+            for js_list in media._js_lists:
+                new_js_list = [x for x in js_list if x not in ['admin/js/inlines.min.js', 'admin/js/inlines.js']]
+                if len(new_js_list) < len(js_list):
+                    new_js_list.append('admin/js/inlines_django_3_1.js')
+                _new_js_lists.append(new_js_list)
+            media._js_lists = _new_js_lists
+            context['media'] = media
         return super().render_change_form(request, context, **kwargs)
 
     def save_model(self, request, obj, form, change):
@@ -537,6 +575,52 @@ class DatasetAdmin(HistoryMixin, ModelAdmin):
             )
 
         return formfield
+
+
+class SupplementInline(SortableStackedInline):
+    add_text = _('Add document')
+    fields = ['file', 'name', 'name_en', 'language']
+    form = SupplementForm
+    description = 'Pliki dokumentów mające na celu uzupełnienie danych znajdujących się w zbiorze.'
+    extra = 0
+    max_num = 10
+    model = Supplement
+    suit_classes = 'suit-tab suit-tab-supplements js-inline-admin-formset'
+    suit_form_inlines_hide_original = True
+    verbose_name = _('document')
+
+    def get_readonly_fields(self, request, obj=None):
+        if obj and obj.is_imported:
+            return ['name', 'name_en', 'file']
+        return super().get_readonly_fields(request, obj=obj)
+
+    def has_add_permission(self, request, obj=None):
+        if obj and obj.is_imported:
+            return False
+        return super().has_add_permission(request, obj=obj)
+
+    def has_delete_permission(self, request, obj=None):
+        if obj and obj.is_imported:
+            return False
+        return super().has_delete_permission(request, obj=obj)
+
+
+class DatasetAdmin(DatasetAdminMixin, ModelAdmin):
+    inlines = [
+        ChangeResourceStacked,
+        AddResourceStacked,
+    ]
+    if is_enabled('S49_dataset_supplements.be'):
+        inlines.append(SupplementInline)
+
+
+class NestedDatasetAdmin(DatasetAdminMixin, NestedModelAdmin):
+    inlines = [
+        ChangeResourceNestedStacked,
+        AddResourceNestedStacked,
+    ]
+    if is_enabled('S49_dataset_supplements.be'):
+        inlines.append(SupplementInline)
 
 
 @admin.register(DatasetTrash)
@@ -614,3 +698,9 @@ class DatasetTrashAdmin(HistoryMixin, TrashMixin):
     def tags_list_en(self, instance):
         return instance.tags_as_str(lang='en')
     tags_list_en.short_description = _('Tags') + ' (EN)'
+
+
+if is_enabled('S49_nested_dataset_admin.be'):
+    admin.site.register(Dataset, NestedDatasetAdmin)
+else:
+    admin.site.register(Dataset, DatasetAdmin)

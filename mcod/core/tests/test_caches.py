@@ -1,6 +1,6 @@
 import pytest
 
-from mcod.core.caches import flush_sessions, flush_cache
+from mcod.core.caches import flush_cache, flush_sessions
 
 
 @pytest.mark.run(order=2)

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from marshmallow import Schema
 
 from mcod.lib import fields

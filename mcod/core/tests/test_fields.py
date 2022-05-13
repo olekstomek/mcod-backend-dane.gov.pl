@@ -1,35 +1,21 @@
 import pytest
-from elasticsearch_dsl import (
-    DateHistogramFacet,
-    TermsFacet,
-    RangeFacet
-)
+from elasticsearch_dsl import DateHistogramFacet, RangeFacet, TermsFacet
 
-from mcod.lib.fields import (
-    SearchFieldMixin,
-    FilteringFilterField,
-    NestedFilteringField,
-    IdsSearchField,
-    SuggesterFilterField,
-    SearchFilterField,
-    FacetedFilterField,
-    OrderingFilterField,
-    HighlightBackend
-)
 from mcod.core.api.search import constants
+from mcod.lib.fields import (
+    FacetedFilterField,
+    FilteringFilterField,
+    HighlightBackend,
+    IdsSearchField,
+    NestedFilteringField,
+    OrderingFilterField,
+    SearchFieldMixin,
+    SearchFilterField,
+    SuggesterFilterField,
+)
 
 
-# class TestRelationship(object):
-#     # TODO
-#     pass
-
-
-# class TestTagsList(object):
-#     # TODO
-#     pass
-
-
-class TestSearchFieldMixin(object):
+class TestSearchFieldMixin:
     sfm = SearchFieldMixin()
 
     @pytest.mark.parametrize(
@@ -67,7 +53,7 @@ class TestSearchFieldMixin(object):
         assert self.sfm.split_lookup_complex_value(in_val) == out_val
 
 
-class TestFilteringFilterField(object):
+class TestFilteringFilterField:
     test_field_name = 'test_filteringfilter'
 
     def test_no_lookups(self):
@@ -128,48 +114,6 @@ class TestFilteringFilterField(object):
 
         qs = fld.prepare_queryset(es_dsl_queryset, context)
         assert qs.to_dict() == valid_query
-
-    # @pytest.mark.parametrize(
-    #     ', '.join(['lookup', 'context', 'valid_query']),
-    #     [
-    #         (  # TODO not implemented
-    #             [constants.LOOKUP_FILTER_REGEXP],
-    #             {'regexp': '[a-zA-Z0-9]+'},
-    #             {"query": {'regexp': {test_field_name: '[a-zA-Z0-9]+'}}}
-    #         ), (  # TODO not implemented
-    #             [constants.LOOKUP_FILTER_FUZZY],
-    #             {'fuzzy': ''},
-    #             {"query": {}}
-    #         ), (  # TODO not implemented
-    #             [constants.LOOKUP_FILTER_TYPE],
-    #             {'': ''},
-    #             {"query": {}}
-    #         ), (  # TODO not implemented
-    #             [constants.LOOKUP_FILTER_GEO_DISTANCE],
-    #             {'geo_distance': '2km|43.53455243|-12.2344243'},
-    #             {"query": {"geo_distance": {"distance": "2km", test_field_name:
-    # {"lat": 43.53455243, "lon": -12.2344243}}}}
-    #         ), (  # TODO not implemented
-    #             [constants.LOOKUP_FILTER_GEO_POLYGON],
-    #             {'geo_polygon': '40,-70|30,-80|20,-90'},
-    #             {"query": {"geo_polygon": {test_field_name:
-    # {"points": [{"lat": 40, "lon": -70}, {"lat": 30, "lon": -80}, {"lat": 20, "lon": -90}]}}}}
-    #         ), (  # TODO not implemented
-    #             [constants.LOOKUP_FILTER_GEO_BOUNDING_BOX],
-    #             {'geo_bounding_box': '40.73,-74.1|40.01,-71.12'},
-    #             {"query": {"geo_bounding_box": {"location":
-    # {"top_left": {"lat": 40.73, "lon": -74.1}, "bottom_right": {"lat": 40.01, "lon": -71.12}}}}}
-    #         )
-    #     ]
-    # )
-    # def test_geo_queryset(self, lookup, context, valid_query, es_dsl_queryset):
-    #     fld = FilteringFilterField(
-    #         lookups=lookup,
-    #         field_name=self.test_field_name
-    #     )
-    #
-    #     qs = fld.prepare_queryset(es_dsl_queryset, context)
-    #     assert qs.to_dict() == valid_query
 
     @pytest.mark.parametrize(
         ', '.join(['lookup', 'context', 'valid_query']),
@@ -276,7 +220,7 @@ class TestFilteringFilterField(object):
         assert qs.to_dict() == {}
 
 
-class TestNestedFilteringField(object):
+class TestNestedFilteringField:
     test_field_name = 'test_nestedfilteringfield'
 
     @pytest.mark.parametrize(
@@ -301,7 +245,7 @@ class TestNestedFilteringField(object):
         assert qs.to_dict() == {'query': {'nested': valid_query}}
 
 
-class TestIdsSearchField(object):
+class TestIdsSearchField:
     test_field_name = 'test_idssearch'
 
     @pytest.mark.parametrize(
@@ -337,7 +281,7 @@ class TestIdsSearchField(object):
         assert qs_ids == valid_ids
 
 
-class TestSuggesterFilterField(object):
+class TestSuggesterFilterField:
     test_field_name = 'test_suggesterfilter'
     suggest_field = 'suggest_field'
     text = "suggest test text"
@@ -443,7 +387,7 @@ class TestSuggesterFilterField(object):
         } == qs
 
 
-class TestSearchFilterField(object):
+class TestSearchFilterField:
     @pytest.mark.parametrize(
         ', '.join(['search_fields', 'context', 'valid_query']),
         [(
@@ -480,7 +424,7 @@ class TestSearchFilterField(object):
         assert qs == {'query': {'bool': {'should': valid_query}}}
 
 
-class TestFacetedFilterField(object):
+class TestFacetedFilterField:
     test_field_name = "faceted_filter_field"
 
     @pytest.mark.parametrize(
@@ -572,7 +516,7 @@ class TestFacetedFilterField(object):
         assert ret == valid_query
 
 
-class TestOrderingFilterField(object):
+class TestOrderingFilterField:
     test_field_name = 'test_orderingfilter'
 
     @pytest.mark.parametrize(
@@ -611,7 +555,7 @@ class TestOrderingFilterField(object):
         assert qs == {"sort": valid_query}
 
 
-class TestHighlightBackend(object):
+class TestHighlightBackend:
     test_field_name = 'test_highlightbackend'
 
     @pytest.mark.parametrize(

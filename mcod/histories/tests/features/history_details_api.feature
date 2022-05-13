@@ -2,8 +2,7 @@
 Feature: History details API
 
   Scenario Outline: History details endpoint returns required data
-    # TODO: how to create history object? (some errors related to table_schema during creation).
-    Given history with id 999
+    Given log entry with id 999
     When api request method is GET
     And api request path is <request_path>
     And send api request and fetch the response

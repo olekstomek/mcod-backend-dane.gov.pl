@@ -1,14 +1,13 @@
 import logging
 
 import requests
-from requests.auth import HTTPBasicAuth
 from django.conf import settings
+from requests.auth import HTTPBasicAuth
 
 logger = logging.getLogger('mcod')
 
 
 class BaseApi:
-
     def __init__(self, url):
         self.url = url
         self.user = settings.GEOCODER_USER
@@ -31,9 +30,8 @@ class BaseApi:
 
 
 class PlaceholderApi(BaseApi):
-
     def __init__(self):
-        super(PlaceholderApi, self).__init__(settings.PLACEHOLDER_URL)
+        super().__init__(settings.PLACEHOLDER_URL)
 
     def find_by_id(self, ids):
         params = {'ids': ','.join([str(i) for i in ids])}
@@ -91,10 +89,9 @@ class PlaceholderApi(BaseApi):
 
 
 class PeliasApi(BaseApi):
-
     def __init__(self, size=25):
         self.size = size
-        super(PeliasApi, self).__init__(settings.GEOCODER_URL + '/v1/')
+        super().__init__(settings.GEOCODER_URL + '/v1/')
 
     def autocomplete(self, text, lang='pl', layers=None):
         params = {'text': text,

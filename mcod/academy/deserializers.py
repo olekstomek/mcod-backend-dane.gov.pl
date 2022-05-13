@@ -1,10 +1,10 @@
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
-from marshmallow import validate
 from elasticsearch_dsl import Q
-from mcod.core.api.schemas import ListingSchema, NumberTermSchema, ListTermsSchema
-from mcod.core.api.search import fields as search_fields
+from marshmallow import validate
 
+from mcod.core.api.schemas import ListingSchema, ListTermsSchema, NumberTermSchema
+from mcod.core.api.search import fields as search_fields
 
 COURSE_STATE_CHOICES = ['current', 'finished', 'planned']
 

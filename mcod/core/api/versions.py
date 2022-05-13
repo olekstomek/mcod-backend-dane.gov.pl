@@ -2,7 +2,7 @@ from datetime import date
 from decimal import Decimal
 
 
-class Version(object):
+class Version:
     def __init__(self, version, release_date, doc_enabled=True):
         self.version_tuple = version.split('.')
         if len(self.version_tuple) != 2:
@@ -58,7 +58,6 @@ class Version(object):
 VERSIONS = [
     Version('1.0', date(2018, 9, 14), doc_enabled=False),
     Version('1.4', date(2019, 2, 2), doc_enabled=True),
-    # Version('1.5', date(2019, 3, 1), doc_enabled=True),
 ]
 
 DOC_VERSIONS = [v for v in VERSIONS if v.doc_enabled]

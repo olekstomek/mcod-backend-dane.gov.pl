@@ -2,22 +2,18 @@ from collections.abc import Sequence
 
 from django.apps import apps
 from django.core import paginator
-from django.db.models import QuerySet, Manager, Q
+from django.db.models import Manager, Q, QuerySet
 from django.utils.timezone import now
 from django.utils.translation import get_language
-from elasticsearch_dsl import (
-    AttrList,
-    AttrDict,
-    response as es_response
-)
+from elasticsearch_dsl import AttrDict, AttrList, response as es_response
 from marshmallow import pre_dump
 from marshmallow.schema import SchemaOpts
 from querystring_parser import builder
 
 from mcod import settings
-from mcod.core.api import schemas, fields
+from mcod.core.api import fields, schemas
 from mcod.core.registries import object_attrs_registry
-from mcod.core.utils import setpathattr, complete_invalid_xml
+from mcod.core.utils import complete_invalid_xml, setpathattr
 
 
 class ErrorSource(schemas.ExtSchema):
@@ -313,7 +309,6 @@ class TopLevelOpts(SchemaOpts):
         self.aggs_schema = getattr(meta, 'aggs_schema', None)
         self.data_schema = getattr(meta, 'data_schema', None)
 
-        # self.errors_schema = getattr(meta, 'errors_schema', ResponseErrors)
         self.meta_schema = getattr(meta, 'meta_schema', TopLevelMeta)
         self.links_schema = getattr(meta, 'links_schema', TopLevelLinks)
 
@@ -357,6 +352,7 @@ class ExtAggregation(schemas.ExtSchema):
         if _meta_cls:
             model_str = getattr(_meta_cls, 'model')
             field_name = getattr(_meta_cls, 'title_field', 'name')
+            additional_attributes = getattr(_meta_cls, 'additional_attributes', [])
             if model_str:
                 filter_field = getattr(_meta_cls, 'filter_field', 'pk')
                 id_field = getattr(_meta_cls, 'id_field', 'id')
@@ -364,14 +360,21 @@ class ExtAggregation(schemas.ExtSchema):
                 _data = {item['key']: item['doc_count'] for item in data}
                 data = []
                 q = Q(**{f'{filter_field}__in': _data.keys()})
-                for item in model.objects.filter(q).values(id_field, field_name):
-                    data.append({
-                        id_field: item[id_field],
-                        'title': item[field_name],
-                        'doc_count': _data[item[id_field]]
-                    })
+                for item in model.objects.filter(q).values(id_field, field_name, *additional_attributes):
+                    item_data = self._get_item_data(item, _data, id_field, field_name, additional_attributes)
+                    data.append(item_data)
 
         return data
+
+    def _get_item_data(self, item, data, id_field, field_name, additional_attributes):
+        item_data = {
+            id_field: item[id_field],
+            'title': item[field_name],
+            'doc_count': data[item[id_field]]
+        }
+        for attr in additional_attributes:
+            item_data[attr] = item[attr]
+        return item_data
 
 
 class TopLevel(schemas.ExtSchema):

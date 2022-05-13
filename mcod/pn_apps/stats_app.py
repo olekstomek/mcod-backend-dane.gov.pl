@@ -1,60 +1,63 @@
-# from holoviews.element.chart import Bars
-# from holoviews.core import Dataset
+import json
+import logging
 from collections import OrderedDict
 from datetime import date
-from time import time
-# from bokeh.plotting import show
-# from bokeh.models.tools import HoverTool
 from functools import partial
+from time import time
 
-import json
 import holoviews as hv
 import hvplot.pandas  # noqa
 import numpy as np
 import pandas as pd
 import panel as pn
-import logging
 from dateutil import relativedelta
 from django.conf import settings
 from django.db.models import (
-    Count, Q, Exists, OuterRef,
-    Sum, F, IntegerField, Subquery,
-    Case, When, CharField, FloatField
+    Case,
+    CharField,
+    Count,
+    Exists,
+    F,
+    FloatField,
+    IntegerField,
+    OuterRef,
+    Q,
+    Subquery,
+    Sum,
+    When,
 )
-from django.db.models.functions import Trunc, Coalesce, Cast
-from django.utils.translation import activate
-from django.utils.translation import gettext as _
+from django.db.models.functions import Cast, Coalesce, Trunc
+from django.utils.translation import activate, gettext as _
 from user_agents import parse
 
 from mcod.categories.models import Category
-from mcod.counters.models import ResourceViewCounter, ResourceDownloadCounter
+from mcod.counters.models import ResourceDownloadCounter, ResourceViewCounter
 from mcod.datasets.models import Dataset
 from mcod.organizations.models import Organization
 from mcod.pn_apps.base import (
-    StatsPanel, RankingPanel,
-    ChartPanel, NewDataByTimePeriodForGroup,
-    DataCountByTimePeriodForGroup
+    ChartPanel,
+    DataCountByTimePeriodForGroup,
+    NewDataByTimePeriodForGroup,
+    RankingPanel,
+    StatsPanel,
 )
-from mcod.pn_apps.mixins import UserFilterMixin, UserOrganizationGroupMixin, CombinedChartMixin
+from mcod.pn_apps.mixins import CombinedChartMixin, UserFilterMixin, UserOrganizationGroupMixin
 from mcod.pn_apps.params import (
-    ProvidersParamWidget,
+    PresentationTypeParamWidget,
     ResourceTypeParamWidget,
     TimePeriodParamWidget,
+    UserGroupProvidersParamsWidget,
     VizTypeParamWidget,
-    PresentationTypeParamWidget,
-    UserGroupProvidersParamsWidget
-
 )
 from mcod.pn_apps.utils import (
     format_time_period,
     prepare_time_periods,
     register_event_widgets,
-    set_locale
+    set_locale,
 )
 from mcod.resources.models import Resource
 from mcod.searchhistories.models import SearchHistory
 from mcod.tags.models import Tag
-from mcod.unleash import is_enabled
 from mcod.watchers.models import Subscription
 
 pd.options.plotting.backend = 'holoviews'
@@ -169,16 +172,13 @@ class Top10MostDownloadedDatasets(RankingPanel):
         return any(perms)
 
     def get_queryset(self):
-        if is_enabled('S16_new_date_counters.be'):
-            qs = ResourceDownloadCounter.objects.filter(
-                resource__dataset__status='published',
-                resource__dataset__is_removed=False,
-                resource__dataset__is_permanently_removed=False,
-            ).values('resource__dataset__title').annotate(
-                downloads_count=Coalesce(Sum('count'), 0)
-            ).annotate(title_i18n=F('resource__dataset__title_i18n')).order_by('-downloads_count')
-        else:
-            qs = super().get_queryset().order_by('-downloads_count')
+        qs = ResourceDownloadCounter.objects.filter(
+            resource__dataset__status='published',
+            resource__dataset__is_removed=False,
+            resource__dataset__is_permanently_removed=False,
+        ).values('resource__dataset__title').annotate(
+            downloads_count=Coalesce(Sum('count'), 0)
+        ).annotate(title_i18n=F('resource__dataset__title_i18n')).order_by('-downloads_count')
         return qs.values('title_i18n', 'downloads_count')
 
     def get_dataframe(self):
@@ -221,16 +221,13 @@ class Top10MostViewedDatasets(RankingPanel):
         return any(perms)
 
     def get_queryset(self):
-        if is_enabled('S16_new_date_counters.be'):
-            qs = ResourceViewCounter.objects.filter(
-                resource__dataset__status='published',
-                resource__dataset__is_removed=False,
-                resource__dataset__is_permanently_removed=False,
-            ).values('resource__dataset__title').annotate(
-                views_count=Coalesce(Sum('count'), 0)
-            ).annotate(title_i18n=F('resource__dataset__title_i18n'))
-        else:
-            qs = super().get_queryset()
+        qs = ResourceViewCounter.objects.filter(
+            resource__dataset__status='published',
+            resource__dataset__is_removed=False,
+            resource__dataset__is_permanently_removed=False,
+        ).values('resource__dataset__title').annotate(
+            views_count=Coalesce(Sum('count'), 0)
+        ).annotate(title_i18n=F('resource__dataset__title_i18n'))
         return qs.order_by('-views_count').values('views_count', 'title_i18n')
 
     def get_dataframe(self):
@@ -793,90 +790,6 @@ class NewResourcesCountByTimePeriod(StatsPanel):
         return chart
 
 
-class ResourcesCountByTimePeriodByGroup(StatsPanel):
-    """
-    iczba danych dla grupy instytucji w podziale na miesiące/kwartały/lata, typ danych i dostawcę
-    """
-    model = Resource
-    widgets_cls = {
-        'timeperiod': TimePeriodParamWidget,
-        'restypes': ResourceTypeParamWidget,
-        'providers': ProvidersParamWidget
-    }
-    show_table_index = False
-    show_initial_table = False
-    variable_widget = 'restypes'
-
-    def has_perm(self):
-        perms = (
-            self.user.agent,
-        )
-
-        return any(perms)
-
-    def get_queryset(self):
-        qs = super().get_queryset().annotate(period=Trunc('created', kind=self.timeperiod)).values('period')
-        rtc = Count('type')
-        res_types = [itm[0] for itm in self.restypes] if self.restypes else []
-        values = ['period', 'num']
-        if res_types:
-            rtc.filter = Q(type__in=res_types)
-            values.append('type')
-
-        values.append('dataset__organization__title')
-
-        qs = qs.filter(dataset__organization__in=self.user.agent_institutions.all())
-
-        return qs.annotate(num=rtc).values(*values).order_by('period')
-
-    def get_dataframe(self):
-        qs = self.get_results()
-
-        periods = prepare_time_periods(qs[0]['period'], qs[-1]['period'], self.timeperiod)
-        res_types = [itm[0] for itm in self.restypes] if self.restypes else []
-        _res_types = res_types or ['all']
-
-        _data = OrderedDict()
-        for i, itm in enumerate(periods):
-            val = {res_type: 0 for res_type in _res_types}
-            val[_('Entry')] = i
-            _data[itm] = val
-
-        for itm in qs:
-            period = format_time_period(itm['period'], self.timeperiod)
-            num_key = itm['type'] if res_types else 'all'
-            _data[period][num_key] = itm['num']
-
-        data = {}
-        data[_('Entry')] = [i[_('Entry')] for i in _data.values()]
-        data[_('Period')] = list(_data.keys())
-        for rt in _res_types:
-            data[types_map[rt]] = [i[rt] for i in _data.values()]
-
-        df = pd.DataFrame(data=data)
-        df.set_index(_('Entry'), inplace=True)
-        for rt in _res_types:
-            k = types_map[rt]
-            df[k] = df[k].cumsum()
-
-        return df
-
-    def chart(self):
-        chart = self.cached_df.plot.bar(
-            stacked=True,
-            legend='bottom',
-            x=_('Period'),
-            **self.get_chart_kwargs()
-        )
-
-        chart.opts(
-            xlabel="",
-            xrotation=90,
-            axiswise=True
-        )
-        return chart
-
-
 class Top10MostDownloadedResources(RankingPanel):
     """
     Ranking danych o największej liczbie pobrań
@@ -891,16 +804,13 @@ class Top10MostDownloadedResources(RankingPanel):
         self.y_axis_label = 'Liczba pobrań'
 
     def get_queryset(self):
-        if is_enabled('S16_new_date_counters.be'):
-            qs = ResourceDownloadCounter.objects.filter(
-                resource__dataset__status='published',
-                resource__dataset__is_removed=False,
-                resource__dataset__is_permanently_removed=False,
-            ).annotate(title=F('resource__title')).values('title').annotate(
-                downloads_count=Sum('count')
-            )
-        else:
-            qs = super().get_queryset()
+        qs = ResourceDownloadCounter.objects.filter(
+            resource__dataset__status='published',
+            resource__dataset__is_removed=False,
+            resource__dataset__is_permanently_removed=False,
+        ).annotate(title=F('resource__title')).values('title').annotate(
+            downloads_count=Sum('count')
+        )
         return qs.values('title', 'downloads_count').order_by('-downloads_count')
 
 
@@ -918,22 +828,13 @@ class Top10OrganizationsMostDownloadedDatasets(RankingPanel):
         self.y_axis_label = 'Liczba pobrań'
 
     def get_queryset(self):
-        if is_enabled('S16_new_date_counters.be'):
-            queryset = ResourceDownloadCounter.objects.filter(
-                resource__dataset__status='published',
-                resource__dataset__is_removed=False,
-                resource__dataset__is_permanently_removed=False,
-            ).values('resource__dataset__organization__title').annotate(
-                org_download_count=Coalesce(Sum('count'), 0)
-            ).annotate(title=F('resource__dataset__organization__title'))
-        else:
-            queryset = super().get_queryset().annotate(
-                org_download_count=Coalesce(
-                    Sum('datasets__downloads_count',
-                        filter=Q(datasets__is_removed=False, datasets__is_permanently_removed=False, datasets__status='published')
-                        ),
-                    0)
-            )
+        queryset = ResourceDownloadCounter.objects.filter(
+            resource__dataset__status='published',
+            resource__dataset__is_removed=False,
+            resource__dataset__is_permanently_removed=False,
+        ).values('resource__dataset__organization__title').annotate(
+            org_download_count=Coalesce(Sum('count'), 0)
+        ).annotate(title=F('resource__dataset__organization__title'))
         return queryset.order_by('-org_download_count').values('title', 'org_download_count')
 
 
@@ -1010,16 +911,13 @@ class Top10MostPopularResources(RankingPanel):
         self.y_axis_label = 'Liczba wyświetleń'
 
     def get_queryset(self):
-        if is_enabled('S16_new_date_counters.be'):
-            qs = ResourceViewCounter.objects.filter(
-                resource__status='published',
-                resource__is_removed=False,
-                resource__is_permanently_removed=False,
-            ).values('resource__title').annotate(
-                views_count=Coalesce(Sum('count'), 0)
-            ).annotate(title=F('resource__title'))
-        else:
-            qs = super().get_queryset()
+        qs = ResourceViewCounter.objects.filter(
+            resource__status='published',
+            resource__is_removed=False,
+            resource__is_permanently_removed=False,
+        ).values('resource__title').annotate(
+            views_count=Coalesce(Sum('count'), 0)
+        ).annotate(title=F('resource__title'))
         return qs.values('title', 'views_count').order_by('-views_count')
 
 
@@ -1037,22 +935,13 @@ class Top10MostPopularOrganizations(RankingPanel):
         self.y_axis_label = 'Liczba wyświetleń'
 
     def get_queryset(self):
-        if is_enabled('S16_new_date_counters.be'):
-            qs = ResourceViewCounter.objects.filter(
-                resource__dataset__status='published',
-                resource__dataset__is_removed=False,
-                resource__dataset__is_permanently_removed=False,
-            ).values('resource__dataset__organization__title').annotate(
-                views_sum=Coalesce(Sum('count'), 0)
-            ).annotate(title=F('resource__dataset__organization__title'))
-        else:
-            qs = super().get_queryset()
-            qs = qs.values('title').annotate(
-                views_sum=Coalesce(
-                    Sum('datasets__views_count',
-                        filter=Q(datasets__is_removed=False, datasets__is_permanently_removed=False, datasets__status='published')
-                        ), 0)
-            )
+        qs = ResourceViewCounter.objects.filter(
+            resource__dataset__status='published',
+            resource__dataset__is_removed=False,
+            resource__dataset__is_permanently_removed=False,
+        ).values('resource__dataset__organization__title').annotate(
+            views_sum=Coalesce(Sum('count'), 0)
+        ).annotate(title=F('resource__dataset__organization__title'))
         return qs.order_by('-views_sum')
 
 
@@ -2054,17 +1943,11 @@ def app(doc):
             OrganizationGroupDatasetObservationByTimePeriod(
                 name='Liczba obserwacji zbiorów danych dla grupy instytucji', **charts_kwargs),
             Top10ObservedDatasets(name='Ranking obserwacji zbiorów danych', **charts_kwargs),
-        ]
-        date_counter_dependent_charts = [
             DatasetViewsCountByTimePeriod(name=_('Views of datasets'), **charts_kwargs),
             DatasetDownloadsCountByTimePeriod(name=_('Downloads of datasets'), **charts_kwargs),
-            OrganizationGroupViewsCountByTimePeriod(
-                name='Liczba wyświetleń danych dla grupy instytucji', **charts_kwargs),
-            OrganizationGroupDownloadsCountByTimePeriod(
-                name='Liczba pobrań danych dla grupy instytucji', **charts_kwargs),
+            OrganizationGroupViewsCountByTimePeriod(name='Liczba wyświetleń danych dla grupy instytucji', **charts_kwargs),
+            OrganizationGroupDownloadsCountByTimePeriod(name='Liczba pobrań danych dla grupy instytucji', **charts_kwargs),
         ]
-        if is_enabled('S16_new_date_counters.be'):
-            charts += date_counter_dependent_charts
         chart_init_end = time()
         charts_init_delta = chart_init_end - chart_init_start
         profile_log.debug('Charts initialization: %.4f' % charts_init_delta)

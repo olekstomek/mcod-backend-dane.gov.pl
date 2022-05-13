@@ -1,8 +1,8 @@
-from django.db.models import Case, CharField, Count, Max, Min, Q, When, Value
+from django.db.models import Case, CharField, Count, Max, Min, Q, Value, When
 from django.utils import timezone
 
 from mcod.core.db.managers import TrashManager
-from mcod.core.managers import SoftDeletableQuerySet, SoftDeletableManager, TrashQuerySet
+from mcod.core.managers import SoftDeletableManager, SoftDeletableQuerySet, TrashQuerySet
 
 
 class CourseQuerySetMixin:

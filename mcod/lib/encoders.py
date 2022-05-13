@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
 import json
-from datetime import datetime, date, time
+from datetime import date, datetime, time
 
 from django.core.serializers.json import DjangoJSONEncoder
 from django.utils.encoding import force_str
@@ -11,7 +10,7 @@ class LazyEncoder(DjangoJSONEncoder):
     def default(self, obj):
         if isinstance(obj, Promise):
             return force_str(obj)
-        return super(LazyEncoder, self).default(obj)
+        return super().default(obj)
 
 
 class DateTimeToISOEncoder(json.JSONEncoder):

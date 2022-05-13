@@ -2,17 +2,13 @@ from django.test import Client
 from django.utils.encoding import smart_str
 from pytest_bdd import scenarios
 
-from mcod.unleash import is_enabled
-
-
 scenarios(
     'features/admin/dataset_details.feature',
     'features/admin/datasets_list.feature',
     'features/forms.feature',
     'features/admin/autocomplete.feature',
+    'features/admin/custom_urls.feature',
 )
-if is_enabled('S41_resource_has_high_value_data.be'):
-    scenarios('features/admin/custom_urls.feature')
 
 
 def test_deleted_resource_are_not_shown_in_dataset_resource_inline(dataset_with_resources, admin):

@@ -1,6 +1,5 @@
 from pytest_bdd import scenarios
 
-
 scenarios(
     'features/admin/accepteddatasetsubmission_list.feature',
     'features/admin/datasetcomment_list.feature',

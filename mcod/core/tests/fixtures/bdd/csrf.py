@@ -1,9 +1,9 @@
 import random
 from string import ascii_letters, digits
 
-from pytest_bdd import given, parsers, when, then
+from pytest_bdd import given, parsers, then, when
 
-from mcod.core.csrf import salt_cipher_secret, unsalt_cipher_token, _sanitize_token
+from mcod.core.csrf import _sanitize_token, salt_cipher_secret, unsalt_cipher_token
 
 allowed_alphabet = ascii_letters + digits
 

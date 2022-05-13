@@ -1,4 +1,3 @@
-# import json
 from datetime import date
 
 import pytest
@@ -6,11 +5,10 @@ from celery import states
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 
-from mcod.resources.models import Resource, TaskResult, Chart, update_resource
-from mcod.unleash import is_enabled
+from mcod.resources.models import Chart, Resource, TaskResult, update_resource
 
 
-class TestResourceModel(object):
+class TestResourceModel:
     def test_forced_api_type_toggle(self, resource_of_type_website):
         resource = resource_of_type_website
         assert resource.type == 'website'
@@ -45,7 +43,6 @@ class TestResourceModel(object):
         r_dict = resource.__dict__
         fields = [
             "uuid",
-            "file",
             "format",
             "description",
             "position",
@@ -61,8 +58,6 @@ class TestResourceModel(object):
             "modified_by_id",
             "created_by_id",
         ]
-        if is_enabled('S40_new_file_model.be'):
-            fields.remove('file')
 
         for f in fields:
             assert f in r_dict
@@ -168,50 +163,6 @@ class TestTaskResultModel:
         tr.result = '''{"exc_type": "SomeUnknownError", "exc_message":""}'''
         assert tr.message == ['Nierozpoznany błąd walidacji']
         assert tr.recommendation == ['Skontaktuj się z administratorem systemu.']
-
-    # TODO: Fix - not working!
-    # def test_messages_on_success(self, resource):
-    #     for tasks in (resource.file_tasks, resource.link_tasks, resource.data_tasks):
-    #         assert tasks.count() == 1
-    #         task = tasks.first()
-    #         assert task.status == 'SUCCESS'
-    #         assert isinstance(task.message, list)
-    #         assert len(task.message) == 1
-    #         assert task.message[0] == ""
-    #
-    #         assert isinstance(task.recommendation, list)
-    #         assert len(task.recommendation) == 1
-    #         assert task.recommendation[0] == ''
-
-    # TODO: Fix - not working!
-    # def test_data_messages_on_failure(self, table_resource_with_invalid_schema):
-    #     resource = table_resource_with_invalid_schema
-    #     task = resource.data_tasks.first()
-    #     assert task.status == 'FAILURE'
-    #     assert isinstance(task.message, list)
-    #     assert isinstance(task.recommendation, list)
-    #     assert len(task.message) == len(task.recommendation)
-    #     assert len(task.message) > 0
-
-    #     for msg in task.message:
-    #         assert isinstance(msg, str)
-    #         assert len(msg) > 5
-
-    #     for msg in task.recommendation:
-    #         assert isinstance(msg, str)
-    #         assert len(msg) > 5
-
-    #     assert task.message[0].startswith("Błąd schematu tabeli:")
-    #     assert task.recommendation[0].startswith("Sprawdź, czy schemat wskazany do walidacji jest aktualny.")
-
-    #     task.result = json.dumps({
-    #         'exc_type': "SomeUnknownException",
-    #         'exc_message': "Some unknown exception was thrown and You should not know what to do with it."
-    #     })
-    #     task.save()
-
-    #     assert task.message[0] == "Nierozpoznany błąd walidacji"
-    #     assert task.recommendation[0] == "Skontaktuj się z administratorem systemu."
 
     def test_error_code_finding(self):
         result = {

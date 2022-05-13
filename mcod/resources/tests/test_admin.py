@@ -1,17 +1,17 @@
 import datetime
-import re
-import pytest
 import logging
+import re
+
+import pytest
+import requests_mock
 from django.test import Client
 from django.urls import reverse
 from django.utils.encoding import smart_str
-from pytest_bdd import given, parsers, scenarios
-import mcod.unleash
-import requests_mock
 from django.utils.translation import gettext as _
+from pytest_bdd import given, parsers, scenarios
 
+import mcod.unleash
 from mcod.datasets.documents import Resource
-from mcod.unleash import is_enabled
 
 logger = logging.getLogger('mcod')
 
@@ -70,7 +70,7 @@ scenarios(
 )
 
 
-class TestEditorAccess(object):
+class TestEditorAccess:
 
     def test_editor_not_in_organization_cant_see_resource_from_organizaton(self, active_editor, resource):
         client = Client()
@@ -92,7 +92,7 @@ class TestEditorAccess(object):
         assert all([f'/resources/resourcetrash/{res_id}/change' in result for res_id in editor_res_ids])
 
 
-class TestDuplicateResource(object):
+class TestDuplicateResource:
 
     def test_editor_can_add_resource_based_on_other_resource(self, active_editor):
         resource = Resource.objects.filter(dataset__organization_id=active_editor.organizations.all()[0].pk)[0]
@@ -141,7 +141,6 @@ class TestDuplicateResource(object):
         content = response.content.decode()
         assert removed_resource.title not in content
         assert removed_resource.description not in content
-        # assert f'value="{removed_resource.pk}"' not in content  # raises errors sometimes.
 
     def test_cant_duplicate_imported_resource(self, admin, imported_ckan_resource):
         client = Client()
@@ -152,10 +151,9 @@ class TestDuplicateResource(object):
             logger.error("CKAN RESOURCE ID:", imported_ckan_resource.pk)
         assert imported_ckan_resource.title not in content
         assert imported_ckan_resource.description not in content
-        # assert f'value="{imported_ckan_resource.pk}"' not in content  # raises errors sometimes.
 
 
-class TestRevalidationAction(object):
+class TestRevalidationAction:
 
     def test_revalidate_resource_started(self, buzzfeed_fakenews_resource, admin):
         client = Client()
@@ -186,7 +184,7 @@ class TestRevalidationAction(object):
         assert _('Resource with this id does not exists') in content
 
 
-class TestResourceAndDataset(object):
+class TestResourceAndDataset:
 
     def test_restore_resource_from_trash_is_not_possible_without_restore_his_dataset(self, resource, admin):
         assert resource.dataset.is_removed is False
@@ -215,7 +213,7 @@ class TestResourceAndDataset(object):
         assert r.dataset.is_removed is False
 
 
-class TestResourceTabularDataRules(object):
+class TestResourceTabularDataRules:
 
     def test_verification_tabs_should_not_be_available_for_resources_without_tabular_data_schema(self, resource,
                                                                                                  admin):
@@ -320,7 +318,7 @@ class TestResourceTabularDataRules(object):
             colname='datetime', rule='unknown_rule') in content
 
 
-class TestResourceChangeType(object):
+class TestResourceChangeType:
 
     def test_change_type_tab_should_not_be_available_for_resources_without_tabular_data_schema(self, resource,
                                                                                                admin):
@@ -351,7 +349,7 @@ class TestResourceChangeType(object):
             assert '#types' in resp.content.decode()
 
 
-class TestResourceChangeList(object):
+class TestResourceChangeList:
 
     def get_filter_result_response(self, set_attrs, resource, admin, filter_name, filter_value):
         client = Client()
@@ -418,7 +416,7 @@ class TestResourceChangeList(object):
         assert resource.title in content
 
 
-class TestResourceForm(object):
+class TestResourceForm:
 
     def test_non_csv_resource_doesnt_display_csv_file_data(self, admin, resource_of_type_website):
         client = Client()
@@ -432,10 +430,7 @@ class TestResourceForm(object):
         client.force_login(admin)
         resp = client.get(resource_with_xls_file.admin_change_url)
         content = resp.content.decode()
-        if is_enabled('S40_new_file_model.be'):
-            assert 'csv_converted_file' in content
-        else:
-            assert 'csv_file' in content
+        assert 'csv_converted_file' in content
 
     def test_forced_file_type_checkbox_visible_for_api_resource(self, admin, remote_file_resource_of_api_type):
         client = Client()

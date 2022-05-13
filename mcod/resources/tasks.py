@@ -7,12 +7,11 @@ from django.apps import apps
 
 from mcod.resources.indexed_data import FileEncodingValidationError
 from mcod.resources.link_validation import check_link_scheme
-from mcod.unleash import is_enabled
 
 logger = logging.getLogger('mcod')
 
 
-@shared_task
+@shared_task(ignore_result=False)
 def process_resource_from_url_task(resource_id, update_file=True,
                                    update_file_archive=False, forced_file_changed=False, **kwargs):
     Resource = apps.get_model('resources', 'Resource')
@@ -26,34 +25,9 @@ def process_resource_from_url_task(resource_id, update_file=True,
         if resource_type == 'website' and resource.forced_api_type:
             logger.debug("Resource of type 'website' forced into type 'api'!")
             resource_type = 'api'
-        if is_enabled('S40_new_file_model.be'):
-            process_for_separate_file_model(resource_id, resource, options,
-                                            resource_type, update_file_archive=update_file_archive,
-                                            forced_file_changed=forced_file_changed, **kwargs)
-        else:
-            openness_score = resource.get_openness_score(options['format'])
-            qs = Resource.raw.filter(id=resource_id)
-            if resource_type == 'file':
-                if 'filename' in options:
-                    qs.update(
-                        file=resource.save_file(options['content'], options['filename']),
-                        format=options['format'],
-                        openness_score=openness_score
-                    )
-                process_resource_file_task.s(resource_id, update_link=False,
-                                             update_file_archive=update_file_archive, **kwargs).apply_async(
-                    countdown=2)
-            else:  # API or WWW
-                qs.update(
-                    type=resource_type,
-                    format=options['format'],
-                    file=None,
-                    file_info=None,
-                    file_encoding=None,
-                    openness_score=openness_score
-                )
-                if is_enabled('S41_resource_bulk_download.be') and forced_file_changed:
-                    resource.dataset.archive_files()
+        process_for_separate_file_model(resource_id, resource, options,
+                                        resource_type, update_file_archive=update_file_archive,
+                                        forced_file_changed=forced_file_changed, **kwargs)
 
     resource = Resource.raw.get(id=resource_id)
     result = {
@@ -109,7 +83,7 @@ def process_for_separate_file_model(resource_id, resource, options, resource_typ
                                          update_file_archive=update_file_archive, **kwargs).apply_async(countdown=2)
     else:  # API or WWW
         ResourceFile.objects.filter(resource_id=resource_id).delete()
-        if is_enabled('S41_resource_bulk_download.be') and forced_file_changed:
+        if forced_file_changed:
             resource.dataset.archive_files()
         qs.update(
             type=resource_type,
@@ -118,7 +92,7 @@ def process_for_separate_file_model(resource_id, resource, options, resource_typ
         )
 
 
-@shared_task
+@shared_task(ignore_result=False)
 def process_resource_file_task(resource_id, update_link=True, update_file_archive=False, **kwargs):
     Resource = apps.get_model('resources', 'Resource')
 
@@ -153,7 +127,7 @@ def process_resource_file_task(resource_id, update_link=True, update_file_archiv
     if update_link:
         process_resource_from_url_task.s(resource_id, update_file=False, **kwargs).apply_async(
             countdown=2)
-    if is_enabled('S41_resource_bulk_download.be') and update_file_archive:
+    if update_file_archive:
         resource.dataset.archive_files()
     return json.dumps({
         'uuid': str(resource.uuid),
@@ -165,7 +139,7 @@ def process_resource_file_task(resource_id, update_link=True, update_file_archiv
     })
 
 
-@shared_task
+@shared_task(ignore_result=False)
 def process_resource_file_data_task(resource_id, **kwargs):
     resource_model = apps.get_model('resources', 'Resource')
     resource = resource_model.raw.get(id=resource_id)
@@ -214,18 +188,6 @@ def send_resource_comment(resource_id, comment):
 
 
 @shared_task
-def remove_orphaned_files_task():
-    resource_model = apps.get_model('resources', 'Resource')
-    resources_files = resource_model.get_resources_files()
-    count = 0
-    for file_path in resource_model.get_all_files():
-        if file_path not in resources_files:
-            resource_model.remove_orphaned_file(file_path)
-            count += 1
-    return {'removed_files': count}
-
-
-@shared_task
 def update_resource_has_table_has_map_task(resource_id):
     resource_model = apps.get_model('resources', 'Resource')
     obj = resource_model.raw.filter(id=resource_id).first()
@@ -266,19 +228,7 @@ def update_resource_validation_results_task(resource_id):
     return result
 
 
-@shared_task
-def update_resource_openness_score_task(resource_id):
-    resource_model = apps.get_model('resources', 'Resource')
-    resource = resource_model.raw.filter(id=resource_id).first()
-    result = None
-    if resource:
-        openness_score = resource.get_openness_score()
-        if resource.openness_score != openness_score:
-            result = resource_model.raw.filter(id=resource_id).update(openness_score=openness_score)
-    return {'resource_id': resource_id, 'updated': bool(result)}
-
-
-@shared_task
+@shared_task(ignore_result=False)
 def validate_link(resource_id):
     Resource = apps.get_model('resources', 'Resource')
     resource = Resource.raw.get(id=resource_id)
@@ -292,7 +242,7 @@ def validate_link(resource_id):
     }
 
 
-@shared_task
+@shared_task(ignore_result=False)
 def check_link_protocol(resource_id, link, title, organization_title, resource_type):
     logger.debug(f'Checking link {link} of resource with id {resource_id}')
     returns_https, change_required = check_link_scheme(link)
@@ -320,7 +270,7 @@ def process_resource_data_indexing_task(resource_id):
     return {}
 
 
-@shared_task
+@shared_task(ignore_result=False)
 def process_resource_res_file_task(resource_file_id, update_link=True, update_file_archive=False, **kwargs):
     ResourceFile = apps.get_model('resources', 'ResourceFile')
     Resource = apps.get_model('resources', 'Resource')
@@ -364,7 +314,7 @@ def process_resource_res_file_task(resource_file_id, update_link=True, update_fi
     if update_link:
         process_resource_from_url_task.s(resource_id, update_file=False, **kwargs).apply_async(
             countdown=2)
-    if is_enabled('S41_resource_bulk_download.be') and update_file_archive:
+    if update_file_archive:
         resource.dataset.archive_files()
     return json.dumps({
         'uuid': str(resource.uuid),

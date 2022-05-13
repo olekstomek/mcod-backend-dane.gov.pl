@@ -1,7 +1,8 @@
 from django import template
-from django.utils.safestring import mark_safe
 from django.contrib.admin.views.main import PAGE_VAR
 from django.utils.html import escape
+from django.utils.safestring import mark_safe
+
 from mcod.lib.utils import is_django_ver_lt
 
 register = template.Library()

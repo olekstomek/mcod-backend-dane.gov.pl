@@ -1,5 +1,6 @@
-import falcon
 from functools import partial
+
+import falcon
 
 from mcod.academy.deserializers import CourseApiSearchRequest
 from mcod.academy.documents import CourseDoc

@@ -1,10 +1,11 @@
 from pathlib import Path
+
+from bokeh.server.django import autoload
 from bokeh.server.django.routing import document
 from django.conf import settings
 from django.urls import path
-from bokeh.server.django import autoload
-from mcod.pn_apps import views
-from mcod.pn_apps import stats_app
+
+from mcod.pn_apps import stats_app, views
 
 urlpatterns = [
     path('stats/', views.stats_dashboard, name='stats'),

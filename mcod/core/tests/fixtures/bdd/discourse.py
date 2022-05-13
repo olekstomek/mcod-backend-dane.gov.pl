@@ -3,11 +3,10 @@ import json
 from discourse_django_sso.utils import SSOClientUtils
 from discourse_django_sso_test_project.urls import nonce_service
 from django.conf import settings
-from django.test import Client
-from django.test import override_settings
+from django.test import Client, override_settings
 from django.urls import reverse
-from django.utils.http import urlquote_plus, limited_parse_qsl
-from pytest_bdd import parsers, when, given, then
+from django.utils.http import limited_parse_qsl, urlquote_plus
+from pytest_bdd import given, parsers, then, when
 
 from mcod.discourse.tests.utils import discourse_response_mocker
 from mcod.discourse.utils import ForumProducerUtils

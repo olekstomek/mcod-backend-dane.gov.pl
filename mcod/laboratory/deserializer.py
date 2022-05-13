@@ -1,9 +1,9 @@
 from mcod.core.api.schemas import (
+    DateTermSchema,
     ListingSchema,
     NumberTermSchema,
     StringMatchSchema,
     StringTermSchema,
-    DateTermSchema
 )
 from mcod.core.api.search import fields as search_fields
 

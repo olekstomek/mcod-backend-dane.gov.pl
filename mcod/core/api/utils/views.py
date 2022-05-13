@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import json
 
 import falcon
@@ -7,22 +6,20 @@ from elasticsearch import RequestError
 from elasticsearch_dsl.connections import get_connection
 
 from mcod import settings
+from mcod.api import app_cache as cache
 from mcod.applications import views as app_views
 from mcod.applications.serializers import ApplicationApiResponse
-from mcod.api import app_cache as cache
 from mcod.articles import views as art_views
 from mcod.articles.serializers import ArticleApiResponse
 from mcod.core.api.openapi.specs import get_spec
 from mcod.core.api.versions import DOC_VERSIONS
-from mcod.datasets import serializers as dat_responses
-from mcod.datasets import views as dat_views
+from mcod.datasets import serializers as dat_responses, views as dat_views
 from mcod.histories.api import views as his_views
 from mcod.histories.serializers import HistoryApiResponse
 from mcod.lib.encoders import DateTimeToISOEncoder
-from mcod.organizations.serializers import InstitutionApiResponse
 from mcod.organizations import views as org_views
-from mcod.resources import serializers as res_responses
-from mcod.resources import views as res_views
+from mcod.organizations.serializers import InstitutionApiResponse
+from mcod.resources import serializers as res_responses, views as res_views
 from mcod.search import views as search_views
 from mcod.search.serializers import CommonObjectResponse
 from mcod.showcases import views as showcases_views
@@ -32,19 +29,19 @@ from mcod.unleash import is_enabled
 connection = get_connection()
 
 
-class ClusterHealthView(object):
+class ClusterHealthView:
     def on_get(self, request, response, *args, **kwargs):
         response.text = json.dumps(connection.cluster.health())
         response.status = falcon.HTTP_200
 
 
-class ClusterStateView(object):
+class ClusterStateView:
     def on_get(self, request, response, *args, **kwargs):
         response.text = json.dumps(connection.cluster.state())
         response.status = falcon.HTTP_200
 
 
-class ClusterAllocationView(object):
+class ClusterAllocationView:
     def on_get(self, request, response, *args, **kwargs):
         try:
             result = connection.cluster.allocation_explain()
@@ -54,7 +51,7 @@ class ClusterAllocationView(object):
         response.status = falcon.HTTP_200
 
 
-class SwaggerView(object):
+class SwaggerView:
     def on_get(self, request, response, *args, **kwargs):
         template = loader.get_template('swagger_ui/index.html')
         versions = sorted(DOC_VERSIONS, reverse=True)
@@ -90,18 +87,17 @@ class SwaggerView(object):
         response.text = template.render(context)
 
 
-class OpenApiSpec(object):
+class OpenApiSpec:
 
-    showcases_enabled = is_enabled('S39_showcases.be')
-    dataset_showcases_enabled = is_enabled('S42_dataset_showcases.be')
+    applications_deleted = is_enabled('S49_delete_application_app.be')
 
     def on_get(self, req, resp, version=None, *args, **kwargs):
         if version and version not in DOC_VERSIONS:
             raise falcon.HTTPBadRequest(description='Invalid version')
         spec = get_spec(version=version)
-
-        spec.components.schema('Applications', schema=ApplicationApiResponse, many=True)
-        spec.components.schema('Application', schema=ApplicationApiResponse, many=False)
+        if not self.applications_deleted:
+            spec.components.schema('Applications', schema=ApplicationApiResponse, many=True)
+            spec.components.schema('Application', schema=ApplicationApiResponse, many=False)
         spec.components.schema('Articles', schema=ArticleApiResponse, many=True)
         spec.components.schema('Article', schema=ArticleApiResponse, many=False)
         spec.components.schema('Institutions', schema=InstitutionApiResponse, many=True)
@@ -115,15 +111,14 @@ class OpenApiSpec(object):
         spec.components.schema('ResourceTable', schema=res_responses.TableApiResponse, many=True)
         spec.components.schema('ResourceTableRow', schema=res_responses.TableApiResponse, many=False)
         spec.components.schema('Search', schema=CommonObjectResponse, many=True)
-        if self.showcases_enabled:
-            spec.components.schema('Showcases', schema=ShowcaseApiResponse, many=True)
-            spec.components.schema('Showcase', schema=ShowcaseApiResponse, many=False)
+        spec.components.schema('Showcases', schema=ShowcaseApiResponse, many=True)
+        spec.components.schema('Showcase', schema=ShowcaseApiResponse, many=False)
         spec.components.schema('Histories', schema=HistoryApiResponse, many=True)
         spec.components.schema('History', schema=HistoryApiResponse, many=False)
-
-        spec.path(resource=app_views.ApplicationSearchApiView)
-        spec.path(resource=app_views.ApplicationApiView)
-        spec.path(resource=app_views.ApplicationDatasetsView)
+        if not self.applications_deleted:
+            spec.path(resource=app_views.ApplicationSearchApiView)
+            spec.path(resource=app_views.ApplicationApiView)
+            spec.path(resource=app_views.ApplicationDatasetsView)
         spec.path(resource=art_views.ArticlesView)
         spec.path(resource=art_views.ArticleView)
         spec.path(resource=art_views.ArticleDatasetsView)
@@ -133,18 +128,14 @@ class OpenApiSpec(object):
         spec.path(resource=dat_views.DatasetSearchView)
         spec.path(resource=dat_views.DatasetApiView)
         spec.path(resource=dat_views.DatasetResourceSearchApiView)
-        if self.dataset_showcases_enabled:
-            spec.path(resource=showcases_views.DatasetShowcasesApiView)
+        spec.path(resource=showcases_views.DatasetShowcasesApiView)
         spec.path(resource=res_views.ResourcesView)
         spec.path(resource=res_views.ResourceView)
-        # spec.path(resource=res_views.ChartsView)
-        # spec.path(resource=res_views.ChartView)
         spec.path(resource=res_views.ResourceTableView)
         spec.path(resource=res_views.ResourceTableRowView)
         spec.path(resource=search_views.SearchView)
-        if self.showcases_enabled:
-            spec.path(resource=showcases_views.ShowcasesApiView)
-            spec.path(resource=showcases_views.ShowcaseApiView)
+        spec.path(resource=showcases_views.ShowcasesApiView)
+        spec.path(resource=showcases_views.ShowcaseApiView)
         spec.path(resource=his_views.HistoriesView)
         spec.path(resource=his_views.HistoryView)
 
@@ -152,7 +143,7 @@ class OpenApiSpec(object):
         resp.status = falcon.HTTP_200
 
 
-class CatalogOpenApiSpec(object):
+class CatalogOpenApiSpec:
     @cache.cached(timeout=60 * 60 * 24)
     def on_get(self, req, resp, version=None, *args, **kwargs):
         with open(settings.SPEC_DIR.path('rdf_api_desc.html'), 'r') as file:

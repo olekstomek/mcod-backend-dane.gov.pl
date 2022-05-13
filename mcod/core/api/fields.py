@@ -9,12 +9,10 @@ from functools import partial
 import markdown2
 from django.template import loader
 from django.utils.translation import gettext_lazy as _
-from marshmallow import fields, missing, ValidationError
-from marshmallow import utils
+from marshmallow import ValidationError, fields, missing, utils
 from marshmallow.orderedset import OrderedSet
 
 from mcod.core import utils as api_utils
-
 
 BEFORE_DESERIALIZE = 'before_deserialize'
 BEFORE_SERIALIZE = 'before_serialize'
@@ -296,17 +294,10 @@ class ExtendedFieldMixin(metaclass=ExtendedFieldMeta):
             raise AttributeError('Missing or wrong value of "name" attribute')
         attributes['name'] = name
 
-        # if 'description' in self._metadata:
-        #     attributes['description'] = self._metadata['description']
-
         if _in == 'path' and not self._required:
             raise AttributeError('Path attributes are always required')
 
         attributes['required'] = self._required
-
-        # if _in == 'query':
-        #     attributes['allowEmptyValue'] = self._metadata.get('allowEmptyValue', False)
-
         attributes['schema'] = self.openapi_property
         meta = self._metadata
 
@@ -617,7 +608,6 @@ class Date(ExtendedFieldMixin, fields.Date):
     def openapi_property(self):
         ret = self._prepare_openapi_property()
         ret['type'] = 'string'
-        # ret['format'] = 'date'
         return ret
 
 
@@ -676,8 +666,12 @@ BBoxTuple = namedtuple('BBox', ('min_lon', 'max_lat', 'max_lon', 'min_lat', 'div
 
 
 class BoundingBox(Field):
-    @staticmethod
-    def bbox(value):
+
+    MIN_DIVIDER = 2
+    MAX_DIVIDER = 4
+
+    @classmethod
+    def bbox(cls, value):
         if isinstance(value, str):
             values = value.split(',')
             coords = (float(val) for val in values[:4])
@@ -703,10 +697,13 @@ class BoundingBox(Field):
             if bbox.min_lat >= bbox.max_lat:
                 raise ValidationError('invalid latitude range')
 
-            if bbox.divider < 2 or bbox.divider > 4:
-                raise ValidationError('invalid tile divider range')
+            self.validate_other_params(bbox)
 
         return value, attr, data
+
+    def validate_other_params(self, bbox):
+        if hasattr(bbox, 'divider') and (bbox.divider < self.MIN_DIVIDER or bbox.divider > self.MAX_DIVIDER):
+            raise ValidationError('invalid tile divider range')
 
 
 class GeoDistance(Field):

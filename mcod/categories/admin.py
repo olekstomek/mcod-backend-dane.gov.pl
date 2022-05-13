@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.utils.translation import gettext_lazy as _
 
 from mcod.categories.models import Category, CategoryTrash
-from mcod.lib.admin_mixins import TrashMixin, HistoryMixin, ModelAdmin
+from mcod.lib.admin_mixins import HistoryMixin, ModelAdmin, TrashMixin
 
 
 @admin.register(Category)

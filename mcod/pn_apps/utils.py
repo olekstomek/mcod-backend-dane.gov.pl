@@ -1,13 +1,14 @@
 import locale
-from datetime import timedelta, datetime
+from datetime import datetime, timedelta
 from pydoc import locate
 
 import holoviews as hv
 import pandas as pd
 from bokeh.themes.theme import Theme
-from dateutil.rrule import rrule, MONTHLY, YEARLY
+from dateutil.rrule import MONTHLY, YEARLY, rrule
 from django.conf import settings
 from django.utils import timezone
+
 from mcod.core import storages
 
 

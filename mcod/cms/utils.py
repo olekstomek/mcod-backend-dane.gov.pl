@@ -1,9 +1,9 @@
-from django.contrib.contenttypes.models import ContentType
-
 from urllib.parse import urlsplit, urlunsplit
 
+from django.contrib.contenttypes.models import ContentType
 from wagtail.core import hooks
 from wagtail.core.models import UserPagePermissionsProxy
+
 from mcod.cms.models import FormPage
 
 

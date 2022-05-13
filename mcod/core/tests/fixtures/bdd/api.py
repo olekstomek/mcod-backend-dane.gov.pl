@@ -3,10 +3,9 @@ from urllib import parse
 
 import dpath.util
 import requests_mock
-from falcon.testing import TestClient, Cookie
+from falcon.testing import Cookie, TestClient
 from falcon.util.misc import get_http_status
-from pytest_bdd import parsers
-from pytest_bdd import then, when
+from pytest_bdd import parsers, then, when
 
 from mcod import settings
 from mcod.api import app, get_api_app
@@ -184,15 +183,6 @@ def api_request_header(req_header_name, req_header_value, context):
     context.api.headers[req_header_name] = req_header_value
 
 
-# @then(parsers.parse('api request body object is {body_obj_type}'))
-# @when(parsers.parse('api request body object is {body_obj_type}'))
-# def api_request_object_change_type(body_obj_type, context):
-#     if body_obj_type == 'list':
-#         context.obj = []
-#     else:
-#
-#     dpath.new(context.obj, field, value)
-
 @then(parsers.parse('api request body field {field} is of type {field_type}'))
 @when(parsers.parse('api request body field {field} is of type {field_type}'))
 def api_request_object_of_type(field, field_type, context):
@@ -251,10 +241,6 @@ def api_send_request(context, mocker):
     }
     if context.api.method in ('POST', 'PUT', 'PATCH', 'DELETE'):
         kwargs['json'] = context.obj
-
-    # # For deleting in bulk
-    # if context.api.method == 'DELETE' and context.obj:
-    #     kwargs['json'] = context.obj
 
     resp = TestClient(app).simulate_request(**kwargs)
     skip_validation = getattr(context.api, 'skip_validation', False)
@@ -486,6 +472,14 @@ def api_response_body_field_has_fields(field, fields, context):
         assert x in item, f'{x} must be in {item}'
 
 
+@then(parsers.parse('api\'s response body fields {field} have fields {fields}'))
+def api_response_body_fields_have_fields(field, fields, context):
+    items = dpath.util.values(context.response.json, field)
+    for item in items:
+        for key in fields.split(','):
+            assert key in item, f'{key} must be in {item}'
+
+
 @then(parsers.parse('api\'s response body field {field} has no fields {fields}'))
 def api_response_body_field_has_no_fields(field, fields, context):
     item = dpath.util.get(context.response.json, field)
@@ -534,7 +528,7 @@ def api_response_header_value_contains(context, resp_header_name, resp_header_va
         resp_header_value, resp_header_name, value)
 
 
-@then(parsers.parse('api\'s json-ld response body with rdf type {rdf_type} has field {field_name} with attribute {identifier}'
+@then(parsers.parse('api\'s jsonld response body with rdf type {rdf_type} has field {field_name} with attribute {identifier}'
                     ' that equals {expected_value}'))
 def api_dcat_response_body_specific_class_field(rdf_type, field_name, identifier, expected_value, context):
     nodes = context.response.json['@graph']

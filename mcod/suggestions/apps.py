@@ -15,7 +15,7 @@ class SuggestionsConfig(ExtendedAppMixin, AppConfig):
             DatasetComment,
             DatasetSubmission,
             ResourceComment,
-            SubmissionFeedback
+            SubmissionFeedback,
         )
         self.connect_core_signals(AcceptedDatasetSubmission)
         self.connect_core_signals(AcceptedDatasetSubmissionTrash)

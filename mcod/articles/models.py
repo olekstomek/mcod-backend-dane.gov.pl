@@ -12,10 +12,9 @@ from mcod.articles.signals import update_related_articles
 from mcod.core import signals as core_signals
 from mcod.core.api.search import signals as search_signals
 from mcod.core.db.managers import TrashManager
-from mcod.core.db.models import ExtendedModel, update_watcher, TrashModelBase
+from mcod.core.db.models import ExtendedModel, TrashModelBase, update_watcher
 from mcod.core.managers import SoftDeletableManager
 from mcod.lib.widgets import RichTextUploadingField
-
 
 User = get_user_model()
 

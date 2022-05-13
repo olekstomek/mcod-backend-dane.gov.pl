@@ -1,6 +1,5 @@
 from rdflib import BNode, Literal, URIRef
 
-
 EXTRA_RESOURCE_TRIPLES = [
     (URIRef('http://publications.europa.eu/resource/authority/language/POL'),
      URIRef('http://www.w3.org/1999/02/22-rdf-syntax-ns#type'),

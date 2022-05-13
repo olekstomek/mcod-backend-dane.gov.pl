@@ -1,7 +1,7 @@
-import pytest
 import dpath.util
+import pytest
 from django.apps import apps
-from pytest_bdd import then, parsers
+from pytest_bdd import parsers, then
 
 
 @pytest.fixture
@@ -69,6 +69,21 @@ def main_region():
         bbox=[20.851688, 52.09785, 21.271151, 52.368154],
         geonames_id=756135,
         hierarchy_label='Warszawa, Gmina Warszawa, pow. Warszawa, woj. Mazowieckie'
+    )
+
+
+@pytest.fixture
+def wroclaw_main_region():
+    region = apps.get_model('regions', 'Region')
+    return region.objects.create(
+        name='Wrocław',
+        region_id=101752181,
+        region_type='locality',
+        lat=51.097349,
+        lng=17.023978,
+        bbox=[16.807339, 51.21006, 17.176219, 51.042669],
+        geonames_id=None,
+        hierarchy_label='Wrocław, Gmina Wrocław, pow. Wrocław, woj. dolnośląskie'
     )
 
 

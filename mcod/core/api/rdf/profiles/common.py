@@ -1,11 +1,10 @@
 import abc
 
-from rdflib import BNode, RDF
-
-from mcod.lib.rdf.rdf_field import RDFField
+from rdflib import RDF, BNode
 
 import mcod.core.api.rdf.namespaces as ns
 from mcod import settings
+from mcod.lib.rdf.rdf_field import RDFField
 
 RDF_CLASSES = {}
 
@@ -29,12 +28,11 @@ class RDFMeta(abc.ABCMeta):
     def __new__(mcs, name, bases, attrs):
         cls = super().__new__(mcs, name, bases, attrs)
         cls.fields = {}
+        for base in bases:
+            cls.fields.update(base.fields)
         for key, value in attrs.items():
             if isinstance(value, (RDFField, RDFNestedField)):
                 cls.fields[key] = value
-        for base in bases:
-            if base.__name__ == 'BaseDCATDeserializer':
-                cls.fields.update(base.fields)
 
         RDF_CLASSES[name] = cls
         return cls
@@ -99,6 +97,8 @@ class RDFClass(metaclass=RDFMeta):
                 elif field.object is None:
                     try:
                         object_value = data[name]
+                        if not field.required and not object_value:
+                            continue
                     except Exception:
                         if not field.required:
                             continue

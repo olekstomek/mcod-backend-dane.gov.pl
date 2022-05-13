@@ -10,7 +10,12 @@ class UsersConfig(ExtendedAppMixin, AppConfig):
 
     def ready(self):
         from mcod.users.models import (
-            Meeting, MeetingTrash, User, UserFollowingApplication, UserFollowingArticle, UserFollowingDataset,
+            Meeting,
+            MeetingTrash,
+            User,
+            UserFollowingApplication,
+            UserFollowingArticle,
+            UserFollowingDataset,
         )
         self.connect_core_signals(Meeting)
         self.connect_core_signals(MeetingTrash)

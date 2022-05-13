@@ -1,8 +1,9 @@
 from importlib import import_module
 from typing import List, Optional
+
+from bokeh.server.django.routing import Routing, RoutingConfiguration
 from django.apps import AppConfig
 from django.conf import settings
-from bokeh.server.django.routing import Routing, RoutingConfiguration
 
 from mcod.lib.utils import is_django_ver_lt
 

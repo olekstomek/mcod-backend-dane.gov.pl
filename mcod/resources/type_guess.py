@@ -1,6 +1,7 @@
 from collections import defaultdict
 
 from tableschema import Table as TablePre, config
+
 import mcod.lib.cast_types as types
 
 
@@ -26,7 +27,7 @@ def _infer_type_order():
     return _INFER_TYPE_ORDER
 
 
-class TypeGuesser(object):
+class TypeGuesser:
     """
     That Guesser change original guesser to better handle date and datetime
     """
@@ -97,7 +98,7 @@ class TypeGuesser(object):
                 longer_than_date and dot_after_colon)
 
 
-class TypeResolver(object):
+class TypeResolver:
     """Get the best matching type/format from a list of possible ones.
     """
 

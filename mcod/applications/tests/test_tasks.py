@@ -6,7 +6,7 @@ from django.test import override_settings
 from mcod.applications.tasks import send_application_proposal
 
 
-class TestApplicationsTasks(object):
+class TestApplicationsTasks:
     @override_settings(EMAIL_BACKEND='django.core.mail.backends.filebased.EmailBackend',
                        EMAIL_FILE_PATH='/tmp/app-messages')
     def test_sending_application_proposal(self, datasets):

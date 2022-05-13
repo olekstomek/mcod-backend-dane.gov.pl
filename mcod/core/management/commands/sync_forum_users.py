@@ -1,6 +1,7 @@
 import logging
 
 from django.core.management.base import BaseCommand
+
 from mcod.discourse.manager import DiscourseManager
 
 logger = logging.getLogger('mcod')

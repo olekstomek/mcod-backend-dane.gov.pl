@@ -3,12 +3,11 @@ from django_elasticsearch_dsl import fields
 from django_elasticsearch_dsl.registries import registry
 
 from mcod import settings as mcs
-from mcod.regions.documents import regions_field
 from mcod.harvester.serializers import DataSourceSerializer
 from mcod.lib.search.fields import TranslatedTextField
+from mcod.regions.documents import regions_field
 from mcod.search.documents import ExtendedDocument
 from mcod.unleash import is_enabled
-
 
 Resource = apps.get_model('resources', 'Resource')
 Dataset = apps.get_model('datasets', 'Dataset')
@@ -97,8 +96,9 @@ class ResourceDocument(ExtendedDocument):
             properties={
                 'id': fields.IntegerField(),
                 'name': TranslatedTextField('name'),
-                'file_url': fields.TextField(),
-                'file_size': fields.LongField()
+                'api_file_url': fields.TextField(),
+                'file_size': fields.LongField(),
+                'language': fields.KeywordField(),
             }
         )
     is_chart_creation_blocked = fields.BooleanField()
@@ -112,8 +112,7 @@ class ResourceDocument(ExtendedDocument):
     has_research_data = fields.BooleanField()
     if is_enabled('S37_resources_admin_region_data.be'):
         regions = regions_field(attr='all_regions')
-    if is_enabled('S40_new_file_model.be'):
-        files = files_field(attr='all_files')
+    files = files_field(attr='all_files')
 
     class Index:
         name = mcs.ELASTICSEARCH_INDEX_NAMES['resources']

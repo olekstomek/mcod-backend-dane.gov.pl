@@ -3,8 +3,8 @@ from django_elasticsearch_dsl.registries import registry
 
 from mcod import settings as mcs
 from mcod.core.db.elastic import Document
-from mcod.suggestions.models import AcceptedDatasetSubmission, SubmissionFeedback
 from mcod.lib.search.fields import TranslatedTextField
+from mcod.suggestions.models import AcceptedDatasetSubmission, SubmissionFeedback
 
 
 @registry.register_document

@@ -1,21 +1,24 @@
-# -*- coding: utf-8 -*-
 from functools import partial
 
 import falcon
 from django.apps import apps
+from django.conf import settings
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.http import JsonResponse
-from django.views import View
-from elasticsearch_dsl import Q, A
-from django.conf import settings
 from django.utils.translation import get_language
+from django.views import View
+from elasticsearch_dsl import A, Q
 
 from mcod.core.api.handlers import (
-    BaseHdlr, SearchHdlr, RetrieveOneHdlr, CreateOneHdlr,
-    SubscriptionSearchHdlr, ShaclMixin
+    BaseHdlr,
+    CreateOneHdlr,
+    RetrieveOneHdlr,
+    SearchHdlr,
+    ShaclMixin,
+    SubscriptionSearchHdlr,
 )
 from mcod.core.api.hooks import login_optional
-from mcod.core.api.views import JsonAPIView, RDFView, BaseView
+from mcod.core.api.views import BaseView, JsonAPIView, RDFView
 from mcod.core.versioning import versioned
 from mcod.datasets.deserializers import (
     CatalogRdfApiRequest,
@@ -26,11 +29,11 @@ from mcod.datasets.deserializers import (
 )
 from mcod.datasets.documents import DatasetDocument
 from mcod.datasets.handlers import (
+    ArchiveDownloadViewHandler,
     CSVMetadataViewHandler,
     XMLMetadataViewHandler,
-    ArchiveDownloadViewHandler
 )
-from mcod.datasets.models import Dataset, LICENSE_CONDITION_LABELS
+from mcod.datasets.models import LICENSE_CONDITION_LABELS, Dataset
 from mcod.datasets.serializers import (
     CommentApiResponse,
     DatasetApiResponse,
@@ -283,4 +286,6 @@ class ConditionLabelsAdminView(PermissionRequiredMixin, View):
         req_organization_type = request.GET.get('organization_type')
         org_type = req_organization_type if req_organization_type in LICENSE_CONDITION_LABELS else 'public'
         labels = LICENSE_CONDITION_LABELS[org_type]
-        return JsonResponse({'condition_labels': labels})
+        article_url = f"{settings.BASE_URL}{settings.PUBLIC_LICENSES_ARTICLE_URL}" if org_type == 'public' else\
+            f"{settings.BASE_URL}{settings.PRIVATE_LICENSES_ARTICLE_URL}"
+        return JsonResponse({'condition_labels': labels, 'article_url': article_url})

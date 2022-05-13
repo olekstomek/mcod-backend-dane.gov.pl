@@ -1,36 +1,39 @@
-import xlsxwriter
-import pytz
 import io
 from collections import OrderedDict
+
+import pytz
+import xlsxwriter
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
 from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
-from django.views.decorators.csrf import csrf_exempt
 from django.utils.timezone import datetime
+from django.utils.translation import ungettext
+from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.views.generic import TemplateView
-from django.utils.translation import ungettext
+from wagtail.admin import messages
 from wagtail.admin.auth import user_has_any_page_permission, user_passes_test
+from wagtail.admin.forms.search import SearchForm
+from wagtail.admin.modal_workflow import render_modal_workflow
+from wagtail.admin.views.chooser import can_choose_page, page_models_from_string, shared_context
+from wagtail.contrib.forms.views import SafePaginateListView
 from wagtail.core import hooks
 from wagtail.core.forms import PasswordViewRestrictionForm
 from wagtail.core.models import Page, PageViewRestriction, UserPagePermissionsProxy
 from wagtail.core.url_routing import RouteResult
-from wagtail.contrib.forms.views import SafePaginateListView
-from wagtail.admin import messages
-from wagtail.admin.forms.search import SearchForm
-from wagtail.admin.modal_workflow import render_modal_workflow
-from wagtail.admin.views.chooser import shared_context, page_models_from_string, can_choose_page
 
-
-from mcod.cms.utils import get_forms_for_user, filter_page_type
 from mcod.cms.forms import (
-    SelectDateForm, TitledExternalLinkChooserForm,
-    TitledEmailLinkChooserForm, TitledPhoneLinkChooserForm,
-    TitledAnchorLinkChooserForm, TitleChooserForm
+    SelectDateForm,
+    TitleChooserForm,
+    TitledAnchorLinkChooserForm,
+    TitledEmailLinkChooserForm,
+    TitledExternalLinkChooserForm,
+    TitledPhoneLinkChooserForm,
 )
 from mcod.cms.models import FormPageSubmission
+from mcod.cms.utils import filter_page_type, get_forms_for_user
 
 warsaw_timezone = pytz.timezone('Europe/Warsaw')
 

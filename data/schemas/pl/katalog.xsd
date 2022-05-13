@@ -178,6 +178,7 @@
             </xs:element>
             <xs:element type="resourcesType" name="resources"/>
             <xs:element type="regionsType" name="regions"/>
+            <xs:element type="supplementsType" name="supplements"/>
         </xs:all>
     </xs:complexType>
     <xs:complexType name="categoryType">
@@ -272,11 +273,19 @@
             <xs:element type="xs:string" name="name"/>
             <xs:element type="xs:anyURI" name="file_url"/>
             <xs:element type="xs:string" name="file_size"/>
+            <xs:element name="language">
+                <xs:simpleType>
+                    <xs:restriction base="xs:string">
+                        <xs:enumeration value="pl"/>
+                        <xs:enumeration value="en"/>
+                    </xs:restriction>
+                </xs:simpleType>
+            </xs:element>
         </xs:all>
     </xs:complexType>
     <xs:complexType name="supplementsType">
         <xs:sequence>
-            <xs:element type="supplementType" name="supplement" maxOccurs="unbounded" minOccurs="0"/>
+            <xs:element type="supplementType" name="supplement" maxOccurs="10" minOccurs="0"/>
         </xs:sequence>
     </xs:complexType>
 </xs:schema>

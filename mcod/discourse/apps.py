@@ -1,6 +1,7 @@
 from django.apps import AppConfig
-from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.signals import user_logged_out
+from django.utils.translation import gettext_lazy as _
+
 from mcod.users.signals import user_changed
 
 

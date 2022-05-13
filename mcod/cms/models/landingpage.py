@@ -1,11 +1,9 @@
-# -*- coding: utf-8 -*-
 from hypereditor.fields import HyperFieldPanel
-from wagtail.admin.edit_handlers import (FieldPanel, MultiFieldPanel,
-                                         PublishingPanel)
+from wagtail.admin.edit_handlers import FieldPanel, MultiFieldPanel, PublishingPanel
 from wagtail.api import APIField
 
-from mcod.cms.models.base import BasePage
 from mcod.cms.api.fields import HyperEditorJSONField, LocalizedHyperField
+from mcod.cms.models.base import BasePage
 
 
 class LandingPageIndex(BasePage):

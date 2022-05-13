@@ -1,6 +1,8 @@
-import dpath
 import random
+
+import dpath
 from pytest_bdd import given, parsers, then
+
 from mcod.laboratory.factories import LabEventFactory, ReportFactory
 
 

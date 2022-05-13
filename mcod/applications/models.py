@@ -1,8 +1,7 @@
-# -*- coding: utf-8 -*-
 import base64
 import os
 from email.mime.image import MIMEImage
-from mimetypes import guess_type, guess_extension
+from mimetypes import guess_extension, guess_type
 
 from constance import config
 from django.apps import apps
@@ -37,10 +36,8 @@ from mcod.applications.tasks import generate_logo_thumbnail_task
 from mcod.core import signals as core_signals, storages
 from mcod.core.api.search import signals as search_signals
 from mcod.core.db.managers import TrashManager
-from mcod.core.db.models import ExtendedModel, update_watcher, TrashModelBase
+from mcod.core.db.models import ExtendedModel, TrashModelBase, update_watcher
 from mcod.core.managers import SoftDeletableManager
-from mcod.unleash import is_enabled
-
 
 User = get_user_model()
 
@@ -57,7 +54,6 @@ class ApplicationIndexPage(Page):
     under_title_cb = StreamField([
         ('paragraph', blocks.RichTextBlock(features=settings.CMS_RICH_TEXT_FIELD_FEATURES, label="Blok tekstu")),
         ('image', ImageChooserBlock(label="Obrazek")),
-        # ('cta', CTABlock(label='Wezwanie do działania (CTA)'))
     ],
         default='',
         blank=True,
@@ -67,7 +63,6 @@ class ApplicationIndexPage(Page):
     under_list_cb = StreamField([
         ('paragraph', blocks.RichTextBlock(features=settings.CMS_RICH_TEXT_FIELD_FEATURES, label="Blok tekstu")),
         ('image', ImageChooserBlock(label="Obrazek")),
-        # ('cta', CTABlock(label='Wezwanie do działania (CTA)'))
     ],
         default='',
         blank=True,
@@ -76,8 +71,6 @@ class ApplicationIndexPage(Page):
     )
 
     subpage_types = ['applications.ApplicationPage']
-
-    # parent_page_types = ['wagtailtrans.TranslatableSiteRootPage']
 
     api_fields = [
         APIField('title'),
@@ -132,7 +125,6 @@ class ApplicationPage(Page):
         APIField('intro'),
         APIField('body'),
         APIField('is_featured'),
-        # APIField('tags'),
         APIField('app_url_path')
     ]
 
@@ -145,7 +137,6 @@ class ApplicationPage(Page):
     content_panels = Page.content_panels + [
         FieldPanel('intro', classname="full"),
         StreamFieldPanel('body'),
-        # FieldPanel('tags', classname="full"),
         FieldPanel('app_url_path')
     ]
 
@@ -423,10 +414,9 @@ class ApplicationProposal(ApplicationMixin):
         data['host'] = settings.BASE_URL
 
         emails = [config.TESTER_EMAIL] if settings.DEBUG and config.TESTER_EMAIL else [config.CONTACT_MAIL]
-        html_template = 'applicationproposal' if is_enabled('S39_mail_layout.be') else 'propose-application'
         with translation.override('pl'):
             msg_plain = render_to_string('mails/propose-application.txt', data)
-            msg_html = render_to_string(f'mails/{html_template}.html', data)
+            msg_html = render_to_string('mails/propose-application.html', data)
             attachments = []
             if img_data:
                 attachments.append(image)

@@ -2,32 +2,41 @@ import marshmallow as ma
 from django.apps import apps
 from django.db.models.manager import Manager
 from django.utils.html import strip_tags
-from django.utils.translation import gettext_lazy as _, get_language
+from django.utils.translation import get_language, gettext_lazy as _
 from querystring_parser import builder
 
 from mcod import settings
 from mcod.core.api import fields, schemas
 from mcod.core.api.jsonapi.serializers import (
-    Relationships,
-    Relationship,
-    ObjectAttrs,
-    TopLevel,
     Aggregation,
     ExtAggregation,
-    HighlightObjectMixin
+    HighlightObjectMixin,
+    ObjectAttrs,
+    Relationship,
+    Relationships,
+    TopLevel,
 )
 from mcod.core.api.rdf import fields as rdf_fields
 from mcod.core.api.rdf.profiles.common import HYDRAPagedCollection
+from mcod.core.api.rdf.schema_mixins import ProfilesMixin
 from mcod.core.api.rdf.schemas import ResponseSchema as RDFResponseSchema
 from mcod.core.api.schemas import ExtSchema
 from mcod.core.serializers import CSVSerializer, ListWithoutNoneStrElement
 from mcod.datasets.models import UPDATE_FREQUENCY
-from mcod.core.api.rdf.schema_mixins import ProfilesMixin
 from mcod.lib.extended_graph import ExtendedGraph
-from mcod.lib.serializers import TranslatedStr, KeywordsList
-from mcod.organizations.serializers import InstitutionXMLSerializer, InstitutionCSVMetadataSerializer
-from mcod.resources.serializers import ResourceRDFMixin, ResourceXMLSerializer, ResourceCSVMetadataSerializer
-from mcod.regions.serializers import RegionSchema, RegionBaseSchema, RDFRegionSchema
+from mcod.lib.serializers import KeywordsList, TranslatedStr
+from mcod.organizations.serializers import (
+    InstitutionCSVMetadataSerializer,
+    InstitutionXMLSerializer,
+)
+from mcod.regions.serializers import RDFRegionSchema, RegionBaseSchema, RegionSchema
+from mcod.resources.serializers import (
+    ResourceCSVMetadataSerializer,
+    ResourceRDFMixin,
+    ResourceXMLSerializer,
+    SupplementSchema,
+    supplements_dump,
+)
 from mcod.unleash import is_enabled
 from mcod.watchers.serializers import SubscriptionMixin
 
@@ -78,6 +87,7 @@ class OrganizationRDFMixin(ProfilesMixin):
     title_pl = ma.fields.Str(attribute='title_translated.pl')
     title_en = ma.fields.Str(attribute='title_translated.en')
     email = ma.fields.Str()
+    regon = ma.fields.Str()
 
 
 class OrganizationRDFNestedSchema(OrganizationRDFMixin, ma.Schema):
@@ -123,8 +133,10 @@ class DatasetRDFResponseSchema(ProfilesMixin, RDFResponseSchema):
     resources = ma.fields.Function(resources_dump)
     organization = ma.fields.Function(organization_dump)
     categories = ma.fields.Function(categories_dump)
+    supplements = ma.fields.Function(supplements_dump)
     update_frequency = DcatUpdateFrequencyField()
     license = ma.fields.Function(lambda ds: ds.license_link)
+    logo = ma.fields.Str(attribute='image_absolute_url')
     if is_enabled('S38_dcat_spatial_data.be'):
         spatial = ma.fields.Nested(RDFRegionSchema, many=True, attribute='regions')
 
@@ -228,6 +240,9 @@ class LicenseConditionDescriptionSchema(ExtSchema):
     license_condition_responsibilities = fields.Str()
     license_condition_cc40_responsibilities = fields.Str()
     license_condition_source = fields.Str()
+    if is_enabled('S49_cc_by_40_conditions_unification.be'):
+        license_condition_custom_description = fields.Str()
+        license_condition_default_cc40 = fields.Str()
 
 
 class SourceSchema(ExtSchema):
@@ -386,13 +401,12 @@ class DatasetApiRelationships(Relationships):
         _type='resource',
         url_template='{object_url}/resources'
     )
-    if is_enabled('S42_dataset_showcases.be'):
-        showcases = fields.Nested(
-            Relationship,
-            many=False, default=[],
-            _type='showcase',
-            url_template='{object_url}/showcases'
-        )
+    showcases = fields.Nested(
+        Relationship,
+        many=False, default=[],
+        _type='showcase',
+        url_template='{object_url}/showcases'
+    )
     subscription = fields.Nested(
         Relationship,
         many=False,
@@ -422,21 +436,21 @@ class DatasetApiAttrs(ObjectAttrs, HighlightObjectMixin):
     license_chosen = fields.Integer()
     license_condition_db_or_copyrighted = fields.String()
     license_condition_personal_data = fields.String()
-    license_condition_modification = fields.Boolean()
     license_condition_original = fields.Boolean()
-    license_condition_responsibilities = fields.String()
-    license_condition_cc40_responsibilities = fields.Boolean()
-    license_condition_source = fields.Boolean()
     license_condition_timestamp = fields.Boolean()
+    if is_enabled('S49_cc_by_40_conditions_unification.be'):
+        license_condition_custom_description = fields.String()
+        license_condition_default_cc40 = fields.Boolean()
+    else:
+        license_condition_responsibilities = fields.String()
+        license_condition_cc40_responsibilities = fields.Boolean()
+        license_condition_source = fields.Boolean()
+        license_condition_modification = fields.Boolean()
     license_name = fields.String()
     license_description = fields.String()
     update_frequency = TransUpdateFreqField()
-    views_count =\
-        fields.Function(
-            lambda obj: obj.computed_views_count if is_enabled('S16_new_date_counters.be') else obj.views_count)
-    downloads_count =\
-        fields.Function(
-            lambda obj: obj.computed_downloads_count if is_enabled('S16_new_date_counters.be') else obj.downloads_count)
+    views_count = fields.Int(attribute='computed_views_count')
+    downloads_count = fields.Int(attribute='computed_downloads_count')
     url = fields.String()
     followed = fields.Boolean()
     modified = fields.DateTime()
@@ -447,17 +461,16 @@ class DatasetApiAttrs(ObjectAttrs, HighlightObjectMixin):
     source = fields.Nested(SourceSchema)
     image_url = fields.Str()
     image_alt = TranslatedStr()
-    if is_enabled('S43_dynamic_data.be'):
-        has_dynamic_data = fields.Boolean()
-    if is_enabled('S35_high_value_data.be'):
-        has_high_value_data = fields.Boolean()
+    has_dynamic_data = fields.Boolean()
+    has_high_value_data = fields.Boolean()
     if is_enabled('S47_research_data.be'):
         has_research_data = fields.Boolean()
     if is_enabled('S37_resources_admin_region_data.be'):
         regions = fields.Nested(RegionSchema, many=True)
-    if is_enabled('S41_resource_bulk_download.be'):
-        archived_resources_files_url = fields.Str()
+    archived_resources_files_url = fields.Str()
     current_condition_descriptions = fields.Nested(LicenseConditionDescriptionSchema)
+    if is_enabled('S49_dataset_supplements.be'):
+        supplement_docs = fields.Nested(SupplementSchema, data_key='supplements', many=True)
 
     class Meta:
         relationships_schema = DatasetApiRelationships
@@ -530,12 +543,12 @@ class DatasetXMLSerializer(ExtSchema):
     conditions = fields.Str(attribute='formatted_condition_descriptions')
     organization = fields.Method('get_organization')
     resources = fields.Nested(ResourceXMLSerializer, attribute='published_resources', many=True)
+    if is_enabled('S49_dataset_supplements.be'):
+        supplement_docs = fields.Nested(SupplementSchema, data_key='supplements', many=True)
 
     source = fields.Nested(SourceXMLSchema)
-    if is_enabled('S41_resource_has_high_value_data.be'):
-        has_high_value_data = fields.Bool()
-    if is_enabled('S43_dynamic_data.be'):
-        has_dynamic_data = fields.Bool()
+    has_high_value_data = fields.Bool()
+    has_dynamic_data = fields.Bool()
     if is_enabled('S47_research_data.be'):
         has_research_data = fields.Bool()
     if is_enabled('S37_resources_admin_region_data.be'):
@@ -567,14 +580,15 @@ class DatasetResourcesCSVSerializer(CSVSerializer):
     dataset_conditions = fields.Str(attribute='formatted_condition_descriptions', data_key=_('Terms of use'))
     dataset_license = fields.Str(attribute='license_name', data_key=_('License'))
     dataset_source = fields.Nested(SourceXMLSchema, attribute='source', data_key=_('source'))
-    if is_enabled('S41_resource_has_high_value_data.be'):
-        has_high_value_data = fields.MetaDataNullBoolean(data_key=_('Dataset has high value data'))
-    if is_enabled('S43_dynamic_data.be'):
-        has_dynamic_data = fields.MetaDataNullBoolean(data_key=_('Dataset has dynamic data'))
+    has_high_value_data = fields.MetaDataNullBoolean(data_key=_('Dataset has high value data'))
+    has_dynamic_data = fields.MetaDataNullBoolean(data_key=_('Dataset has dynamic data'))
     if is_enabled('S47_research_data.be'):
         has_research_data = fields.MetaDataNullBoolean(data_key=_('Dataset has research data'))
     if is_enabled('S37_resources_admin_region_data.be'):
         regions = fields.Str(data_key=_('Dataset regions'), attribute='regions_str')
+    if is_enabled('S49_dataset_supplements.be'):
+        supplements = fields.Str(
+            attribute='supplements_str', data_key=_('Dataset supplements (name, language, url, file size)'))
     organization = fields.Method('get_organization')
     resources = fields.Nested(ResourceCSVMetadataSerializer, many=True, attribute='published_resources')
 

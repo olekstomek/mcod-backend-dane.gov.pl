@@ -1,11 +1,11 @@
+from ckeditor.fields import RichTextField
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from modelcluster.contrib.taggit import ClusterTaggableManager
 from modelcluster.fields import ParentalKey
 from taggit.models import TaggedItemBase
-from wagtail.admin.edit_handlers import MultiFieldPanel, FieldPanel, TabbedInterface, ObjectList
+from wagtail.admin.edit_handlers import FieldPanel, MultiFieldPanel, ObjectList, TabbedInterface
 from wagtail.api import APIField
-from ckeditor.fields import RichTextField
 
 from mcod.cms.api import fields
 from mcod.cms.api.serializers import NewsPageSerializer

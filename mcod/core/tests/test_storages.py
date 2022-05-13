@@ -1,13 +1,13 @@
+import os
+import shutil
 from uuid import uuid4
 
-import os
 import pytest
-import shutil
 
-from mcod.core.storages import ResourcesStorage, OrganizationImagesStorage, ApplicationImagesStorage
+from mcod.core.storages import ApplicationImagesStorage, OrganizationImagesStorage, ResourcesStorage
 
 
-class TestStorages(object):
+class TestStorages:
     def _test_storage(self, client, storage):
         tmp_name = str(uuid4())
         tmp_path = os.path.join('/', 'tmp', str(uuid4()))

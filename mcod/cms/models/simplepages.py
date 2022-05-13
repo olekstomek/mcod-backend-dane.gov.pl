@@ -1,12 +1,10 @@
-# -*- coding: utf-8 -*-
 from django.db.models import TextField
-from wagtail.admin.edit_handlers import (FieldPanel, MultiFieldPanel,
-                                         PublishingPanel)
+from wagtail.admin.edit_handlers import FieldPanel, MultiFieldPanel, PublishingPanel
 from wagtail.api import APIField
 from wagtail.core.fields import RichTextField
 
-from mcod.cms.models.base import BasePage
 from mcod.cms.api import fields
+from mcod.cms.models.base import BasePage
 
 
 class SimplePageIndex(BasePage):

@@ -2,12 +2,12 @@ import datetime
 
 import factory
 
-from mcod.harvester.models import DataSource, FREQUENCY_CHOICES, DataSourceImport
-from mcod.core.registries import factories_registry
 from mcod.categories.factories import CategoryFactory
-from mcod.users.factories import AdminFactory
+from mcod.core.registries import factories_registry
+from mcod.harvester.models import FREQUENCY_CHOICES, DataSource, DataSourceImport
 from mcod.organizations.factories import OrganizationFactory
 from mcod.organizations.models import Organization
+from mcod.users.factories import AdminFactory
 
 
 class DataSourceFactory(factory.django.DjangoModelFactory):

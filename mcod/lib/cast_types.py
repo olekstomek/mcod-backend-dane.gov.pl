@@ -1,15 +1,11 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
+from __future__ import absolute_import, division, print_function, unicode_literals
 
+import base64
 import re
 import uuid
-import base64
-import rfc3986.validators
-import rfc3986.uri
 
+import rfc3986.uri
+import rfc3986.validators
 # Module API
 from tableschema.config import ERROR
 from tableschema.types.any import cast_any  # noqa

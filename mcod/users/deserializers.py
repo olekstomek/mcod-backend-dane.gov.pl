@@ -1,15 +1,14 @@
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
-from django.utils.translation import gettext as _
 from django.utils import timezone
+from django.utils.translation import gettext as _
 from elasticsearch_dsl import Q
-from marshmallow import post_load, ValidationError, validate, validates_schema
+from marshmallow import ValidationError, post_load, validate, validates_schema
 
 from mcod.core.api import fields
-from mcod.core.api.jsonapi.deserializers import TopLevel, ObjectAttrs
+from mcod.core.api.jsonapi.deserializers import ObjectAttrs, TopLevel
 from mcod.core.api.schemas import ListingSchema, ListTermsSchema, NumberTermSchema
 from mcod.core.api.search import fields as search_fields
-
 
 MEETING_STATE_CHOICES = ['finished', 'planned']
 

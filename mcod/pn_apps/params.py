@@ -1,8 +1,9 @@
-import param
 import panel as pn
+import param
 from django.utils.translation import gettext as _
-from mcod.pn_apps.widgets import BootstrapSelectWidget, ExtendedRadioButtonGroup
+
 from mcod.organizations.models import Organization
+from mcod.pn_apps.widgets import BootstrapSelectWidget, ExtendedRadioButtonGroup
 from mcod.resources.models import RESOURCE_TYPE
 from mcod.unleash import is_enabled
 
@@ -57,7 +58,7 @@ class QuerysetMultiSelectParamWidget(MultiSelectParamWidget):
 
     def __init__(self, query_params=None, **kwargs):
         self.query_params = query_params
-        super(QuerysetMultiSelectParamWidget, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
     def get_queryset(self):
         if self.query_params:
@@ -65,38 +66,6 @@ class QuerysetMultiSelectParamWidget(MultiSelectParamWidget):
         else:
             qs = self.model.objects.all()
         return qs
-
-
-class ProvidersParamWidget(MultiSelectParamWidget):
-
-    def __init__(self, **kwargs):
-        super(ProvidersParamWidget, self).__init__(_('Providers'), **kwargs)
-
-    @property
-    def widget_default_params(self):
-        return {
-            'actions_box': True,
-            'live_search': True,
-            'selected_text_format': 'count > 3',
-            'none_selected_text': 'Nie wybrano żadnego dostawcy',
-            'none_results_text': 'Nie znaleziono dostawcy dla frazy {0}',
-            'count_selected_text': '{0} z {1} dostawców'
-        }
-
-    @property
-    def widget_objects(self):
-        def make_abbreviation(title, abbr=None):
-            if not abbr:
-                abbr = ''.join(wrd[0] for wrd in title.split())
-            return abbr
-
-        return {
-            title: (id, make_abbreviation(title, abbr)) for id, title, abbr in Organization.objects.values_list(
-                'id',
-                'title',
-                'abbreviation'
-            )
-        }
 
 
 class UserGroupProvidersParamsWidget(QuerysetMultiSelectParamWidget):
@@ -132,7 +101,7 @@ class UserGroupProvidersParamsWidget(QuerysetMultiSelectParamWidget):
 class ResourceTypeParamWidget(MultiSelectParamWidget):
 
     def __init__(self, **kwargs):
-        super(ResourceTypeParamWidget, self).__init__(_('Type of data'), **kwargs)
+        super().__init__(_('Type of data'), **kwargs)
 
     @property
     def widget_default_params(self):
@@ -160,7 +129,7 @@ class TimePeriodParamWidget(BaseStatsParamWidget):
         widget_cls = pn.widgets.RadioButtonGroup
 
     def __init__(self, **kwargs):
-        super(TimePeriodParamWidget, self).__init__(_('Period'), **kwargs)
+        super().__init__(_('Period'), **kwargs)
 
     @property
     def param_kwargs(self):
@@ -180,7 +149,7 @@ class TimePeriodParamWidget(BaseStatsParamWidget):
 class VizTypeParamWidget(MultiSelectParamWidget):
 
     def __init__(self, **kwargs):
-        super(VizTypeParamWidget, self).__init__(_('Visualization type'), **kwargs)
+        super().__init__(_('Visualization type'), **kwargs)
 
     @property
     def widget_default_params(self):
@@ -211,7 +180,7 @@ class PresentationTypeParamWidget(BaseStatsParamWidget):
         widget_cls = pn.widgets.RadioButtonGroup
 
     def __init__(self, **kwargs):
-        super(PresentationTypeParamWidget, self).__init__(_('Way of presentation'), **kwargs)
+        super().__init__(_('Way of presentation'), **kwargs)
 
     @property
     def param_kwargs(self):

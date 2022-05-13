@@ -10,27 +10,25 @@ from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _, override
-from model_utils import FieldTracker, Choices
+from model_utils import Choices, FieldTracker
 from model_utils.fields import MonitorField
 from modeltrans.fields import TranslationField
 
 from mcod import settings
-from mcod.core.db.models import ExtendedModel, Model, TrashModelBase, STATUS_CHOICES
+from mcod.core.db.models import STATUS_CHOICES, ExtendedModel, Model, TrashModelBase
 from mcod.datasets.tasks import send_dataset_comment
 from mcod.resources.tasks import send_resource_comment
 from mcod.suggestions.managers import (
-    AcceptedDatasetSubmissionTrashManager,
     AcceptedDatasetSubmissionManager,
+    AcceptedDatasetSubmissionTrashManager,
     DatasetCommentManager,
     DatasetCommentTrashManager,
-    DatasetSubmissionTrashManager,
     DatasetSubmissionManager,
+    DatasetSubmissionTrashManager,
     ResourceCommentManager,
     ResourceCommentTrashManager,
 )
 from mcod.suggestions.tasks import send_data_suggestion, send_dataset_suggestion_mail_task
-from mcod.unleash import is_enabled
-
 
 logger = logging.getLogger('mcod')
 User = get_user_model()
@@ -134,8 +132,6 @@ class DatasetSubmission(DatasetSubmissionMixin):
     accepted_dataset_submission = models.OneToOneField(
         'suggestions.AcceptedDatasetSubmission', on_delete=models.CASCADE, null=True, blank=True,
         verbose_name=_('accepted dataset submission'))
-    # user_opinions = models.ManyToManyField(User, through='SubmissionOpinion',
-    #                                        related_name='dataset_submission_opinions')
 
     objects = DatasetSubmissionManager()
     trash = DatasetSubmissionTrashManager()
@@ -172,10 +168,9 @@ class DatasetSubmission(DatasetSubmissionMixin):
             'obj': self,
             'host': settings.BASE_URL,
         }
-        tmpl = 'mails/dataset-submission.html' if is_enabled('S39_mail_layout.be') else 'mails/dataset-suggestion.html'
         with override('pl'):
             msg_plain = render_to_string('mails/dataset-suggestion.txt', context)
-            msg_html = render_to_string(tmpl, context)
+            msg_html = render_to_string('mails/dataset-suggestion.html', context)
             return self.send_mail_message(
                 _('Resource demand reported'),
                 msg_plain,

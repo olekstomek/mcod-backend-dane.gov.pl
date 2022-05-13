@@ -1,16 +1,17 @@
-from wagtail.api.v2.serializers import BaseSerializer, TagsField
+from modelcluster.models import get_all_child_relations
 from rest_framework import serializers
+from wagtail.api.v2.serializers import BaseSerializer, TagsField
+
 from mcod.cms.api.fields import (
+    CharField,
+    ChildRelationField,
     DetailUrlField,
+    IntegerField,
+    PageChildrenField,
     PageHtmlUrlField,
     PageParentField,
-    ChildRelationField,
     PageTypeField,
-    PageChildrenField,
-    CharField,
-    IntegerField,
 )
-from modelcluster.models import get_all_child_relations
 
 
 class CmsPageSerializer(BaseSerializer):

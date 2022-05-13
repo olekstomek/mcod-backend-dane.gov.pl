@@ -1,6 +1,6 @@
 from marshmallow import SchemaOpts
 
-from mcod.core.api import schemas, fields
+from mcod.core.api import fields, schemas
 
 
 class ObjectAttrsOpts(SchemaOpts):
@@ -33,12 +33,6 @@ class Object(schemas.ExtSchema):
             self.opts.attrs_schema, name='attributes', required=getattr(self.opts, 'attrs_schema_required', False),
             many=False,
         )
-
-        # relationships_schema = getattr(self.opts.attrs_schema.opts, 'relationships_schema', None)
-        #
-        # if relationships_schema:
-        #     self._declared_fields['relationships'] = fields.Nested(relationships_schema, many=False,
-        #                                                            name='relationships')
 
         super().__init__(only=only, exclude=exclude, many=many, context=context,
                          load_only=load_only, dump_only=dump_only,

@@ -8,7 +8,6 @@ from modeltrans.fields import TranslationField
 
 from mcod.core.db.mixins import AdminMixin
 
-
 User = get_user_model()
 
 STATUS_CHOICES = [

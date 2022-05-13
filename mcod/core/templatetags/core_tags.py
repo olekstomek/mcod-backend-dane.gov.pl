@@ -6,10 +6,10 @@ from django.http import HttpRequest
 from django.template.defaultfilters import capfirst
 from django.urls import reverse
 from django.utils.encoding import force_str
+from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from suit.templatetags.suit_list import result_list_with_context
-from django.utils.html import format_html
-from suit.templatetags.suit_menu import get_admin_site, Menu as SuitMenu
+from suit.templatetags.suit_menu import Menu as SuitMenu, get_admin_site
 from suit.templatetags.suit_tags import field_contents_foreign_linked
 
 from mcod.unleash import is_enabled

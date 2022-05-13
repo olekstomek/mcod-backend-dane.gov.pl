@@ -1,11 +1,9 @@
 import pytest
-from pytest_bdd import given, then, when
-from pytest_bdd import parsers
+from pytest_bdd import given, parsers, then, when
 
 from mcod.core.registries import factories_registry
-from mcod.watchers.factories import SubscriptionFactory, NotificationFactory
-from mcod.watchers.models import SubscribedObjectDoesNotExist
-from mcod.watchers.models import SubscriptionCannotBeCreated
+from mcod.watchers.factories import NotificationFactory, SubscriptionFactory
+from mcod.watchers.models import SubscribedObjectDoesNotExist, SubscriptionCannotBeCreated
 from mcod.watchers.tasks import update_query_watchers_task
 
 

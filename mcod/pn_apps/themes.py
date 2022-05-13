@@ -1,6 +1,5 @@
-import panel as pn
 import holoviews as hv
-# import hvplot
+import panel as pn
 
 
 def __disable_logo(plot, element):

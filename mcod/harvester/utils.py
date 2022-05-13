@@ -1,18 +1,18 @@
-import os
 import json
 import logging
+import os
 import re
-from xml.etree import ElementTree
-
-import requests
 import ssl
-import xmlschema
 from hashlib import md5
 from urllib.parse import unquote
 from urllib.request import urlretrieve
-from rdflib.plugins.stores.sparqlstore import SPARQLStore
+from xml.etree import ElementTree
+
+import requests
+import xmlschema
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
+from rdflib.plugins.stores.sparqlstore import SPARQLStore
 
 from mcod import settings
 from mcod.unleash import is_enabled
@@ -126,9 +126,6 @@ def get_xml_schema_version(*, xml_path=None, xml_url=None):
 
 def get_xml_schema_path(version):
     versions = {
-        '1.3': 'S37_validate_resource_link_scheme_harvester.be',
-        '1.4': 'S41_xml_harvester_special_signs.be',
-        '1.5': 'S43_xml_harvester_high_value_dynamic_data.be',
         '1.6': 'S47_xml_harvester_research_data.be',
         '1.7': 'S48_xml_harvester_resource_supplements.be',
     }

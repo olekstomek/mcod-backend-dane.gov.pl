@@ -1,24 +1,24 @@
-# -*- coding: utf-8 -*-
 from django.conf import settings
-from wagtail.api import APIField
-
-from wagtail.core.fields import StreamField
-from wagtail.api.v2.serializers import StreamField as StreamFieldSerializer
-from wagtail.admin.edit_handlers import StreamFieldPanel
-from wagtail.admin.edit_handlers import (FieldPanel, MultiFieldPanel,
-                                         PublishingPanel)
 from hypereditor.fields import HyperFieldPanel
+from wagtail.admin.edit_handlers import (
+    FieldPanel,
+    MultiFieldPanel,
+    PublishingPanel,
+    StreamFieldPanel,
+)
+from wagtail.api import APIField
+from wagtail.api.v2.serializers import StreamField as StreamFieldSerializer
+from wagtail.core.fields import StreamField
 
-from mcod.cms.models.base import BasePage
 from mcod.cms.api.fields import HyperEditorJSONField, LocalizedHyperField
 from mcod.cms.blocks.common import (
-    # SvgDocumentChooserBlock,
-    ImageChooserBlock,
-    RichTextBlock,
     BannerBlock,
+    ImageChooserBlock,
     RawHTMLBlock,
-    VideoBlock
+    RichTextBlock,
+    VideoBlock,
 )
+from mcod.cms.models.base import BasePage
 
 
 class KBRootPage(BasePage):
@@ -30,7 +30,6 @@ class KBRootPage(BasePage):
         ('video', VideoBlock(label='Film')),
         ('text', RichTextBlock(features=settings.CMS_RICH_TEXT_FIELD_FEATURES, label="Tekst")),
         ('raw_html', RawHTMLBlock(label='Kod HTML')),
-        # ('svg', SvgDocumentChooserBlock(label='Obraz wektorowy (SVG)')),
         ('image', ImageChooserBlock(label='Obraz')),
     ], default='', blank=True, verbose_name="Zawartość gównego bloku.",
         help_text="Wprowadź zawartość górnego bloku.",
@@ -41,7 +40,6 @@ class KBRootPage(BasePage):
         ('video', VideoBlock(label='Film')),
         ('text', RichTextBlock(features=settings.CMS_RICH_TEXT_FIELD_FEATURES, label="Tekst")),
         ('raw_html', RawHTMLBlock(label='Kod HTML')),
-        # ('svg', SvgDocumentChooserBlock(label='Obraz wektorowy (SVG)')),
         ('image', ImageChooserBlock(label='Obraz')),
     ], default='', blank=True, verbose_name="Zawartość dolnego bloku.",
         help_text="Wprowadź zawartość dolnego bloku.",
@@ -52,7 +50,6 @@ class KBRootPage(BasePage):
         ('video', VideoBlock(label='Film')),
         ('text', RichTextBlock(features=settings.CMS_RICH_TEXT_FIELD_FEATURES, label="Tekst")),
         ('raw_html', RawHTMLBlock(label='Kod HTML')),
-        # ('svg', SvgDocumentChooserBlock(label='Obraz wektorowy (SVG)')),
         ('image', ImageChooserBlock(label='Obraz')),
     ], default='', blank=True, verbose_name="Zawartość gównego bloku.",
         help_text="Wprowadź zawartość górnego bloku.",
@@ -63,7 +60,6 @@ class KBRootPage(BasePage):
         ('video', VideoBlock(label='Film')),
         ('text', RichTextBlock(features=settings.CMS_RICH_TEXT_FIELD_FEATURES, label="Tekst")),
         ('raw_html', RawHTMLBlock(label='Kod HTML')),
-        # ('svg', SvgDocumentChooserBlock(label='Obraz wektorowy (SVG)')),
         ('image', ImageChooserBlock(label='Obraz')),
     ], default='', blank=True, verbose_name="Zawartość dolnego bloku.",
         help_text="Wprowadź zawartość dolnego bloku.",
@@ -113,7 +109,6 @@ class KBCategoryPage(BasePage):
         ('video', VideoBlock(label='Film')),
         ('text', RichTextBlock(features=settings.CMS_RICH_TEXT_FIELD_FEATURES, label="Tekst")),
         ('raw_html', RawHTMLBlock(label='Kod HTML')),
-        # ('svg', SvgDocumentChooserBlock(label='Obraz wektorowy (SVG)')),
         ('image', ImageChooserBlock(label='Obraz')),
     ], default='', blank=True, verbose_name="Zawartość gównego bloku.",
         help_text="Wprowadź zawartość górnego bloku.",
@@ -124,7 +119,6 @@ class KBCategoryPage(BasePage):
         ('video', VideoBlock(label='Film')),
         ('text', RichTextBlock(features=settings.CMS_RICH_TEXT_FIELD_FEATURES, label="Tekst")),
         ('raw_html', RawHTMLBlock(label='Kod HTML')),
-        # ('svg', SvgDocumentChooserBlock(label='Obraz wektorowy (SVG)')),
         ('image', ImageChooserBlock(label='Obraz')),
     ], default='', blank=True, verbose_name="Zawartość dolnego bloku.",
         help_text="Wprowadź zawartość dolnego bloku.",
@@ -135,7 +129,6 @@ class KBCategoryPage(BasePage):
         ('video', VideoBlock(label='Film')),
         ('text', RichTextBlock(features=settings.CMS_RICH_TEXT_FIELD_FEATURES, label="Tekst")),
         ('raw_html', RawHTMLBlock(label='Kod HTML')),
-        # ('svg', SvgDocumentChooserBlock(label='Obraz wektorowy (SVG)')),
         ('image', ImageChooserBlock(label='Obraz')),
     ], default='', blank=True, verbose_name="Zawartość gównego bloku.",
         help_text="Wprowadź zawartość górnego bloku.",
@@ -146,7 +139,6 @@ class KBCategoryPage(BasePage):
         ('video', VideoBlock(label='Film')),
         ('text', RichTextBlock(features=settings.CMS_RICH_TEXT_FIELD_FEATURES, label="Tekst")),
         ('raw_html', RawHTMLBlock(label='Kod HTML')),
-        # ('svg', SvgDocumentChooserBlock(label='Obraz wektorowy (SVG)')),
         ('image', ImageChooserBlock(label='Obraz')),
     ], default='', blank=True, verbose_name="Zawartość dolnego bloku.",
         help_text="Wprowadź zawartość dolnego bloku.",
@@ -196,7 +188,6 @@ class KBPage(BasePage):
         ('video', VideoBlock(label='Film')),
         ('text', RichTextBlock(features=settings.CMS_RICH_TEXT_FIELD_FEATURES, label="Tekst")),
         ('raw_html', RawHTMLBlock(label='Kod HTML')),
-        # ('svg', SvgDocumentChooserBlock(label='Obraz wektorowy (SVG)')),
         ('image', ImageChooserBlock(label='Obraz')),
     ], default=None, verbose_name="Treść strony.",
         help_text="Wprowadź treść dla tej strony.",
@@ -207,7 +198,6 @@ class KBPage(BasePage):
         ('video', VideoBlock(label='Film')),
         ('text', RichTextBlock(features=settings.CMS_RICH_TEXT_FIELD_FEATURES, label="Tekst")),
         ('raw_html', RawHTMLBlock(label='Kod HTML')),
-        # ('svg', SvgDocumentChooserBlock(label='Obraz wektorowy (SVG)')),
         ('image', ImageChooserBlock(label='Obraz')),
     ], default=None, blank=True, null=True, verbose_name="Treść strony.",
         help_text="Wprowadź treść dla tej strony.",

@@ -5,7 +5,6 @@ from elasticsearch_dsl.connections import get_connection
 from mcod.celeryapp import app
 from mcod.resources.models import Resource
 from mcod.resources.tasks import process_resource_data_indexing_task
-from mcod.unleash import is_enabled
 
 
 class Command(BaseCommand):
@@ -111,10 +110,7 @@ class Command(BaseCommand):
             type='file',
             format__in=('csv', 'tsv', 'xls', 'xlsx', 'ods', 'shp'),
         )
-        if is_enabled('S40_new_file_model.be'):
-            queryset = queryset.filter(files__isnull=False).distinct()
-        else:
-            queryset = queryset.filter(file__isnull=False).exclude(file='')
+        queryset = queryset.filter(files__isnull=False).distinct()
         connection = get_connection()
         valid_indices = [f'resource-{x.id}' for x in queryset]
         resource_data_indices = connection.indices.get('resource-*').keys()

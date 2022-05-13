@@ -39,6 +39,20 @@ Feature: Datasets list API
     And api's response status code is 200
     And api's response datasets contain valid links to related resources
 
+  Scenario: Test dataset openness scores contains scores only from related resources that are published
+    Given dataset with id 10001
+    And resource created with params {"id": 10000, "dataset_id": 10001, "openness_score": 3}
+    And another resource created with params {"id": 10001, "dataset_id": 10001, "openness_score": 2}
+    When api request method is GET
+    And api request path is /1.4/datasets/10001
+    Then send api request and fetch the response
+    And api's response status code is 200
+    And api's response body field data/attributes/openness_scores is [2, 3]
+    Then set status draft on resource with id 10001
+    Then send api request and fetch the response
+    And api's response status code is 200
+    And api's response body field data/attributes/openness_scores is [3]
+
   Scenario Outline: Test datasets list is filtered by openness_scores
     Given dataset with id 999
     And resource created with params {"id": 999, "dataset_id": 999, "openness_score": 3}

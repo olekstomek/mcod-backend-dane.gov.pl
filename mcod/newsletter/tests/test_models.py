@@ -6,7 +6,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from mcod.newsletter.models import Newsletter
 
 
-class TestSubscriptionModel(object):
+class TestSubscriptionModel:
 
     def test_resign_newsletter_absolute_url_with_proper_lang(
             self, newsletter_subscription):

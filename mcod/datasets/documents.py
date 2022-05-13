@@ -3,12 +3,12 @@ from django_elasticsearch_dsl import fields
 from django_elasticsearch_dsl.registries import registry
 
 from mcod import settings as mcs
-from mcod.regions.documents import regions_field
-from mcod.lib.search.fields import TranslatedTextField, TranslatedKeywordField
-from mcod.users.models import UserFollowingDataset
 from mcod.harvester.serializers import DataSourceSerializer
+from mcod.lib.search.fields import TranslatedKeywordField, TranslatedTextField
+from mcod.regions.documents import regions_field
 from mcod.search.documents import ExtendedDocument
 from mcod.unleash import is_enabled
+from mcod.users.models import UserFollowingDataset
 
 Dataset = apps.get_model('datasets', 'Dataset')
 Organization = apps.get_model('organizations', 'Organization')
@@ -42,14 +42,18 @@ class DatasetDocument(ExtendedDocument):
     license_chosen = fields.IntegerField()
     license_condition_db_or_copyrighted = fields.TextField()
     license_condition_personal_data = fields.TextField()
-    license_condition_modification = fields.BooleanField()
     license_condition_original = fields.BooleanField()
-    license_condition_responsibilities = fields.TextField()
-    license_condition_cc40_responsibilities = fields.BooleanField()
-    license_condition_source = fields.BooleanField()
     license_condition_timestamp = fields.BooleanField()
     license_name = fields.TextField()
     license_description = fields.TextField()
+    if is_enabled('S49_cc_by_40_conditions_unification.be'):
+        license_condition_custom_description = fields.TextField()
+        license_condition_default_cc40 = fields.BooleanField()
+    else:
+        license_condition_modification = fields.BooleanField()
+        license_condition_responsibilities = fields.TextField()
+        license_condition_cc40_responsibilities = fields.BooleanField()
+        license_condition_source = fields.BooleanField()
     resource_modified = fields.DateField(attr='last_modified_resource')
     url = fields.KeywordField()
     source = fields.NestedField(
@@ -125,6 +129,16 @@ class DatasetDocument(ExtendedDocument):
             'title': TranslatedTextField('title')
         }
     )
+    if is_enabled('S49_dataset_supplements.be'):
+        supplement_docs = fields.NestedField(
+            properties={
+                'id': fields.IntegerField(),
+                'name': TranslatedTextField('name'),
+                'api_file_url': fields.TextField(),
+                'file_size': fields.LongField(),
+                'language': fields.KeywordField(),
+            }
+        )
 
     update_frequency = fields.KeywordField()
     users_following = fields.KeywordField(attr='users_following_list', multi=True)

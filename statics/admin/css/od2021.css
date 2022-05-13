@@ -673,3 +673,8 @@ a.disabledTab {
 .suit-columns { /* ODSOFT-2926 */
 	display: block;
 }
+.form-horizontal .inline-related h3 span.remove-handler {
+	float: right;
+	margin-right: 10px;
+	font-weight: 400;
+}

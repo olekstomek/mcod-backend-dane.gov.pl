@@ -1,7 +1,7 @@
 import json
 
 from mcod.core.api import fields
-from mcod.core.api.jsonapi.serializers import TopLevel, ObjectAttrs
+from mcod.core.api.jsonapi.serializers import ObjectAttrs, TopLevel
 from mcod.core.utils import anonymize_email
 from mcod.unleash import is_enabled
 

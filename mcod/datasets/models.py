@@ -1,42 +1,42 @@
-import json
-import os
 import itertools
+import json
 import logging
+import os
 from types import SimpleNamespace
 from uuid import uuid4
 
 from constance import config
 from django.apps import apps
-from django.utils.functional import cached_property
 from django.contrib.auth import get_user_model
 from django.contrib.postgres.fields import JSONField
 from django.contrib.postgres.indexes import GinIndex
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.db.models import Max, Sum, Q
-from django.db.models.signals import pre_save, post_save
+from django.db.models import Max, Q, Sum
+from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from django.template.loader import render_to_string
+from django.utils.functional import cached_property
+from django.utils.safestring import mark_safe
 from django.utils.timezone import now
-from django.utils.translation import gettext_lazy as _, get_language, override
+from django.utils.translation import get_language, gettext_lazy as _, override
 from model_utils import FieldTracker
 from modeltrans.fields import TranslationField
 
 from mcod import settings
-from mcod.datasets.managers import DatasetManager
-from mcod.watchers.tasks import update_model_watcher_task
 from mcod.core import signals as core_signals
-from mcod.core.api.search import signals as search_signals
 from mcod.core.api.rdf import signals as rdf_signals
+from mcod.core.api.search import signals as search_signals
 from mcod.core.db.managers import TrashManager
-from mcod.core.db.models import ExtendedModel, update_watcher, TrashModelBase
+from mcod.core.db.models import ExtendedModel, TrashModelBase, update_watcher
+from mcod.core.storages import get_storage
 from mcod.counters.models import ResourceDownloadCounter, ResourceViewCounter
+from mcod.datasets.managers import DatasetManager, SupplementManager
 from mcod.datasets.signals import remove_related_resources
 from mcod.datasets.tasks import archive_resources_files
-from mcod.core.storages import get_storage
 from mcod.regions.models import Region
 from mcod.unleash import is_enabled
-
+from mcod.watchers.tasks import update_model_watcher_task
 
 logger = logging.getLogger('mcod')
 
@@ -92,7 +92,13 @@ LICENSE_CONDITION_LABELS = {
                                ' or covered by plant variety rights within the meaning of the Act of 26 June 2003'
                                ' on the legal protection of plant varieties, to which the entity providing private'
                                ' data (suppliers) has rights (Article 36 (2) (1) of the Act of 11'
-                               ' August 2021 on open data and re-use of public sector information)')
+                               ' August 2021 on open data and re-use of public sector information)'),
+        'custom_description': mark_safe(
+            _('The user should inform about the source, time of creation and'
+              ' obtaining private data from the entity providing the data (supplier) <br><br> '
+              'The user should inform about the processing of the used private data'
+              ' (if he modifies it in any way) <br><br> The scope of the responsibility of the'
+              ' entity providing private data (suppliers) for the provided data'))
     },
     'public': {
         'source': _('The user should inform about the source, time of creation and obtaining public sector'
@@ -111,7 +117,13 @@ LICENSE_CONDITION_LABELS = {
                                ' and re-use public sector information)'),
         'personal_data': _('Conditions for the re-use of public sector information constituting or containing personal'
                            ' data (Article 15 (1) (4) of the Act of 11 August 2021 on open data and re-use'
-                           ' of public sector information)')
+                           ' of public sector information)'),
+        'custom_description': mark_safe(
+            _('The user should inform about the source, time of creation and obtaining public sector'
+              ' information from the obliged entity (supplier) <br><br> '
+              'The user should inform about the processing of public sector'
+              ' information to re-use (when modifying it in any way) <br><br> The scope of the responsibility'
+              ' of the obliged entity (supplier) for shared public sector information'))
     }
 }
 CC_BY_40_RESPONSIBILITIES_LABELS = {
@@ -271,21 +283,27 @@ class Dataset(ExtendedModel):
         storage=get_storage('datasets_archives'), blank=True, null=True,
         upload_to=archives_upload_to, max_length=2000, verbose_name=_("Archived resources files")
     )
+    license_condition_default_cc40 = models.NullBooleanField(
+        null=True, blank=True, default=None,
+        verbose_name='')
+    license_condition_custom_description = models.TextField(
+        blank=True, null=True,
+        verbose_name=_('Custom CC BY 40 conditions'))
 
     def __str__(self):
         return self.title
 
     @cached_property
     def has_table(self):
-        return self.resources.filter(has_table=True).exists()
+        return self.resources.published().filter(has_table=True).exists()
 
     @cached_property
     def has_map(self):
-        return self.resources.filter(has_map=True).exists()
+        return self.resources.published().filter(has_map=True).exists()
 
     @cached_property
     def has_chart(self):
-        return self.resources.filter(has_chart=True).exists()
+        return self.resources.published().filter(has_chart=True).exists()
 
     @property
     def comment_editors(self):
@@ -339,12 +357,12 @@ class Dataset(ExtendedModel):
 
     @property
     def formats(self):
-        items = [x.formats_list for x in self.resources.filter(status='published') if x.formats_list]
+        items = [x.formats_list for x in self.resources.published() if x.formats_list]
         return sorted(set([item for sublist in items for item in sublist]))
 
     @property
     def types(self):
-        return list(self.resources.values_list('type', flat=True).distinct())
+        return list(self.resources.published().values_list('type', flat=True).distinct())
 
     @property
     def frontend_url(self):
@@ -356,7 +374,7 @@ class Dataset(ExtendedModel):
 
     @property
     def openness_scores(self):
-        return list(set(res.openness_score for res in self.resources.all()))
+        return list(set(res.openness_score for res in self.resources.published()))
 
     @property
     def keywords_list(self):
@@ -385,8 +403,9 @@ class Dataset(ExtendedModel):
     @property
     def license_code(self):
         license_ = self.LICENSE_CC0
-        if self.license_condition_source or self.license_condition_modification or\
-                self.license_condition_responsibilities or self.license_condition_cc40_responsibilities:
+        if any([self.license_condition_source, self.license_condition_modification,
+                self.license_condition_responsibilities, self.license_condition_cc40_responsibilities,
+                self.license_condition_default_cc40, self.license_condition_custom_description]):
             license_ = self.LICENSE_CC_BY
         if self.license_chosen and self.license_chosen > license_:
             license_ = self.license_chosen
@@ -419,7 +438,9 @@ class Dataset(ExtendedModel):
             self.license_condition_modification,
             self.license_condition_original,
             self.license_condition_responsibilities,
-            self.license_condition_cc40_responsibilities
+            self.license_condition_cc40_responsibilities,
+            self.license_condition_default_cc40,
+            self.license_condition_custom_description
         ])
 
     @property
@@ -428,11 +449,11 @@ class Dataset(ExtendedModel):
 
     @property
     def published_resources_count(self):
-        return self.resources.count()
+        return self.resources.published().count()
 
     @property
     def visualization_types(self):
-        return list(set(itertools.chain(*[r.visualization_types for r in self.resources.all()])))
+        return list(set(itertools.chain(*[r.visualization_types for r in self.resources.published()])))
 
     @property
     def model_name(self):
@@ -464,14 +485,12 @@ class Dataset(ExtendedModel):
     @property
     def computed_downloads_count(self):
         return ResourceDownloadCounter.objects.filter(
-            resource__dataset_id=self.pk).aggregate(count_sum=Sum('count'))['count_sum'] or 0\
-            if is_enabled('S16_new_date_counters.be') else self.downloads_count
+            resource__dataset_id=self.pk).aggregate(count_sum=Sum('count'))['count_sum'] or 0
 
     @property
     def computed_views_count(self):
         return ResourceViewCounter.objects.filter(
-            resource__dataset_id=self.pk).aggregate(count_sum=Sum('count'))['count_sum'] or 0\
-            if is_enabled('S16_new_date_counters.be') else self.views_count
+            resource__dataset_id=self.pk).aggregate(count_sum=Sum('count'))['count_sum'] or 0
 
     def to_rdf_graph(self):
         schema = self.get_rdf_serializer_schema()
@@ -514,17 +533,12 @@ class Dataset(ExtendedModel):
                 'html_message': html_msg,
                 'test': bool(settings.DEBUG and config.TESTER_EMAIL),
             }
-            template_suffix = '-test' if settings.DEBUG and config.TESTER_EMAIL else ''
             subject = _('A comment was posted on the data set %(title)s%(version)s') % {
                 'title': title,
                 'version': version,
             }
-            if is_enabled('S39_mail_layout.be'):
-                _plain = 'mails/dataset-comment.txt'
-                _html = 'mails/dataset-comment.html'
-            else:
-                _plain = f'mails/report-dataset-comment{template_suffix}.txt'
-                _html = f'mails/report-dataset-comment{template_suffix}.html'
+            _plain = 'mails/dataset-comment.txt'
+            _html = 'mails/dataset-comment.html'
             msg_plain = render_to_string(_plain, context=context)
             msg_html = render_to_string(_html, context=context)
 
@@ -546,8 +560,7 @@ class Dataset(ExtendedModel):
 
     @property
     def regions(self):
-        has_no_region_resources = \
-            self.resources.filter(status='published', is_removed=False, regions__isnull=True).exists()
+        has_no_region_resources = self.resources.published().filter(is_removed=False, regions__isnull=True).exists()
         return Region.objects.for_dataset_with_id(self.pk, has_no_region_resources=has_no_region_resources)
 
     @property
@@ -557,6 +570,14 @@ class Dataset(ExtendedModel):
     @cached_property
     def showcases_published(self):
         return self.showcases.filter(status='published')
+
+    @cached_property
+    def supplement_docs(self):
+        return self.supplements.all()
+
+    @property
+    def supplements_str(self):
+        return ';'.join([x.name_csv for x in self.supplement_docs])
 
     def archive_files(self):
         archive_resources_files.s(dataset_id=self.pk).apply_async(countdown=settings.DATASET_ARCHIVE_FILES_TASK_DELAY)
@@ -605,12 +626,7 @@ class Dataset(ExtendedModel):
     @property
     def resources_files_list(self):
         resourcefile_model = apps.get_model('resources', 'ResourceFile')
-        resource_model = apps.get_model('resources', 'Resource')
-        if is_enabled('S40_new_file_model.be'):
-            file_details = resourcefile_model.objects.files_details_list(dataset_id=self.pk)
-        else:
-            file_details = resource_model.objects.file_details_list(dataset_id=self.pk)
-        return file_details
+        return resourcefile_model.objects.files_details_list(dataset_id=self.pk)
 
     @property
     def archived_resources_files_media_url(self):
@@ -638,8 +654,11 @@ class Dataset(ExtendedModel):
 
     @property
     def current_condition_descriptions(self):
-        labels = dict(self.license_condition_labels)
-        labels['cc40_responsibilities'] = CC_BY_40_RESPONSIBILITIES_LABELS[self.institution_type]
+        if is_enabled('S49_cc_by_40_conditions_unification.be'):
+            labels = {'custom_description': self.license_condition_labels['responsibilities']}
+        else:
+            labels = dict(self.license_condition_labels)
+            labels['cc40_responsibilities'] = CC_BY_40_RESPONSIBILITIES_LABELS[self.institution_type]
         descriptions = {}
         for key, val in labels.items():
             condition_field = f'license_condition_{key}'
@@ -653,7 +672,8 @@ class Dataset(ExtendedModel):
     def formatted_condition_descriptions(self):
         user_input_conditions = ['license_condition_responsibilities',
                                  'license_condition_personal_data',
-                                 'license_condition_db_or_copyrighted']
+                                 'license_condition_db_or_copyrighted',
+                                 'license_condition_custom_description']
         conditions = _('This dataset can be used under following conditions: ')
         descriptions = self.current_condition_descriptions
         terms = []
@@ -678,6 +698,87 @@ class Dataset(ExtendedModel):
         db_table = 'dataset'
         default_manager_name = "objects"
         indexes = [GinIndex(fields=["i18n"]), ]
+
+
+class BaseSupplement(ExtendedModel):
+    name = models.CharField(max_length=200, verbose_name=_('name'))
+    language = models.CharField(
+        max_length=2, choices=settings.LANGUAGES, default=settings.LANGUAGES[0][0], verbose_name=_('language'))
+    order = models.PositiveIntegerField(verbose_name=_('order'))
+    created_by = models.ForeignKey(
+        User,
+        models.DO_NOTHING,
+        blank=False,
+        editable=False,
+        null=True,
+        verbose_name=_('created by'),
+        related_name='%(app_label)s_%(class)s_created'
+    )
+    modified_by = models.ForeignKey(
+        User,
+        models.DO_NOTHING,
+        blank=False,
+        editable=False,
+        null=True,
+        verbose_name=_('modified by'),
+        related_name='%(app_label)s_%(class)s_modified'
+    )
+    i18n = TranslationField(fields=('name', ))
+
+    class Meta:
+        abstract = True
+        ordering = ('order',)
+        verbose_name = _('supplement')
+        verbose_name_plural = _('supplements')
+
+    def __str__(self):
+        return self.name
+
+    @property
+    def file_size(self):
+        try:
+            return self.file.size
+        except (FileNotFoundError, ValueError):
+            return None
+
+    @property
+    def file_size_human_readable(self):
+        return self.sizeof_fmt(self.file_size or 0)
+
+    @property
+    def file_size_human_readable_or_empty_str(self):
+        return self.file_size_human_readable if self.file_size else ''
+
+    @property
+    def api_file_url(self):
+        return self._get_api_url(self.file.url) if self.file_size else ''
+
+    @property
+    def file_url(self):
+        return self._get_api_url(self.file.url) if self.file else None
+
+    @property
+    def name_csv(self):
+        return f'{self.name_i18n}, {self.language.upper()}, {self.api_file_url}, {self.file_size_human_readable}'
+
+    def save_file(self, content, filename):
+        dt = self.created.date() if self.created else now().date()
+        subdir = dt.isoformat().replace("-", "")
+        dest_dir = os.path.join(self.file.storage.location, subdir)
+        os.makedirs(dest_dir, exist_ok=True)
+        file_path = os.path.join(dest_dir, filename)
+        with open(file_path, 'wb') as f:
+            f.write(content.read())
+        return '%s/%s' % (subdir, filename)
+
+
+class Supplement(BaseSupplement):
+    dataset = models.ForeignKey(Dataset, on_delete=models.CASCADE, related_name='supplements')
+    file = models.FileField(
+        verbose_name=_('file'), storage=get_storage('datasets'),
+        upload_to='%Y%m%d', max_length=2000)
+
+    objects = SupplementManager()
 
 
 @receiver(pre_save, sender=Dataset)

@@ -1,4 +1,4 @@
-from django.db.models import Model, Max
+from django.db.models import Max, Model
 
 from mcod.core.api.rdf.namespaces import NAMESPACES
 

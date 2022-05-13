@@ -1,19 +1,19 @@
 import json
+from datetime import datetime
 
 from auditlog.models import LogEntry as BaseLogEntry
 from deepdiff import DeepDiff
-from datetime import datetime
-from django.utils.safestring import mark_safe
-from pygments import highlight
-from pygments.formatters.html import HtmlFormatter
-from pygments.lexers.data import JsonLexer
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.postgres.fields import JSONField
+from django.db import models
 from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
+from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
-from django.db import models
+from pygments import highlight
+from pygments.formatters.html import HtmlFormatter
+from pygments.lexers.data import JsonLexer
 
 from mcod.core.api.search.helpers import get_document_for_model
 from mcod.core.api.search.tasks import delete_document_task, update_document_task
@@ -51,7 +51,6 @@ class History(models.Model):
                 ignore_order=True,
                 verbose_level=0,
                 exclude_paths={"root['modified']", "root['metadata_modified']"},
-                # exclude_types=['dictionary_item_added']
             )
 
             if 'type_changes' in ddiff:

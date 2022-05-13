@@ -6,7 +6,7 @@ import falcon
 from django.apps import apps
 from elasticsearch_dsl import Q
 
-from mcod.core.api.handlers import CreateOneHdlr, SearchHdlr, RetrieveOneHdlr
+from mcod.core.api.handlers import CreateOneHdlr, RetrieveOneHdlr, SearchHdlr
 from mcod.core.api.hooks import login_optional
 from mcod.core.api.views import JsonAPIView
 from mcod.core.versioning import versioned

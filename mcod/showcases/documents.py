@@ -5,7 +5,6 @@ from django_elasticsearch_dsl.registries import registry
 from mcod import settings as mcs
 from mcod.lib.search.fields import TranslatedKeywordField, TranslatedTextField
 from mcod.search.documents import ExtendedDocument
-from mcod.unleash import is_enabled
 
 Showcase = apps.get_model('showcases.Showcase')
 Dataset = apps.get_model('datasets.Dataset')
@@ -17,17 +16,10 @@ DATASET_FIELDS = {
     'title': TranslatedTextField('title'),
     'notes': TranslatedTextField('notes'),
     'category': fields.KeywordField(attr='category.title'),
-    'formats': fields.KeywordField(attr='formats', multi=True),
-    'downloads_count': fields.IntegerField(attr='computed_downloads_count'),
-    'views_count': fields.IntegerField(attr='computed_views_count'),
-    'openness_scores': fields.IntegerField(attr='openness_scores'),
     'modified': fields.DateField(),
     'slug': TranslatedKeywordField('slug'),
     'verified': fields.DateField(),
 }
-if is_enabled('S44_no_dataset_computed_fields.be'):
-    for field in ('formats', 'downloads_count', 'views_count', 'openness_scores'):
-        DATASET_FIELDS.pop(field)
 
 
 @registry.register_document

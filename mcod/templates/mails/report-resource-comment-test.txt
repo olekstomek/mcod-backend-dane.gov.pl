@@ -1,3 +1,0 @@
-adresaci: {{ resource.comment_mail_recipients|join:", " }}
-Do zasobu {{ resource.title }} została zgłoszona uwaga:
-{{ comment }}

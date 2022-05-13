@@ -90,7 +90,7 @@ Feature: Global Search API
 
       Examples:
       | request_path                                                                                                    |
-      | /1.4/search/?regions[bbox][geo_shape]=19.259214,53.481806,23.128409,51.013112&model[terms]=resource&per_page=10 |
+      | /1.4/search/?regions[bbox][geo_shape]=19.259214,53.481806,23.128409,51.013112,8&model[terms]=resource&per_page=10 |
       | /1.4/search/?regions[id][terms]=101752777&model[terms]=resource&per_page=10                                     |
 
   Scenario Outline: Institution abbrevation based search is case insensitive

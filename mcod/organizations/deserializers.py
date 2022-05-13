@@ -1,5 +1,11 @@
-from mcod.core.api.schemas import ListingSchema, CommonSchema, ExtSchema
-from mcod.core.api.schemas import NumberTermSchema, StringTermSchema, StringMatchSchema
+from mcod.core.api.schemas import (
+    CommonSchema,
+    ExtSchema,
+    ListingSchema,
+    NumberTermSchema,
+    StringMatchSchema,
+    StringTermSchema,
+)
 from mcod.core.api.search import fields as search_fields
 
 

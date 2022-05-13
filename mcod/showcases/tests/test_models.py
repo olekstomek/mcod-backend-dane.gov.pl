@@ -2,7 +2,7 @@ from datetime import date
 
 import pytest
 from django.conf import settings
-from django.core.exceptions import ValidationError, ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import IntegrityError
 from django.db.models.query import QuerySet
 from django.test import Client
@@ -11,7 +11,7 @@ from django.utils.encoding import smart_str
 from mcod.showcases.models import Showcase
 
 
-class TestShowcaseModel(object):
+class TestShowcaseModel:
     def test_can_not_create_empty_showcase(self):
         with pytest.raises(ValidationError)as e:
             a = Showcase()
@@ -132,7 +132,7 @@ class TestShowcaseModel(object):
         assert showcase2.main_page_position is None
 
 
-class TestShowcaseUserRoles(object):
+class TestShowcaseUserRoles:
     def test_editor_doesnt_see_showcases_in_admin_panel(self, active_editor):
         client = Client()
         client.login(email=active_editor.email, password='12345.Abcde')

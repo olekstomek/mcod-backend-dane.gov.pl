@@ -1,7 +1,8 @@
-import os
-import environ
 import logging
+import os
+
 import django
+import environ
 from channels.routing import get_default_application
 
 log = logging.getLogger(__name__)

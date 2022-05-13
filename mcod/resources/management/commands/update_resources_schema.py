@@ -4,11 +4,10 @@ from django.core.management import BaseCommand
 from django.core.management.base import CommandError
 from tqdm import tqdm
 
-
 description = """
-Po zmianie sposobu wyświetlania i indeksowania date i datetime stare zasoby mogą mieć problem ze zmianą typu. 
+Po zmianie sposobu wyświetlania i indeksowania date i datetime stare zasoby mogą mieć problem ze zmianą typu.
 Wynika to z tego, że mają one utworzony schemat a w nim dla typów date i datetime ustawiony format 'default'.
-Nowe zasoby mają ustawiony dla tych typów format 'any'. 
+Nowe zasoby mają ustawiony dla tych typów format 'any'.
 
 Te polecenie dla wybranych zasobów zmieni schemat zamieniając 'default' na 'any'.
 

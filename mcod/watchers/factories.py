@@ -42,7 +42,6 @@ class SubscriptionFactory(factory.django.DjangoModelFactory):
 
 
 class NotificationFactory(factory.django.DjangoModelFactory):
-    # subscription = factory.SubFactory(SubscriptionFactory)
     notification_type = factory.Faker('random_element', elements=_NOTIFICATION_TYPES)
     status = factory.Faker('random_element', elements=_NOTIFICATION_STATUS_CHOICES)
 
@@ -52,5 +51,5 @@ class NotificationFactory(factory.django.DjangoModelFactory):
 
 factories_registry.register('model watcher', ModelWatcherFactory)
 factories_registry.register('search query watcher', SearchQueryWatcherFactory)
-factories_registry.register('subscription', SubscriptionFactory)
+factories_registry.register('watchers subscription', SubscriptionFactory)
 factories_registry.register('notification', NotificationFactory)

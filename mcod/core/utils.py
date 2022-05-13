@@ -1,26 +1,24 @@
-# -*- coding: utf-8 -*-
-import logging
 import collections
 import csv
 import datetime
 import json
+import logging
 import re
+import unicodedata
 from collections import OrderedDict
 from http.cookies import SimpleCookie
 from typing import Union
-import unicodedata
 from xml.dom.minidom import parseString
-
-from dicttoxml import dicttoxml
-from pytz import utc
 
 import json_api_doc
 import jsonschema
+from dicttoxml import dicttoxml
 from falcon import Response
 from marshmallow import class_registry
 from marshmallow.schema import BaseSchema
-from mcod import settings
+from pytz import utc
 
+from mcod import settings
 
 logger = logging.getLogger('mcod')
 

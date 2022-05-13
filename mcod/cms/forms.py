@@ -3,8 +3,10 @@ from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 from wagtail.admin.forms import WagtailAdminPageForm
 from wagtail.admin.forms.choosers import (
-    ExternalLinkChooserForm, AnchorLinkChooserForm,
-    EmailLinkChooserForm, PhoneLinkChooserForm,
+    AnchorLinkChooserForm,
+    EmailLinkChooserForm,
+    ExternalLinkChooserForm,
+    PhoneLinkChooserForm,
 )
 from wagtail.core.blocks import BlockField, StreamValue
 
@@ -12,11 +14,11 @@ from mcod.cms.blocks.forms import (
     CheckboxBlock,
     CheckboxWithInputBlock,
     CheckboxWithMultilineInputBlock,
+    MultilineTextInput,
     RadioButtonBlock,
     RadioButtonWithInputBlock,
     RadioButtonWithMultilineInputBlock,
     SinglelineTextInput,
-    MultilineTextInput,
 )
 
 

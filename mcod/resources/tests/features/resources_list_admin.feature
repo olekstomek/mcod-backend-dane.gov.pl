@@ -8,6 +8,7 @@ Feature: Resources list in admin panel
     And admin's response page contains Test widoczności zasobu na liście
     # next line tests dal_admin_filters widget.
     And admin's response page contains Filtruj według nazwy zbioru
+    And admin's response page contains Filtruj według nazwy instytucji
 
   Scenario: Admin shouldnt see deleted resources on list
     Given resource created with params {"id": 999, "title": "Test widoczności zasobu na liście", "is_removed": true}

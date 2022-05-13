@@ -1,5 +1,6 @@
-import falcon
 from functools import partial
+
+import falcon
 from elasticsearch_dsl import Q
 
 from mcod.core.api.handlers import SearchHdlr

@@ -1,9 +1,9 @@
 from django.conf import settings
+from hypereditor.blocks import register, register_chooser
 from hypereditor.blocks.base import Block
 from hypereditor.blocks.chooser import Chooser
-from hypereditor.blocks import register, register_chooser
-from wagtail.images import get_image_model
 from wagtail.embeds.format import embed_to_frontend_html
+from wagtail.images import get_image_model
 
 Image = get_image_model()
 
@@ -57,11 +57,7 @@ class ImageChooser(Chooser):
             return {
                 'id': img.id,
                 'title': img.title,
-                # 'alt': {
-                #     'pl': img.alt_pl,
-                #     'en': img.alt_en,
-                # },
-                'url': _image_url
+                'url': _image_url,
             }
         else:
             return img

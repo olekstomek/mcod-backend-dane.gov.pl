@@ -12,5 +12,14 @@ class SpecialSignFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = SpecialSign
 
+    @factory.post_generation
+    def special_signs_resources(self, create, extracted, **kwargs):
+        if not create:
+            return
+
+        if extracted:
+            for resource in extracted:
+                self.special_signs_resources.add(resource)
+
 
 factories_registry.register('specialsign', SpecialSign)

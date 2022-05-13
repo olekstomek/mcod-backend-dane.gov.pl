@@ -1,34 +1,32 @@
-# -*- coding: utf-8 -*-
-
 import uuid
+
+from django.contrib.postgres.fields import JSONField
 from django.db import models
-from rest_framework.response import Response
-from rest_framework.exceptions import UnsupportedMediaType
+from django.utils.translation import get_language, gettext_lazy as _
 from modelcluster.fields import ParentalKey
-from django.utils.translation import get_language
+from rest_framework.exceptions import UnsupportedMediaType
+from rest_framework.fields import CharField
+from rest_framework.response import Response
 from rest_framework.serializers import ModelSerializer, RelatedField, UUIDField
-from wagtail.core.models import Page
-from wagtail.admin.edit_handlers import (FieldPanel, FieldRowPanel,
-                                         InlinePanel,
-                                         MultiFieldPanel,
-                                         RichTextFieldPanel,
-                                         ObjectList, PublishingPanel,
-                                         TabbedInterface)
+from wagtail.admin.edit_handlers import (
+    FieldPanel,
+    FieldRowPanel,
+    InlinePanel,
+    MultiFieldPanel,
+    ObjectList,
+    PublishingPanel,
+    RichTextFieldPanel,
+    StreamFieldPanel,
+    TabbedInterface,
+)
 from wagtail.api import APIField
 from wagtail.api.v2.serializers import StreamField as StreamFieldSerializer
-from django.utils.translation import gettext_lazy as _
-from wagtail.core.fields import RichTextField
-from rest_framework.fields import CharField
-from wagtail.core.models import Orderable
+from wagtail.core.fields import RichTextField, StreamField
+from wagtail.core.models import Orderable, Page
 
+from mcod.cms.blocks import forms as block_forms
 from mcod.cms.forms import FormPageForm
 from mcod.cms.models.base import BasePage
-from wagtail.core.fields import StreamField
-from wagtail.admin.edit_handlers import StreamFieldPanel
-from mcod.cms.blocks import forms as block_forms
-from django.contrib.postgres.fields import JSONField
-
-# from wagtail.contrib.forms.models import AbstractEmailForm, AbstractFormField
 
 
 class FormPageIndex(BasePage):

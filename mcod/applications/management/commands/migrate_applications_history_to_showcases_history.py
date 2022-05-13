@@ -2,8 +2,8 @@ from django.core.management import BaseCommand
 from tqdm import tqdm
 
 from mcod.applications.models import Application, ApplicationProposal
-from mcod.showcases.models import Showcase, ShowcaseProposal
 from mcod.histories.models import LogEntry
+from mcod.showcases.models import Showcase, ShowcaseProposal
 
 
 class Command(BaseCommand):

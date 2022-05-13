@@ -1,8 +1,15 @@
 from marshmallow import pre_dump
 
 from mcod.core.api import fields
-from mcod.core.api.jsonapi.serializers import \
-    Relationships, ObjectAttrs, TopLevel, RelationshipData, RelationshipMeta, RelationshipLinks, Relationship
+from mcod.core.api.jsonapi.serializers import (
+    ObjectAttrs,
+    Relationship,
+    RelationshipData,
+    RelationshipLinks,
+    RelationshipMeta,
+    Relationships,
+    TopLevel,
+)
 from mcod.core.api.schemas import ExtSchema
 from mcod.watchers.models import MODEL_TO_OBJECT_NAME, Subscription
 
@@ -103,12 +110,6 @@ class SubscriptionApiResponse(TopLevel):
     class Meta:
         attrs_schema = SubscriptionApiAttrs
         aggs_schema = SubscriptionApiAggs
-
-
-class NotificationSubscriptionRelationship(ExtSchema):
-    data = fields.Nested(RelationshipData)
-    links = fields.Nested(RelationshipLinks, required=True, many=False)
-    meta = fields.Nested(RelationshipMeta, many=False)
 
 
 class NotificationApiRelationships(Relationships):

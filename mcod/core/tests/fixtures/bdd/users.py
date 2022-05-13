@@ -1,12 +1,14 @@
 import json
 
-from django.test import Client as DjangoClient
 from django.core import mail
-from pytest_bdd import given, then
-from pytest_bdd import parsers
+from django.test import Client as DjangoClient
+from pytest_bdd import given, parsers, then
 
 from mcod.core.caches import flush_sessions
 from mcod.core.registries import factories_registry
+from mcod.newsletter.models import Subscription
+from mcod.organizations.models import Organization
+from mcod.resources.factories import ResourceFactory
 from mcod.users.factories import (
     AdminFactory,
     EditorFactory,
@@ -15,9 +17,6 @@ from mcod.users.factories import (
     UserFactory,
 )
 from mcod.users.models import User
-from mcod.newsletter.models import Subscription
-from mcod.organizations.models import Organization
-from mcod.resources.factories import ResourceFactory
 
 
 @given(parsers.parse('{state} user with email {email_address} and password {password}'))

@@ -3,7 +3,6 @@ import factory
 from mcod.categories import models
 from mcod.core.registries import factories_registry
 
-
 DCAT_CATEGORY_CODES = [
     'AGRI', 'ECON', 'EDUC', 'ENVI', 'GOVE', 'HEAL', 'JUST', 'SOCI', 'TECH', 'TRAN', 'ENER', 'INTR', 'REGI']
 

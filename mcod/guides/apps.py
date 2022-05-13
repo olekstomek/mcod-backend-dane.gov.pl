@@ -11,6 +11,3 @@ class GuidesConfig(ExtendedAppMixin, AppConfig):
     def ready(self):
         from mcod.guides.models import Guide, GuideItem
         self.connect_history(Guide, GuideItem)
-        # self.connect_core_signals(Guide)
-        # self.connect_core_signals(GuideTrash)
-        # self.connect_core_signals(Step)

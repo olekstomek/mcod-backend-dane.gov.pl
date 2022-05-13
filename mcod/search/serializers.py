@@ -8,10 +8,10 @@ from mcod.core.api.jsonapi.serializers import (
     Aggregation,
     HighlightObjectMixin,
     ObjectAttrs,
-    Relationships,
     Relationship,
+    Relationships,
     TopLevel,
-    TopLevelMeta
+    TopLevelMeta,
 )
 from mcod.core.api.rdf.schemas import ResponseSchema as RDFResponseSchema
 from mcod.core.api.schemas import ExtSchema
@@ -19,21 +19,21 @@ from mcod.datasets.serializers import (
     BoolDataAggregation,
     CategoryAggregation,
     InstitutionAggregation,
-    SourceSchema,
     LicenseAggregation,
+    SourceSchema,
     UpdateFrequencyAggregation,
 )
-from mcod.lib.serializers import TranslatedStr, KeywordsList
+from mcod.lib.serializers import KeywordsList, TranslatedStr
 from mcod.organizations.serializers import DataSourceAttr
-from mcod.regions.serializers import RegionSchema, RegionAggregationSerializer
-from mcod.resources.serializers import GeoTileAggregation, GeoRegionAggregation
+from mcod.regions.serializers import RegionAggregationSerializer, RegionSchema
+from mcod.resources.serializers import GeoRegionAggregation, GeoTileAggregation
 from mcod.showcases.serializers import (
     ShowcaseCategoryAggregation,
     ShowcasePlatformAggregation,
     ShowcaseTypeAggregation,
 )
-from mcod.watchers.serializers import SubscriptionMixin
 from mcod.unleash import is_enabled
+from mcod.watchers.serializers import SubscriptionMixin
 
 
 class CommonObjectRelationships(Relationships):
@@ -81,10 +81,8 @@ class CommonObjectApiAttrs(ObjectAttrs, HighlightObjectMixin):
     verified = fields.DateTime()
     categories = fields.Nested(Category, many=True)
     category = fields.Nested(Category)
-    if is_enabled('S43_dynamic_data.be'):
-        has_dynamic_data = fields.Boolean()
-    if is_enabled('S35_high_value_data.be'):
-        has_high_value_data = fields.Boolean()
+    has_dynamic_data = fields.Boolean()
+    has_high_value_data = fields.Boolean()
     if is_enabled('S47_research_data.be'):
         has_research_data = fields.Boolean()
 
@@ -101,11 +99,10 @@ class CommonObjectApiAttrs(ObjectAttrs, HighlightObjectMixin):
     illustrative_graphics_url = fields.Str()
     image_alt = TranslatedStr()
     image_thumb_url = fields.Str()
-    if is_enabled('S39_showcases.be'):
-        showcase_category = fields.Str()
-        showcase_category_name = fields.Method('get_showcase_category_name')
-        showcase_types = fields.List(fields.Str())
-        showcase_platforms = fields.List(fields.Str())
+    showcase_category = fields.Str()
+    showcase_category_name = fields.Method('get_showcase_category_name')
+    showcase_types = fields.List(fields.Str())
+    showcase_platforms = fields.List(fields.Str())
 
     # institutions
     abbreviation = fields.Str()
@@ -290,10 +287,6 @@ class SparqlNamespaceApiAttrs(ObjectAttrs):
 class SparqlNamespaceApiResponse(TopLevel):
     class Meta:
         attrs_schema = SparqlNamespaceApiAttrs
-
-
-class SparqlAttrs(ObjectAttrs):
-    pass
 
 
 class SparqlResponseSchema(RDFResponseSchema):

@@ -1,21 +1,21 @@
 import re
+
 from django.conf import settings
 from django.conf.urls import url
 from django.http import Http404
 from django.shortcuts import get_object_or_404
-from django.urls import reverse, path
+from django.urls import path, reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import activate
 from django.views.decorators.vary import vary_on_cookie
 from fancy_cache import cache_page
-from rest_framework.exceptions import NotFound, MethodNotAllowed
+from rest_framework.exceptions import NotFound
 from rest_framework.response import Response
-from wagtail.api.v2.views import BaseAPIViewSet, PagesAPIViewSet
-from wagtail.core.models import PageRevision, Page
 from wagtail.api.v2.utils import BadRequestError, page_models_from_string
+from wagtail.api.v2.views import BaseAPIViewSet, PagesAPIViewSet
+from wagtail.core.models import Page, PageRevision
 from wagtail.images.api.v2.views import ImagesAPIViewSet
 from wagtailvideos import get_video_model
-
 
 from mcod.cms.api.serializers import CmsPageSerializer, VideoOEmbedSerializer
 from mcod.cms.utils import filter_page_type
@@ -188,12 +188,9 @@ class CmsPagesViewSet(PagesAPIViewSet):
 
         if not models:
             return _qs
-
-        elif len(models) == 1:
+        if len(models) == 1:
             return models[0].objects.filter(id__in=_qs.values_list('id', flat=True))
-
-        else:  # len(models) > 1
-            return filter_page_type(_qs, models)
+        return filter_page_type(_qs, models)
 
     @ classmethod
     def get_urlpatterns(cls):
@@ -214,14 +211,12 @@ class CmsPagesViewSet(PagesAPIViewSet):
         return result
 
     def post(self, request, url_path, **kwargs):
-        # return Response(status=200)
         try:
             url_path = url_path.strip()
             page = Page.objects.get(url_path='/{}/'.format(url_path))
             return page.specific.save_post(request)
         except Page.DoesNotExist:
             raise NotFound
-        raise MethodNotAllowed(method='POST')
 
 
 class OEmbedApiViewSet(BaseAPIViewSet):

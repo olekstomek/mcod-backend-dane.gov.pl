@@ -1,4 +1,5 @@
 import pytest
+
 from mcod.newsletter.factories import NewsletterFactory
 
 

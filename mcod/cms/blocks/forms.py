@@ -32,7 +32,6 @@ class RadioButtonWithInputBlock(blocks.StructBlock):
     label = blocks.CharBlock(
         label='Etykieta dla przycisku radio',
         max_length=5000,
-        # help_text='',
         required=False
     )
     help_text = blocks.CharBlock(
@@ -45,20 +44,17 @@ class RadioButtonWithInputBlock(blocks.StructBlock):
     input_label = blocks.CharBlock(
         label='Etykieta dla pola tekstowego',
         max_length=5000,
-        # help_text='',
         required=False
     )
     input_help_text = blocks.CharBlock(
         label='Tekst pomocniczy dla pola tekstowego',
         max_length=5000,
-        # help_text='',
         required=False
     )
 
     input_default_value = blocks.CharBlock(
         label='Domyślna wartość pola tekstowego',
         max_length=5000,
-        # help_text='',
         required=False
     )
     input_placeholder = blocks.CharBlock(
@@ -77,7 +73,6 @@ class RadioButtonWithMultilineInputBlock(blocks.StructBlock):
     label = blocks.CharBlock(
         label='Etykieta dla przycisku radio',
         max_length=5000,
-        # help_text='',
         required=False
     )
     help_text = blocks.CharBlock(
@@ -90,20 +85,17 @@ class RadioButtonWithMultilineInputBlock(blocks.StructBlock):
     input_label = blocks.CharBlock(
         label='Etykieta dla pola tekstowego',
         max_length=5000,
-        # help_text='',
         required=False
     )
     input_help_text = blocks.CharBlock(
         label='Tekst pomocniczy dla pola tekstowego',
         max_length=5000,
-        # help_text='',
         required=False
     )
 
     input_default_value = blocks.CharBlock(
         label='Domyślna wartość pola tekstowego',
         max_length=5000,
-        # help_text='',
         required=False
     )
     input_placeholder = blocks.CharBlock(
@@ -148,7 +140,6 @@ class CheckboxWithInputBlock(blocks.StructBlock):
     label = blocks.CharBlock(
         label='Etykieta dla przycisku checkbox',
         max_length=5000,
-        # help_text='',
         required=False
     )
     help_text = blocks.CharBlock(
@@ -161,20 +152,17 @@ class CheckboxWithInputBlock(blocks.StructBlock):
     input_label = blocks.CharBlock(
         label='Etykieta dla pola tekstowego',
         max_length=5000,
-        # help_text='',
         required=False
     )
     input_help_text = blocks.CharBlock(
         label='Tekst pomocniczy dla pola tekstowego',
         max_length=5000,
-        # help_text='',
         required=False
     )
 
     input_default_value = blocks.CharBlock(
         label='Domyślna wartość pola tekstowego',
         max_length=5000,
-        # help_text='',
         required=False
     )
     input_placeholder = blocks.CharBlock(
@@ -193,7 +181,6 @@ class CheckboxWithMultilineInputBlock(blocks.StructBlock):
     label = blocks.CharBlock(
         label='Etykieta dla przycisku checkbox',
         max_length=5000,
-        # help_text='',
         required=False
     )
     help_text = blocks.CharBlock(
@@ -206,20 +193,17 @@ class CheckboxWithMultilineInputBlock(blocks.StructBlock):
     input_label = blocks.CharBlock(
         label='Etykieta dla pola tekstowego',
         max_length=5000,
-        # help_text='',
         required=False
     )
     input_help_text = blocks.CharBlock(
         label='Tekst pomocniczy dla pola tekstowego',
         max_length=5000,
-        # help_text='',
         required=False
     )
 
     input_default_value = blocks.CharBlock(
         label='Domyślna wartość pola tekstowego',
         max_length=5000,
-        # help_text='',
         required=False
     )
     input_placeholder = blocks.CharBlock(
@@ -299,20 +283,3 @@ class DropdownInput(blocks.StructBlock):
 
     class Meta:
         form_classname = 'dropdown-block'
-
-
-# FORM_FIELD_CHOICES = (
-#     #('singleline', _('Single line text')),
-#     #('multiline', _('Multi-line text')),
-#     ('email', _('Email')),
-#     ('number', _('Number')),
-#     ('url', _('URL')),
-#     #('checkbox', _('Checkbox')),
-#     #('checkboxes', _('Checkboxes')),
-#     ('dropdown', _('Drop down')),
-#     #('multiselect', _('Multiple select')),
-#     #('radio', _('Radio buttons')),
-#     #('date', _('Date')),
-#     #('datetime', _('Date/time')),
-#     #('hidden', _('Hidden field')),
-# )

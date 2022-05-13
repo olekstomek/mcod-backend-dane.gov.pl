@@ -1,8 +1,9 @@
-import falcon
 import uuid
 from collections import namedtuple
-from django.utils.translation import gettext_lazy as _
 from functools import partial
+
+import falcon
+from django.utils.translation import gettext_lazy as _
 
 from mcod import settings
 from mcod.core.api.handlers import (
@@ -24,10 +25,8 @@ from mcod.schedules.deserializers import (
     AdminCreateUserScheduleItemRequest,
     CommentsApiRequest,
     CreateCommentRequest,
-    CreateUserScheduleItemRequest,
     CreateNotificationsApiRequest,
-    get_schedule_deserializer_schema,
-    get_user_schedule_item_deserializer_schema,
+    CreateUserScheduleItemRequest,
     NotificationApiRequest,
     NotificationsApiRequest,
     ScheduleApiRequest,
@@ -40,6 +39,8 @@ from mcod.schedules.deserializers import (
     UserScheduleItemInstitutionApiRequest,
     UserScheduleItemsApiRequest,
     UserSchedulesApiRequest,
+    get_schedule_deserializer_schema,
+    get_user_schedule_item_deserializer_schema,
 )
 from mcod.schedules.models import Comment, Notification, Schedule, UserSchedule, UserScheduleItem
 from mcod.schedules.serializers import (
@@ -62,7 +63,7 @@ class RetrieveManyHdlr(IncludeMixin, BaseRetrieveManyHdlr):
     pass
 
 
-class RetrieveTabularMixin(object):
+class RetrieveTabularMixin:
 
     def update_context(self):
         data = getattr(self.response.context, 'data', None)

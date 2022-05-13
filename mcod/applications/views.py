@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from collections import namedtuple
 from functools import partial
 from uuid import uuid4
@@ -7,11 +6,15 @@ import falcon
 from django.apps import apps
 from elasticsearch_dsl import Q
 
-from mcod.applications.deserializers import ApplicationApiRequest, ApplicationApiSearchRequest, CreateSubmissionRequest
+from mcod.applications.deserializers import (
+    ApplicationApiRequest,
+    ApplicationApiSearchRequest,
+    CreateSubmissionRequest,
+)
 from mcod.applications.documents import ApplicationDocument
 from mcod.applications.serializers import ApplicationApiResponse, SubmissionApiResponse
 from mcod.applications.tasks import create_application_proposal_task, send_application_proposal
-from mcod.core.api.handlers import CreateOneHdlr, SearchHdlr, RetrieveOneHdlr
+from mcod.core.api.handlers import CreateOneHdlr, RetrieveOneHdlr, SearchHdlr
 from mcod.core.api.hooks import login_optional
 from mcod.core.api.views import JsonAPIView
 from mcod.core.versioning import versioned

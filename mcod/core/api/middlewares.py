@@ -8,13 +8,14 @@ from urllib.parse import urlparse
 import elasticapm
 import elasticapm.instrumentation.control
 import falcon
+from accept_types import get_best_match
 from django.apps import apps
 from django.utils.http import is_same_domain
 from django.utils.translation import activate, gettext_lazy as _
 from django.utils.translation.trans_real import (
     get_supported_language_variant,
     language_code_re,
-    parse_accept_lang_header
+    parse_accept_lang_header,
 )
 from django_redis import get_redis_connection
 from elasticapm.conf import constants
@@ -22,16 +23,14 @@ from elasticapm.utils.disttracing import TraceParent
 from falcon import Request, Response
 from falcon_caching.middleware import Middleware as BaseFalconCacheMiddleware
 from falcon_caching.options import CacheEvictionStrategy, HttpMethods
-from accept_types import get_best_match
 
 from mcod import settings
-from mcod.core.api.apm import get_data_from_response, get_data_from_request
+from mcod.core.api.apm import get_data_from_request, get_data_from_response
 from mcod.core.api.versions import VERSIONS
 from mcod.core.csrf import _sanitize_token, compare_salted_tokens, generate_csrf_token
-from mcod.core.utils import jsonapi_validator, route_to_name, falcon_set_cookie
+from mcod.core.utils import falcon_set_cookie, jsonapi_validator, route_to_name
 from mcod.counters.lib import Counter
 from mcod.lib.encoders import DateTimeToISOEncoder
-
 
 logger = logging.getLogger(__name__)
 
@@ -56,7 +55,7 @@ class SearchHistoryMiddleware:
             con.lpush(key, req.url)
 
 
-class ApiVersionMiddleware(object):
+class ApiVersionMiddleware:
     def process_request(self, req, resp):
         current_version = max(VERSIONS)
         version = req.headers.get('X-API-VERSION', str(current_version))
@@ -134,7 +133,7 @@ class FalconCacheMiddleware(BaseFalconCacheMiddleware):
         return resp.media
 
 
-class LocaleMiddleware(object):
+class LocaleMiddleware:
     def get_language_from_header(self, header):
         for accept_lang, unused in parse_accept_lang_header(header):
             if accept_lang == '*':
@@ -165,7 +164,7 @@ class LocaleMiddleware(object):
         resp.append_header('Content-Language', req.language)
 
 
-class CounterMiddleware(object):
+class CounterMiddleware:
 
     def process_response(self, req, resp, resource, req_succeeded):
         try:
@@ -184,7 +183,7 @@ class CounterMiddleware(object):
                 pass
 
 
-class DebugMiddleware(object):
+class DebugMiddleware:
     def process_request(self, request, response):
 
         response.context.debug = True if request.params.get('debug') == 'yes' else False
@@ -214,7 +213,7 @@ class DebugMiddleware(object):
             response.content_type = 'application/json'
 
 
-class ContentTypeMiddleware(object):
+class ContentTypeMiddleware:
     def process_request(self, req, resp):
         allowed_mime_types = [
             'application/vnd.api+json',
@@ -223,7 +222,7 @@ class ContentTypeMiddleware(object):
         resp.content_type = get_best_match(req.accept, allowed_mime_types)
 
 
-class TraceMiddleware(object):
+class TraceMiddleware:
     def __init__(self, apm_client):
         self.client = apm_client
 

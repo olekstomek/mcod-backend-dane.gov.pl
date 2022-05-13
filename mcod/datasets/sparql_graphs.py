@@ -1,15 +1,15 @@
-from django.db.models import Model
 import marshmallow as ma
-from rdflib import ConjunctiveGraph
-from rdflib import URIRef
-from mcod.core.api.rdf.sparql_graphs import SparqlGraph
-from mcod.core.api.rdf.graph_mixins import SparqlGraphCatalogModifiedMixin
+from django.db.models import Model
+from rdflib import ConjunctiveGraph, URIRef
+
 import mcod.core.api.rdf.namespaces as ns
-from mcod.datasets.serializers import DatasetRDFResponseSchema
-from mcod.datasets.models import Dataset
-from mcod.resources.models import Resource
-from mcod.organizations.models import Organization
 from mcod.categories.models import Category
+from mcod.core.api.rdf.graph_mixins import SparqlGraphCatalogModifiedMixin
+from mcod.core.api.rdf.sparql_graphs import SparqlGraph
+from mcod.datasets.models import Dataset
+from mcod.datasets.serializers import DatasetRDFResponseSchema
+from mcod.organizations.models import Organization
+from mcod.resources.models import Resource
 
 
 class DatasetSparqlGraph(SparqlGraph, DatasetRDFResponseSchema, SparqlGraphCatalogModifiedMixin):

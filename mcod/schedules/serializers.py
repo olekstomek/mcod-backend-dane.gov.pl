@@ -1,7 +1,7 @@
 from marshmallow import post_dump, pre_dump
 
 from mcod.core.api import fields
-from mcod.core.api.jsonapi.serializers import Relationships, ObjectAttrs, TopLevel, Relationship
+from mcod.core.api.jsonapi.serializers import ObjectAttrs, Relationship, Relationships, TopLevel
 from mcod.core.api.schemas import ExtSchema
 from mcod.core.serializers import CSVSerializer
 
@@ -253,7 +253,6 @@ class CreateNotificationsApiResponse(TopLevel):
 class NotificationApiAttrs(NotificationSerializer, ObjectAttrs):
 
     class Meta:
-        # relationships_schema = NotificationApiRelationships
         object_type = 'notification'
         url_template = '{api_url}/auth/schedule_notifications/{ident}'
         ordered = True

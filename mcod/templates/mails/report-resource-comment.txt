@@ -1,2 +1,0 @@
-Do zasobu {{ resource.title }} została zgłoszona uwaga:
-{{ comment }}

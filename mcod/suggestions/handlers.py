@@ -2,14 +2,8 @@ from functools import partial
 
 from django.apps import apps
 
-from mcod.core.api.handlers import (
-    RetrieveOneHdlr,
-    SearchHdlr
-)
-from mcod.suggestions.deserializers import (
-    SubmissionApiRequest,
-    SubmissionListRequest
-)
+from mcod.core.api.handlers import RetrieveOneHdlr, SearchHdlr
+from mcod.suggestions.deserializers import SubmissionApiRequest, SubmissionListRequest
 from mcod.suggestions.documents import AcceptedDatasetSubmissionDoc
 from mcod.suggestions.serializers import AcceptedSubmissionApiResponse
 

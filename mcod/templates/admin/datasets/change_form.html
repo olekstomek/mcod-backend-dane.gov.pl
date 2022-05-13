@@ -8,20 +8,11 @@
 
 {% block extrajs %}
     {{ block.super }}
-    {% include 'admin/datasets/licences/licenses_script.html' %}
+    {% include 'admin/datasets/licenses/licenses_script.html' %}
 
-    {% is_unleash_enabled "S29_update_frequency_notifications_pa.be" as S29_update_frequency_notifications_pa %}
-    {% is_unleash_enabled "S36_dataset_resource_comment_recipient.be" as S36_dataset_resource_comment_recipient %}
     <script>
         var $updateNotificationRecipientEmailControlGroup = $("div.control-group.form-row.field-update_notification_recipient_email");
         var $updateNotificationRecipientEmailHelpInline = $updateNotificationRecipientEmailControlGroup.find('span.help-inline');
-
-        {% if not S36_dataset_resource_comment_recipient %}
-        $updateNotificationRecipientEmailControlGroup.css('display', 'none');
-        $updateNotificationRecipientEmailHelpInline.css('display', 'none');
-        {% endif %}
-
-        {% if S29_update_frequency_notifications_pa %}
         var $updateFrequency = $("div.field-update_frequency");
         var $updateFrequencySelect = $updateFrequency.find('select#id_update_frequency');
         var frequencyNotifications = {
@@ -48,18 +39,12 @@
                 if (frequencyNotification === undefined) {
                     $isUpdateNotificationEnabledControlGroup.css('display', 'none');
                     $updateNotificationFrequencyControlGroup.css('display', 'none');
-                    {% if not S36_dataset_resource_comment_recipient %}
-                    $updateNotificationRecipientEmailControlGroup.css('display', 'none');
-                    {% endif %}
                     if (!initial) {
                         $updateNotificationFrequencyInput.val('');
                     }
                 } else {
                     $isUpdateNotificationEnabledControlGroup.css('display', 'inline');
                     $updateNotificationFrequencyControlGroup.css('display', 'inline');
-                    {% if not S36_dataset_resource_comment_recipient %}
-                    $updateNotificationRecipientEmailControlGroup.css('display', 'inline');
-                    {% endif %}
                     if (!initial || $updateNotificationFrequencyInput.val() === '') {
                         $updateNotificationFrequencyInput.val(frequencyNotification.value);
                     }
@@ -106,7 +91,6 @@
                 return;
             });
         {% endif %}
-    {% endif %}
     $('input[name="has_dynamic_data"]').click(function(){
       $('input[name="has_dynamic_data"]').prop('checked', false);
       $(this).prop('checked', true);

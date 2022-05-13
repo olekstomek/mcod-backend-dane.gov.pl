@@ -11,13 +11,13 @@ from django.db import models
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
 from django.forms.models import model_to_dict
+from django.template.loader import render_to_string
+from django.templatetags.static import static
 from django.utils import timezone, translation
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _, pgettext_lazy
-from django.templatetags.static import static
-from django.template.loader import render_to_string
-from modeltrans.fields import TranslationField
 from model_utils import FieldTracker
+from modeltrans.fields import TranslationField
 from PIL import Image
 
 from mcod import settings
@@ -26,13 +26,12 @@ from mcod.core.api.search import signals as search_signals
 from mcod.core.db.models import ExtendedModel, TrashModelBase
 from mcod.showcases.managers import (
     ShowcaseManager,
-    ShowcaseTrashManager,
     ShowcaseProposalManager,
     ShowcaseProposalTrashManager,
+    ShowcaseTrashManager,
 )
 from mcod.showcases.signals import generate_thumbnail, update_showcase_document
 from mcod.showcases.tasks import generate_logo_thumbnail_task, send_showcase_proposal_mail_task
-
 
 User = get_user_model()
 

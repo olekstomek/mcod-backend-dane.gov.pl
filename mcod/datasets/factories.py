@@ -1,3 +1,6 @@
+import uuid
+from io import BytesIO
+
 import factory
 
 from mcod.categories.factories import CategoryFactory
@@ -71,4 +74,16 @@ class DatasetFactory(factory.django.DjangoModelFactory):
         django_get_or_create = ('title',)
 
 
+class SupplementFactory(factory.django.DjangoModelFactory):
+    name = factory.Faker('text', max_nb_chars=200, locale='pl_PL')
+    file = factory.django.FileField(from_func=lambda: BytesIO(b'Some text'), filename='{}.txt'.format(str(uuid.uuid4())))
+    dataset = factory.SubFactory(DatasetFactory)
+    order = 0
+    language = 'pl'
+
+    class Meta:
+        model = models.Supplement
+
+
 factories_registry.register('dataset', DatasetFactory)
+factories_registry.register('supplement', SupplementFactory)

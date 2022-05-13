@@ -1,22 +1,20 @@
-# -*- coding: utf-8 -*-
 import falcon
 from django.utils.translation import get_language
 from elasticsearch import TransportError
 from elasticsearch_dsl import DateHistogramFacet, MultiSearch, Search, TermsFacet
-from elasticsearch_dsl.aggs import Terms, Nested, Filter
+from elasticsearch_dsl.aggs import Filter, Nested, Terms
 from elasticsearch_dsl.connections import get_connection
 
 from mcod import settings
 from mcod.alerts.utils import get_active_alerts
 from mcod.core.api.search.facets import NestedFacet
 from mcod.core.api.views import JsonAPIView
+from mcod.core.schemas import StatsSchema
 from mcod.core.versioning import versioned
 from mcod.datasets.documents import DatasetDocument
 from mcod.lib.handlers import BaseHandler
 from mcod.resources.documents import ResourceDocument
-from mcod.tools.depricated.schemas import StatsSchema
 from mcod.tools.depricated.serializers import StatsMeta, StatsSerializer
-
 
 connection = get_connection()
 

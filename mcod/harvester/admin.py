@@ -2,21 +2,17 @@ from django.contrib import admin, messages
 from django.contrib.admin.views.decorators import staff_member_required
 from django.db.models import Q
 from django.urls import path, re_path, reverse
+from django.utils import timezone
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
-from django.utils import timezone
 
-from mcod.harvester.forms import DataSourceAdminForm, DataSourceImportAdminForm
 from mcod.datasets.admin import PaginationInline
 from mcod.datasets.models import Dataset
+from mcod.harvester.forms import DataSourceAdminForm, DataSourceImportAdminForm
 from mcod.harvester.models import DataSource, DataSourceImport, DataSourceTrash
 from mcod.harvester.tasks import import_data_task
 from mcod.harvester.views import ValidateXMLDataSourceView, get_progress
-from mcod.lib.admin_mixins import (
-    HistoryMixin,
-    TrashMixin,
-    ModelAdmin,
-)
+from mcod.lib.admin_mixins import HistoryMixin, ModelAdmin, TrashMixin
 from mcod.users.forms import FilteredSelectMultipleCustom
 
 
@@ -37,7 +33,6 @@ class DataSourceDatasets(PaginationInline):
     can_add = False
     can_change = False
     can_delete = False
-    show_change_link = False
     max_num = 0
     min_num = 0
     extra = 0
@@ -76,8 +71,6 @@ class DataSourceImports(PaginationInline):
     can_delete = False
     form = DataSourceImportAdminForm
     template = 'admin/harvester/datasourceimport-inline-list.html'
-    show_change_link = False
-
     fields = ('start', 'end', '_status')
     max_num = 0
     min_num = 0

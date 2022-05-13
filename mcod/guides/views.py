@@ -1,13 +1,18 @@
-import falcon
 from functools import partial
 
+import falcon
+
 from mcod.api import app_cache as cache
-from mcod.core.api.handlers import IncludeMixin, RetrieveManyHdlr as BaseRetrieveManyHdlr, RetrieveOneHdlr
-from mcod.guides.deserializers import GuideApiRequest, GuidesApiRequest
-from mcod.guides.serializers import GuideApiResponse
+from mcod.core.api.handlers import (
+    IncludeMixin,
+    RetrieveManyHdlr as BaseRetrieveManyHdlr,
+    RetrieveOneHdlr,
+)
 from mcod.core.api.views import JsonAPIView
 from mcod.core.versioning import versioned
+from mcod.guides.deserializers import GuideApiRequest, GuidesApiRequest
 from mcod.guides.models import Guide
+from mcod.guides.serializers import GuideApiResponse
 
 
 class RetrieveManyHdlr(IncludeMixin, BaseRetrieveManyHdlr):

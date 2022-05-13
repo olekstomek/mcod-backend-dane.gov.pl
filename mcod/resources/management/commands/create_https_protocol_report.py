@@ -1,10 +1,11 @@
-from django_tqdm import BaseCommand
+from celery import chord
 from django.apps import apps
-from django.db.models import F, Case, When, Value, CharField
+from django.db.models import Case, CharField, F, Value, When
+from django_tqdm import BaseCommand
+
+from mcod.reports.tasks import create_resources_report_task
 from mcod.resources.models import RESOURCE_TYPE
 from mcod.resources.tasks import check_link_protocol
-from mcod.reports.tasks import create_resources_report_task
-from celery import chord
 
 
 class Command(BaseCommand):

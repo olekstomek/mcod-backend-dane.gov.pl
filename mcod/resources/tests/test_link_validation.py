@@ -1,11 +1,23 @@
 import pytest
 import requests_mock
+from pytest_bdd import scenarios
 
 from mcod.resources.link_validation import (
-    check_link_status, InvalidUrl, InvalidResponseCode, InvalidSchema,
-    InvalidContentType, UnsupportedContentType, download_file, MissingContentType,
-    content_type_from_file_format, filename_from_url,
-    _get_resource_type
+    InvalidContentType,
+    InvalidResponseCode,
+    InvalidSchema,
+    InvalidUrl,
+    MissingContentType,
+    UnsupportedContentType,
+    check_link_status,
+    content_type_from_file_format,
+    download_file,
+    filename_from_url,
+)
+
+
+scenarios(
+    'features/resource_link_validation.feature',
 )
 
 
@@ -193,26 +205,3 @@ def test_filename_from_url_extension_from_content_type():
     filename, extension = filename_from_url('http://mocker-test.com/test-file', 'video/mp4')
     assert filename == 'test-file'
     assert extension == 'mp4'
-
-
-class TestResourceTypeDiscovery:
-
-    def test__get_resource_type_recognize_xml_attachment_as_file(self, xml_resource_file_response):
-        resource_type = _get_resource_type(xml_resource_file_response)
-        assert resource_type == 'file'
-
-    def test__get_resource_type_recognize_xml_non_attachment_as_api(self, xml_resource_api_response):
-        resource_type = _get_resource_type(xml_resource_api_response)
-        assert resource_type == 'api'
-
-    def test__get_resource_type_recognize_json_as_api(self, json_resource_response):
-        resource_type = _get_resource_type(json_resource_response)
-        assert resource_type == 'api'
-
-    def test__get_resource_type_recognize_jsonstat_as_api(self, jsonstat_resource_response):
-        resource_type = _get_resource_type(jsonstat_resource_response)
-        assert resource_type == 'api'
-
-    def test__get_resource_type_recognize_html_as_web(self, html_resource_response):
-        resource_type = _get_resource_type(html_resource_response)
-        assert resource_type == 'website'

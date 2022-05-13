@@ -2,13 +2,13 @@ import os
 import zipfile
 from functools import partial
 
-from django.apps import apps
 import falcon
+from django.apps import apps
 
 from mcod.core.api.handlers import RetrieveManyHdlr, RetrieveOneHdlr
 from mcod.counters.lib import Counter
 from mcod.datasets.deserializers import DatasetResourcesDownloadApiRequest
-from mcod.datasets.serializers import DatasetXMLSerializer, DatasetResourcesCSVSerializer
+from mcod.datasets.serializers import DatasetResourcesCSVSerializer, DatasetXMLSerializer
 
 
 class CSVMetadataViewHandler(RetrieveManyHdlr):

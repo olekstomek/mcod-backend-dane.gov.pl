@@ -1,7 +1,7 @@
 from marshmallow.schema import BaseSchema
 from querystring_parser import parser as qs_parser
 from webargs import core
-from webargs.core import json, get_value, dict2schema
+from webargs.core import dict2schema, get_value, json
 from webargs.falconparser import FalconParser
 
 

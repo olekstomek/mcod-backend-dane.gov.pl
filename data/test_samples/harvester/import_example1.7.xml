@@ -54,6 +54,7 @@
                             <polish>Dokument 1</polish>
                             <english>Document 1</english>
                         </name>
+                        <language>pl</language>
                     </supplement>
                 </supplements>
 			</resource>
@@ -76,6 +77,16 @@
                 </specialSigns>
 			</resource>
 		</resources>
+        <supplements>
+            <supplement>
+                <url>https://mock-resource.com.pl/example.txt</url>
+                <name>
+                    <polish>Dokument 1</polish>
+                    <english>Document 1</english>
+                </name>
+                <language>en</language>
+            </supplement>
+        </supplements>
 		<tags>
 			<tag lang="pl">2028_tagPL</tag>
 		</tags>

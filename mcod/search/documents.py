@@ -1,10 +1,10 @@
 from django_elasticsearch_dsl import fields
 
-from mcod.watchers.models import ModelWatcher
-from mcod.core.api.search.analyzers import lang_synonyms_analyzers, lang_exact_analyzers
-from mcod.core.db.elastic import Document, NonIndexableValue
-from mcod.lib.search.fields import TranslatedTextField, TranslatedSuggestField
 from mcod import settings
+from mcod.core.api.search.analyzers import lang_exact_analyzers, lang_synonyms_analyzers
+from mcod.core.db.elastic import Document, NonIndexableValue
+from mcod.lib.search.fields import TranslatedSuggestField, TranslatedTextField
+from mcod.watchers.models import ModelWatcher
 
 
 class ExtendedDocument(Document):

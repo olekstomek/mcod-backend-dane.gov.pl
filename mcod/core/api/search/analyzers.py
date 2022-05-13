@@ -1,4 +1,5 @@
 from elasticsearch_dsl import analyzer, token_filter
+
 from mcod import settings
 
 __all__ = ('standard_analyzer', 'polish_analyzer', 'lang_synonyms_analyzers', 'lang_exact_analyzers')

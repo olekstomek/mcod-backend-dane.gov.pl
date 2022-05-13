@@ -1,37 +1,38 @@
-# -*- coding: utf-8 -*-
-
 from functools import partial
 
 import falcon
 from django.apps import apps
 
 from mcod.core.api.handlers import (
-    RetrieveOneHdlr,
-    RetrieveManyHdlr,
     CreateOneHdlr,
-    UpdateOneHdlr,
-    UpdateManyHdlr,
+    RemoveManyHdlr,
     RemoveOneHdlr,
-    RemoveManyHdlr
+    RetrieveManyHdlr,
+    RetrieveOneHdlr,
+    UpdateManyHdlr,
+    UpdateOneHdlr,
 )
 from mcod.core.api.hooks import login_required
 from mcod.core.api.jsonapi.serializers import SubscriptionQuerySchema
 from mcod.core.api.views import JsonAPIView
 from mcod.watchers.deserializers import (
-    SubscriptionCreateApiRequest,
-    SubscriptionApiRequest,
-    SubscriptionListApiRequest,
-    SubscriptionUpdateApiRequest,
-    NotificationApiRequest,
-    NotificationApiListRequest,
     ChangeNotificationsStatus,
     ChangeNotificationStatus,
-    DeleteNotifications
+    DeleteNotifications,
+    NotificationApiListRequest,
+    NotificationApiRequest,
+    SubscriptionApiRequest,
+    SubscriptionCreateApiRequest,
+    SubscriptionListApiRequest,
+    SubscriptionUpdateApiRequest,
 )
-from mcod.watchers.models import SubscribedObjectDoesNotExist, DuplicateSubscriptionName
-from mcod.watchers.serializers import SubscriptionApiResponse, NotificationApiResponse
-from mcod.watchers.tasks import update_notifications_task, remove_user_notifications_task, \
-    update_notifications_status_task
+from mcod.watchers.models import DuplicateSubscriptionName, SubscribedObjectDoesNotExist
+from mcod.watchers.serializers import NotificationApiResponse, SubscriptionApiResponse
+from mcod.watchers.tasks import (
+    remove_user_notifications_task,
+    update_notifications_status_task,
+    update_notifications_task,
+)
 
 
 class SubscriptionsView(JsonAPIView):
@@ -246,9 +247,6 @@ class NotificationsStatusView(JsonAPIView):
 
     class DELETE(RemoveManyHdlr):
         database_model = apps.get_model('watchers', 'Notification')
-
-        # def clean(self, *args, **kwargs):
-        #     return super().clean(*args, locations=('headers', 'json'), **kwargs)
 
         def _async_run(self, cleaned, *args, **kwargs):
             update_notifications_status_task.s(self.request.user.id, status='read').apply_async()

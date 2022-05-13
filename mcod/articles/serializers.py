@@ -1,15 +1,15 @@
 from mcod.core.api import fields
 from mcod.core.api.jsonapi.serializers import (
-    Relationships,
-    ObjectAttrs,
-    TopLevel,
-    Relationship,
     Aggregation,
     ExtAggregation,
-    HighlightObjectMixin
+    HighlightObjectMixin,
+    ObjectAttrs,
+    Relationship,
+    Relationships,
+    TopLevel,
 )
 from mcod.core.api.schemas import ExtSchema
-from mcod.lib.serializers import TranslatedStr, KeywordsList
+from mcod.lib.serializers import KeywordsList, TranslatedStr
 from mcod.watchers.serializers import SubscriptionMixin
 
 

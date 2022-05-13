@@ -1,9 +1,11 @@
-import sys
 import importlib
-from importlib.machinery import PathFinder, ModuleSpec, SourceFileLoader
-from django.core.exceptions import ImproperlyConfigured
+import sys
+from importlib.machinery import ModuleSpec, PathFinder, SourceFileLoader
+
 from django.apps import AppConfig
+from django.core.exceptions import ImproperlyConfigured
 from modeltrans.fields import TranslatedVirtualField
+
 from mcod.hacks import search_index as search_index_hacked
 from mcod.hacks.goodtables_spec import spec as gt_spec
 

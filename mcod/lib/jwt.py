@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from datetime import datetime, timedelta
 
 import falcon
@@ -54,8 +53,6 @@ def decode_jwt_token(auth_header):
         payload = jwt.decode(jwt=token, key=settings.JWT_SECRET_KEY,
                              options=options,
                              algorithms=settings.JWT_ALGORITHMS,
-                             # issuer=settings.JWT_ISS,
-                             # audience=settings.JWT_AUD,
                              leeway=settings.JWT_LEEWAY)
     except jwt.InvalidTokenError as ex:
         raise falcon.HTTPUnauthorized(

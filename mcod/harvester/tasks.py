@@ -16,7 +16,6 @@ from mcod.harvester.utils import (
     validate_xml,
 )
 
-
 logger = logging.getLogger('mcod')
 
 
@@ -39,7 +38,7 @@ def harvester_supervisor():
     return {}
 
 
-@shared_task(bind=True)
+@shared_task(bind=True, ignore_result=False)
 def validate_xml_url_task(self, url):
     progress_recorder = ProgressRecorder(self)
 

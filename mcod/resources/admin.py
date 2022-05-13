@@ -2,7 +2,7 @@ from dal_admin_filters import AutocompleteFilter
 from django.conf import settings
 from django.contrib import admin, messages
 from django.core.exceptions import PermissionDenied
-from django.db.models import Subquery, OuterRef, Q
+from django.db.models import Q
 from django.forms.models import model_to_dict
 from django.http.response import HttpResponseRedirect
 from django.template.defaultfilters import truncatewords, yesno
@@ -11,16 +11,19 @@ from django.urls import path
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
-from django_celery_results.models import TaskResult
 
+from mcod.datasets.admin import OrganizationFilter
 from mcod.histories.models import LogEntry
 from mcod.lib.admin_mixins import HistoryMixin, ModelAdmin, SortableStackedInline, TrashMixin
 from mcod.lib.helpers import get_paremeters_from_post
-from mcod.resources.forms import ChangeResourceForm, AddResourceForm, SupplementForm, TrashResourceForm
+from mcod.organizations.models import Organization
+from mcod.resources.forms import (
+    AddResourceForm,
+    ChangeResourceForm,
+    SupplementForm,
+    TrashResourceForm,
+)
 from mcod.resources.models import (
-    Resource,
-    ResourceFile,
-    ResourceTrash,
     RESOURCE_FORCED_TYPE,
     RESOURCE_TYPE,
     RESOURCE_TYPE_API,
@@ -28,11 +31,13 @@ from mcod.resources.models import (
     RESOURCE_TYPE_FILE,
     RESOURCE_TYPE_FILE_CHANGE,
     RESOURCE_TYPE_WEBSITE,
-    supported_formats_choices,
+    Resource,
+    ResourceFile,
+    ResourceTrash,
     Supplement,
+    supported_formats_choices,
 )
 from mcod.unleash import is_enabled
-
 
 rules_names = {x[0]: x[1] for x in settings.VERIFICATION_RULES}
 
@@ -42,6 +47,14 @@ class DatasetFilter(AutocompleteFilter):
     field_name = 'dataset'
     is_placeholder_title = True
     title = _('Filter by dataset name')
+
+
+class ResourceOrganizationFilter(OrganizationFilter):
+    field_name = 'organization'
+    parameter_name = 'dataset__organization'
+
+    def get_queryset_for_field(self, model, name):
+        return Organization.objects.all()
 
 
 class FormatFilter(admin.SimpleListFilter):
@@ -55,16 +68,7 @@ class FormatFilter(admin.SimpleListFilter):
         val = self.value()
         if not val:
             return queryset
-        query = Q(format=val)
-        if is_enabled('S40_new_file_model.be'):
-            query = query | Q(files__format=val)
-        else:
-            if val in ['json-ld', 'jsonld']:
-                query.add(~Q(jsonld_file=None), Q.OR)
-                query.add(~Q(jsonld_file=''), Q.AND)
-            elif val == 'csv':
-                query.add(~Q(csv_file=None), Q.OR)
-                query.add(~Q(csv_file=''), Q.AND)
+        query = Q(format=val) | Q(files__format=val)
         return queryset.filter(query).distinct()
 
 
@@ -86,8 +90,7 @@ class TaskStatus(admin.SimpleListFilter):
         val = self.value()
         if not val:
             return queryset
-        empty_val = '' if is_enabled('S41_resource_AP_optimization.be') else None
-        val = empty_val if val == 'N/A' else val
+        val = '' if val == 'N/A' else val
         return queryset.filter(**{self.qs_param: val})
 
 
@@ -118,19 +121,19 @@ class TypeFilter(admin.SimpleListFilter):
 class LinkStatusFilter(TaskStatus):
     title = _('Link status')
     parameter_name = 'link_status'
-    qs_param = 'link_tasks_last_status' if is_enabled('S41_resource_AP_optimization.be') else '_link_status'
+    qs_param = 'link_tasks_last_status'
 
 
 class FileStatusFilter(TaskStatus):
     title = _('File status')
     parameter_name = 'file_status'
-    qs_param = 'file_tasks_last_status' if is_enabled('S41_resource_AP_optimization.be') else '_file_status'
+    qs_param = 'file_tasks_last_status'
 
 
 class TabularViewFilter(TaskStatus):
     title = _('TabularView')
     parameter_name = 'tabular_view_status'
-    qs_param = 'data_tasks_last_status' if is_enabled('S41_resource_AP_optimization.be') else '_data_status'
+    qs_param = 'data_tasks_last_status'
 
 
 class TaskResultInline(admin.options.InlineModelAdmin):
@@ -157,13 +160,13 @@ class DataTaskResultInline(TaskResultInline):
 
 class SupplementInline(SortableStackedInline):
     add_text = _('Add document')
-    fields = ['file', 'name', 'name_en']
+    fields = ['file', 'name', 'name_en', 'language']
     form = SupplementForm
     description = 'Pliki dokumentów mające na celu uzupełnienie danych znajdujących się w zasobie.'
     extra = 0
     max_num = 10
     model = Supplement
-    suit_classes = 'suit-tab suit-tab-supplements'
+    suit_classes = 'suit-tab suit-tab-supplements js-inline-admin-formset'
     suit_form_inlines_hide_original = True
     verbose_name = _('document')
 
@@ -271,11 +274,11 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):
     has_dynamic_data_fieldset = [(None, {
         'classes': ('suit-tab', 'suit-tab-general'),
         'fields': ('has_dynamic_data',),
-    })] if is_enabled('S43_dynamic_data.be') else []
+    })]
     has_high_value_data_fieldset = [(None, {
         'classes': ('suit-tab', 'suit-tab-general'),
         'fields': ('has_high_value_data',),
-    })] if is_enabled('S41_resource_has_high_value_data.be') else []
+    })]
     has_research_data_fieldset = [(None, {
         'classes': ('suit-tab', 'suit-tab-general'),
         'fields': ('has_research_data',),
@@ -345,7 +348,9 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):
         'created',
     ]
 
+    organization_filter = [ResourceOrganizationFilter] if is_enabled('S50_resource_admin_organization_filter.be') else []
     list_filter = [
+        *organization_filter,
         DatasetFilter,
         FormatFilter,
         TYPE_FILTER,
@@ -384,20 +389,15 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):
 
     def get_fieldsets(self, request, obj=None):
         if obj:
-            jsonld_file = ['jsonld_file'] if obj.jsonld_converted_file else []
-            jsonld_file = ['jsonld_converted_file'] if jsonld_file and is_enabled('S40_new_file_model.be') else jsonld_file
-            csv_file = ['csv_converted_file'] if is_enabled('S40_new_file_model.be') else ['csv_file']
-            file = ['main_file'] if is_enabled('S40_new_file_model.be') else ['file']
+            jsonld_file = ['jsonld_converted_file'] if obj.jsonld_converted_file else []
+            csv_file = ['csv_converted_file']
+            file = ['main_file']
             special_signs = ['special_signs'] if not obj.is_imported else ['special_signs_symbols']
-            file_info = ['main_file_info'] if is_enabled('S40_new_file_model.be') else ['file_info']
-            file_encoding = ['main_file_encoding'] if is_enabled('S40_new_file_model.be') else ['file_encoding']
+            file_info = ['main_file_info']
+            file_encoding = ['main_file_encoding']
             regions = ['regions'] if is_enabled('S37_resources_admin_region_data.be') and not obj.is_imported else []
-            has_dynamic_data = []
-            if is_enabled('S43_dynamic_data.be'):
-                has_dynamic_data = ['has_dynamic_data'] if not obj.is_imported else ['has_dynamic_data_info']
-            has_high_value_data = []
-            if is_enabled('S41_resource_has_high_value_data.be'):
-                has_high_value_data = ['has_high_value_data'] if not obj.is_imported else ['has_high_value_data_info']
+            has_dynamic_data = ['has_dynamic_data'] if not obj.is_imported else ['has_dynamic_data_info']
+            has_high_value_data = ['has_high_value_data'] if not obj.is_imported else ['has_high_value_data_info']
             has_research_data = []
             if is_enabled('S47_research_data.be'):
                 has_research_data = ['has_research_data'] if not obj.is_imported else ['has_research_data_info']
@@ -507,16 +507,17 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):
 
     def get_readonly_fields(self, request, obj=None):
         readonly_fields = self.change_readonly_fields if obj and obj.id else self.add_readonly_fields
-        if is_enabled('S40_new_file_model.be'):
-            new_fields_mapping = {
-                'file': 'main_file',
-                'file_info': 'main_file_info',
-                'file_encoding': 'main_file_encoding',
-                'csv_file': 'csv_converted_file',
-                'jsonld_file': 'jsonld_converted_file'
-            }
-            readonly_fields =\
-                [field if field not in new_fields_mapping else new_fields_mapping[field] for field in readonly_fields]
+        new_fields_mapping = {
+            'file': 'main_file',
+            'file_info': 'main_file_info',
+            'file_encoding': 'main_file_encoding',
+            'csv_file': 'csv_converted_file',
+            'jsonld_file': 'jsonld_converted_file'
+        }
+        readonly_fields = [
+            field if field not in new_fields_mapping else new_fields_mapping[field]
+            for field in readonly_fields
+        ]
         if obj and not obj.data_is_valid:
             readonly_fields = (*readonly_fields, 'show_tabular_view')
         if obj and obj.type != "file":
@@ -541,7 +542,7 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):
             for js_list in media._js_lists:
                 new_js_list = [x for x in js_list if x not in ['admin/js/inlines.min.js', 'admin/js/inlines.js']]
                 if len(new_js_list) < len(js_list):
-                    new_js_list.append('admin/js/inlines_orig.js')
+                    new_js_list.append('admin/js/inlines_django_3_1.js')
                 _new_js_lists.append(new_js_list)
             media._js_lists = _new_js_lists
             context['media'] = media
@@ -550,41 +551,19 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
-
         if request.user.is_staff and not request.user.is_superuser:
             qs = qs.filter(dataset__organization__in=request.user.organizations.iterator())
-        if not is_enabled('S41_resource_AP_optimization.be'):
-            link_tasks = TaskResult.objects.filter(link_task_resources=OuterRef('pk')).order_by('-date_done')
-            qs = qs.annotate(
-                _link_status=Subquery(
-                    link_tasks.values('status')[:1])
-            )
-            file_tasks = TaskResult.objects.filter(file_task_resources=OuterRef('pk')).order_by('-date_done')
-            qs = qs.annotate(
-                _file_status=Subquery(
-                    file_tasks.values('status')[:1])
-            )
-
-            data_tasks = TaskResult.objects.filter(data_task_resources=OuterRef('pk')).order_by('-date_done')
-            qs = qs.annotate(
-                _data_status=Subquery(
-                    data_tasks.values('status')[:1])
-            )
         return qs
 
     def link_status(self, obj):
-        return self._format_list_status(obj.link_tasks_last_status if
-                                        is_enabled('S41_resource_AP_optimization.be') else obj._link_status)
+        return self._format_list_status(obj.link_tasks_last_status)
 
-    link_status.admin_order_field = 'link_tasks_last_status' if\
-        is_enabled('S41_resource_AP_optimization.be') else '_link_status'
+    link_status.admin_order_field = 'link_tasks_last_status'
 
     def file_status(self, obj):
-        return self._format_list_status(obj.file_tasks_last_status if
-                                        is_enabled('S41_resource_AP_optimization.be') else obj._file_status)
+        return self._format_list_status(obj.file_tasks_last_status)
 
-    file_status.admin_order_field = 'file_tasks_last_status' if\
-        is_enabled('S41_resource_AP_optimization.be') else '_file_status'
+    file_status.admin_order_field = 'file_tasks_last_status'
 
     def formats(self, obj):
         return obj.formats or '-'
@@ -609,11 +588,9 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):
     special_signs_symbols.short_description = _('Special Signs')
 
     def tabular_view(self, obj):
-        return self._format_list_status(obj.data_tasks_last_status if
-                                        is_enabled('S41_resource_AP_optimization.be') else obj._data_status)
+        return self._format_list_status(obj.data_tasks_last_status)
 
-    tabular_view.admin_order_field = 'data_tasks_last_status' if\
-        is_enabled('S41_resource_AP_optimization.be') else '_data_status'
+    tabular_view.admin_order_field = 'data_tasks_last_status'
 
     tabular_view.short_description = format_html('<i class="fas fa-table" title="{}"></i>'.format(
         _('Tabular data validation status')))
@@ -636,10 +613,10 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):
         if not obj.id:
             obj.created_by = request.user
         obj.modified_by = request.user
-        if is_enabled('S40_new_file_model.be') and obj.file:
+        if obj.file:
             obj.file = None
         obj.save()
-        if is_enabled('S40_new_file_model.be') and form.cleaned_data.get('file'):
+        if form.cleaned_data.get('file'):
             ResourceFile.objects.update_or_create(
                 resource=obj,
                 is_main=True,
@@ -670,10 +647,8 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):
                 initial['title_en'] = data.get('title_en')
                 initial['description_en'] = data.get('description_en')
                 initial['slug_en'] = data.get('slug_en')
-                if is_enabled('S43_dynamic_data.be'):
-                    initial['has_dynamic_data'] = data.get('has_dynamic_data')
-                if is_enabled('S41_resource_has_high_value_data.be'):
-                    initial['has_high_value_data'] = data.get('has_high_value_data')
+                initial['has_dynamic_data'] = data.get('has_dynamic_data')
+                initial['has_high_value_data'] = data.get('has_high_value_data')
                 if is_enabled('S47_research_data.be'):
                     initial['has_research_data'] = data.get('has_research_data')
         return initial
@@ -714,10 +689,8 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):
             obj.save()
             messages.add_message(request, messages.SUCCESS, _('Map definition saved'))
             self.revalidate(request, obj.id)
-        elif '_continue' in request.POST or\
-             (is_enabled('S41_resource_revalidate.be') and '_save' in request.POST):
-            if is_enabled('S41_resource_revalidate.be'):
-                obj.save()
+        elif '_continue' in request.POST or '_save' in request.POST:
+            obj.save()
             self.revalidate(request, obj.id)
         return super().response_change(request, obj)
 

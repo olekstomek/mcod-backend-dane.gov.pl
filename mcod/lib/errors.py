@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import json
 import traceback
 from uuid import uuid4
@@ -6,7 +5,7 @@ from uuid import uuid4
 from django.utils.translation import gettext_lazy as _
 from flatdict import FlatDict
 
-from mcod import settings, logger
+from mcod import logger, settings
 from mcod.core.api.jsonapi.serializers import ErrorsSchema
 from mcod.lib.encoders import LazyEncoder
 from mcod.lib.schemas import ErrorSchema

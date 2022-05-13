@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 import falcon
 import pytest
 
-from mcod.lib.jwt import parse_auth_token, decode_jwt_token, DateTimeToISOEncoder
+from mcod.lib.jwt import DateTimeToISOEncoder, decode_jwt_token, parse_auth_token
 
 
 @pytest.fixture(scope='module')
@@ -20,7 +20,7 @@ def valid_header():
            'MCwibmJmIjoxNTE5ODYyNDYwLCJleHAiOjE4MzUyMjI0NjB9.2fYmOkgXgvy-G1xENejWaI27Ix_J8CPORaM0vHrHLCU'
 
 
-class TestJWT(object):
+class TestJWT:
     @pytest.mark.run(order=1)
     def test_jwt_json_encoder(self, now):
         result = json.dumps({'abcd': 1234}, cls=DateTimeToISOEncoder)

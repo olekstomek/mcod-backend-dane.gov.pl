@@ -1,17 +1,15 @@
-# -*- coding: utf-8 -*-
-import marshmallow as ma
 from collections import namedtuple
-from smtplib import SMTPException
 from functools import partial
+from smtplib import SMTPException
 
 import falcon
-# from cache_memoize import cache_memoize
-from django.contrib.auth import authenticate, login, logout, get_user_model
-from django.contrib.auth.views import LoginView as DjangoLoginView
+import marshmallow as ma
+from django.conf import settings
+from django.contrib.auth import authenticate, get_user_model, login, logout
 from django.contrib.auth.password_validation import validate_password as dj_validate_password
+from django.contrib.auth.views import LoginView as DjangoLoginView
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.http import HttpResponseRedirect
-from django.conf import settings
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
@@ -28,9 +26,6 @@ from mcod.lib.triggers import session_store
 from mcod.schedules.models import Schedule
 from mcod.suggestions.models import AcceptedDatasetSubmission
 from mcod.tools.api.dashboard import DashboardMetaSerializer, DashboardSerializer
-from mcod.users.documents import MeetingDoc
-from mcod.users.forms import AdminLoginForm
-from mcod.users.models import Meeting, Token
 from mcod.users.deserializers import (
     ChangePasswordApiRequest,
     ConfirmResetPasswordApiRequest,
@@ -41,20 +36,22 @@ from mcod.users.deserializers import (
     ResetPasswordApiRequest,
     UserUpdateApiRequest,
 )
+from mcod.users.documents import MeetingDoc
+from mcod.users.forms import AdminLoginForm
+from mcod.users.models import Meeting, Token
 from mcod.users.serializers import (
     ChangePasswordApiResponse,
     ConfirmResetPasswordApiResponse,
     LoginApiResponse,
     LogoutApiResponse,
     MeetingApiResponse,
-    UserApiResponse,
     RegistrationApiResponse,
     ResendActivationEmailApiResponse,
     ResetPasswordApiResponse,
+    UserApiResponse,
     VerifyEmailApiResponse,
 )
 from mcod.watchers.models import Subscription
-
 
 User = get_user_model()
 
@@ -231,7 +228,6 @@ class DashboardView(JsonAPIView):
                 })
             return data
 
-        # @cache_memoize(60 * 2, args_rewrite=lambda self, user: (user.id, ))
         def _get_aggregations(self, user):
             result = {
                 'subscriptions': self._get_user_subscriptions(user),

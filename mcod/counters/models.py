@@ -1,7 +1,7 @@
 from datetime import date
 
-from modeltrans.manager import MultilingualManager
 from django.db import models
+from modeltrans.manager import MultilingualManager
 
 
 class ResourceCounter(models.Model):

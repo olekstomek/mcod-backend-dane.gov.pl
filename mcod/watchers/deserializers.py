@@ -1,15 +1,17 @@
 from urllib.parse import urlsplit
 
 from django.utils.translation import gettext as _
-from marshmallow import ValidationError, validates_schema
-from marshmallow import validate, pre_load, post_load
+from marshmallow import ValidationError, post_load, pre_load, validate, validates_schema
 
 from mcod import settings
-from mcod.core.api import fields as core_fields
-from mcod.core.api import schemas as core_schemas
-from mcod.core.api.jsonapi.deserializers import TopLevel, ObjectAttrs, ObjectWithId
+from mcod.core.api import fields as core_fields, schemas as core_schemas
+from mcod.core.api.jsonapi.deserializers import ObjectAttrs, ObjectWithId, TopLevel
 from mcod.core.api.search import fields as search_fields
-from mcod.watchers.models import NOTIFICATION_TYPES, NOTIFICATION_STATUS_CHOICES, OBJECT_NAME_TO_MODEL
+from mcod.watchers.models import (
+    NOTIFICATION_STATUS_CHOICES,
+    NOTIFICATION_TYPES,
+    OBJECT_NAME_TO_MODEL,
+)
 
 ALLOWED_NOTIFICATION_TYPES = [i[0] for i in NOTIFICATION_TYPES]
 ALLOWED_STATUS_CHOICES = [i[0] for i in NOTIFICATION_STATUS_CHOICES]

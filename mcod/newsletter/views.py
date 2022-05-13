@@ -1,16 +1,24 @@
+from functools import partial
 from types import SimpleNamespace
 
 import falcon
 from django.apps import apps
 from django.template.loader import render_to_string
-from django.utils.translation import gettext_lazy as _, get_language
-from functools import partial
+from django.utils.translation import get_language, gettext_lazy as _
 
 from mcod.core.api.handlers import CreateOneHdlr, RetrieveOneHdlr, UpdateOneHdlr
 from mcod.core.api.hooks import login_optional
 from mcod.core.api.views import JsonAPIView
-from mcod.newsletter.deserializers import NewsletterRulesApiRequest, SubscribeApiRequest, UnsubscribeApiRequest
-from mcod.newsletter.serializers import NewsletterRulesApiResponse, SubscriptionApiResponse, UnsubscribeApiResponse
+from mcod.newsletter.deserializers import (
+    NewsletterRulesApiRequest,
+    SubscribeApiRequest,
+    UnsubscribeApiRequest,
+)
+from mcod.newsletter.serializers import (
+    NewsletterRulesApiResponse,
+    SubscriptionApiResponse,
+    UnsubscribeApiResponse,
+)
 
 
 class SubscribeNewsletterView(JsonAPIView):

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from wagtail.admin.edit_handlers import FieldPanel as WagtailFieldPanel
 
 

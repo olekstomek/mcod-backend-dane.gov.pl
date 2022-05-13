@@ -1,34 +1,26 @@
-import pytest
 import os
+
+import pytest
 import requests_mock
 from django.conf import settings
 from falcon.util.structures import Context
+
 from mcod.core.tests.fixtures.bdd import *  # noqa
 from mcod.core.tests.fixtures.categories import *  # noqa
 from mcod.core.tests.fixtures.harvester import *  # noqa
 from mcod.core.tests.fixtures.legacy import *  # noqa
 from mcod.core.tests.fixtures.licenses import *  # noqa
 from mcod.core.tests.fixtures.newsletter import *  # noqa
-from mcod.core.tests.fixtures.tags import *  # noqa
-from mcod.core.tests.fixtures.users import *  # noqa
 from mcod.core.tests.fixtures.rdf import *  # noqa
 from mcod.core.tests.fixtures.suggestions import *  # noqa
+from mcod.core.tests.fixtures.tags import *  # noqa
+from mcod.core.tests.fixtures.users import *  # noqa
 from mcod.lib.triggers import session_store
 
 adapter = requests_mock.Adapter()
 
 
 def pytest_configure(config):
-    # from elasticsearch import Elasticsearch as ES
-    # es_client = ES(hosts=settings.ELASTICSEARCH_HOSTS.split(','))
-
-    # es_client.indices.delete(
-    #     index='test-*',
-    #     allow_no_indices=True,
-    #     expand_wildcards='all',
-    #     ignore_unavailable=True
-    # )
-
     config.addinivalue_line(
         "markers", "elasticsearch: mark test to run with new empty set of indicies"
     )
@@ -44,10 +36,12 @@ def pytest_sessionfinish(session):
 
 
 def pytest_runtest_setup(item):
-    from django_elasticsearch_dsl.registries import registry
-    from mcod.core.api.rdf.registry import registry as rdf_registry
     import random
     import string
+
+    from django_elasticsearch_dsl.registries import registry
+
+    from mcod.core.api.rdf.registry import registry as rdf_registry
 
     es_marker = item.get_closest_marker('elasticsearch')
 
@@ -64,17 +58,14 @@ def pytest_runtest_setup(item):
         graph_uri = f'<http://test.mcod/{graph_name}>'
         rdf_registry.create_named_graph(graph_uri)
 
-    # redis_marker = item.get_closest_marker('redis')
-    # if redis_marker:
-    #     redis_client = get_redis_connection()
-    #     redis_client.flushall()
-
 
 def pytest_runtest_teardown(item, nextitem):
-    from mcod.core.api.rdf.registry import registry as rdf_registry
-    from django_elasticsearch_dsl.registries import registry
-    from mcod.resources.indexed_data import es_connections
     import shutil
+
+    from django_elasticsearch_dsl.registries import registry
+
+    from mcod.core.api.rdf.registry import registry as rdf_registry
+    from mcod.resources.indexed_data import es_connections
 
     worker = os.environ.get('PYTEST_XDIST_WORKER', '')
     archives_path = os.path.join(settings.DATASETS_MEDIA_ROOT, 'archives', worker)
@@ -99,6 +90,11 @@ def pytest_runtest_teardown(item, nextitem):
 @pytest.fixture(autouse=True)
 def enable_db_access(db):
     pass
+
+
+@pytest.fixture
+def ctx():
+    return {}
 
 
 @pytest.fixture

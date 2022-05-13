@@ -1,26 +1,25 @@
+from bokeh.server.django import static_extensions
+from django.apps import apps
 from django.conf import settings
 from django.conf.urls import include
 from django.conf.urls.static import static
 from django.contrib import admin
-from django.urls import path, re_path
-from django.apps import apps
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
+from django.urls import path, re_path
 from django.views.generic.base import TemplateView
 from wagtail.admin import urls as wagtailadmin_urls
 from wagtail.documents import urls as wagtaildocs_urls
 from wagtail.documents.api.v2.views import DocumentsAPIViewSet
-from bokeh.server.django import static_extensions
 
-from mcod.cms.views import revisions_view
-from mcod.datasets.views import ConditionLabelsAdminView
-from mcod.regions.views import RegionsAutocomplete
-from mcod.organizations.views import InstitutionTypeAdminView
-from mcod.users.views import CustomAdminLoginView
 from mcod.cms import urls as cms_urls
 from mcod.cms.api.router import CmsApiRouter
 from mcod.cms.api.views import CmsPagesViewSet, ImagesViewSet, OEmbedApiViewSet
+from mcod.cms.views import revisions_view
 from mcod.core.admin import AdminAutocomplete
-
+from mcod.datasets.views import ConditionLabelsAdminView
+from mcod.organizations.views import InstitutionTypeAdminView
+from mcod.regions.views import RegionsAutocomplete
+from mcod.users.views import CustomAdminLoginView
 
 panel_app_config = apps.get_app_config('mcod.pn_apps')
 

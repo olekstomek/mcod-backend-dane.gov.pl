@@ -8,14 +8,12 @@ from urllib import parse
 import requests
 from django.core.exceptions import ValidationError
 from django.core.validators import URLValidator
-from mimeparse import parse_mime_type, MimeTypeParseException
+from mimeparse import MimeTypeParseException, parse_mime_type
 
 from mcod import settings
 from mcod.resources import guess
 from mcod.resources.file_validation import file_format_from_content_type
 from mcod.resources.geo import is_json_stat
-from mcod.unleash import is_enabled
-
 
 logger = logging.getLogger('mcod')
 
@@ -25,6 +23,10 @@ session = requests.Session()
 
 
 old_merge_environment_settings = requests.Session.merge_environment_settings
+
+
+class DangerousContentError(Exception):
+    pass
 
 
 class EmptyDocument(Exception):
@@ -55,21 +57,14 @@ class UnsupportedContentType(Exception):
     pass
 
 
-def _get_resource_type(response):
+def _get_resource_type(response, api_content_types=('atom+xml', 'vnd.api+json', 'json', 'xml')):
     _, content_type, _ = parse_mime_type(response.headers.get('Content-Type'))
-    content_disposition = response.headers.get('Content-Disposition', None)
-
+    is_attachment = 'attachment' in response.headers.get('Content-Disposition', '')
     if content_type == 'html' and guess.web_format(response.content):
         return 'website'
-    elif not (content_disposition and 'attachment' in content_disposition) and content_type in (
-        'atom+xml',
-        'vnd.api+json',
-        'json',
-        'xml'
-    ) and guess.api_format(response.content):
+    elif not is_attachment and content_type in api_content_types and guess.api_format(response.content):
         return 'api'
-    else:
-        return 'file'
+    return 'file'
 
 
 def filename_from_url(url, content_type=None):
@@ -105,11 +100,11 @@ def download_file(url, forced_file_type=False):  # noqa: C901
     except ValidationError:
         raise InvalidUrl('Invalid url address: %s' % url)
 
-    filename, format = None, None
+    filename, _format = None, None
 
     response = session.get(url, stream=True, allow_redirects=True, verify=False, timeout=180)
 
-    if not response.url.startswith('https') and is_enabled('S37_validate_resource_link_scheme_harvester.be'):
+    if not response.url.startswith('https'):
         raise InvalidSchema('Invalid schema!')
     if response.status_code != 200:
         raise InvalidResponseCode('Invalid response code: %s' % response.status_code)
@@ -147,35 +142,37 @@ def download_file(url, forced_file_type=False):  # noqa: C901
             logger.debug(f'  filename: {filename}')
             if filename:
                 filename = filename.replace('"', '').split(';')[0]
-                format = filename.split('.')[-1]
-                logger.debug(f'  filename: {filename}, format: {format}')
+                _format = filename.split('.')[-1]
+                logger.debug(f'  filename: {filename}, format: {_format}')
 
         if not filename:
-            name, format = filename_from_url(url, content_type)
-            filename = '.'.join([name, format])
-            logger.debug(f'  filename: {filename}, format: {format} - from url')
+            name, _format = filename_from_url(url, content_type)
+            filename = '.'.join([name, _format])
+            logger.debug(f'  filename: {filename}, format: {_format} - from url')
 
+        if content_disposition and 'attachment' in content_disposition and _format in settings.RESTRICTED_FILE_TYPES:
+            raise DangerousContentError()  # https://cwe.mitre.org/data/definitions/434.html
         filename = filename.strip('.')
 
         if guess.is_octetstream(content_type):
-            family, content_type = content_type_from_file_format(format)
+            family, content_type = content_type_from_file_format(_format)
             logger.debug(f'  {family}/{content_type} - from file format')
 
-        format = file_format_from_content_type(content_type, family=family, extension=format)
-        logger.debug(f'  format:{format} - from content type (file)')
+        _format = file_format_from_content_type(content_type, family=family, extension=_format)
+        logger.debug(f'  format:{_format} - from content type (file)')
         options = {
             'filename': filename,
-            'format': format,
+            'format': _format,
             'content': content
         }
     else:
-        format = file_format_from_content_type(content_type, family)
-        logger.debug(f'  format: {format} - from content type (web/api)')
+        _format = file_format_from_content_type(content_type, family)
+        logger.debug(f'  format: {_format} - from content type (web/api)')
         if resource_type != 'api' and response.history and all((
                 response.history[-1].status_code == 301,
                 simplified_url(response.url) != simplified_url(url))):
             raise InvalidResponseCode('Resource location has been moved!')
-        options = {'format': format}
+        options = {'format': _format}
     if format == 'json' and is_json_stat(content):
         options['format'] = 'jsonstat'
     return resource_type, options

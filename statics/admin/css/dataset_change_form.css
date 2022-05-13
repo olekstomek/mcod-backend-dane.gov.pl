@@ -99,3 +99,12 @@ div.control-group.form-row.field-update_notification_frequency
 {
     display: none;
 }
+h3#conditions-header{
+    padding-left:0px;
+}
+
+p#article-paragraph{
+    margin-top:10px;
+    margin-bottom:10px;
+    font-weight:bold;
+}

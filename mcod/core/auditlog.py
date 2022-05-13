@@ -3,9 +3,8 @@ import json
 from auditlog.diff import get_field_value, get_fields_in_model
 from auditlog.models import LogEntry
 from auditlog.registry import AuditlogModelRegistry
-
 from django.db.models import Model
-from django.db.models.signals import post_save, pre_save, post_delete
+from django.db.models.signals import post_delete, post_save, pre_save
 from django.utils.encoding import smart_str
 
 

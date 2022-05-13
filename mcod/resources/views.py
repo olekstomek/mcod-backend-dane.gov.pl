@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import json
 from functools import partial
 
@@ -11,20 +9,22 @@ from elasticsearch_dsl import A
 
 from mcod import settings
 from mcod.core.api.handlers import (
-    SearchHdlr,
-    RetrieveOneHdlr,
     CreateOneHdlr,
     RemoveOneHdlr,
     RetrieveManyHdlr,
-    SubscriptionSearchHdlr,
+    RetrieveOneHdlr,
+    SearchHdlr,
     ShaclMixin,
+    SubscriptionSearchHdlr,
     UpdateOneHdlr,
 )
 from mcod.core.api.hooks import login_optional, login_required
 from mcod.core.api.openapi.plugins import TabularDataPlugin
+from mcod.core.api.rdf.vocabs.openness_score import OpennessScoreVocab
+from mcod.core.api.rdf.vocabs.special_sign import SpecialSignVocab
 from mcod.core.api.schemas import ListingSchema
 from mcod.core.api.versions import DOC_VERSIONS
-from mcod.core.api.views import JsonAPIView, RDFView
+from mcod.core.api.views import JsonAPIView, RDFView, VocabEntryRDFView, VocabRDFView
 from mcod.core.versioning import versioned
 from mcod.counters.lib import Counter
 from mcod.lib.encoders import DateTimeToISOEncoder
@@ -47,8 +47,9 @@ from mcod.resources.serializers import (
     ResourceApiResponse,
     ResourceRDFResponseSchema,
     TableApiResponse,
+    VocabEntryRDFResponseSchema,
+    VocabRDFResponseSchema,
 )
-
 
 Resource = apps.get_model('resources', 'Resource')
 
@@ -121,6 +122,36 @@ class ResourceRDFView(RDFView):
                 except model.DoesNotExist:
                     raise falcon.HTTPNotFound
             return self._cached_instance
+
+
+class VocabSpecialSignRDFView(VocabRDFView):
+    class GET(VocabRDFView.GET):
+        serializer_schema = VocabRDFResponseSchema
+        vocab_class = SpecialSignVocab
+
+
+class VocabEntrySpecialSignRDFView(VocabEntryRDFView):
+    vocab_class = SpecialSignVocab
+    vocab_name = "Special Sign Vocabulary"
+
+    class GET(VocabEntryRDFView.GET):
+        serializer_schema = VocabEntryRDFResponseSchema
+        vocab_class = SpecialSignVocab
+
+
+class VocabOpennessScoreRDFView(VocabRDFView):
+    class GET(VocabRDFView.GET):
+        serializer_schema = VocabRDFResponseSchema
+        vocab_class = OpennessScoreVocab
+
+
+class VocabEntryOpennessScoreRDFView(VocabEntryRDFView):
+    vocab_class = OpennessScoreVocab
+    vocab_name = "Openness Score Vocabulary"
+
+    class GET(VocabEntryRDFView.GET):
+        serializer_schema = VocabEntryRDFResponseSchema
+        vocab_class = OpennessScoreVocab
 
 
 class ResourceTableView(JsonAPIView):
@@ -392,7 +423,7 @@ class ResourceFileDownloadView:
         self.on_request(request, response, id, *args, **kwargs)
 
 
-class ResourceTableSpecView(object):
+class ResourceTableSpecView:
     def on_get(self, req, resp, id, version=None):
         version = version or str(max(DOC_VERSIONS))
 
@@ -440,7 +471,7 @@ class ResourceTableSpecView(object):
         resp.status = falcon.HTTP_200
 
 
-class ResourceSwaggerView(object):
+class ResourceSwaggerView:
     def on_get(self, request, response, id):
         try:
             resource = Resource.objects.get(pk=id)
@@ -465,7 +496,7 @@ class ResourceSwaggerView(object):
         response.text = template.render(context)
 
 
-class ResourceDownloadCounter(object):
+class ResourceDownloadCounter:
     def on_put(self, req, resp, id=None, **kwargs):
         if id:
             counter = Counter()

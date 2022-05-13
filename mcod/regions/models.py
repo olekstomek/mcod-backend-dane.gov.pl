@@ -7,12 +7,11 @@ from django.dispatch import receiver
 from django.utils.translation import gettext_lazy as _
 from modeltrans.fields import TranslationField
 
-from mcod.core.api.search.tasks import update_related_task, bulk_delete_documents_task
+from mcod.core.api.search.tasks import bulk_delete_documents_task, update_related_task
 from mcod.core.db.models import BaseExtendedModel
 from mcod.regions.api import PlaceholderApi
 from mcod.regions.managers import RegionManager
 from mcod.regions.signals import regions_updated
-
 
 # Create your models here.
 

@@ -1,25 +1,25 @@
-from django.templatetags.static import static
-from django.utils.html import format_html_join
-from django.urls import reverse
-from django.utils.translation import gettext_lazy as _
-from django.forms.utils import flatatt
-from django.utils.html import format_html
-from wagtail.admin.widgets import Button, ButtonWithDropdownFromHook, PageListingButton
-from wagtail.core import hooks
 from django.conf.urls import include, url
-
+from django.forms.utils import flatatt
+from django.templatetags.static import static
+from django.urls import reverse
+from django.utils.html import format_html, format_html_join
+from django.utils.translation import gettext_lazy as _
 from wagtail.admin.menu import MenuItem
 from wagtail.admin.rich_text.converters.html_to_contentstate import InlineStyleElementHandler
 from wagtail.admin.rich_text.editors.draftail import features as draftail_features
+from wagtail.admin.widgets import Button, ButtonWithDropdownFromHook, PageListingButton
+from wagtail.core import hooks
 
-from mcod.cms.urls import form_urls, chooser_urls
-from mcod.cms.utils import get_forms_for_user, to_i18n_url
 from mcod.cms.handlers import (
-    TitledLinkHandler, TitledExternalLinkElementHandler,
-    titled_link_entity, TitledPageLinkElementHandler, TitledPageLinkHandler
+    TitledExternalLinkElementHandler,
+    TitledLinkHandler,
+    TitledPageLinkElementHandler,
+    TitledPageLinkHandler,
+    titled_link_entity,
 )
+from mcod.cms.urls import chooser_urls, form_urls
+from mcod.cms.utils import get_forms_for_user, to_i18n_url
 from mcod.unleash import is_enabled
-
 
 CUSTOM_STYLESHEETS = [
     'cms/custom.css',

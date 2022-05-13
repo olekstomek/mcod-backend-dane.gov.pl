@@ -1,5 +1,4 @@
 {% load suit_tags core_tags %}
-{% is_unleash_enabled "S40_new_file_model.be" as res_separate_files %}
 <fieldset class="module aligned{{ fieldset.name|yesno:' with-legend, first' }} {{ fieldset.classes }}">
     {% if fieldset.name %}
         <h2 class="legend">{{ fieldset.name }}
@@ -57,11 +56,7 @@
                 {% endif %}
 
                 {% if field.is_readonly %}
-                    {% if res_separate_files %}
                     <span class="readonly">{{ field|mcod_field_contents_foreign_linked }} </span>
-                    {% else %}
-                    <span class="readonly">{{ field|field_contents_foreign_linked }} </span>
-                    {% endif %}
                 {% else %}
                     {{ field.field }}
                 {% endif %}

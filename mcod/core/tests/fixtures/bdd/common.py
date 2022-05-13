@@ -1,5 +1,4 @@
 import datetime
-import dpath
 import json
 import os
 import re
@@ -9,12 +8,12 @@ import zipfile
 from io import BytesIO
 from pydoc import locate
 
+import dpath
+import requests_mock
 from django.apps import apps
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client
 from django.utils import translation
-import requests_mock
-
 from pytest_bdd import given, parsers, then, when
 
 from mcod import settings
@@ -49,9 +48,9 @@ def prepare_dbf_file(filename):
 def create_object(obj_type, obj_id, is_removed=False, status='published', **kwargs):
     _factory = factories_registry.get_factory(obj_type)
     kwargs['pk'] = obj_id
-    if obj_type not in ['alert', 'tag', 'task result']:
+    if obj_type not in ['alert', 'tag', 'task result', 'log entry']:
         kwargs['is_removed'] = is_removed
-    if 'user' not in obj_type:
+    if 'user' not in obj_type and obj_type not in ['log entry']:
         kwargs['status'] = status
     return _factory(**kwargs)
 
@@ -264,7 +263,7 @@ def object_with_id(object_type, object_id):
 
 def translated_object_type(object_type):
     params = {
-        'application': {
+        'showcase': {
             "id": 999,
             "title": "title_pl",
             "title_en": "title_en",
@@ -353,7 +352,7 @@ def another_object_type_created_with_params(context, object_type, another_params
 
 @given('translated objects')
 def translated_objects():
-    for object_type in ['application', 'article', 'dataset', 'institution', 'resource']:
+    for object_type in ['showcase', 'article', 'dataset', 'institution', 'resource']:
         translated_object_type(object_type)
 
 
@@ -451,10 +450,8 @@ def get_data(resource):
     assert resource.tabular_data_schema
     data = resource.__dict__
     data['dataset'] = resource.dataset_id
-    if is_enabled('S43_dynamic_data.be'):
-        data['has_dynamic_data'] = False
-    if is_enabled('S41_resource_has_high_value_data.be'):
-        data['has_high_value_data'] = False
+    data['has_dynamic_data'] = False
+    data['has_high_value_data'] = False
     if is_enabled('S47_research_data.be'):
         data['has_research_data'] = False
     return data
@@ -595,15 +592,35 @@ def api_request_post_data(admin_context, data_type, req_post_data):
             "url": "http://www.test.pl",
             "organization": [],
             "tags": [],
+            "has_high_value_data": False,
+            "has_dynamic_data": False,
 
             "resources-TOTAL_FORMS": "0",
             "resources-INITIAL_FORMS": "0",
             "resources-MIN_NUM_FORMS": "0",
             "resources-MAX_NUM_FORMS": "1000",
+
+            "supplements-INITIAL_FORMS": "0",
+            "supplements-MAX_NUM_FORMS": "10",
+            "supplements-MIN_NUM_FORMS": "0",
+            "supplements-TOTAL_FORMS": "0",
+
             "resources-2-TOTAL_FORMS": "0",
             "resources-2-INITIAL_FORMS": "0",
             "resources-2-MIN_NUM_FORMS": "0",
             "resources-2-MAX_NUM_FORMS": "1000",
+            "resources-2-0-has_high_value_data": False,
+            "resources-2-0-has_dynamic_data": False,
+
+            # nested admin required fields.
+            "resources-2-0-supplements-TOTAL_FORMS": "0",
+            "resources-2-0-supplements-INITIAL_FORMS": "0",
+            "resources-2-0-supplements-MIN_NUM_FORMS": "0",
+            "resources-2-0-supplements-MAX_NUM_FORMS": "1000",
+            "resources-2-empty-supplements-TOTAL_FORMS": "0",
+            "resources-2-empty-supplements-INITIAL_FORMS": "0",
+            "resources-2-empty-supplements-MIN_NUM_FORMS": "0",
+            "resources-2-empty-supplements-MAX_NUM_FORMS": "1000",
         },
         'datasource': {
             '_save': [''],
@@ -715,6 +732,14 @@ def api_request_post_data(admin_context, data_type, req_post_data):
             "datasets-2-0-license_condition_personal_data": "",
             "datasets-2-0-id": "",
             "datasets-2-0-organization": "",
+
+            "datasets-2-0-has_high_value_data": False,
+            "datasets-2-0-has_dynamic_data": False,
+
+            "datasets-2-0-supplements-TOTAL_FORMS": "0",
+            "datasets-2-0-supplements-INITIAL_FORMS": "0",
+            "datasets-2-0=supplements-MIN_NUM_FORMS": "0",
+            "datasets-2-0-supplements-MAX_NUM_FORMS": "10",
         },
         'lab_event': {
             "reports-TOTAL_FORMS": "1",
@@ -764,6 +789,8 @@ def api_request_post_data(admin_context, data_type, req_post_data):
             "title_en": "",
             "description_en": "",
             "slug_en": "",
+            "has_high_value_data": False,
+            "has_dynamic_data": False,
         },
         'showcase': {
             "category": "app",
@@ -785,20 +812,6 @@ def api_request_post_data(admin_context, data_type, req_post_data):
             "organizations": []
         }
     }
-    if is_enabled('S43_dynamic_data.be'):
-        default_post_data['dataset'].update({
-            "has_dynamic_data": False,
-            "resources-2-0-has_dynamic_data": False,
-        })
-        default_post_data['institution']['datasets-2-0-has_dynamic_data'] = False
-        default_post_data['resource']['has_dynamic_data'] = False
-    if is_enabled('S41_resource_has_high_value_data.be'):
-        default_post_data['dataset'].update({
-            "has_high_value_data": False,
-            "resources-2-0-has_high_value_data": False,
-        })
-        default_post_data['institution']['datasets-2-0-has_high_value_data'] = False
-        default_post_data['resource']['has_high_value_data'] = False
     if is_enabled('S47_research_data.be'):
         default_post_data['dataset'].update({
             "has_research_data": False,

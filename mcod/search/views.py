@@ -1,32 +1,37 @@
 import hashlib
 import json
 import logging
+import mimetypes
 import uuid
 from collections import namedtuple
 from functools import partial
 
 import falcon
-from django.utils.translation import gettext_lazy as _
 from django.core.paginator import Paginator
-from elasticsearch_dsl import Search, A
-import mimetypes
+from django.utils.translation import gettext_lazy as _
+from elasticsearch_dsl import A, Search
 
+from mcod import settings
 from mcod.api import app_cache as cache, limiter
-from mcod.core.api.handlers import RetrieveManyHdlr, SearchHdlr, BaseHdlr, SubscriptionSearchHdlr
+from mcod.core.api.handlers import BaseHdlr, RetrieveManyHdlr, SearchHdlr, SubscriptionSearchHdlr
 from mcod.core.api.hooks import login_optional
 from mcod.core.api.rdf.namespaces import NAMESPACES
 from mcod.core.api.schemas import ListingSchema
 from mcod.core.api.views import BaseView, JsonAPIView
 from mcod.core.versioning import versioned
 from mcod.lib.rdf.store import get_sparql_store
-from mcod.search.deserializers import ApiSearchRequest, ApiSuggestRequest, SparqlRequest, SPARQL_FORMATS
+from mcod.search.deserializers import (
+    SPARQL_FORMATS,
+    ApiSearchRequest,
+    ApiSuggestRequest,
+    SparqlRequest,
+)
 from mcod.search.serializers import (
     CommonObjectResponse,
     SparqlApiResponse,
     SparqlNamespaceApiResponse,
     SparqlResponseSchema,
 )
-from mcod import settings
 from mcod.search.utils import get_sparql_limiter_key
 from mcod.unleash import is_enabled
 
@@ -44,9 +49,8 @@ PLURAL_MODEL_NAMES = {
     'searchhistory': 'searchhistories',
     'history': 'histories',
     'news': 'news',
+    'showcase': 'showcases',
 }
-if is_enabled('S39_showcases.be'):
-    PLURAL_MODEL_NAMES['showcase'] = 'showcases'
 
 
 ALLOWED_MODELS = [
@@ -60,9 +64,8 @@ ALLOWED_MODELS = [
     'searchhistory',
     'history',
     'news',
+    'showcase',
 ]
-if is_enabled('S39_showcases.be'):
-    ALLOWED_MODELS.append('showcase')
 
 
 class NoneVisualizationCleaner:

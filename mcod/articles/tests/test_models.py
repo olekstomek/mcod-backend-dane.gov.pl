@@ -1,9 +1,6 @@
-# from django.test import TestCase
-
-# Create your tests here.
 import pytest
-from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.conf import settings
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db.models import QuerySet
 from django.test import Client
 from django.utils import translation
@@ -12,12 +9,11 @@ from django.utils.encoding import smart_str
 from mcod.articles.models import Article
 
 
-class TestArticleModel(object):
+class TestArticleModel:
     def test_can_not_create_empty_article(self):
         with pytest.raises(ValidationError)as e:
             a = Article()
             a.full_clean()
-        # assert "'slug'" in str(e.value)
         assert "'title'" in str(e.value)
 
     def test_create_article(self, article_category):
@@ -64,7 +60,6 @@ class TestArticleModel(object):
     def test_unsafe_delete(self, article):
         assert article.status == 'published'
         article.delete(soft=False)
-        # assert valid_article.state == 'deleted'
         with pytest.raises(ObjectDoesNotExist) as e:
             Article.objects.get(id=article.id)
         assert "Article matching query does not exist." in str(e.value)
@@ -77,7 +72,7 @@ class TestArticleModel(object):
             assert article.frontend_absolute_url == f'{settings.BASE_URL}/pl/article/{article.ident}'
 
 
-class TestArticleUserRoles(object):
+class TestArticleUserRoles:
     def test_editor_doesnt_see_articles_in_admin_panel(self, active_editor):
         client = Client()
         client.force_login(active_editor)

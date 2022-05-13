@@ -1,8 +1,6 @@
-# -*- coding: utf-8 -*-
-from importlib import import_module
-
 import json
 import uuid
+from importlib import import_module
 
 import falcon
 from django.contrib.auth import get_user
@@ -17,7 +15,6 @@ from mcod.lib.jwt import decode_jwt_token
 session_store = import_module(settings.SESSION_ENGINE).SessionStore
 
 role_properties = {
-    # role: model property
     'admin': 'is_superuser',
     'lod_admin': 'is_labs_admin',
     'aod_admin': 'is_academy_admin',
@@ -68,7 +65,7 @@ def login_required(req, resp, resource, params, roles=('user', ), save=False, re
             )
         user_payload = decode_jwt_token(auth_header)['user']
 
-    if not set(('session_key', 'email')) <= set(user_payload):
+    if not {'session_key', 'email'} <= set(user_payload):
         raise falcon.HTTPUnauthorized(
             title='401 Unauthorized',
             description=_('Invalid token') if restore_from else _('Invalid authorization header'),
@@ -137,7 +134,7 @@ def login_optional(req, resp, resource, *args, **kwargs):
     except Exception:
         pass
 
-    if not set(('session_key', 'email')) <= set(user_payload):
+    if not {'session_key', 'email'} <= set(user_payload):
         req.user = AnonymousUser()
         return
 

@@ -1,9 +1,10 @@
 import marshmallow as ma
-from rdflib.term import URIRef
 from rdflib import ConjunctiveGraph
+from rdflib.term import URIRef
+
+from mcod.core.api.rdf.schemas import ResponseSchema as RDFResponseSchema
 from mcod.core.api.rdf.sparql_graphs import SparqlGraph
 from mcod.datasets.serializers import OrganizationRDFMixin
-from mcod.core.api.rdf.schemas import ResponseSchema as RDFResponseSchema
 from mcod.organizations.models import Organization
 
 

@@ -5,13 +5,8 @@ from mimeparse import parse_mime_type
 
 from mcod import settings
 from mcod.resources import guess
-from mcod.resources.archives import UnsupportedArchiveError, is_archive_file, ArchiveReader
-from mcod.resources.geo import (
-    analyze_shapefile,
-    are_shapefiles,
-    check_geodata,
-    has_geotiff_files,
-)
+from mcod.resources.archives import ArchiveReader, UnsupportedArchiveError, is_archive_file
+from mcod.resources.geo import analyze_shapefile, are_shapefiles, check_geodata, has_geotiff_files
 from mcod.resources.meteo import check_meteo_data
 
 logger = logging.getLogger('mcod')

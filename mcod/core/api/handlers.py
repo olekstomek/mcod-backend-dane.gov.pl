@@ -1,10 +1,8 @@
-# -*- coding: utf-8 -*-
-
+import falcon
 from django.apps import apps
 from django.contrib.auth.models import AbstractBaseUser
 from django.db.models.query import QuerySet
 from django.utils.translation import gettext_lazy as _
-import falcon
 from elasticsearch import TransportError
 from elasticsearch_dsl import Q
 from marshmallow import ValidationError

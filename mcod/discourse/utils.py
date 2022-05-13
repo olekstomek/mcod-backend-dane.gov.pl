@@ -1,7 +1,8 @@
-import typing
 import logging
-from django.conf import settings
+import typing
+
 from discourse_django_sso.utils import SSOProducerUtils, SSOProviderService
+from django.conf import settings
 
 
 class ForumProviderService(SSOProviderService):

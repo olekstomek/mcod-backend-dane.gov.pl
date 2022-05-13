@@ -1,14 +1,19 @@
 # app.videos.models
 from django.conf import settings
 from django.db import models
-from django.db.models.signals import post_save, post_delete
+from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 from django.forms.utils import flatatt
 from django.utils.safestring import mark_safe
 from modelcluster.fields import ParentalKey
 from wagtail.embeds.embeds import get_embed_hash
 from wagtail.embeds.models import Embed
-from wagtailvideos.models import AbstractVideo, AbstractVideoTranscode, AbstractVideoTrack, AbstractTrackListing
+from wagtailvideos.models import (
+    AbstractTrackListing,
+    AbstractVideo,
+    AbstractVideoTrack,
+    AbstractVideoTranscode,
+)
 
 
 class CustomVideo(AbstractVideo):

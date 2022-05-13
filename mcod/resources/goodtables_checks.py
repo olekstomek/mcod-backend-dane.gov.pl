@@ -1,12 +1,11 @@
-from goodtables.registry import check
 from goodtables.error import Error
-
+from goodtables.registry import check
 
 ZERO_DATA_ROWS = 'zero-data-rows'
 
 
 @check(ZERO_DATA_ROWS, type='custom', context='body')
-class ZeroDataRows(object):
+class ZeroDataRows:
     def __init__(self, **kwargs):
         self.__rows_count = 0
 

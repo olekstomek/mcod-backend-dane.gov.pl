@@ -161,6 +161,16 @@
                     </xs:documentation>
                 </xs:annotation>
             </xs:element>
+            <xs:element name="supplements" maxOccurs="1" minOccurs="0">
+                <xs:complexType>
+                    <xs:annotation>
+                        <xs:documentation>Lista dokumentów uzupełniających  zbioru.</xs:documentation>
+                    </xs:annotation>
+                    <xs:sequence maxOccurs="10" minOccurs="1">
+                        <xs:element name="supplement" type="supplementType"></xs:element>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
         </xs:all>
         <xs:attribute name="status" default="published">
             <xs:annotation>
@@ -310,7 +320,7 @@
                     <xs:annotation>
                         <xs:documentation>Lista dokumentów uzupełniających  zasobu.</xs:documentation>
                     </xs:annotation>
-                    <xs:sequence maxOccurs="unbounded" minOccurs="1">
+                    <xs:sequence maxOccurs="10" minOccurs="1">
                         <xs:element name="supplement" type="supplementType"></xs:element>
                     </xs:sequence>
                 </xs:complexType>
@@ -360,6 +370,14 @@
                         Nazwa dokumentu uzupełniającego.
                     </xs:documentation>
                 </xs:annotation>
+            </xs:element>
+            <xs:element name="language">
+                <xs:simpleType>
+                    <xs:restriction base="xs:string">
+                        <xs:enumeration value="pl"></xs:enumeration>
+                        <xs:enumeration value="en"></xs:enumeration>
+                    </xs:restriction>
+                </xs:simpleType>
             </xs:element>
         </xs:all>
     </xs:complexType>

@@ -1,9 +1,9 @@
 from django_elasticsearch_dsl import fields
 from django_elasticsearch_dsl.registries import registry
 
-from mcod.searchhistories.models import SearchHistory
 from mcod import settings as mcs
 from mcod.core.db.elastic import Document
+from mcod.searchhistories.models import SearchHistory
 
 
 @registry.register_document

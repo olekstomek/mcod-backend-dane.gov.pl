@@ -1,10 +1,7 @@
 from django.contrib import admin
 from django.utils.translation import gettext_lazy as _
 
-from mcod.lib.admin_mixins import (
-    HistoryMixin,
-    ModelAdmin,
-)
+from mcod.lib.admin_mixins import HistoryMixin, ModelAdmin
 from mcod.special_signs.forms import SpecialSignAdminForm
 from mcod.special_signs.models import SpecialSign
 

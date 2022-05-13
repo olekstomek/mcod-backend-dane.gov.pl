@@ -1,5 +1,6 @@
 import pytest
 from namedlist import namedlist
+
 from mcod.applications.forms import ApplicationForm
 from mcod.applications.models import Application
 from mcod.lib.helpers import change_namedlist
@@ -94,10 +95,6 @@ class TestApplicationFormValidity:
                                        'validity': False}),
             #   wrong url format
             change_namedlist(minimal, {'title': 'wrong url format', 'url': "wrong format", 'validity': False}),
-            # date
-            #   wrong format
-            # change_namedlist(minimal, {'title': 'wrong date format', 'validity': False}),
-
         ])
     def test_application_form_validity(self,
                                        title,

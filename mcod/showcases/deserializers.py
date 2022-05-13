@@ -1,12 +1,18 @@
+from django.utils.translation import get_language, gettext_lazy as _
 from elasticsearch_dsl.query import Term
-from marshmallow import pre_load, post_load, validate, validates, validates_schema, ValidationError
-from django.utils.translation import gettext_lazy as _, get_language
+from marshmallow import ValidationError, post_load, pre_load, validate, validates, validates_schema
 
 from mcod import settings
 from mcod.core.api import fields as core_fields
-from mcod.core.api.jsonapi.deserializers import TopLevel, ObjectAttrs
-from mcod.core.api.schemas import ListingSchema, CommonSchema, ExtSchema
-from mcod.core.api.schemas import NumberTermSchema, StringTermSchema, StringMatchSchema
+from mcod.core.api.jsonapi.deserializers import ObjectAttrs, TopLevel
+from mcod.core.api.schemas import (
+    CommonSchema,
+    ExtSchema,
+    ListingSchema,
+    NumberTermSchema,
+    StringMatchSchema,
+    StringTermSchema,
+)
 from mcod.core.api.search import fields as search_fields
 from mcod.showcases.models import ShowcaseProposal
 

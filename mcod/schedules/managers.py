@@ -1,7 +1,7 @@
 from notifications.base.models import NotificationQuerySet as BaseNotificationQuerySet
 
-from mcod.core.db.managers import TrashManager, QuerySetMixin
-from mcod.core.managers import SoftDeletableQuerySet, SoftDeletableManager
+from mcod.core.db.managers import QuerySetMixin, TrashManager
+from mcod.core.managers import SoftDeletableManager, SoftDeletableQuerySet
 
 
 class NotificationQuerySet(QuerySetMixin, BaseNotificationQuerySet):
@@ -134,8 +134,7 @@ class UserScheduleQuerySet(QuerySetMixin, SoftDeletableQuerySet):
         return self.filter(status='published')
 
 
-class BaseManagerMixin(object):
-
+class BaseManagerMixin:
     def get_filtered_results(self, **kwargs):
         return super().get_queryset().get_filtered_results(**kwargs)
 

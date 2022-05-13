@@ -1,15 +1,13 @@
 import re
 from collections import deque
 
-from django.core.exceptions import FieldDoesNotExist
-from django.core.paginator import Paginator, EmptyPage
+from bs4 import BeautifulSoup
 from django.conf import settings
-
+from django.core.exceptions import FieldDoesNotExist
+from django.core.paginator import EmptyPage, Paginator
 from django.urls.exceptions import NoReverseMatch
 from hypereditor.fields import HyperField
-from rest_framework import fields as drff
-from bs4 import BeautifulSoup
-from rest_framework import relations
+from rest_framework import fields as drff, relations
 from wagtailvideos import get_video_model
 
 from mcod.cms.api.exceptions import UnprocessableEntity

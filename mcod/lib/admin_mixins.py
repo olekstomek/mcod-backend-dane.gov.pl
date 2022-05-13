@@ -1,38 +1,36 @@
 import json
 from collections import defaultdict
-import nested_admin
 from urllib.parse import quote as urlquote
 
+import nested_admin
 from auditlog.admin import LogEntryAdmin as BaseLogEntryAdmin
 from django.contrib import admin, messages
-from django.contrib.admin.utils import quote, unquote
-from django.contrib.admin.options import InlineModelAdmin as DjangoInlineModelAdmin
 from django.contrib.admin.templatetags.admin_urls import add_preserved_filters
+from django.contrib.admin.utils import quote, unquote
 from django.contrib.admin.views.main import ChangeList
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.core.exceptions import PermissionDenied
 from django.http import HttpResponseRedirect
 from django.template.defaultfilters import truncatewords
 from django.template.response import TemplateResponse
-from django.urls import reverse, NoReverseMatch
+from django.urls import NoReverseMatch, reverse
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils.text import capfirst
 from django.utils.timezone import now
-from django.utils.translation import gettext_lazy as _, gettext, pgettext_lazy
+from django.utils.translation import gettext, gettext_lazy as _, pgettext_lazy
 from modeltrans.translator import get_i18n_field
 from modeltrans.utils import get_language
 from rules.contrib.admin import (
     ObjectPermissionsModelAdmin as BaseObjectPermissionsModelAdmin,
     ObjectPermissionsStackedInline as BaseObjectPermissionsStackedInline,
 )
-from suit.admin import SortableStackedInline as BaseSortableStackedInline
+from suit.admin import SortableStackedInline as BaseSortableStackedInline, SortableStackedInlineBase
 
 from mcod import settings
 from mcod.histories.models import History, LogEntry
 from mcod.reports.tasks import generate_csv
 from mcod.tags.views import TagAutocompleteJsonView
-from mcod.unleash import is_enabled
 
 
 class MCODChangeList(ChangeList):
@@ -168,8 +166,6 @@ class CRUDMessageMixin:
     delete_msg_template_f = pgettext_lazy('The %(name)s "%(obj)s" was deleted successfully.', 'feminine')
     delete_msg_template_n = pgettext_lazy('The %(name)s "%(obj)s" was deleted successfully.', 'neuter')
 
-    s43_admin_trash_fixes = is_enabled('S43_admin_trash_fixes.be')
-
     def get_msg_template(self, template_name):
         if self.obj_gender in ['f', 'n']:
             template_name = f'{template_name}_{self.obj_gender}'
@@ -225,15 +221,12 @@ class CRUDMessageMixin:
             return self.response_post_save_add(request, obj)
 
     def _get_obj_url(self, request, obj):
-        if self.s43_admin_trash_fixes:
-            obj_url = getattr(obj, 'admin_change_url', None) or urlquote(request.path)
-            if self.model._meta.proxy and not obj.is_removed:
-                opts = self.model._meta.concrete_model._meta
-                obj_url = reverse(
-                    'admin:%s_%s_change' % (opts.app_label, opts.model_name), args=(obj.pk,),
-                    current_app=self.admin_site.name)
-        else:
-            obj_url = urlquote(request.path)
+        obj_url = getattr(obj, 'admin_change_url', None) or urlquote(request.path)
+        if self.model._meta.proxy and not obj.is_removed:
+            opts = self.model._meta.concrete_model._meta
+            obj_url = reverse(
+                'admin:%s_%s_change' % (opts.app_label, opts.model_name), args=(obj.pk,),
+                current_app=self.admin_site.name)
         return obj_url
 
     def response_change(self, request, obj):
@@ -433,6 +426,51 @@ class ListDisplayMixin:
         return default
 
 
+class AdminInlineLangMixin:
+
+    use_translated_fields = False
+
+    def get_lang_fields(self):
+        i18n_field = get_i18n_field(self.model)
+        fields = []
+        for lang_code in settings.MODELTRANS_AVAILABLE_LANGUAGES:
+            if lang_code == settings.LANGUAGE_CODE:
+                continue
+            lang_fields = [
+                f'{field.name}' for field in i18n_field.get_translated_fields()
+                if field.name.endswith(lang_code)
+            ]
+            fields.extend(lang_fields)
+        return fields
+
+    def extend_by_lang_fields(self, orig_fields):
+        if self.use_translated_fields:
+            extended_fields = []
+            i18n_fields = self.get_lang_fields()
+            fields_map = defaultdict(list)
+            for field in i18n_fields:
+                if field not in orig_fields:
+                    fields_map[field.rsplit('_', 1)[0]].append(field)
+            for field in orig_fields:
+                extended_fields.append(field)
+                if field in orig_fields:
+                    extended_fields.extend(fields_map[field])
+            return extended_fields
+        return orig_fields
+
+
+class NestedStackedInline(AdminInlineLangMixin, nested_admin.NestedStackedInline):
+    pass
+
+
+class SortableNestedStackedInline(SortableStackedInlineBase, NestedStackedInline):
+    pass
+
+
+class StackedInline(AdminInlineLangMixin, admin.StackedInline):
+    pass
+
+
 class TabularInline(ListDisplayMixin, AdminListMixin, admin.TabularInline):
     pass
 
@@ -487,41 +525,8 @@ class LangFieldsOnlyMixin:
                      if lang_code is not settings.LANGUAGE_CODE)
 
 
-class AdminInlineLangMixin:
-
-    use_translated_fields = False
-
-    def get_lang_fields(self):
-        i18n_field = get_i18n_field(self.model)
-        fields = []
-        for lang_code in settings.MODELTRANS_AVAILABLE_LANGUAGES:
-            if lang_code == settings.LANGUAGE_CODE:
-                continue
-            lang_fields = [
-                f'{field.name}' for field in i18n_field.get_translated_fields()
-                if field.name.endswith(lang_code)
-            ]
-            fields.extend(lang_fields)
-        return fields
-
-    def extend_by_lang_fields(self, orig_fields):
-        if self.use_translated_fields:
-            extended_fields = []
-            i18n_fields = self.get_lang_fields()
-            fields_map = defaultdict(list)
-            for field in i18n_fields:
-                if field not in orig_fields:
-                    fields_map[field.rsplit('_', 1)[0]].append(field)
-            for field in orig_fields:
-                extended_fields.append(field)
-                if field in orig_fields:
-                    extended_fields.extend(fields_map[field])
-            return extended_fields
-        return orig_fields
-
-
-class ModelAdmin(ListDisplayMixin, LangFieldsOnlyMixin, AdminListMixin, ExportCsvMixin, SoftDeleteMixin,
-                 CRUDMessageMixin, MCODAdminMixin, admin.ModelAdmin):
+class ModelAdminMixin(ListDisplayMixin, LangFieldsOnlyMixin, AdminListMixin, ExportCsvMixin, SoftDeleteMixin,
+                      CRUDMessageMixin, MCODAdminMixin):
 
     check_imported_obj_perms = False
     delete_selected_msg = None
@@ -553,6 +558,14 @@ class ModelAdmin(ListDisplayMixin, LangFieldsOnlyMixin, AdminListMixin, ExportCs
         return super().has_change_permission(request, obj=obj)
 
 
+class ModelAdmin(ModelAdminMixin, admin.ModelAdmin):
+    pass
+
+
+class NestedModelAdmin(ModelAdminMixin, nested_admin.NestedModelAdmin):
+    pass
+
+
 class UserAdmin(ListDisplayMixin, ExportCsvMixin, SoftDeleteMixin, BaseUserAdmin):
     soft_delete = True
 
@@ -562,8 +575,7 @@ class ObjectPermissionsStackedInline(AdminInlineLangMixin, AdminListMixin, neste
 
     def get_fields(self, request, obj=None):
         fields = super().get_fields(request, obj)
-        return self.extend_by_lang_fields(fields) if\
-            is_enabled('S45_forms_unification.be') else fields
+        return self.extend_by_lang_fields(fields)
 
 
 class ObjectPermissionsModelAdmin(ListDisplayMixin, LangFieldsOnlyMixin, ExportCsvMixin, SoftDeleteMixin,
@@ -617,8 +629,7 @@ class TrashMixin(ModelAdmin):
         return False
 
     def render_change_form(self, request, context, add=False, change=False, form_url='', obj=None):
-        if self.s43_admin_trash_fixes:
-            context['show_save_and_continue'] = False
+        context['show_save_and_continue'] = False
         if hasattr(self.model, 'accusative_case'):
             if add:
                 title = _('Add %s - trash')
@@ -708,7 +719,3 @@ class HistoryMixin:
         return html
 
     obj_history.short_description = _('History')
-
-
-class InlineModelAdmin(AdminInlineLangMixin, DjangoInlineModelAdmin):
-    pass

@@ -3,6 +3,7 @@ import logging
 import os
 import uuid
 from functools import partial
+from mimetypes import guess_extension, guess_type
 
 from django.conf import settings
 from django.core.files.base import ContentFile
@@ -14,21 +15,19 @@ from django.dispatch import receiver
 from django.template.defaultfilters import truncatechars
 from django.utils.functional import cached_property
 from django.utils.text import slugify
-from django.utils.translation import gettext_lazy as _, get_language
-from mimetypes import guess_type, guess_extension
+from django.utils.translation import get_language, gettext_lazy as _
 from model_utils import Choices
-from model_utils.models import TimeStampedModel as BaseTimeStampedModel
-from model_utils.models import StatusModel, MonitorField
+from model_utils.models import MonitorField, StatusModel, TimeStampedModel as BaseTimeStampedModel
 
 from mcod.core import signals
 from mcod.core.api.search import signals as search_signals
 from mcod.core.db.mixins import AdminMixin, ApiMixin
 from mcod.core.models import SoftDeletableModel
-from mcod.core.serializers import csv_serializers_registry as csr
 from mcod.core.registries import rdf_serializers_registry as rsr
+from mcod.core.serializers import csv_serializers_registry as csr
 from mcod.core.signals import permanently_remove_related_objects
 from mcod.core.utils import sizeof_fmt
-from mcod.watchers.models import Subscription, ModelWatcher
+from mcod.watchers.models import ModelWatcher, Subscription
 from mcod.watchers.tasks import update_model_watcher_task
 
 signal_logger = logging.getLogger('signals')
@@ -59,7 +58,7 @@ def default_slug_value():
     return uuid.uuid4().hex
 
 
-class LogMixin(object):
+class LogMixin:
     @classmethod
     def log_debug(cls, instance, msg, signal, state=None):
         extra = {
@@ -506,19 +505,6 @@ def update_watcher(sender, instance, *args, state=None, **kwargs):
         countdown=1
     )
 
-
-# def update_common_doc(sender, instance, *args, state=None, **kwargs):
-#     if hasattr(sender, 'log_debug'):
-#         sender.log_debug(
-#             instance,
-#             '{} {}'.format(sender._meta.object_name, state),
-#             'notify_{}'.format(state),
-#             state,
-#         )
-#     if state not in {'published', 'restored', 'updated', 'removed'}:
-#         return
-
-#     #elastic.update_common_doc(instance, state)
 
 class TrashModelBase(ModelBase):
 

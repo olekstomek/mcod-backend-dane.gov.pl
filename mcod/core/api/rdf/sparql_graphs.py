@@ -1,11 +1,10 @@
-from rdflib.term import BNode
 from django.db.models import Model
+from rdflib.term import BNode
 
 from mcod.core.api.rdf.registry import registry
 
 
 class SparqlGraph:
-
     model = None
     related_models = None
     parent_model = None
@@ -14,7 +13,7 @@ class SparqlGraph:
 
     def __init__(self, named_graph=None, *args, **kwargs):
         self._named_graph = named_graph
-        super(SparqlGraph, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def __init_subclass__(cls, **kwargs):
         registry.register_graph(cls)

@@ -3,8 +3,8 @@ from django.utils import timezone
 from django.utils.formats import localize
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
-from modeltrans.fields import TranslationField
 from model_utils import FieldTracker
+from modeltrans.fields import TranslationField
 
 from mcod.core.db.managers import TrashManager
 from mcod.core.db.models import ExtendedModel, TrashModelBase

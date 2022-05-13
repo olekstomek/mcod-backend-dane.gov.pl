@@ -1,9 +1,9 @@
 import pytest
 from namedlist import namedlist
+
+from mcod.lib.helpers import change_namedlist
 from mcod.showcases.forms import ShowcaseForm
 from mcod.showcases.models import Showcase
-from mcod.lib.helpers import change_namedlist
-
 
 fields = [
     "title",
@@ -95,10 +95,6 @@ class TestApplicationFormValidity:
                                        'validity': False}),
             #   wrong url format
             change_namedlist(minimal, {'title': 'wrong url format', 'url': "wrong format", 'validity': False}),
-            # date
-            #   wrong format
-            # change_namedlist(minimal, {'title': 'wrong date format', 'validity': False}),
-
         ])
     def test_application_form_validity(self, title, slug, notes, author, status, url, image, validity):
         form = ShowcaseForm(data={

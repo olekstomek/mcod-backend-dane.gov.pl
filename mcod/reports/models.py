@@ -2,12 +2,12 @@ import os
 
 from django.contrib.auth import get_user_model
 from django.db import models
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext_lazy as _, pgettext_lazy
 from django_celery_results.models import TaskResult
+from model_utils.models import TimeStampedModel
 
 from mcod import settings
 from mcod.core.utils import sizeof_fmt
-from model_utils.models import TimeStampedModel
 
 User = get_user_model()
 
@@ -147,3 +147,10 @@ class SummaryDailyReport(ReportMixin, TimeStampedModel):
     class Meta:
         verbose_name = _("Summary daily report")
         verbose_name_plural = _("Summary daily reports")
+
+
+class Dashboard(Report):
+    class Meta:
+        proxy = True
+        verbose_name = pgettext_lazy('Metabase Dashboard', 'Dashboard')
+        verbose_name_plural = pgettext_lazy('Metabase Dashboards', 'Dashboards')

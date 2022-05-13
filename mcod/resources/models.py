@@ -6,11 +6,11 @@ import os
 import re
 import shutil
 import tempfile
-import unicodecsv
 from io import BytesIO
 
 import magic
-from celery.signals import task_prerun, task_failure, task_success, task_postrun
+import unicodecsv
+from celery.signals import task_failure, task_postrun, task_prerun, task_success
 from constance import config
 from csvwlib import CSVWConverter
 from django.conf import settings
@@ -19,10 +19,10 @@ from django.contrib.postgres.fields import JSONField
 from django.contrib.postgres.indexes import GinIndex
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
-from django.core.validators import MinValueValidator, MaxValueValidator
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import Max, Sum
-from django.db.models.signals import pre_save, post_save, pre_delete
+from django.db.models.signals import post_save, pre_delete, pre_save
 from django.dispatch import receiver
 from django.template.defaultfilters import filesizeformat
 from django.template.loader import render_to_string
@@ -36,43 +36,48 @@ from mimeparse import parse_mime_type
 from model_utils import FieldTracker
 from modeltrans.fields import TranslationField
 
-from mcod.core import signals as core_signals
-from mcod.core import storages
+from mcod.core import signals as core_signals, storages
 from mcod.core.api.rdf import signals as rdf_signals
 from mcod.core.api.rdf.tasks import update_graph_task
 from mcod.core.api.search import signals as search_signals
-from mcod.core.api.search.tasks import update_with_related_task, bulk_delete_documents_task, update_related_task
+from mcod.core.api.search.tasks import (
+    bulk_delete_documents_task,
+    update_related_task,
+    update_with_related_task,
+)
 from mcod.core.db.managers import TrashManager
-from mcod.core.db.models import ExtendedModel, update_watcher, TrashModelBase
+from mcod.core.db.models import ExtendedModel, TrashModelBase, update_watcher
 from mcod.counters.models import ResourceDownloadCounter, ResourceViewCounter
-from mcod.datasets.models import Dataset
-from mcod.regions.models import RegionManyToManyField, Region
+from mcod.datasets.models import BaseSupplement, Dataset
 from mcod.lib.data_rules import painless_body
+from mcod.regions.models import Region, RegionManyToManyField
 from mcod.resources.archives import ArchiveReader, is_archive_file
-from mcod.resources.error_mappings import recommendations, messages
+from mcod.resources.error_mappings import messages, recommendations
 from mcod.resources.file_validation import analyze_file, check_support, get_file_info
 from mcod.resources.indexed_data import ShpData, TabularData
 from mcod.resources.link_validation import check_link_status, download_file
 from mcod.resources.managers import (
     ChartManager,
+    ResourceFileManager,
     ResourceManager,
     ResourceRawManager,
-    ResourceFileManager,
     SupplementManager,
 )
 from mcod.resources.score_computation import get_score
-from mcod.resources.signals import revalidate_resource, update_chart_resource, update_dataset_file_archive
+from mcod.resources.signals import (
+    revalidate_resource,
+    update_chart_resource,
+    update_dataset_file_archive,
+)
 from mcod.resources.tasks import (
-    process_resource_from_url_task,
-    process_resource_file_task,
     process_resource_file_data_task,
-    update_resource_openness_score_task,
+    process_resource_file_task,
+    process_resource_from_url_task,
+    process_resource_res_file_task,
     validate_link,
-    process_resource_res_file_task
 )
 from mcod.unleash import is_enabled
 from mcod.watchers.tasks import update_model_watcher_task
-
 
 User = get_user_model()
 
@@ -102,6 +107,12 @@ def supported_formats_choices():
     return [(i, i.upper()) for i in supported_formats()]
 
 
+SUPPORTED_FILE_EXTENSIONS = [x[0] for x in supported_formats_choices()]
+SUPPORTED_FILE_EXTENSIONS.extend(settings.ARCHIVE_EXTENSIONS)
+SUPPORTED_FILE_EXTENSIONS = [
+    f'.{x}' for x in SUPPORTED_FILE_EXTENSIONS if x not in settings.RESTRICTED_FILE_TYPES]
+
+
 def get_coltype(col, table_schema):
     fields = table_schema.get('fields')
     col_index = int(col.replace("col", "")) - 1
@@ -109,7 +120,7 @@ def get_coltype(col, table_schema):
 
 
 @deconstructible
-class FileValidator(object):
+class FileValidator:
     error_messages = {
         'max_size': ("Ensure this file size is not greater than %(max_size)s."
                      " Your file size is %(size)s."),
@@ -539,7 +550,7 @@ class Resource(ExtendedModel):
 
     def get_csv_file_internal_url(self, suffix='.utf8_encoded.csv'):
         """
-        Returns absolute url to csv file for convertion to json-ld.
+        Returns absolute url to csv file for convertion to jsonld.
         During the process new csv file (with specified suffix) is created in media directory
         to meet the requirements of converter (csvwlib.utils.CSVUtils).
         """
@@ -641,9 +652,7 @@ class Resource(ExtendedModel):
 
     @property
     def file_extension(self):
-        if is_enabled('S40_new_file_model.be'):
-            return self._main_file.extension
-        return os.path.splitext(self.file.name)[1] if self.file else None
+        return self._main_file.extension
 
     @property
     def file_size(self):
@@ -670,7 +679,7 @@ class Resource(ExtendedModel):
     def converted_formats(self):
         items = [
             'csv' if self.csv_converted_file else None,
-            'json-ld' if self.jsonld_converted_file else None,
+            'jsonld' if self.jsonld_converted_file else None,
         ]
         return [item for item in items if item]
 
@@ -750,23 +759,31 @@ class Resource(ExtendedModel):
                 csv_out.writerow(row)
             f.seek(0)
             csv_file = self.save_file(f, f'{csv_filename}.csv')
-        if is_enabled('S40_new_file_model.be') and csv_file:
-            csv_file, created = ResourceFile.objects.update_or_create(
-                resource_id=self.pk, format='csv', is_main=False, defaults={'file': csv_file})
-        self.csv_converted_file = csv_file
-        jsonld = self.convert_csv_to_jsonld()
-        if is_enabled('S40_new_file_model.be') and jsonld:
-            jsonld, created = ResourceFile.objects.update_or_create(
-                resource_id=self.pk, format='jsonld', is_main=False, defaults={'file': jsonld})
-        self.jsonld_converted_file = jsonld
-        if not is_enabled('S40_new_file_model.be'):
-            self.save()
+
+        if csv_file:
+            resource_file, _ = ResourceFile.objects.update_or_create(
+                resource_id=self.pk,
+                format='csv',
+                is_main=False,
+                defaults={'file': csv_file},
+            )
+            self.add_to_other_files_cache(resource_file)
+
+        jsonld_file = self.convert_csv_to_jsonld()
+        if jsonld_file:
+            resource_file, _ = ResourceFile.objects.update_or_create(
+                resource_id=self.pk,
+                format='jsonld',
+                is_main=False,
+                defaults={'file': jsonld_file},
+            )
+            self.add_to_other_files_cache(resource_file)
 
     def convert_csv_to_jsonld(self):
         url = self.get_csv_file_internal_url()
         if url:
             jsonld_filename = f'{os.path.splitext(self.file_basename)[0]}.jsonld'
-            logger.debug(f'Trying to convert {url} to json-ld file named {jsonld_filename}')
+            logger.debug(f'Trying to convert {url} to jsonld file named {jsonld_filename}')
             try:
                 graph = CSVWConverter.to_rdf(url)
                 # override context to omit long list of default namespaces as @context in json-ld.
@@ -804,14 +821,10 @@ class Resource(ExtendedModel):
 
     def revalidate(self, **kwargs):
         if not self.link or self.is_link_internal:
-            if is_enabled('S40_new_file_model.be'):
-                if self._main_file:
-                    process_resource_res_file_task.s(self._main_file.pk, **kwargs).apply_async(countdown=2)
-            else:
-                process_resource_file_task.s(self.id, **kwargs).apply_async(countdown=2)
+            if self._main_file:
+                process_resource_res_file_task.s(self._main_file.pk, **kwargs).apply_async(countdown=2)
         else:
-            process_resource_from_url_task.s(self.id, **kwargs).apply_async(
-                countdown=2)
+            process_resource_from_url_task.s(self.id, **kwargs).apply_async(countdown=2)
 
     @classmethod
     def accusative_case(cls):
@@ -819,18 +832,15 @@ class Resource(ExtendedModel):
 
     @classmethod
     def get_resources_files(cls):
-        if is_enabled('S40_new_file_model.be'):
-            resources_files = [f.file.path for f in ResourceFile.objects.all()]
-        else:
-            resources_files = [x.file.path for x in cls.raw.exclude(file=None).exclude(file='')]
-            resources_files.extend(
-                [x.csv_file.path for x in cls.raw.exclude(csv_file=None).exclude(csv_file='')])
-            resources_files.extend(
-                [x.jsonld_file.path for x in cls.raw.exclude(jsonld_file=None).exclude(jsonld_file='')])
-        resources_files.extend(
-            [x.packed_file.path for x in cls.raw.exclude(packed_file=None).exclude(packed_file='')])
-        resources_files.extend(
-            [x.old_file.path for x in cls.raw.exclude(old_file=None).exclude(old_file='')])
+        resources_files = [f.file.path for f in ResourceFile.objects.all()]
+        resources_files.extend([
+            x.packed_file.path
+            for x in cls.raw.exclude(packed_file=None).exclude(packed_file='')
+        ])
+        resources_files.extend([
+            x.old_file.path
+            for x in cls.raw.exclude(old_file=None).exclude(old_file='')
+        ])
         return resources_files
 
     @classmethod
@@ -859,24 +869,15 @@ class Resource(ExtendedModel):
 
     def get_openness_score(self, format_=None):
         format_ = format_ or self.format
-        if is_enabled('S40_new_file_model.be'):
-            files_score = []
-            if format_ is None:
-                return 0, [0]
-            if self.link and not self.main_file:
-                resource_score = get_score(self.link, format_)
-            else:
-                files_score = [{'file_pk': f.pk, 'score': f.get_openness_score()} for f in self.all_files]
-                resource_score = max([fs['score'] for fs in files_score])
-            return resource_score, files_score
+        files_score = []
+        if format_ is None:
+            return 0, [0]
+        if self.link and not self.main_file:
+            resource_score = get_score(self.link, format_)
         else:
-            if self.csv_file:
-                format_ = 'csv'
-            if format_ == 'jsonstat':
-                format_ = 'json'
-            if format_ is None:
-                return 0
-            return get_score(self, format_)
+            files_score = [{'file_pk': f.pk, 'score': f.get_openness_score()} for f in self.all_files]
+            resource_score = max([fs['score'] for fs in files_score])
+        return resource_score, files_score
 
     @property
     def file_size_human_readable(self):
@@ -945,8 +946,7 @@ class Resource(ExtendedModel):
 
     objects = ResourceManager()
     trash = TrashManager()
-    if is_enabled('S40_new_file_model.be'):
-        raw = ResourceRawManager()
+    raw = ResourceRawManager()
 
     class Meta:
         verbose_name = _("Resource")
@@ -985,14 +985,12 @@ class Resource(ExtendedModel):
     @property
     def computed_downloads_count(self):
         return ResourceDownloadCounter.objects.filter(
-            resource_id=self.pk).aggregate(count_sum=Sum('count'))['count_sum'] or 0\
-            if is_enabled('S16_new_date_counters.be') else self.downloads_count
+            resource_id=self.pk).aggregate(count_sum=Sum('count'))['count_sum'] or 0
 
     @property
     def computed_views_count(self):
         return ResourceViewCounter.objects.filter(
-            resource_id=self.pk).aggregate(count_sum=Sum('count'))['count_sum'] or 0\
-            if is_enabled('S16_new_date_counters.be') else self.views_count
+            resource_id=self.pk).aggregate(count_sum=Sum('count'))['count_sum'] or 0
 
     @cached_property
     def data_special_signs(self):
@@ -1011,6 +1009,10 @@ class Resource(ExtendedModel):
         return self.supplements.all()
 
     @property
+    def supplements_str(self):
+        return ';'.join([x.name_csv for x in self.supplement_docs])
+
+    @property
     def all_regions(self):
         return Region.objects.for_resource_with_id(self.pk, has_other_regions=self.regions.all().exists())
 
@@ -1026,9 +1028,7 @@ class Resource(ExtendedModel):
         return _schema(many=False).dump(obj)
 
     def analyze_file(self):
-        if is_enabled('S40_new_file_model.be'):
-            return self._main_file.analyze()
-        return analyze_file(self.file.file.name)
+        return self._main_file.analyze()
 
     def as_sparql_create_query(self):
         g = self.to_rdf_graph()
@@ -1055,9 +1055,7 @@ class Resource(ExtendedModel):
         return check_link_status(self.link, self.type)
 
     def check_support(self):
-        if is_enabled('S40_new_file_model.be'):
-            return self._main_file.check_support()
-        return check_support(self.format, self.file_mimetype)
+        return self._main_file.check_support()
 
     def download_file(self):
         return download_file(self.link, self.forced_file_type)
@@ -1104,27 +1102,27 @@ class Resource(ExtendedModel):
 
     @property
     def main_file(self):
-        return getattr(self._main_file, 'file', '') if is_enabled('S40_new_file_model.be') else self.file
+        return getattr(self._main_file, 'file', '')
 
     @property
     def csv_converted_file(self):
-        return self.get_other_file_by_format('csv') if is_enabled('S40_new_file_model.be') else self.csv_file
+        return self.get_other_file_by_format('csv')
 
     @property
     def jsonld_converted_file(self):
-        return self.get_other_file_by_format('jsonld') if is_enabled('S40_new_file_model.be') else self.jsonld_file
+        return self.get_other_file_by_format('jsonld')
 
     @property
     def main_file_info(self):
-        return getattr(self._main_file, 'info', '') if is_enabled('S40_new_file_model.be') else self.file_info
+        return getattr(self._main_file, 'info', '')
 
     @property
     def main_file_encoding(self):
-        return getattr(self._main_file, 'encoding', '') if is_enabled('S40_new_file_model.be') else self.file_encoding
+        return getattr(self._main_file, 'encoding', '')
 
     @property
     def main_file_mimetype(self):
-        return getattr(self._main_file, 'mimetype', None) if is_enabled('S40_new_file_model.be') else self.file_mimetype
+        return getattr(self._main_file, 'mimetype', None)
 
     @property
     def _main_file(self):
@@ -1141,10 +1139,9 @@ class Resource(ExtendedModel):
 
     @property
     def other_files(self):
-        other_files = getattr(self, '_other_files', [])  # _other_files is computed by prefetch_related in manager
-        if not other_files and not is_enabled('S45_resource_indexing_optimalization.be'):
-            other_files = self._other_files = self.files.filter(is_main=False)
-        return other_files
+        if hasattr(self, '_other_files'):  # _other_files is added if qs.iterator() is not used
+            return getattr(self, '_other_files', [])
+        return self.files.filter(is_main=False)
 
     @property
     def all_files(self):
@@ -1152,30 +1149,27 @@ class Resource(ExtendedModel):
         all_files.extend(self.other_files)
         return all_files
 
-    @csv_converted_file.setter
-    def csv_converted_file(self, new_csv):
-        if is_enabled('S40_new_file_model.be'):
-            self.update_cahced_files(new_csv, 'csv')
-        else:
-            self.csv_file = new_csv
-
-    @jsonld_converted_file.setter
-    def jsonld_converted_file(self, new_jsonld):
-        if is_enabled('S40_new_file_model.be'):
-            self.update_cahced_files(new_jsonld, 'jsonld')
-        else:
-            self.jsonld_file = new_jsonld
-
-    def update_cahced_files(self, res_file, format):
-        if res_file:
-            other_files = getattr(self, '_other_files', [])
-            new_files = [f for f in other_files if f.format != format]
-            new_files.append(res_file)
-            self._other_files = new_files
+    def add_to_other_files_cache(self, new_file):
+        """
+        Add `new_file` to `self._other_files` cache.
+        If `self._other_files` already has file with the same format as `new_file`, it is replaced by `new_file`.
+        """
+        new_files = [
+            file
+            for file in getattr(self, '_other_files', [])
+            if file.format != new_file.format
+        ]
+        new_files.append(new_file)
+        self._other_files = new_files
 
     def get_other_file_by_format(self, file_format):
-        _file = list(filter(lambda f: f.format == file_format, self.other_files))
-        return _file[0].file if _file else ''
+        resource_files = [
+            file
+            for file in self.other_files
+            if file.format == file_format
+        ]
+        resource_file = next(iter(resource_files), None)
+        return resource_file.file if resource_file else ''
 
     @property
     def is_published(self):
@@ -1183,9 +1177,7 @@ class Resource(ExtendedModel):
 
     @property
     def needs_es_and_rdf_db_update(self):
-        if is_enabled('S44_es_update_fix.be'):
-            return self.is_published and not self.is_removed and not self.is_permanently_removed
-        return self.is_published
+        return self.is_published and not self.is_removed and not self.is_permanently_removed
 
     def send_resource_comment_mail(self, comment):
         context = {
@@ -1194,13 +1186,8 @@ class Resource(ExtendedModel):
             'comment': comment,
             'test': bool(settings.DEBUG and config.TESTER_EMAIL),
         }
-        template_suffix = '-test' if settings.DEBUG and config.TESTER_EMAIL else ''
-        if is_enabled('S39_mail_layout.be'):
-            _plain = 'mails/resource-comment.txt'
-            _html = 'mails/resource-comment.html'
-        else:
-            _plain = f'mails/report-resource-comment{template_suffix}.txt'
-            _html = f'mails/report-resource-comment{template_suffix}.html'
+        _plain = 'mails/resource-comment.txt'
+        _html = 'mails/resource-comment.html'
         with override('pl'):
             msg_plain = render_to_string(_plain, context=context)
             msg_html = render_to_string(_html, context=context)
@@ -1221,7 +1208,7 @@ class Resource(ExtendedModel):
 
     @property
     def regions_to_conceal(self):
-        ids = list(self.all_regions.values_list('pk', flat=True))
+        ids = list(self.all_regions.exclude(region_id=settings.DEFAULT_REGION_ID).values_list('pk', flat=True))
         return Region.objects.unassigned_regions(ids)
 
     @property
@@ -1393,70 +1380,12 @@ class ResourceFile(models.Model):
         return self.file.name
 
 
-class Supplement(ExtendedModel):
-    name = models.CharField(max_length=200, verbose_name=_('name'))
+class Supplement(BaseSupplement):
     file = models.FileField(
         verbose_name=_('file'), storage=storages.get_storage('resources'),
         upload_to='%Y%m%d', max_length=2000)
     resource = models.ForeignKey(Resource, on_delete=models.CASCADE, related_name='supplements')
-    order = models.PositiveIntegerField(verbose_name=_('order'))
-    created_by = models.ForeignKey(
-        User,
-        models.DO_NOTHING,
-        blank=False,
-        editable=False,
-        null=True,
-        verbose_name=_('created by'),
-        related_name='supplements_created'
-    )
-    modified_by = models.ForeignKey(
-        User,
-        models.DO_NOTHING,
-        blank=False,
-        editable=False,
-        null=True,
-        verbose_name=_('modified by'),
-        related_name='supplements_modified'
-    )
-    i18n = TranslationField(fields=('name', ))
     objects = SupplementManager()
-
-    class Meta:
-        ordering = ('order',)
-        verbose_name = _('supplement')
-        verbose_name_plural = _('supplements')
-
-    def __str__(self):
-        return self.name
-
-    @property
-    def file_size(self):
-        try:
-            return self.file.size
-        except FileNotFoundError:
-            return None
-
-    @property
-    def file_size_human_readable(self):
-        return self.sizeof_fmt(self.file_size or 0)
-
-    @property
-    def file_size_human_readable_or_empty_str(self):
-        return self.file_size_human_readable if self.file_size else ''
-
-    @property
-    def file_url(self):
-        return self._get_api_url(self.file.url)
-
-    def save_file(self, content, filename):
-        dt = self.created.date() if self.created else now().date()
-        subdir = dt.isoformat().replace("-", "")
-        dest_dir = os.path.join(self.file.storage.location, subdir)
-        os.makedirs(dest_dir, exist_ok=True)
-        file_path = os.path.join(dest_dir, filename)
-        with open(file_path, 'wb') as f:
-            f.write(content.read())
-        return '%s/%s' % (subdir, filename)
 
 
 class ResourceTrash(Resource, metaclass=TrashModelBase):
@@ -1499,11 +1428,6 @@ def handle_resource_post_save(sender, instance, *args, **kwargs):
         Dataset.objects.filter(pk=instance.dataset.id).update(verified=max_created)  # we don't want signals here
     else:
         Dataset.objects.filter(pk=instance.dataset.id).update(verified=instance.dataset.created)
-    if any([
-        instance.tracker.has_changed('csv_file'),
-        instance.tracker.has_changed('jsonld_file'),
-    ]) and not is_enabled('S40_new_file_model.be'):
-        update_resource_openness_score_task.s(instance.id).apply_async()
 
 
 @receiver(revalidate_resource, sender=Resource)
@@ -1512,12 +1436,9 @@ def process_resource(sender, instance, *args, **kwargs):
     if instance.is_link_updated:
         process_resource_from_url_task.s(instance.id, update_file_archive=True,
                                          forced_file_changed=instance.has_forced_file_changed).apply_async(countdown=2)
-    elif not is_enabled('S40_new_file_model.be') and (instance.tracker.has_changed('file') or instance.state_restored):
-        process_resource_file_task.s(instance.id, update_file_archive=True).apply_async(countdown=2)
-    elif is_enabled('S40_new_file_model.be') and instance.state_restored:
+    elif instance.state_restored:
         process_resource_res_file_task.s(instance._main_file.pk, update_file_archive=True).apply_async(countdown=2)
-    elif is_enabled('S41_resource_bulk_download.be') and\
-            instance.tracker.has_changed('dataset_id') and instance.tracker.previous('dataset_id') is not None:
+    elif instance.tracker.has_changed('dataset_id') and instance.tracker.previous('dataset_id') is not None:
         instance.dataset.archive_files()
         previous_ds = instance.tracker.previous('dataset_id')
         Dataset.objects.get(pk=previous_ds).archive_files()
@@ -1525,8 +1446,7 @@ def process_resource(sender, instance, *args, **kwargs):
 
 @receiver(update_dataset_file_archive, sender=Resource)
 def update_dataset_archive(sender, instance, *args, **kwargs):
-    if is_enabled('S41_resource_bulk_download.be'):
-        instance.dataset.archive_files()
+    instance.dataset.archive_files()
 
 
 def update_dataset_watcher(sender, instance, *args, state=None, **kwargs):
@@ -1597,8 +1517,7 @@ def process_resource_from_url_task_prerun_handler(sender, task_id, task, signal,
         result_task = TaskResult.objects.get_task(task_id)
         result_task.save()
         resource.link_tasks.add(result_task)
-        if is_enabled('S41_resource_AP_optimization.be'):
-            Resource.raw.filter(pk=resource_id).update(link_tasks_last_status=result_task.status)
+        Resource.raw.filter(pk=resource_id).update(link_tasks_last_status=result_task.status)
     except Exception:
         pass
 
@@ -1611,8 +1530,7 @@ def process_resource_file_task_prerun_handler(sender, task_id, task, signal, **k
         result_task = TaskResult.objects.get_task(task_id)
         result_task.save()
         resource.file_tasks.add(result_task)
-        if is_enabled('S41_resource_AP_optimization.be'):
-            Resource.raw.filter(pk=resource_id).update(file_tasks_last_status=result_task.status)
+        Resource.raw.filter(pk=resource_id).update(file_tasks_last_status=result_task.status)
     except Exception:
         pass
 
@@ -1626,8 +1544,7 @@ def process_resource_res_file_task_prerun_handler(sender, task_id, task, signal,
         result_task = TaskResult.objects.get_task(task_id)
         result_task.save()
         resource.file_tasks.add(result_task)
-        if is_enabled('S41_resource_AP_optimization.be'):
-            Resource.raw.filter(pk=resource_id).update(file_tasks_last_status=result_task.status)
+        Resource.raw.filter(pk=resource_id).update(file_tasks_last_status=result_task.status)
     except Exception:
         pass
 
@@ -1641,8 +1558,7 @@ def process_resource_file_data_task_prerun_handler(sender, task_id, task, signal
             result_task = TaskResult.objects.get_task(task_id)
             result_task.save()
             resource.data_tasks.add(result_task)
-            if is_enabled('S41_resource_AP_optimization.be'):
-                Resource.raw.filter(pk=resource_id).update(data_tasks_last_status=result_task.status)
+            Resource.raw.filter(pk=resource_id).update(data_tasks_last_status=result_task.status)
     except Exception:
         pass
 
@@ -1713,12 +1629,9 @@ def process_resource_res_file_task_postrun_handler(sender, task_id, task, signal
 def process_resource_file_data_task_postrun_handler(sender, task_id, task, signal, **kwargs):
     kwargs.update({
         'update_has_map': True,
-        'update_has_table': True
+        'update_has_table': True,
+        'update_revalidated_data': True,
     })
-    if not is_enabled('S41_resource_AP_optimization.be'):
-        kwargs['update_data_tasks_last_status'] = True
-    if is_enabled('S40_new_file_model.be'):
-        kwargs['update_revalidated_data'] = True
     update_resource(task_id, **kwargs)
 
 
@@ -1823,25 +1736,20 @@ def process_resource_file_data_task_success_handler(sender, result, *args, **kwa
         data = {}
     indexed = data.get('indexed')
     resource_id = data.get('resource_id')
-    if is_enabled('S41_resource_AP_optimization.be'):
-        kwargs.update({
-            'args': [resource_id],
-            'update_data_tasks_last_status': True
-        })
-        update_resource(sender.request.id, **kwargs)
+    kwargs.update({
+        'args': [resource_id],
+        'update_data_tasks_last_status': True
+    })
+    update_resource(sender.request.id, **kwargs)
     if indexed and resource_id:
         resource = Resource.raw.filter(id=resource_id).first()
         if resource:
             resource.increase_openness_score()
-            if is_enabled('S41_resource_bulk_download.be'):
-                resource.dataset.archive_files()
-            if is_enabled('S40_new_file_model.be'):
-                resource_score, files_score = resource.get_openness_score()
-                Resource.raw.filter(pk=resource_id).update(
-                    openness_score=resource_score
-                )
-                for rf in files_score:
-                    ResourceFile.objects.filter(pk=rf['file_pk']).update(openness_score=rf['score'])
+            resource.dataset.archive_files()
+            resource_score, files_score = resource.get_openness_score()
+            Resource.raw.filter(pk=resource_id).update(openness_score=resource_score)
+            for rf in files_score:
+                ResourceFile.objects.filter(pk=rf['file_pk']).update(openness_score=rf['score'])
 
 
 @task_failure.connect(sender=process_resource_file_data_task)
@@ -1863,14 +1771,6 @@ def process_resource_file_data_task_failure_handler(sender, task_id, exception, 
         result_task.status = 'FAILURE'
     result_task.result = json.dumps(result)
     result_task.save()
-    if is_enabled('S41_resource_AP_optimization.be'):
-        kwargs['update_data_tasks_last_status'] = True
-        kwargs['args'] = [resource_id]
+    kwargs['update_data_tasks_last_status'] = True
+    kwargs['args'] = [resource_id]
     update_resource(task_id, **kwargs)
-
-
-@task_postrun.connect(sender=update_resource_openness_score_task)
-def update_resource_openness_score_task_postrun_handler(sender, task_id, task, signal, **kwargs):
-    resource_id = int(kwargs['args'][0])
-    res = Resource.raw.get(pk=resource_id)
-    res.update_es_and_rdf_db()

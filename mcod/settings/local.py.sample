@@ -3,18 +3,6 @@ from mcod.settings.base import *  # noqa: F403
 DEBUG = True
 ALLOWED_HOSTS = ['*']
 
-# VAULT
-# import vaulthelpers
-# INSTALLED_APPS += [
-#     'vaulthelpers',
-# ]
-# DATABASES = {
-#     'default': vaulthelpers.database.get_config({
-#         'ATOMIC_REQUESTS': True,
-#         'CONN_MAX_AGE': 3600
-#     }),
-# }
-
 TEMPLATES[0]['OPTIONS']['debug'] = DEBUG  # noqa: F405
 
 EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'

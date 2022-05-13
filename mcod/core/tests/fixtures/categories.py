@@ -14,12 +14,6 @@ def organization_category():
 
 
 @pytest.fixture
-def legacy_category():
-    cat = CategoryFactory.create(code='')
-    return cat
-
-
-@pytest.fixture
 def categories():
     categories = CategoryFactory.create_batch(3)
     return categories

@@ -1,4 +1,4 @@
-from mcod.core.managers import SoftDeletableQuerySet, SoftDeletableManager
+from mcod.core.managers import SoftDeletableManager, SoftDeletableQuerySet
 
 
 class DataSourceQuerySet(SoftDeletableQuerySet):

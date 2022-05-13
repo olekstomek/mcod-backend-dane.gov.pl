@@ -25,7 +25,7 @@ class SPARQLUpdateStore(BaseSPARQLUpdateStore):
         if kwargs_headers and kwargs_headers.get('Content-Type') and\
                 kwargs_headers.get('Content-Type') == 'application/sparql-update':
             kwargs_headers.pop('Content-Type')
-        return super(SPARQLUpdateStore, self).query(*args, **kwargs)
+        return super().query(*args, **kwargs)
 
     def add_object(self, obj):
         query, ns = obj.as_sparql_create_query()

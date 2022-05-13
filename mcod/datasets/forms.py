@@ -1,6 +1,3 @@
-from mcod.datasets.widgets import CheckboxInputWithLabel
-from mcod.lib.field_validators import ContainsLetterValidator
-from mcod.lib.widgets import CKEditorWidget
 from django import forms
 from django.contrib.postgres.forms.jsonb import JSONField
 from django.utils.safestring import mark_safe
@@ -9,8 +6,11 @@ from django.utils.translation import gettext_lazy as _
 from mcod import settings
 from mcod.core.db.models import STATUS_CHOICES
 from mcod.datasets.field_validators import validate_dataset_image_file_extension
-from mcod.datasets.models import UPDATE_FREQUENCY, Dataset, LICENSE_CONDITION_LABELS
-from mcod.lib.widgets import CheckboxSelect, JsonPairDatasetInputs
+from mcod.datasets.models import LICENSE_CONDITION_LABELS, UPDATE_FREQUENCY, Dataset, Supplement
+from mcod.datasets.widgets import CheckboxInputWithLabel
+from mcod.lib.field_validators import ContainsLetterValidator
+from mcod.lib.widgets import CheckboxSelect, CKEditorWidget, JsonPairDatasetInputs
+from mcod.resources.forms import SupplementForm as ResourceSupplementForm
 from mcod.tags.forms import ModelFormWithKeywords
 from mcod.unleash import is_enabled
 
@@ -78,30 +78,28 @@ class DatasetForm(ModelFormWithKeywords):
             "to that set will be changed to a draft"
         )
     )
-    if is_enabled('S43_dynamic_data.be'):
-        has_dynamic_data = forms.ChoiceField(
-            required=True,
-            label=_('dynamic data').capitalize(),
-            choices=[(True, _('Yes')), (False, _('No'))],
-            help_text=(
-                'Zaznaczenie TAK spowoduje oznaczenie wszystkich nowo dodanych danych w zbiorze jako dane dynamiczne.'
-                '<br><br>Jeżeli chcesz się więcej dowiedzieć na temat danych dynamicznych '
-                '<a href="%(url)s" target="_blank">przejdź do strony</a>') % {
-                'url': f'{settings.BASE_URL}{settings.DYNAMIC_DATA_MANUAL_URL}'},
-            widget=CheckboxSelect(attrs={'class': 'inline'}),
-        )
-    if is_enabled('S41_resource_has_high_value_data.be'):
-        has_high_value_data = forms.ChoiceField(
-            required=True,
-            label=_('has high value data').capitalize(),
-            choices=[(True, _('Yes')), (False, _('No'))],
-            help_text=(
-                'Zaznaczenie TAK spowoduje oznaczenie wszystkich nowo dodanych danych w zbiorze jako dane o wysokiej '
-                'wartości.<br><br>Jeżeli chcesz się więcej dowiedzieć na temat danych wysokiej wartości '
-                '<a href="%(url)s" target="_blank">przejdź do strony</a>') % {
-                'url': f'{settings.BASE_URL}{settings.HIGH_VALUE_DATA_MANUAL_URL}'},
-            widget=CheckboxSelect(attrs={'class': 'inline'}),
-        )
+    has_dynamic_data = forms.ChoiceField(
+        required=True,
+        label=_('dynamic data').capitalize(),
+        choices=[(True, _('Yes')), (False, _('No'))],
+        help_text=(
+            'Zaznaczenie TAK spowoduje oznaczenie wszystkich nowo dodanych danych w zbiorze jako dane dynamiczne.'
+            '<br><br>Jeżeli chcesz się więcej dowiedzieć na temat danych dynamicznych '
+            '<a href="%(url)s" target="_blank">przejdź do strony</a>') % {
+            'url': f'{settings.BASE_URL}{settings.DYNAMIC_DATA_MANUAL_URL}'},
+        widget=CheckboxSelect(attrs={'class': 'inline'}),
+    )
+    has_high_value_data = forms.ChoiceField(
+        required=True,
+        label=_('has high value data').capitalize(),
+        choices=[(True, _('Yes')), (False, _('No'))],
+        help_text=(
+            'Zaznaczenie TAK spowoduje oznaczenie wszystkich nowo dodanych danych w zbiorze jako dane o wysokiej '
+            'wartości.<br><br>Jeżeli chcesz się więcej dowiedzieć na temat danych wysokiej wartości '
+            '<a href="%(url)s" target="_blank">przejdź do strony</a>') % {
+            'url': f'{settings.BASE_URL}{settings.HIGH_VALUE_DATA_MANUAL_URL}'},
+        widget=CheckboxSelect(attrs={'class': 'inline'}),
+    )
     if is_enabled('S47_research_data.be'):
         has_research_data = forms.ChoiceField(
             required=True,
@@ -117,7 +115,7 @@ class DatasetForm(ModelFormWithKeywords):
 
     def __init__(self, *args, instance=None, **kwargs):
         super().__init__(*args, instance=instance, **kwargs)
-        if 'categories' in self.fields and is_enabled('S41_dataset_categories_required.be'):
+        if 'categories' in self.fields:
             self.fields['categories'].required = True
         try:
             self.fields['image'].validators.append(validate_dataset_image_file_extension)
@@ -151,6 +149,8 @@ class DatasetForm(ModelFormWithKeywords):
             'license_chosen': forms.RadioSelect,
             'license_condition_personal_data': CKEditorWidget(config_name='licenses'),
             'update_notification_frequency': forms.TextInput(attrs={'maxlength': 3}),
+            'license_condition_default_cc40': CheckboxInputWithLabel(label='CC BY 4.0'),
+            'license_condition_custom_description': CKEditorWidget(config_name='licenses')
         }
         fields = [
             'title',
@@ -186,7 +186,8 @@ class DatasetForm(ModelFormWithKeywords):
             'license_condition_modification': LICENSE_CONDITION_LABELS['public']['modification'],
             'license_condition_responsibilities': LICENSE_CONDITION_LABELS['public']['responsibilities'],
             'license_condition_db_or_copyrighted': LICENSE_CONDITION_LABELS['public']['db_or_copyrighted'],
-            'license_condition_personal_data': LICENSE_CONDITION_LABELS['public']['personal_data']
+            'license_condition_personal_data': LICENSE_CONDITION_LABELS['public']['personal_data'],
+            'license_condition_custom_description': LICENSE_CONDITION_LABELS['public']['custom_description']
         }
 
     def clean(self):
@@ -257,3 +258,9 @@ class TrashDatasetForm(forms.ModelForm):
             raise forms.ValidationError(mark_safe(error_message))
 
         return self.cleaned_data['is_removed']
+
+
+class SupplementForm(ResourceSupplementForm):
+
+    class Meta(ResourceSupplementForm.Meta):
+        model = Supplement

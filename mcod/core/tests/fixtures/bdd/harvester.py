@@ -1,16 +1,16 @@
+import hashlib
 import json
 import os
-import hashlib
+from unittest.mock import MagicMock, patch
 
+import requests_mock
 from django.conf import settings
 from django.test import Client
 from pytest_bdd import given, parsers, then, when
-from unittest.mock import patch, MagicMock
-import requests_mock
 
+from mcod.core.registries import factories_registry
 from mcod.datasets.models import Dataset
 from mcod.harvester.factories import CKANDataSourceFactory, XMLDataSourceFactory
-from mcod.core.registries import factories_registry
 from mcod.harvester.models import DataSource, DataSourceImport
 from mcod.resources.models import Resource
 
@@ -190,6 +190,7 @@ def xml_datasource_imported_resources(obj_id, version):
         assert dataset.has_research_data
         assert set(res.values_list('has_research_data', flat=True)) == {True, None}
     if ver_no >= 7:  # from 1.7 supplements are imported.
+        assert dataset.supplements.count() == 1
         assert res.get(title='ZASOB csv REMOTE').supplements.count() == 1
 
 

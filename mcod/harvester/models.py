@@ -4,6 +4,7 @@ import pprint
 from collections import defaultdict
 from urllib.parse import urlencode
 
+from dateutil.relativedelta import relativedelta
 from django.apps import apps
 from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.core.files import File
@@ -15,11 +16,10 @@ from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
+from marshmallow import ValidationError as SchemaValidationError
 from model_utils import FieldTracker
 from model_utils.fields import AutoCreatedField
 from model_utils.models import TimeStampedModel
-from dateutil.relativedelta import relativedelta
-from marshmallow import ValidationError as SchemaValidationError
 
 from mcod import settings
 from mcod.categories.models import Category
@@ -34,11 +34,9 @@ from mcod.harvester.utils import (
     CKANImportInvalidLicenseError,
     CKANImportOrganizationInTrashError,
     make_request,
-    retrieve_to_file
+    retrieve_to_file,
 )
 from mcod.organizations.models import Organization
-from mcod.unleash import is_enabled
-
 
 logger = logging.getLogger('mcod')
 
@@ -178,10 +176,6 @@ class DataSource(AdminMixin, LogMixin, SoftDeletableModel, TimeStampedModel):
     @cached_property
     def resource_model(self):
         return apps.get_model('resources.Resource')
-
-    @cached_property
-    def resource_supplement_model(self):
-        return apps.get_model('resources.Supplement')
 
     @cached_property
     def tag_model(self):
@@ -376,11 +370,7 @@ class DataSource(AdminMixin, LogMixin, SoftDeletableModel, TimeStampedModel):
                             r_created += 1
                         else:
                             r_updated += 1
-                        for sd in supplements:
-                            self._update_or_create_resource_supplement(resource, sd)
-                        supplement_names = [x['name_pl'] for x in supplements]
-                        for obj in resource.supplements.exclude(name_pl__in=supplement_names):
-                            obj.delete()
+                        self._update_or_create_supplements(resource, supplements)
         return ds_imported, ds_created, ds_updated, r_imported, r_created, r_updated
 
     def _update_or_create_dataset(self, data):
@@ -388,6 +378,7 @@ class DataSource(AdminMixin, LogMixin, SoftDeletableModel, TimeStampedModel):
         modified = data.pop('modified', None)
         modified = modified or data.get('created')
         int_ident = data.pop('int_ident', None)
+        supplements = data.pop('supplements', [])
 
         if int_ident:
             created = False
@@ -401,21 +392,33 @@ class DataSource(AdminMixin, LogMixin, SoftDeletableModel, TimeStampedModel):
                 ext_ident=data['ext_ident'], source=data['source'], defaults=data)
         if obj and modified:  # TODO: find a better way to save modification date with value from data.
             self.dataset_model.raw.filter(id=obj.id).update(modified=modified)
+        self._update_or_create_supplements(obj, supplements)
         return obj, created
 
-    def _update_or_create_resource_supplement(self, resource, data):
+    def _get_supplement_data(self, idx, data):
         _file = SimpleUploadedFile(
             data['filename'], data['content'].read()) if 'filename' in data and 'content' in data else None
-        defaults = {
+        return {
             'file': _file,
             'name_en': data['name_en'],
-            'order': 0,
+            'language': data['language'],
+            'order': idx,
             'created_by': self.import_user,
             'modified_by': self.import_user,
-            'modified': resource.modified,
         }
-        return self.resource_supplement_model.objects.update_or_create(
-            resource=resource, name=data['name_pl'], defaults=defaults)
+
+    def _update_or_create_supplements(self, obj, data):
+        for idx, item in enumerate(data):
+            defaults = self._get_supplement_data(idx, item)
+            defaults['modified'] = obj.modified
+            kwargs = {
+                obj._meta.model_name: obj,  # obj._meta.model_name is 'dataset' or 'resource'.
+                'name': item['name_pl'],
+            }
+            obj.supplements.model.objects.update_or_create(**kwargs, defaults=defaults)
+
+        for supplement in obj.supplements.exclude(name_pl__in=[x['name_pl'] for x in data]):
+            supplement.delete()
 
     def _get_dataset_category(self, data):
         if self.is_ckan:
@@ -531,8 +534,7 @@ class DataSource(AdminMixin, LogMixin, SoftDeletableModel, TimeStampedModel):
                 dataset=dataset, ext_ident=data['ext_ident'], defaults=data)
         if obj and modified:  # TODO: find a better way to save modification date with value from data.
             self.resource_model.raw.filter(id=obj.id).update(modified=modified)
-        if is_enabled('S41_xml_harvester_special_signs.be'):
-            obj.special_signs.set(obj.special_signs.model.objects.filter(symbol__in=special_signs))
+        obj.special_signs.set(obj.special_signs.model.objects.filter(symbol__in=special_signs))
         return obj, created
 
     def _import_from(self, path):

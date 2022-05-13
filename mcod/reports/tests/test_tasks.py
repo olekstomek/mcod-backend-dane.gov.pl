@@ -3,23 +3,22 @@ import datetime
 import json
 import os
 from time import sleep
+
 from django.apps import apps
-from django.contrib.auth import get_user_model
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.db.models import Sum
 
-
-from mcod.counters.models import ResourceViewCounter, ResourceDownloadCounter
+from mcod.counters.models import ResourceDownloadCounter, ResourceViewCounter
 from mcod.reports.models import SummaryDailyReport
-from mcod.reports.tasks import generate_csv, create_daily_resources_report
-from mcod.unleash import is_enabled
+from mcod.reports.tasks import create_daily_resources_report, generate_csv
 
 User = get_user_model()
 Report = apps.get_model('reports', 'Report')
 TaskResult = apps.get_model('django_celery_results', 'TaskResult')
 
 
-class TestTasks(object):
+class TestTasks:
     def test_generate_csv(self, active_user, admin):
         request_date = datetime.datetime(2018, 12, 4)
         eager = generate_csv.s(
@@ -86,26 +85,6 @@ class TestTasks(object):
         assert r.task == result_task
         assert r.task.status == 'FAILURE'
 
-    # def test_no_file_report(self, active_user):
-    #     request_date = datetime.datetime.now()
-    #     from mcod import settings
-    #     bkp = settings.REPORTS_MEDIA_ROOT
-    #     settings.REPORTS_MEDIA_ROOT = ""
-    #     eager = generate_csv.delay(
-    #         pks=[active_user.id],
-    #         model_info=User._meta.label,
-    #         user_id=active_user.id,
-    #         request_date=request_date
-    #     )
-    #
-    #     assert eager
-    #     result_task = TaskResult.objects.get(task_id=eager)
-    #     r = Report.objects.get(task=result_task)
-    #     assert r.task == result_task
-    #     assert r.task.status == 'FAILURE'
-    #     FIXME na gitlabie jest SUCCESS
-    #     settings.REPORTS_MEDIA_ROOT = bkp
-
     def test_create_daily_resources_report(self, admin, resource):
         admin.id = 1
         admin.email = "testadmin@test.xx"
@@ -131,13 +110,9 @@ class TestTasks(object):
             reader = csv.reader(report_file, delimiter=',')
             next(reader)
             resource_data = next(reader)
-        if is_enabled('S16_new_date_counters.be'):
-            views_count = ResourceViewCounter.objects.filter(
-                resource_id=resource_with_counters.pk).aggregate(views_sum=Sum('count'))['views_sum']
-            downloads_count = ResourceDownloadCounter.objects.filter(
-                resource_id=resource_with_counters.pk).aggregate(downloads_sum=Sum('count'))['downloads_sum']
-        else:
-            views_count = resource_with_counters.views_count
-            downloads_count = resource_with_counters.downloads_count
+        views_count = ResourceViewCounter.objects.filter(
+            resource_id=resource_with_counters.pk).aggregate(views_sum=Sum('count'))['views_sum']
+        downloads_count = ResourceDownloadCounter.objects.filter(
+            resource_id=resource_with_counters.pk).aggregate(downloads_sum=Sum('count'))['downloads_sum']
         assert int(resource_data[10]) == views_count
         assert int(resource_data[11]) == downloads_count

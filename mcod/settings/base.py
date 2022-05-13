@@ -3,11 +3,11 @@ from collections import OrderedDict
 from datetime import date
 
 import environ
+from bokeh.util.paths import bokehjsdir
 from celery.schedules import crontab
 from django.utils.translation import gettext_lazy as _, pgettext_lazy
 from kombu import Queue
 from wagtail.embeds.oembed_providers import all_providers
-from bokeh.util.paths import bokehjsdir
 
 env = environ.Env()
 ROOT_DIR = environ.Path(__file__) - 3
@@ -99,7 +99,6 @@ INSTALLED_APPS = [
     'channels',
     'notifications',
     'django_admin_multiple_choice_list_filter',
-    # 'bokeh.server.django',
     'auditlog',
 
     # Our apps
@@ -113,7 +112,6 @@ INSTALLED_APPS = [
     'mcod.resources',
     'mcod.users',
     'mcod.licenses',
-    'mcod.following',
     'mcod.counters',
     'mcod.histories',
     'mcod.searchhistories',
@@ -140,7 +138,6 @@ CMS_MIDDLEWARE = ['mcod.cms.middleware.CounterMiddleware'] if COMPONENT == 'cms'
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    # 'django.middleware.locale.LocaleMiddleware',
     'mcod.cms.middleware.SiteMiddleware',
     *CMS_MIDDLEWARE,
     'wagtail.contrib.redirects.middleware.RedirectMiddleware',
@@ -259,9 +256,6 @@ HARVESTER_XML_VERSION_TO_SCHEMA_PATH = {
 
 HARVESTER_IMPORTERS = {
     'ckan': {
-        'API_URL_PARAMS': {
-            # 'limit': 100,
-        },
         'MEDIA_URL_TEMPLATE': '{}/uploads/group/{}',
         'SCHEMA': 'mcod.harvester.serializers.DatasetSchema',
     },
@@ -385,10 +379,6 @@ LOCALE_PATHS = [
     str(ROOT_DIR.path('translations', 'cms')),
 ]
 
-# if COMPONENT == 'cms':
-#     LOCALE_PATHS.append(
-#         str(ROOT_DIR.path('translations', 'cms')),
-#     )
 
 LANGUAGE_CODE = 'pl'
 
@@ -537,10 +527,10 @@ SUIT_CONFIG = {
             'orig_url': '/users/user',
         },
         {
-            'label': _('CSV Reports'),
+            'label': _('Reports'),
             'app': 'reports',
             'models': [
-                # FIXME label 'Users' koliduje z panelem użytkowników i w lewym menu podświetla się nie właściwa pozycja
+                {'model': "reports.dashboard", 'label': pgettext_lazy('Metabase Dashboards', 'Dashboards')},
                 {'model': 'reports.userreport', 'label': _('Users reports')},
                 {'model': 'reports.resourcereport', 'label': _('Resources')},
                 {'model': 'reports.datasetreport', 'label': _('Datasets')},
@@ -656,7 +646,6 @@ SPECIAL_CHARS = ' !"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~'
 
 CKEDITOR_CONFIGS = {
     'default': {
-        # 'toolbar': 'Basic',
         'toolbar_Custom': [
             ['Bold', 'Italic', 'Underline'],
             ['NumberedList', 'BulletedList', '-', 'Outdent', 'Indent', '-', 'JustifyLeft', 'JustifyCenter',
@@ -764,6 +753,7 @@ CELERY_BROKER_URL = 'amqp://%s' % str(env('RABBITMQ_HOST', default='mcod-rabbitm
 
 CELERY_RESULT_BACKEND = 'django-db'
 CELERY_TASK_ALWAYS_EAGER = False
+CELERY_TASK_IGNORE_RESULT = True
 
 CELERY_TASK_DEFAULT_QUEUE = 'default'
 
@@ -795,9 +785,7 @@ CELERY_TASK_ROUTES = {
     'mcod.resources.tasks.process_resource_file_task': {'queue': 'resources'},
     'mcod.resources.tasks.process_resource_res_file_task': {'queue': 'resources'},
     'mcod.resources.tasks.process_resource_file_data_task': {'queue': 'resources'},
-    'mcod.resources.tasks.remove_orphaned_files_task': {'queue': 'resources'},
     'mcod.resources.tasks.update_resource_has_table_has_map_task': {'queue': 'resources'},
-    'mcod.resources.tasks.update_resource_openness_score_task': {'queue': 'resources'},
     'mcod.resources.tasks.update_resource_validation_results_task': {'queue': 'resources'},
     'mcod.resources.tasks.send_resource_comment': {'queue': 'notifications'},
     'mcod.counters.tasks.save_counters': {'queue': 'periodic'},
@@ -835,8 +823,6 @@ CELERY_TASK_ROUTES = {
     'mcod.watchers.tasks.query_watcher_updated_task': {'queue': 'watchers'},
     'mcod.watchers.tasks.send_report_from_subscriptions': {'queue': 'watchers'},
 }
-
-# CELERY_TIMEZONE = 'Europe/Warsaw'
 
 CELERY_BEAT_SCHEDULE = {
     'every-2-minute': {
@@ -1158,7 +1144,7 @@ SUPPORTED_CONTENT_TYPES = [
     ('text', 'tab-separated-values', ('tsv',), 3),
     ('text', 'xml', ('xml', 'wsdl', 'xpdl', 'xsl'), 3, {4, 5}),
     # RDF
-    ('application', 'ld+json', ('jsonld', 'json-ld'), 4, {5}),
+    ('application', 'ld+json', ('jsonld',), 4, {5}),
     ('application', 'rdf+xml', ('rdf',), 4, {5}),
     ('text', 'n3', ('n3',), 4, {5}),
     ('text', 'turtle', ('ttl', 'turtle'), 4, {5}),
@@ -1184,8 +1170,8 @@ ARCHIVE_CONTENT_TYPES = {
 }
 ARCHIVE_EXTENSIONS = {'bz', 'bz2', 'gz', 'rar', 'tar', 'zip', '7z'}
 ALLOWED_CONTENT_TYPES = [x[1] for x in SUPPORTED_CONTENT_TYPES] + list(ARCHIVE_CONTENT_TYPES)
-ALLOWED_RESOURCE_SUPPLEMENT_MIMETYPES = env.list(
-    'ALLOWED_RESOURCE_SUPPLEMENT_MIMETYPES',
+ALLOWED_SUPPLEMENT_MIMETYPES = env.list(
+    'ALLOWED_SUPPLEMENT_MIMETYPES',
     default=[
         # .doc, .docx
         'application/msword',
@@ -1197,6 +1183,19 @@ ALLOWED_RESOURCE_SUPPLEMENT_MIMETYPES = env.list(
         'text/plain',
         # .odt
         'application/vnd.oasis.opendocument.text',
+    ]
+)
+RESTRICTED_FILE_TYPES = env.list(
+    'RESTRICTED_FILE_TYPES',
+    default=[
+        'asp',
+        'aspx',
+        'bat',
+        'cgi',
+        'com',
+        'exe',
+        'jsp',
+        'php',
     ]
 )
 
@@ -1234,6 +1233,8 @@ DATE_BASE_FORMATS = ['yyyy-MM-dd', 'yyyy-MM-dd HH:mm', 'yyyy-MM-dd HH:mm:ss', 'y
 
 TIME_BASE_FORMATS = ['HH:mm', 'HH:mm:ss', 'HH:mm:ss.SSSSSS']
 
+METABASE_DASHBOARDS_ENABLED = env('METABASE_DASHBOARDS_ENABLED', default='no') in ('yes', 1, 'true')
+
 CONSTANCE_BACKEND = 'constance.backends.database.DatabaseBackend'
 CONSTANCE_DATABASE_PREFIX = 'constance:mcod:'
 CONSTANCE_DATABASE_CACHE_BACKEND = 'default'
@@ -1262,6 +1263,11 @@ CONSTANCE_CONFIG = {
     'DATASET__CONTACT_POINT__HAS_EMAIL': ('mailto:kontakt@dane.gov.pl', 'Wartość pola VcardKind -> <vcard:hasEmail> w API (końcówka /catalog.rdf)', str),  # noqa: E501
 }
 
+METABASE_DASHBOARDS_FIELDSET = []
+if METABASE_DASHBOARDS_ENABLED:
+    CONSTANCE_CONFIG['METABASE_DASHBOARDS'] = ('', 'JSON, Lista obiektów zawierających atrybuty "name" i "id" - nazwę oraz id dashboardu w metabase. Przykład:\n[{"name":"Użytkownicy","id":15}]', str)  # noqa: E501
+    METABASE_DASHBOARDS_FIELDSET = [('Metabase', ('METABASE_DASHBOARDS',))]
+
 CONSTANCE_CONFIG_FIELDSETS = OrderedDict((
     ('URLs', ('MANUAL_URL',)),
     ('Mails', (
@@ -1269,6 +1275,7 @@ CONSTANCE_CONFIG_FIELDSETS = OrderedDict((
         'NEWSLETTER_EMAIL')),
     ('Development', ('TESTER_EMAIL',)),
     ('Dates', ('DATE_FORMATS', 'TIME_FORMATS')),
+    *METABASE_DASHBOARDS_FIELDSET,
     ('RDF', (
         'CATALOG__TITLE_PL', 'CATALOG__TITLE_EN', 'CATALOG__DESCRIPTION_PL', 'CATALOG__DESCRIPTION_EN',
         'CATALOG__ISSUED', 'CATALOG__PUBLISHER__NAME_PL', 'CATALOG__PUBLISHER__NAME_EN',
@@ -1453,7 +1460,6 @@ EXPORT_FORMAT_TO_MIMETYPE = {
 }
 
 RDF_FORMAT_TO_MIMETYPE = {
-    'json-ld': 'application/ld+json',
     'jsonld': 'application/ld+json',
     'xml': 'application/rdf+xml',
     'rdf': 'application/rdf+xml',
@@ -1616,6 +1622,8 @@ SPARQL_ENDPOINTS = {
                 'returnFormat': 'json'}
 }
 METABASE_URL = env('METABASE_URL', default='http://metabase.mcod.local')
+METABASE_API_KEY = env('METABASE_API_KEY', default='')
+
 KIBANA_URL = env('KIBANA_URL', default='http://kibana.mcod.local')
 ZABBIX_API = {
     'user': env('ZABBIX_API_USER', default='user'),
@@ -1635,3 +1643,8 @@ X_FRAME_OPTIONS = 'SAMEORIGIN'
 
 #  https://docs.djangoproject.com/en/3.2/releases/3.2/#customizing-type-of-auto-created-primary-keys
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
+
+PRIVATE_LICENSES_ARTICLE_URL = env("PRIVATE_LICENSES_ARTICLE_URL",
+                                   default='/pl/page/opis-warunkow-i-licencji-dla-dostawcow-sektora-prywatnego')
+PUBLIC_LICENSES_ARTICLE_URL = env("PUBLIC_LICENSES_ARTICLE_URL",
+                                  default='/pl/page/opis-warunkow-i-licencji-dla-dostawcow-sektora-publicznego')

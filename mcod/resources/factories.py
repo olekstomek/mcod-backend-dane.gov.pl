@@ -1,16 +1,15 @@
 import json
+import os
+import tempfile
 import uuid
 from io import BytesIO
-import tempfile
+
 import factory
-import os
+
 from mcod.core.registries import factories_registry
 from mcod.datasets.factories import DatasetFactory
 from mcod.resources import models
-from mcod.unleash import is_enabled
 
-
-_SUPPORTED_FORMATS = [i[0] for i in models.supported_formats_choices()]
 _RESOURCE_TYPES = [i[0] for i in models.RESOURCE_TYPE]
 _TASK_STATUSES = ['SUCCESS', 'NOT AVAILABLE', 'ERROR']
 
@@ -80,19 +79,15 @@ class ResourceFactory(factory.django.DjangoModelFactory):
     description = factory.Faker('paragraph', nb_sentences=3, variable_nb_sentences=True, locale='pl_PL')
     views_count = factory.Faker('random_int', min=0, max=500)
     downloads_count = factory.Faker('random_int', min=0, max=500)
-    if is_enabled('S40_new_file_model.be'):
-        main_file = factory.RelatedFactory(ResourceFileFactory, factory_related_name='resource')
-        link = factory.LazyAttribute(lambda obj: 'https://test.mcod/media/resources/{}'.format(
-            str(uuid.uuid4())))
-    else:
-        file = factory.django.FileField(from_func=get_csv_file, filename='{}.csv'.format(str(uuid.uuid4())))
-        link = factory.LazyAttribute(lambda obj: 'https://test.mcod/media/resources/{}'.format(obj.file.name))
+    main_file = factory.RelatedFactory(ResourceFileFactory, factory_related_name='resource')
+    link = factory.LazyAttribute(lambda obj: 'https://test.mcod/media/resources/{}'.format(str(uuid.uuid4())))
     format = 'CSV'
     type = factory.Faker('random_element', elements=_RESOURCE_TYPES)
     openness_score = factory.Faker('random_int', min=1, max=5)
     dataset = factory.SubFactory(DatasetFactory)
     forced_api_type = False
     forced_file_type = False
+    data_date = factory.Faker('past_date', start_date="-7d")
 
     @factory.post_generation
     def link_tasks(self, create, extracted, **kwargs):
@@ -132,20 +127,7 @@ class ResourceFactory(factory.django.DjangoModelFactory):
 
     @classmethod
     def _create(cls, model, *args, file=None, link=None, **kwargs):
-        if is_enabled('S40_new_file_model.be'):
-            return super()._create(model, *args, link=link, **kwargs)
-        else:
-            content_type = kwargs.pop('content_type', 'application/csv')
-            from mcod.core.tests.fixtures import adapter
-            from mcod.resources.link_validation import session
-            if file and link:
-                adapter.register_uri('GET', link, content=file.read(), headers={'Content-Type': content_type})
-                session.mount(link, adapter)
-                kwargs.update({
-                    'format': 'csv',
-                    'file_mimetype': 'application/csv',
-                })
-            return super()._create(model, *args, file=file, link=link, **kwargs)
+        return super()._create(model, *args, link=link, **kwargs)
 
     class Meta:
         model = models.Resource
@@ -174,6 +156,7 @@ class SupplementFactory(factory.django.DjangoModelFactory):
     file = factory.django.FileField(from_func=get_csv_file, filename='{}.txt'.format(str(uuid.uuid4())))
     resource = factory.SubFactory(ResourceFactory)
     order = 0
+    language = 'pl'
 
     class Meta:
         model = models.Supplement

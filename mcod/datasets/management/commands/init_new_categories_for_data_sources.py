@@ -1,7 +1,7 @@
 from django_tqdm import BaseCommand
 
 from mcod.categories.models import Category
-from mcod.harvester.models import DataSource, OLD_CATEGORY_TITLE_2_DCAT_CATEGORY_CODE
+from mcod.harvester.models import OLD_CATEGORY_TITLE_2_DCAT_CATEGORY_CODE, DataSource
 
 
 class Command(BaseCommand):

@@ -10,7 +10,6 @@ class OrganizationFactory(factory.django.DjangoModelFactory):
     title = factory.Faker('company', locale='pl_PL')
     description = factory.Faker('paragraph', nb_sentences=5)
     email = factory.Faker('company_email')
-    # institution_type = 'state'
     slug = factory.Faker('slug')
     abbreviation = 'ABC'
     image = factory.django.ImageField(color='blue')

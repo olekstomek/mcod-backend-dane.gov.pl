@@ -1,9 +1,9 @@
-import pytest
 from datetime import date
 
+import pytest
 from django.conf import settings
-from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.exceptions import ValidationError
+from django.core.files.uploadedfile import SimpleUploadedFile
 
 from mcod.datasets.models import Dataset
 from mcod.organizations.models import Organization
@@ -41,8 +41,6 @@ class TestOrganizationModel:
         assert "'postal_code'" in e
         assert "'city'" in e
         assert "'street'" in e
-        # assert "'street_number'" in e
-        # assert "'flat_number'" in e
         assert "'street_type'" in e
         assert "'email'" in e
         assert "'fax'" in e
@@ -50,14 +48,6 @@ class TestOrganizationModel:
         assert "'epuap'" in e
         assert "'regon'" in e
         assert "'website'" in e
-
-    # def test_name_uniqness(self, institution):
-    #     org = Organization()
-    #     org.slug = institution.slug
-    #     with pytest.raises(ValidationError) as e:
-    #         org.full_clean()
-    #
-    #     assert "'slug': " in str(e.value)
 
     def test_str(self, institution):
         institution.name = 'test-name'

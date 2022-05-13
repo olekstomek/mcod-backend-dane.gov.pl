@@ -2,8 +2,8 @@ from django_elasticsearch_dsl import fields
 from django_elasticsearch_dsl.registries import registry
 
 from mcod import settings as mcs
-from mcod.core.db.elastic import Document
 from mcod.academy.models import Course, CourseModule
+from mcod.core.db.elastic import Document
 
 
 @registry.register_document

@@ -1,7 +1,7 @@
 from django.contrib import admin
 
-from mcod.searchhistories.models import SearchHistory
 from mcod.lib.admin_mixins import ModelAdmin
+from mcod.searchhistories.models import SearchHistory
 
 
 @admin.register(SearchHistory)

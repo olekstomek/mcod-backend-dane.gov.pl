@@ -1,18 +1,23 @@
 import datetime
 
-from django.utils.translation import gettext_lazy as _, override
 from django.utils.timezone import is_naive, make_aware
-from marshmallow import Schema as BaseSchema, EXCLUDE, pre_load, post_load, validate
-from marshmallow import ValidationError, validates_schema
-from marshmallow.fields import Bool, Date, DateTime, Int, List, Nested, Str, URL, UUID, Method
+from django.utils.translation import gettext_lazy as _, override
+from marshmallow import (
+    EXCLUDE,
+    Schema as BaseSchema,
+    ValidationError,
+    post_load,
+    pre_load,
+    validate,
+    validates_schema,
+)
+from marshmallow.fields import URL, UUID, Bool, Date, DateTime, Int, List, Method, Nested, Raw, Str
 
 from mcod import settings
 from mcod.core.api.rdf.profiles.dcat_ap import DCATDatasetDeserializer
 from mcod.datasets.models import Dataset
 from mcod.resources.link_validation import download_file
 from mcod.resources.models import Resource, supported_formats_choices
-from mcod.unleash import is_enabled
-
 
 SUPPORTED_RESOURCE_FORMATS = [i[0] for i in supported_formats_choices()]
 SUPPORTED_RESOURCE_FORMATS.extend(settings.ARCHIVE_EXTENSIONS)
@@ -106,7 +111,7 @@ class ResourceMixin:
     @validates_schema
     def validate_link(self, data, **kwargs):
         value = data.get('link')
-        if value and "://" in value and is_enabled('S37_validate_resource_link_scheme_harvester.be'):
+        if value and "://" in value:
             scheme = value.split("://")[0].lower()
             if scheme != 'https':
                 raise ValidationError(_('Required scheme is https://'), field_name='link')
@@ -137,6 +142,9 @@ class XMLSupplementSchema(XMLPreProcessedSchema):
     name_pl = Str()
     name_en = Str()
     url = URL()
+    filename = Str()
+    content = Raw()
+    language = Str(validate=validate.OneOf(choices=['en', 'pl']))
 
     class Meta:
         unknown = EXCLUDE
@@ -157,15 +165,16 @@ class XMLSupplementSchema(XMLPreProcessedSchema):
         if 'name' in data and isinstance(data.get('name'), dict):
             data['name_en'] = data['name'].get('english', '')
             data['name_pl'] = data['name'].get('polish', '')
+        options = {}
         try:
             file_type, options = download_file(data.get('url'))
-            if 'filename' in options:
-                data['filename'] = options['filename']
-            if 'content' in options:
-                data['content'] = options['content']
             self.context['format'] = options.get('format')
         except Exception as exc:
             self.context['download_file_exc'] = str(exc)
+        if 'filename' in options:
+            data['filename'] = options['filename']
+        if 'content' in options:
+            data['content'] = options['content']
         return data
 
 
@@ -364,6 +373,7 @@ class XMLDatasetSchema(XMLPreProcessedSchema):
     modified = DateTime(data_key='lastUpdateDate', allow_none=True)
     categories = List(Str())
     resources = Nested(XMLResourceSchema, many=True)
+    supplements = Nested(XMLSupplementSchema, many=True)
     tags = Nested(XMLTagSchema, many=True)
     has_dynamic_data = Bool(data_key='hasDynamicData', allow_none=True)
     has_high_value_data = Bool(data_key='hasHighValueData', allow_none=True)
@@ -398,6 +408,9 @@ class XMLDatasetSchema(XMLPreProcessedSchema):
                 data['categories'] = [str(row) for row in data['categories']]
         if 'resources' in data:
             data['resources'] = data['resources'].get('resource', [])
+        supplements = data.pop('supplements', {})
+        if 'supplement' in supplements:
+            data['supplements'] = supplements['supplement']
         int_ident = data.get('intIdent')
         if int_ident:
             self.context['dataset_int_ident'] = int_ident

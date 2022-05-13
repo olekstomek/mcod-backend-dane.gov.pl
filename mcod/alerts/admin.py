@@ -1,4 +1,3 @@
-from mcod.lib.widgets import CKEditorWidget
 from django.contrib import admin
 from django.db.models import Case, CharField, Value, When
 from django.forms import ModelForm, ValidationError
@@ -8,8 +7,9 @@ from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 from suit.widgets import SuitSplitDateTimeWidget
 
-from mcod.alerts.models import Alert, DISPLAY_STATUS
+from mcod.alerts.models import DISPLAY_STATUS, Alert
 from mcod.lib.admin_mixins import ModelAdmin
+from mcod.lib.widgets import CKEditorWidget
 
 
 class DisplayStatusFilter(admin.SimpleListFilter):

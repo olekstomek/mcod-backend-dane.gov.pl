@@ -13,4 +13,3 @@ class OrganizationsConfig(ExtendedAppMixin, AppConfig):
         self.connect_core_signals(Organization)
         self.connect_core_signals(OrganizationTrash)
         self.connect_history(Organization)
-        # self.connect_common_index_signals(Organization)

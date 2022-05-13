@@ -1,12 +1,7 @@
 from django.contrib import admin, messages
 from django.utils.translation import gettext_lazy as _
 
-from mcod.lib.admin_mixins import (
-    DecisionFilter,
-    HistoryMixin,
-    TrashMixin,
-    ModelAdmin,
-)
+from mcod.lib.admin_mixins import DecisionFilter, HistoryMixin, ModelAdmin, TrashMixin
 from mcod.suggestions.forms import (
     AcceptedDatasetSubmissionForm,
     DatasetCommentForm,

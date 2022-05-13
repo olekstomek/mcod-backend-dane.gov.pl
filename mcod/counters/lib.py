@@ -9,7 +9,6 @@ from elasticsearch.helpers import bulk as streaming_bulk
 from elasticsearch_dsl.connections import connections
 
 from mcod import settings
-from mcod.unleash import is_enabled
 
 VIEWS_COUNT_PREFIX = 'views_count'
 DOWNLOADS_COUNT_PREFIX = 'downloads_count'
@@ -65,7 +64,7 @@ class Counter:
                 model.is_indexable = False
                 data_key = f'{oper}:{last_save}:{label}:*'
 
-                if label in self.date_counter_labels and is_enabled('S16_new_date_counters.be'):
+                if label in self.date_counter_labels:
                     counter_model = resource_counter_model[oper]
                     self.save_resource_date_counters(oper, counter_model, data_key, label, model, today)
 

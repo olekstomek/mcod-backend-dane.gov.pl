@@ -9,8 +9,7 @@ from django.utils import timezone
 
 from mcod import settings
 from mcod.core.caches import flush_sessions
-from mcod.lib.jwt import get_auth_header, decode_jwt_token
-
+from mcod.lib.jwt import decode_jwt_token, get_auth_header
 
 User = get_user_model()
 

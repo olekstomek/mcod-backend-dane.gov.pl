@@ -1,7 +1,7 @@
 import pytest
 from django.conf import settings
-
 from rdflib.plugins.stores.sparqlstore import SPARQLStore
+
 from mcod.core.api.rdf.registry import registry as rdf_registry
 
 

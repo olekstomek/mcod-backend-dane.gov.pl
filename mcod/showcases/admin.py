@@ -4,21 +4,10 @@ from django.utils.translation import gettext_lazy as _
 from modeltrans.translator import get_i18n_field
 
 from mcod import settings
+from mcod.lib.admin_mixins import DecisionFilter, HistoryMixin, ModelAdmin, TrashMixin
 from mcod.showcases.forms import ShowcaseForm, ShowcaseProposalForm
-from mcod.showcases.models import (
-    Showcase,
-    ShowcaseTrash,
-    ShowcaseProposal,
-    ShowcaseProposalTrash,
-)
-from mcod.lib.admin_mixins import (
-    DecisionFilter,
-    HistoryMixin,
-    TrashMixin,
-    ModelAdmin,
-)
+from mcod.showcases.models import Showcase, ShowcaseProposal, ShowcaseProposalTrash, ShowcaseTrash
 from mcod.showcases.tasks import create_showcase_task
-from mcod.unleash import is_enabled
 
 
 class ShowcaseAdmin(HistoryMixin, ModelAdmin):
@@ -93,7 +82,7 @@ class ShowcaseAdmin(HistoryMixin, ModelAdmin):
             (
                 None,
                 {
-                    'classes': ('collapse', 'suit-tab', 'suit-tab-general',),
+                    'classes': ('suit-tab', 'suit-tab-general',),
                     'fields': (
                         'is_mobile_app',
                         'mobile_apple_url',
@@ -406,8 +395,7 @@ class ShowcaseProposalTrashAdmin(ShowcaseProposalMixin, TrashMixin):
         return self._get_fields(obj=obj)
 
 
-if is_enabled('S39_showcases.be'):
-    admin.site.register(Showcase, ShowcaseAdmin)
-    admin.site.register(ShowcaseTrash, ShowcaseTrashAdmin)
-    admin.site.register(ShowcaseProposal, ShowcaseProposalAdmin)
-    admin.site.register(ShowcaseProposalTrash, ShowcaseProposalTrashAdmin)
+admin.site.register(Showcase, ShowcaseAdmin)
+admin.site.register(ShowcaseTrash, ShowcaseTrashAdmin)
+admin.site.register(ShowcaseProposal, ShowcaseProposalAdmin)
+admin.site.register(ShowcaseProposalTrash, ShowcaseProposalTrashAdmin)

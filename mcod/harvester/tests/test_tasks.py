@@ -10,7 +10,6 @@ def test_validate_xml_url_task(admin):
     with requests_mock.Mocker() as m:
         m.get(url, text='resp')
         m.head(url, text='resp', headers={'Content-Type': 'text/xml'})
-        # m.get('http://example.md5', text='f09b2eeeca9f3172165360a52436106e')
         result = validate_xml_url_task.delay(url)
         progress_url = reverse('admin:validate-xml-task-status', args=[result.task_id])
         client = DjangoClient()

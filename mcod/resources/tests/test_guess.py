@@ -1,7 +1,7 @@
 from mcod.resources import guess
 
 
-class TestGuess(object):
+class TestGuess:
     def test_csv(self, file_csv):
         assert guess._csv(file_csv.name, 'utf-8') == 'csv'
         assert guess._csv(file_csv.name, None) == 'csv'
@@ -54,17 +54,17 @@ class TestGuess(object):
     def test_text_file_format_guess(self, file_csv, file_xml, file_html, file_json, file_rdf, file_txt):
         # assert guess.text_file_format(file_xml.name, 'utf-8') == 'xml'    # FIXME rdf?
         assert guess.text_file_format(file_html.name, 'utf-8') == 'html'
-        # assert guess.text_file_format(file_rdf.name, 'utf-8') == 'rdf'  # FIXME test_simple_rdf_guess
+        assert guess.text_file_format(file_rdf.name, 'utf-8') == 'rdf'
         assert guess.text_file_format(file_csv.name, 'utf-8') == 'csv'
         assert guess.text_file_format(file_json.name, 'utf-8') == 'json'
-        # assert guess.text_file_format(file_txt.name, 'utf-8') is None
+        assert guess.text_file_format(file_txt.name, 'utf-8') is None
 
         # assert guess.text_file_format(file_xml.name, None) == 'xml'    # FIXME rdf?
         assert guess.text_file_format(file_html.name, None) == 'html'
         assert guess.text_file_format(file_json.name, None) == 'json'
-        # assert guess.text_file_format(file_rdf.name, None) == 'rdf'  # FIXME test_simple_rdf_guess
+        assert guess.text_file_format(file_rdf.name, None) == 'rdf'
         assert guess.text_file_format(file_csv.name, None) == 'csv'
-        # assert guess.text_file_format(file_txt.name, None) is None
+        assert guess.text_file_format(file_txt.name, None) is None
 
     def test_web_format_guess(self, file_html):
         assert guess.web_format(file_html.name) == 'html'

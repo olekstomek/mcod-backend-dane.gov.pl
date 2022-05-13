@@ -2,7 +2,7 @@ import json
 
 from django.db.models import Manager
 from django.test import Client
-from django.urls import reverse, NoReverseMatch
+from django.urls import NoReverseMatch, reverse
 from pytest_bdd import given, then, when
 
 from mcod.core.models import SoftDeletableModel

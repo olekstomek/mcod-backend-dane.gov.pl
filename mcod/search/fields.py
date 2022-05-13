@@ -1,6 +1,6 @@
 from django.utils.translation import get_language
 from elasticsearch_dsl import Q
-from elasticsearch_dsl.query import Term, Bool, Nested
+from elasticsearch_dsl.query import Bool, Nested, Term
 
 from mcod.core.api.search.fields import MultiMatchField
 

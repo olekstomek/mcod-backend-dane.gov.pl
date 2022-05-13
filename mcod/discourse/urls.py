@@ -1,8 +1,7 @@
 from django.urls import path
 
-from mcod.discourse.views import DiscourseLoginView, SSOProviderView
 from mcod import settings
-
+from mcod.discourse.views import DiscourseLoginView, SSOProviderView
 
 urlpatterns = [
     path('connect/login', DiscourseLoginView.as_view(), name='discourse-login'),

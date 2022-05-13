@@ -1,6 +1,13 @@
+import json
+import time
+
+import jwt
+from constance import config
 from dal_admin_filters import AutocompleteFilter
+from django.conf import settings
 from django.contrib import admin, messages
 from django.http.response import HttpResponseRedirect
+from django.shortcuts import render
 from django.urls import path, reverse
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
@@ -9,6 +16,7 @@ from rangefilter.filter import DateRangeFilter
 
 from mcod.lib.admin_mixins import ModelAdmin
 from mcod.reports.models import (
+    Dashboard,
     DatasetReport,
     MonitoringReport,
     OrganizationReport,
@@ -18,7 +26,6 @@ from mcod.reports.models import (
     UserReport,
 )
 from mcod.reports.tasks import create_daily_resources_report
-from mcod.unleash import is_enabled
 
 
 class UserFilter(AutocompleteFilter):
@@ -91,9 +98,8 @@ class MonitoringReportsAdmin(ReportsAdmin):
         'suggestions.DatasetSubmission',
         'suggestions.DatasetComment',
         'suggestions.ResourceComment',
+        'showcases.ShowcaseProposal',
     ]
-    if is_enabled('S39_showcases.be'):
-        app_models.append('showcases.ShowcaseProposal')
 
     class Media:
         pass
@@ -155,3 +161,54 @@ class DailyResourceReportsAdmin(ReportsAdmin):
         msg = _('The task of generating the report has been commissioned. The report may appear with a delay ...')
         messages.info(request, msg)
         return HttpResponseRedirect(url)
+
+
+class DashboardAdmin(ModelAdmin):
+    change_form_template = 'admin/reports/dashboard/change_form.html'
+    change_list_template = 'admin/reports/dashboard/change_list.html'
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def _get_objects(self):
+        metabase_dashboards = config.METABASE_DASHBOARDS.strip()
+        if metabase_dashboards:
+            return json.loads(config.METABASE_DASHBOARDS)
+        return []
+
+    def _get_metabase_dashboard_url(self, obj):
+        payload = {
+            "resource": {"dashboard": int(obj['id'])},
+            "params": {},
+            "exp": round(time.time()) + (60 * 10),  # 10 minute expiration
+        }
+        token = jwt.encode(payload, settings.METABASE_API_KEY, algorithm="HS256").decode("utf8")
+        return f"{settings.METABASE_URL}/embed/dashboard/{token}#bordered=false&titled=false"
+
+    def get_queryset(self, request):
+        return Dashboard.objects.none()
+
+    def changelist_view(self, request, extra_context=None):
+        extra_context = extra_context or {}
+        extra_context['objects'] = self._get_objects()
+        return super().changelist_view(request, extra_context=extra_context)
+
+    def _get_obj_does_not_exist_redirect(self, request, opts, object_id):
+        for obj in self._get_objects():
+            if str(obj['id']) == object_id:
+                return render(request, self.change_form_template, context={
+                    'object': obj,
+                    'dashboard_url': self._get_metabase_dashboard_url(obj),
+                    'title': _("View %s") % self.model._meta.verbose_name,
+                })
+        return super()._get_obj_does_not_exist_redirect(request, opts, object_id)
+
+
+if settings.METABASE_DASHBOARDS_ENABLED:
+    admin.site.register(Dashboard, DashboardAdmin)

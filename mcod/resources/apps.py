@@ -9,8 +9,8 @@ class ResourcesConfig(ExtendedAppMixin, AppConfig):
     verbose_name = _('Resources')
 
     def ready(self):
-        from mcod.resources.models import Resource, ResourceTrash, Chart, ResourceFile, Supplement
         from mcod.core.registries import rdf_serializers_registry as rsr
+        from mcod.resources.models import Chart, Resource, ResourceFile, ResourceTrash, Supplement
         from mcod.resources.serializers import ResourceRDFResponseSchema
         self.connect_core_signals(Resource)
         self.connect_core_signals(ResourceFile)

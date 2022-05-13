@@ -4,25 +4,22 @@ from uuid import uuid4
 
 import pandas as pd
 import param
-from bokeh.models.widgets.markups import Div
 from django.template.loader import render_to_string
 from django.utils.translation import gettext as _
-from panel.util import as_unicode
 from panel.util import isIn
 from panel.widgets import RadioButtonGroup
-from panel.widgets.base import Widget
-from panel.widgets.select import _MultiSelectBase, SelectBase
+from panel.widgets.select import SelectBase, _MultiSelectBase
 
-from mcod.pn_apps.bokeh.widgets import BootstrapSelect as _BootstrapSelect, \
-    ExtendedRadioButtonGroup as _BkExtendedRadioButtonGroup
-from mcod.pn_apps.utils import change_theme
+from mcod.pn_apps.bokeh.widgets import (
+    BootstrapSelect as _BootstrapSelect,
+    ExtendedRadioButtonGroup as _BkExtendedRadioButtonGroup,
+)
 
 
 class BootstrapSelectWidget(_MultiSelectBase):
     alt_title = param.String(default='')
     actions_box = param.Boolean(default=False)
     live_search = param.Boolean(default=False)
-    # show_subtext = param.Boolean(default=False)
     select_all_at_start = param.Boolean(default=False)
     none_selected_text = param.String(default='')
     count_selected_text = param.String(default='')
@@ -60,57 +57,6 @@ class BootstrapSelectWidget(_MultiSelectBase):
         return msg
 
 
-class EventDivWidgetBase(Widget):
-    style = param.Dict(default=None, doc="""
-        Dictionary of CSS property:value pairs to apply to this Div.""")
-
-    value = param.Parameter(default=None)
-
-    _rename = {'name': None, 'value': 'text'}
-
-    _format = '<div data-event-value={value}></div>'
-
-    _widget_type = Div
-
-    _target_transforms = {'value': 'target.text.split("=")[0]+value+"></div>"'}
-
-    _source_transforms = {'value': 'value.split("=")[1].replace("></div>", "")'}
-
-    def __init__(self, **params):
-        charts = params.pop('charts')
-        self.charts = charts
-        super(EventDivWidgetBase, self).__init__(**params)
-        self.height = 0
-
-    def _process_param_change(self, msg):
-        msg = super(EventDivWidgetBase, self)._process_property_change(msg)
-        if 'value' in msg:
-            text = as_unicode(msg.pop('value'))
-            partial = self._format.replace('{value}', '')
-            if self.name:
-                text = self._format.format(value=text.replace(partial, ''))
-            msg['text'] = text
-        return msg
-
-    @staticmethod
-    def event_callback(*events):
-        raise NotImplementedError
-
-
-class ThemeChangedEventDivWidget(EventDivWidgetBase):
-
-    @staticmethod
-    def event_callback(*events):
-        value_event = events[0]
-        _self = value_event.obj
-        new_theme_name = value_event.new
-        if new_theme_name is None:
-            new_theme_name = ''
-        change_theme(new_theme_name)
-        for chart in _self.charts:
-            chart.set_param(new_theme_name=new_theme_name)
-
-
 class BaseTableTemplate:
     template_path = None
 
@@ -134,10 +80,10 @@ class BootstrapTableTemplate(BaseTableTemplate):
         self.show_table_index = show_table_index
         self.table_id = str(uuid4())
         self.paginate = len(dataframe.index) > 10
-        super(BootstrapTableTemplate, self).__init__(dataframe)
+        super().__init__(dataframe)
 
     def get_context_data(self):
-        context_data = super(BootstrapTableTemplate, self).get_context_data()
+        context_data = super().get_context_data()
         context_data.update({
             'caption': self.caption,
             'show_table_index': self.show_table_index,
@@ -152,7 +98,7 @@ class TabbedBootstrapTableTemplate(BaseTableTemplate):
 
     def __init__(self, dataframe, tabs):
         self.tabs_labels = tabs
-        super(TabbedBootstrapTableTemplate, self).__init__(dataframe)
+        super().__init__(dataframe)
 
     def split_dataframe(self):
         tabs = []
@@ -178,7 +124,7 @@ class TabbedBootstrapTableTemplate(BaseTableTemplate):
         return tabs, tabs_nav
 
     def get_context_data(self):
-        context_data = super(TabbedBootstrapTableTemplate, self).get_context_data()
+        context_data = super().get_context_data()
         tabs, tabs_nav = self.split_dataframe()
         context_data['tabs_nav'] = tabs_nav
         context_data['tabs'] = tabs

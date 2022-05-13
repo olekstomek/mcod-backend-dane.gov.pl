@@ -1,8 +1,8 @@
-from mcod.lib.widgets import CKEditorUploadingWidget
 from django import forms
 from django.utils.translation import gettext_lazy as _
 
 from mcod.articles.models import Article
+from mcod.lib.widgets import CKEditorUploadingWidget
 from mcod.tags.forms import ModelFormWithKeywords
 
 

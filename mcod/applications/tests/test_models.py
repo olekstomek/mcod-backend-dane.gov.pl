@@ -2,23 +2,21 @@ from datetime import date
 
 import pytest
 from django.conf import settings
-from django.core.exceptions import ValidationError, ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import IntegrityError
 from django.db.models.query import QuerySet
 
 from mcod.applications.models import Application
 
 
-class TestApplicationModel(object):
+class TestApplicationModel:
     def test_can_not_create_empty_application(self):
         with pytest.raises(ValidationError)as e:
             a = Application()
             a.full_clean()
-        # assert "'slug'" in str(e.value)
         assert "'title'" in str(e.value)
         assert "'url'" in str(e.value)
         assert "'notes'" in str(e.value)
-        # assert "'status'" in str(e.value)
 
     def test_create_application(self):
         a = Application()
@@ -26,7 +24,6 @@ class TestApplicationModel(object):
         a.title = "Test name"
         a.notes = "Treść"
         a.url = "http://smth.smwheere.com"
-        # a.status = 'active'
         assert a.full_clean() is None
         assert a.id is None
         a.save()
@@ -79,7 +76,6 @@ class TestApplicationModel(object):
     def test_unsafe_delete(self, application):
         assert application.status == 'published'
         application.delete(soft=False)
-        # assert application.status == 'deleted'
         with pytest.raises(ObjectDoesNotExist) as e:
             Application.objects.get(id=application.id)
         assert "Application matching query does not exist." in str(e.value)

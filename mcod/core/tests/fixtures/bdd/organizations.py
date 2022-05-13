@@ -3,8 +3,7 @@ import os
 
 import pytest
 from django.apps import apps
-from pytest_bdd import given, when, then
-from pytest_bdd import parsers
+from pytest_bdd import given, parsers, then, when
 
 from mcod import settings
 from mcod.core.tests.fixtures.bdd.common import copyfile
@@ -27,22 +26,10 @@ def _institution():
     return OrganizationFactory.create()
 
 
-# @given(parsers.parse('draft institution'))
-# def draft_institution():
-#     org = OrganizationFactory.create(status="draft", title='Draft institution')
-#     return org
-
-
 @given(parsers.parse('removed institution'))
 def removed_institution():
     org = OrganizationFactory.create(is_removed=True, title='Removed institution')
     return org
-
-
-# @given(parsers.parse('institution with id {institution_id:d}'))
-# def institution_with_id(institution_id):
-#     org = OrganizationFactory.create(id=institution_id, title='Institution %s' % institution_id)
-#     return org
 
 
 @given(parsers.parse('second institution with id {institution_id:d}'))

@@ -3,23 +3,23 @@ import copy
 import functools
 import operator
 import re
+from collections import namedtuple
 from functools import reduce
 
 import six
-from django.utils.translation import get_language
 from django.conf import settings
-from elasticsearch_dsl import Field as DSLField, Q, A, Search
-from elasticsearch_dsl import TermsFacet, DateHistogramFacet
+from django.utils.translation import get_language
+from elasticsearch_dsl import A, DateHistogramFacet, Field as DSLField, Q, Search, TermsFacet
+from elasticsearch_dsl.aggs import Filter, GeoCentroid, Nested
 from elasticsearch_dsl.query import Bool, Query
-from elasticsearch_dsl.aggs import Nested, Filter, GeoCentroid
-from marshmallow import class_registry, utils
+from marshmallow import ValidationError, class_registry, utils
 from marshmallow.base import SchemaABC
 
 from mcod.core.api import fields
-from mcod.core.api.search.facets import NestedFacet, FilterFacet
-from mcod.core.utils import flatten_list
+from mcod.core.api.search.facets import FilterFacet, NestedFacet
 from mcod.core.query_string_escape import _escape_column_expression, _escape_non_column_expression
-
+from mcod.core.utils import flatten_list
+from mcod.unleash import is_enabled
 
 TRUE_VALUES = ('true', 'yes', 'on', '"true"', '1', '"on"', '"yes"')
 FALSE_VALUES = (
@@ -35,7 +35,7 @@ class ICUSortField(DSLField):
     name = 'icu_collation_keyword'
 
 
-class ElasticField(object):
+class ElasticField:
     @property
     def _name(self):
         return getattr(self, 'data_key') or getattr(self, 'name')
@@ -329,7 +329,7 @@ class FilterField(ElasticField, fields.Nested):
     def _prepare_queryset(self, queryset, data):
         for f, d in data:
             if self._condition:
-                d = Bool(must=[self._condition, d])  # TODO [WIP] can data have len > 1? if so, it's bad solution... fix it...
+                d = Bool(must=[self._condition, d])
             queryset = f(queryset, d)
         return queryset
 
@@ -657,7 +657,6 @@ class DateHistogramAggregationField(AggregationField):
                 _field = _f['field']
                 _path = _f.get('nested_path', None)
                 kw = {
-                    # 'size': _f.get('size', 500),
                     'min_doc_count': _f.get('min_doc_count', 1),
                     'interval': _f.get('interval', 'month')
                 }
@@ -703,7 +702,6 @@ class TermsAggregationField(AggregationField):
                 kw = {
                     'size': _f.get('size', 500),
                     'min_doc_count': _f.get('min_doc_count', 1),
-                    # 'keyed': _f.get('keyed', False)
                 }
                 _order = _f.get('order')
                 if _order:
@@ -897,14 +895,37 @@ class GeoShapeField(AggregatedBboxField):
 class RegionsGeoShapeField(BaseBboxField):
 
     relation_type = 'within'
+    MAP_MIN_ZOOM = 0
+    MAP_MAX_ZOOM = 20
+    NO_REGION_HIERARCHY = 6.0
+    ZOOM_TO_HIERARCHY = [
+        ((MAP_MIN_ZOOM, 6), 5),
+        ((7, 8), 4),
+        ((9, 10), 3),
+        ((11, 11), 2),
+        ((12, MAP_MAX_ZOOM), 1)
+    ]
 
-    def aggregate_bbox_regions(self, bbox, nested_agg):
-        main_bbox_q = self.get_geo_shape_query(bbox)
-        nested_bbox_q = Q('nested', path=self.search_path, query=main_bbox_q)
+    @classmethod
+    def bbox(cls, value):
+        if is_enabled('S50_bbox_zoom_to_hierarchy.be') and isinstance(value, str):
+            values = value.split(',')
+            coords = (float(val) for val in values[:4])
+            zoom = int(values[4]) if len(value) > 4 else 0
+            ZoomedBBoxTuple = namedtuple('BBox', ('min_lon', 'max_lat', 'max_lon', 'min_lat', 'zoom'))
+            return ZoomedBBoxTuple(*coords, zoom)
+        return super().bbox(value)
+
+    def validate_other_params(self, bbox):
+        if hasattr(bbox, 'zoom') and (bbox.zoom < self.MAP_MIN_ZOOM or bbox.zoom > self.MAP_MAX_ZOOM):
+            raise ValidationError('invalid hierarchy zoom level')
+
+    def aggregate_bbox_regions(self, bbox, nested_agg, main_query):
+        nested_bbox_q = Q('nested', path=self.search_path, query=main_query)
         return A('filter', filter=nested_bbox_q).metric(
             'resources_regions',
             Nested(path='regions').metric(
-                "bbox_regions", A("filter", filter=main_bbox_q).metric(*nested_agg)
+                "bbox_regions", A("filter", filter=main_query).metric(*nested_agg)
             )
         )
 
@@ -915,12 +936,20 @@ class RegionsGeoShapeField(BaseBboxField):
             return q, bbox
         return value
 
+    def get_geo_bounding_box_query(self, bbox):
+        return Q('geo_bounding_box', **{
+            f'{self.search_path}.coords': {
+                'top_left': {'lon': bbox.min_lon, 'lat': bbox.max_lat},
+                'bottom_right': {'lon': bbox.max_lon, 'lat': bbox.min_lat}
+            }
+        })
+
     def _prepare_queryset(self, queryset, data):
         q, bbox = data
         cloned_queryset = queryset._clone()
         cloned_queryset = super()._prepare_queryset(cloned_queryset, q)
         top_hierarchy = self.get_top_hierarchy(cloned_queryset, bbox)
-        queryset = self.query_top_hierarchy(queryset, top_hierarchy, q)
+        queryset = self.query_top_hierarchy(queryset, top_hierarchy, self.get_geo_bounding_box_query(bbox))
         top_regions_agg = self.get_regions_aggregation(bbox, top_hierarchy)
         queryset.aggs.bucket('regions_agg', top_regions_agg)
         return queryset
@@ -931,11 +960,18 @@ class RegionsGeoShapeField(BaseBboxField):
         return queryset.query(nested_hierarchy_q)
 
     def get_top_hierarchy(self, queryset, bbox):
-        top_hierarchy_agg = self.aggregate_bbox_regions(
-            bbox, ('top_hierarchy', A('max', field='regions.hierarchy_level')))
-        queryset.aggs.bucket('top_agg', top_hierarchy_agg)
-        c_resp = queryset.execute()
-        return c_resp.aggregations.top_agg.resources_regions.bbox_regions.top_hierarchy.value
+        if is_enabled('S50_bbox_zoom_to_hierarchy.be'):
+            for r in self.ZOOM_TO_HIERARCHY:
+                if r[0][0] <= int(bbox.zoom) <= r[0][1]:
+                    return r[1]
+        else:
+            geo_shape_q = self.get_geo_shape_query(bbox)
+            top_hierarchy_agg = self.aggregate_bbox_regions(
+                bbox, ('top_hierarchy', A('max', field='regions.hierarchy_level')), geo_shape_q)
+            queryset.aggs.bucket('top_agg', top_hierarchy_agg)
+            c_resp = queryset.execute()
+            _top_hierarchy = c_resp.aggregations.top_agg.resources_regions.bbox_regions.top_hierarchy.value
+            return _top_hierarchy or self.NO_REGION_HIERARCHY
 
     def get_regions_aggregation(self, bbox, top_hierarchy):
         top_regions_agg = self.aggregate_bbox_regions(bbox, (
@@ -944,7 +980,7 @@ class RegionsGeoShapeField(BaseBboxField):
                     'region_data', A("top_hits", size=1)).metric(
                     'model_types', A('filters', filters={'resources': Q('match', _index='resources'),
                                                          'datasets': Q('match', _index='datasets')})))
-        ))
+        ), self.get_geo_bounding_box_query(bbox))
         return top_regions_agg
 
 

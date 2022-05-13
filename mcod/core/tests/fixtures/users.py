@@ -3,7 +3,7 @@ import pytest
 from mcod.datasets.factories import DatasetFactory
 from mcod.organizations.factories import OrganizationFactory
 from mcod.resources.factories import ResourceFactory
-from mcod.users.factories import UserFactory, AdminFactory, EditorFactory
+from mcod.users.factories import AdminFactory, EditorFactory, UserFactory
 
 
 @pytest.fixture
@@ -72,7 +72,6 @@ def admin():
         password='12345.Abcde',
         phone='0048123456789'
     )
-    # OrganizationFactory.create_batch(2, users=(usr,))
     return usr
 
 

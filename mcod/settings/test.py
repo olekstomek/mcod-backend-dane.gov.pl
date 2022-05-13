@@ -1,4 +1,5 @@
 import os
+
 from mcod.settings.base import *  # noqa: F403, F405
 
 ROOT_DIR = environ.Path(__file__) - 3  # noqa: F405
@@ -80,23 +81,7 @@ DCAT_VOCABULARIES_MEDIA_ROOT = str(ROOT_DIR.path(MEDIA_ROOT, 'resources'))
 METADATA_MEDIA_ROOT = str(ROOT_DIR.path(MEDIA_ROOT, 'datasets', 'catalog'))
 
 CACHES.update({'test': {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'}})
-# CACHES = {
-#     "default": {
-#         "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
-#     },
-#     "sessions": {
-#         "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
-#     },
-#     "constance": {
-#         "BACKEND": "django_redis.cache.RedisCache",
-#         "LOCATION": "%s/1" % REDIS_URL,
-#         "OPTIONS": {
-#             "CLIENT_CLASS": "django_redis.client.DefaultClient",
-#         }
-#     }
-# }
 
-# CONSTANCE_DATABASE_CACHE_BACKEND = 'constance'
 
 MEDIA_URL = '/media/'
 IMAGES_URL = '%s%s' % (MEDIA_URL, 'images')
@@ -144,7 +129,6 @@ PASSWORD_HASHERS = [
 
 CELERY_BEAT_SCHEDULE['send-newsletter'] = {
     'task': 'mcod.newsletter.tasks.send_newsletter',
-    # 'schedule': crontab(minute=0, hour=3)
     'schedule': 120,
 }
 

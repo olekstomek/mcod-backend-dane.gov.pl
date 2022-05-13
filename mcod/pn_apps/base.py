@@ -1,36 +1,39 @@
+import json
+import logging
 from collections import OrderedDict
 from functools import partial
-import json
+from io import BytesIO
+from time import time
+
+import holoviews as hv
 import numpy as np
 import pandas as pd
 import panel as pn
 import param
-import logging
-import holoviews as hv
-from time import time
-from io import BytesIO
-from panel.io.state import state
 from bokeh.io.export import get_screenshot_as_png
-from bokeh.models import FuncTickFormatter, BasicTicker, CompositeTicker
+from bokeh.models import BasicTicker, CompositeTicker, FuncTickFormatter
 from django.db import connections
 from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
+from panel.io.state import state
+
 from mcod.organizations.models import Organization
-from mcod.pn_apps.widgets import BootstrapTableTemplate, TabbedBootstrapTableTemplate
-from mcod.pn_apps.utils import (
-    reformat_time_period,
-    chart_thumb_path,
-    format_time_period,
-    prepare_time_periods
+from mcod.pn_apps.bokeh.tools.base import (
+    LocalizedHoverTool,
+    LocalizedPanTool,
+    LocalizedResetTool,
+    LocalizedSaveTool,
+    LocalizedWheelZoomTool,
 )
 from mcod.pn_apps.layout import ExtendedColumn
-from mcod.pn_apps.bokeh.tools.base import (
-    LocalizedSaveTool, LocalizedHoverTool,
-    LocalizedWheelZoomTool, LocalizedPanTool,
-    LocalizedResetTool
+from mcod.pn_apps.mixins import CombinedChartMixin, UserOrganizationGroupMixin
+from mcod.pn_apps.utils import (
+    chart_thumb_path,
+    format_time_period,
+    prepare_time_periods,
+    reformat_time_period,
 )
-from mcod.pn_apps.mixins import UserOrganizationGroupMixin, CombinedChartMixin
-
+from mcod.pn_apps.widgets import BootstrapTableTemplate, TabbedBootstrapTableTemplate
 
 q_log = logging.getLogger('stats-queries')
 profile_log = logging.getLogger('stats-profile')
@@ -490,7 +493,7 @@ class RawSqlOrganizationGroupStatsPanel(UserOrganizationGroupMixin, CombinedChar
         if self.is_regroupable_df:
             template = self.tabbed_table_template_cls(df, self.organizations_names)
         else:
-            template = super(RawSqlOrganizationGroupStatsPanel, self).table_template(df)
+            template = super().table_template(df)
         return template
 
     def chart(self):
@@ -637,17 +640,15 @@ class DataCountByTimePeriodForGroup(RawSqlOrganizationGroupStatsPanel):
 
 
 class NewDataByTimePeriodForGroup(RawSqlOrganizationGroupStatsPanel):
-
     def __init__(self, *args, **kwargs):
-        super(NewDataByTimePeriodForGroup, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.p_map = {
             'absolute': _('Number'),
             'percentage': _('Percent'),
         }
 
     def get_institutions(self, qs):
-        qs_organization_names, selected_orgs_options =\
-            super(NewDataByTimePeriodForGroup, self).get_institutions(qs)
+        qs_organization_names, selected_orgs_options = super().get_institutions(qs)
         if not selected_orgs_options:
             qs_organization_names = []
         return qs_organization_names, selected_orgs_options
@@ -703,7 +704,7 @@ class ChartPanel(StatsPanel):
     use_index = False
 
     def __init__(self, *args, **kwargs):
-        super(ChartPanel, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.init_labels()
 
     def has_perm(self):
@@ -771,7 +772,7 @@ class RankingPanel(ChartPanel):
     top_count = 10
 
     def init_labels(self):
-        super(RankingPanel, self).init_labels()
+        super().init_labels()
         self.index_label = _('Entry')
 
     def get_results(self):

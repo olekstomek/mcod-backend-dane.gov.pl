@@ -1,6 +1,5 @@
 from django.apps import apps
-from pytest_bdd import given, when, then
-from pytest_bdd import parsers
+from pytest_bdd import given, parsers, then, when
 
 from mcod.applications.factories import ApplicationFactory
 from mcod.datasets.factories import DatasetFactory
@@ -13,21 +12,10 @@ def application():
     return org
 
 
-# @given(parsers.parse('draft application'))
-# def draft_application():
-#     org = ApplicationFactory.create(status="draft", title='Draft application')
-#     return org
-
 @given(parsers.parse('removed application'))
 def removed_application():
     org = ApplicationFactory.create(is_removed=True, title='Removed application')
     return org
-
-#
-# @given(parsers.parse('application with id {application_id:d}'))
-# def application_with_id(application_id):
-#     org = ApplicationFactory.create(id=application_id, title='application %s' % application_id)
-#     return org
 
 
 @given(parsers.parse('second application with id {application_id:d}'))

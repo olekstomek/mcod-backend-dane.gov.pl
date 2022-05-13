@@ -1,6 +1,7 @@
-from mcod.searchhistories.tasks import save_searchhistories_task
-from mcod.searchhistories.models import SearchHistory
 from django_redis import get_redis_connection
+
+from mcod.searchhistories.models import SearchHistory
+from mcod.searchhistories.tasks import save_searchhistories_task
 
 
 class TestSearchhistoryTool:

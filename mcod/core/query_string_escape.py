@@ -10,7 +10,6 @@ https://www.elastic.co/guide/en/elasticsearch/reference/6.7/query-dsl-query-stri
 import re
 from typing import Optional
 
-
 ES_QUERYSTRING_ESCAPE_RULES = {
     '+': r'\+',
     '-': r'\-',

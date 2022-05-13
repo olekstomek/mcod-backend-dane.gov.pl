@@ -1,5 +1,5 @@
 from mcod.core.db.managers import TrashManager
-from mcod.core.managers import SoftDeletableQuerySet, SoftDeletableManager
+from mcod.core.managers import SoftDeletableManager, SoftDeletableQuerySet
 
 
 class SpecialSignQuerySet(SoftDeletableQuerySet):
@@ -8,7 +8,7 @@ class SpecialSignQuerySet(SoftDeletableQuerySet):
         return self.filter(status='published')
 
 
-class SpecialSignManagerMixin(object):
+class SpecialSignManagerMixin:
     _queryset_class = SpecialSignQuerySet
 
     def published(self):

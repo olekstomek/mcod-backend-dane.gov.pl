@@ -3,10 +3,9 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.forms.models import BaseInlineFormSet
 from django.utils.translation import gettext_lazy as _, ngettext
-from suit.widgets import AutosizedTextarea, SuitDateWidget, NumberInput
+from suit.widgets import AutosizedTextarea, NumberInput, SuitDateWidget
 
 from mcod.academy.models import Course, CourseModule
-
 
 TOTAL_FORM_COUNT = 'TOTAL_FORMS'
 

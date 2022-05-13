@@ -1,7 +1,7 @@
 import factory
 
-from mcod.guides import models
 from mcod.core.registries import factories_registry
+from mcod.guides import models
 from mcod.users.factories import AdminFactory
 
 

@@ -1,5 +1,5 @@
 import json
-from datetime import datetime, time, date
+from datetime import date, datetime, time
 
 from elasticsearch_dsl import AttrList
 

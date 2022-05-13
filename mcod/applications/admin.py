@@ -1,19 +1,13 @@
-from django.contrib import admin, messages
+from django.contrib import messages
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 from modeltrans.translator import get_i18n_field
 
 from mcod import settings
 from mcod.applications.forms import ApplicationForm, ApplicationProposalForm
-from mcod.applications.models import Application, ApplicationProposal, ApplicationProposalTrash, ApplicationTrash
+from mcod.applications.models import Application
 from mcod.applications.tasks import create_application_task
-from mcod.lib.admin_mixins import (
-    DecisionFilter,
-    HistoryMixin,
-    TrashMixin,
-    ModelAdmin,
-)
-from mcod.unleash import is_enabled
+from mcod.lib.admin_mixins import DecisionFilter, HistoryMixin, ModelAdmin, TrashMixin
 
 
 class ApplicationAdmin(HistoryMixin, ModelAdmin):
@@ -310,10 +304,3 @@ class ApplicationProposalTrashAdmin(ApplicationProposalMixin, TrashMixin):
         'decision_date',
     ]
     fields = [x for x in readonly_fields] + ['is_removed']
-
-
-if not is_enabled('S46_hide_applications_admin.be'):
-    admin.site.register(Application, ApplicationAdmin)
-    admin.site.register(ApplicationTrash, ApplicationTrashAdmin)
-    admin.site.register(ApplicationProposal, ApplicationProposalAdmin)
-    admin.site.register(ApplicationProposalTrash, ApplicationProposalTrashAdmin)

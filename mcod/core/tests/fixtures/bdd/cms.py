@@ -3,8 +3,7 @@ import os
 
 from django.apps import apps
 from django.test import Client
-from pytest_bdd import given, when, then
-from pytest_bdd import parsers
+from pytest_bdd import given, parsers, then, when
 from wagtail.core.models import Page, Site
 
 from mcod import settings

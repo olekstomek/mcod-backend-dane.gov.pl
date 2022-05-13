@@ -1,9 +1,8 @@
-# -*- coding: utf-8 -*-
+from hypereditor.fields import HyperFieldPanel
 from wagtail.admin.edit_handlers import StreamFieldPanel
 from wagtail.api import APIField
 from wagtail.api.v2.serializers import StreamField as StreamFieldSerializer
 from wagtail.core.fields import StreamField
-from hypereditor.fields import HyperFieldPanel
 
 from mcod.cms.api.fields import HyperEditorJSONField, LocalizedHyperField
 from mcod.cms.blocks.common import CarouselBlock

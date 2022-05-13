@@ -2,11 +2,11 @@ from django import forms
 from django.utils.translation import gettext_lazy as _
 
 from mcod.suggestions.models import (
+    ACCEPTED_DATASET_SUBMISSION_STATUS_CHOICES_NO_PUBLISHED,
     AcceptedDatasetSubmission,
     DatasetComment,
     DatasetSubmission,
     ResourceComment,
-    ACCEPTED_DATASET_SUBMISSION_STATUS_CHOICES_NO_PUBLISHED,
 )
 
 

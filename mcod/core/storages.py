@@ -1,5 +1,6 @@
 import os
 from datetime import datetime
+
 from django.conf import settings
 from django.core.files.storage import FileSystemStorage
 
@@ -12,8 +13,7 @@ class BaseFileSystemStorage(FileSystemStorage):
         if not os.path.exists(location):
             os.makedirs(location)
 
-        super(BaseFileSystemStorage, self).__init__(
-            location, base_url, **kwargs)
+        super().__init__(location, base_url, **kwargs)
 
     def name_from_url(self, url):
         if url:

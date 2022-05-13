@@ -13,7 +13,6 @@ Feature: Dataset RDF API
     | request_path                          | resp_header_name | resp_header_value     |
     | /catalog/dataset/999                  | content-type     | application/ld+json   |
     | /catalog/dataset/999.jsonld           | content-type     | application/ld+json   |
-    | /catalog/dataset/999.json-ld          | content-type     | application/ld+json   |
     | /catalog/dataset/999.n3               | content-type     | text/n3               |
     | /catalog/dataset/999.nt               | content-type     | application/n-triples |
     | /catalog/dataset/999.ntriples         | content-type     | application/n-triples |
@@ -28,7 +27,6 @@ Feature: Dataset RDF API
     # with optional slug in url.
     | /catalog/dataset/999,test-rdf         | content-type     | application/ld+json   |
     | /catalog/dataset/999,test-rdf.jsonld  | content-type     | application/ld+json   |
-    | /catalog/dataset/999,test-rdf.json-ld | content-type     | application/ld+json   |
     | /catalog/dataset/999,test-rdf.n3      | content-type     | text/n3               |
     | /catalog/dataset/999,test-rdf.nt      | content-type     | application/n-triples |
     | /catalog/dataset/999,test-rdf.ntriples| content-type     | application/n-triples |
@@ -82,7 +80,7 @@ Feature: Dataset RDF API
     And api request path is /catalog/dataset/999
     Then send api request and fetch the response
     And api's response status code is 200
-    And api's json-ld response body with rdf type dcat:Distribution has field dct:format with attribute @id that equals http://publications.europa.eu/resource/authority/file-type/CSV
+    And api's jsonld response body with rdf type dcat:Distribution has field dct:format with attribute @id that equals http://publications.europa.eu/resource/authority/file-type/CSV
 
   Scenario: Test that RDF catalog's resources response has valid file format vocabulary value set.
     Given dataset with id 999
@@ -93,7 +91,7 @@ Feature: Dataset RDF API
     And api request path is /catalog/
     Then send api request and fetch the response
     And api's response status code is 200
-    And api's json-ld response body with rdf type dcat:Distribution has field dct:format with attribute @id that equals http://publications.europa.eu/resource/authority/file-type/CSV
+    And api's jsonld response body with rdf type dcat:Distribution has field dct:format with attribute @id that equals http://publications.europa.eu/resource/authority/file-type/CSV
 
   Scenario: Test that RDF catalog's response has valid language vocabulary value set.
     Given dataset with id 999
@@ -104,8 +102,8 @@ Feature: Dataset RDF API
     And api request path is /catalog/
     Then send api request and fetch the response
     And api's response status code is 200
-    And api's json-ld response body with rdf type dcat:Catalog has field dct:language with attribute @id that equals http://publications.europa.eu/resource/authority/language/POL
-    And api's json-ld response body with rdf type dcat:Catalog has field dct:language with attribute @id that equals http://publications.europa.eu/resource/authority/language/ENG
+    And api's jsonld response body with rdf type dcat:Catalog has field dct:language with attribute @id that equals http://publications.europa.eu/resource/authority/language/POL
+    And api's jsonld response body with rdf type dcat:Catalog has field dct:language with attribute @id that equals http://publications.europa.eu/resource/authority/language/ENG
 
   Scenario: Test that RDF api related distribution default region with geonames id is assigned to dataset
     Given dataset with id 999
@@ -116,4 +114,4 @@ Feature: Dataset RDF API
     And api request path is /catalog/dataset/999
     Then send api request and fetch the response
     And api's response status code is 200
-    And api's json-ld response body with rdf type dct:Location has field dct:identifier with attribute @id that equals http://sws.geonames.org/798544/
+    And api's jsonld response body with rdf type dct:Location has field dct:identifier with attribute @id that equals http://sws.geonames.org/798544/

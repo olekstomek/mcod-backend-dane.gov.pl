@@ -31,7 +31,6 @@ def random_csv_data(columns=5, rows=100):
         ('catch_phrase', {}),
         ('bs', {}),
         ('company', {}),
-        # ('int', {}),
         ('country', {}),
         ('city', {}),
         ('street_name', {}),
@@ -420,19 +419,19 @@ def fake_session():
 
 @pytest.fixture
 def fake_client():
-    class XmlResource(object):
+    class XmlResource:
         def on_get(self, request, response):
             response.status = falcon.HTTP_200
             response.content_type = falcon.MEDIA_XML
             response.text = xml_sample
 
-    class JsonResource(object):
+    class JsonResource:
         def on_get(self, request, response):
             response.status = falcon.HTTP_200
             response.content_type = falcon.MEDIA_JSON
             response.text = json_sample
 
-    class JsonapiResource(object):
+    class JsonapiResource:
         def on_get(self, request, response):
             response.status = falcon.HTTP_200
             response.content_type = 'application/vnd.api+json; charset=UTF-8'

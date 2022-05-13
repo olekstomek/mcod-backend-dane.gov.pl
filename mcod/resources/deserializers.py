@@ -1,8 +1,8 @@
 from django.utils.translation import gettext as _
-from marshmallow import pre_load, validate, validates, validates_schema, ValidationError
+from marshmallow import ValidationError, pre_load, validate, validates, validates_schema
 
 from mcod.core.api import fields
-from mcod.core.api.jsonapi.deserializers import TopLevel, ObjectAttrs
+from mcod.core.api.jsonapi.deserializers import ObjectAttrs, TopLevel
 from mcod.core.api.schemas import (
     BooleanTermSchema,
     CommonSchema,
@@ -161,20 +161,18 @@ class ResourceApiSearchRequest(ListingSchema):
         description='Allow the client to customize which related resources should be returned in included section.',
         allowEmptyValue=True,
     )
-    if is_enabled('S43_dynamic_data.be'):
-        has_dynamic_data = search_fields.FilterField(
-            BooleanTermSchema,
-            doc_template='docs/generic/fields/boolean_term_field.html',
-            doc_base_url='/resources',
-            doc_field_name='has_dynamic_data',
-        )
-    if is_enabled('S41_resource_has_high_value_data.be'):
-        has_high_value_data = search_fields.FilterField(
-            BooleanTermSchema,
-            doc_template='docs/generic/fields/boolean_term_field.html',
-            doc_base_url='/resources',
-            doc_field_name='has_high_value_data',
-        )
+    has_dynamic_data = search_fields.FilterField(
+        BooleanTermSchema,
+        doc_template='docs/generic/fields/boolean_term_field.html',
+        doc_base_url='/resources',
+        doc_field_name='has_dynamic_data',
+    )
+    has_high_value_data = search_fields.FilterField(
+        BooleanTermSchema,
+        doc_template='docs/generic/fields/boolean_term_field.html',
+        doc_base_url='/resources',
+        doc_field_name='has_high_value_data',
+    )
     if is_enabled('S47_research_data.be'):
         has_research_data = search_fields.FilterField(
             BooleanTermSchema,

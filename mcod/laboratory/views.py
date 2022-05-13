@@ -1,6 +1,6 @@
-import falcon
-
 from functools import partial
+
+import falcon
 
 from mcod.core.api.handlers import SearchHdlr
 from mcod.core.api.hooks import login_required

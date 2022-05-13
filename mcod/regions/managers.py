@@ -1,8 +1,9 @@
 from decimal import Decimal
+
+from django.apps import apps
 from django.conf import settings
 from django.db import models
-from django.db.models import Q, F, Case, When, Value
-from django.apps import apps
+from django.db.models import Case, F, Q, Value, When
 
 from mcod.regions.api import PeliasApi
 from mcod.unleash import is_enabled

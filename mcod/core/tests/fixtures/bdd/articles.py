@@ -1,7 +1,6 @@
-from pytest_bdd import given, then
-from pytest_bdd import parsers
+from pytest_bdd import given, parsers, then
 
-from mcod.articles.factories import ArticleFactory, ArticleCategoryFactory
+from mcod.articles.factories import ArticleCategoryFactory, ArticleFactory
 from mcod.datasets.factories import DatasetFactory
 
 

@@ -1,6 +1,5 @@
 from django.utils.translation import gettext_lazy as _
 
-
 spec = {'errors': {'blank-header': {'context': 'head',
                                     'description': _('A column in the header row is should be provided.'
                                                      '\n\n '

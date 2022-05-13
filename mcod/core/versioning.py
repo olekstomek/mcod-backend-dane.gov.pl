@@ -1,8 +1,6 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
 import functools
 
-from mcod.core.api.versions import get_latest_version, VERSIONS
+from mcod.core.api.versions import VERSIONS, get_latest_version
 
 
 def versioned(method):
@@ -14,7 +12,7 @@ def versioned(method):
 
     from service.tools import versioning, RequestHandler
 
-    class MyHandler(object):
+    class MyHandler:
         @versioned
         def on_get(self, req, resp):
             self.finish('newest version')
@@ -45,8 +43,6 @@ def versioned(method):
     def _get_version(version=None):
         latest_version = str(get_latest_version())
         version = version or latest_version
-        # if version not in VERSIONS:
-        #     raise ValueError('Unsupported version')
         m = method.VERSIONS.get(version)
 
         if m is None:

@@ -1,18 +1,18 @@
-from marshmallow import pre_dump
 from django.utils.translation import gettext_lazy as _
+from marshmallow import pre_dump
 
 from mcod.core.api import fields
 from mcod.core.api.jsonapi.serializers import (
-    Relationships,
-    ObjectAttrs,
-    TopLevel,
-    Relationship,
     Aggregation,
-    HighlightObjectMixin
+    HighlightObjectMixin,
+    ObjectAttrs,
+    Relationship,
+    Relationships,
+    TopLevel,
 )
 from mcod.core.api.schemas import ExtSchema
 from mcod.core.serializers import CSVSerializer
-from mcod.lib.serializers import TranslatedStr, KeywordsList
+from mcod.lib.serializers import KeywordsList, TranslatedStr
 from mcod.showcases.models import Showcase
 from mcod.watchers.serializers import SubscriptionMixin
 

@@ -1,19 +1,19 @@
-# -*- coding: utf-8 -*-
 import io
-import os
 import json
+import os
+import xml
+from zipfile import BadZipFile
+
 import cchardet
-from bs4 import BeautifulSoup
 import jsonschema
 import rdflib
-import xml
+from bs4 import BeautifulSoup
 from lxml import etree
 from tabulator import Stream
-from tabulator.exceptions import FormatError, EncodingError
-from zipfile import BadZipFile
+from tabulator.exceptions import EncodingError, FormatError
+
 from mcod import settings
 from mcod.resources.geo import is_json_stat
-
 
 GUESS_FROM_BUFFER = (
     "application/octetstream",
@@ -116,13 +116,15 @@ def _html(source, encoding):
         elif isinstance(source, bytes):
             source = io.BytesIO(source)
             source.seek(0)
-        is_html = bool(BeautifulSoup(source.read(), "html.parser").find('html'))
+        file_source = BeautifulSoup(source.read(), "html.parser")
+        # there are resources with links to web pages containing only iframes loading some content
+        is_html = bool(file_source.find('html') or file_source.find('iframe'))
         return 'html' if is_html else None
     except Exception:
         return None
 
 
-def _rdf(source, encoding, extensions=('rdf', 'n3', 'nt', 'nq', 'trig', 'trix', 'rdfa', 'xml', 'ttl')):
+def _rdf(source, encoding, extensions=('rdf', 'n3', 'nt', 'nq', 'trig', 'trix', 'rdfa', 'xml', 'ttl', 'jsonld')):
     ext = None
     if isinstance(source, str):
         ext = source.split('.')[-1]
@@ -133,7 +135,7 @@ def _rdf(source, encoding, extensions=('rdf', 'n3', 'nt', 'nq', 'trig', 'trix', 
         graph = rdflib.ConjunctiveGraph()
         graph.parse(source, format=_format)
         if len(graph):
-            if ext in ('nt', 'nq', 'n3', 'trig', 'trix', 'ttl'):
+            if ext in ('nt', 'nq', 'n3', 'trig', 'trix', 'ttl', 'jsonld'):
                 return ext
             elif ext == 'nquads':
                 return 'nq'

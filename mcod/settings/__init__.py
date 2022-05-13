@@ -1,6 +1,6 @@
 # -* coding: utf-8 *-
-import os
 import importlib
+import os
 
 my_module = importlib.import_module(os.getenv('DJANGO_SETTINGS_MODULE', 'mcod.settings.base'))
 my_module_dict = my_module.__dict__

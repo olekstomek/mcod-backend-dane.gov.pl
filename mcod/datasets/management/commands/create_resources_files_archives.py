@@ -1,5 +1,6 @@
-from django_tqdm import BaseCommand
 from django.apps import apps
+from django_tqdm import BaseCommand
+
 from mcod.datasets.tasks import archive_resources_files
 
 

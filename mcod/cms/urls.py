@@ -3,6 +3,7 @@ from django.conf.urls import url
 from django.contrib.auth import views as auth_views
 from django.urls import path
 from wagtail.core.utils import WAGTAIL_APPEND_SLASH
+
 from mcod.cms import views
 
 if WAGTAIL_APPEND_SLASH:

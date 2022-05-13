@@ -4,12 +4,11 @@ from urllib.parse import urlparse
 from xml.etree import ElementTree
 
 import requests
+from rdflib import ConjunctiveGraph, URIRef
 from requests.exceptions import RequestException
-from rdflib import URIRef, ConjunctiveGraph
 
 from mcod import settings
 from mcod.resources.link_validation import content_type_from_file_format
-from mcod.unleash import is_enabled
 
 
 class ScoreValidationError(Exception):
@@ -18,14 +17,16 @@ class ScoreValidationError(Exception):
 
 DEFAULT_OPENNESS_SCORE = {_type: os for _, _type, _, os, *other in settings.SUPPORTED_CONTENT_TYPES}
 OPENNESS_SCORES = {_type: {os} | set(*other) for _, _type, _, os, *other in settings.SUPPORTED_CONTENT_TYPES}
+RDF_FORMATS = {format_: mime_type for format_, mime_type in settings.RDF_FORMAT_TO_MIMETYPE.items() if format_ != 'xml'}
 
 format_to_score_calculator = {}
 
 
-def register_score_calculator(format_):
+def register_score_calculator(*formats):
     def inner(class_):
         assert issubclass(class_, OpennessScoreCalculator)
-        format_to_score_calculator[format_] = class_
+        for format_ in formats:
+            format_to_score_calculator[format_] = class_
         return class_
     return inner
 
@@ -51,14 +52,7 @@ class OpennessScoreCalculator:
         return context
 
     def get_context(self, resource):
-        if is_enabled('S40_new_file_model.be'):
-            context = self.get_link_or_file_context(resource)
-        else:
-            if resource.link and not resource.file:
-                context = self.get_link_context_data(resource.link)
-            else:
-                context = self.get_file_context_data(resource.file)
-        return context
+        return self.get_link_or_file_context(resource)
 
     def get_link_context_data(self, link):
         context = {}
@@ -87,13 +81,20 @@ class OpennessScoreCalculator:
             pass
         return score
 
+    def add_graph_uri(self, triple_elem, predicate, graph_uris):
+        if isinstance(triple_elem, URIRef) and \
+                not str(predicate).startswith('http://www.w3.org/1999/02/22-rdf-syntax-ns#'):
+            graph_uris.add(urlparse(str(triple_elem)).netloc)
+
     def contains_linked_data(self, graph):
         # TODO zastanowić się kiedy plik zawiera dane zlinkowane
-        for subject, predicate, object_ in graph:
-            if isinstance(object_, URIRef) and not (
-                    str(predicate).startswith('http://www.w3.org/1999/02/22-rdf-syntax-ns#') or
-                    str(object_).startswith(settings.API_URL)):
-                return True
+        graph_uris = set()
+        for g in graph.store.contexts():
+            for subject, predicate, object_ in g:
+                self.add_graph_uri(subject, predicate, graph_uris)
+                self.add_graph_uri(object_, predicate, graph_uris)
+                if len(graph_uris) > 1:
+                    return True
         return False
 
 
@@ -102,18 +103,7 @@ class CSVScoreCalculator(OpennessScoreCalculator):
     default_score = 3
 
     def get_score(self, resource, format_):
-
-        score = self.default_score
-        if not is_enabled('S40_new_file_model.be') and resource.jsonld_file:
-            score = 4
-            with open(resource.jsonld_file.path, 'rb') as outfile:
-                jsonld_data = outfile.read()
-            graph = ConjunctiveGraph()
-            graph.parse(data=jsonld_data, format='json-ld')
-            if self.contains_linked_data(graph):
-                score = 5
-
-        return score
+        return self.default_score
 
 
 @register_score_calculator('json')
@@ -200,6 +190,27 @@ class XMLScoreCalculator(OpennessScoreCalculator):
         try:
             graph = graph.parse(data=context['data'])
             if not len(graph) or not self.contains_linked_data(graph):
+                raise ScoreValidationError
+        except Exception:
+            raise ScoreValidationError
+
+
+@register_score_calculator(*RDF_FORMATS.keys())
+class RDFScoreCalculator(OpennessScoreCalculator):
+    default_score = 4
+
+    def get_score(self, resource, format_):
+        context = self.get_context(resource)
+        context['registered_format'] = format_
+        return self.calculate_score(context)
+
+    def validate_score_level_5(self, context):
+        graph = ConjunctiveGraph()
+        try:
+            parse_format = RDF_FORMATS[context['registered_format']]
+            graph = graph.parse(data=context['data'], format=parse_format)
+            has_triples = any([len(g) for g in graph.store.contexts()])
+            if not has_triples or not self.contains_linked_data(graph):
                 raise ScoreValidationError
         except Exception:
             raise ScoreValidationError

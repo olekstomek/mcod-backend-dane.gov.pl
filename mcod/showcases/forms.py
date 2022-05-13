@@ -1,4 +1,3 @@
-from mcod.lib.widgets import CKEditorUploadingWidget
 from django import forms
 from django.contrib.admin.widgets import FilteredSelectMultiple
 from django.contrib.postgres.forms.jsonb import JSONField
@@ -8,7 +7,7 @@ from django.utils.translation import gettext_lazy as _
 
 from mcod.core.db.models import STATUS_CHOICES
 from mcod.datasets.models import Dataset
-from mcod.lib.widgets import ExternalDatasetsWidget
+from mcod.lib.widgets import CKEditorUploadingWidget, ExternalDatasetsWidget
 from mcod.showcases.models import Showcase, ShowcaseProposal
 from mcod.tags.forms import ModelFormWithKeywords
 

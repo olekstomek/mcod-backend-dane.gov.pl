@@ -1,7 +1,7 @@
-from mcod.lib.data_rules import numeric_rule, pna_rule, krs_rule, regon_rule, nip_rule, boolean_rule
+from mcod.lib.data_rules import boolean_rule, krs_rule, nip_rule, numeric_rule, pna_rule, regon_rule
 
 
-class TestRulesTemplates(object):
+class TestRulesTemplates:
 
     def test_boolean_tmpl(self):
         result = boolean_rule('col')

@@ -3,10 +3,16 @@ from django.utils.translation import gettext_lazy as _
 from marshmallow import post_dump, pre_dump
 
 from mcod.core.api import fields
-from mcod.core.api.jsonapi.serializers import Relationships, Relationship, DataRelationship, ObjectAttrs, TopLevel
+from mcod.core.api.jsonapi.serializers import (
+    DataRelationship,
+    ObjectAttrs,
+    Relationship,
+    Relationships,
+    TopLevel,
+)
 from mcod.core.serializers import CSVSerializer
-from mcod.users.models import Meeting
 from mcod.schedules.serializers import UserScheduleApiAttrs
+from mcod.users.models import Meeting
 
 
 class ChangePasswordApiAttrs(ObjectAttrs):
@@ -172,7 +178,7 @@ class AgentApiRelationships(UserApiRelationships):
             self._fields['planned_user_schedule_items'].schema.context.update(object_url='')
 
 
-class UserSchemaMixin(object):
+class UserSchemaMixin:
     state = fields.Str(
         required=True, faker_type='userstate', example='active',
         description="Allowed values: 'active', 'inactive' or 'blocked'")

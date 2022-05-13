@@ -1,7 +1,7 @@
-import libarchive
 import os
 import tempfile
 
+import libarchive
 import rarfile
 
 from mcod import settings
@@ -20,7 +20,7 @@ def has_archive_extension(path):
     return ext in settings.ARCHIVE_EXTENSIONS
 
 
-class ArchiveReader(object):
+class ArchiveReader:
     _tmp_dir = None
 
     def __init__(self, source, destiny_path=None):

@@ -7,7 +7,6 @@ from django.db.models import Sum
 
 from mcod import settings
 from mcod.counters.lib import Counter
-from mcod.unleash import is_enabled
 
 logger = logging.getLogger('kibana-statistics')
 
@@ -41,16 +40,10 @@ def kibana_statistics():
 
     public_organizations_with_dataset = organizations_with_dataset.exclude(institution_type=institution_type_private)
     resources_of_public_organizations = resources.exclude(dataset__organization__institution_type=institution_type_private)
-    if is_enabled('S16_new_date_counters.be'):
-        public_downloads_count = download_counter_model.objects.filter(
-            resource__in=resources_of_public_organizations).aggregate(Sum('count'))['count__sum'] or 0
-        public_views_count = view_counter_model.objects.filter(
-            resource__in=resources_of_public_organizations).aggregate(Sum('count'))['count__sum'] or 0
-    else:
-        public_downloads_count = resources_of_public_organizations.aggregate(
-            Sum('downloads_count'))['downloads_count__sum'] or 0
-        public_views_count = resources_of_public_organizations.aggregate(
-            Sum('views_count'))['views_count__sum'] or 0
+    public_downloads_count = download_counter_model.objects.filter(
+        resource__in=resources_of_public_organizations).aggregate(Sum('count'))['count__sum'] or 0
+    public_views_count = view_counter_model.objects.filter(
+        resource__in=resources_of_public_organizations).aggregate(Sum('count'))['count__sum'] or 0
     size_of_documents_of_public_organizations = sum(
         resource.file.size
         for resource in resources_of_public_organizations.iterator()
@@ -59,16 +52,10 @@ def kibana_statistics():
 
     private_organizations_with_dataset = organizations_with_dataset.filter(institution_type=institution_type_private)
     resources_of_private_organizations = resources.filter(dataset__organization__institution_type=institution_type_private)
-    if is_enabled('S16_new_date_counters.be'):
-        private_downloads_count = download_counter_model.objects.filter(
-            resource__in=resources_of_private_organizations).aggregate(Sum('count'))['count__sum'] or 0
-        private_views_count = view_counter_model.objects.filter(
-            resource__in=resources_of_private_organizations).aggregate(Sum('count'))['count__sum'] or 0
-    else:
-        private_downloads_count = resources_of_private_organizations.aggregate(
-            Sum('downloads_count'))['downloads_count__sum'] or 0
-        private_views_count = resources_of_private_organizations.aggregate(
-            Sum('views_count'))['views_count__sum'] or 0
+    private_downloads_count = download_counter_model.objects.filter(
+        resource__in=resources_of_private_organizations).aggregate(Sum('count'))['count__sum'] or 0
+    private_views_count = view_counter_model.objects.filter(
+        resource__in=resources_of_private_organizations).aggregate(Sum('count'))['count__sum'] or 0
     size_of_documents_of_private_organizations = sum(
         resource.file.size
         for resource in resources_of_private_organizations.iterator()

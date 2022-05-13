@@ -1,21 +1,21 @@
 import json
 
+import more_itertools as mit
 from ckeditor.widgets import CKEditorWidget as BaseCKEditorWidget
 from ckeditor_uploader.fields import RichTextUploadingField as BaseRichTextUploadingField
 from ckeditor_uploader.widgets import CKEditorUploadingWidget as BaseCKEditorUploadingWidget
-from django.forms import fields, CheckboxSelectMultiple, Widget
+from django.conf import settings
+from django.forms import CheckboxSelectMultiple, Widget, fields
 from django.template.loader import get_template
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
-from django.conf import settings
-import more_itertools as mit
 
 
 class CheckboxSelect(CheckboxSelectMultiple):
     allow_multiple_selected = False
 
 
-class CKEditorMixin(object):
+class CKEditorMixin:
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.config['language_list'] = ["pl:Polski", "en:Angielski"]
@@ -42,7 +42,7 @@ class RichTextUploadingFormField(fields.CharField):
         kwargs.update({
             'widget': CKEditorUploadingWidget(config_name=config_name, extra_plugins=extra_plugins,
                                               external_plugin_resources=external_plugin_resources)})
-        super(RichTextUploadingFormField, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
 
 class RichTextUploadingField(BaseRichTextUploadingField):
@@ -113,7 +113,7 @@ class JsonPairInputsWidget(Widget):
             self.key_attrs = kwargs.pop("key_attrs")
         if "val_attrs" in kwargs:
             self.val_attrs = kwargs.pop("val_attrs")
-        super(JsonPairInputsWidget, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
 
 class JsonPairDatasetInputs(JsonPairInputsWidget):

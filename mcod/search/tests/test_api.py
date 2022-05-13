@@ -1,6 +1,5 @@
 from pytest_bdd import scenarios
 
-
 scenarios(
     'features/search.feature',
     'features/sparql.feature',

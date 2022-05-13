@@ -5,8 +5,9 @@ from django.db import connection
 from django.shortcuts import redirect
 from django.utils.deprecation import MiddlewareMixin
 from django.utils.translation import gettext_lazy as _
-from mcod.lib.jwt import get_auth_token
+
 from mcod import settings
+from mcod.lib.jwt import get_auth_token
 
 
 class PostgresConfMiddleware(MiddlewareMixin):
@@ -15,7 +16,7 @@ class PostgresConfMiddleware(MiddlewareMixin):
             connection.cursor().execute(f'SET myapp.userid = "{request.user.id}"')
 
 
-class APIAuthTokenMiddleware(object):
+class APIAuthTokenMiddleware:
 
     def __init__(self, get_response):
         self.get_response = get_response

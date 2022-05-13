@@ -1,5 +1,5 @@
 from mcod.core.api import fields
-from mcod.core.api.jsonapi.serializers import TopLevel, ObjectAttrs
+from mcod.core.api.jsonapi.serializers import ObjectAttrs, TopLevel
 from mcod.lib.serializers import TranslatedStr
 
 

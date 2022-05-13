@@ -5,7 +5,6 @@ from pytest_bdd import scenarios
 
 from mcod.organizations.models import Organization
 
-
 scenarios(
     'features/organization_details_admin.feature',
     'features/organizations_list_admin.feature',

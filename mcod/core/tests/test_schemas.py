@@ -1,12 +1,12 @@
 from elasticsearch_dsl import TermsFacet
 
-from mcod.lib import fields
-from mcod.lib.schemas import List
 from mcod.core.api.search import constants
 from mcod.core.tests.helpers.elasticsearch import QuerysetTestHelper
+from mcod.lib import fields
+from mcod.lib.schemas import List
 
 
-class TestListSchema(object):
+class TestListSchema:
     def test_query(self, es_dsl_queryset):
         class SomeSchema(QuerysetTestHelper, List):
             ids = fields.IdsSearchField()
@@ -225,27 +225,3 @@ class TestListSchema(object):
         }
         qs = schema.prepare_queryset(es_dsl_queryset, context).to_dict()
         assert qs == valid_query
-
-    # def test_suggester(self, es_dsl_queryset):
-    #     class SomeSchema(QuerysetTestHelper, List):
-    #         sugg = fields.SuggesterFilterField(field='title.suggest')
-    #
-    #     schema = SomeSchema()
-    #
-    #     context = {
-    #         'sugg': {
-    #             'title': {'term': 'ble'}
-    #         }
-    #     }
-    #
-    #     valid_query = {
-    #         "suggest": {
-    #             'sugg': {
-    #                 "text": 'ble',
-    #                 "term": {
-    #                     "field": 'title'
-    #                 }
-    #             }
-    #         }
-    #     }
-    #

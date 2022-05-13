@@ -1,5 +1,5 @@
-import os
 import logging
+import os
 import string
 from io import BytesIO
 
@@ -14,7 +14,6 @@ from tifffile import TiffFile
 
 from mcod import settings
 from mcod.lib.jsonstat import validate as jsonstat_validate
-from mcod.unleash import is_enabled
 
 logger = logging.getLogger('mcod')
 
@@ -121,8 +120,6 @@ def has_geotiff_files(files):
 
 
 def is_json_stat(source):
-    if not is_enabled('S35_jsonstat.be'):
-        return False
     if isinstance(source, str):
         source = open(os.path.realpath(source))
     elif isinstance(source, bytes):

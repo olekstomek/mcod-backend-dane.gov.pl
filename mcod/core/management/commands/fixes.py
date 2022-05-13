@@ -1,6 +1,6 @@
+import csv
 import json
 import os
-import csv
 from pathlib import Path
 
 from django.core.management.base import BaseCommand, CommandError
@@ -20,8 +20,8 @@ from mcod.reports.models import Report
 from mcod.resources.models import Resource
 from mcod.resources.tasks import (
     process_resource_file_task,
-    update_resource_validation_results_task,
     update_resource_has_table_has_map_task,
+    update_resource_validation_results_task,
 )
 
 task_list = ['file_tasks', 'data_tasks', 'link_tasks']
@@ -459,8 +459,12 @@ class Command(BaseCommand):
         self.verified_for_draft_datasets()
 
     def fix_followings(self):
-        from mcod.users.models import UserFollowingApplication, UserFollowingArticle, UserFollowingDataset
-        from mcod.watchers.models import Subscription, ModelWatcher
+        from mcod.users.models import (
+            UserFollowingApplication,
+            UserFollowingArticle,
+            UserFollowingDataset,
+        )
+        from mcod.watchers.models import ModelWatcher, Subscription
         for following in UserFollowingArticle.objects.all():
             watcher, _ = ModelWatcher.objects.get_or_create_from_instance(following.article)
             Subscription.objects.get_or_create(

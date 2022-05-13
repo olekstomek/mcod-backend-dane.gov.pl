@@ -4,11 +4,7 @@ from django.utils.translation import gettext_lazy as _
 
 from mcod.articles.forms import ArticleForm
 from mcod.articles.models import Article, ArticleTrash
-from mcod.lib.admin_mixins import (
-    HistoryMixin,
-    ModelAdmin,
-    TrashMixin,
-)
+from mcod.lib.admin_mixins import HistoryMixin, ModelAdmin, TrashMixin
 
 
 @admin.register(Article)

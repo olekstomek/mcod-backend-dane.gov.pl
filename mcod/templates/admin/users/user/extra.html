@@ -1,5 +1,4 @@
 {% load core_tags %}
-{% is_unleash_enabled "S45_admin_user_checkboxes.be" as S45_admin_user_checkboxes %}
 {% if 'agent_organizations' in adminform.form.fields %}
 <script type="text/javascript">
     function toggle_is_agent_opts() {
@@ -51,12 +50,10 @@
         }
     });
 
-    {% if S45_admin_user_checkboxes %}
     toggle_is_editor_checkbox();
     $('#id_is_superuser,#id_is_academy_admin,#id_is_labs_admin').change(function(){
         toggle_is_editor_checkbox();
     });
-    {% endif %}
 
     $('#id_is_agent').change(function(){
         if($(this).is(":checked")) {

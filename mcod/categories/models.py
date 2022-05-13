@@ -7,15 +7,14 @@ from django.utils.translation import gettext_lazy as _
 from model_utils import FieldTracker
 from modeltrans.fields import TranslationField
 
-from mcod.categories.signals import update_related_datasets, null_in_related_datasets
+from mcod.categories.signals import null_in_related_datasets, update_related_datasets
 from mcod.core import storages
-from mcod.core.api.search import signals as search_signals
 from mcod.core.api.rdf import signals as rdf_signals
+from mcod.core.api.search import signals as search_signals
 from mcod.core.api.search.tasks import null_field_in_related_task
 from mcod.core.db.managers import TrashManager
 from mcod.core.db.models import ExtendedModel, TrashModelBase
 from mcod.core.managers import SoftDeletableManager
-
 
 User = get_user_model()
 

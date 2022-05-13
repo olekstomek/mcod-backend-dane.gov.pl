@@ -1,9 +1,10 @@
 import re
-from django.test import Client
+
 from django.conf import settings
+from django.test import Client
 
 
-class TestCommonAdmin(object):
+class TestCommonAdmin:
     def test_manual_link(self, admin):
         client = Client()
         client.force_login(admin)

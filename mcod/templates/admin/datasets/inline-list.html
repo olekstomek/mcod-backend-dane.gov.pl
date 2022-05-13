@@ -76,7 +76,7 @@
 </fieldset>
   </div>
 </div>
-
+{% block inline_js %}
 <script type="text/javascript">
 //(function($) {
     $(document).ready(function($) {
@@ -141,3 +141,4 @@
     });
 //})(django.jQuery);
 </script>
+{% endblock inline_js %}

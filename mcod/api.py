@@ -1,8 +1,6 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+import json
 import logging
 import os
-import json
 from functools import partial
 
 import django
@@ -20,12 +18,18 @@ from webargs import falconparser
 
 from mcod import settings
 from mcod.core.api import middlewares
+from mcod.core.api.apm import get_client, get_data_from_request
 from mcod.core.api.converters import ExportFormatConverter, RDFFormatConverter
 from mcod.core.api.media import ExportHandler, RDFHandler, SparqlHandler, XMLHandler, ZipHandler
 from mcod.core.api.utils.json_encoders import APIEncoder
-from mcod.core.api.apm import get_client, get_data_from_request
 from mcod.core.utils import get_limiter_key
-from mcod.lib.errors import error_serializer, error_handler, error_404_handler, error_422_handler, error_500_handler
+from mcod.lib.errors import (
+    error_404_handler,
+    error_422_handler,
+    error_500_handler,
+    error_handler,
+    error_serializer,
+)
 
 logger = logging.getLogger("elasticapm.errors.client")
 

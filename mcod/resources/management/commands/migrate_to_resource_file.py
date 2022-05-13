@@ -1,4 +1,5 @@
 import os
+
 from django.db.models import Q
 from django_tqdm import BaseCommand
 
@@ -14,7 +15,7 @@ class Command(BaseCommand):
             openness_score = 2
         elif res_format.lower() == 'csv':
             openness_score = 3
-        elif res_format.lower() in ['jsonld', 'json-ld']:
+        elif res_format.lower() == 'jsonld':
             openness_score = 4
         return openness_score
 

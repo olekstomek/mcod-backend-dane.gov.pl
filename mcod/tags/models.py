@@ -7,11 +7,14 @@ from model_utils import FieldTracker
 from modeltrans.fields import TranslationField
 
 from mcod import settings
-from mcod.core.api.search import signals as search_signals
 from mcod.core.api.rdf import signals as rdf_signals
+from mcod.core.api.search import signals as search_signals
 from mcod.core.db.models import BaseExtendedModel
-from mcod.tags.signals import update_related_datasets, update_related_articles, update_related_applications
-
+from mcod.tags.signals import (
+    update_related_applications,
+    update_related_articles,
+    update_related_datasets,
+)
 
 User = get_user_model()
 

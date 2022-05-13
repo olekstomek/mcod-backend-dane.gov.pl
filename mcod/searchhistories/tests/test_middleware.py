@@ -1,6 +1,6 @@
 import pytest
-from falcon import HTTP_OK, HTTP_201
 from django_redis import get_redis_connection
+from falcon import HTTP_201, HTTP_OK
 
 
 @pytest.mark.redis

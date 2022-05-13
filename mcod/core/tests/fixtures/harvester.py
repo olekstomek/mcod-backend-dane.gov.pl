@@ -5,12 +5,12 @@ from collections import OrderedDict
 
 import pytest
 import pytz
-from rdflib import URIRef, ConjunctiveGraph, Literal, RDF, XSD
 from django.conf import settings
+from rdflib import RDF, XSD, ConjunctiveGraph, Literal, URIRef
 
-from mcod.harvester.utils import get_xml_as_dict
-from mcod.core.api.rdf.profiles.dcat_ap import VOCABULARIES
 import mcod.core.api.rdf.namespaces as ns
+from mcod.core.api.rdf.profiles.dcat_ap import VOCABULARIES
+from mcod.harvester.utils import get_xml_as_dict
 
 
 @pytest.fixture

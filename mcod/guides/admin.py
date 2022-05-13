@@ -3,12 +3,7 @@ from django.utils.translation import gettext_lazy as _, pgettext_lazy
 
 from mcod.guides.forms import GuideForm, GuideItemForm
 from mcod.guides.models import Guide, GuideItem, GuideTrash
-from mcod.lib.admin_mixins import (
-    HistoryMixin,
-    ModelAdmin,
-    SortableStackedInline,
-    TrashMixin,
-)
+from mcod.lib.admin_mixins import HistoryMixin, ModelAdmin, SortableStackedInline, TrashMixin
 
 
 class GuideAdminMixin:

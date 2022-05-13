@@ -46,3 +46,26 @@ Feature: Search suggestions
     And send api request and fetch the response
     Then api's response status code is 200
     And api's response data has length 0
+
+  Scenario: Restored from draft resources regions are visible as suggestion
+    Given dataset with id 998
+    And draft resource with id 111 dataset id 998 and single main region
+    And set status to published on resource with id 111
+    When api request path is /search/suggest/?models=region&q=Warsz
+    And send api request and fetch the response
+    Then api's response status code is 200
+    And api's response data has length 1
+
+  Scenario Outline: Changed to draft resource deletes proper regions from suggestion
+    Given dataset with id 998
+    And resource with id 112 dataset id 998 and wroclaw main region
+    And set status to draft on resource with id 112
+    When api request path is <request_path>
+    And send api request and fetch the response
+    Then api's response status code is 200
+    And api's response data has length <number>
+
+    Examples:
+    | request_path                                            | number |
+    | /1.4/search/suggest/?models=region&q=Polsk&per_model=1  | 1      |
+    | /1.4/search/suggest/?models=region&q=Wroc &per_model=1  | 0      |

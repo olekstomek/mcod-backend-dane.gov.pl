@@ -1,5 +1,6 @@
-import factory
 import datetime
+
+import factory
 
 from mcod.core.registries import factories_registry
 from mcod.counters.models import ResourceDownloadCounter, ResourceViewCounter

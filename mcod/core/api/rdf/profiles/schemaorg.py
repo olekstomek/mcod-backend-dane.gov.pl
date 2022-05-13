@@ -5,8 +5,7 @@ from rdflib import RDF, Literal, URIRef
 
 import mcod.core.api.rdf.namespaces as ns
 from mcod import settings
-
-from mcod.core.api.rdf.profiles.common import RDFClass, RDFNestedField, CATALOG_URL
+from mcod.core.api.rdf.profiles.common import CATALOG_URL, RDFClass, RDFNestedField
 from mcod.lib.rdf.rdf_field import RDFField
 
 

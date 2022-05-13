@@ -1,6 +1,6 @@
 import logging
-import magic
 
+import magic
 from bs4 import BeautifulSoup
 from constance import config
 from django.contrib.auth.hashers import get_hasher
@@ -8,14 +8,17 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.template.loader import render_to_string
 from django.utils.timezone import now
-from django.utils.translation import gettext_lazy as _, get_language, override
+from django.utils.translation import get_language, gettext_lazy as _, override
 
 from mcod import settings
 from mcod.core import storages
 from mcod.core.db.models import TimeStampedModel
-from mcod.newsletter.tasks import remove_inactive_subscription, send_newsletter_mail, send_subscription_confirm_mail
+from mcod.newsletter.tasks import (
+    remove_inactive_subscription,
+    send_newsletter_mail,
+    send_subscription_confirm_mail,
+)
 from mcod.newsletter.utils import make_activation_code
-
 
 logger = logging.getLogger('mcod')
 
@@ -262,7 +265,6 @@ class Newsletter(TimeStampedModel):
             html_template = f.read()
             required_links = [str(x) for x in self._get_required_links(html_template)]
             for obj in Subscription.objects.filter(
-                    # lang=self.lang,
                     is_active=True):
                 html_message = str(html_template)
                 for link in required_links:

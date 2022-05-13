@@ -1,10 +1,10 @@
 from datetime import datetime
+
 from dateutil.relativedelta import relativedelta
-
 from django.apps import apps
-from django.db.models import Count, Prefetch, Q, Max
-from mcod.core.managers import SoftDeletableManager, SoftDeletableQuerySet
+from django.db.models import Count, Max, Prefetch, Q
 
+from mcod.core.managers import SoftDeletableManager, SoftDeletableQuerySet
 from mcod.datasets.utils import _batch_qs
 
 
@@ -161,3 +161,7 @@ class DatasetManager(SoftDeletableManager):
 
     def datasets_to_notify(self):
         return super().get_queryset().datasets_to_notify()
+
+
+class SupplementManager(SoftDeletableManager):
+    pass

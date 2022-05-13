@@ -1,12 +1,16 @@
+from mcod.core.api.rdf.registry import registry
+from mcod.core.api.rdf.tasks import (
+    create_graph_task,
+    create_graph_with_related_update_task,
+    delete_graph_task,
+    delete_graph_with_related_update_task,
+    delete_sub_graphs,
+    update_graph_task,
+    update_graph_with_related_task,
+    update_related_graph_task,
+)
 from mcod.core.mixins.signals import SignalLoggerMixin
 from mcod.core.signals import ExtendedSignal
-from mcod.core.api.rdf.tasks import (
-    update_graph_task, update_graph_with_related_task, update_related_graph_task,
-    delete_graph_with_related_update_task, delete_sub_graphs, create_graph_task,
-    create_graph_with_related_update_task, delete_graph_task
-)
-from mcod.core.api.rdf.registry import registry
-
 
 create_graph = ExtendedSignal()
 create_graph_with_related_update = ExtendedSignal()

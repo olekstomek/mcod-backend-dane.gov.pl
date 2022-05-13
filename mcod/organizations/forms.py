@@ -1,12 +1,12 @@
 from django import forms
-from mcod.lib.widgets import CKEditorWidget
 from django.contrib.admin.widgets import FilteredSelectMultiple
 from django.utils.translation import gettext_lazy as _
-
-from mcod.lib.forms.fields import PhoneNumberField, InternalPhoneNumberField
-from mcod.organizations.models import Organization
-from mcod.core.db.models import STATUS_CHOICES
 from localflavor.pl.forms import PLPostalCodeField, PLREGONField
+
+from mcod.core.db.models import STATUS_CHOICES
+from mcod.lib.forms.fields import InternalPhoneNumberField, PhoneNumberField
+from mcod.lib.widgets import CKEditorWidget
+from mcod.organizations.models import Organization
 from mcod.users.models import User
 
 
@@ -64,7 +64,7 @@ class OrganizationForm(forms.ModelForm):
     email = forms.EmailField()
 
     def __init__(self, *args, **kwargs):
-        super(OrganizationForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         if 'abbreviation' in self.fields:
             self.fields['abbreviation'].required = False
         if 'epuap' in self.fields:
@@ -85,7 +85,7 @@ class OrganizationForm(forms.ModelForm):
         return self.cleaned_data.get('tel_internal')
 
     def save(self, commit=True):
-        super(OrganizationForm, self).save(commit=False)
+        super().save(commit=False)
         if commit:
             self.instance.save()
         if self.instance.pk:

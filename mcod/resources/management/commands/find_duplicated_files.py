@@ -1,7 +1,7 @@
 import hashlib
 import os
-from itertools import chain
 from collections import defaultdict
+from itertools import chain
 from string import punctuation
 
 from django.conf import settings

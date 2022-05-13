@@ -1,5 +1,11 @@
 from mcod.core.api import fields
-from mcod.core.api.jsonapi.serializers import DataRelationship, ObjectAttrs, Relationship, Relationships, TopLevel
+from mcod.core.api.jsonapi.serializers import (
+    DataRelationship,
+    ObjectAttrs,
+    Relationship,
+    Relationships,
+    TopLevel,
+)
 from mcod.lib.serializers import TranslatedStr
 
 
@@ -12,7 +18,6 @@ class GuideApiRelationships(Relationships):
         show_data=True,
         required=True,
         default=[],
-        # url_template='{object_url}/guides',
     )
 
 

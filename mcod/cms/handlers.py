@@ -1,9 +1,12 @@
-from wagtail.core.rich_text import LinkHandler
 from django.utils.html import escape
-from wagtail.admin.rich_text.converters.html_to_contentstate import ExternalLinkElementHandler, PageLinkElementHandler
-from wagtail.core.models import Page
-from wagtail.core.rich_text.pages import PageLinkHandler
 from draftjs_exporter.dom import DOM
+from wagtail.admin.rich_text.converters.html_to_contentstate import (
+    ExternalLinkElementHandler,
+    PageLinkElementHandler,
+)
+from wagtail.core.models import Page
+from wagtail.core.rich_text import LinkHandler
+from wagtail.core.rich_text.pages import PageLinkHandler
 
 
 class TitledLinkHandler(LinkHandler):

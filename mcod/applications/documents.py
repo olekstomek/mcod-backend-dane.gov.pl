@@ -6,13 +6,13 @@ from mcod import settings as mcs
 from mcod.datasets.documents import datasets_field
 from mcod.lib.search.fields import TranslatedTextField
 from mcod.search.documents import ExtendedDocument
+from mcod.unleash import is_enabled
 
 Application = apps.get_model('applications', 'Application')
 Dataset = apps.get_model('datasets', 'Dataset')
 Tag = apps.get_model('tags', 'Tag')
 
 
-@registry.register_document
 class ApplicationDocument(ExtendedDocument):
     image_alt = TranslatedTextField('image_alt')
     has_image_thumb = fields.BooleanField()
@@ -39,3 +39,7 @@ class ApplicationDocument(ExtendedDocument):
 
     class Django:
         model = Application
+
+
+if not is_enabled('S49_delete_application_app.be'):
+    registry.register_document(ApplicationDocument)

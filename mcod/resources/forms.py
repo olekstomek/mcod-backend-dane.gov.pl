@@ -1,17 +1,16 @@
-import magic
 import os
 
+import magic
 from dateutil.utils import today
 from django import forms
 from django.contrib.admin.widgets import AdminDateWidget, FilteredSelectMultiple
+from django.contrib.postgres.forms.jsonb import JSONField
 from django.core.exceptions import ValidationError
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
-from django.contrib.postgres.forms.jsonb import JSONField
 
 from mcod import settings
-from mcod.regions.fields import RegionsMultipleChoiceField
 from mcod.lib.field_validators import ContainsLetterValidator
 from mcod.lib.widgets import (
     CheckboxSelect,
@@ -20,13 +19,10 @@ from mcod.lib.widgets import (
     ResourceDataSchemaWidget,
     ResourceMapsAndPlotsWidget,
 )
-from mcod.resources.models import Resource, supported_formats_choices, ResourceFile, Supplement
+from mcod.regions.fields import RegionsMultipleChoiceField
+from mcod.resources.models import Resource, ResourceFile, Supplement, SUPPORTED_FILE_EXTENSIONS
 from mcod.special_signs.models import SpecialSign
 from mcod.unleash import is_enabled
-
-
-SUPPORTED_FILE_EXTENSIONS = [f'.{x[0]}' for x in supported_formats_choices()]
-SUPPORTED_FILE_EXTENSIONS.extend([f'.{x}' for x in settings.ARCHIVE_EXTENSIONS])
 
 
 class ResourceSourceSwitcher(forms.widgets.HiddenInput):
@@ -177,28 +173,26 @@ class ResourceForm(forms.ModelForm):
     )
     if is_enabled('S37_resources_admin_region_data.be'):
         regions = RegionsMultipleChoiceField(required=False, label=_('Regions'))
-    if is_enabled('S43_dynamic_data.be'):
-        has_dynamic_data = forms.ChoiceField(
-            required=True,
-            label=_('dynamic data').capitalize(),
-            choices=[(True, _('Yes')), (False, _('No'))],
-            help_text=(
-                'Wskazanie TAK oznacza, że zasób jest traktowany jako dane dynamiczne.<br><br>Jeżeli chcesz się '
-                'więcej dowiedzieć na temat danych dynamicznych <a href="%(url)s" target="_blank">przejdź do strony'
-                '</a>') % {'url': f'{settings.BASE_URL}{settings.DYNAMIC_DATA_MANUAL_URL}'},
-            widget=CheckboxSelect(attrs={'class': 'inline'}),
-        )
-    if is_enabled('S41_resource_has_high_value_data.be'):
-        has_high_value_data = forms.ChoiceField(
-            required=True,
-            label=_('has high value data').capitalize(),
-            choices=[(True, _('Yes')), (False, _('No'))],
-            help_text=(
-                'Wskazanie TAK oznacza, że zasób jest traktowany jako dane o wysokiej wartości.<br><br>Jeżeli chcesz '
-                'się więcej dowiedzieć na temat danych o wysokiej wartości <a href="%(url)s" target="_blank">przejdź '
-                'do strony</a>') % {'url': f'{settings.BASE_URL}{settings.HIGH_VALUE_DATA_MANUAL_URL}'},
-            widget=CheckboxSelect(attrs={'class': 'inline'}),
-        )
+    has_dynamic_data = forms.ChoiceField(
+        required=True,
+        label=_('dynamic data').capitalize(),
+        choices=[(True, _('Yes')), (False, _('No'))],
+        help_text=(
+            'Wskazanie TAK oznacza, że zasób jest traktowany jako dane dynamiczne.<br><br>Jeżeli chcesz się '
+            'więcej dowiedzieć na temat danych dynamicznych <a href="%(url)s" target="_blank">przejdź do strony'
+            '</a>') % {'url': f'{settings.BASE_URL}{settings.DYNAMIC_DATA_MANUAL_URL}'},
+        widget=CheckboxSelect(attrs={'class': 'inline'}),
+    )
+    has_high_value_data = forms.ChoiceField(
+        required=True,
+        label=_('has high value data').capitalize(),
+        choices=[(True, _('Yes')), (False, _('No'))],
+        help_text=(
+            'Wskazanie TAK oznacza, że zasób jest traktowany jako dane o wysokiej wartości.<br><br>Jeżeli chcesz '
+            'się więcej dowiedzieć na temat danych o wysokiej wartości <a href="%(url)s" target="_blank">przejdź '
+            'do strony</a>') % {'url': f'{settings.BASE_URL}{settings.HIGH_VALUE_DATA_MANUAL_URL}'},
+        widget=CheckboxSelect(attrs={'class': 'inline'}),
+    )
     if is_enabled('S47_research_data.be'):
         has_research_data = forms.ChoiceField(
             required=True,
@@ -246,7 +240,7 @@ class ChangeResourceForm(ResourceForm):
                 'maps_and_plots': kwargs['instance'].tabular_data_schema,
             }
 
-        super(ChangeResourceForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         if hasattr(self, 'instance'):
             self.fields['tabular_data_schema'].widget.instance = self.instance
             self.fields['data_rules'].widget.instance = self.instance
@@ -257,25 +251,17 @@ class ChangeResourceForm(ResourceForm):
     class Meta:
         model = Resource
         exclude = ["old_resource_type", ]
-        if is_enabled('S40_new_file_model.be'):
-            labels = {
-                'created': _("Availability date"),
-                'modified': _("Modification date"),
-                'verified': _("Update date"),
-                'is_chart_creation_blocked': _('Do not allow user charts to be created'),
-                'main_file': _('File'),
-                'csv_converted_file': _("File as CSV"),
-                'jsonld_converted_file': _("File as JSON-LD"),
-                'main_file_info': _('File info'),
-                'main_file_encoding': _('File encoding')
-            }
-        else:
-            labels = {
-                'created': _("Availability date"),
-                'modified': _("Modification date"),
-                'verified': _("Update date"),
-                'is_chart_creation_blocked': _('Do not allow user charts to be created')
-            }
+        labels = {
+            'created': _("Availability date"),
+            'modified': _("Modification date"),
+            'verified': _("Update date"),
+            'is_chart_creation_blocked': _('Do not allow user charts to be created'),
+            'main_file': _('File'),
+            'csv_converted_file': _("File as CSV"),
+            'jsonld_converted_file': _("File as JSON-LD"),
+            'main_file_info': _('File info'),
+            'main_file_encoding': _('File encoding')
+        }
 
 
 class LinkOrFileUploadForm(forms.ModelForm):
@@ -307,16 +293,14 @@ class LinkOrFileUploadForm(forms.ModelForm):
 class AddResourceForm(ResourceForm, LinkOrFileUploadForm):
     data_date = forms.DateField(initial=today, widget=AdminDateWidget, label=_("Data date"))
     from_resource = forms.ModelChoiceField(queryset=Resource.objects.all(), widget=forms.HiddenInput(), required=False)
-    if is_enabled('S37_validate_resource_link_scheme.be'):
-        link = forms.URLField(
-            widget=ResourceLinkWidget(attrs={'style': 'width: 99%', 'placeholder': 'https://'}))
+    link = forms.URLField(widget=ResourceLinkWidget(attrs={'style': 'width: 99%', 'placeholder': 'https://'}))
 
-    if is_enabled('S37_resources_admin_region_data.be') and is_enabled('S45_forms_unification.be'):
+    if is_enabled('S37_resources_admin_region_data.be'):
         regions_ = RegionsMultipleChoiceField(required=False, label=_('Regions'))
 
     def clean_link(self):
         link = super().clean_link()
-        if link and not link.startswith('https:') and is_enabled('S37_validate_resource_link_scheme.be'):
+        if link and not link.startswith('https:'):
             self.add_error('link', _('Required scheme is https://'))
         return link
 
@@ -378,7 +362,7 @@ class ResourceInlineFormset(forms.models.BaseInlineFormSet):
         # https://code.djangoproject.com/ticket/22852
         # It allows saving regions which are ManyToMany field with custom through model in InlineModelAdmin
         regions_data = form.cleaned_data.get('regions_')
-        if is_enabled('S45_forms_unification.be') and regions_data and instance.id:
+        if regions_data and instance.id:
             for f in instance._meta.many_to_many:
                 if f.name == 'regions':
                     f.save_form_data(instance, regions_data)
@@ -407,7 +391,7 @@ class SupplementForm(forms.ModelForm):
         if file:
             file_error = _('The wrong document format was selected!')
             mime = magic.from_buffer(file.read(2048), mime=True)
-            if mime not in settings.ALLOWED_RESOURCE_SUPPLEMENT_MIMETYPES:
+            if mime not in settings.ALLOWED_SUPPLEMENT_MIMETYPES:
                 self.add_error('file', file_error)
             has_txt_extension = file.name.lower().endswith('.txt')
             if mime == 'text/plain' and not has_txt_extension:

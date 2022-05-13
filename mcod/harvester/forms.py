@@ -1,12 +1,11 @@
 import logging
-from mcod.lib.widgets import CKEditorWidget
-from django import forms
 
+from django import forms
 from django.contrib.admin.widgets import AdminURLFieldWidget
 from django.utils.translation import gettext_lazy as _
 
 from mcod.harvester.models import DataSource, DataSourceImport
-
+from mcod.lib.widgets import CKEditorWidget
 
 logger = logging.getLogger('mcod')
 

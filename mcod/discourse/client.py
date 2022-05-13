@@ -1,15 +1,17 @@
 import os
-import magic
 import time
+
+import magic
 import requests
 from pydiscourse import DiscourseClient as BaseDiscourseClient
-from pydiscourse.client import log, POST
+from pydiscourse.client import POST, log
 from pydiscourse.exceptions import (
-    DiscourseError,
-    DiscourseServerError,
     DiscourseClientError,
+    DiscourseError,
     DiscourseRateLimitedError,
+    DiscourseServerError,
 )
+
 from mcod import settings
 
 

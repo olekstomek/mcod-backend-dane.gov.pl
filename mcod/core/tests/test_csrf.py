@@ -10,32 +10,12 @@ from pytest_bdd import scenario
 
 from mcod import settings
 from mcod.core.api.middlewares import CsrfMiddleware
-from mcod.core.csrf import _sanitize_token, generate_csrf_token, get_new_csrf_string, unsalt_cipher_token
-
-DEFAULT_SESSION_SECRET = "Default0secretN6KnTyVlxyy9RudhRy"
-GOOD_STATUS = falcon.HTTP_200
-GOOD_BODY = json.dumps({
-    "data": [
-        {
-            "type": "message",
-            "id": 1,
-            "attributes": {
-                "title": "Hello, World!"
-            }
-        },
-    ]
-})
-BAD_STATUS = falcon.HTTP_403
-BAD_BODY = json.dumps({
-    "errors": [
-        {
-            "title": "CSRF error",
-            "detail": _("CSRF token missing or incorrect."),
-            "status": "Forbidden",
-            "code": falcon.HTTP_403,
-        },
-    ],
-})
+from mcod.core.csrf import (
+    _sanitize_token,
+    generate_csrf_token,
+    get_new_csrf_string,
+    unsalt_cipher_token,
+)
 
 
 @scenario('features/csrf.feature',
@@ -118,6 +98,31 @@ def test_generates_different_but_equivalent_tokens():
     ]
 )
 def test_csrf_middleware(cookie_value, header_value, should_return_error):
+    default_session_secret = "Default0secretN6KnTyVlxyy9RudhRy"
+    good_status = falcon.HTTP_200
+    good_body = json.dumps({
+        "data": [
+            {
+                "type": "message",
+                "id": 1,
+                "attributes": {
+                    "title": "Hello, World!"
+                }
+            },
+        ]
+    })
+    bad_status = falcon.HTTP_403
+    bad_body = json.dumps({
+        "errors": [
+            {
+                "title": "CSRF error",
+                "detail": _("CSRF token missing or incorrect."),
+                "status": "Forbidden",
+                "code": falcon.HTTP_403,
+            },
+        ],
+    })
+
     req, resp, resource, params = Mock(), Mock(), Mock(), Mock()
     req.cookies = {
         settings.API_CSRF_COOKIE_NAME: cookie_value,
@@ -129,20 +134,20 @@ def test_csrf_middleware(cookie_value, header_value, should_return_error):
     resp.cookies = {}
     resp.headers = {}
     resp.complete = False
-    resp.status = GOOD_STATUS
-    resp.text = GOOD_BODY
+    resp.status = good_status
+    resp.text = good_body
     resource.csrf_exempt = False
 
     middleware = CsrfMiddleware()
-    middleware.default_secret = DEFAULT_SESSION_SECRET
+    middleware.default_secret = default_session_secret
     middleware.process_resource(req, resp, resource, params)
     if should_return_error:
-        assert resp.status == BAD_STATUS, "response status should be %s, is %s" % (BAD_STATUS, resp.status)
-        assert resp.text == BAD_BODY, "response body should be a proper error message"
+        assert resp.status == bad_status, "response status should be %s, is %s" % (bad_status, resp.status)
+        assert resp.text == bad_body, "response body should be a proper error message"
         assert resp.complete, "response should be complete in case of error"
     else:
-        assert resp.status == GOOD_STATUS
-        assert resp.text == GOOD_BODY
+        assert resp.status == good_status
+        assert resp.text == good_body
         assert not resp.complete
 
     middleware.process_response(req, resp, None, None)
@@ -169,15 +174,3 @@ def test_csrf_middleware(cookie_value, header_value, should_return_error):
         assert not cookie["httponly"]
 
     assert cookie_domains == set(settings.API_CSRF_COOKIE_DOMAINS)
-
-
-# @scenario("features/dataset_api_csrf.feature",
-#           "Test posting dataset comment endpoint if CSRF is not valid")
-# def test_dataset_post_invalid_token():
-#     pass
-
-
-# @scenario("features/dataset_api_csrf.feature",
-#           "Test posting dataset comment endpoint if CSRF is valid")
-# def test_dataset_post_valid_token():
-#     pass

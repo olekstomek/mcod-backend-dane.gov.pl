@@ -1,8 +1,9 @@
 import pytest
 from namedlist import namedlist
+
+from mcod.lib.helpers import change_namedlist
 from mcod.organizations.forms import OrganizationForm
 from mcod.organizations.models import Organization
-from mcod.lib.helpers import change_namedlist
 
 fields = [
     'slug',

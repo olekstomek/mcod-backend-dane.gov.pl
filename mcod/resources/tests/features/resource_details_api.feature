@@ -104,3 +104,13 @@ Feature: Resource details API
     Then api's response body field data/attributes/regions/0/name is Polska
     And api's response body field data/attributes/regions/0/is_additional is True
     And size of api's response body field data/attributes/regions is 5
+
+  Scenario: Resource supplements details
+    Given resource with id 999
+    And supplement created with params {"id": 999, "resource_id": 999, "file": "example.txt", "name": "supplement 999 of resource 999", "language": "pl"}
+    When api request path is /1.4/resources/999/
+    And send api request and fetch the response
+    Then api's response body has field data/attributes/supplements
+    And api's response body field data/attributes/supplements/[0]/name is supplement 999 of resource 999
+    And api's response body field data/attributes/supplements/[0]/language is pl
+    And api's response body has field data/attributes/supplements/[0]/file_url

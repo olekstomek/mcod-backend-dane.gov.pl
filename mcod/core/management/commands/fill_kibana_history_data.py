@@ -1,10 +1,10 @@
 import json
 import os
 from collections import OrderedDict, defaultdict
-from datetime import datetime, date
+from datetime import date, datetime
 
 import requests
-from dateutil import rrule, relativedelta
+from dateutil import relativedelta, rrule
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 from django.db.models import Sum

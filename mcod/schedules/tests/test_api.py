@@ -1,6 +1,5 @@
 from pytest_bdd import scenarios
 
-
 scenarios(
     'features/extra.feature',
     'features/schedule_agents_api.feature',

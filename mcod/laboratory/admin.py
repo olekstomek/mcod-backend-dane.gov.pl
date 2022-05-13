@@ -3,12 +3,9 @@ from django import forms
 from django.contrib import admin
 from django.forms.models import BaseInlineFormSet
 from django.utils.translation import gettext_lazy as _
-from mcod.laboratory.models import LabEvent, LabReport, LabEventTrash
-from mcod.lib.admin_mixins import (
-    HistoryMixin,
-    TrashMixin,
-    ModelAdmin,
-)
+
+from mcod.laboratory.models import LabEvent, LabEventTrash, LabReport
+from mcod.lib.admin_mixins import HistoryMixin, ModelAdmin, TrashMixin
 from mcod.resources.forms import LinkOrFileUploadForm
 
 
@@ -27,7 +24,6 @@ class ReportsFormset(BaseInlineFormSet):
 
 class AddReportStacked(nested_admin.NestedStackedInline):
     template = 'admin/laboratory/report-inline-new.html'
-    show_change_link = False
     model = LabReport
     form = AddReportForm
     formset = ReportsFormset

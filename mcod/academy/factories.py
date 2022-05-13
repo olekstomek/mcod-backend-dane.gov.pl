@@ -1,5 +1,6 @@
-import factory
 import uuid
+
+import factory
 from django.utils import timezone
 
 from mcod.academy import models
@@ -30,7 +31,6 @@ class CourseFactory(factory.django.DjangoModelFactory):
 
     class Meta:
         model = models.Course
-        # django_get_or_create = ('title',)
 
 
 class CourseModuleFactory(factory.django.DjangoModelFactory):
@@ -41,7 +41,6 @@ class CourseModuleFactory(factory.django.DjangoModelFactory):
 
     class Meta:
         model = models.CourseModule
-        # django_get_or_create = ('name',)
 
 
 factories_registry.register('course', CourseFactory)

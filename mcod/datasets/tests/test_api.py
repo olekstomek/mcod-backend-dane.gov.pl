@@ -1,12 +1,11 @@
 import pytest
-from pytest_bdd import scenarios
-from falcon import HTTP_OK
 from django.utils.translation import gettext_lazy as _
+from falcon import HTTP_OK
+from pytest_bdd import scenarios
 
 from mcod.datasets.models import Dataset
 from mcod.datasets.serializers import _UPDATE_FREQUENCY
 from mcod.unleash import is_enabled
-
 
 scenarios(
     'features/dataset_comment.feature',
@@ -15,13 +14,15 @@ scenarios(
     'features/dataset_resources_download_csv_api.feature',
     'features/dataset_resources_download_xml_api.feature',
     'features/dataset_licenses.feature',
+    'features/dataset_showcases_list_api.feature',
+    'features/dataset_bulk_download_files_api.feature',
 )
-if is_enabled('S42_dataset_showcases.be'):
-    scenarios('features/dataset_showcases_list_api.feature')
-
 scenarios('features/datasets_list_api.feature', example_converters=dict(field_value=int))
-if is_enabled('S41_resource_bulk_download.be'):
-    scenarios('features/dataset_bulk_download_files_api.feature')
+
+if is_enabled('S49_cc_by_40_conditions_unification.be'):
+    scenarios('features/dataset_unified_conditions.feature')
+else:
+    scenarios('features/dataset_conditions.feature')
 
 
 @pytest.mark.elasticsearch

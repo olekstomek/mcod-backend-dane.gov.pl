@@ -1,10 +1,12 @@
-# -*- coding: utf-8 -*-
 from datetime import datetime
+
 import falcon
+
 from mcod import settings
+from mcod.core.api.handlers import RetrieveOneHdlr
 
 
-class BaseView(object):
+class BaseView:
 
     csrf_exempt = False  # change to True to disable CSRF validation for concrete view.
 
@@ -73,3 +75,36 @@ class RDFView(BaseView):
             return 'application/ld+json'
 
         return resp.content_type
+
+
+class XMLRDFView(RDFView):
+    def on_get(self, request, response, *args, **kwargs):
+        self.handle(request, response, self.GET, *args, **kwargs)
+
+    def set_content_type(self, resp, **kwargs):
+        return super().set_content_type(resp, rdf_format='xml', **kwargs)
+
+
+class VocabRDFView(XMLRDFView):
+    class GET(RetrieveOneHdlr):
+        def _get_data(self, cleaned, *args, **kwargs):
+            return self.vocab_class()
+
+        def clean(self, *args, **kwargs):
+            return None
+
+
+class VocabEntryRDFView(VocabRDFView):
+    def on_get(self, request, response, *args, **kwargs):
+        entry_name = kwargs.get('entry_name')
+
+        if entry_name in self.vocab_class().entries:
+            self.handle(request, response, self.GET, *args, **kwargs)
+        else:
+            response.text = f'''"{self.vocab_name} doesn't have '{entry_name}' entry."'''
+            response.status = falcon.HTTP_404
+
+    class GET(VocabRDFView.GET):
+        def _get_data(self, cleaned, *args, **kwargs):
+            entry_name = kwargs.get('entry_name')
+            return self.vocab_class().entries[entry_name]

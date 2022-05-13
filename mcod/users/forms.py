@@ -7,9 +7,9 @@ from django.utils.translation import gettext_lazy as _
 from suit.widgets import SuitDateWidget, SuitTimeWidget
 
 from mcod import settings
+from mcod.lib.forms.fields import InternalPhoneNumberField, PhoneNumberField
 from mcod.lib.widgets import CKEditorWidget
 from mcod.users.models import Meeting, User
-from mcod.lib.forms.fields import PhoneNumberField, InternalPhoneNumberField
 
 
 class FilteredSelectMultipleCustom(FilteredSelectMultiple):
@@ -143,7 +143,7 @@ class UserForm(forms.ModelForm):
         return data
 
     def save(self, commit=True):
-        super(UserForm, self).save(commit=False)
+        super().save(commit=False)
         if commit:
             self.instance.save()
         if self.instance.pk and 'organizations' in self.cleaned_data:
@@ -182,7 +182,7 @@ class UserCreationForm(UserForm):
         return password2
 
     def save(self, commit=True):
-        super(UserCreationForm, self).save(commit=False)
+        super().save(commit=False)
         self.instance.set_password(self.cleaned_data["password1"])
         if commit:
             self.instance.save()
@@ -199,7 +199,7 @@ class UserChangeForm(UserForm):
                                                         "using <a href=\"../password/\">this form</a>."))
 
     def __init__(self, *args, **kwargs):
-        super(UserChangeForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         f = self.fields.get('user_permissions', None)
         if f is not None:
             f.queryset = f.queryset.select_related('content_type')

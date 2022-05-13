@@ -1,7 +1,8 @@
-from celery import shared_task
+from urllib.parse import parse_qs, urlparse
 
-from urllib.parse import urlparse, parse_qs
+from celery import shared_task
 from django_redis import get_redis_connection
+
 from mcod.searchhistories.models import SearchHistory
 from mcod.users.models import User
 

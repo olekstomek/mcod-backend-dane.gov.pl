@@ -174,7 +174,6 @@ services:
     networks:
       backend:
         ipv4_address: 172.18.18.141
-  
 
 networks:
   backend:

@@ -1,4 +1,3 @@
-from mcod.core.api.search import fields as search_fields
 from mcod.core.api.schemas import (
     CommonSchema,
     DateTermSchema,
@@ -6,6 +5,7 @@ from mcod.core.api.schemas import (
     NumberTermSchema,
     StringMatchSchema,
 )
+from mcod.core.api.search import fields as search_fields
 from mcod.unleash import is_enabled
 
 IS_ANONYMOUS = is_enabled('S47_anonymize_history.be')

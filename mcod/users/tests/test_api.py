@@ -1,6 +1,5 @@
 from pytest_bdd import scenarios
 
-
 scenarios(
     'features/account.feature',
     'features/change_password.feature',

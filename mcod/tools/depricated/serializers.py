@@ -1,8 +1,9 @@
-import marshmallow as ma
-import marshmallow_jsonapi as ja
 from functools import reduce
 
-from mcod.lib.serializers import BasicSerializer, ArgsListToDict, SearchMeta, BucketItem
+import marshmallow as ma
+import marshmallow_jsonapi as ja
+
+from mcod.lib.serializers import ArgsListToDict, BasicSerializer, BucketItem, SearchMeta
 
 
 class StatsBucketItem(BucketItem):

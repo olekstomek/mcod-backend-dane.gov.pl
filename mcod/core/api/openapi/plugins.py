@@ -1,12 +1,12 @@
+import copy
+import re
 from collections import OrderedDict
 
-import copy
 import falcon
-import re
 import yaml
 from apispec import BasePlugin
 from apispec.exceptions import APISpecError
-from apispec.utils import trim_docstring, dedent
+from apispec.utils import dedent, trim_docstring
 from django.template import loader
 
 from mcod.core.utils import resolve_schema_cls

@@ -1,4 +1,4 @@
-from marshmallow.schema import SchemaOpts, BaseSchema, SchemaMeta
+from marshmallow.schema import BaseSchema, SchemaMeta, SchemaOpts
 
 from mcod.core.api import fields
 from mcod.core.registries import csv_serializers_registry
@@ -6,7 +6,7 @@ from mcod.core.registries import csv_serializers_registry
 
 class CSVSchemaMeta(SchemaMeta):
     def __new__(mcs, name, bases, attrs):
-        klass = super(CSVSchemaMeta, mcs).__new__(mcs, name, bases, attrs)
+        klass = super().__new__(mcs, name, bases, attrs)
         csv_serializers_registry.register(klass)
         return klass
 

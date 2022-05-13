@@ -1,8 +1,8 @@
 from django.apps import apps
 from django.conf import settings
-from django.db.models import Count, Q, Prefetch, Manager
-from mcod.core.managers import SoftDeletableQuerySet, SoftDeletableManager, RawManager
-from mcod.unleash import is_enabled
+from django.db.models import Count, Manager, Prefetch, Q
+
+from mcod.core.managers import RawManager, SoftDeletableManager, SoftDeletableQuerySet
 
 
 class ChartQuerySet(SoftDeletableQuerySet):
@@ -83,10 +83,7 @@ class SoftDeletableMetadataQuerySet(PrefetchResourceFilesMixin, SoftDeletableQue
         return self.by_formats(formats).filter(**query)
 
     def by_formats(self, formats):
-        if is_enabled('S40_new_file_model.be'):
-            return self.filter(files__isnull=False, format__in=formats).distinct()
-        else:
-            return self.filter(file__isnull=False, format__in=formats).exclude(file='')
+        return self.filter(files__isnull=False, format__in=formats).distinct()
 
     def published(self):
         return self.filter(status='published')
@@ -118,33 +115,29 @@ class ResourceManager(SoftDeletableManager):
     _queryset_class = SoftDeletableMetadataQuerySet
 
     def get_queryset(self):
-        if is_enabled('S40_new_file_model.be'):
-            qs = super(ResourceManager, self).get_queryset().with_prefetched_files()
-        else:
-            qs = super(ResourceManager, self).get_queryset()
-        return qs
+        return super().get_queryset().with_prefetched_files()
 
     def with_metadata(self):
-        return super().get_queryset().with_metadata()
+        return self.get_queryset().with_metadata()
 
     def with_tabular_data(self, **kwargs):
-        return super().get_queryset().with_tabular_data(**kwargs)
+        return self.get_queryset().with_tabular_data(**kwargs)
 
     def with_ext_http_links_only(self):
-        return super().get_queryset().filter(link__startswith='http://').exclude(
+        return self.get_queryset().filter(link__startswith='http://').exclude(
             Q(link__startswith=settings.API_URL) | Q(link__startswith=settings.BASE_URL))
 
     def by_formats(self, formats):
-        return super().get_queryset().by_formats(formats)
+        return self.get_queryset().by_formats(formats)
 
     def published(self):
-        return super().get_queryset().published()
+        return self.get_queryset().published()
 
     def with_files(self):
-        return super().get_queryset().with_files()
+        return self.get_queryset().with_files()
 
     def file_details_list(self, dataset_id):
-        return super().get_queryset().file_details_list(dataset_id)
+        return self.get_queryset().file_details_list(dataset_id)
 
 
 class ResourceRawManager(PrefetchResourceFilesMixin, RawManager):

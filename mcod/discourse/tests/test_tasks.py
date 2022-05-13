@@ -1,4 +1,4 @@
-from mcod.discourse.tasks import user_sync_task, user_logout_task
+from mcod.discourse.tasks import user_logout_task, user_sync_task
 from mcod.discourse.tests.utils import discourse_response_mocker
 
 

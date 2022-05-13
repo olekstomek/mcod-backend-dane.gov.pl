@@ -56,10 +56,8 @@
                   $(this).prop('checked', true);
                 });
 
-                {% is_unleash_enabled "S41_resource_has_high_value_data.be" as S41_resource_has_high_value_data %}
-                {% is_unleash_enabled "S43_dynamic_data.be" as S43_dynamic_data %}
                 {% is_unleash_enabled "S47_research_data.be" as S47_research_data %}
-                {% if add and S41_resource_has_high_value_data %}
+                {% if add %}
                 $(document).on('change', '#id_dataset', function() {
                   var dataset_id = $(this).val();
                   if (dataset_id){
@@ -76,7 +74,6 @@
                                       $('#id_has_high_value_data_1').prop('checked', true);
                                   }
                               }
-                              {% if S43_dynamic_data %}
                               if ('has_dynamic_data' in data) {
                                   if (data.has_dynamic_data == true){
                                       $('#id_has_dynamic_data_0').prop('checked', true);
@@ -86,7 +83,6 @@
                                       $('#id_has_dynamic_data_1').prop('checked', true);
                                   }
                               }
-                              {% endif %}
                               {% if S47_research_data %}
                               if ('has_research_data' in data) {
                                   if (data.has_research_data == true){

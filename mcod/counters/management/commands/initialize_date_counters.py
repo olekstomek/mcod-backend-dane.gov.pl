@@ -3,9 +3,9 @@ import json
 import logging
 import re
 from datetime import datetime
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import ROUND_HALF_UP, Decimal
 
-from dateutil import rrule, relativedelta
+from dateutil import relativedelta, rrule
 from django.conf import settings
 from django_tqdm import BaseCommand
 

@@ -1,12 +1,17 @@
 from django_elasticsearch_dsl.registries import registry
 from django_elasticsearch_dsl.signals import BaseSignalProcessor
 
-from mcod.core.api.search.tasks import delete_document_task, delete_related_documents_task, delete_with_related_task, \
-    update_with_related_task, update_document_task, update_related_task
+from mcod.core.api.search.tasks import (
+    delete_document_task,
+    delete_related_documents_task,
+    delete_with_related_task,
+    update_document_task,
+    update_related_task,
+    update_with_related_task,
+)
 from mcod.core.db.elastic import ProxyDocumentRegistry
 from mcod.core.mixins.signals import SignalLoggerMixin
 from mcod.core.signals import ExtendedSignal
-
 
 update_document = ExtendedSignal()
 update_document_with_related = ExtendedSignal()
@@ -94,9 +99,6 @@ class AsyncSignalProcessor(SignalLoggerMixin, BaseSignalProcessor):
             object_name = instance._meta.concrete_model._meta.object_name
             delete_related_documents_task.s(instance._meta.app_label, object_name, instance.id).apply_async(
                 countdown=1)
-            # delete_related_documents_task.apply_async(
-            #     args=(instance._meta.app_label, object_name, instance.id),
-            #     countdown=2)
 
     def handle_delete(self, sender, instance, **kwargs):
         is_indexable = getattr(instance, 'is_indexable', False)
@@ -104,8 +106,6 @@ class AsyncSignalProcessor(SignalLoggerMixin, BaseSignalProcessor):
             object_name = instance._meta.concrete_model._meta.object_name
             delete_document_task.s(instance._meta.app_label, object_name, instance.id).apply_async(
                 countdown=1)
-            # delete_document_task.apply_async(args=(instance._meta.app_label, object_name, instance.id),
-            #                                  countdown=2)
 
     def handle_m2m_changed(self, sender, instance, action, **kwargs):
         if action in ('post_add', 'post_remove', 'post_clear'):

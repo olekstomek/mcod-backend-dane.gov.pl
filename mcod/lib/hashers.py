@@ -1,11 +1,10 @@
 import base64
 import hashlib
 from collections import OrderedDict
-from django.contrib.auth.hashers import PBKDF2PasswordHasher, mask_hash
 
+from django.contrib.auth.hashers import PBKDF2PasswordHasher, mask_hash
 from django.utils.crypto import get_random_string, pbkdf2
 from django.utils.translation import gettext_noop as _
-
 from passlib.hash import pbkdf2_sha512
 
 

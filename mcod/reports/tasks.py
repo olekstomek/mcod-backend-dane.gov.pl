@@ -6,12 +6,12 @@ import os
 from collections import OrderedDict
 from pathlib import Path
 
-from celery import shared_task, chord
-from celery.signals import task_prerun, task_failure, task_success
+from celery import chord, shared_task
+from celery.signals import task_failure, task_prerun, task_success
 from django.apps import apps
 from django.contrib.auth import get_user_model
 from django.db import connection
-from django.db.models import Count, Q, F
+from django.db.models import Count, F, Q
 from django.utils.timezone import now
 from django.utils.translation import get_language
 from django_celery_results.models import TaskResult
@@ -27,13 +27,12 @@ from mcod.resources.models import Resource
 from mcod.resources.tasks import validate_link
 from mcod.showcases.serializers import ShowcaseProposalCSVSerializer
 from mcod.suggestions.serializers import DatasetSubmissionCSVSerializer
-from mcod.unleash import is_enabled
 
 User = get_user_model()
 logger = logging.getLogger('mcod')
 
 
-@shared_task(name='reports')
+@shared_task(name='reports', ignore_result=False)
 def generate_csv(pks, model_name, user_id, file_name_postfix):
     app, _model = model_name.split('.')
     model = apps.get_model(app, _model)
@@ -70,7 +69,7 @@ def generate_csv(pks, model_name, user_id, file_name_postfix):
     })
 
 
-@shared_task
+@shared_task(ignore_result=False)
 def create_no_resource_dataset_report():
     logger.debug('Running create_no_resource_dataset_report task.')
     app = 'datasets'
@@ -124,12 +123,12 @@ def create_resource_link_validation_report():
     })
 
 
-@shared_task
+@shared_task(ignore_result=False)
 def link_validation_success_callback():
     return create_resource_link_validation_report()
 
 
-@shared_task
+@shared_task(ignore_result=False)
 def link_validation_error_callback():
     return create_resource_link_validation_report()
 
@@ -154,7 +153,7 @@ def append_report_task(sender, task_id, task, signal, **kwargs):
         logger.error(f"reports.task: exception on append_report_task:\n{e}")
 
 
-@shared_task
+@shared_task(ignore_result=False)
 def create_resources_report_task(data, headers, report_name):
     logger.debug(f'Creating resource {report_name} report.')
     app_name = 'resources'
@@ -193,7 +192,7 @@ def generating_monthly_report_success(sender, result, **kwargs):
         logger.error(f"reports.task: exception on generating_monthly_report_success:\n{e}")
 
 
-@shared_task
+@shared_task(ignore_result=False)
 def validate_resources_links(ids=None):
     if ids:
         resources_ids = ids
@@ -245,17 +244,10 @@ def dict_fetch_all(cursor):
     return [OrderedDict(zip(columns, row)) for row in cursor.fetchall()]
 
 
-@app.task
+@app.task(ignore_result=False)
 def create_daily_resources_report():
     str_date = datetime.datetime.now().strftime('%Y_%m_%d_%H%M')
-    if is_enabled('S40_new_file_model.be') and is_enabled('S16_new_date_counters.be'):
-        view_name = 'mv_resource_dataset_organization_new_counters_report_separate_files'
-    elif is_enabled('S16_new_date_counters.be'):
-        view_name = 'mv_resource_dataset_organization_new_counters_report'
-    elif is_enabled('S40_new_file_model.be'):
-        view_name = 'mv_resource_dataset_organization_report_separate_files'
-    else:
-        view_name = 'mv_resource_dataset_organization_report'
+    view_name = 'mv_resource_dataset_organization_new_counters_report_separate_files'
     with connection.cursor() as cursor:
         cursor.execute(f"""REFRESH MATERIALIZED VIEW {view_name}""")
         cursor.execute(f"""

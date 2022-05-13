@@ -2,7 +2,6 @@
 <div class="inline-group {{ inline_admin_formset.opts.suit_classes }}" id="{{ inline_admin_formset.formset.prefix }}-group">
 {{ inline_admin_formset.formset.management_form }}
 {{ inline_admin_formset.formset.non_form_errors }}
-{% is_unleash_enabled "S45_forms_unification.be" as S45_forms_unification %}
 {% for inline_admin_form in inline_admin_formset %}<div class="inline-related{% if forloop.last %} empty-form last-related{% endif %}" id="{{ inline_admin_formset.formset.prefix }}-{% if not forloop.last %}{{ forloop.counter0 }}{% else %}empty{% endif %}">
   <h3><b>{{ inline_admin_formset.opts.verbose_name|title }}:</b>&nbsp;<span class="inline_label">{% if inline_admin_form.original %}
     {% if '1.8'|django_version_gte and inline_admin_form.model_admin.show_change_link and inline_admin_form.model_admin.has_registered_model %} <a href="{% url inline_admin_form.model_admin.opts|admin_urlname:'change' inline_admin_form.original.pk|admin_urlquote %}" class="inlinechangelink">{{ inline_admin_form.original }}</a>
@@ -193,7 +192,7 @@
                 updateSelectFilter();
                 updateInlineLabel(row);
                 reinitCheckboxes(row);
-                {% if S45_forms_unification %}reinitFrequencyFields(row);{% endif %}
+                reinitFrequencyFields(row);
                 Suit.after_inline.run("{{ inline_admin_formset.formset.prefix }}", row);
                 $('body').trigger('form-ready', [row]);
             })

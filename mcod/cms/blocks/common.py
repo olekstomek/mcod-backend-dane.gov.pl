@@ -1,15 +1,16 @@
 from django import forms
-from django.db.models import Q
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.db.models import Q
 from django.forms.utils import ErrorList
 from django.utils.functional import cached_property
 from wagtail.core import blocks
 from wagtail.core.blocks.struct_block import StructBlockValidationError
+from wagtail.documents.blocks import DocumentChooserBlock as WagtailDocumentChooserBlock
 from wagtail.embeds.blocks import EmbedBlock
 from wagtail.images.blocks import ImageChooserBlock as WagtailImageChooserBlock
-from wagtail.documents.blocks import DocumentChooserBlock as WagtailDocumentChooserBlock
 from wagtailvideos.blocks import VideoChooserBlock
+
 from mcod.cms.widgets import ColorPickerWidget
 from mcod.unleash import is_enabled
 
@@ -87,7 +88,7 @@ class SvgDocumentChooserBlock(DocumentChooserBlock):
 class ColorPickerBlock(blocks.FieldBlock):
     def __init__(self, required=True, **kwargs):
         self.field = forms.CharField(required=required, max_length=7, widget=ColorPickerWidget)
-        super(ColorPickerBlock, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
 
 class AlignChoiceBlock(blocks.ChoiceBlock):
@@ -126,20 +127,6 @@ class LinkTargetChoiceBlock(blocks.ChoiceBlock):
         ('_blank', 'Nowe okno')
     )
 
-
-# class PageBackgroundBlock(blocks.StructBlock):
-#     image = ImageChooserBlock(label='Obraz w tle', required=False, help_text="""
-#                                                 Zalecany rozmiar: XXX na YYY pikseli.
-#                                                 """)
-#     color = ColorPickerBlock(default='#ffffff', label='Kolor tła', required=False, help_text="""
-#                                                 Kolor tła będzie zawsze pod spodem wszystkich
-#                                                 innych elementów strony (w tym również obrazu tła).
-#                                                 """)
-#     paralax = blocks.BooleanBlock(default=False, required=False, label='Efekt paralaksy',
-#                                   help_text="""
-#                                     Przy włączonym efekcie paralaksy tło przewija się wolniej niż pozostałe
-#                                     elementy strony, co tworzy wrażenie głębi.
-#                                     """)
 
 class HeaderChoiceBlock(blocks.ChoiceBlock):
     choices = (
@@ -195,7 +182,6 @@ class VideoBlock(blocks.StructBlock):
                                                help_text='Wybierz plik wideo załadowany poprzez'
                                                          ' panel administracyjny CMS')
 
-    # caption = blocks.RichTextBlock(required=False)
     def clean(self, value):
         cleaned_data = super().clean(value)
         error = None

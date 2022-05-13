@@ -7,17 +7,14 @@ import falcon
 from django.apps import apps
 from django.utils.translation import gettext_lazy as _
 
-from mcod.core.api.handlers import (
-    CreateOneHdlr,
-    RemoveOneHdlr
-)
-from mcod.core.api.hooks import login_required, login_optional
+from mcod.core.api.handlers import CreateOneHdlr, RemoveOneHdlr
+from mcod.core.api.hooks import login_optional, login_required
 from mcod.core.api.views import JsonAPIView
 from mcod.core.versioning import versioned
 from mcod.suggestions.deserializers import (
+    AcceptedSubmissionCommentApiRequest,
     CreateDatasetSubmissionRequest,
     CreateFeedbackRequest,
-    AcceptedSubmissionCommentApiRequest
 )
 from mcod.suggestions.handlers import (
     AcceptedSubmissionRetrieveOneHdlr,

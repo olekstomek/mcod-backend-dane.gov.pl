@@ -1,9 +1,10 @@
-import factory
 import random
 import uuid
 
-from mcod.laboratory import models
+import factory
+
 from mcod.core.registries import factories_registry
+from mcod.laboratory import models
 from mcod.resources.factories import get_csv_file
 
 

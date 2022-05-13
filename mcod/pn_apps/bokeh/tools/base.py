@@ -1,5 +1,5 @@
-from bokeh.models import HoverTool, WheelZoomTool, PanTool, SaveTool, ResetTool
 from bokeh.core.properties import String
+from bokeh.models import HoverTool, PanTool, ResetTool, SaveTool, WheelZoomTool
 
 
 class LocalizedHoverTool(HoverTool):

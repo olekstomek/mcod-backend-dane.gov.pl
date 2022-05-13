@@ -1,11 +1,11 @@
 from mcod.core.api import fields as core_fields
-from mcod.core.api.jsonapi.deserializers import TopLevel, ObjectAttrs
+from mcod.core.api.jsonapi.deserializers import ObjectAttrs, TopLevel
 from mcod.core.api.schemas import (
     CommonSchema,
+    DateTermSchema,
     ListingSchema,
     NumberTermSchema,
     StringMatchSchema,
-    DateTermSchema
 )
 from mcod.core.api.search import fields as search_fields
 
@@ -127,12 +127,6 @@ class DeleteFeedbackAttrs(ObjectAttrs):
         strict = True
         ordered = True
         object_type = 'feedback'
-
-
-class DeleteFeedbackRequest(TopLevel):
-    class Meta:
-        attrs_schema = DeleteFeedbackAttrs
-        attrs_schema_required = True
 
 
 class AcceptedSubmissionCommentAttrs(ObjectAttrs):

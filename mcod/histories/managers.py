@@ -3,9 +3,9 @@ import time
 from collections import defaultdict
 
 from auditlog.models import LogEntryManager as BaseLogEntryManager
+from django.contrib.contenttypes.models import ContentType
 from django.core.paginator import Paginator
 from django.db.models import Manager
-from django.contrib.contenttypes.models import ContentType
 
 from mcod.unleash import is_enabled
 

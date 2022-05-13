@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import re
 from functools import partial
 from urllib.parse import urlparse
@@ -13,7 +12,7 @@ from django.shortcuts import get_object_or_404
 from django.views import View
 from elasticsearch_dsl import Q
 
-from mcod.core.api.handlers import SearchHdlr, RetrieveOneHdlr, SubscriptionSearchHdlr
+from mcod.core.api.handlers import RetrieveOneHdlr, SearchHdlr, SubscriptionSearchHdlr
 from mcod.core.api.hooks import login_optional
 from mcod.core.api.views import JsonAPIView
 from mcod.core.versioning import versioned

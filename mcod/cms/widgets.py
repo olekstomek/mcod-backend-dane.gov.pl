@@ -7,5 +7,5 @@ class ColorPickerWidget(forms.TextInput):
     def render(self, name, value, attrs=None, renderer=None):
         if value is None:
             value = '#ffffff'
-        rendered = super(ColorPickerWidget, self).render(name, value, attrs, renderer)
+        rendered = super().render(name, value, attrs, renderer)
         return rendered

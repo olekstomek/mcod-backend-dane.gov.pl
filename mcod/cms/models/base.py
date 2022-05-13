@@ -1,19 +1,16 @@
-# -*- coding: utf-8 -*-
 import logging
 from functools import partial
 from urllib.parse import urlencode, urljoin
 
 from django.db import models
 from django.shortcuts import redirect
-from django.utils.translation import activate, get_language
-from django.utils.translation import gettext_lazy as _
 from django.utils.text import slugify
+from django.utils.translation import activate, get_language, gettext_lazy as _
 from fancy_cache.memory import find_urls
 from modeltrans.fields import TranslationField
-from rest_framework.fields import CharField
 from rest_framework.exceptions import MethodNotAllowed
-from wagtail.admin.edit_handlers import (FieldPanel, MultiFieldPanel,
-                                         ObjectList, TabbedInterface)
+from rest_framework.fields import CharField
+from wagtail.admin.edit_handlers import FieldPanel, MultiFieldPanel, ObjectList, TabbedInterface
 from wagtail.api import APIField
 from wagtail.core.models import Page, PageBase, PageLogEntry
 from wagtail.core.utils import WAGTAIL_APPEND_SLASH
@@ -21,9 +18,8 @@ from wagtail.documents.models import AbstractDocument
 from wagtail.images.models import AbstractImage, AbstractRendition
 
 from mcod.cms.fields import CustomTextField
-from mcod.core.api.search import signals as search_signals
+from mcod.core.api.search.signals import remove_document, update_document
 from mcod.core.db.mixins import ApiMixin
-
 
 logger = logging.getLogger('wagtail.core')
 mcod_logger = logging.getLogger('mcod')
@@ -31,7 +27,7 @@ mcod_logger = logging.getLogger('mcod')
 
 class BasePageMeta(PageBase):
     def __init__(self, name, bases, dct):
-        super(BasePageMeta, self).__init__(name, bases, dct)
+        super().__init__(name, bases, dct)
 
     @staticmethod
     def prepare_i18_field(inst, field=None):
@@ -344,9 +340,10 @@ class BasePage(ApiMixin, Page, metaclass=BasePageMeta):
 
     @staticmethod
     def on_post_save(sender, instance, created, raw, using, update_fields, **kwargs):
-        is_indexable = getattr(instance, 'is_indexable', False)
-        if is_indexable and instance.live:
-            search_signals.update_document.send(sender, instance)
+        if getattr(instance, 'is_indexable', False):
+            if instance.live:
+                update_document.send(sender, instance)
+
         if getattr(instance, 'url_path', None):
             urls = [
                 f'*{instance.url_path}',
@@ -364,9 +361,14 @@ class BasePage(ApiMixin, Page, metaclass=BasePageMeta):
 
     @staticmethod
     def on_pre_delete(sender, instance, using, **kwargs):
-        is_indexable = getattr(instance, 'is_indexable', False)
-        if is_indexable:
-            search_signals.remove_document.send(sender, instance)
+        if getattr(instance, 'is_indexable', False):
+            remove_document.send(sender, instance)
+
+    @staticmethod
+    def on_unpublish(sender, **kwargs):
+        instance = kwargs['instance']
+        if getattr(instance, 'is_indexable', False):
+            remove_document.send(sender, instance)
 
     class Meta:
         abstract = True

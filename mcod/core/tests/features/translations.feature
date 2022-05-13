@@ -12,8 +12,8 @@ Feature: Translations in API
 
     Examples:
     |request_path               | lang_code | field                | items_str                                                           |
-    | /1.4/applications/999     | en        | /data/attributes     | {"title": "title_en", "notes": "notes_en", "slug": "slug_en"}       |
-    | /1.4/applications/999     | pl        | /data/attributes     | {"title": "title_pl", "notes": "notes_pl", "slug": "slug_pl"}       |
+    | /1.4/showcases/999        | en        | /data/attributes     | {"title": "title_en", "notes": "notes_en", "slug": "slug_en"}       |
+    | /1.4/showcases/999        | pl        | /data/attributes     | {"title": "title_pl", "notes": "notes_pl", "slug": "slug_pl"}       |
     | /1.4/articles/999         | en        | /data/attributes     | {"title": "title_en", "notes": "notes_en", "slug": "slug_en"}       |
     | /1.4/articles/999         | pl        | /data/attributes     | {"title": "title_pl", "notes": "notes_pl", "slug": "slug_pl"}       |
     | /1.4/datasets/999         | en        | /data/attributes     | {"title": "title_en", "notes": "notes_en", "slug": "slug_en"}       |
@@ -23,8 +23,8 @@ Feature: Translations in API
     | /1.4/resources/999        | en        | /data/attributes     | {"title": "title_en", "description": "description_en"}              |
     | /1.4/resources/999        | pl        | /data/attributes     | {"title": "title_pl", "description": "description_pl"}              |
 
-    | /1.4/applications/?id=999 | en        | /data/[0]/attributes | {"title": "title_en", "notes": "notes_en", "slug": "slug_en"}       |
-    | /1.4/applications/?id=999 | pl        | /data/[0]/attributes | {"title": "title_pl", "notes": "notes_pl", "slug": "slug_pl"}       |
+    | /1.4/showcases/?id=999    | en        | /data/[0]/attributes | {"title": "title_en", "notes": "notes_en", "slug": "slug_en"}       |
+    | /1.4/showcases/?id=999    | pl        | /data/[0]/attributes | {"title": "title_pl", "notes": "notes_pl", "slug": "slug_pl"}       |
     | /1.4/articles/?id=999     | en        | /data/[0]/attributes | {"title": "title_en", "notes": "notes_en", "slug": "slug_en"}       |
     | /1.4/articles/?id=999     | pl        | /data/[0]/attributes | {"title": "title_pl", "notes": "notes_pl", "slug": "slug_pl"}       |
     | /1.4/datasets/?id=999     | en        | /data/[0]/attributes | {"title": "title_en", "notes": "notes_en", "slug": "slug_en"}       |

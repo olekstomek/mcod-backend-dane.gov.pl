@@ -1,7 +1,9 @@
 from collections import defaultdict
+
 from django.db.models import Model
-from mcod.lib.rdf.store import get_sparql_store
+
 from mcod.core.api.search.tasks import _instance
+from mcod.lib.rdf.store import get_sparql_store
 
 
 class SparqlGraphRegistry:

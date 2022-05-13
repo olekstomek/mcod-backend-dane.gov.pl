@@ -122,6 +122,6 @@ messages = {
     'illegal_argument_exception': "Niepoprawna wartość",
     'es-index-error': "Błąd indeksacji. Wartości z kolumny {} nie mogą być typu {}.",
     'ExtractUAddressError': "Błąd przetwarzania adresu uniwersalnego: {}",
-
+    'DangerousContentError': "Potencjalnie niebezpieczna zawartość zewnętrznego zasobu",
     None: ""
 }

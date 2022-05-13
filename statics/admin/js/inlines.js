@@ -178,7 +178,6 @@ function start_inline($) {
 
     // Tabular inlines ---------------------------------------------------------
     $.fn.tabularFormset = function (options) {
-        console.log("I'm here");
         var $rows = $(this);
         var alternatingRows = function (row) {
             $($rows.selector).not(".add-row").removeClass("row1 row2")

@@ -10,17 +10,3 @@
             {% endif %}
         {% endwith %}
     </div>
-
-    <!-- Following javaScript is required if you have tabs, 
-         otherwise you can remove this JS code -->
-    <script type="text/javascript">
-        (function ($) {
-            Suit.$('.pagination li a').on('click', function () {
-                if (document.location.hash) {
-                    $(this).attr('href', $(this).attr('href') +
-                        '#' + document.location.hash.substr(1));
-                }
-            });
-        }(Suit.$));
-    </script>
-

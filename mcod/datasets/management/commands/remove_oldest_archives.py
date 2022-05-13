@@ -1,5 +1,7 @@
 import os
+
 from django_tqdm import BaseCommand
+
 from mcod.core.storages import get_storage
 
 

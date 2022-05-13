@@ -1,31 +1,33 @@
 import json
 
 import marshmallow as ma
-from django.utils.translation import gettext_lazy as _
 from django.utils.html import strip_tags
+from django.utils.translation import gettext_lazy as _
 
+import mcod.core.api.rdf.namespaces as ns
 from mcod.core.api import fields, schemas
 from mcod.core.api.jsonapi.serializers import (
-    Relationships,
-    Relationship,
+    Aggregation,
+    HighlightObjectMixin,
     Object,
     ObjectAttrs,
+    ObjectAttrsMeta,
+    Relationship,
+    Relationships,
     TopLevel,
     TopLevelMeta,
-    ObjectAttrsMeta,
-    Aggregation,
-    HighlightObjectMixin
 )
+from mcod.core.api.rdf.schema_mixins import ProfilesMixin
 from mcod.core.api.rdf.schemas import ResponseSchema as RDFResponseSchema
+from mcod.core.api.rdf.vocabs.common import VocabSKOSConcept, VocabSKOSConceptScheme
 from mcod.core.api.schemas import ExtSchema
 from mcod.core.serializers import CSVSerializer, ListWithoutNoneStrElement
 from mcod.lib.extended_graph import ExtendedGraph
 from mcod.lib.serializers import TranslatedStr
-from mcod.core.api.rdf.schema_mixins import ProfilesMixin
+from mcod.regions.serializers import RegionBaseSchema, RegionSchema
 from mcod.resources.models import Resource
-from mcod.regions.serializers import RegionSchema, RegionBaseSchema
-from mcod.watchers.serializers import SubscriptionMixin
 from mcod.unleash import is_enabled
+from mcod.watchers.serializers import SubscriptionMixin
 
 
 class ResourceApiRelationships(Relationships):
@@ -82,8 +84,12 @@ class SpecialSignSchema(ExtSchema):
 
 class SupplementSchema(ExtSchema):
     name = TranslatedStr()
-    file_url = fields.Url()
+    file_url = fields.Url(attribute='api_file_url')
     file_size = fields.Str(attribute='file_size_human_readable_or_empty_str')
+    language = fields.Str()
+
+    class Meta:
+        ordered = True
 
 
 class ResourceFileSchema(ExtSchema):
@@ -100,13 +106,9 @@ class ResourceApiAttrs(ObjectAttrs, HighlightObjectMixin):
     format = fields.Str()
     media_type = fields.Str(attribute='type')  # https://jsonapi.org/format/#document-resource-object-fields
     visualization_types = ListWithoutNoneStrElement(fields.Str())
-    downloads_count =\
-        fields.Function(
-            lambda obj: obj.computed_downloads_count if is_enabled('S16_new_date_counters.be') else obj.downloads_count)
     openness_score = fields.Integer()
-    views_count =\
-        fields.Function(
-            lambda obj: obj.computed_views_count if is_enabled('S16_new_date_counters.be') else obj.views_count)
+    views_count = fields.Int(attribute='computed_views_count')
+    downloads_count = fields.Int(attribute='computed_downloads_count')
     modified = fields.DateTime()
     created = fields.DateTime()
     verified = fields.DateTime()
@@ -123,16 +125,13 @@ class ResourceApiAttrs(ObjectAttrs, HighlightObjectMixin):
     link = fields.Str()
     data_special_signs = fields.Nested(SpecialSignSchema, data_key='special_signs', many=True)
     is_chart_creation_blocked = fields.Bool()
-    if is_enabled('S43_dynamic_data.be'):
-        has_dynamic_data = fields.Boolean()
-    if is_enabled('S35_high_value_data.be'):
-        has_high_value_data = fields.Boolean()
+    has_dynamic_data = fields.Boolean()
+    has_high_value_data = fields.Boolean()
     if is_enabled('S47_research_data.be'):
         has_research_data = fields.Boolean()
     if is_enabled('S37_resources_admin_region_data.be'):
         regions = fields.Method('get_regions')
-    if is_enabled('S40_new_file_model.be'):
-        files = fields.Method('get_files')
+    files = fields.Method('get_files')
     if is_enabled('S48_resource_supplements.be'):
         supplement_docs = fields.Nested(SupplementSchema, data_key='supplements', many=True)
 
@@ -194,6 +193,24 @@ class ResourceApiResponse(SubscriptionMixin, TopLevel):
         aggs_schema = ResourceApiAggregations
 
 
+class SpecialSignRDFNestedSchema(ProfilesMixin, ma.Schema):
+    id = ma.fields.Int()
+    title_pl = ma.fields.Str(attribute='name_pl')
+    title_en = ma.fields.Str(attribute='name_en')
+
+
+def special_signs_dump(resource, context):
+    return SpecialSignRDFNestedSchema(many=True, context=context).dump(resource.special_signs.all())
+
+
+class SupplementRDFNestedSchema(ma.Schema):
+    file_url = ma.fields.Str()
+
+
+def supplements_dump(object, context):
+    return SupplementRDFNestedSchema(many=True, context=context).dump(object.supplement_docs)
+
+
 class ResourceRDFMixin(ProfilesMixin):
     dataset_frontend_absolute_url = ma.fields.Function(lambda r: r.dataset.frontend_absolute_url)
     id = ma.fields.Str(attribute='id')
@@ -211,10 +228,85 @@ class ResourceRDFMixin(ProfilesMixin):
     file_mimetype = ma.fields.Str(attribute='main_file_mimetype')
     file_size = ma.fields.Int()
     license = ma.fields.Function(lambda r: r.dataset.license_link)
+    validity_date = ma.fields.Str(attribute='data_date')
+    openness_score = ma.fields.Int()
+    special_signs = ma.fields.Function(special_signs_dump)
+    supplements = ma.fields.Function(supplements_dump)
+
+
+class BaseVocabEntryRDFResponseSchema(RDFResponseSchema):
+    url = ma.fields.Str()
+    name_pl = ma.fields.Str()
+    name_en = ma.fields.Str()
+    description_pl = ma.fields.Str()
+    description_en = ma.fields.Str()
+    notation = ma.fields.Str()
+    scheme = ma.fields.Method('get_scheme')
+    top_concept_of = ma.fields.Method('get_scheme')
+
+    def get_scheme(self, entry):
+        return entry.vocab_url
+
+
+class VocabSchemaMixin:
+    @ma.pre_dump()
+    def prepare_data(self, data, **kwargs):
+        return data.data if hasattr(data, 'data') else data
+
+    @ma.post_dump()
+    def prepare_graph_triples(self, data, **kwargs):
+        return self.rdf_class().to_triples(data, self.include_nested_triples)
+
+    @ma.post_dump(pass_many=True)
+    def prepare_graph(self, data, many, **kwargs):
+        graph = ExtendedGraph(ordered=True)
+
+        # add bindings
+        for prefix, namespace in ns.NAMESPACES.items():
+            graph.bind(prefix, namespace)
+
+        for triple in data:
+            graph.add(triple)
+        return graph
+
+
+class VocabEntryRDFResponseSchema(BaseVocabEntryRDFResponseSchema, VocabSchemaMixin):
+    rdf_class = VocabSKOSConcept
+
+
+class NestedVocabEntryRDFResponseSchema(BaseVocabEntryRDFResponseSchema):
+    pass
+
+
+def entries_dump(vocab, context):
+    return NestedVocabEntryRDFResponseSchema(many=True, context=context).dump(vocab.entries.values())
+
+
+class VocabRDFResponseSchema(RDFResponseSchema, VocabSchemaMixin):
+    rdf_class = VocabSKOSConceptScheme
+
+    url = ma.fields.Str()
+    identifier = ma.fields.Method('get_identifier')
+    label_pl = ma.fields.Str()
+    label_en = ma.fields.Str()
+    title_pl = ma.fields.Method('get_label_pl')
+    title_en = ma.fields.Method('get_label_en')
+    name_pl = ma.fields.Method('get_label_pl')
+    name_en = ma.fields.Method('get_label_en')
+    version = ma.fields.Str()
+    concepts = ma.fields.Function(entries_dump)
+
+    def get_identifier(self, vocab):
+        return vocab.url
+
+    def get_label_pl(self, vocab):
+        return vocab.label_pl
+
+    def get_label_en(self, vocab):
+        return vocab.label_en
 
 
 class ResourceRDFResponseSchema(ResourceRDFMixin, RDFResponseSchema):
-
     @ma.pre_dump(pass_many=True)
     def prepare_data(self, data, many, **kwargs):
         # If many, serialize data as catalog - from Elasticsearch
@@ -484,10 +576,8 @@ class ResourceXMLSerializer(schemas.ExtSchema):
     visualization_types = ListWithoutNoneStrElement(fields.Str())
     download_url = fields.Str()
     data_special_signs = fields.Nested(SpecialSignSchema, data_key='special_signs', many=True)
-    if is_enabled('S41_resource_has_high_value_data.be'):
-        has_high_value_data = fields.Bool()
-    if is_enabled('S43_dynamic_data.be'):
-        has_dynamic_data = fields.Bool()
+    has_high_value_data = fields.Bool()
+    has_dynamic_data = fields.Bool()
     if is_enabled('S47_research_data.be'):
         has_research_data = fields.Bool()
     if is_enabled('S37_resources_admin_region_data.be'):
@@ -512,10 +602,8 @@ class ResourceCSVMetadataSerializer(schemas.ExtSchema):
     has_table = fields.Function(lambda obj: _('YES') if obj.has_table else _('NO'), data_key=_('Table'))
     has_chart = fields.Function(lambda obj: _('YES') if obj.has_chart else _('NO'), data_key=_('Map'))
     has_map = fields.Function(lambda obj: _('YES') if obj.has_map else _('NO'), data_key=_('Chart'))
-    if is_enabled('S41_resource_has_high_value_data.be'):
-        has_high_value_data = fields.MetaDataNullBoolean(data_key=_('Resource has high value data'))
-    if is_enabled('S43_dynamic_data.be'):
-        has_dynamic_data = fields.MetaDataNullBoolean(data_key=_('Resource has dynamic data'))
+    has_high_value_data = fields.MetaDataNullBoolean(data_key=_('Resource has high value data'))
+    has_dynamic_data = fields.MetaDataNullBoolean(data_key=_('Resource has dynamic data'))
     if is_enabled('S47_research_data.be'):
         has_research_data = fields.MetaDataNullBoolean(data_key=_('Resource has research data'))
     if is_enabled('S37_resources_admin_region_data.be'):
@@ -523,10 +611,8 @@ class ResourceCSVMetadataSerializer(schemas.ExtSchema):
     download_url = fields.Url(data_key=_('Download URL'))
     data_special_signs = fields.Nested(SpecialSignSchema, data_key=_('special signs'), many=True)
     if is_enabled('S48_resource_supplements.be'):
-        supplements = fields.Method('get_supplements', data_key=_('Resource supplements (name, url, file size)'))
-
-    def get_supplements(self, obj):
-        return ';'.join([f'{x.name_i18n}, {x.file_url}, {x.file_size_human_readable}' for x in obj.supplement_docs])
+        supplements = fields.Str(
+            attribute='supplements_str', data_key=_('Resource supplements (name, language, url, file size)'))
 
     @ma.post_dump(pass_many=False)
     def prepare_nested_data(self, data, **kwargs):

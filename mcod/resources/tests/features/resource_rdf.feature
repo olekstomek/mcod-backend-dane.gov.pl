@@ -14,7 +14,6 @@ Feature: Resource RDF API
     | request_path                                       | resp_header_name | resp_header_value     |
     | /catalog/dataset/999/resource/999                  | content-type     | application/ld+json   |
     | /catalog/dataset/999/resource/999.jsonld           | content-type     | application/ld+json   |
-    | /catalog/dataset/999/resource/999.json-ld          | content-type     | application/ld+json   |
     | /catalog/dataset/999/resource/999.n3               | content-type     | text/n3               |
     | /catalog/dataset/999/resource/999.nt               | content-type     | application/n-triples |
     | /catalog/dataset/999/resource/999.ntriples         | content-type     | application/n-triples |
@@ -29,7 +28,6 @@ Feature: Resource RDF API
     # with optional slug in url.
     | /catalog/dataset/999/resource/999,test-rdf         | content-type     | application/ld+json   |
     | /catalog/dataset/999/resource/999,test-rdf.jsonld  | content-type     | application/ld+json   |
-    | /catalog/dataset/999/resource/999,test-rdf.json-ld | content-type     | application/ld+json   |
     | /catalog/dataset/999/resource/999,test-rdf.n3      | content-type     | text/n3               |
     | /catalog/dataset/999/resource/999,test-rdf.nt      | content-type     | application/n-triples |
     | /catalog/dataset/999/resource/999,test-rdf.ntriples| content-type     | application/n-triples |
@@ -85,4 +83,4 @@ Feature: Resource RDF API
     And api request path is /catalog/dataset/999/resource/999
     Then send api request and fetch the response
     And api's response status code is 200
-    And api's json-ld response body with rdf type dcat:Distribution has field dct:format with attribute @id that equals http://publications.europa.eu/resource/authority/file-type/CSV
+    And api's jsonld response body with rdf type dcat:Distribution has field dct:format with attribute @id that equals http://publications.europa.eu/resource/authority/file-type/CSV

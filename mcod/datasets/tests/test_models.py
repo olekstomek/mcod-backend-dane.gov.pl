@@ -1,21 +1,19 @@
 import time
 
 import pytest
-from pytest_bdd import scenarios
 from bs4 import BeautifulSoup
-from django.core.exceptions import ValidationError, ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.test import Client
 from django.utils.encoding import smart_str
+from pytest_bdd import scenarios
 
 from mcod.datasets.models import Dataset
 from mcod.organizations.models import Organization
 from mcod.resources.models import Resource
-from mcod.users.models import User, UserFollowingDataset
 from mcod.unleash import is_enabled
+from mcod.users.models import User, UserFollowingDataset
 
-
-if is_enabled('S41_resource_bulk_download.be'):
-    scenarios('features/dataset_create_resources_files_zip.feature')
+scenarios('features/dataset_create_resources_files_zip.feature')
 
 
 def create_organization(param):
@@ -84,7 +82,7 @@ def test_get_datasets_lists(html_table):
     assert len(rows) == 2
 
 
-class TestDatasetModel(object):
+class TestDatasetModel:
     def test_cant_create_empty_dataset(self):
         with pytest.raises(ValidationError) as e:
             ds = Dataset()
@@ -185,25 +183,8 @@ class TestDatasetModel(object):
         else:
             assert dataset_with_resources.regions.count() == 3
 
-    # def test_save_with_deleted_status(self, dataset, resource):
-    #     assert 'published' == dataset.status
-    #     assert 'published' == dataset.resources.first().status
-    #     dataset.status = 'archived'
-    #     dataset.save()
-    #     assert 'archived' == dataset.status
-    #     assert 'archived' == dataset.resources.first().status
 
-    # TODO: trash functionality - as MCOD-621
-    # def test_save_with_deleted_status(self, dataset, resource):
-    #     assert 'active' == dataset.state
-    #     assert 'active' == dataset.resources.first().state
-    #     dataset.state = 'archived'
-    #     dataset.save()
-    #     assert 'archived' == dataset.state
-    #     assert 'archived' == dataset.resources.first().state
-
-
-class TestDatasetsUserRoles(object):
+class TestDatasetsUserRoles:
     def test_editor_can_see_datasets_in_admin_panel(self, active_editor, institution):
         client = Client()
         client.force_login(active_editor)

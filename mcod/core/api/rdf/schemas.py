@@ -1,10 +1,7 @@
 import typing
-from marshmallow import post_dump
-from marshmallow.decorators import (
-    POST_DUMP,
-    PRE_DUMP,
-)
 
+from marshmallow import post_dump
+from marshmallow.decorators import POST_DUMP, PRE_DUMP
 from pyshacl import validate as shacl_validate
 
 from mcod import settings

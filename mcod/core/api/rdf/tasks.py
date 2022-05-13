@@ -1,4 +1,5 @@
 from celery import shared_task
+
 from mcod.core.api.rdf.registry import registry
 
 

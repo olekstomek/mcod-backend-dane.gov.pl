@@ -10,7 +10,9 @@ class ApplicationsConfig(ExtendedAppMixin, AppConfig):
 
     def ready(self):
         from mcod.applications.models import Application, ApplicationProposal, ApplicationTrash
-        self.connect_core_signals(Application)
-        self.connect_core_signals(ApplicationTrash)
-        self.connect_m2m_signal(Application.datasets.through)
-        self.connect_history(Application, ApplicationProposal)
+        from mcod.unleash import is_enabled
+        if not is_enabled('S49_delete_application_app.be'):
+            self.connect_core_signals(Application)
+            self.connect_core_signals(ApplicationTrash)
+            self.connect_m2m_signal(Application.datasets.through)
+            self.connect_history(Application, ApplicationProposal)

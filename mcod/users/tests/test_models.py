@@ -126,7 +126,7 @@ def test_tokens(active_user):
     assert token.expiration_date.date() == exp_date
 
 
-class TestLogin(object):
+class TestLogin:
 
     def test_admin_can_login_to_admin_panel(self, admin):
         client = Client()

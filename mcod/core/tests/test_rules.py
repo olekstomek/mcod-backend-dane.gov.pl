@@ -1,5 +1,5 @@
-from django.test import Client
 from django.contrib import auth
+from django.test import Client
 
 from mcod.lib.rules import assigned_to_organization
 

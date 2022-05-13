@@ -1,11 +1,12 @@
 import marshmallow as ma
 from rdflib import ConjunctiveGraph
-from mcod.core.api.rdf.sparql_graphs import SparqlGraph
+
 from mcod.core.api.rdf.graph_mixins import SparqlGraphCatalogModifiedMixin
+from mcod.core.api.rdf.sparql_graphs import SparqlGraph
 from mcod.datasets.models import Dataset
-from mcod.resources.serializers import ResourceRDFResponseSchema
-from mcod.resources.models import Resource
 from mcod.licenses.models import License
+from mcod.resources.models import Resource
+from mcod.resources.serializers import ResourceRDFResponseSchema
 
 
 class ResourceSparqlGraph(SparqlGraph, ResourceRDFResponseSchema, SparqlGraphCatalogModifiedMixin):

@@ -2,8 +2,9 @@ import marshmallow as ma
 import marshmallow_jsonapi as ja
 from django.apps import apps
 from django.db.models.manager import BaseManager
-from elasticsearch_dsl.utils import AttrList, AttrDict
 from django.utils.translation import get_language
+from elasticsearch_dsl.utils import AttrDict, AttrList
+
 from mcod.core.api import fields
 
 

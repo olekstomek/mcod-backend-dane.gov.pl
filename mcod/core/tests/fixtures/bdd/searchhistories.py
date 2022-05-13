@@ -1,8 +1,8 @@
-from pytest_bdd import given, parsers, then
 from elasticsearch_dsl import Q
+from pytest_bdd import given, parsers, then
 
-from mcod.searchhistories.factories import SearchHistoryFactory
 from mcod.searchhistories.documents import SearchHistoriesDoc
+from mcod.searchhistories.factories import SearchHistoryFactory
 
 
 @given(parsers.parse('{num:d} search histories for admin'))
