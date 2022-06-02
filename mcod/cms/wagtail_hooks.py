@@ -266,16 +266,36 @@ def register_external_link(features):
     })
 
 
-@hooks.register('insert_editor_js')
-def editor_js():
-    return format_html(
-        """
-        <script>
-            window.chooserUrls.pageChooser = '{}';
-        </script>
-        """,
-        reverse('wagtailadmin_choose_page_titled_external_link')
+@hooks.register('register_rich_text_features')
+def register_mail_link(features):
+    feature_name = 'email-link'
+    features.register_editor_plugin(
+        'draftail', feature_name, draftail_features.EntityFeature({
+            'type': 'EMAIL_LINK',
+            'icon': 'mail',
+            'description': 'Email',
+            # We want to enforce constraints on which links can be pasted into rich text.
+            # Keep only the attributes Wagtail needs.
+            'attributes': ['url', 'id', 'parentId', 'link_title'],
+            'whitelist': {
+                # Keep pasted links with http/https protocol, and not-pasted links (href = undefined).
+                'href': "^(http:|https:|undefined$)",
+                'title': "^.*"
+            }
+        }, js=[
+            'cms/titled_link.js',
+            'cms/page-chooser-modal.js'
+        ])
     )
+    features.register_converter_rule('contentstate', feature_name, {
+        'from_database_format': {
+            'a[href]': TitledExternalLinkElementHandler('TITLED_LINK'),
+            'a[linktype="page"]': TitledPageLinkElementHandler('TITLED_LINK'),
+        },
+        'to_database_format': {
+            'entity_decorators': {'EMAIL_LINK': titled_link_entity}
+        }
+    })
 
 
 @hooks.register('construct_main_menu')

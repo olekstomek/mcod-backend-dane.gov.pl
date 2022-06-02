@@ -3,6 +3,8 @@ import pytest
 from django.apps import apps
 from pytest_bdd import parsers, then
 
+from mcod.regions.api import PlaceholderApi
+
 
 @pytest.fixture
 def main_regions_response():
@@ -68,7 +70,7 @@ def main_region():
         lng=21.005427,
         bbox=[20.851688, 52.09785, 21.271151, 52.368154],
         geonames_id=756135,
-        hierarchy_label='Warszawa, Gmina Warszawa, pow. Warszawa, woj. Mazowieckie'
+        hierarchy_label='Warszawa, Gmina Warszawa, pow. Warszawa, woj. mazowieckie'
     )
 
 
@@ -91,6 +93,8 @@ def wroclaw_main_region():
 def additional_regions(additional_regions_response):
     to_create_regions = ["1477743805", "1125365875", "85687257"]
     region = apps.get_model('regions', 'Region')
+    api = PlaceholderApi()
+    api.add_hierarchy_labels(additional_regions_response)
     created_regions = region.objects.bulk_create([region(
         region_id=reg_id,
         region_type=additional_regions_response[reg_id]['placetype'],
@@ -100,7 +104,9 @@ def additional_regions(additional_regions_response):
         additional_regions_response[reg_id]['names'].get('eng') else additional_regions_response[reg_id]['name'],
         bbox=additional_regions_response[reg_id]['geom']['bbox'].split(','),
         lat=additional_regions_response[reg_id]['geom']['lat'],
-        lng=additional_regions_response[reg_id]['geom']['lon']
+        lng=additional_regions_response[reg_id]['geom']['lon'],
+        hierarchy_label_pl=additional_regions_response[reg_id]['hierarchy_label_pl'],
+        hierarchy_label_en=additional_regions_response[reg_id]['hierarchy_label_en']
     ) for reg_id in to_create_regions])
     return created_regions
 

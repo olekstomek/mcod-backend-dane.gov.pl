@@ -20,7 +20,7 @@ class ModelWatcherFactory(factory.django.DjangoModelFactory):
 
 
 class SearchQueryWatcherFactory(ModelWatcherFactory):
-    watcher_type = 'search_query'
+    watcher_type = 'query'
 
     class Meta:
         model = models.Watcher

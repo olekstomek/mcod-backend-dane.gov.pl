@@ -146,16 +146,13 @@ class ShowcaseProposalCSVSerializer(CSVSerializer):
     report_date = fields.Date(data_key=_('report date'))
     decision_date = fields.Date(data_key=_('decision date'), default=None)
     comment = fields.Str(data_key=_('comment'), example='komentarz...', default='')
-    datasets = fields.Method('get_datasets', data_key=_('datasets'), example='998,999', default='')
+    datasets = fields.Str(data_key=_('datasets'), attribute='datasets_ids_as_str', example='998,999', default='')
     external_datasets = fields.Raw(data_key=_('external datasets'), example='[]')
     showcase = fields.Int(data_key=_('Showcase'), attribute='showcase.id', default=None)
 
     class Meta:
         ordered = True
         model = 'showcases.ShowcaseProposal'
-
-    def get_datasets(self, obj):
-        return ','.join(str(x.id) for x in obj.datasets.order_by('id'))
 
 
 class ShowcaseProposalAttrs(ObjectAttrs):

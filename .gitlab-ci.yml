@@ -85,7 +85,14 @@ test:
     - name: $REGISTRY_PATH/postgresql:13-mcod
       alias: postgres
   before_script:
-    - apt-get update && apt-get install -y --allow-unauthenticated gettext libarchive13 libmagickwand-dev libmagickcore-6.q16-3-extra
+    - apt-get update && apt-get install -y --allow-unauthenticated gettext libarchive13 libmagickwand-dev libmagickcore-6.q16-3-extra locales
+    - echo "en_US UTF-8" > /etc/locale.gen
+    - echo "en_GB UTF-8" > /etc/locale.gen
+    - echo "pl_PL UTF-8" > /etc/locale.gen
+    - locale-gen
+    - export LANG=pl_PL.UTF-8
+    - export LANGUAGE=pl_PL:pl
+    - export LC_ALL=pl_PL.UTF-8
     - find . | grep -E "(__pycache__|\.pyc|\.pyo$)" | xargs rm -rf || true
     - python3 -m venv venv
     - source venv/bin/activate

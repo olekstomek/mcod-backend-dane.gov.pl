@@ -93,13 +93,7 @@
             $(this).prop('checked', true);
         });
         var rows = "#{{ inline_admin_formset.formset.prefix }}-group .inline-related";
-        var reinitDateTimeShortCuts = function() {
-            // Reinitialize the calendar and clock widgets by force, yuck.
-            if (typeof DateTimeShortcuts != "undefined") {
-                $(".datetimeshortcuts").remove();
-                DateTimeShortcuts.init();
-            }
-        };
+
         var updateSelectFilter = function() {
             // If any SelectFilter widgets were added, instantiate a new instance.
             if (typeof SelectFilter != "undefined"){
@@ -115,20 +109,7 @@
                 });
             }
         };
-        var initPrepopulatedFields = function(row) {
-            row.find('.prepopulated_field').each(function() {
-                var field = $(this);
-                var input = field.find('input, select, textarea');
-                var dependency_list = input.data('dependency_list') || [];
-                var dependencies = [];
-                $.each(dependency_list, function(i, field_name) {
-                  dependencies.push('#' + row.find('.form-row .field-' + field_name).find('input, select, textarea').attr('id'));
-                });
-                if (dependencies.length) {
-                    input.prepopulate(dependencies, input.attr('maxlength'));
-                }
-            });
-        };
+
         var reinitCheckboxes = function(row) {
             row.find('input[id$="-has_dynamic_data_0"]').prop('checked', $('#id_has_dynamic_data_0').prop('checked'));
             row.find('input[id$="-has_dynamic_data_1"]').prop('checked', $('#id_has_dynamic_data_1').prop('checked'));
@@ -152,6 +133,7 @@
                 $(this).prop('checked', true);
             });
         };
+
         // https://docs.djangoproject.com/en/2.2/ref/contrib/admin/javascript/
         $(document).on('formset:added', function(event, $row, formsetName) {
             initPrepopulatedFields($row);
@@ -159,6 +141,8 @@
             updateSelectFilter();
             if (formsetName === 'resources-2') {
                 reinitCheckboxes($row);
+            } else if (formsetName === 'datasets-2') {
+                reinitFrequencyFields($row);
             }
             Suit.after_inline.run("{{ inline_admin_formset.formset.prefix }}", $row);
             $('body').trigger('form-ready', [$row]);

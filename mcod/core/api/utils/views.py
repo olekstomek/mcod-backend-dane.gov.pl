@@ -6,7 +6,6 @@ from elasticsearch import RequestError
 from elasticsearch_dsl.connections import get_connection
 
 from mcod import settings
-from mcod.api import app_cache as cache
 from mcod.applications import views as app_views
 from mcod.applications.serializers import ApplicationApiResponse
 from mcod.articles import views as art_views
@@ -15,7 +14,7 @@ from mcod.core.api.openapi.specs import get_spec
 from mcod.core.api.versions import DOC_VERSIONS
 from mcod.datasets import serializers as dat_responses, views as dat_views
 from mcod.histories.api import views as his_views
-from mcod.histories.serializers import HistoryApiResponse
+from mcod.histories.serializers import LogEntryApiResponse
 from mcod.lib.encoders import DateTimeToISOEncoder
 from mcod.organizations import views as org_views
 from mcod.organizations.serializers import InstitutionApiResponse
@@ -55,27 +54,26 @@ class SwaggerView:
     def on_get(self, request, response, *args, **kwargs):
         template = loader.get_template('swagger_ui/index.html')
         versions = sorted(DOC_VERSIONS, reverse=True)
+        active_spec_name = request.params.get('urls.primaryName', f'DANE.GOV.PL API v{versions[0]}')
 
-        rdf_spec_name = 'DANE.GOV.PL RDF API'
-        default_spec_name = f'DANE.GOV.PL API v{versions[0]}'
-        spec_name = request.params.get('urls.primaryName', default_spec_name)
-
-        api_spec_urls = [
+        spec_urls = [
+            *[
+                {
+                    'url': f'{settings.API_URL}/spec/{version}',
+                    'name': f'DANE.GOV.PL API v{version}',
+                }
+                for version in versions
+            ],
             {
-                'url': f'{settings.API_URL}/spec/{version}',
-                'name': f'DANE.GOV.PL API v{version}',
-            }
-            for version in versions
+                'url': f'{settings.API_URL}/catalog/dcat_ap/spec',
+                'name': 'DANE.GOV.PL RDF API (DCAT-AP)',
+            },
+            {
+                'url': f'{settings.API_URL}/catalog/dcat_ap_pl/spec',
+                'name': 'DANE.GOV.PL RDF API (DCAT-AP-PL)',
+            },
         ]
-        rdf_api_spec_url = {
-            'url': f'{settings.API_URL}/catalog/spec',
-            'name': rdf_spec_name,
-        }
-
-        if spec_name == rdf_spec_name:
-            spec_urls = [rdf_api_spec_url, *api_spec_urls]
-        else:
-            spec_urls = [*api_spec_urls, rdf_api_spec_url]
+        spec_urls.sort(key=lambda spec: spec['name'] != active_spec_name)
 
         context = {
             'spec_urls': spec_urls,
@@ -113,8 +111,8 @@ class OpenApiSpec:
         spec.components.schema('Search', schema=CommonObjectResponse, many=True)
         spec.components.schema('Showcases', schema=ShowcaseApiResponse, many=True)
         spec.components.schema('Showcase', schema=ShowcaseApiResponse, many=False)
-        spec.components.schema('Histories', schema=HistoryApiResponse, many=True)
-        spec.components.schema('History', schema=HistoryApiResponse, many=False)
+        spec.components.schema('Histories', schema=LogEntryApiResponse, many=True)
+        spec.components.schema('History', schema=LogEntryApiResponse, many=False)
         if not self.applications_deleted:
             spec.path(resource=app_views.ApplicationSearchApiView)
             spec.path(resource=app_views.ApplicationApiView)
@@ -143,13 +141,25 @@ class OpenApiSpec:
         resp.status = falcon.HTTP_200
 
 
-class CatalogOpenApiSpec:
-    @cache.cached(timeout=60 * 60 * 24)
+class RdfApiSpec:
+    desc = None
+    spec = None
+
     def on_get(self, req, resp, version=None, *args, **kwargs):
-        with open(settings.SPEC_DIR.path('rdf_api_desc.html'), 'r') as file:
+        with open(settings.SPEC_DIR.path(self.desc), 'r') as file:
             description = file.read()
-        with open(settings.SPEC_DIR.path('rdf_api_spec.json'), 'rb') as file:
+        with open(settings.SPEC_DIR.path(self.spec), 'rb') as file:
             spec = json.load(file)
         spec['info']['description'] = description
         resp.media = spec
         resp.status = falcon.HTTP_200
+
+
+class RdfDcatApApiSpec(RdfApiSpec):
+    desc = 'rdf_api_desc_dcat_ap.html'
+    spec = 'rdf_api_spec_dcat_ap.json'
+
+
+class RdfDcatApPlApiSpec(RdfApiSpec):
+    desc = 'rdf_api_desc_dcat_ap_pl.html'
+    spec = 'rdf_api_spec_dcat_ap_pl.json'

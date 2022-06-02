@@ -1,5 +1,7 @@
-# from pytest_bdd import scenarios
+from pytest_bdd import scenarios
 
-
-# FIXME
-# scenarios('features')
+scenarios(
+    'features/notifications_api.feature',
+    'features/query_watcher.feature',
+    'features/subscriptions_api.feature',
+)

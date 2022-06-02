@@ -128,6 +128,7 @@ def get_xml_schema_path(version):
     versions = {
         '1.6': 'S47_xml_harvester_research_data.be',
         '1.7': 'S48_xml_harvester_resource_supplements.be',
+        '1.8': 'S51_xml_harvester_data_date_update.be',
     }
     flag = versions.get(version)
     if flag and not is_enabled(flag):

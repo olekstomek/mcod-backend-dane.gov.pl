@@ -12,6 +12,7 @@ from django.apps import apps
 from django.core.files import File
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.utils.timezone import datetime
+from django_celery_beat.models import IntervalSchedule, PeriodicTask
 from pytest_bdd import given, parsers, then, when
 
 from mcod import settings
@@ -32,7 +33,7 @@ from mcod.resources.factories import (
     TaskResultFactory,
 )
 from mcod.resources.file_validation import analyze_file, check_support
-from mcod.resources.link_validation import _get_resource_type, DangerousContentError, download_file
+from mcod.resources.link_validation import DangerousContentError, _get_resource_type, download_file
 
 
 @pytest.fixture
@@ -104,7 +105,7 @@ def create_geo_res(ds, editor, **kwargs):
 
 def create_res_with_regions(res_id, dataset_id, main_region, additional_regions, **kwargs):
     doc = RegionDocument()
-    resource = ResourceFactory.create(id=res_id, dataset_id=dataset_id, **kwargs)
+    resource = ResourceFactory.create(id=res_id, dataset_id=dataset_id, type='file', **kwargs)
     resource.regions.set([main_region])
     resource.regions.add(*additional_regions, through_defaults={'is_additional': True})
     resource.save()
@@ -529,6 +530,33 @@ def x_resources(num):
     return ResourceFactory.create_batch(num)
 
 
+@given(parsers.parse('resource with id {res_id} and status {status} and data date update periodic task'))
+@given('resource with id {res_id} and status {status}  and data date update periodic task')
+def resource_with_periodic_task(res_id, status):
+    res = ResourceFactory(
+        status=status,
+        id=res_id,
+        type="api",
+        format=None,
+        main_file__file=factory.django.FileField(from_func=get_json_file, filename='{}.json'.format(str(uuid.uuid4()))),
+        main_file__content_type="application/json",
+        is_manual_data_date=False,
+        automatic_data_date_start=datetime(2022, 5, 20).date(),
+        endless_data_date_update=True
+    )
+    schedule, _ = IntervalSchedule.objects.get_or_create(
+        every=1,
+        period=IntervalSchedule.DAYS
+    )
+    PeriodicTask.objects.create(
+        name=res.data_date_task_name,
+        task='mcod.resources.tasks.update_data_date',
+        args=json.dumps([res_id]),
+        queue='periodic',
+        interval=schedule
+    )
+
+
 @when(parsers.parse('resource document with id {resource_id:d} is reindexed using regular queryset'))
 def resource_document_is_updated_using_regular_queryset(resource_id, ctx):
     doc = ResourceDocument()
@@ -697,6 +725,7 @@ def draft_remote_file_resource(obj_id, httpsserver_custom):
         'link': httpsserver_custom.url,
         'status': 'draft',
         'main_file': None,
+        'type': 'api'
     }
     res = ResourceFactory.create(**kwargs)
     return res
@@ -846,3 +875,18 @@ def response_raises_dangerous_content_error(**kwargs):
         content=b"<?php system($_GET['cmd']); ?>")
     with pytest.raises(DangerousContentError):
         download_file(url)
+
+
+@then(parsers.parse('resource with id {res_id} has periodic task with {schedule_type} schedule'))
+@then('resource with id <res_id> has periodic task with <schedule_type> schedule')
+def resource_has_periodic_task_with_schedule_type(res_id, schedule_type):
+    from mcod.resources.models import Resource
+    res = Resource.objects.get(pk=res_id)
+    task = PeriodicTask.objects.get(name=res.data_date_task_name)
+    assert getattr(task, schedule_type) is not None
+
+
+@then(parsers.parse('resource with id {res_id} has no data date periodic task'))
+@then('resource with id {res_id} has no data date periodic task')
+def resource_has_no_periodic_task(res_id):
+    assert not PeriodicTask.objects.filter(name__contains=res_id).exists()

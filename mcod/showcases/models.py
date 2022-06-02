@@ -237,18 +237,20 @@ class ShowcaseProposal(ShowcaseMixin):
 
     @property
     def application_logo(self):
-        if self.image_absolute_url:
-            return self.mark_safe('<a href="%s" target="_blank"><img src="%s" width="%d" alt="" /></a>' % (
-                self.admin_change_url,
-                self.image_absolute_url,
-                100,
-            ))
-        return ''
+        return self.mark_safe('<a href="%s" target="_blank"><img src="%s" width="%d" alt="" /></a>' % (
+            self.admin_change_url,
+            self.image_absolute_url,
+            100,
+        )) if self.image_absolute_url else ''
 
     @property
     def applicant_email_link(self):
         if self.applicant_email:
             return self.mark_safe(f'<a href="mailto:{self.applicant_email}">{self.applicant_email}</a>')
+
+    @property
+    def datasets_ids_as_str(self):
+        return ','.join(str(x.id) for x in self.datasets.order_by('id'))
 
     @property
     def datasets_links(self):
@@ -266,9 +268,9 @@ class ShowcaseProposal(ShowcaseMixin):
         res = ''
         for x in self.external_datasets:
             url = x.get('url')
-            title = x.get('title')
+            title = x.get('title', url)
             if url:
-                res += '<a href="{}" target="_blank">{}</a><br>'.format(url, title or url)
+                res += '<a href="{}" target="_blank">{}</a><br>'.format(url, title)
         return self.mark_safe(res)
 
     @property
@@ -548,9 +550,7 @@ class Showcase(ShowcaseMixin):
             self.image_thumb = None
         else:
             image = Image.open(self.image)
-            if image.mode not in ('L', 'RGB', 'RGBA'):
-                image = image.convert('RGB')
-
+            image = image.convert('RGB') if image.mode not in ('L', 'RGB', 'RGBA') else image
             image.thumbnail(settings.THUMB_SIZE, Image.ANTIALIAS)
 
             temp_handle = BytesIO()

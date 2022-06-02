@@ -87,6 +87,8 @@ Feature: Global Search API
     And api's response status code is 200
     And has assigned Polska,Warszawa as name for regions
     And has assigned 85633723,101752777 as region_id for regions
+    And has assigned 85633723,101752777 as region_id for regions
+    And api's response body field meta/aggregations/map_by_regions/[0] has fields doc_count,region_name,datasets_count,resources_count,centroid
 
       Examples:
       | request_path                                                                                                    |
@@ -110,9 +112,24 @@ Feature: Global Search API
     Given dataset with id 998
     And resource with id 999 dataset id 998 and single main region
     And 3 resources
-    When api request method is GET
-    And api request path is /1.4/search?model[terms]=dataset,resource&per_page=1&filtered_facet[by_regions]=101752777
+    When api request path is /1.4/search?model[terms]=dataset,resource&per_page=1&filtered_facet[by_regions]=101752777
     Then send api request and fetch the response
     And api's response status code is 200
     And api's response body field meta/aggregations/by_regions/[0]/id is 101752777
-    And api's response body field meta/aggregations/by_regions/[0]/title is Warszawa, Gmina Warszawa, pow. Warszawa, woj. Mazowieckie
+    And api's response body field meta/aggregations/by_regions/[0]/title is Warszawa, Gmina Warszawa, pow. Warszawa, woj. mazowieckie
+
+  Scenario Outline: Search by region bbox returns different administrative layers based on zoom
+    Given dataset with id 998
+    And resource with id 999 dataset id 998 and single main region
+    When api request path is <request_path>
+    Then send api request and fetch the response
+    And api's response status code is 200
+    And api's response body field <resp_body_field> is <resp_body_value>
+
+    Examples:
+    | request_path                                                                                                       |resp_body_field                                      | resp_body_value                                           |
+    | /1.4/search/?regions[bbox][geo_shape]=19.259214,53.481806,23.128409,51.013112,6&model[terms]=resource&per_page=10  |meta/aggregations/map_by_regions/[0]/region_name     |Polska                                                     |
+    | /1.4/search/?regions[bbox][geo_shape]=19.259214,53.481806,23.128409,51.013112,8&model[terms]=resource&per_page=10  |meta/aggregations/map_by_regions/[0]/region_name     |woj. mazowieckie                                           |
+    | /1.4/search/?regions[bbox][geo_shape]=19.259214,53.481806,23.128409,51.013112,10&model[terms]=resource&per_page=10 |meta/aggregations/map_by_regions/[0]/region_name     |pow. Warszawa, woj. mazowieckie                            |
+    | /1.4/search/?regions[bbox][geo_shape]=19.259214,53.481806,23.128409,51.013112,11&model[terms]=resource&per_page=10 |meta/aggregations/map_by_regions/[0]/region_name     |Gmina Warszawa, pow. Warszawa, woj. mazowieckie            |
+    | /1.4/search/?regions[bbox][geo_shape]=19.259214,53.481806,23.128409,51.013112,12&model[terms]=resource&per_page=10 |meta/aggregations/map_by_regions/[0]/region_name     |Warszawa, Gmina Warszawa, pow. Warszawa, woj. mazowieckie  |

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-04-29 10:40+0200\n"
+"POT-Creation-Date: 2022-05-20 16:36+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -421,6 +421,15 @@ msgstr "Data końca"
 
 msgid "Link title"
 msgstr "Tytuł linku"
+
+msgid "Email address"
+msgstr "Adres email"
+
+msgid "Link text"
+msgstr "Tekst linku"
+
+msgid "Phone number"
+msgstr "Nr telefonu"
 
 msgid "The page title as you'd like it to be seen by the public"
 msgstr ""
@@ -2010,6 +2019,18 @@ msgstr ""
 "Zasób z id: %(r_id)s, id zbioru: %(d_id)s i instytucji \"%(ins)s\" nie "
 "został znaleziony."
 
+msgid "Please provide specific date or set endless update."
+msgstr "Należy wprowadzić konkretną datę lub ustawić aktualizację bez daty zakończenia."
+
+msgid ""
+"Data date end cant be chosen when endless data date update is selected. "
+"Please choose one."
+msgstr "Nie można jednocześnie wprowadzić daty zakończenia aktualizacji oraz wybrać opcji bez daty zakończenia."
+"Proszę wybrać tylko jedną z tych opcji."
+
+msgid "Update end date cant be earlier than start date."
+msgstr "Data zakończenia aktualizacji nie może być wcześniejsza lub taka sama jak data rozpoczęcia."
+
 #, python-format
 msgid "Dataset with id: %(d_id)s and institution: \"%(ins)s\" was not found."
 msgstr ""
@@ -2402,20 +2423,14 @@ msgstr ""
 "Twoje hasło musi zawierać przynajmniej: jedną cyfrę, jeden znak specjalny, "
 "jedną dużą i jedną małą literę"
 
-msgid "Page number must be greater then 0"
-msgstr "Numer strony musi być większy niż 0"
-
-msgid "Page size must be greater then 0"
-msgstr "Rozmiar strony musi być większy niż 0"
-
-msgid "Max page size is 100"
-msgstr "Maksymalny rozmiar strony to 100"
-
 msgid "Page must be greater then 1"
 msgstr "Strona musi być większa niż 1"
 
 msgid "Page size mus be greater then 0"
 msgstr "Wielkość strony musi być większa niż 0"
+
+msgid "Max page size is 100"
+msgstr "Maksymalny rozmiar strony to 100"
 
 msgid "Licenses"
 msgstr "Licencje"
@@ -2596,9 +2611,6 @@ msgstr "Instytucje"
 msgid "Some information about the institution"
 msgstr "Niektóre informacje o instytucji"
 
-msgid "Phone number"
-msgstr "Nr telefonu"
-
 msgid "Fax number"
 msgstr "Numer faksu"
 
@@ -2730,9 +2742,6 @@ msgstr "Brak"
 
 msgid "Percent"
 msgstr "Procent"
-
-msgid "Providers"
-msgstr "Dostawcy"
 
 msgid "Type of data"
 msgstr "Typ danych"
@@ -3000,6 +3009,9 @@ msgstr "Weryfikacja jakości"
 msgid "Maps and plots"
 msgstr "Mapy i wykresy"
 
+msgid "Manual update"
+msgstr "Aktualizacja manualna"
+
 msgid "Special Signs"
 msgstr "Znaki umowne"
 
@@ -3087,6 +3099,15 @@ msgstr "Szerokość geograficzna powinna być liczbą"
 
 msgid "special signs"
 msgstr "znaki umowne"
+
+msgid "Please provide specific date or select endless update."
+msgstr "Należy podać konkretną datę zakończenia aktualizacji lub wybrać opcję bez daty zakończenia."
+
+msgid ""
+"Endless data date update cant be selected when data date end is chosen. "
+"Please choose one."
+msgstr "Nie można wybrać opcji aktualizacji bez daty zakończenia w"
+"przypadku wprowadzenia konkretnej daty zakończenia aktualizacji."
 
 msgid ""
 "You can't set status of this resource to published, because it's dataset is "
@@ -3216,6 +3237,18 @@ msgstr "ma tabelę?"
 
 msgid "is chart creation blocked?"
 msgstr "tworzenie wykresu zablokowane?"
+
+msgid "Data date update period"
+msgstr "powtarzać co"
+
+msgid "Data date start date update"
+msgstr "Data rozpoczęcia aktualizacji"
+
+msgid "Data date end date update"
+msgstr "Data zakończenia aktualizacji"
+
+msgid "Endless data date update"
+msgstr "Bez daty zakończenia"
 
 msgid "acc: Resource"
 msgstr "zasób"
@@ -4894,18 +4927,6 @@ msgstr "Lista pełnomocników"
 msgid "Agents added to meeting"
 msgstr "Dodani pełnomocnicy do spotkania"
 
-msgid "Full name"
-msgstr "Imię i nazwisko"
-
-msgid "Official phone"
-msgstr "telefon służbowy"
-
-msgid "Role"
-msgstr "Rola"
-
-msgid "Invalid user state."
-msgstr "Niepoprawny status użytkownika."
-
 msgid "Passwords not match"
 msgstr "Hasła nie pasują"
 
@@ -4974,6 +4995,9 @@ msgstr "Token resetu hasła"
 #| msgid "Password reset token"
 msgid "Charts preview token"
 msgstr "Token resetu hasła"
+
+msgid "Full name"
+msgstr "Imię i nazwisko"
 
 msgid "Admin status"
 msgstr "Status administratora"
@@ -5078,6 +5102,12 @@ msgstr "Kosz (Spotkanie pełnomocników)"
 
 msgid "Trash (Meetings)"
 msgstr "Kosz (Spotkania pełnomocników)"
+
+msgid "Official phone"
+msgstr "telefon służbowy"
+
+msgid "Role"
+msgstr "Rola"
 
 msgid "Institution1"
 msgstr "Instytucja1"

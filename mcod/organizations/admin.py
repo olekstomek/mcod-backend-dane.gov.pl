@@ -9,6 +9,7 @@ from mcod.datasets.forms import (
     SupplementForm as DatasetSupplementForm,
 )
 from mcod.datasets.models import Dataset, Supplement as DatasetSupplement
+from mcod.datasets.widgets import CheckboxInputWithLabel, TextInputWithLabel
 from mcod.lib.admin_mixins import (
     HistoryMixin,
     ObjectPermissionsModelAdmin,
@@ -190,6 +191,17 @@ class AddDatasetStacked(ObjectPermissionsStackedInline):
     def get_queryset(self, request):
         queryset = super().get_queryset(request)
         return queryset.none()
+
+    def formfield_for_dbfield(self, db_field, request, **kwargs):
+        if db_field.name == 'is_update_notification_enabled':
+            label = 'Do dostawcy zostanie wysłany komunikat przypominający '\
+                    'o aktualizacji danych' if request.user.is_superuser else ''
+            kwargs['widget'] = CheckboxInputWithLabel(label=label, style='padding-left:10px;font-size:14px;')
+        elif db_field.name == 'update_notification_frequency':
+            label = 'Liczba dni, według których powiadomienie zostanie wysłane do dostawcy przed planowaną datą aktu'\
+                    'alizacji danych, licząc od daty pierwszego dodania zbioru.' if request.user.is_superuser else ''
+            kwargs['widget'] = TextInputWithLabel(attrs={'maxlength': 3}, label=label)
+        return super().formfield_for_dbfield(db_field, request, **kwargs)
 
     def formfield_for_manytomany(self, db_field, request, **kwargs):
         formfield = super().formfield_for_manytomany(db_field, request, **kwargs)

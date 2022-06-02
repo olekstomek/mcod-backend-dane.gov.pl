@@ -13,8 +13,8 @@ class Migration(migrations.Migration):
     operations = [
         migrations.RunSQL(
             sql=open(
-                os.path.join(settings.DATABASE_DIR, 'ODSFOT-261-laboratory-history.sql')).read(),
+                os.path.join(settings.DATABASE_DIR, 'ODSOFT-261-laboratory-history.sql')).read(),
             reverse_sql=open(
-                os.path.join(settings.DATABASE_DIR, 'ODSFOT-261-laboratory-history_backward.sql')).read(),
+                os.path.join(settings.DATABASE_DIR, 'ODSOFT-261-laboratory-history_backward.sql')).read(),
         )
     ]

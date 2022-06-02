@@ -17,6 +17,7 @@ from mcod.core.tests.fixtures.bdd.histories import *  # noqa
 from mcod.core.tests.fixtures.bdd.laboratory import *  # noqa
 from mcod.core.tests.fixtures.bdd.newsletter import *  # noqa
 from mcod.core.tests.fixtures.bdd.organizations import *  # noqa
+from mcod.core.tests.fixtures.bdd.pn_apps import *  # noqa
 from mcod.core.tests.fixtures.bdd.regions import *  # noqa
 from mcod.core.tests.fixtures.bdd.reports import *  # noqa
 from mcod.core.tests.fixtures.bdd.resources import *  # noqa

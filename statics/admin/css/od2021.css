@@ -678,3 +678,46 @@ a.disabledTab {
 	margin-right: 10px;
 	font-weight: 400;
 }
+
+.tmp-is-manual-data-date-update{
+    margin-left: 40px;
+}
+
+.tmp-is-manual-data-date-update,
+.tmp-is-manual-data-date-update label,
+.tmp-is-manual-data-date-update input{
+    display:inline-block;
+    font-size: 100%;
+}
+.tmp-is-manual-data-date-update input{
+    margin-left:10px;
+}
+
+.control-group.field-is_manual_data_date .control-label,
+.control-group.field-automatic_data_date_start .control-label,
+.control-group.field-data_date_update_period .control-label,
+.control-group.field-automatic_data_date_end .control-label{
+   border-bottom: none;
+}
+
+.control-group.field-is_manual_data_date label,
+.control-group.field-automatic_data_date_start label,
+.control-group.field-data_date_update_period label,
+.control-group.field-automatic_data_date_end label,
+.control-group.field-endless_data_date_update label{
+   display:inline-block;
+   font-size: 100%;
+   margin-left:10px;
+}
+.control-group.field-endless_data_date_update label{
+    padding-left:120px;
+}
+
+.control-group.field-endless_data_date_update .controls input{
+    margin-left:50px
+}
+.field-is_manual_data_date span.conf-label{
+    display:block;
+    border-bottom:1px solid black;
+    width:35%;
+}

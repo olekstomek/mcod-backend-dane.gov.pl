@@ -12,6 +12,7 @@ const $ = global.jQuery;
 const EMBED = 'EMBED';
 const DOCUMENT = 'DOCUMENT';
 const TITLED_LINK = 'TITLED_LINK';
+const EMAIL_LINK = 'EMAIL_LINK';
 
 const Icon = window.wagtail.components.Icon;
 
@@ -26,6 +27,7 @@ const getDomainName = url => url.replace(/(^\w+:|^)\/\//, '').split('/')[0];
 const MUTABILITY = {};
 MUTABILITY[ENTITY_TYPE.LINK] = 'MUTABLE';
 MUTABILITY[TITLED_LINK] = 'MUTABLE';
+MUTABILITY[EMAIL_LINK] = 'MUTABLE';
 MUTABILITY[DOCUMENT] = 'MUTABLE';
 MUTABILITY[ENTITY_TYPE.IMAGE] = 'IMMUTABLE';
 MUTABILITY[EMBED] = 'IMMUTABLE';
@@ -73,6 +75,7 @@ const getSelectionText = (editorState) => {
 const getChooserConfig = (entityType, entity, selectedText) => {
   let url;
   let urlParams;
+  let defaultUrl;
 
   switch (entityType.type) {
   case ENTITY_TYPE.IMAGE:
@@ -101,7 +104,8 @@ const getChooserConfig = (entityType, entity, selectedText) => {
     };
 
   case TITLED_LINK:
-    url = global.chooserUrls.pageChooser;
+    defaultUrl = global.chooserUrls.externalLinkChooser;
+    url = defaultUrl;
     urlParams = {
       page_type: 'wagtailcore.page',
       allow_external_link: true,
@@ -116,9 +120,50 @@ const getChooserConfig = (entityType, entity, selectedText) => {
       urlParams.link_title = data.link_title;
       if (data.id) {
         if (data.parentId !== null) {
-          url = `${global.chooserUrls.pageChooser}${data.parentId}/`;
+          url = `${defaultUrl}${data.parentId}/`;
         } else {
-          url = global.chooserUrls.pageChooser;
+          url = defaultUrl;
+        }
+      } else if (data.url.startsWith('mailto:')) {
+        url = global.chooserUrls.emailLinkChooser;
+        urlParams.link_url = data.url.replace('mailto:', '');
+      } else if (data.url.startsWith('tel:')) {
+        url = global.chooserUrls.phoneLinkChooser;
+        urlParams.link_url = data.url.replace('tel:', '');
+      } else if (data.url.startsWith('#')) {
+        url = global.chooserUrls.anchorLinkChooser;
+        urlParams.link_url = data.url.replace('#', '');
+      } else {
+        url = defaultUrl;
+        urlParams.link_url = data.url;
+      }
+    }
+
+    return {
+      url,
+      urlParams,
+      onload: global.PAGE_CHOOSER_MODAL_ONLOAD_HANDLERS,
+    };
+
+  case EMAIL_LINK:
+    url = global.chooserUrls.emailLinkChooser;
+    urlParams = {
+      page_type: 'wagtailcore.page',
+      allow_external_link: true,
+      allow_email_link: true,
+      allow_phone_link: true,
+      allow_anchor_link: true,
+      link_text: selectedText,
+    };
+
+    if (entity) {
+      const data = entity.getData();
+      urlParams.link_title = data.link_title;
+      if (data.id) {
+        if (data.parentId !== null) {
+          url = `${global.chooserUrls.emailLinkChooser}${data.parentId}/`;
+        } else {
+          url = global.chooserUrls.emailLinkChooser;
         }
       } else if (data.url.startsWith('mailto:')) {
         url = global.chooserUrls.emailLinkChooser;
@@ -201,6 +246,22 @@ const filterEntityData = (entityType, data) => {
       url: data.url,
       link_title: data.link_title
     };
+
+  case EMAIL_LINK:
+    if (data.id) {
+      return {
+        url: data.url,
+        id: data.id,
+        parentId: data.parentId,
+        link_title: data.link_title,
+      };
+    }
+
+    return {
+      url: data.url,
+      link_title: data.link_title
+    };
+
   case DOCUMENT:
     return {
       url: data.url,
@@ -335,9 +396,14 @@ const TitledLink = props => {
     );
 };
 
-
 window.draftail.registerPlugin({
     type: 'TITLED_LINK',
+    source: ExtendedModalWorkflowSource,
+    decorator: TitledLink,
+});
+
+window.draftail.registerPlugin({
+    type: 'EMAIL_LINK',
     source: ExtendedModalWorkflowSource,
     decorator: TitledLink,
 });

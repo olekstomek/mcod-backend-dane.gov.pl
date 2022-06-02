@@ -110,9 +110,8 @@ class ShowcaseDatasetsView(JsonAPIView):
         include_default = ['institution']
 
         def _queryset_extra(self, queryset, id=None, **kwargs):
-            if id:
-                queryset = queryset.query('nested', path='showcases',
-                                          query=Q('term', **{'showcases.id': id}))
+            queryset = queryset.query(
+                'nested', path='showcases', query=Q('term', **{'showcases.id': id})) if id else queryset
             return queryset.filter('term', status='published')
 
 

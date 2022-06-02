@@ -17,7 +17,8 @@ from mcod import settings
 from mcod.core.api.rdf.profiles.dcat_ap import DCATDatasetDeserializer
 from mcod.datasets.models import Dataset
 from mcod.resources.link_validation import download_file
-from mcod.resources.models import Resource, supported_formats_choices
+from mcod.resources.models import RESOURCE_DATA_DATE_PERIODS, Resource, supported_formats_choices
+from mcod.unleash import is_enabled
 
 SUPPORTED_RESOURCE_FORMATS = [i[0] for i in supported_formats_choices()]
 SUPPORTED_RESOURCE_FORMATS.extend(settings.ARCHIVE_EXTENSIONS)
@@ -316,6 +317,13 @@ class XMLResourceSchema(ResourceMixin, XMLPreProcessedSchema):
     has_high_value_data = Bool(data_key='hasHighValueData', allow_none=True)
     has_research_data = Bool(data_key='hasResearchData', allow_none=True)
     supplements = Nested(XMLSupplementSchema, many=True)
+    if is_enabled('S51_xml_harvester_data_date_update.be'):
+        is_manual_data_date = Bool(data_key='isManualDataDate')
+        data_date_update_period = Str(data_key='dataDateUpdatePeriod',
+                                      validate=validate.OneOf(choices=[p[0] for p in RESOURCE_DATA_DATE_PERIODS]))
+        automatic_data_date_start = Date(data_key='autoDataDateStart')
+        automatic_data_date_end = Date(data_key='autoDataDateEnd')
+        endless_data_date_update = Bool(data_key='endlessDataDateUpdate')
 
     class Meta:
         ordered = True
@@ -350,6 +358,12 @@ class XMLResourceSchema(ResourceMixin, XMLPreProcessedSchema):
             msg = _('Resource with id: %(r_id)s, dataset\'s id: %(d_id)s and institution "%(ins)s" was not found.') % {
                 'r_id': int_ident, 'd_id': dataset_int_ident, "ins": organization.title}
             raise ValidationError(msg, field_name='int_ident')
+
+    @validates_schema
+    def validate_auto_data_date(self, data, **kwargs):
+        err = Resource.get_auto_data_date_errors(data, True)
+        if err:
+            raise ValidationError(err.field_name, err.message)
 
 
 class XMLDatasetSchema(XMLPreProcessedSchema):

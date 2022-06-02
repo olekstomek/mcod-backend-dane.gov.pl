@@ -59,6 +59,21 @@ def get_es_index_names():
 ELASTICSEARCH_INDEX_NAMES = get_es_index_names()
 
 
+def get_es_alias_name():
+    import uuid
+    index_prefix = str(uuid.uuid4())
+    worker = os.environ.get('PYTEST_XDIST_WORKER', '')
+    return f'{index_prefix}-{worker}-test-common-alias'
+
+
+ELASTICSEARCH_COMMON_ALIAS_NAME = get_es_alias_name()
+
+
+ELASTICSEARCH_DSL_SEARCH_INDEX_ALIAS = {
+    ELASTICSEARCH_COMMON_ALIAS_NAME: {},
+}
+
+
 def get_email_file_path():
     import uuid
     return '/tmp/app-messages-%s' % str(uuid.uuid4())

@@ -28,7 +28,7 @@ from rules.contrib.admin import (
 from suit.admin import SortableStackedInline as BaseSortableStackedInline, SortableStackedInlineBase
 
 from mcod import settings
-from mcod.histories.models import History, LogEntry
+from mcod.histories.models import LogEntry
 from mcod.reports.tasks import generate_csv
 from mcod.tags.views import TagAutocompleteJsonView
 
@@ -613,7 +613,7 @@ class TrashMixin(ModelAdmin):
         for obj in to_restore:
             obj.is_removed = False
             obj.save()
-        if cant_restore is not None:
+        if cant_restore:
             self.message_user(request, self.cant_restore_msg.format(', '.join([str(obj) for obj in cant_restore])))
         self.message_user(request, _('Successfully restored objects: {}').format(to_restore.count()))
 
@@ -656,14 +656,6 @@ class HistoryMixin:
         if not self.is_history_with_unknown_user_rows:
             queryset = queryset.exclude(actor_id=1)
         return queryset
-
-    def get_history_action_list(self, table_name, obj):
-        if self.is_history_other:
-            return History.objects.get_history_other(table_name, obj.id, self.is_history_with_unknown_user_rows)
-        qs = History.objects.filter(table_name=table_name, row_id=obj.id)
-        if not self.is_history_with_unknown_user_rows:
-            qs = qs.exclude(change_user_id=1)
-        return qs.order_by('-change_timestamp')
 
     def has_history_permission(self, request, obj):
         return self.has_change_permission(request, obj)

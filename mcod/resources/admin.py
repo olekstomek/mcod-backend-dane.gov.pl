@@ -11,6 +11,13 @@ from django.urls import path
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
+from django_celery_beat.models import (
+    ClockedSchedule,
+    CrontabSchedule,
+    IntervalSchedule,
+    PeriodicTask,
+    SolarSchedule,
+)
 
 from mcod.datasets.admin import OrganizationFilter
 from mcod.histories.models import LogEntry
@@ -238,6 +245,7 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):
     TYPE_FILTER = TypeFilter
     resource_supplements = is_enabled('S48_resource_supplements.be')
     is_inlines_js_upgraded = is_enabled('S48_resource_inlines_js_upgrade.be')
+    is_auto_data_date_update = is_enabled('S51_data_date_update.be')
 
     def get_suit_form_tabs(self, obj=None):
         tabs = [
@@ -283,7 +291,7 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):
         'classes': ('suit-tab', 'suit-tab-general'),
         'fields': ('has_research_data',),
     })] if is_enabled('S47_research_data.be') else []
-
+    data_date_fields = ('data_date',)
     add_fieldsets = [
         (None, {
             'classes': ('suit-tab', 'suit-tab-general'),
@@ -299,7 +307,7 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):
         }),
         (None, {
             'classes': ('suit-tab', 'suit-tab-general'),
-            'fields': ('data_date',),
+            'fields': data_date_fields,
         }),
         *has_dynamic_data_fieldset,
         *has_high_value_data_fieldset,
@@ -408,7 +416,15 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):
                     obj.type == RESOURCE_TYPE_API or obj.forced_file_type or
                     (obj.type == RESOURCE_TYPE_FILE and obj.tracker.has_changed('forced_file_type'))):
                 extra_fields = ['forced_file_type']
-
+            show_dd_update_fields = (self.is_auto_data_date_update and obj.type == RESOURCE_TYPE_API and
+                                     not obj.is_imported)
+            dd_update_fields = [
+                'is_manual_data_date',
+                'automatic_data_date_start',
+                'data_date_update_period',
+                'automatic_data_date_end',
+                'endless_data_date_update'
+            ] if show_dd_update_fields else []
             extra_fields = extra_fields if not obj.is_imported else []
             tab_general_fields = (
                 'link',
@@ -423,6 +439,7 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):
                 'dataset',
                 *regions,
                 'data_date',
+                *dd_update_fields,
                 *has_dynamic_data,
                 *has_high_value_data,
                 *has_research_data,
@@ -523,10 +540,19 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):
         if obj and obj.type != "file":
             readonly_fields = (*readonly_fields, 'data_date')
         if obj and obj.is_imported:
+            auto_data_date_fields = []
+            if self.is_auto_data_date_update:
+                auto_data_date_fields = [
+                    'is_manual_data_date_info',
+                    'automatic_data_date_start',
+                    'data_date_update_period',
+                    'automatic_data_date_end',
+                    'endless_data_date_update'
+                ] if obj.is_manual_data_date is False else ['is_manual_data_date_info']
             readonly_fields = (
-                *readonly_fields, 'dataset', 'data_date', 'description', 'description_en', 'show_tabular_view',
-                'slug_en', 'status', 'title', 'title_en', 'is_chart_creation_blocked', 'has_dynamic_data_info',
-                'has_high_value_data_info', 'has_research_data_info')
+                *readonly_fields, 'dataset', 'data_date', *auto_data_date_fields, 'description', 'description_en',
+                'show_tabular_view', 'slug_en', 'status', 'title', 'title_en', 'is_chart_creation_blocked',
+                'has_dynamic_data_info', 'has_high_value_data_info', 'has_research_data_info')
         return tuple(set(readonly_fields))
 
     def render_change_form(self, request, context, add=False, change=False, form_url='', obj=None):
@@ -582,6 +608,10 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):
     def has_research_data_info(self, obj):
         return yesno(obj.has_research_data, 'Tak,Nie,-')
     has_research_data_info.short_description = _('has research data')
+
+    def is_manual_data_date_info(self, obj):
+        return yesno(obj.is_manual_data_date, 'Tak,Nie,-')
+    is_manual_data_date_info.short_description = _('Manual update')
 
     def special_signs_symbols(self, obj):
         return obj.special_signs_symbols or '-'
@@ -745,3 +775,10 @@ class TrashAdmin(HistoryMixin, TrashMixin):
         if request.user.is_superuser:
             return qs
         return qs.filter(dataset__organization_id__in=request.user.organizations.all())
+
+
+admin.site.unregister(IntervalSchedule)
+admin.site.unregister(CrontabSchedule)
+admin.site.unregister(SolarSchedule)
+admin.site.unregister(ClockedSchedule)
+admin.site.unregister(PeriodicTask)

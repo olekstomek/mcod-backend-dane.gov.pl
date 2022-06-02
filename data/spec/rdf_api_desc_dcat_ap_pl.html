@@ -1,4 +1,4 @@
-<p>Welcome to the <strong>DANE.GOV.PL API</strong>, the source of reliable, constantly updated data, made available free
+<p>Welcome to the <strong>DANE.GOV.PL API (DCAT-AP-PL)</strong>, the source of reliable, constantly updated data, made available free
     of charge for re-use.</p>
 
 <p>We have created this API for:</p>
@@ -101,7 +101,12 @@
     vocabulary (DCAT) for describing public sector datasets in Europe. Its basic use case is to enable a cross-data
     portal search for data sets and make public sector data better searchable across borders and sectors. This can be
     achieved by the exchange of descriptions of data sets among data portals.</p>
-
+<h4>DCAT-AP-PL</h4>
+<p>The DCAT application profile for data portals in Poland (DCAT-AP-PL) is an application profile of the Data Catalog
+    Vocabulary and is used to describe the data recorded in Polish data portals (e.g. dane.gov.pl). Its target group are
+    the operators of data portals in Poland (according to DCAT terminology "Data Receivers") and the providers of this
+    data who maintain data catalogs (according to DCAT terminology "Data Senders"). DCAT-AP-PL ensures compatibility
+    with the application profile for data portals in Europe (DCAT-AP). </p>
 
 <h2>About API</h2>
 <h4>Response Content-Type</h4>
@@ -113,22 +118,22 @@
 
 <p>Example - no format specified, JSON-LD by default:</p>
 <ul>
-    <li><a href="https://api.dane.gov.pl/catalog">https://api.dane.gov.pl/catalog</a></li>
+    <li><a href="https://api.dane.gov.pl/catalog?profile=dcat_ap_pl">https://api.dane.gov.pl/catalog?profile=dcat_ap_pl</a></li>
 </ul>
 
 <p>Example - JSON-LD format specified:</p>
 <ul>
-    <li><a href="https://api.dane.gov.pl/catalog.json-ld">https://api.dane.gov.pl/catalog.jsonld</a></li>
+    <li><a href="https://api.dane.gov.pl/catalog.json-ld?profile=dcat_ap_pl">https://api.dane.gov.pl/catalog.jsonld?profile=dcat_ap_pl</a></li>
 </ul>
 
 <p>Example - XML/RDF format specified:</p>
 <ul>
-    <li><a href="https://api.dane.gov.pl/catalog.rdf">https://api.dane.gov.pl/catalog.rdf</a></li>
+    <li><a href="https://api.dane.gov.pl/catalog.rdf?profile=dcat_ap_pl">https://api.dane.gov.pl/catalog.rdf?profile=dcat_ap_pl</a></li>
 </ul>
 
 <p>Example - N-Triples format specified:</p>
 <ul>
-    <li><a href="https://api.dane.gov.pl/catalog.nt">https://api.dane.gov.pl/catalog.nt</a></li>
+    <li><a href="https://api.dane.gov.pl/catalog.nt?profile=dcat_ap_pl">https://api.dane.gov.pl/catalog.nt?profile=dcat_ap_pl</a></li>
 </ul>
 
 <br>
@@ -235,9 +240,7 @@
 
 
 <h4>Data Structure</h4>
-<p>Response data structure is based on <a
-        href="https://joinup.ec.europa.eu/collection/semantic-interoperability-community-semic/solution/dcat-application-profile-data-portals-europe/release/201-0">DCAT-AP
-    2.0.1</a> specification.</p>
+<p>Response data structure is based on <a href="https://dane.gov.pl/dcat-ap-pl/">DCAT-AP-PL 2.1.0</a> specification.</p>
 <h4>Translations</h4>
 <p>By default, all API messages are translated into Polish. You can change this by setting the
     <code>Accept-Language</code> header, for example</p>

@@ -20,7 +20,7 @@ from mcod.lib.widgets import (
     ResourceMapsAndPlotsWidget,
 )
 from mcod.regions.fields import RegionsMultipleChoiceField
-from mcod.resources.models import Resource, ResourceFile, Supplement, SUPPORTED_FILE_EXTENSIONS
+from mcod.resources.models import SUPPORTED_FILE_EXTENSIONS, Resource, ResourceFile, Supplement
 from mcod.special_signs.models import SpecialSign
 from mcod.unleash import is_enabled
 
@@ -208,7 +208,9 @@ class ResourceForm(forms.ModelForm):
     def clean(self):
         data = super().clean()
         dataset = data.get('dataset')
-
+        data_date_err = Resource.get_auto_data_date_errors(data)
+        if data_date_err:
+            self.add_error(data_date_err.field_name, data_date_err.message)
         if data['status'] == 'published' and dataset and dataset.status == 'draft':
             error_message = _(
                 "You can't set status of this resource to published, because it's dataset is still a draft. "

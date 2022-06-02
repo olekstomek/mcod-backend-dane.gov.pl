@@ -9,6 +9,7 @@
 {% block extrajs %}
     {{ block.super }}
     {% include 'admin/datasets/licenses/licenses_script.html' %}
+    {% include 'admin/datasets/extra.html' %}
 
     <script>
         var $updateNotificationRecipientEmailControlGroup = $("div.control-group.form-row.field-update_notification_recipient_email");
@@ -25,12 +26,7 @@
         var $updateNotificationRecipientEmailInput = $("input#id_update_notification_recipient_email");
 
         {% if user.is_superuser %}
-            var $isUpdateNotificationEnabledParent = $("#id_is_update_notification_enabled").parent();
-            var $updateNotificationFrequencyParent = $("#id_update_notification_frequency").parent();
-            $isUpdateNotificationEnabledParent.append('<span style="padding-left: 10px">Do dostawcy zostanie wysłany komunikat przypominający o aktualizacji danych</span>');
-            $updateNotificationFrequencyParent.append('<span style="padding-left: 10px">Liczba dni, według których powiadomienie zostanie wysłane do dostawcy przed planowaną datą aktualizacji danych, licząc od daty pierwszego dodania zbioru.</span>');
             var $updateNotificationFrequencyInput = $("input#id_update_notification_frequency");
-
             var $isUpdateNotificationEnabledControlGroup = $("div.control-group.form-row.field-is_update_notification_enabled");
             var $updateNotificationFrequencyControlGroup = $("div.control-group.form-row.field-update_notification_frequency");
 

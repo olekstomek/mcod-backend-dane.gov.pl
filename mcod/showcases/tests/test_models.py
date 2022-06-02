@@ -5,10 +5,8 @@ from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import IntegrityError
 from django.db.models.query import QuerySet
-from django.test import Client
-from django.utils.encoding import smart_str
 
-from mcod.showcases.models import Showcase
+from mcod.showcases.models import Showcase, ShowcaseProposal
 
 
 class TestShowcaseModel:
@@ -131,30 +129,33 @@ class TestShowcaseModel:
         )
         assert showcase2.main_page_position is None
 
+    def test_showcases_with_decision(self):
+        obj = ShowcaseProposal.objects.create(
+            title='test',
+            notes='test',
+            decision='accepted',
+        )
+        qs = ShowcaseProposal.objects.with_decision()
+        assert obj in qs
 
-class TestShowcaseUserRoles:
-    def test_editor_doesnt_see_showcases_in_admin_panel(self, active_editor):
-        client = Client()
-        client.login(email=active_editor.email, password='12345.Abcde')
-        response = client.get('/')
-        assert response.status_code == 200
-        assert '/showcases/' not in smart_str(response.content)
+    def test_showcases_without_decision(self):
+        obj = ShowcaseProposal.objects.create(
+            title='test',
+            notes='test',
+            decision='',
+        )
+        qs = ShowcaseProposal.objects.without_decision()
+        assert obj in qs
 
-    def test_editor_cant_go_to_showcases_in_admin_panel(self, active_editor):
-        client = Client()
-        client.login(email=active_editor.email, password='12345.Abcde')
-        response = client.get('/showcases/')
-        assert response.status_code == 404
-
-    def test_admin_see_showcases_in_admin_panel(self, admin):
-        client = Client()
-        client.login(email=admin.email, password='12345.Abcde')
-        response = client.get('/')
-        assert response.status_code == 200
-        assert '/showcases/' in smart_str(response.content)
-
-    def test_admin_can_go_to_showcases_in_admin_panel(self, admin):
-        client = Client()
-        client.login(email=admin.email, password='12345.Abcde')
-        response = client.get('/showcases/')
-        assert response.status_code == 200
+    def test_showcaseproposal_cannot_be_converted_again(self):
+        showcase = Showcase.objects.create(
+            title='test showcase 1',
+            notes='test description 1',
+        )
+        obj = ShowcaseProposal.objects.create(
+            title='test',
+            notes='test',
+            decision='accepted',
+            showcase=showcase,
+        )
+        assert not obj.convert_to_showcase()

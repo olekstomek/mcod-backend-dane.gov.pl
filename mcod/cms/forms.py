@@ -128,6 +128,15 @@ class FormPageForm(WagtailAdminPageForm):
 class TitleChooserForm(django.forms.Form):
     link_title = django.forms.CharField(required=False, label=_('Link title'))
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if 'email_address' in self.fields:
+            self.fields['email_address'].label = _('Email address')
+        if 'link_text' in self.fields:
+            self.fields['link_text'].label = _('Link text')
+        if 'phone_number' in self.fields:
+            self.fields['phone_number'].label = _('Phone number')
+
 
 class TitledExternalLinkChooserForm(TitleChooserForm, ExternalLinkChooserForm):
     pass

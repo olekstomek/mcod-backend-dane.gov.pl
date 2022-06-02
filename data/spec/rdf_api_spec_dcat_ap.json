@@ -2,7 +2,7 @@
     "info": {
         "version": "1.0",
         "description": "PLACEHOLDER",
-        "title": "DANE.GOV.PL RDF API"
+        "title": "DANE.GOV.PL RDF API (DCAT-AP)"
     },
     "paths": {
         "/catalog": {
@@ -954,12 +954,17 @@
                     },
                     "skos:inScheme": {
                         "$ref": "#/components/schemas/URIReference"
+                    },
+                    "dct:identifier": {
+                        "$ref": "#/components/schemas/URIReference"
+                    },
+                    "dcat:centroid": {
+                        "type": "string"
                     }
                 },
                 "required": [
                     "@id",
-                    "@type",
-                    "skos:inScheme"
+                    "@type"
                 ]
             },
             "DCTFrequency": {
@@ -1163,6 +1168,9 @@
                     },
                     "dcat:license": {
                         "$ref": "#/components/schemas/URIReference"
+                    },
+                    "foaf:page": {
+                        "$ref": "#/components/schemas/URIReferences"
                     }
                 },
                 "required": [
@@ -1249,6 +1257,9 @@
                                 "type": "string"
                             }
                         ]
+                    },
+                    "foaf:page": {
+                        "$ref": "#/components/schemas/URIReferences"
                     }
                 },
                 "required": [

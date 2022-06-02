@@ -14,6 +14,7 @@ class ShowcaseFactory(factory.django.DjangoModelFactory):
     url = factory.Faker('url')
     views_count = factory.Faker('random_int', min=0, max=500)
     image = factory.django.ImageField(color='blue')
+    illustrative_graphics = factory.django.ImageField(color='blue')
 
     @factory.post_generation
     def datasets(self, create, extracted, **kwargs):
@@ -43,10 +44,22 @@ class ShowcaseProposalFactory(factory.django.DjangoModelFactory):
     notes = factory.Faker('paragraph', nb_sentences=5, locale='pl_PL')
     author = factory.Faker('name')
     url = factory.Faker('url')
+    image = factory.django.ImageField(color='blue')
+    illustrative_graphics = factory.django.ImageField(color='blue')
+    showcase = factory.SubFactory(ShowcaseFactory)
 
     class Meta:
         model = ShowcaseProposal
         django_get_or_create = ('title',)
+
+    @factory.post_generation
+    def datasets(self, create, extracted, **kwargs):
+        if not create:
+            return
+
+        if extracted:
+            for dataset in extracted:
+                self.datasets.add(dataset)
 
 
 factories_registry.register('showcase', ShowcaseFactory)

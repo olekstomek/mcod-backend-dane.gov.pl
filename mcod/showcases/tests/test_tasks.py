@@ -29,6 +29,7 @@ class TestApplicationsTasks:
         )
         obj = ShowcaseProposal.create(data)
         assert obj.is_app
+        assert not obj.is_other
         mail_filename = sorted(os.listdir(settings.EMAIL_FILE_PATH))[-1]
         last_mail_path = f"{settings.EMAIL_FILE_PATH}/{mail_filename}"
         with open(last_mail_path, 'r') as mail_file:

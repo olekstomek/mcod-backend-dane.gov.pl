@@ -1,5 +1,8 @@
+import json
+
 import pytest
 
+from mcod.core.registries import factories_registry
 from mcod.datasets.factories import DatasetFactory
 from mcod.organizations.factories import OrganizationFactory
 from mcod.resources.factories import ResourceFactory
@@ -93,3 +96,17 @@ def inactive_admin():
         is_active=False
     )
     return usr
+
+
+def create_user_with_params(user_type, params=None):
+    _factory = factories_registry.get_factory(user_type)
+    kwargs = {
+        'email': '{}@dane.gov.pl'.format(user_type.replace(' ', '_')),
+        'password': '12345.Abcde',
+    }
+    if params is not None:
+        kwargs.update(json.loads(params))
+    created_user = _factory(
+        **kwargs
+    )
+    return created_user

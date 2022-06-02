@@ -75,12 +75,18 @@ class ShowcaseForm(ModelFormWithKeywords):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        for name in ['mobile_apple_url', 'mobile_google_url', 'desktop_windows_url', 'desktop_linux_url',
-                     'desktop_macos_url']:
-            if name in self.fields:
-                css_class = self.fields[name].widget.attrs.get('class', '')
-                css_class += ' span12'
-                self.fields[name].widget.attrs.update({'placeholder': 'https://', 'class': css_class})
+        url_field_names = [
+            'mobile_apple_url',
+            'mobile_google_url',
+            'desktop_windows_url',
+            'desktop_linux_url',
+            'desktop_macos_url',
+        ]
+        url_fields = [x for x in self.fields if x in url_field_names]
+        for name in url_fields:
+            css_class = self.fields[name].widget.attrs.get('class', '')
+            css_class += ' span12'
+            self.fields[name].widget.attrs.update({'placeholder': 'https://', 'class': css_class})
 
     def clean(self):
         data = super().clean()
@@ -125,11 +131,15 @@ class ShowcaseProposalForm(forms.ModelForm):
             'decision',
             'decision_date',
         ]
+        labels = {
+            'decision': _('Decision made'),
+            'title': _('Name'),
+            'url': _('Application link / Application info page address'),
+        }
         widgets = {
             'comment': forms.Textarea(attrs={'rows': '1', 'class': 'input-block-level'}),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        if 'decision' in self.fields:
-            self.fields['decision'].required = True
+        self.fields['decision'].required = True

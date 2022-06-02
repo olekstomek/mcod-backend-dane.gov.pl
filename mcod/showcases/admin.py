@@ -1,5 +1,4 @@
 from django.contrib import admin, messages
-from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 from modeltrans.translator import get_i18n_field
 
@@ -150,9 +149,6 @@ class ShowcaseAdmin(HistoryMixin, ModelAdmin):
     preview_link.short_description = _('Preview link')
 
     def save_model(self, request, obj, form, change):
-        if 'slug' in form.cleaned_data:
-            if form.cleaned_data['slug'] == '':
-                obj.slug = slugify(form.cleaned_data['title'])
         if not obj.id:
             obj.created_by = request.user
         obj.modified_by = request.user
@@ -343,17 +339,8 @@ class ShowcaseProposalAdmin(ShowcaseProposalMixin, ModelAdmin):
     def admin_url(self):
         return super().admin_url + '?decision=not_taken'
 
-    def get_form(self, request, obj=None, change=False, **kwargs):
-        kwargs['labels'] = {
-            'decision': _('Decision made'),
-            'title': _('Name'),
-            'url': _('Application link / Application info page address'),
-        }
-        return super().get_form(request, obj=obj, change=change, **kwargs)
-
     def save_model(self, request, obj, form, change):
-        if not obj.id:
-            obj.created_by = request.user
+        obj.created_by = request.user if not obj.id and not obj.created_by else obj.created_by
         obj.modified_by = request.user
         create_showcase = obj.tracker.has_changed('decision') and obj.is_accepted and (
             not obj.showcase or obj.showcase.is_permanently_removed)

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-04-29 10:40+0200\n"
+"POT-Creation-Date: 2022-05-18 23:50+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -414,6 +414,15 @@ msgid "Date to"
 msgstr ""
 
 msgid "Link title"
+msgstr ""
+
+msgid "Email address"
+msgstr ""
+
+msgid "Link text"
+msgstr ""
+
+msgid "Phone number"
 msgstr ""
 
 msgid "The page title as you'd like it to be seen by the public"
@@ -2221,19 +2230,13 @@ msgid ""
 "and one lower letter"
 msgstr ""
 
-msgid "Page number must be greater then 0"
-msgstr ""
-
-msgid "Page size must be greater then 0"
-msgstr ""
-
-msgid "Max page size is 100"
-msgstr ""
-
 msgid "Page must be greater then 1"
 msgstr ""
 
 msgid "Page size mus be greater then 0"
+msgstr ""
+
+msgid "Max page size is 100"
 msgstr ""
 
 msgid "Licenses"
@@ -2411,9 +2414,6 @@ msgstr ""
 msgid "Some information about the institution"
 msgstr ""
 
-msgid "Phone number"
-msgstr ""
-
 msgid "Fax number"
 msgstr ""
 
@@ -2541,9 +2541,6 @@ msgid "None"
 msgstr ""
 
 msgid "Percent"
-msgstr ""
-
-msgid "Providers"
 msgstr ""
 
 msgid "Type of data"
@@ -4620,18 +4617,6 @@ msgstr ""
 msgid "Agents added to meeting"
 msgstr ""
 
-msgid "Full name"
-msgstr ""
-
-msgid "Official phone"
-msgstr ""
-
-msgid "Role"
-msgstr ""
-
-msgid "Invalid user state."
-msgstr ""
-
 msgid "Passwords not match"
 msgstr ""
 
@@ -4692,6 +4677,9 @@ msgid "Password reset token"
 msgstr ""
 
 msgid "Charts preview token"
+msgstr ""
+
+msgid "Full name"
 msgstr ""
 
 msgid "Admin status"
@@ -4794,6 +4782,12 @@ msgid "Trash (Meeting)"
 msgstr ""
 
 msgid "Trash (Meetings)"
+msgstr ""
+
+msgid "Official phone"
+msgstr ""
+
+msgid "Role"
 msgstr ""
 
 msgid "Institution1"

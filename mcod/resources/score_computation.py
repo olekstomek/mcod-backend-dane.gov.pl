@@ -42,7 +42,7 @@ class OpennessScoreCalculator:
 
     def get_score(self, resource, format_):
         _, content = content_type_from_file_format(format_.lower())
-        return DEFAULT_OPENNESS_SCORE.get(content, 0)
+        return DEFAULT_OPENNESS_SCORE.get(content, 1)
 
     def get_link_or_file_context(self, link_or_file):
         if isinstance(link_or_file, str) and link_or_file.startswith('http'):

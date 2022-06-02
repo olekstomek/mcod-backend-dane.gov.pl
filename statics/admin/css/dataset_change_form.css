@@ -90,7 +90,7 @@ a.accordion-expander.collapsed::before {
 }
 
 /* UPDATE FREQUENCY NOTIFICATION FIELDS */
-input#id_update_notification_frequency {
+input#id_update_notification_frequency, input[name$="update_notification_frequency"] {
     width: 30px;
 }
 

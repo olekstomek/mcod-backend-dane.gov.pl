@@ -1,8 +1,20 @@
+import json
+from unittest import mock
+from urllib.parse import urlsplit, urlunsplit
+from uuid import uuid4
+
 import pytest
+from falcon.testing import TestClient
 from pytest_bdd import given, parsers, then, when
 
+from mcod.api import app
+from mcod.core.api.versions import VERSIONS
 from mcod.core.registries import factories_registry
-from mcod.watchers.factories import NotificationFactory, SubscriptionFactory
+from mcod.watchers.factories import (
+    NotificationFactory,
+    SearchQueryWatcherFactory,
+    SubscriptionFactory,
+)
 from mcod.watchers.models import SubscribedObjectDoesNotExist, SubscriptionCannotBeCreated
 from mcod.watchers.tasks import update_query_watchers_task
 
@@ -248,6 +260,42 @@ def query_subscription_with_id(s_id, query_url, s_name, context):
     SubscriptionFactory.create(user=context.user, data=data, force_id=int(s_id))
 
 
+@given(parsers.parse('second query subscription with id {s_id:d} for url {query_url} as {s_name}'))
+def second_query_subscription_with_id(s_id, query_url, s_name, context):
+    data = {
+        'name': s_name,
+        'object_name': 'query',
+        'object_ident': query_url
+    }
+    SubscriptionFactory.create(user=context.user, data=data, force_id=int(s_id))
+
+
+@given(parsers.parse('query subscription with id {s_id:d} for url {query_url} with {meta_count} results'))
+def query_subscription_with_id_and_watcher_ref_value(s_id, query_url, meta_count, context):
+    API_VERSION = str(max(VERSIONS))
+    search_query_watcher = SearchQueryWatcherFactory.create(
+        object_name='query',
+        object_ident=query_url,
+        ref_field='/meta/count',
+        customfields={
+            'headers': {
+                'X-API-VERSION': API_VERSION,
+                'api_version': API_VERSION,
+            },
+        }
+    )
+    # TODO remove setting ref_value here, once SearchQueryWatcher has implemented ref_value initialization on creation
+    search_query_watcher.ref_value = meta_count
+    search_query_watcher.save()
+
+    data = {
+        'name': str(uuid4()),
+        'object_name': 'query',
+        'object_ident': query_url,
+    }
+    SubscriptionFactory.create(user=context.user, data=data, watcher=search_query_watcher, force_id=int(s_id))
+
+
 @given(parsers.cfparse('admin has query subscription with id {s_id:d} for url {query_url} as {s_name}'))
 def admin_subscription_of_query(admin, s_id, query_url, s_name, context):
     data = {
@@ -275,4 +323,9 @@ def third_notification_with_id_for_subscription(not_id, sub_id, context):
 
 @then('trigger query watcher update')
 def trigger_query_watcher_update():
-    update_query_watchers_task.s().apply_async()
+    def get(url, headers, allow_redirects=False, verify=True, timeout=1):
+        url = urlunsplit(urlsplit(url)._replace(scheme='')._replace(netloc=''))
+        return TestClient(app).simulate_get(url, headers=headers)
+
+    with mock.patch('requests.get', get), mock.patch('falcon.testing.client.Result.json', lambda self: json.loads(self.text)):
+        update_query_watchers_task()

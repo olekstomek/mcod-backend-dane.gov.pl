@@ -62,6 +62,7 @@ def pytest_runtest_setup(item):
 def pytest_runtest_teardown(item, nextitem):
     import shutil
 
+    from django_celery_beat.models import PeriodicTask
     from django_elasticsearch_dsl.registries import registry
 
     from mcod.core.api.rdf.registry import registry as rdf_registry
@@ -85,6 +86,9 @@ def pytest_runtest_teardown(item, nextitem):
     sparql_marker = item.get_closest_marker('sparql')
     if sparql_marker:
         rdf_registry.delete_named_graph()
+    periodic_task_marker = item.get_closest_marker('periodic_task')
+    if periodic_task_marker:
+        PeriodicTask.objects.all().delete()
 
 
 @pytest.fixture(autouse=True)

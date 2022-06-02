@@ -6,6 +6,8 @@ from mcod.showcases.models import Showcase
 scenarios(
     'features/showcase_details_admin.feature',
     'features/showcases_list_admin.feature',
+    'features/showcaseproposal_details_admin.feature',
+    'features/showcaseproposal_list_admin.feature',
 )
 
 

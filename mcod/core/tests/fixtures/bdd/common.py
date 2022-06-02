@@ -536,6 +536,9 @@ def admin_request_user_unauthenticated(admin_context):
 def api_request_post_data(admin_context, data_type, req_post_data):
     post_data = json.loads(req_post_data)
     default_post_data = {
+        'action': {
+            'action': 'export_to_csv',
+        },
         'alert': {
             "title_pl": "Alert title",
             "description_pl": "alert description",
@@ -801,6 +804,18 @@ def api_request_post_data(admin_context, data_type, req_post_data):
             "url": "http://test.pl",
             "status": "published",
         },
+        'showcaseproposal': {
+            "category": "app",
+            "license_type": "free",
+            "title": "Showcase title",
+            "slug": "showcase-title",
+            "notes": "opis",
+            "url": "https://test.pl",
+            "external_datasets": [
+                {'title': 'example.com', 'url': 'https://example.com'}
+            ],
+            "keywords": ["test"],
+        },
         'user': {
             "email": "",
             "fullname": "",
@@ -969,6 +984,8 @@ def admin_path_is_requested(admin_context):
 
 @when(parsers.parse('admin\'s page {page_url} is requested'))
 @when('admin\'s page <page_url> is requested')
+@then(parsers.parse('admin\'s page {page_url} is requested'))
+@then('admin\'s page <page_url> is requested')
 def admin_page_is_requested(admin_context, page_url):
     admin_context.admin.path = page_url
     admin_context.response = get_response(admin_context)
@@ -976,6 +993,8 @@ def admin_page_is_requested(admin_context, page_url):
 
 @when(parsers.parse('admin\'s page with mocked geo api {page_url} is requested'))
 @when('admin\'s page with mocked geo api <page_url> is requested')
+@then(parsers.parse('admin\'s page with mocked geo api {page_url} is requested'))
+@then('admin\'s page with mocked geo api <page_url> is requested')
 def admin_page_with_mocked_geo_api_is_requested(admin_context, page_url, main_regions_response,
                                                 additional_regions_response):
     client = Client()

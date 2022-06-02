@@ -1,4 +1,5 @@
 import csv
+import datetime
 import glob
 import json
 import logging
@@ -6,13 +7,18 @@ import os
 import re
 import shutil
 import tempfile
+from calendar import monthrange
+from collections import namedtuple
 from io import BytesIO
+from pydoc import locate
 
 import magic
+import pytz
 import unicodecsv
 from celery.signals import task_failure, task_postrun, task_prerun, task_success
 from constance import config
 from csvwlib import CSVWConverter
+from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.postgres.fields import JSONField
@@ -30,6 +36,7 @@ from django.utils.deconstruct import deconstructible
 from django.utils.functional import cached_property
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _, override
+from django_celery_beat.models import CrontabSchedule, IntervalSchedule, PeriodicTask
 from django_celery_results.models import TaskResult as TaskResultOrig
 from elasticsearch_dsl.connections import Connections
 from mimeparse import parse_mime_type
@@ -65,6 +72,7 @@ from mcod.resources.managers import (
 )
 from mcod.resources.score_computation import get_score
 from mcod.resources.signals import (
+    cancel_data_date_update,
     revalidate_resource,
     update_chart_resource,
     update_dataset_file_archive,
@@ -74,6 +82,7 @@ from mcod.resources.tasks import (
     process_resource_file_task,
     process_resource_from_url_task,
     process_resource_res_file_task,
+    update_last_day_data_date,
     validate_link,
 )
 from mcod.unleash import is_enabled
@@ -117,6 +126,9 @@ def get_coltype(col, table_schema):
     fields = table_schema.get('fields')
     col_index = int(col.replace("col", "")) - 1
     return fields[col_index]['type']
+
+
+DataError = namedtuple('DataError', ['field_name', 'message'])
 
 
 @deconstructible
@@ -183,6 +195,11 @@ RESOURCE_TYPE_FILE_CHANGE_LABEL = _('File - change')
 RESOURCE_FORCED_TYPE = (
     (RESOURCE_TYPE_API_CHANGE, RESOURCE_TYPE_API_CHANGE_LABEL),
     (RESOURCE_TYPE_FILE_CHANGE, RESOURCE_TYPE_FILE_CHANGE_LABEL),
+)
+RESOURCE_DATA_DATE_PERIODS = (
+    ('daily', _('daily')),
+    ('weekly', _('weekly')),
+    ('monthly', _('monthly')),
 )
 
 
@@ -336,6 +353,7 @@ class Resource(ExtendedModel):
         ),
         'removed': (
             rdf_signals.delete_graph_with_related_update,
+            cancel_data_date_update,
             search_signals.remove_document_with_related,
             update_dataset_file_archive,
             core_signals.notify_removed
@@ -440,6 +458,12 @@ class Resource(ExtendedModel):
     regions = RegionManyToManyField(
         'regions.Region', blank=True, related_name='region_resources',
         related_query_name='resource', through='regions.ResourceRegion', verbose_name=_('Regions'))
+    is_manual_data_date = models.BooleanField(verbose_name=_('Manual update'), default=True)
+    data_date_update_period = models.CharField(verbose_name=_('Data date update period'),
+                                               choices=RESOURCE_DATA_DATE_PERIODS, max_length=10, null=True, blank=True)
+    automatic_data_date_start = models.DateField(verbose_name=_('Data date start date update'), blank=True, null=True)
+    automatic_data_date_end = models.DateField(verbose_name=_('Data date end date update'), blank=True, null=True)
+    endless_data_date_update = models.BooleanField(verbose_name=_('Endless data date update'), default=False)
 
     def __str__(self):
         return self.title
@@ -677,11 +701,10 @@ class Resource(ExtendedModel):
 
     @property
     def converted_formats(self):
-        items = [
-            'csv' if self.csv_converted_file else None,
-            'jsonld' if self.jsonld_converted_file else None,
+        return [
+            rf.format
+            for rf in self.other_files
         ]
-        return [item for item in items if item]
 
     @property
     def converted_formats_str(self):
@@ -689,7 +712,13 @@ class Resource(ExtendedModel):
 
     @property
     def formats_list(self):
-        return [self.format] + self.converted_formats if self.format else self.converted_formats
+        formats = []
+        if self.format:
+            formats.append(self.format)
+        elif self._main_file and self._main_file.format:
+            formats.append(self._main_file.format)
+        formats.extend(self.converted_formats)
+        return formats
 
     @property
     def download_url(self):
@@ -1216,6 +1245,123 @@ class Resource(ExtendedModel):
         ids = list(self.all_regions.values_list('pk', flat=True))
         return Region.objects.assigned_regions(ids)
 
+    def schedule_data_date_update(self):
+        period_method = {
+            'daily': 'schedule_interval_data_date_update',
+            'weekly': 'schedule_interval_data_date_update',
+            'monthly': 'schedule_crontab_data_date_update'
+        }
+        if self.is_manual_data_date is False and self.type == 'api':
+            getattr(self, period_method[self.data_date_update_period])(
+                schedule_date=self.automatic_data_date_start
+            )
+
+    def schedule_interval_data_date_update(self, *args, **kwargs):
+        logger.debug(f'Scheduling interval data date update for resource with id {self.pk}')
+        schedule, _ = IntervalSchedule.objects.get_or_create(
+            every=1 if self.data_date_update_period == 'daily' else 7,
+            period=IntervalSchedule.DAYS
+        )
+        task_kwargs = {'interval': schedule}
+        self._create_schedule_periodic_task(task_kwargs=task_kwargs)
+
+    def schedule_crontab_data_date_update(self, schedule_date):
+        logger.debug(f'Scheduling crontab data date update for resource with id {self.pk}')
+        task_kwargs = {}
+        if self.is_last_day_of_month(schedule_date):
+            crontab_kwargs = {
+                'minute': '30',
+                'hour': '0',
+                'day_of_week': '*',
+                'day_of_month': str(schedule_date.day),
+                'month_of_year': str(schedule_date.month),
+                'timezone': pytz.timezone(settings.TIME_ZONE)
+            }
+            task_kwargs = {'one_off': True,
+                           'task': 'mcod.resources.tasks.update_last_day_data_date'}
+            self.cancel_data_date_update()
+        else:
+            crontab_kwargs = {
+                'minute': '30',
+                'hour': '0',
+                'day_of_week': '*',
+                'day_of_month': str(schedule_date.day),
+                'month_of_year': '*',
+                'timezone': pytz.timezone(settings.TIME_ZONE)
+            }
+        schedule, _ = CrontabSchedule.objects.get_or_create(**crontab_kwargs)
+        task_kwargs['crontab'] = schedule
+        self._create_schedule_periodic_task(task_kwargs=task_kwargs, schedule_date=schedule_date)
+
+    def is_last_day_of_month(self, schedule_date):
+        m_range = monthrange(schedule_date.year, schedule_date.month)
+        day_of_month = schedule_date.day
+        return m_range[1] == day_of_month
+
+    def _create_schedule_periodic_task(self, task_kwargs=None, schedule_date=None):
+        if schedule_date is None:
+            schedule_date = self.automatic_data_date_start
+        obj_kwargs = {
+            'task': 'mcod.resources.tasks.update_data_date',
+            'args': json.dumps([self.pk]),
+            'queue': 'periodic'
+        }
+        if task_kwargs:
+            obj_kwargs.update(task_kwargs)
+        start_dt = datetime.datetime.combine(self.automatic_data_date_start, datetime.time(0, 0))
+        localized_start = pytz.timezone('Europe/Warsaw').localize(start_dt)
+        obj_kwargs['start_time'] = localized_start
+        if self.automatic_data_date_end:
+            end_dt = datetime.datetime.combine(self.automatic_data_date_end, datetime.time(1, 0))
+            localized_end = pytz.timezone('Europe/Warsaw').localize(end_dt)
+            obj_kwargs['expires'] = localized_end
+        PeriodicTask.objects.update_or_create(
+            name=self.data_date_task_name, defaults=obj_kwargs
+        )
+        if now().date() == schedule_date:
+            update_task = obj_kwargs['task']
+            locate(update_task).s(self.pk, False).apply_async(countdown=1)
+
+    def cancel_data_date_update(self):
+        try:
+            PeriodicTask.objects.get(name=self.data_date_task_name).delete()
+        except PeriodicTask.DoesNotExist:
+            pass
+
+    @property
+    def data_date_task_name(self):
+        return f'Data date update for resource {self.pk}.'
+
+    @staticmethod
+    def get_auto_data_date_errors(data, is_xml_import=False):
+        manual_data_date = data.get('is_manual_data_date')
+        if (not is_enabled('S51_xml_harvester_data_date_update.be') and is_xml_import) or\
+                manual_data_date or manual_data_date is None:
+            return
+
+        dd_start = data.get('automatic_data_date_start')
+        dd_end = data.get('automatic_data_date_end')
+        dd_update_period = data.get('data_date_update_period')
+        dd_endless_update = data.get('endless_data_date_update')
+
+        required_msg = _('This field is required.')
+
+        if not dd_start:
+            return DataError('automatic_data_date_start', required_msg)
+
+        if not dd_update_period:
+            return DataError('data_date_update_period', required_msg)
+
+        if not any([dd_endless_update, dd_end]):
+            return DataError('automatic_data_date_end', _('Please provide specific date or set endless update.'))
+
+        if all([dd_endless_update, dd_end]):
+            return DataError('automatic_data_date_end',
+                             _('Data date end cant be chosen when endless data date update is selected. Please choose one.'))
+
+        if dd_start and dd_end and dd_end <= dd_start:
+            return DataError('automatic_data_date_end', _('Update end date cant be earlier than start date.'))
+
 
 class Chart(ExtendedModel):
     SIGNALS_MAP = {
@@ -1368,7 +1514,7 @@ class ResourceFile(models.Model):
         if format_ == 'jsonstat':
             format_ = 'json'
         if format_ is None:
-            return 0
+            return 1
         return get_score(self.file, format_)
 
     @classmethod
@@ -1433,6 +1579,16 @@ def handle_resource_post_save(sender, instance, *args, **kwargs):
 @receiver(revalidate_resource, sender=Resource)
 def process_resource(sender, instance, *args, **kwargs):
     sender.log_debug(instance, 'Processing resource', 'pre_save')
+    is_manual_data_date_changed =\
+        is_enabled('S51_data_date_update.be') and instance.tracker.has_changed('is_manual_data_date')
+    auto_data_date_fields = ['is_manual_data_date', 'automatic_data_date_start', 'data_date_update_period',
+                             'automatic_data_date_end', 'endless_data_date_update']
+    auto_data_date_fields_changed = any([instance.tracker.has_changed(f) for f in auto_data_date_fields])
+    if is_enabled('S51_data_date_update.be') and not instance.is_manual_data_date and\
+            (instance.state_restored or auto_data_date_fields_changed):
+        instance.schedule_data_date_update()
+    elif is_manual_data_date_changed and instance.is_manual_data_date:
+        instance.cancel_data_date_update()
     if instance.is_link_updated:
         process_resource_from_url_task.s(instance.id, update_file_archive=True,
                                          forced_file_changed=instance.has_forced_file_changed).apply_async(countdown=2)
@@ -1469,6 +1625,11 @@ def update_dataset_watcher(sender, instance, *args, state=None, **kwargs):
 
 def resource_special_signs_changed(sender, instance, *args, **kwargs):
     process_resource_file_data_task.s(instance.id).apply_async()
+
+
+@receiver(cancel_data_date_update, sender=Resource)
+def cancel_data_date_update_schedule(sender, instance, *args, **kwargs):
+    instance.cancel_data_date_update()
 
 
 @receiver(post_save, sender=ResourceFile)
@@ -1633,6 +1794,17 @@ def process_resource_file_data_task_postrun_handler(sender, task_id, task, signa
         'update_revalidated_data': True,
     })
     update_resource(task_id, **kwargs)
+
+
+@task_postrun.connect(sender=update_last_day_data_date)
+def reschedule_last_day_of_month_dd_update(sender, task_id, task, signal, **kwargs):
+    resource_id = int(kwargs['args'][0])
+    resource = Resource.objects.get(pk=resource_id)
+    result = kwargs['result']
+    current_date = result.get('current_date')
+    if current_date:
+        new_schedule_date = current_date + relativedelta(months=1)
+        resource.schedule_crontab_data_date_update(new_schedule_date)
 
 
 @task_success.connect(sender=validate_link)

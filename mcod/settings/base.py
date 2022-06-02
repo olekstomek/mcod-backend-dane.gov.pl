@@ -87,6 +87,7 @@ INSTALLED_APPS = [
     'rules.apps.AutodiscoverRulesConfig',
     'nested_admin',
     'django_celery_results',
+    'django_celery_beat',
     'localflavor',
     'django.contrib.admin',
     'constance',
@@ -252,6 +253,7 @@ HARVESTER_XML_VERSION_TO_SCHEMA_PATH = {
     '1.5': HARVESTER_DATA_DIR.path('xml_import_otwarte_dane_1_5.xsd').root,
     '1.6': HARVESTER_DATA_DIR.path('xml_import_otwarte_dane_1_6.xsd').root,
     '1.7': HARVESTER_DATA_DIR.path('xml_import_otwarte_dane_1_7.xsd').root,
+    '1.8': HARVESTER_DATA_DIR.path('xml_import_otwarte_dane_1_8.xsd').root,
 }
 
 HARVESTER_IMPORTERS = {
@@ -828,10 +830,6 @@ CELERY_BEAT_SCHEDULE = {
     'every-2-minute': {
         'task': 'mcod.counters.tasks.save_counters',
         'schedule': 120,
-    },
-    'every-3-minutes': {
-        'task': 'mcod.histories.tasks.index_history',
-        'schedule': 180,
     },
     'every-5-minutes': {
         'task': 'mcod.searchhistories.tasks.save_searchhistories_task',
@@ -1428,6 +1426,7 @@ CMS_RICH_TEXT_FIELD_FEATURES = [
     'subscript',
     'strikethrough'
     'document-link',
+    'email-link',
     'lang-pl',
     'lang-en',
 ]
@@ -1436,8 +1435,9 @@ WAGTAILADMIN_RICH_TEXT_EDITORS = {
     'default': {
         'WIDGET': 'wagtail.admin.rich_text.DraftailRichTextArea',
         'OPTIONS': {
-            'features': ['bold', 'italic', 'h2', 'h3', 'h4', 'ol', 'ul', 'hr',
-                         'image', 'embed', 'titled_link', 'document-link', 'lang-en', 'lang-pl']
+            'features': [
+                'bold', 'italic', 'h2', 'h3', 'h4', 'ol', 'ul', 'hr',
+                'image', 'embed', 'titled_link', 'document-link', 'email-link', 'lang-en', 'lang-pl']
         }
     },
 }

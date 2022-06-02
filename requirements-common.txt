@@ -120,7 +120,7 @@ dicttoxml==1.7.4
 csvwlib==0.3.2
 django-fancy-cache==1.1.0
 tifffile
-django-auditlog==1.0a1
+django-auditlog==1.0.0
 netcdf4==1.5.7
 cachier==1.5.4
 wagtailvideos==2.10.9

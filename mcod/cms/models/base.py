@@ -339,11 +339,7 @@ class BasePage(ApiMixin, Page, metaclass=BasePageMeta):
         return redirect(_url)
 
     @staticmethod
-    def on_post_save(sender, instance, created, raw, using, update_fields, **kwargs):
-        if getattr(instance, 'is_indexable', False):
-            if instance.live:
-                update_document.send(sender, instance)
-
+    def clear_cache(instance, signal_name):
         if getattr(instance, 'url_path', None):
             urls = [
                 f'*{instance.url_path}',
@@ -357,7 +353,15 @@ class BasePage(ApiMixin, Page, metaclass=BasePageMeta):
                 ]
             removed_cache_items = list(find_urls(urls, purge=True))
             for url, key, count in removed_cache_items:
-                mcod_logger.debug('URL \"%s\" removed from cache on post_save \"%s\" page signal.' % (url, instance))
+                mcod_logger.debug('URL "%s" removed from cache on %s "%s" page signal.', url, signal_name, instance)
+
+    @staticmethod
+    def on_post_save(sender, instance, **kwargs):
+        if getattr(instance, 'is_indexable', False):
+            if instance.live:
+                update_document.send(sender, instance)
+        if hasattr(sender, 'clear_cache'):
+            sender.clear_cache(instance, 'post_save')
 
     @staticmethod
     def on_pre_delete(sender, instance, using, **kwargs):
@@ -365,10 +369,14 @@ class BasePage(ApiMixin, Page, metaclass=BasePageMeta):
             remove_document.send(sender, instance)
 
     @staticmethod
-    def on_unpublish(sender, **kwargs):
-        instance = kwargs['instance']
+    def on_unpublish(sender, instance, **kwargs):
         if getattr(instance, 'is_indexable', False):
             remove_document.send(sender, instance)
+
+    @staticmethod
+    def on_post_page_move(sender, instance, **kwargs):
+        if hasattr(sender, 'clear_cache'):
+            sender.clear_cache(instance, 'post_page_move')
 
     class Meta:
         abstract = True

@@ -4,6 +4,7 @@ from copy import deepcopy
 
 from celery import shared_task
 from django.apps import apps
+from django.utils.timezone import now
 
 from mcod.resources.indexed_data import FileEncodingValidationError
 from mcod.resources.link_validation import check_link_scheme
@@ -324,3 +325,27 @@ def process_resource_res_file_task(resource_file_id, update_link=True, update_fi
         'path': resource_file.file.path,
         'url': resource.file_url
     })
+
+
+@shared_task
+def update_data_date(resource_id, update_es=True):
+    Resource = apps.get_model('resources', 'Resource')
+    res_q = Resource.objects.filter(pk=resource_id)
+    res = res_q.first()
+    if res.is_manual_data_date is False:
+        current_dt = now().date()
+        res_q.update(data_date=current_dt)
+        logger.debug(f'Updated data date for resource with id {resource_id} with date {current_dt}')
+        if update_es:
+            res.update_es_and_rdf_db()
+        return {
+            'current_date': current_dt
+        }
+    return {
+        'current_date': None
+    }
+
+
+@shared_task
+def update_last_day_data_date(resource_id):
+    update_data_date(resource_id)
