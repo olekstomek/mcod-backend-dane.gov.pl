@@ -114,5 +114,5 @@ class TestTasks:
             resource_id=resource_with_counters.pk).aggregate(views_sum=Sum('count'))['views_sum']
         downloads_count = ResourceDownloadCounter.objects.filter(
             resource_id=resource_with_counters.pk).aggregate(downloads_sum=Sum('count'))['downloads_sum']
-        assert int(resource_data[10]) == views_count
-        assert int(resource_data[11]) == downloads_count
+        assert int(resource_data[13]) == views_count
+        assert int(resource_data[14]) == downloads_count

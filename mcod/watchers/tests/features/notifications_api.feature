@@ -41,10 +41,10 @@ Feature: Notifications API
   Scenario: Notifications bulk update
     Given logged active user
     And subscription with id 2001 of dataset with id 1001 as dataset-1001
-    And second subscription with id 2002 of dataset with id 1002 as dataset-1002
+    And subscription with id 2002 of dataset with id 1002 as dataset-1002
 
     And notification with id 3000 for subscription with id 2001
-    And second notification with id 3001 for subscription with id 2002
+    And notification with id 3001 for subscription with id 2002
 
     When api request path is /auth/notifications
     And send api request and fetch the response
@@ -102,11 +102,6 @@ Feature: Notifications API
     And api's response status code is 200
     And api's response body field /meta/count is 0
 
-    And api request path is /auth/notifications?object_name=article
-    And send api request and fetch the response
-    And api's response status code is 200
-    And api's response body field /meta/count is 0
-
     And api request path is /auth/notifications?object_name=dataset&object_id=1003
     And send api request and fetch the response
     And api's response status code is 200
@@ -132,10 +127,10 @@ Feature: Notifications API
   Scenario: Included
     Given logged active user
     And subscription with id 2004 of dataset with id 1004 as dataset-1004
-    And second subscription with id 2005 of dataset with id 1005 as dataset-1005
+    And subscription with id 2005 of dataset with id 1005 as dataset-1005
     And notification with id 3003 for subscription with id 2004
-    And second notification with id 3004 for subscription with id 2005
-    And third notification with id 3005 for subscription with id 2005
+    And notification with id 3004 for subscription with id 2005
+    And notification with id 3005 for subscription with id 2005
 
     When api request path is /auth/notifications
     And send api request and fetch the response
@@ -159,7 +154,7 @@ Feature: Notifications API
   Scenario: Notification type object_restored (soft_remove)
     Given logged active user
     And subscription with id 2006 of dataset with id 1006 as dataset-1006
-    And second subscription with id 2007 of dataset with id 1007 as dataset-1007
+    And subscription with id 2007 of dataset with id 1007 as dataset-1007
 
     When api request path is /auth/notifications
     And send api request and fetch the response
@@ -187,7 +182,7 @@ Feature: Notifications API
   Scenario: Notification type object_restored (status chage)
     Given logged active user
     And subscription with id 2008 of dataset with id 1008 as dataset-1008
-    And second subscription with id 2009 of dataset with id 1009 as dataset-1009
+    And subscription with id 2009 of dataset with id 1009 as dataset-1009
 
     When api request path is /auth/notifications
     And send api request and fetch the response
@@ -216,9 +211,9 @@ Feature: Notifications API
     Given logged active user
 
     And subscription with id 2010 of dataset with id 1010 as dataset-1010
-    And second subscription with id 2011 of dataset with id 1011 as dataset-1011
+    And subscription with id 2011 of dataset with id 1011 as dataset-1011
     And notification with id 3006 for subscription with id 2010
-    And second notification with id 3007 for subscription with id 2011
+    And notification with id 3007 for subscription with id 2011
 
     When api request method is DELETE
     And api request path is /auth/notifications/status
@@ -248,11 +243,11 @@ Feature: Notifications API
   Scenario: Remove notifications in bulk
     Given logged active user
     And subscription with id 2012 of dataset with id 1012 as dataset-1012
-    And second subscription with id 2013 of dataset with id 1013 as dataset-1013
-    And third subscription with id 2014 of dataset with id 1014 as dataset-1014
+    And subscription with id 2013 of dataset with id 1013 as dataset-1013
+    And subscription with id 2014 of dataset with id 1014 as dataset-1014
     And notification with id 3008 for subscription with id 2012
-    And second notification with id 3009 for subscription with id 2013
-    And third notification with id 3010 for subscription with id 2014
+    And notification with id 3009 for subscription with id 2013
+    And notification with id 3010 for subscription with id 2014
 
     When api request method is DELETE
     And api request path is /auth/notifications
@@ -285,8 +280,7 @@ Feature: Notifications API
 #    And subscription with id 999 of article with id 1112 as article-1112
 #    And restore dataset with id 900
 #
-#    When api request method is GET
-#    And api request path is /auth/notifications
+#    When api request path is /auth/notifications
 #    And send api request and fetch the response
 #    Then api's response status code is 200
 #    And api's response body field /meta/count is 1
@@ -303,8 +297,7 @@ Feature: Notifications API
 #    And subscription with id 999 of dataset with id 900 as dataset-900
 #    And restore resource with id 3000
 #
-#    When api request method is GET
-#    And api request path is /auth/notifications
+#    When api request path is /auth/notifications
 #    And send api request and fetch the response
 #    Then api's response status code is 200
 #    And api's response body field /meta/count is 1
@@ -317,8 +310,7 @@ Feature: Notifications API
 #    And dataset with id 900
 #    And subscription with id 999 of article with id 1112 as article-1112
 #    And add dataset with id 900 to article with id 1112
-#    When api request method is GET
-#    And api request path is /auth/notifications
+#    When api request path is /auth/notifications
 #    And send api request and fetch the response
 #    Then api's response status code is 200
 #    And api's response body field /meta/count is 1
@@ -333,8 +325,7 @@ Feature: Notifications API
 #    And add dataset with id 900 to article with id 1112
 #    And subscription with id 999 of article with id 1112 as article-1112
 #    And remove dataset with id 900
-#    When api request method is GET
-#    And api request path is /auth/notifications
+#    When api request path is /auth/notifications
 #    And send api request and fetch the response
 #    Then api's response status code is 200
 #    And api's response body field /meta/count is 1
@@ -349,8 +340,7 @@ Feature: Notifications API
 #    And add dataset with id 900 to article with id 1112
 #    And subscription with id 999 of article with id 1112 as article-1112
 #    And remove dataset with id 900 from article with id 1112
-#    When api request method is GET
-#    And api request path is /auth/notifications
+#    When api request path is /auth/notifications
 #    And send api request and fetch the response
 #    Then api's response status code is 200
 #    And api's response body field /meta/count is 1
@@ -365,8 +355,7 @@ Feature: Notifications API
 #    And add dataset with id 900 to article with id 1112
 #    And subscription with id 999 of article with id 1112 as article-1112
 #    And set title to changed-title on dataset with id 900
-#    When api request method is GET
-#    And api request path is /auth/notifications
+#    When api request path is /auth/notifications
 #    And send api request and fetch the response
 #    Then api's response status code is 200
 #    And api's response body field /meta/count is 1

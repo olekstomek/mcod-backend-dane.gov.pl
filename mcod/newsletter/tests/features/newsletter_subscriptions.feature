@@ -1,8 +1,7 @@
 Feature: Newsletter subscriptions
     Scenario: User can fetch newsletter rules info
     Given logged active user
-    When api request method is GET
-    And api request path is /1.0/auth/newsletter/subscribe/
+    When api request path is /1.0/auth/newsletter/subscribe/
     And send api request and fetch the response
     Then api's response status code is 200
     And api's response body has field data/attributes/personal_data_processing

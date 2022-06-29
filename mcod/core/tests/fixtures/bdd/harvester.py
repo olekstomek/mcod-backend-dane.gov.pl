@@ -10,7 +10,7 @@ from pytest_bdd import given, parsers, then, when
 
 from mcod.core.registries import factories_registry
 from mcod.datasets.models import Dataset
-from mcod.harvester.factories import CKANDataSourceFactory, XMLDataSourceFactory
+from mcod.harvester.factories import CKANDataSourceFactory
 from mcod.harvester.models import DataSource, DataSourceImport
 from mcod.resources.models import Resource
 
@@ -20,19 +20,9 @@ def active_ckan_datasource_with_id(obj_id):
     return CKANDataSourceFactory.create(pk=obj_id, status='active')
 
 
-@given(parsers.parse('XML datasource with id {obj_id:d} active'))
-def active_xml_datasource_with_id(obj_id):
-    return XMLDataSourceFactory.create(pk=obj_id, status='active')
-
-
 @given(parsers.parse('CKAN datasource with id {obj_id:d} inactive'))
 def inactive_ckan_datasource_with_id(obj_id):
     return CKANDataSourceFactory.create(pk=obj_id, status='inactive')
-
-
-@given(parsers.parse('XML datasource with id {obj_id:d} inactive'))
-def inactive_xml_datasource_with_id(obj_id):
-    return XMLDataSourceFactory.create(pk=obj_id, status='inactive')
 
 
 @given(parsers.parse('datasource with id {obj_id:d} attribute {attr_name} is set to {attr_value}'))
@@ -114,7 +104,6 @@ def datasource_imported_resources(obj_id):
 
 
 @when(parsers.parse('xml datasource with id {obj_id:d} of version {version} finishes importing objects'))
-@when('xml datasource with id <obj_id> of version <version> finishes importing objects')
 @requests_mock.Mocker(kw='mock_request')
 def xml_datasource_finishes_import(
         obj_id, version, harvester_decoded_xml_1_2_import_data, harvester_decoded_xml_1_4_import_data,
@@ -158,7 +147,6 @@ def xml_datasource_finishes_import(
 
 
 @then(parsers.parse('xml datasource with id {obj_id:d} of version {version} created all data in db'))
-@then('xml datasource with id <obj_id> of version <version> created all data in db')
 def xml_datasource_imported_resources(obj_id, version):
     obj = DataSourceImport.objects.get(datasource_id=obj_id)
     assert obj.error_desc == ''
@@ -244,7 +232,6 @@ def dcat_datasource_imported_resources(obj_id):
 
 
 @when(parsers.parse('admin\'s harvester page {page_url} is requested'))
-@when('admin\'s harvester page <page_url> is requested')
 @requests_mock.Mocker(kw='mock_request')
 def admin_harvester_page_is_requested(admin_context, page_url, **kwargs):
     mock_request = kwargs['mock_request']

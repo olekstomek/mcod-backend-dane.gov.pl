@@ -10,11 +10,7 @@ from mcod import settings
 from mcod.core.api.rdf import signals as rdf_signals
 from mcod.core.api.search import signals as search_signals
 from mcod.core.db.models import BaseExtendedModel
-from mcod.tags.signals import (
-    update_related_applications,
-    update_related_articles,
-    update_related_datasets,
-)
+from mcod.tags.signals import update_related_applications, update_related_datasets
 
 User = get_user_model()
 
@@ -27,19 +23,15 @@ STATUS_CHOICES = [
 class Tag(BaseExtendedModel):
     SIGNALS_MAP = {
         'updated': (update_related_datasets,
-                    update_related_articles,
                     update_related_applications
                     ),
         'published': (update_related_datasets,
-                      update_related_articles,
                       update_related_applications
                       ),
         'restored': (update_related_datasets,
-                     update_related_articles,
                      update_related_applications
                      ),
         'removed': (update_related_datasets,
-                    update_related_articles,
                     update_related_applications
                     ),
     }
@@ -110,17 +102,3 @@ def update_tag_in_datasets(sender, instance, *args, **kwargs):
     for dataset in instance.datasets.all():
         search_signals.update_document.send(dataset._meta.model, dataset)
         rdf_signals.update_graph.send(dataset._meta.model, dataset)
-
-
-@receiver(update_related_articles, sender=Tag)
-def update_tag_in_articles(sender, instance, *args, **kwargs):
-    sender.log_debug(instance, 'Updating related articles', 'update_related_articles')
-    for app in instance.applications.all():
-        search_signals.update_document.send(app._meta.model, app)
-
-
-@receiver(update_related_applications, sender=Tag)
-def update_tag_in_applications(sender, instance, *args, **kwargs):
-    sender.log_debug(instance, 'Updating related applications', 'update_related_applications')
-    for article in instance.articles.all():
-        search_signals.update_document.send(article._meta.model, article)

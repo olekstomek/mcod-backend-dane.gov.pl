@@ -39,7 +39,7 @@ Feature: Create archive containing resources files
 
   Scenario: Switching resource datasets updates dataset's archive
     Given dataset with id 1998
-    And second dataset with id 2001
+    And dataset with id 2001
     And resource with id 998 and dataset_id is 1998
     Then set dataset_id to 2001 on resource with id 998
     And Dataset with id 1998 has no archive assigned

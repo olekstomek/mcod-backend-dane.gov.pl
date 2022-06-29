@@ -2,8 +2,7 @@ Feature: User schedule items list API
   Scenario: Test that user schedule item list endpoint can be filtered by planned state
     Given logged admin user
     And 3 user schedule items with state planned
-    When api request method is GET
-    And api request path is /auth/user_schedule_items?state=planned
+    When api request path is /auth/user_schedule_items?state=planned
     Then send api request and fetch the response
     And api's response status code is 200
     And api's response body field meta/count is 3
@@ -12,8 +11,7 @@ Feature: User schedule items list API
   Scenario: Test that user schedule item list endpoint can be filtered by implemented state
     Given logged admin user
     And 3 user schedule items with state implemented
-    When api request method is GET
-    And api request path is /auth/user_schedule_items?state=implemented
+    When api request path is /auth/user_schedule_items?state=implemented
     Then send api request and fetch the response
     And api's response status code is 200
     And api's response body field meta/count is 3
@@ -22,8 +20,7 @@ Feature: User schedule items list API
   Scenario: Test that user schedule item list endpoint can be filtered by archived state
     Given logged admin user
     And 3 user schedule items with state archived
-    When api request method is GET
-    And api request path is /auth/user_schedule_items?state=archived
+    When api request path is /auth/user_schedule_items?state=archived
     Then send api request and fetch the response
     And api's response status code is 200
     And api's response body field meta/count is 3
@@ -32,8 +29,7 @@ Feature: User schedule items list API
   Scenario: Test that user schedule item list endpoint returns error message if invalid state is passed
     Given logged admin user
     And 3 user schedule items with state planned
-    When api request method is GET
-    And api request language is pl
+    When api request language is pl
     And api request path is /auth/user_schedule_items?state=invalid
     Then send api request and fetch the response
     And api's response status code is 422
@@ -44,8 +40,7 @@ Feature: User schedule items list API
     Given logged admin user
     And 3 user schedule items with state planned
     And user_schedule_item created with params {"id": 999, "dataset_title": "Zbiór testowy"}
-    When api request method is GET
-    And api request language is pl
+    When api request language is pl
     And api request path is /auth/user_schedule_items?q=testow
     Then send api request and fetch the response
     And api's response status code is 200
@@ -55,8 +50,7 @@ Feature: User schedule items list API
     Given logged admin user
     And 3 user schedule items with state planned
     And user_schedule_item created with params {"id": 999, "dataset_title": "Zbiór testowy"}
-    When api request method is GET
-    And api request language is pl
+    When api request language is pl
     And api request path is /auth/user_schedule_items?q=testow&exclude_id=999
     Then send api request and fetch the response
     And api's response status code is 200
@@ -67,8 +61,7 @@ Feature: User schedule items list API
     And user_schedule_item with id 998
     And schedule data created with {"schedule_id": 999, "user_id": 999, "user_schedule_id": 999, "user_schedule_item_id": 999}
     And logged admin user
-    When api request method is GET
-    And api request path is /auth/schedules/999/user_schedule_items
+    When api request path is /auth/schedules/999/user_schedule_items
     And send api request and fetch the response
     Then api's response status code is 200
     And api's response body field meta/count is 1
@@ -78,8 +71,7 @@ Feature: User schedule items list API
     Given logged agent user created with {"id": 999}
     And user_schedule_item with id 998
     And schedule data created with {"schedule_id": 999, "user_id": 999, "user_schedule_id": 999, "user_schedule_item_id": 999}
-    When api request method is GET
-    And api request path is /auth/schedules/999/user_schedule_items
+    When api request path is /auth/schedules/999/user_schedule_items
     And send api request and fetch the response
     Then api's response status code is 200
     And api's response body field meta/count is 1

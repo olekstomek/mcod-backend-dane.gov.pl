@@ -2,8 +2,7 @@
 Feature: LabEvents list API
   Scenario Outline: Test lab events list endpoint is not accessible for unlogged
     Given LabEvent id 999
-    When api request method is GET
-    And api request language is <lang_code>
+    When api request language is <lang_code>
     And api request path is /laboratory
     Then send api request and fetch the response
     And api's response status code is 401
@@ -16,23 +15,20 @@ Feature: LabEvents list API
 
   Scenario: Test lab events list endpoint is accessible by official user
     Given logged official user
-    When api request method is GET
-    And api request path is /laboratory
+    When api request path is /laboratory
     Then send api request and fetch the response
     And api's response status code is 200
 
   Scenario: Test lab_events list endpoint is accessible by admin (superuser)
     Given logged admin user
-    When api request method is GET
-    And api request path is /laboratory
+    When api request path is /laboratory
     Then send api request and fetch the response
     And api's response status code is 200
 
   Scenario: Test lab_events list endpoint returns required data
     Given LabEvent id 999
     And logged official user
-    When api request method is GET
-    And api request language is en
+    When api request language is en
     And api request path is /laboratory?id=999
     Then send api request and fetch the response
     And api's response status code is 200
@@ -43,8 +39,7 @@ Feature: LabEvents list API
     Given Laboratory analysis 998
     And logged official user
     And Laboratory research 999
-    When api request method is GET
-    And api request language is pl
+    When api request language is pl
     And api request path is /laboratory
     And api request param <req_param_name> is <req_param_value>
     Then send api request and fetch the response

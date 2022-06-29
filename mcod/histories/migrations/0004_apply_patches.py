@@ -27,10 +27,9 @@ class Migration(migrations.Migration):
         ('resources', '0007_rename_fields'),
         ('tags', '0002_initial'),
         ('users', '0003_internals'),
-        ('organizations','0002_initial')
+        ('organizations', '0002_initial')
     ]
 
     operations = [
         migrations.RunPython(load_patch(filename)) for filename in patches
     ]
-

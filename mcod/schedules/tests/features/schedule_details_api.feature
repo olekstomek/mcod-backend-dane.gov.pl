@@ -2,8 +2,7 @@ Feature: Schedule details API
   Scenario: Schedule details endpoint for admin
     Given logged admin user
     And schedule with id 999
-    When api request method is GET
-    And api request path is /auth/schedules/999
+    When api request path is /auth/schedules/999
     And send api request and fetch the response
     Then api's response status code is 200
     And api's response body field data/type is schedule
@@ -13,8 +12,7 @@ Feature: Schedule details API
   Scenario: Schedule details endpoint for agent
     Given logged agent user
     And schedule with id 999
-    When api request method is GET
-    And api request path is /auth/schedules/999
+    When api request path is /auth/schedules/999
     And send api request and fetch the response
     Then api's response status code is 200
     And api's response body field data/type is schedule
@@ -24,16 +22,14 @@ Feature: Schedule details API
 
   Scenario: Current schedule details endpoint returns 404 if no planned schedule yet
     Given logged admin user
-    When api request method is GET
-    And api request path is /auth/schedules/current
+    When api request path is /auth/schedules/current
     And send api request and fetch the response
     Then api's response status code is 404
 
   Scenario: Schedule details endpoint is not available for active user
     Given logged active user
     And schedule with id 999
-    When api request method is GET
-    And api request language is pl
+    When api request language is pl
     And api request path is /auth/schedules/999
     And send api request and fetch the response
     Then api's response status code is 403

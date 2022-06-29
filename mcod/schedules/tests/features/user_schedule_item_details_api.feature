@@ -129,8 +129,7 @@ Feature: User schedule item details API
   Scenario: User schedule item details endpoint returns valid data for admin
     Given logged admin user
     And user_schedule_item with id 999
-    When api request method is GET
-    And api request path is /auth/user_schedule_items/999
+    When api request path is /auth/user_schedule_items/999
     And send api request and fetch the response
     Then api's response status code is 200
     And api's response body field data/id is 999
@@ -140,8 +139,7 @@ Feature: User schedule item details API
   Scenario: User schedule item details endpoint returns valid data for agent who created it
     Given logged agent user created with {"id": 999}
     And schedule data created with {"schedule_id": 999, "user_id": 999, "user_schedule_id": 999, "user_schedule_item_id": 999}
-    When api request method is GET
-    And api request path is /auth/user_schedule_items/999
+    When api request path is /auth/user_schedule_items/999
     And send api request and fetch the response
     Then api's response status code is 200
     And api's response body field data/id is 999
@@ -153,8 +151,7 @@ Feature: User schedule item details API
     Given logged out agent user created with {"id": 998, "email": "agent2@dane.gov.pl"}
     And logged agent user created with {"id": 999}
     And schedule data created with {"schedule_id": 999, "user_id": 998, "user_schedule_id": 999, "user_schedule_item_id": 999}
-    When api request method is GET
-    And api request path is /auth/user_schedule_items/999
+    When api request path is /auth/user_schedule_items/999
     And send api request and fetch the response
     Then api's response status code is 404
 
@@ -171,8 +168,7 @@ Feature: User schedule item details API
     Given logged out agent user created with {"id": 999}
     And logged active user
     And schedule data created with {"schedule_id": 999, "user_id": 999, "user_schedule_id": 999, "user_schedule_item_id": 999}
-    When api request method is GET
-    And api request path is /auth/user_schedule_items/999
+    When api request path is /auth/user_schedule_items/999
     And send api request and fetch the response
     Then api's response status code is 403
 
@@ -244,8 +240,7 @@ Feature: User schedule item details API
     Given logged out agent user created with {"id": 999, "email": "agent@dane.gov.pl"}
     And schedule data created with {"schedule_id": 999, "user_id": 999, "user_schedule_id": 999, "user_schedule_item_id": 999, "comment_id": 999}
     And logged admin user
-    When api request method is GET
-    And api request path is /auth/user_schedule_items/999/comments
+    When api request path is /auth/user_schedule_items/999/comments
     And send api request and fetch the response
     Then api's response status code is 200
     And api's response body field data/*/attributes has fields author,created,text
@@ -255,8 +250,7 @@ Feature: User schedule item details API
   Scenario: Agent can list comments related to one of his user schedule items
     Given logged agent user created with {"id": 999, "email": "agent@dane.gov.pl"}
     And schedule data created with {"schedule_id": 999, "user_id": 999, "user_schedule_id": 999, "user_schedule_item_id": 999, "comment_id": 999}
-    When api request method is GET
-    And api request path is /auth/user_schedule_items/999/comments
+    When api request path is /auth/user_schedule_items/999/comments
     And send api request and fetch the response
     Then api's response status code is 200
     And api's response body field data/*/attributes has fields author,created,text
@@ -267,16 +261,14 @@ Feature: User schedule item details API
     Given logged out agent user created with {"id": 999, "email": "agent@dane.gov.pl"}
     And schedule data created with {"schedule_id": 999, "user_id": 999, "user_schedule_id": 999, "user_schedule_item_id": 999, "comment_id": 999}
     And logged active user
-    When api request method is GET
-    And api request path is /auth/user_schedule_items/999/comments
+    When api request path is /auth/user_schedule_items/999/comments
     And send api request and fetch the response
     Then api's response status code is 403
     And api's response body field errors/[0]/detail is Wymagane są dodatkowe uprawnienia!
 
   Scenario: User schedule item comments list endpoint returns 404 for invalid id
     Given logged agent user created with {"id": 999, "email": "agent@dane.gov.pl"}
-    When api request method is GET
-    And api request path is /auth/user_schedule_items/9999/comments
+    When api request path is /auth/user_schedule_items/9999/comments
     And send api request and fetch the response
     Then api's response status code is 404
 

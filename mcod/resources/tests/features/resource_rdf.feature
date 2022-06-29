@@ -2,9 +2,8 @@ Feature: Resource RDF API
   Scenario Outline: Test that resource RDF endpoint returns data in format specified in url.
     Given dataset with id 999
     And resource created with params {"id": 999, "slug": "test-rdf", "dataset_id": 999}
-    When api request method is GET
     # the next line is added to disable json api validation of response during test.
-    And api request header x-api-version is 1.0
+    When api request header x-api-version is 1.0
     And api request path is <request_path>
     And send api request and fetch the response
     Then api's response status code is 200
@@ -43,8 +42,7 @@ Feature: Resource RDF API
   Scenario Outline: Test that resource RDF endpoint returns data in format specified as Accept HTML header.
     Given dataset with id 999
     And resource created with params {"id": 999, "slug": "test-rdf", "dataset_id": 999}
-    When api request method is GET
-    And api request header <req_header_name> is <req_header_value>
+    When api request header <req_header_name> is <req_header_value>
     # the next line is added to disable json api validation of response during test.
     And api request header x-api-version is 1.0
     And api request path is /catalog/dataset/999/resource/999,test-rdf
@@ -65,8 +63,7 @@ Feature: Resource RDF API
   Scenario: Test that RDF format passed in url is more significant than value of Accept header.
     Given dataset with id 999
     And resource created with params {"id": 999, "slug": "test-rdf", "dataset_id": 999}
-    When api request method is GET
-    And api request header Accept is application/n-triples
+    When api request header Accept is application/n-triples
     # the next line is added to disable json api validation of response during test.
     And api request header x-api-version is 1.0
     And api request path is /catalog/dataset/999/resource/999,test-rdf.ttl
@@ -77,9 +74,8 @@ Feature: Resource RDF API
   Scenario: Test that RDF resource response has valid file-related vocabularies values set.
     Given dataset with id 999
     And resource created with params {"id": 999, "slug": "test-rdf", "dataset_id": 999}
-    When api request method is GET
     # the next line is added to disable json api validation of response during test.
-    And api request header x-api-version is 1.0
+    When api request header x-api-version is 1.0
     And api request path is /catalog/dataset/999/resource/999
     Then send api request and fetch the response
     And api's response status code is 200

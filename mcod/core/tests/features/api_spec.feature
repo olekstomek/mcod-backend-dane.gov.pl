@@ -1,8 +1,7 @@
 Feature: Api spec endpoint
 
   Scenario Outline: Request for spec api is ok
-    When api request method is GET
-    And api request path is <request_path>
+    When api request path is <request_path>
     And json api validation is skipped
     And send api request and fetch the response
     Then api's response status code is 200

@@ -3,8 +3,7 @@ Feature: Organizations API
 
   Scenario Outline: Filtering institutions by type
     Given institutions of type {"local": 3, "state": 3, "other": 3}
-    When api request method is GET
-    And api request path is <request_path>
+    When api request path is <request_path>
     Then api request param <req_param_name> is <req_param_value>
     And send api request and fetch the response
     And api's response status code is 200
@@ -22,8 +21,7 @@ Feature: Organizations API
 
   Scenario Outline: Institution on list contains required fields
     Given 3 institutions
-    When api request method is GET
-    And api request path is <request_path>
+    When api request path is <request_path>
     Then send api request and fetch the response
     And api's response body has field /data/*/attributes/abbreviation
     And api's response body has field /data/*/attributes/datasets_count

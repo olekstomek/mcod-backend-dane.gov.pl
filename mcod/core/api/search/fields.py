@@ -3,7 +3,7 @@ import copy
 import functools
 import operator
 import re
-from collections import namedtuple
+from collections import namedtuple, OrderedDict
 from functools import reduce
 
 import six
@@ -11,7 +11,7 @@ from django.conf import settings
 from django.utils.translation import get_language
 from elasticsearch_dsl import A, DateHistogramFacet, Field as DSLField, Q, Search, TermsFacet
 from elasticsearch_dsl.aggs import Filter, GeoCentroid, Nested
-from elasticsearch_dsl.query import Bool, Query
+from elasticsearch_dsl.query import Bool, FunctionScore, Query, Term
 from marshmallow import ValidationError, class_registry, utils
 from marshmallow.base import SchemaABC
 
@@ -548,6 +548,7 @@ class SortField(ElasticField, fields.List):
     def __init__(self, cls_or_instance=fields.String, **kwargs):
         super().__init__(cls_or_instance, **kwargs)
         self.sort_map = []
+        self.with_boost = is_enabled('S52_sort_is_promoted_boost.be')
 
     def prepare_data(self, name, params):
         if name not in params and self.missing:
@@ -555,6 +556,22 @@ class SortField(ElasticField, fields.List):
         return params
 
     def _prepare_queryset(self, queryset, data):
+        is_sorted_by_date = any(any(key in x for key in ['created', 'search_date']) for x in data)
+        if all([
+            self.context.get('dataset_promotion_enabled', False),
+            self.with_boost,
+            is_sorted_by_date,
+        ]):
+            queryset = queryset.query(
+                FunctionScore(
+                    boost_mode='multiply',
+                    functions=[{
+                        'filter': Term(is_promoted=True),
+                        'weight': 2,
+                    }]
+                )
+            )
+            data = ['_score', *data]
         return queryset.sort(*data)
 
     @property
@@ -582,7 +599,14 @@ class SortField(ElasticField, fields.List):
                     opts['nested'] = {'path': nested_path}
                     sort_opt = {field_path: opts}
                 else:
-                    sort_opt = {field_path: opts}
+                    sort_opt = OrderedDict()
+                    if all([
+                        field_path in ['created', 'search_date'],
+                        self.context.get('dataset_promotion_enabled', False),
+                        not self.with_boost,
+                    ]):
+                        sort_opt['is_promoted'] = {'order': 'desc', 'unmapped_type': 'long'}
+                    sort_opt[field_path] = opts
                     if field_path.startswith('col') and '.val' in field_path:
                         obsolete_field_path = field_path.replace('.val', '')
                         sort_opt[obsolete_field_path] = opts  # sort related on tabular data indexed in the old way.

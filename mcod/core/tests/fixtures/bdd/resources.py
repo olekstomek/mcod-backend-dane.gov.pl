@@ -32,7 +32,11 @@ from mcod.resources.factories import (
     SupplementFactory,
     TaskResultFactory,
 )
-from mcod.resources.file_validation import analyze_file, check_support
+from mcod.resources.file_validation import (
+    PasswordProtectedArchiveError,
+    analyze_file,
+    check_support,
+)
 from mcod.resources.link_validation import DangerousContentError, _get_resource_type, download_file
 
 
@@ -282,14 +286,14 @@ def resource_with_failure_tasks_statuses(other_remote_file_resource):
     return other_remote_file_resource
 
 
-@given(parsers.parse('resource'))
+@pytest.fixture
 def resource():
     res = ResourceFactory.create()
     return res
 
 
-@given(parsers.parse('resource'))
-def resource_with_file(file_csv):
+@pytest.fixture
+def resource_with_file():
     res = ResourceFactory.create(
         type="file",
         format='csv',
@@ -333,7 +337,119 @@ def get_json_file():
     )
 
 
-@given(parsers.parse('resource of type website'))
+@pytest.fixture
+def geo_tabular_data_response():
+    return {
+        'features': [
+            {
+                'type': 'Feature',
+                'geometry': {
+                    'type': 'Point',
+                    'coordinates': [
+                        21.005427,
+                        52.237695
+                    ]
+                },
+                'properties': {
+                    'id': '101752777',
+                    'gid': 'whosonfirst:locality:101752777',
+                    'layer': 'locality',
+                    'source': 'whosonfirst',
+                    'source_id': '101752777',
+                    'country_code': 'PL',
+                    'name': 'Warsaw',
+                    'confidence': 0.6,
+                    'match_type': 'fallback',
+                    'distance': 104.639,
+                    'accuracy': 'centroid',
+                    'country': 'Poland',
+                    'country_gid': 'whosonfirst:country:85633723',
+                    'country_a': 'POL',
+                    'region': 'Mazowieckie',
+                    'region_gid': 'whosonfirst:region:85687257',
+                    'region_a': 'MZ',
+                    'county': 'Warszawa County',
+                    'county_gid': 'whosonfirst:county:1477743805',
+                    'localadmin': 'Warsaw',
+                    'localadmin_gid': 'whosonfirst:localadmin:1125365875',
+                    'locality': 'Warsaw',
+                    'locality_gid': 'whosonfirst:locality:101752777',
+                    'label': 'Warsaw, MZ, Poland',
+                    'addendum': {
+                        'concordances': {
+                            'dbp:id': 'Warsaw',
+                            'fb:id': 'en.warsaw',
+                            'fct:id': '024ce880-8f76-11e1-848f-cfd5bf3ef515',
+                            'gn:id': 756135,
+                            'gp:id': 523920,
+                            'loc:id': 'n79018894',
+                            'ne:id': 1159151299,
+                            'nyt:id': 'N38439611599745838241',
+                            'qs_pg:id': 900428,
+                            'wd:id': 'Q270',
+                            'wk:page': 'Warsaw'
+                        }
+                    }
+                },
+                'bbox': [
+                    20.851688,
+                    52.09785,
+                    21.271151,
+                    52.368154
+                ]
+            },
+            {
+                'type': 'Feature',
+                'geometry': {
+                    'type': 'Point',
+                    'coordinates': [
+                        19.3406,
+                        50.76855
+                    ]
+                },
+                'properties': {
+                    'id': '1309831997',
+                    'gid': 'whosonfirst:locality:1309831997',
+                    'layer': 'locality',
+                    'source': 'whosonfirst',
+                    'source_id': '1309831997',
+                    'country_code': 'PL',
+                    'name': 'Bukowno Warszawa',
+                    'confidence': 0.6,
+                    'match_type': 'fallback',
+                    'distance': 130.189,
+                    'accuracy': 'centroid',
+                    'country': 'Poland',
+                    'country_gid': 'whosonfirst:country:85633723',
+                    'country_a': 'POL',
+                    'region': 'Silesian Voivodeship',
+                    'region_gid': 'whosonfirst:region:85687277',
+                    'region_a': 'SL',
+                    'county': 'Częstochowski County',
+                    'county_gid': 'whosonfirst:county:102079663',
+                    'localadmin': 'Olsztyn',
+                    'localadmin_gid': 'whosonfirst:localadmin:1125304413',
+                    'locality': 'Bukowno Warszawa',
+                    'locality_gid': 'whosonfirst:locality:1309831997',
+                    'label': 'Bukowno Warszawa, SL, Poland',
+                    'addendum': {
+                        'concordances': {
+                            'gn:id': 3102072
+                        }
+                    }
+                },
+                'bbox': [
+                    19.3206,
+                    50.74855,
+                    19.3606,
+                    50.78855
+                ]
+            }
+        ]
+    }
+
+
+@pytest.fixture
 def resource_of_type_website():
     res = ResourceFactory.create(
         type="website",
@@ -346,7 +462,12 @@ def resource_of_type_website():
     return res
 
 
-@given(parsers.parse('resource of type api'))
+@given('resource of type website')
+def create_resource_of_type_website(resource_of_type_website):
+    return resource_of_type_website
+
+
+@pytest.fixture
 def resource_of_type_api():
     from mcod.resources.models import Resource
     res = ResourceFactory(
@@ -359,7 +480,12 @@ def resource_of_type_api():
     return res
 
 
-@given(parsers.parse('resource with buzzfeed file'))
+@given('resource of type api')
+def create_resource_of_type_api(resource_of_type_api):
+    return resource_of_type_api
+
+
+@given('resource with buzzfeed file')
 def resource_with_buzzfeed_file(buzzfeed_fakenews_resource):
     return buzzfeed_fakenews_resource
 
@@ -368,13 +494,6 @@ def resource_with_buzzfeed_file(buzzfeed_fakenews_resource):
 def geo_tabular_data_resource_with_params(buzzfeed_dataset, buzzfeed_editor, params):
     data = json.loads(params)
     return create_geo_res(buzzfeed_dataset, buzzfeed_editor, **data)
-
-
-@given(parsers.parse('resource created at {created}'))
-def resources_created_at(created):
-    date = parser.parse(created)
-    res = ResourceFactory.create(created=date)
-    return res
 
 
 @given(parsers.parse('three resources with created dates in {dates}'))
@@ -409,7 +528,7 @@ def two_charts_for_resource_id(context, data_str):
     ChartFactory.create(resource=resource, created_by=context.user, is_default=False)
 
 
-@given(parsers.parse('resource with date and datetime'))
+@given('resource with date and datetime')
 def _resource_with_date_and_datetime(csv_with_date_and_datetime):
     res = ResourceFactory.create(
         type='file',
@@ -419,7 +538,8 @@ def _resource_with_date_and_datetime(csv_with_date_and_datetime):
     return res
 
 
-@given(parsers.parse('resource with id {res_id} and xls file converted to csv'))
+@given(parsers.parse('resource with id {res_id} and xls file converted to csv'),
+       target_fixture='resource_with_xls_file_converted_to_csv')
 def resource_with_xls_file_converted_to_csv(res_id, example_xls_file, buzzfeed_dataset, buzzfeed_editor):
     from mcod.resources.models import Resource
     params = {
@@ -477,28 +597,21 @@ def resource_with_simple_csv(res_id, simple_csv_file):
     return res
 
 
-@given(parsers.parse('draft resource'))
+@given('draft resource')
 def draft_resource():
     res = ResourceFactory.create(status="draft", title='Draft resource')
     return res
 
 
-@given(parsers.parse('removed resource'))
+@pytest.fixture
 def removed_resource():
     res = ResourceFactory.create(is_removed=True, title='Removed resource')
     return res
 
 
-@given(parsers.parse('second resource with id {resource_id:d}'))
-def second_resource_with_id(resource_id):
-    res = ResourceFactory.create(id=resource_id, title='Second resource %s' % resource_id)
-    return res
-
-
-@given(parsers.parse('another resource with id {resource_id:d}'))
-def another_resource_with_id(resource_id):
-    res = ResourceFactory.create(id=resource_id, title='Another resource %s' % resource_id)
-    return res
+@given('removed resource')
+def create_removed_resource(removed_resource):
+    return removed_resource
 
 
 @given(parsers.parse('draft resource with id {resource_id:d}'))
@@ -515,14 +628,9 @@ def removed_resource_with_id(resource_id):
     return res
 
 
-@given(parsers.parse('3 resources'))
+@pytest.fixture
 def resources():
-    return ResourceFactory.create_batch(3)
-
-
-@given(parsers.parse("{num:d} resources with type {res_type}"))
-def resource_with_type(num, res_type):
-    return ResourceFactory.create_batch(num, type=res_type)
+    return ResourceFactory.create_batch(2)
 
 
 @given(parsers.parse('{num:d} resources'))
@@ -530,8 +638,9 @@ def x_resources(num):
     return ResourceFactory.create_batch(num)
 
 
-@given(parsers.parse('resource with id {res_id} and status {status} and data date update periodic task'))
-@given('resource with id {res_id} and status {status}  and data date update periodic task')
+@given(parsers.parse(
+    'resource with id {res_id} and status {status} and data date update periodic task with interval schedule'
+))
 def resource_with_periodic_task(res_id, status):
     res = ResourceFactory(
         status=status,
@@ -573,7 +682,7 @@ def resource_document_is_updated_using_queryset_iterator(resource_id, ctx):
     ctx['queryset_iterator_document'] = ResourceDocument.get(id=resource_id)
 
 
-@then(parsers.parse('compare resource documents reindexed using different approaches'))
+@then('compare resource documents reindexed using different approaches')
 def compare_resource_documents_reindexed_using_different_approaches(ctx):
     assert ctx['regular_queryset_document']._d_ == ctx['queryset_iterator_document']._d_
 
@@ -692,7 +801,6 @@ def shapefile_trees():
 
 
 @given(parsers.parse('resource with {filename} file and id {obj_id}'))
-@given('resource with <filename> file and id <obj_id>')
 def resource_with_id_and_filename(filename, dataset, obj_id):
     from mcod.resources.models import Resource
     full_filename = prepare_file(filename)
@@ -712,7 +820,6 @@ def resource_with_id_and_filename(filename, dataset, obj_id):
 
 
 @given(parsers.parse('draft remote file resource of api type with id {obj_id}'))
-@given('draft remote file resource of api type with id <obj_id>')
 def draft_remote_file_resource(obj_id, httpsserver_custom):
     httpsserver_custom.serve_content(
         content=get_json_file().read(),
@@ -732,7 +839,6 @@ def draft_remote_file_resource(obj_id, httpsserver_custom):
 
 
 @then(parsers.parse('resource with id {obj_id} attributes are equal {expected_attr_vals}'))
-@then('resource with id <obj_id> attributes are equal <expected_attr_vals>')
 def resource_with_id_attr_is_equal(obj_id, expected_attr_vals):
     expected_vals = json.loads(expected_attr_vals)
     model = apps.get_model('resources', 'resource')
@@ -749,14 +855,12 @@ def resource_field_value_is(context, r_field, r_value):
 
 
 @then(parsers.parse('file is validated and result is {file_format}'))
-@then('file is validated and result is <file_format>')
 def file_format(validated_file, file_format):
     ext, file_info, encoding, path, file_mimetype, exc = analyze_file(validated_file)
     assert ext == file_format, f'Analyzed {validated_file} file format is not: "{file_format}", but: "{ext}"'
 
 
 @then(parsers.parse('archive file is successfully unpacked and has {files_number} files'))
-@then('archive file is successfully unpacked and has <files_number> files')
 def file_archive(validated_file, files_number):
     with ArchiveReader(validated_file) as extracted:
         assert os.path.exists(extracted.tmp_dir)
@@ -768,18 +872,23 @@ def file_archive(validated_file, files_number):
 
 
 @then(parsers.parse('file is validated and result mimetype is {mimetype}'))
-@then('file is validated and result mimetype is <mimetype>')
 def file_mimetype(validated_file, mimetype):
     extension, file_info, encoding, path, file_mimetype, exc = analyze_file(validated_file)
     assert file_mimetype == mimetype
 
 
-@then(parsers.parse('file is validated and UnsupportedArchiveError is raised'))
+@then('file is validated and UnsupportedArchiveError is raised')
 def file_validation_exception(validated_file):
     with pytest.raises(UnsupportedArchiveError) as e:
         extension, file_info, file_encoding, path, file_mimetype, exc = analyze_file(validated_file)
         check_support(extension, file_mimetype)
         assert str(e.value) == 'archives-are-not-supported'
+
+
+@then(parsers.parse('file is validated and PasswordProtectedArchiveError is raised'))
+def archive_file_validation_exception(validated_file):
+    with pytest.raises(PasswordProtectedArchiveError):
+        analyze_file(validated_file)
 
 
 @given(parsers.parse('resource with id {res_id} is viewed and counter incrementing task is executed'))
@@ -851,7 +960,7 @@ def resource_file_name_id(title, filename):
     assert obj.main_file.name.endswith(filename)
 
 
-@when('response is <resp_name> type is <resp_type>')
+@when(parsers.parse('response is {resp_name} type is {resp_type}'))
 def response_mocked(resp_name, resp_type, html_resource_response, json_resource_response,
                     jsonstat_resource_response, xml_resource_api_response, xml_resource_file_response):
     responses = {
@@ -878,7 +987,6 @@ def response_raises_dangerous_content_error(**kwargs):
 
 
 @then(parsers.parse('resource with id {res_id} has periodic task with {schedule_type} schedule'))
-@then('resource with id <res_id> has periodic task with <schedule_type> schedule')
 def resource_has_periodic_task_with_schedule_type(res_id, schedule_type):
     from mcod.resources.models import Resource
     res = Resource.objects.get(pk=res_id)
@@ -887,6 +995,10 @@ def resource_has_periodic_task_with_schedule_type(res_id, schedule_type):
 
 
 @then(parsers.parse('resource with id {res_id} has no data date periodic task'))
-@then('resource with id {res_id} has no data date periodic task')
 def resource_has_no_periodic_task(res_id):
     assert not PeriodicTask.objects.filter(name__contains=res_id).exists()
+
+
+@then(parsers.parse('Periodic task for resource with id {res_id:d} has last_run_at attr set'))
+def resource_periodic_task_has_last_run_at_set(res_id):
+    assert PeriodicTask.objects.get(name__contains=res_id).last_run_at is not None

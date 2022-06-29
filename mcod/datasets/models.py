@@ -27,6 +27,7 @@ from mcod import settings
 from mcod.core import signals as core_signals
 from mcod.core.api.rdf import signals as rdf_signals
 from mcod.core.api.search import signals as search_signals
+from mcod.core.api.search.tasks import update_document_task
 from mcod.core.db.managers import TrashManager
 from mcod.core.db.models import ExtendedModel, TrashModelBase, update_watcher
 from mcod.core.storages import get_storage
@@ -289,6 +290,7 @@ class Dataset(ExtendedModel):
     license_condition_custom_description = models.TextField(
         blank=True, null=True,
         verbose_name=_('Custom CC BY 40 conditions'))
+    is_promoted = models.BooleanField(verbose_name=_('promoting the dataset'), default=False)
 
     def __str__(self):
         return self.title
@@ -791,6 +793,11 @@ def handle_dataset_pre_save(sender, instance, *args, **kwargs):
 def handle_dataset_without_resources(sender, instance, *args, **kwargs):
     if not instance.resources.all():
         Dataset.objects.filter(pk=instance.id).update(verified=instance.created)
+    if instance.tracker.has_changed('organization_id') and is_enabled('S52_update_es_institution.be'):
+        organization_id = instance.tracker.previous('organization_id')
+        if organization_id:
+            # update ES document for previously set organization, if any.
+            update_document_task.s('organizations', 'Organization', organization_id).apply_async(countdown=2)
 
 
 @receiver(remove_related_resources, sender=Dataset)
@@ -821,7 +828,7 @@ def update_related_watchers(sender, instance, *args, state=None, **kwargs):
         'notify_{}'.format(state),
         state,
     )
-    instances = list(instance.applications.all()) + list(instance.articles.all())
+    instances = list(instance.applications.all())
     instances.append(instance.organization)
 
     for i in instances:

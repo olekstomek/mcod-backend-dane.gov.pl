@@ -15,7 +15,6 @@ Organization = apps.get_model('organizations', 'Organization')
 Category = apps.get_model('categories', 'Category')
 Tag = apps.get_model('tags', 'Tag')
 Resource = apps.get_model('resources', 'Resource')
-Article = apps.get_model('articles', 'Article')
 Application = apps.get_model('applications', 'Application')
 DataSource = apps.get_model('harvester', 'DataSource')
 Showcase = apps.get_model('showcases', 'Showcase')
@@ -115,13 +114,6 @@ class DatasetDocument(ExtendedDocument):
             'title': TranslatedTextField('title')
         }
     )
-
-    articles = fields.NestedField(
-        properties={
-            'id': fields.IntegerField(),
-            'title': TranslatedTextField('title')
-        }
-    )
     showcases = fields.NestedField(
         attr='showcases_published',
         properties={
@@ -150,6 +142,8 @@ class DatasetDocument(ExtendedDocument):
     has_dynamic_data = fields.BooleanField()
     has_high_value_data = fields.BooleanField()
     has_research_data = fields.BooleanField()
+    if is_enabled('S52_dataset_is_promoted.be'):
+        is_promoted = fields.BooleanField()
     if is_enabled('S37_resources_admin_region_data.be'):
         regions = regions_field()
 
@@ -162,7 +156,6 @@ class DatasetDocument(ExtendedDocument):
         model = Dataset
         related_models = [
             Application,
-            Article,
             Category,
             DataSource,
             Organization,
@@ -175,8 +168,6 @@ class DatasetDocument(ExtendedDocument):
         if isinstance(related_instance, UserFollowingDataset):
             return related_instance.follower.followed_applications.all()
         if isinstance(related_instance, Application):
-            return related_instance.datasets.filter(status='published')
-        if isinstance(related_instance, Article):
             return related_instance.datasets.filter(status='published')
         if isinstance(related_instance, Resource):
             return related_instance.dataset

@@ -27,8 +27,6 @@ CURRENT_VERSION = max(VERSIONS)
 
 OBJECT_NAME_TO_MODEL = {
     'application': 'applications.Application',
-    'article': 'articles.Article',
-    'article_category': 'articles.ArticleCategory',
     'category': 'categories.Category',
     'dataset': 'datasets.Dataset',
     'resource': 'resources.Resource',
@@ -36,6 +34,8 @@ OBJECT_NAME_TO_MODEL = {
     'tag': 'tags.Tag',
     'query': 'query'
 }
+
+DEPRECATED_MODELS = ['articles.Article', 'articles.ArticleCategory']
 
 MODEL_TO_OBJECT_NAME = {model: obj for obj, model in OBJECT_NAME_TO_MODEL.items()}
 
@@ -522,6 +522,12 @@ def update_subscribed_object(sender, instance, *args, **kwargs):
 
 
 class NotificationManager(models.Manager):
+
+    def get_queryset(self):
+        return super().get_queryset().exclude(
+            subscription__watcher__object_name__in=DEPRECATED_MODELS
+        )
+
     def get_paginated_results(self, user, data, subscription_id=None):
         filters = {
             "subscription__user": user,

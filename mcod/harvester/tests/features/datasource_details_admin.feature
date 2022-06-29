@@ -10,8 +10,7 @@ Feature: DataSource details page in admin panel
 
   Scenario: User can view CKAN datasource details
     Given active ckan_datasource with id 100 for data {"name": "Viewed datasource", "api_url": ["http://api.example.com/res.json"]}
-    When admin's request method is GET
-    And admin's harvester page /harvester/datasource/100/change/ is requested
+    When admin's harvester page /harvester/datasource/100/change/ is requested
     Then admin's response status code is 200
     And admin's response page contains Viewed datasource
 
@@ -35,8 +34,7 @@ Feature: DataSource details page in admin panel
   Scenario: User can view XML datasource
     Given institution with id 999
     And active xml_datasource with id 100 for data {"name": "Viewed xml datasource"}
-    When admin's request method is GET
-    And admin's harvester page /harvester/datasource/100/change/ is requested
+    When admin's harvester page /harvester/datasource/100/change/ is requested
     Then admin's response status code is 200
     And admin's response page contains Viewed xml datasource
 
@@ -68,8 +66,7 @@ Feature: DataSource details page in admin panel
   Scenario: User can view DCAT datasource
     Given institution with id 999
     And active dcat_datasource with id 100 for data {"name": "Viewed dcat datasource"}
-    When admin's request method is GET
-    And admin's harvester page /harvester/datasource/100/change/ is requested
+    When admin's harvester page /harvester/datasource/100/change/ is requested
     Then admin's response status code is 200
     And admin's response page contains Viewed dcat datasource
 

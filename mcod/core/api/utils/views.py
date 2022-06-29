@@ -8,8 +8,6 @@ from elasticsearch_dsl.connections import get_connection
 from mcod import settings
 from mcod.applications import views as app_views
 from mcod.applications.serializers import ApplicationApiResponse
-from mcod.articles import views as art_views
-from mcod.articles.serializers import ArticleApiResponse
 from mcod.core.api.openapi.specs import get_spec
 from mcod.core.api.versions import DOC_VERSIONS
 from mcod.datasets import serializers as dat_responses, views as dat_views
@@ -96,8 +94,6 @@ class OpenApiSpec:
         if not self.applications_deleted:
             spec.components.schema('Applications', schema=ApplicationApiResponse, many=True)
             spec.components.schema('Application', schema=ApplicationApiResponse, many=False)
-        spec.components.schema('Articles', schema=ArticleApiResponse, many=True)
-        spec.components.schema('Article', schema=ArticleApiResponse, many=False)
         spec.components.schema('Institutions', schema=InstitutionApiResponse, many=True)
         spec.components.schema('Institution', schema=InstitutionApiResponse, many=False)
         spec.components.schema('Datasets', schema=dat_responses.DatasetApiResponse, many=True)
@@ -117,9 +113,6 @@ class OpenApiSpec:
             spec.path(resource=app_views.ApplicationSearchApiView)
             spec.path(resource=app_views.ApplicationApiView)
             spec.path(resource=app_views.ApplicationDatasetsView)
-        spec.path(resource=art_views.ArticlesView)
-        spec.path(resource=art_views.ArticleView)
-        spec.path(resource=art_views.ArticleDatasetsView)
         spec.path(resource=org_views.InstitutionSearchView)
         spec.path(resource=org_views.InstitutionApiView)
         spec.path(resource=org_views.InstitutionDatasetSearchApiView)

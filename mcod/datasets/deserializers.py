@@ -255,6 +255,13 @@ class DatasetApiSearchRequest(ListingSchema):
             doc_base_url='/datasets',
             doc_field_name='has_research_data',
         )
+    if is_enabled('S52_dataset_is_promoted.be'):
+        is_promoted = search_fields.FilterField(
+            BooleanTermSchema,
+            doc_template='docs/generic/fields/boolean_term_field.html',
+            doc_base_url='/datasets',
+            doc_field_name='is_promoted',
+        )
 
     class Meta:
         strict = True

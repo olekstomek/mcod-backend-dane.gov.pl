@@ -7,12 +7,3 @@ from mcod.core.apps import ExtendedAppMixin
 class ArticlesConfig(ExtendedAppMixin, AppConfig):
     name = 'mcod.articles'
     verbose_name = _('Articles')
-
-    def ready(self):
-        from mcod.articles.models import Article, ArticleCategory, ArticleTrash
-        self.connect_core_signals(Article)
-        self.connect_core_signals(ArticleTrash)
-        self.connect_core_signals(ArticleCategory)
-        self.connect_m2m_signal(Article.datasets.through)
-        self.connect_m2m_signal(Article.tags.through)
-        self.connect_history(Article, ArticleCategory)

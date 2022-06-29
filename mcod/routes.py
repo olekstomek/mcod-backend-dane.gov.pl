@@ -1,6 +1,5 @@
 from mcod.academy import views as academy_views
 from mcod.applications import views as app_views
-from mcod.articles import views as article_views
 from mcod.core.api.utils import views as core_views
 from mcod.datasets import views as dataset_views
 from mcod.guides import views as guides_views
@@ -51,12 +50,6 @@ routes = [
     ('/auth/subscriptions/{id:int}/notifications', watcher_views.SubscriptionNotificationsView()),
     ('/auth/notifications', watcher_views.NotificationsView()),
     ('/auth/notifications/status', watcher_views.NotificationsStatusView()),
-    # Articles
-    ('/articles', article_views.ArticlesView()),
-    ('/articles/{id:int}', article_views.ArticleView()),
-    ('/articles/{id:int},{slug}', article_views.ArticleView()),
-    ('/articles/{id:int}/datasets', article_views.ArticleDatasetsView()),
-    ('/articles/{id:int},{slug}/datasets', article_views.ArticleDatasetsView()),
     # Organizations
     ('/institutions', org_views.InstitutionSearchView()),
     ('/institutions/{id:int}', org_views.InstitutionApiView()),

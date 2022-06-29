@@ -14,7 +14,6 @@
     Examples:
     | object_type               |                              params| has_trash | can_delete | can_remove_from_db |
     | course                    |                       {"id": 1001} |         1 |          1 |                  0 |
-    | article                   |                       {"id": 1001} |         1 |          1 |                  0 |
     | search history            |                       {"id": 1001} |         0 |          1 |                  1 |
     | institution               |                       {"id": 1001} |         1 |          1 |                  0 |
     | category                  |                       {"id": 1001} |         1 |          1 |                  0 |
@@ -63,7 +62,6 @@
     Examples:
     | object_type               | page_url                                     | params       |
     | course                    | /academy/coursetrash/                        | {"id": 1003} |
-    | article                   | /articles/articletrash/                      | {"id": 1003} |
     | institution               | /organizations/organizationtrash/            | {"id": 1003} |
     | category                  | /categories/categorytrash/                   | {"id": 1003} |
     | lab_event                 | /laboratory/labeventtrash/                   | {"id": 1003} |

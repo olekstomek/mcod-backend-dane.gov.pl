@@ -1,8 +1,7 @@
 Feature: Schedules list API
   Scenario Outline: Schedule notifications list endpoint is not accessible for active user
     Given logged active user
-    When api request method is GET
-    And api request language is <lang_code>
+    When api request language is <lang_code>
     And api request path is /auth/schedule_notifications
     Then send api request and fetch the response
     And api's response status code is 403
@@ -16,8 +15,7 @@ Feature: Schedules list API
   Scenario Outline: Some endpoints are accessible by admin and agent users only
     Given logged <user_type>
     And schedule data created with {"schedule_id": 999, "user_schedule_id": 999, "user_schedule_item_id": 999, "notification_id": 999}
-    When api request method is GET
-    And api request path is <request_path>
+    When api request path is <request_path>
     # the next line is added to disable json api validation of response during tests of CSV, XLSX responses.
     And api request header x-api-version is 1.0
     Then send api request and fetch the response
@@ -88,8 +86,7 @@ Feature: Schedules list API
   Scenario Outline: Specified endpoints returns related objects in included section for admin
     Given logged admin user
     And schedule data created with {"schedule_id": 999, "user_schedule_id": 999, "user_schedule_item_id": 999, "comment_id": 999}
-    When api request method is GET
-    And api request path is <request_path>
+    When api request path is <request_path>
     Then send api request and fetch the response
     And api's response status code is 200
     And api's response body has field included
@@ -114,8 +111,7 @@ Feature: Schedules list API
     Given institution with id 999
     And logged agent user created with {"id": 999, "agent_organizations": [999]}
     And schedule data created with {"schedule_id": 999, "user_schedule_id": 999, "user_id": 999, "user_schedule_item_id": 999, "comment_id": 999}
-    When api request method is GET
-    And api request path is <request_path>
+    When api request path is <request_path>
     Then send api request and fetch the response
     And api's response status code is 200
     And api's response body has field included
@@ -137,8 +133,7 @@ Feature: Schedules list API
   Scenario Outline: Requests for export files returns link to tabular response
     Given logged <user_type>
     And schedule data created with {"schedule_id": 999, "user_schedule_id": 999, "user_schedule_item_id": 999}
-    When api request method is GET
-    And api request path is <request_path>
+    When api request path is <request_path>
     Then send api request and fetch the response
     And api's response status code is 200
     And api's response body has field data/attributes/url

@@ -3,16 +3,12 @@ from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.postgres.indexes import GinIndex
 from django.db import models
-from django.dispatch import receiver
 from django.utils.translation import gettext_lazy as _
 from model_utils import FieldTracker
 from modeltrans.fields import TranslationField
 
-from mcod.articles.signals import update_related_articles
-from mcod.core import signals as core_signals
-from mcod.core.api.search import signals as search_signals
 from mcod.core.db.managers import TrashManager
-from mcod.core.db.models import ExtendedModel, TrashModelBase, update_watcher
+from mcod.core.db.models import ExtendedModel, TrashModelBase
 from mcod.core.managers import SoftDeletableManager
 from mcod.lib.widgets import RichTextUploadingField
 
@@ -27,12 +23,6 @@ CATEGORY_TYPES = (
 
 
 class ArticleCategory(ExtendedModel):
-    SIGNALS_MAP = {
-        'updated': (update_related_articles,),
-        'published': (update_related_articles,),
-        'restored': (update_related_articles,),
-        'removed': (update_related_articles,),
-    }
 
     name = models.CharField(max_length=100, unique=True, verbose_name=_("name"))
     type = models.CharField(max_length=20, choices=CATEGORY_TYPES, verbose_name=_("type"), default="unlisted")
@@ -80,20 +70,7 @@ class ArticleCategory(ExtendedModel):
         indexes = [GinIndex(fields=['i18n']), ]
 
 
-@receiver(update_related_articles, sender=ArticleCategory)
-def reindex_related_articles(sender, instance, *args, **kwargs):
-    sender.log_debug(instance, 'Reindex related articles', 'update_related_articles')
-    for article in instance.article_set.all():
-        search_signals.update_document.send(article._meta.model, article)
-
-
 class Article(ExtendedModel):
-    SIGNALS_MAP = {
-        'updated': (search_signals.update_document, core_signals.notify_updated),
-        'published': (search_signals.update_document, core_signals.notify_published),
-        'restored': (search_signals.update_document, core_signals.notify_restored),
-        'removed': (search_signals.remove_document, core_signals.notify_removed),
-    }
 
     title = models.CharField(max_length=300, verbose_name=_("Title"))
     notes = RichTextUploadingField(verbose_name=_("Notes"), null=True)
@@ -248,17 +225,3 @@ class ArticleTrash(Article, metaclass=TrashModelBase):
         proxy = True
         verbose_name = _("Trash")
         verbose_name_plural = _("Trash")
-
-
-core_signals.notify_published.connect(update_watcher, sender=Article)
-core_signals.notify_restored.connect(update_watcher, sender=Article)
-core_signals.notify_updated.connect(update_watcher, sender=Article)
-core_signals.notify_removed.connect(update_watcher, sender=Article)
-core_signals.notify_m2m_added.connect(update_watcher, sender=Article.datasets.through)
-core_signals.notify_m2m_removed.connect(update_watcher, sender=Article.datasets.through)
-core_signals.notify_m2m_cleaned.connect(update_watcher, sender=Article.datasets.through)
-
-core_signals.notify_published.connect(update_watcher, sender=ArticleTrash)
-core_signals.notify_restored.connect(update_watcher, sender=ArticleTrash)
-core_signals.notify_updated.connect(update_watcher, sender=ArticleTrash)
-core_signals.notify_removed.connect(update_watcher, sender=ArticleTrash)

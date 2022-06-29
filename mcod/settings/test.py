@@ -37,7 +37,6 @@ def get_es_index_names():
     index_prefix = f'{index_prefix}-{worker}'
     return {
         "common": "test-common-{}".format(index_prefix),
-        "articles": "test-articles-{}".format(index_prefix),
         "applications": "test-applications-{}".format(index_prefix),
         "courses": "test-courses-{}".format(index_prefix),
         "datasets": "test-datasets-{}".format(index_prefix),

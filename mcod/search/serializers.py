@@ -1,5 +1,6 @@
 from django.apps import apps
 from django.utils.translation import get_language
+from functools import partial
 from marshmallow import missing, pre_dump
 
 from mcod import settings
@@ -88,6 +89,8 @@ class CommonObjectApiAttrs(ObjectAttrs, HighlightObjectMixin):
 
     # datasets
     source = fields.Nested(SourceSchema)
+    if is_enabled('S52_dataset_is_promoted.be'):
+        is_promoted = fields.Boolean()
 
     # resources
     data_date = fields.Date()
@@ -157,7 +160,6 @@ class SearchCounterAggregation(ExtSchema):
     showcases = fields.Integer()
     applications = fields.Integer()
     institutions = fields.Integer()
-    articles = fields.Integer()
     news = fields.Integer()
     knowledge_base = fields.Integer()
 
@@ -195,6 +197,10 @@ class CommonObjectApiAggregations(ExtSchema):
     by_institution_type = fields.Nested(Aggregation,
                                         many=True,
                                         attribute='_filter_by_institution_type.by_institution_type.buckets')
+    by_is_promoted = fields.Nested(
+        BoolDataAggregation,
+        many=True,
+        attribute='_filter_by_is_promoted.by_is_promoted.buckets')
     search_date_range = fields.Nested(SearchDateRangeAggregation)
     by_license_code = fields.Nested(LicenseAggregation,
                                     many=True,
@@ -204,15 +210,15 @@ class CommonObjectApiAggregations(ExtSchema):
                                         attribute='_filter_by_update_frequency.by_update_frequency.buckets')
 
     by_has_dynamic_data = fields.Nested(
-        BoolDataAggregation,
+        partial(BoolDataAggregation, context={'only_true': is_enabled('S52_remove_no_from_filters.be')}),
         many=True,
         attribute='_filter_by_has_dynamic_data.by_has_dynamic_data.buckets')
     by_has_high_value_data = fields.Nested(
-        BoolDataAggregation,
+        partial(BoolDataAggregation, context={'only_true': is_enabled('S52_remove_no_from_filters.be')}),
         many=True,
         attribute='_filter_by_has_high_value_data.by_has_high_value_data.buckets')
     by_has_research_data = fields.Nested(
-        BoolDataAggregation,
+        partial(BoolDataAggregation, context={'only_true': is_enabled('S52_remove_no_from_filters.be')}),
         many=True,
         attribute='_filter_by_has_research_data.by_has_research_data.buckets')
     by_showcase_category = fields.Nested(

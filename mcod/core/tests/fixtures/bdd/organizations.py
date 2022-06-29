@@ -21,48 +21,27 @@ def institutions():
     return OrganizationFactory.create_batch(3)
 
 
-@given(parsers.parse('institution'))
+@given('institution')
 def _institution():
     return OrganizationFactory.create()
 
 
-@given(parsers.parse('removed institution'))
+@given('removed institution')
 def removed_institution():
     org = OrganizationFactory.create(is_removed=True, title='Removed institution')
     return org
 
 
-@given(parsers.parse('second institution with id {institution_id:d}'))
-def second_institution_with_id(institution_id):
-    org = OrganizationFactory.create(id=institution_id, title='Second Institution %s' % institution_id)
-    return org
-
-
-@given(parsers.parse('another institution with id {institution_id:d}'))
-def another_institution_with_id(institution_id):
-    org = OrganizationFactory.create(id=institution_id, title='Another Institution %s' % institution_id)
-    return org
-
-
-@given(parsers.parse('draft institution with id {institution_id:d}'))
-def draft_institution_with_id(institution_id):
-    org = OrganizationFactory.create(id=institution_id, title='Draft Institution {}'.format(institution_id),
-                                     status='draft')
-    return org
-
-
-@given(parsers.parse('removed institution with id {institution_id:d}'))
-def removed_institution_with_id(institution_id):
-    org = OrganizationFactory.create(id=institution_id, title='Removed Institution {}'.format(institution_id),
-                                     is_removed=True)
-    return org
-
-
-@given(parsers.parse('institution with datasets'))
+@pytest.fixture
 def institution_with_datasets():
     org = OrganizationFactory.create()
     DatasetFactory.create_batch(2, organization=org)
     return org
+
+
+@given('institution with datasets')
+def create_institution_with_datasets(institution_with_datasets):
+    return institution_with_datasets
 
 
 @given(parsers.parse('institution with id {institution_id:d} and {num:d} datasets'))

@@ -3,26 +3,26 @@ import json
 from django.db.models import Manager
 from django.test import Client
 from django.urls import NoReverseMatch, reverse
-from pytest_bdd import given, then, when
+from pytest_bdd import given, parsers, then, when
 
 from mcod.core.models import SoftDeletableModel
 from mcod.core.registries import factories_registry
 from mcod.users.forms import UserCreationForm
 
 
-@given('UserCreationForm with <posted_data>', target_fixture='user_creation_form')
+@given(parsers.parse('UserCreationForm with {posted_data}'), target_fixture='user_creation_form')
 def user_create_form_with_posted_data(posted_data):
     form = UserCreationForm(data=json.loads(posted_data))
     return form
 
 
-@then('form validation equals <expected_validation>')
+@then(parsers.parse('form validation equals {expected_validation}'))
 def form_validation_euqals(user_creation_form, expected_validation):
     validation_value = expected_validation == 'true'
     assert user_creation_form.is_valid() == validation_value
 
 
-@when('admin user runs restore action for selected <object_type> objects with ids <requested_object_ids>')
+@when(parsers.parse('admin user runs restore action for selected {object_type} objects with ids {requested_object_ids}'))
 def admin_user_runs_restore_action(admin_context, object_type, requested_object_ids):
     _factory = factories_registry.get_factory(object_type)
     model = _factory._meta.model
@@ -34,7 +34,7 @@ def admin_user_runs_restore_action(admin_context, object_type, requested_object_
     admin_context.response = response
 
 
-@then('<object_type> objects with ids <restored_object_ids> are restored from trash')
+@then(parsers.parse('{object_type} objects with ids {restored_object_ids} are restored from trash'))
 def objects_with_ids_are_restored_from_trash(object_type, restored_object_ids):
     _factory = factories_registry.get_factory(object_type)
     model = _factory._meta.model
@@ -45,7 +45,7 @@ def objects_with_ids_are_restored_from_trash(object_type, restored_object_ids):
     ).count() == len(ids_list)
 
 
-@then('<object_type> objects with ids <unrestored_object_ids> are still in trash')
+@then(parsers.parse('{object_type} objects with ids {unrestored_object_ids} are still in trash'))
 def objects_with_ids_are_still_in_trash(object_type, unrestored_object_ids):
     _factory = factories_registry.get_factory(object_type)
     ids_list = unrestored_object_ids.split(',')
@@ -56,8 +56,8 @@ def objects_with_ids_are_still_in_trash(object_type, unrestored_object_ids):
     ).count() == len(ids_list)
 
 
-@when('admin\'s path is changelist for <object_type>')
-@then('admin\'s path is changelist for <object_type>')
+@when(parsers.parse("admin's path is changelist for {object_type}"))
+@then(parsers.parse("admin's path is changelist for {object_type}"))
 def admin_path_is_changelist(admin_context, object_type):
     _factory = factories_registry.get_factory(object_type)
     model = _factory._meta.model
@@ -65,8 +65,8 @@ def admin_path_is_changelist(admin_context, object_type):
     admin_context.admin.path = path
 
 
-@when('admin\'s path is trash change for <object_type>')
-@then('admin\'s path is trash change for <object_type>')
+@when(parsers.parse("admin's path is trash change for {object_type}"))
+@then(parsers.parse("admin's path is trash change for {object_type}"))
 def admin_path_is_trash_change(admin_context, object_type):
     _factory = factories_registry.get_factory(object_type)
     model = _factory._meta.model
@@ -77,7 +77,7 @@ def admin_path_is_trash_change(admin_context, object_type):
     admin_context.admin.path = path
 
 
-@then('<object_type> has trash if <has_trash>')
+@then(parsers.parse('{object_type} has trash if {has_trash}'))
 def object_type_has_trash_if(admin_context, object_type, has_trash):
     has_trash = bool(int(has_trash))
     _factory = factories_registry.get_factory(object_type)
@@ -93,7 +93,7 @@ def object_type_has_trash_if(admin_context, object_type, has_trash):
         assert not has_trash
 
 
-@then('object is deletable in admin panel if <can_delete>')
+@then(parsers.parse('object is deletable in admin panel if {can_delete}'))
 def object_type_is_deletable_if(admin_context, can_delete):
     can_delete = bool(int(can_delete))
     instance = admin_context.obj
@@ -139,7 +139,7 @@ def factory_get_or_create(object_type, params, is_removed=False):
     return instance
 
 
-@then('object can be removed from database by button if <can_delete> and <can_remove_from_db>')
+@then(parsers.parse('object can be removed from database by button if {can_delete} and {can_remove_from_db}'))
 def can_be_deleted_by_button(admin_context, can_delete, can_remove_from_db):
     can_delete = bool(int(can_delete))
     if not can_delete:
@@ -169,7 +169,7 @@ def can_be_deleted_by_button(admin_context, can_delete, can_remove_from_db):
         assert can_remove_from_db
 
 
-@then('object can be removed from database by action if <can_delete> and <can_remove_from_db>')
+@then(parsers.parse('object can be removed from database by action if {can_delete} and {can_remove_from_db}'))
 def can_be_deleted_by_action(admin_context, can_delete, can_remove_from_db):
     can_delete = bool(int(can_delete))
     if not can_delete:
@@ -201,7 +201,7 @@ def can_be_deleted_by_action(admin_context, can_delete, can_remove_from_db):
         assert can_remove_from_db
 
 
-@then('object can be removed from database by model delete method if <can_delete> and <can_remove_from_db>')
+@then(parsers.parse('object can be removed from database by model delete method if {can_delete} and {can_remove_from_db}'))
 def can_be_deleted_by_model_delete_method(admin_context, can_delete, can_remove_from_db):
     can_delete = bool(int(can_delete))
     if not can_delete:
@@ -222,7 +222,7 @@ def can_be_deleted_by_model_delete_method(admin_context, can_delete, can_remove_
         assert can_remove_from_db
 
 
-@then('object can be removed from database by queryset delete method if <can_delete> and <can_remove_from_db>')
+@then(parsers.parse('object can be removed from database by queryset delete method if {can_delete} and {can_remove_from_db}'))
 def can_be_deleted_by_queryset_delete_method(admin_context, can_delete, can_remove_from_db):
     can_delete = bool(int(can_delete))
     if not can_delete:
@@ -312,14 +312,14 @@ def can_be_deleted_by_trash_queryset_delete_method(admin_context):
     assert proxy_model.objects.filter(id=instance.id, is_permanently_removed=True).exists()
 
 
-@given('factory <object_type> with params <params>')
+@given(parsers.parse('factory {object_type} with params {params}'))
 def factory_object_with_id(admin_context, object_type, params):
     admin_context.obj = factory_get_or_create(object_type, params)
     admin_context.object_type = object_type
     admin_context.params = params
 
 
-@given('removed factory <object_type> with params <params>')
+@given(parsers.parse('removed factory {object_type} with params {params}'))
 def removed_factory_object_with_id(admin_context, object_type, params):
     admin_context.obj = factory_get_or_create(object_type, params, is_removed=True)
     admin_context.object_type = object_type

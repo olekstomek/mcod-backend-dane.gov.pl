@@ -3,17 +3,15 @@ Feature: Dashboard view
   Scenario: Query subscription is visible in dashboard.
     Given logged admin user
     And admin has query subscription with id 100 for url google.com as xxx
-    When api request method is GET
-    And api request path is /auth/user/dashboard
+    When api request path is /auth/user/dashboard
     And send api request and fetch the response
     Then api's response status code is 200
     And api's response body field /meta/aggregations/subscriptions/queries is 1
 
   Scenario: Dataset subscription is visible in dashboard.
     Given logged active user
-    And logged user has subscription with id 999 of dataset with id 10 as yyy
-    When api request method is GET
-    And api request path is /auth/user/dashboard
+    And subscription with id 999 of dataset with id 10 as yyy
+    When api request path is /auth/user/dashboard
     And send api request and fetch the response
     Then api's response status code is 200
     And api's response body field /meta/aggregations/subscriptions/datasets is 1
@@ -23,8 +21,7 @@ Feature: Dashboard view
     And <planned> planned academy courses
     And <current> current academy courses
     And <finished> finished academy courses
-    When api request method is GET
-    And api request path is /auth/user/dashboard
+    When api request path is /auth/user/dashboard
     And send api request and fetch the response
     Then api's response status code is 200
     And dashboard api's response planned courses is <planned>
@@ -45,8 +42,7 @@ Feature: Dashboard view
     Given logged admin user
     And <researches> laboratory researches
     And <analyses> laboratory analyses
-    When api request method is GET
-    And api request path is /auth/user/dashboard
+    When api request path is /auth/user/dashboard
     And send api request and fetch the response
     Then api's response status code is 200
     And dashboard api's response laboratory researches is <researches>
@@ -61,8 +57,7 @@ Feature: Dashboard view
 
   Scenario: Ordinary active user sees only LOD data and subscriptions in dashboard.
     Given logged active user
-    When api request method is GET
-    And api request path is /auth/user/dashboard
+    When api request path is /auth/user/dashboard
     And send api request and fetch the response
     Then api's response status code is 200
     And api's response body has no field /meta/aggregations/academy
@@ -71,8 +66,7 @@ Feature: Dashboard view
 
   Scenario: AOD admin sees AOD, LOD and subscription data in dashboard.
     Given logged academy admin
-    When api request method is GET
-    And api request path is /auth/user/dashboard
+    When api request path is /auth/user/dashboard
     And send api request and fetch the response
     Then api's response status code is 200
     And api's response body has field /meta/aggregations/academy
@@ -81,8 +75,7 @@ Feature: Dashboard view
 
   Scenario: LOD admin sees AOD, LOD and subscriptions data in dashboard.
     Given logged laboratory admin
-    When api request method is GET
-    And api request path is /auth/user/dashboard
+    When api request path is /auth/user/dashboard
     And send api request and fetch the response
     Then api's response status code is 200
     And api's response body has field /meta/aggregations/academy
@@ -91,8 +84,7 @@ Feature: Dashboard view
 
   Scenario Outline: Official user/Agent user sees AOD, LOD and subscriptions data in dashboard.
     Given logged <user_type>
-    When api request method is GET
-    And api request path is /auth/user/dashboard
+    When api request path is /auth/user/dashboard
     And send api request and fetch the response
     Then api's response status code is 200
     And api's response body has field /meta/aggregations/academy
@@ -106,8 +98,7 @@ Feature: Dashboard view
 
   Scenario: Staff/editor user sees AOD, LOD and subscriptions data in dashboard.
     Given logged editor user
-    When api request method is GET
-    And api request path is /auth/user/dashboard
+    When api request path is /auth/user/dashboard
     And send api request and fetch the response
     Then api's response status code is 200
     And api's response body has field /meta/aggregations/academy
@@ -116,16 +107,14 @@ Feature: Dashboard view
 
   Scenario: Aggregated suggestions data are not visible for active normal user.
     Given logged active user
-    When api request method is GET
-    And api request path is /auth/user/dashboard
+    When api request path is /auth/user/dashboard
     And send api request and fetch the response
     Then api's response status code is 200
     And api's response body has no field /meta/aggregations/suggestions
 
   Scenario Outline: Aggregated suggestions data are visible for admin, editor and agent users.
     Given logged <user_type>
-    When api request method is GET
-    And api request path is /auth/user/dashboard
+    When api request path is /auth/user/dashboard
     And send api request and fetch the response
     Then api's response status code is 200
     And api's response body has field /meta/aggregations/suggestions/active
@@ -139,8 +128,7 @@ Feature: Dashboard view
 
 #  Scenario Outline: Aggregated meetings data are visible for admin and agent users.
 #    Given logged <user_type>
-#    When api request method is GET
-#    And api request path is /auth/user/dashboard
+#    When api request path is /auth/user/dashboard
 #    And send api request and fetch the response
 #    Then api's response status code is 200
 #    And api's response body has field /meta/aggregations/meetings/finished
@@ -153,8 +141,7 @@ Feature: Dashboard view
 
   Scenario: Analytical tools and cms url are visible for admin
     Given logged admin user
-    When api request method is GET
-    And api request path is /auth/user/dashboard
+    When api request path is /auth/user/dashboard
     And send api request and fetch the response
     Then api's response status code is 200
     And api's response body has field /meta/aggregations/analytical_tools
@@ -162,8 +149,7 @@ Feature: Dashboard view
 
   Scenario Outline: Analytical tools and cms url are not visible for non admin user
     Given logged <user_type>
-    When api request method is GET
-    And api request path is /auth/user/dashboard
+    When api request path is /auth/user/dashboard
     And send api request and fetch the response
     Then api's response status code is 200
     And api's response body has no field /meta/aggregations/analytical_tools

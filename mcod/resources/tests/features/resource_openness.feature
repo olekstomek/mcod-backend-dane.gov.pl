@@ -16,6 +16,7 @@ Feature: Resources openness scores are set properly
     | 1000   | resources.Resource |single_geotiff.zip        | {"openness_score": 3, "format": "geotiff", "main_file_mimetype": "image/tiff;application=geotiff"} |
     | 1000   | resources.Resource |sample_TIFF_file.tiff     | {"openness_score": 1, "format": "tiff", "main_file_mimetype": "image/tiff"}                        |
     | 1000   | resources.Resource |linked_rdf.rdf            | {"openness_score": 5, "format": "rdf"}                                                             |
+    | 1000   | resources.Resource |linked_rdf_packed.zip     | {"openness_score": 5, "format": "rdf"}                                                             |
     | 1000   | resources.Resource |linked_jsonld.jsonld      | {"openness_score": 5, "format": "jsonld"}                                                          |
     | 1000   | resources.Resource |linked_nt.nt              | {"openness_score": 5, "format": "nt"}                                                              |
     | 1000   | resources.Resource |csv2jsonld.jsonld         | {"openness_score": 4, "format": "jsonld"}                                                          |

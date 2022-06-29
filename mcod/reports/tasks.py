@@ -27,6 +27,7 @@ from mcod.resources.models import Resource
 from mcod.resources.tasks import validate_link
 from mcod.showcases.serializers import ShowcaseProposalCSVSerializer
 from mcod.suggestions.serializers import DatasetSubmissionCSVSerializer
+from mcod.unleash import is_enabled
 
 User = get_user_model()
 logger = logging.getLogger('mcod')
@@ -247,33 +248,73 @@ def dict_fetch_all(cursor):
 @app.task(ignore_result=False)
 def create_daily_resources_report():
     str_date = datetime.datetime.now().strftime('%Y_%m_%d_%H%M')
-    view_name = 'mv_resource_dataset_organization_new_counters_report_separate_files'
+    view_name = 'mv_resource_dataset_organization_report_d_hv_data'
+    report_fields = """
+        id_zasobu,
+        NULL as link_zasobu,
+        nazwa,
+        opis,
+        typ,
+        format,
+        formaty_po_konwersji,
+        data_utworzenia_zasobu,
+        data_modyfikacji_zasobu,
+        stopien_otwartosci,
+        zasob_posiada_dane_wysokiej_wartosci,
+        zasob_posiada_dane_dynamiczne,
+        liczba_wyswietlen,
+        liczba_pobran,
+        id_zbioru_danych,
+        zbior_danych_posiada_dane_wysokiej_wartosci,
+        zbior_danych_posiada_dane_dynamiczne,
+        NULL as link_zbioru,
+        data_utworzenia_zbioru_danych,
+        data_modyfikacji_zbioru_danych,
+        liczba_obserwujacych,
+        id_instytucji,
+        NULL as link_instytucji,
+        tytul,
+        rodzaj,
+        data_utworzenia_instytucji,
+        liczba_udostepnionych_zbiorow_danych
+    """
+    if is_enabled('S47_research_data.be'):
+        view_name = 'mv_resource_dataset_organization_report_d_hv_r_data'
+        report_fields = """
+                id_zasobu,
+                NULL as link_zasobu,
+                nazwa,
+                opis,
+                typ,
+                format,
+                formaty_po_konwersji,
+                data_utworzenia_zasobu,
+                data_modyfikacji_zasobu,
+                stopien_otwartosci,
+                zasob_posiada_dane_wysokiej_wartosci,
+                zasob_posiada_dane_dynamiczne,
+                zasob_posiada_dane_badawcze,
+                liczba_wyswietlen,
+                liczba_pobran,
+                id_zbioru_danych,
+                zbior_danych_posiada_dane_wysokiej_wartosci,
+                zbior_danych_posiada_dane_dynamiczne,
+                zbior_danych_posiada_dane_badawcze,
+                NULL as link_zbioru,
+                data_utworzenia_zbioru_danych,
+                data_modyfikacji_zbioru_danych,
+                liczba_obserwujacych,
+                id_instytucji,
+                NULL as link_instytucji,
+                tytul,
+                rodzaj,
+                data_utworzenia_instytucji,
+                liczba_udostepnionych_zbiorow_danych
+            """
     with connection.cursor() as cursor:
         cursor.execute(f"""REFRESH MATERIALIZED VIEW {view_name}""")
         cursor.execute(f"""
-            SELECT id_zasobu,
-                   NULL as link_zasobu,
-                   nazwa,
-                   opis,
-                   typ,
-                   format,
-                   formaty_po_konwersji,
-                   data_utworzenia_zasobu,
-                   data_modyfikacji_zasobu,
-                   stopien_otwartosci,
-                   liczba_wyswietlen,
-                   liczba_pobran,
-                   id_zbioru_danych,
-                   NULL as link_zbioru,
-                   data_utworzenia_zbioru_danych,
-                   data_modyfikacji_zbioru_danych,
-                   liczba_obserwujacych,
-                   id_instytucji,
-                   NULL as link_instytucji,
-                   tytul,
-                   rodzaj,
-                   data_utworzenia_instytucji,
-                   liczba_udostepnionych_zbiorow_danych
+            SELECT {report_fields}
             FROM {view_name}
         """)
         results = dict_fetch_all(cursor)

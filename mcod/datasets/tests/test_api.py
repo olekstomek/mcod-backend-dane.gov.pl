@@ -16,8 +16,8 @@ scenarios(
     'features/dataset_licenses.feature',
     'features/dataset_showcases_list_api.feature',
     'features/dataset_bulk_download_files_api.feature',
+    'features/datasets_list_api.feature',
 )
-scenarios('features/datasets_list_api.feature', example_converters=dict(field_value=int))
 
 if is_enabled('S49_cc_by_40_conditions_unification.be'):
     scenarios('features/dataset_unified_conditions.feature')

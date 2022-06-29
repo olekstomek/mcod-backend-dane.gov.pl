@@ -510,11 +510,6 @@ SUIT_CONFIG = {
                     'label': _('PoCoTo'),
                     'icon': 'icon-cupe-black'
                 }, {
-                    'model': 'articles.article',
-                    'label': _('Articles'),
-                    'permissions': 'auth.add_user',
-                    'icon': 'icon-leaf'
-                }, {
                     'model': 'suggestions.AcceptedDatasetSubmission',
                     'label': _('Data suggestions'),
                     'permissions': 'auth.add_user',
@@ -709,7 +704,6 @@ ELASTICSEARCH_DSL = {
 ELASTICSEARCH_COMMON_ALIAS_NAME = "common_alias"
 
 ELASTICSEARCH_INDEX_NAMES = OrderedDict({
-    "articles": "articles",
     "applications": "applications",
     "courses": "courses",
     "institutions": "institutions",
@@ -1151,21 +1145,35 @@ SUPPORTED_CONTENT_TYPES = [
     ('application', 'trix', ('trix',), 4, {5}),
     ('application', 'trig', ('trig',), 4, {5}),
 ]
-ARCHIVE_CONTENT_TYPES = {
-    'bzip2',
-    'gzip',
+
+ARCHIVE_RAR_CONTENT_TYPES = {
     'rar',
     'vnd.rar',
+    'x-rar',
+    'x-rar-compressed',
+}
+
+ARCHIVE_ZIP_CONTENT_TYPES = {
+    'zip',
+    'x-zip-compressed',
+}
+
+ARCHIVE_7Z_CONTENT_TYPES = {
+    'x-7z-compressed',
+}
+
+ARCHIVE_CONTENT_TYPES = {
+    *ARCHIVE_RAR_CONTENT_TYPES,
+    *ARCHIVE_ZIP_CONTENT_TYPES,
+    *ARCHIVE_7Z_CONTENT_TYPES,
+    'bzip2',
+    'gzip',
     'x-bzip',
     'x-bzip2',
     'x-gzip',
-    'x-rar',
-    'x-rar-compressed',
     'x-tar',
-    'x-zip-compressed',
-    'x-7z-compressed',
-    'zip'
 }
+
 ARCHIVE_EXTENSIONS = {'bz', 'bz2', 'gz', 'rar', 'tar', 'zip', '7z'}
 ALLOWED_CONTENT_TYPES = [x[1] for x in SUPPORTED_CONTENT_TYPES] + list(ARCHIVE_CONTENT_TYPES)
 ALLOWED_SUPPLEMENT_MIMETYPES = env.list(
@@ -1205,7 +1213,6 @@ THUMB_SIZE = (200, 1024)
 
 COUNTED_MODELS = {
     'applications.Application': {'status': 'published'},
-    'articles.Article': {'status': 'published'},
     'resources.Resource': {'status': 'published'},
     'cms.NewsPage': {'live': True},
 }
@@ -1618,7 +1625,6 @@ DISCOURSE_FORUM_ENABLED = env('DISCOURSE_FORUM_ENABLED', default=True)
 
 SPARQL_ENDPOINTS = {
     'kronika': {'query_endpoint': env('KRONIKA_SPARQL_URL', default='http://kronika.mcod.local'),
-                'headers': {'host': 'public-api.k8s'},
                 'returnFormat': 'json'}
 }
 METABASE_URL = env('METABASE_URL', default='http://metabase.mcod.local')
@@ -1634,6 +1640,8 @@ ZABBIX_API = {
 DEFAULT_REGION_ID = 85633723
 
 DATASET_ARCHIVE_FILES_TASK_DELAY = env('DATASET_ARCHIVE_FILES_TASK_DELAY', default=180)
+
+DATASET_IS_PROMOTED_LIMIT = env('DATASET_IS_PROMOTED_LIMIT', default=5)
 
 ALLOWED_MINIMUM_SPACE = 1024*1024*1024*env('ALLOWED_MINIMUM_FREE_GB', default=20)
 

@@ -23,15 +23,6 @@ class TagFactory(factory.django.DjangoModelFactory):
                 self.datasets.add(dataset)
 
     @factory.post_generation
-    def articles(self, create, extracted, **kwargs):
-        if not create:
-            return
-
-        if extracted:
-            for article in extracted:
-                self.articles.add(article)
-
-    @factory.post_generation
     def applications(self, create, extracted, **kwargs):
         if not create:
             return

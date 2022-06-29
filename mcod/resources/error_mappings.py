@@ -78,6 +78,7 @@ recommendations = {
     'InvalidContentType': 'Sprawdź poprawność adresu url',
     'MissingContentType': 'Sprawdź czy nagłówek Content-Type jest zwracany',
     'UnsupportedContentType': 'Sprawdź poprawność adresu url',
+    'PasswordProtectedArchiveError': 'Upewnij się, że podany link prowadzi do pliku archiwum niezabezpieczonego hasłem.',
     'longitude-error': "Długość geograficzna powinna być z zakresu od -180 do 180.\n"
                        "Popraw wartości w kolumnie wskazanej jako długość geograficzna.",
     'latitude-error': "Szerokość geograficzna powinna być z zakresu od -90 do 90.\n"
@@ -116,6 +117,7 @@ messages = {
     'InvalidContentType': "Niepoprawna wartość w nagłówku odpowiedzi: 'content-type = {}'",
     'MissingContentType': "Brak nagłówka Content-Type w odpowiedzi",
     'UnsupportedContentType': 'Nieobsługiwany typ: {}',
+    'PasswordProtectedArchiveError': 'Pliki archiwum zabezpieczone hasłem nie są dozwolone.',
     'failed-new-connection': "Nie można ustanowić nowego połączenia. Nazwa lub usługa nieznana.",
     'longitude-error': "Długość geograficzna nie jest z zakresu -180 do 180",
     'latitude-error': "Szerokość geograficzna nie jest z zakresu od -90 do 90",

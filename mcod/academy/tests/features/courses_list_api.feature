@@ -3,8 +3,7 @@ Feature: Courses list API
   Scenario Outline: Test courses list endpoint is not accessible for active user
     Given course with id 999
     And logged active user
-    When api request method is GET
-    And api request language is <lang_code>
+    When api request language is <lang_code>
     And api request path is /courses
     Then send api request and fetch the response
     And api's response status code is 403
@@ -17,8 +16,7 @@ Feature: Courses list API
 
   Scenario Outline: Test courses list endpoint is accessible by academy admin
     Given logged <user_type>
-    When api request method is GET
-    And api request path is /courses
+    When api request path is /courses
     Then send api request and fetch the response
     And api's response status code is 200
 
@@ -34,8 +32,7 @@ Feature: Courses list API
   Scenario: Test courses list endpoint returns required data
     Given course created with params {"id": 999, "title": "Course with id: 999"}
     And logged official user
-    When api request method is GET
-    And api request language is en
+    When api request language is en
     And api request path is /courses?id=999
     Then send api request and fetch the response
     And api's response status code is 200
@@ -47,8 +44,7 @@ Feature: Courses list API
     And planned course with id 998
     And current course with id 997
     And logged official user
-    When api request method is GET
-    And api request language is pl
+    When api request language is pl
     And api request path is /courses
     And api request param state is invalid
     Then send api request and fetch the response
@@ -60,8 +56,7 @@ Feature: Courses list API
     And planned course with id 998
     And current course with id 997
     And logged official user
-    When api request method is GET
-    And api request language is pl
+    When api request language is pl
     And api request path is /courses
     And api request param <req_param_name> is <req_param_value>
     Then send api request and fetch the response
@@ -79,8 +74,7 @@ Feature: Courses list API
     And planned course with id 998
     And current course with id 997
     And logged official user
-    When api request method is GET
-    And api request language is pl
+    When api request language is pl
     And api request path is <request_path>
     Then send api request and fetch the response
     And api's response status code is 200
@@ -93,8 +87,7 @@ Feature: Courses list API
   Scenario: Test courses list endpoint returns required data with proper file url
     Given course with id 999
     And logged official user
-    When api request method is GET
-    And api request language is en
+    When api request language is en
     And api request path is /courses?id=999
     Then send api request and fetch the response
     And api's response status code is 200

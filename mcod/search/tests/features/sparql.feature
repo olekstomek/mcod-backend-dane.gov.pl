@@ -1,7 +1,6 @@
 Feature: Sparql API endpoint
   Scenario: Test that GET request for sparql endpoint returns list of namespaces
-    When api request method is GET
-    And api request path is /sparql/
+    When api request path is /sparql/
     And send api request and fetch the response
     Then api's response status code is 200
     And api's response body field /data/[0]/type is namespace

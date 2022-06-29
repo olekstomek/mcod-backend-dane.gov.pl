@@ -1140,13 +1140,6 @@ class MostUsedTags(RankingPanel):
                 dataset__is_permanently_removed=False,
                 dataset__status='published'
             ), distinct=True)).values('dataset_tags_count')
-        article_subquery = base_sub_qs.annotate(article_tags_count=Count(
-            'article',
-            filter=Q(
-                article__is_removed=False,
-                article__is_permanently_removed=False,
-                article__status='published'
-            ), distinct=True)).values('article_tags_count')
         application_subquery = base_sub_qs.annotate(application_tags_count=Count(
             'application',
             filter=Q(
@@ -1156,10 +1149,9 @@ class MostUsedTags(RankingPanel):
             distinct=True)).values('application_tags_count')
         return qs.values('name').annotate(
             dataset_tags=Subquery(dataset_subquery, output_field=IntegerField()),
-            article_tags=Subquery(article_subquery, output_field=IntegerField()),
             application_tags=Subquery(application_subquery, output_field=IntegerField())
         ).annotate(
-            overall_tags=F('dataset_tags') + F('article_tags') + F('application_tags')
+            overall_tags=F('dataset_tags') + F('application_tags')
         ).order_by('-overall_tags')
 
 

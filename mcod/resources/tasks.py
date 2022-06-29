@@ -2,8 +2,10 @@ import json
 import logging
 from copy import deepcopy
 
+import pytz
 from celery import shared_task
 from django.apps import apps
+from django.conf import settings
 from django.utils.timezone import now
 
 from mcod.resources.indexed_data import FileEncodingValidationError
@@ -91,53 +93,6 @@ def process_for_separate_file_model(resource_id, resource, options, resource_typ
             format=options['format'],
             openness_score=openness_score
         )
-
-
-@shared_task(ignore_result=False)
-def process_resource_file_task(resource_id, update_link=True, update_file_archive=False, **kwargs):
-    Resource = apps.get_model('resources', 'Resource')
-
-    resource = Resource.raw.get(id=resource_id)
-    format, file_info, file_encoding, p, file_mimetype, analyze_exc = resource.analyze_file()
-    if not resource.file_extension and format:
-        Resource.raw.filter(pk=resource_id).update(
-            file=resource.save_file(resource.file, f'{resource.file_basename}.{format}')
-        )
-        resource = Resource.raw.get(id=resource_id)
-
-    Resource.raw.filter(pk=resource_id).update(
-        format=format,
-        file_mimetype=file_mimetype,
-        file_info=file_info,
-        file_encoding=file_encoding,
-        type='file',
-        link=resource.file_url if update_link else resource.link,
-        openness_score=resource.get_openness_score(format)
-    )
-
-    resource = Resource.raw.get(id=resource_id)
-    resource.check_support()
-
-    if resource.format == 'csv' and resource.file_encoding is None:
-        raise FileEncodingValidationError(
-            [{'code': 'unknown-encoding', 'message': 'Nie udało się wykryć kodowania pliku.'}])
-
-    if analyze_exc:
-        raise analyze_exc
-    process_resource_file_data_task.s(resource_id, **kwargs).apply_async(countdown=2)
-    if update_link:
-        process_resource_from_url_task.s(resource_id, update_file=False, **kwargs).apply_async(
-            countdown=2)
-    if update_file_archive:
-        resource.dataset.archive_files()
-    return json.dumps({
-        'uuid': str(resource.uuid),
-        'link': resource.link,
-        'format': resource.format,
-        'type': resource.type,
-        'path': resource.file.path,
-        'url': resource.file_url
-    })
 
 
 @shared_task(ignore_result=False)
@@ -333,7 +288,8 @@ def update_data_date(resource_id, update_es=True):
     res_q = Resource.objects.filter(pk=resource_id)
     res = res_q.first()
     if res.is_manual_data_date is False:
-        current_dt = now().date()
+        warsaw_tz = pytz.timezone(settings.TIME_ZONE)
+        current_dt = now().astimezone(warsaw_tz).date()
         res_q.update(data_date=current_dt)
         logger.debug(f'Updated data date for resource with id {resource_id} with date {current_dt}')
         if update_es:

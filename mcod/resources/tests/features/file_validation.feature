@@ -17,6 +17,7 @@ Feature: File validation
     | tar.gz with one csv       | csv         |
     | empty_file.7z             | csv         |
     | empty_file.rar            | csv         |
+    | empty_docx_packed.rar     | docx        |
     | empty_file.tar.gz         | csv         |
     | empty_file.tar.bz2        | csv         |
     | shapefile arch            | shp         |
@@ -40,6 +41,20 @@ Feature: File validation
     | turtle                    | ttl         |
     | trig                      | trig        |
     | trix                      | trix        |
+    | regular.zip               | csv         |
+    | regular.7z                | csv         |
+    | regular.rar               | csv         |
+
+  Scenario Outline: Validation of password protected archives
+    Given I have file <file_type>
+    Then file is validated and PasswordProtectedArchiveError is raised
+    Examples:
+    | file_type                         |
+    | encrypted_content.zip             |
+    | encrypted_content.7z              |
+    | encrypted_content_and_headers.7z  |
+    | encrypted_content.rar             |
+    | encrypted_content_and_headers.rar |
 
   Scenario Outline: Validation of rar with many files
     Given I have file <file_type>

@@ -3,7 +3,7 @@ Feature: Query Watcher
   Scenario: query watcher updates
     Given logged active user
     And dataset created with params {"id": 1100, "title": "Creative Name"}
-    And another dataset created with params {"id": 1101, "title": "Regular Name"}
+    And dataset created with params {"id": 1101, "title": "Regular Name"}
 
     And query subscription with id 999 for url /search?advanced=all&model[terms]=dataset&page=1&per_page=20&q=creative&sort=relevance with 1 results
 

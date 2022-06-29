@@ -311,6 +311,29 @@ class AddResourceNestedStacked(AddResourceMixin, NestedStackedInline):
     verbose_name_plural = ''
 
 
+class IsPromotedListFilter(admin.SimpleListFilter):
+    parameter_name = 'is_promoted'
+    title = _('Promoted datasets')
+    template = 'admin/checkbox_filter.html'
+
+    def lookups(self, request, model_admin):
+        return (
+            ('on', True),
+        )
+
+    def choices(self, changelist):
+        for lookup, title in self.lookup_choices:
+            yield {
+                'selected': self.value() == str(lookup),
+                'query_string': changelist.get_query_string({self.parameter_name: lookup}),
+                'display': title,
+            }
+
+    def queryset(self, request, queryset):
+        val = self.value()
+        return queryset.filter(is_promoted=True) if val == 'on' else queryset
+
+
 class OrganizationFilter(AutocompleteFilter):
     autocomplete_url = 'organization-autocomplete'
     field_name = 'organization'
@@ -322,6 +345,7 @@ class DatasetAdminMixin(HistoryMixin):
     actions_on_top = True
     autocomplete_fields = ['tags', 'organization']
     check_imported_obj_perms = True
+    dataset_promotion_enabled = is_enabled('S52_dataset_is_promoted.be')
     dataset_supplements = is_enabled('S49_dataset_supplements.be')
     export_to_csv = True
     form = DatasetForm
@@ -335,11 +359,6 @@ class DatasetAdminMixin(HistoryMixin):
         'obj_history',
     ]
     lang_fields = True
-    list_filter = [
-        'categories',
-        OrganizationFilter,
-        'status'
-    ]
     prepopulated_fields = {
         "slug": ("title", ),
     }
@@ -369,6 +388,9 @@ class DatasetAdminMixin(HistoryMixin):
             *supplements,
         )
 
+    def suit_row_attributes(self, obj, request):
+        return {'class': 'info'} if request.user.is_superuser and obj.is_promoted else {}
+
     def get_history(self, obj):
         history = super().get_history(obj)
         if self.dataset_supplements:
@@ -377,6 +399,15 @@ class DatasetAdminMixin(HistoryMixin):
             all_history = history.distinct() | supplements_history
             return all_history.order_by('-timestamp')
         return history
+
+    def get_list_filter(self, request):
+        is_promoted = [IsPromotedListFilter] if request.user.is_superuser and self.dataset_promotion_enabled else []
+        return [
+            'categories',
+            OrganizationFilter,
+            'status',
+            *is_promoted,
+        ]
 
     def has_dynamic_data_info(self, obj):
         return yesno(obj.has_dynamic_data, 'Tak,Nie,-')
@@ -410,6 +441,12 @@ class DatasetAdminMixin(HistoryMixin):
         has_research_data = []
         if is_enabled('S47_research_data.be'):
             has_research_data = ['has_research_data_info'] if obj and obj.is_imported else ['has_research_data']
+        show_is_promoted = all([
+            request.user.is_superuser,
+            not getattr(obj, 'is_imported', False),
+            self.dataset_promotion_enabled,
+        ])
+        is_promoted = ['is_promoted'] if show_is_promoted else []
         license_fields = ['license_condition_default_cc40', 'license_condition_custom_description'] if\
             is_enabled('S49_cc_by_40_conditions_unification.be') else\
             ['license_condition_source', 'license_condition_modification',
@@ -435,6 +472,7 @@ class DatasetAdminMixin(HistoryMixin):
                         category_field,
                         *has_high_value_data,
                         *has_research_data,
+                        *is_promoted,
                         'archived_resources_files_media_url',
                         'status',
                         'created_by',

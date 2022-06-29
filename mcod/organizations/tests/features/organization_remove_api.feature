@@ -4,8 +4,7 @@ Feature: Organization remove
   Scenario: /search endpoint shows dataset related to organization
     Given institution with id 1
     And dataset created with params {"id": 999, "title": "FIRST_UNIQUE_TITLE", "organization_id": 1}
-    When api request method is GET
-    And api request path is /search?q=FIRST_UNIQUE_TITLE
+    When api request path is /search?q=FIRST_UNIQUE_TITLE
     Then send api request and fetch the response
     And api's response status code is 200
     And api's response body field /meta/count is 1

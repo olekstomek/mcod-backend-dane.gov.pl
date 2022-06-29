@@ -114,3 +114,21 @@ Feature: Resource details API
     And api's response body field data/attributes/supplements/[0]/name is supplement 999 of resource 999
     And api's response body field data/attributes/supplements/[0]/language is pl
     And api's response body has field data/attributes/supplements/[0]/file_url
+
+  Scenario: Resource file geo data are returned by api
+    Given dataset with id 998
+    And resource with tabular_file_with_geo_data.csv file and id 989
+    When admin's request method is POST
+    And admin's request posted resource data is {"title": "test geo tabular csv", "description": "<p>more than 20 characters</p>", "dataset": 998, "data_date": "2021-05-04", "status": "published", "show_tabular_view": "on", "schema_type_0": "string", "schema_type_1": "string", "schema_type_2": "string", "schema_type_3": "number", "schema_type_4": "string", "schema_type_5": "string", "schema_type_6": "string", "geo_0": "label", "geo_1": "postal_code", "geo_2": "place", "geo_3": "", "geo_4": "", "geo_5": "", "geo_6": "", "_map_save": ""}
+    And admin's page with geocoder mocked api for tabular data /resources/resource/989/change/ is requested
+    And api request path is /1.4/resources/989/geo?bbox=5.07568359375,56.03522578369872,33.15673828125,47.945786463687185,3,9&per_page=100
+    And send api request and fetch the response
+    Then api's response body has field meta/aggregations/tiles
+    And api's response body field meta/aggregations/tiles/[0]/doc_count is 1
+
+  Scenario: Resource api doc page is available
+    Given resource with id 999
+    When api request path is /resources/999/data/doc
+    And json api validation is skipped
+    And send api request and fetch the response
+    Then api's response status code is 200

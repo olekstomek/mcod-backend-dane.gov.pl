@@ -11,6 +11,7 @@ from mcod.unleash import is_enabled
 
 Organization = apps.get_model('organizations', 'Organization')
 Dataset = apps.get_model('datasets', 'Dataset')
+Resource = apps.get_model('resources', 'Resource')
 
 
 @registry.register_document
@@ -54,7 +55,7 @@ class InstitutionDocument(ExtendedDocument):
 
     class Django:
         model = Organization
-        related_models = [Dataset, ]
+        related_models = [Dataset, Resource] if is_enabled('S52_update_es_institution.be') else [Dataset, ]
 
     def prepare_model(self, instance):
         return 'institution'
@@ -62,3 +63,5 @@ class InstitutionDocument(ExtendedDocument):
     def get_instances_from_related(self, related_instance):
         if isinstance(related_instance, Dataset):
             return related_instance.organization
+        elif isinstance(related_instance, Resource):
+            return related_instance.dataset.organization

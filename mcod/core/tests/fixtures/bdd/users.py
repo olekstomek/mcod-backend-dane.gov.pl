@@ -9,13 +9,7 @@ from mcod.core.registries import factories_registry
 from mcod.newsletter.models import Subscription
 from mcod.organizations.models import Organization
 from mcod.resources.factories import ResourceFactory
-from mcod.users.factories import (
-    AdminFactory,
-    EditorFactory,
-    MeetingFactory,
-    MeetingFileFactory,
-    UserFactory,
-)
+from mcod.users.factories import EditorFactory, MeetingFactory, MeetingFileFactory, UserFactory
 from mcod.users.models import User
 
 
@@ -42,7 +36,7 @@ def session_is_flushed():
     flush_sessions()
 
 
-@given(parsers.parse('logged active user'))
+@given('logged active user')
 def logged_active_user(context):
     context.user = UserFactory(
         email='active_user@dane.gov.pl',
@@ -53,7 +47,6 @@ def logged_active_user(context):
 
 
 @given(parsers.parse('logged agent user created with {params}'))
-@given('logged agent user created with <params>')
 def logged_agent_user_created_with_params(context, params):
     _factory = factories_registry.get_factory('agent user')
     kwargs = {
@@ -66,7 +59,6 @@ def logged_agent_user_created_with_params(context, params):
 
 
 @given(parsers.parse('logged out agent user created with {params}'))
-@given('logged out agent user created with <params>')
 def logged_out_agent_user_created_with_params(context, params):
     _factory = factories_registry.get_factory('agent user')
     kwargs = {
@@ -79,7 +71,6 @@ def logged_out_agent_user_created_with_params(context, params):
 
 
 @given(parsers.parse('logged extra agent with id {extra_agent_id:d} of agent with id {agent_id:d}'))
-@given('logged extra agent with id <extra_agent_id> of agent with id <agent_id>')
 def logged_extra_agent_with_id_of_agent_with_id(context, extra_agent_id, agent_id):
     _agent_factory = factories_registry.get_factory('agent user')
     _active_user_factory = factories_registry.get_factory('active user')
@@ -100,7 +91,6 @@ def logged_extra_agent_with_id_of_agent_with_id(context, extra_agent_id, agent_i
 
 
 @given(parsers.parse('logged {user_type}'))
-@given('logged <user_type>')
 def logged_user_type(context, user_type):
     _factory = factories_registry.get_factory(user_type)
     context.user = _factory(
@@ -145,79 +135,9 @@ def logged_out_user_with_email_and_password(context, state, email, password):
     DjangoClient().logout()
 
 
-@given(parsers.parse('logged pending user'))
-def logged_pending_user(context):
-    context.user = UserFactory(
-        email='pending_user@dane.gov.pl',
-        password='12345.Abcde',
-        state='pending'
-    )
-    DjangoClient().force_login(context.user)
-
-
-@given(parsers.parse('logged pending user with email {email_address} and password {password}'))
-def logged_pending_user_with_email_and_password(context, email_address, password):
-    context.user = UserFactory(
-        email=email_address,
-        password=password,
-        state='pending'
-    )
-    DjangoClient().force_login(context.user)
-
-
-@given(parsers.parse('logged blocked user'))
-def logged_blocked_user(context):
-    context.user = UserFactory(
-        email='blocked_user@dane.gov.pl',
-        password='12345.Abcde',
-        state='blocked'
-    )
-    DjangoClient().force_login(context.user)
-
-
-@given(parsers.parse('logged blocked user with email {email_address} and password {password}'))
-def logged_blocked_user_with_email_and_password(context, email_address, password):
-    context.user = UserFactory(
-        email=email_address,
-        password=password,
-        state='blocked'
-    )
-    DjangoClient().force_login(context.user)
-
-
-@given(parsers.parse('logged removed user'))
-def logged_removed_user(context):
-    context.user = UserFactory(
-        email='removed_user@dane.gov.pl',
-        password='12345.Abcde',
-        is_removed=True
-    )
-    DjangoClient().force_login(context.user)
-
-
-@given(parsers.parse('logged removed user with email {email_address} and password {password}'))
-def logged_removed_user_with_email_and_password(context, email_address, password):
-    context.user = UserFactory(
-        email=email_address,
-        password=password,
-        is_removed=True
-    )
-    DjangoClient().force_login(context.user)
-
-
-@given(parsers.parse('logged admin user'))
+@given('logged admin user')
 def logged_admin(context, admin):
     context.user = admin
-    DjangoClient().force_login(context.user)
-
-
-@given(parsers.parse('logged admin user with email {email_address} and password {password}'))
-def logged_admin_with_email_and_password(context, email_address, password):
-    context.user = AdminFactory(
-        email=email_address,
-        password=password,
-        phone='0048123456789'
-    )
     DjangoClient().force_login(context.user)
 
 
@@ -232,16 +152,6 @@ def user_with_id_with_organization(context, editor_id, res_id):
     resource = ResourceFactory.create(id=res_id)
     editor = EditorFactory.create(id=editor_id)
     editor.organizations.add(resource.dataset.organization)
-
-
-@given(parsers.parse('logged editor user with email {email_address} and password {password}'))
-def logged_editor_with_email_and_password(context, email_address, password):
-    context.user = EditorFactory(
-        email=email_address,
-        password=password,
-        phone='0048123456789'
-    )
-    DjangoClient().force_login(context.user)
 
 
 @then(parsers.parse('logged active user attribute {user_attribute} is {user_attribute_value}'))
@@ -263,135 +173,13 @@ def user_organization_is(context, email, organization_id):
     assert user in organization.users.all()
 
 
-@then(parsers.parse('logged as another active user'))
-def logged_as_another_active_user(context):
-    context.user = UserFactory(
-        email='active_user@dane.gov.pl',
-        password='12345.Abcde',
-        state='active'
-    )
-    DjangoClient().force_login(context.user)
-
-
-@then(parsers.parse('logged as another active user with email {email_address} and password {password}'))
-def logged_as_another_active_user_with_email_and_password(context, email_address, password):
-    context.user = UserFactory(
-        email=email_address,
-        password=password,
-        state='active'
-    )
-    DjangoClient().force_login(context.user)
-
-
-@then(parsers.parse('logged as another pending user'))
-def logged_as_another_pending_user(context):
-    context.user = UserFactory(
-        email='pending_user@dane.gov.pl',
-        password='12345.Abcde',
-        state='pending'
-    )
-    DjangoClient().force_login(context.user)
-
-
-@then(parsers.parse('logged as another pending user with email {email_address} and password {password}'))
-def logged_as_another_pending_user_with_email_and_password(context, email_address, password):
-    context.user = UserFactory(
-        email=email_address,
-        password=password,
-        state='pending'
-    )
-    DjangoClient().force_login(context.user)
-
-
-@then(parsers.parse('logged as another blocked user'))
-def logged_as_another_blocked_user(context):
-    context.user = UserFactory(
-        email='blocked_user@dane.gov.pl',
-        password='12345.Abcde',
-        state='blocked'
-    )
-    DjangoClient().force_login(context.user)
-
-
-@then(parsers.parse('logged as another blocked user with email {email_address} and password {password}'))
-def logged_as_another_blocked_user_with_email_and_password(context, email_address, password):
-    context.user = UserFactory(
-        email=email_address,
-        password=password,
-        state='blocked'
-    )
-    DjangoClient().force_login(context.user)
-
-
-@then(parsers.parse('logged as another removed user'))
-def logged_as_another_removed_user(context):
-    context.user = UserFactory(
-        email='removed_user@dane.gov.pl',
-        password='12345.Abcde',
-        is_removed=True
-    )
-    DjangoClient().force_login(context.user)
-
-
-@then(parsers.parse('logged as another removed user with email {email_address} and password {password}'))
-def logged_as_another_removed_user_with_email_and_password(context, email_address, password):
-    context.user = UserFactory(
-        email=email_address,
-        password=password,
-        is_removed=True
-    )
-    DjangoClient().force_login(context.user)
-
-
-@then(parsers.parse('logged as another admin user'))
-def logged_as_another_admin(context):
-    context.user = AdminFactory(
-        email='admin@dane.gov.pl',
-        password='12345.Abcde',
-        phone='0048123456789'
-    )
-    DjangoClient().force_login(context.user)
-
-
-@then(parsers.parse('logged as another admin user with email {email_address} and password {password}'))
-def logged_as_another_admin_with_email_and_password(context, email_address, password):
-    context.user = AdminFactory(
-        email=email_address,
-        password=password,
-        phone='0048123456789'
-    )
-    DjangoClient().force_login(context.user)
-
-
-@then(parsers.parse('logged as another editor user'))
-def logged_as_another_editor(context):
-    context.user = EditorFactory(
-        email='editor@dane.gov.pl',
-        password='12345.Abcde',
-        phone='0048123456789'
-    )
-    DjangoClient().force_login(context.user)
-
-
-@then(parsers.parse('logged as another editor user with email {email_address} and password {password}'))
-def logged_as_another_editor_with_email_and_password(context, email_address, password):
-    context.user = EditorFactory(
-        email=email_address,
-        password=password,
-        phone='0048123456789'
-    )
-    DjangoClient().force_login(context.user)
-
-
 @then(parsers.parse('sent email contains {text}'))
-@then('sent email contains <text>')
 def sent_email_contains_text(context, text):
     assert len(mail.outbox) == 1
     assert text in mail.outbox[0].body, f'Phrase: "{text}" not found in email content.'
 
 
 @then(parsers.parse('sent email recipient is {recipient}'))
-@then('sent email recipient is <recipient>')
 def sent_mail_recipient_is(context, recipient):
     assert recipient in mail.outbox[0].to
 
@@ -415,7 +203,6 @@ def password_is_valid_for_user_email(password, email):
 
 
 @given(parsers.parse('logged {object_type} for data {user_data}'))
-@given('logged <object_type> for data <user_data>')
 def generic_user_with_data(object_type, user_data, context, admin_context):
     assert object_type.endswith(' user'), 'this keyword is only suited for creating users'
     factory_ = factories_registry.get_factory(object_type)
@@ -427,7 +214,6 @@ def generic_user_with_data(object_type, user_data, context, admin_context):
 
 
 @given(parsers.parse('meeting with id {meeting_id:d} and {number:d} files'))
-@given('meetings with id <meeting_id> and <number> files')
 def meeting_with_files(meeting_id, number):
     obj = MeetingFactory(id=meeting_id)
     MeetingFileFactory.create_batch(int(number), meeting=obj)

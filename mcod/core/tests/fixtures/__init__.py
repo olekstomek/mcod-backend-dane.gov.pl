@@ -20,7 +20,29 @@ from mcod.lib.triggers import session_store
 adapter = requests_mock.Adapter()
 
 
+def hack_pytest_bdd():
+    from pytest_bdd.parser import STEP_PARAM_RE, Step
+
+    def render(self, context):
+        def replacer(m):
+            varname = m.group(1)
+            return str(context[varname])
+
+        if not context:
+            return self.name
+
+        return STEP_PARAM_RE.sub(replacer, self.name)
+
+    # There's a bug in pytest-bdd 5.0.0 that disallows usage of < and > sings together in Scenario steps
+    # since they are treated as context varnames.
+    # https://github.com/pytest-dev/pytest-bdd/issues/447
+    # Simple hack for backwards compability is to only treat <tag> as context varnames inside Scenario Outlines that is
+    # when context is provided
+    Step.render = render
+
+
 def pytest_configure(config):
+    hack_pytest_bdd()
     config.addinivalue_line(
         "markers", "elasticsearch: mark test to run with new empty set of indicies"
     )

@@ -11,14 +11,12 @@ Feature: Dataset Comment
     Then api's response status code is 201
     And api's response body field data/attributes/comment is Some comment for dataset 999.
     And sent email contains Some comment for dataset 999.
-    And sent email contains <text>
+    And sent email contains została zgłoszona uwaga
 
     Examples:
-    | req_header_name | req_header_value | text                                 |
-    # For now only PL translated emails are sent.
-    # | Accept-Language | en               | A comment was posted on the data set |
-    | Accept-Language | en               | Zgłoszono uwagę do zbioru            |
-    | Accept-Language | pl               | Zgłoszono uwagę do zbioru            |
+    | req_header_name | req_header_value |
+    | Accept-Language | en               |
+    | Accept-Language | pl               |
 
   Scenario: Adding of dataset comment returns error if comment is too short
     Given dataset with id 999

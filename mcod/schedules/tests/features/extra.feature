@@ -2,8 +2,7 @@ Feature: Extra tests
   Scenario: Endpoint /auth/user_schedule_items/institutions returns list of institutions for agent
     Given institution with id 999
     And logged agent user created with {"id": 999, "agent_organizations": [999]}
-    When api request method is GET
-    And api request path is /auth/user_schedule_items/institutions
+    When api request path is /auth/user_schedule_items/institutions
     Then send api request and fetch the response
     And api's response status code is 200
     And api's response body field data/*/type is institution
@@ -12,8 +11,7 @@ Feature: Extra tests
     Given institution with id 999
     And logged out agent user created with {"id": 999, "agent_organizations": [999]}
     And logged admin user
-    When api request method is GET
-    And api request path is /auth/user_schedule_items/institutions/999
+    When api request path is /auth/user_schedule_items/institutions/999
     Then send api request and fetch the response
     And api's response status code is 200
     And api's response body field data/*/type is institution
@@ -22,8 +20,7 @@ Feature: Extra tests
     Given institution with id 999
     And logged out agent user created with {"id": 999, "agent_organizations": [999]}
     And logged admin user
-    When api request method is GET
-    And api request path is /auth/user_schedule_items/institutions/9999
+    When api request path is /auth/user_schedule_items/institutions/9999
     Then send api request and fetch the response
     And api's response status code is 404
 
@@ -31,8 +28,7 @@ Feature: Extra tests
     Given institution with id 999
     And logged agent user created with {"id": 999, "agent_organizations": [999]}
     And schedule data created with {"schedule_id": 999, "user_id": 999, "user_schedule_id": 999, "user_schedule_item_id": 999}
-    When api request method is GET
-    And api request path is <request_path>
+    When api request path is <request_path>
     Then send api request and fetch the response
     And api's response status code is 200
     And api's response body field data/type is export
@@ -56,8 +52,7 @@ Feature: Extra tests
     Given institution with id 999
     And logged agent user created with {"id": 999, "agent_organizations": [999]}
     And schedule data created with {"schedule_id": 999, "user_id": 999, "user_schedule_id": 999, "user_schedule_item_id": 999}
-    When api request method is GET
-    And api request path is <request_path>
+    When api request path is <request_path>
     Then send api request and fetch the response
     And api's response status code is 200
     And api's response body field data/type is export
@@ -79,8 +74,7 @@ Feature: Extra tests
     Given institution with id 999
     And logged agent user created with {"id": 999, "agent_organizations": [999]}
     And schedule data created with {"schedule_id": 999, "user_id": 999, "user_schedule_id": 999, "user_schedule_item_id": 999}
-    When api request method is GET
-    And api request path is <request_path>
+    When api request path is <request_path>
     Then send api request and fetch the response
     And api's response status code is 200
     And api's response body field data/type is export
@@ -119,8 +113,7 @@ Feature: Extra tests
 
   Scenario: Notification details endpoint returns 404 for invalid notification id
     Given logged admin user
-    When api request method is GET
-    And api request path is /auth/schedule_notifications/9999
+    When api request path is /auth/schedule_notifications/9999
     And send api request and fetch the response
     Then api's response status code is 404
 

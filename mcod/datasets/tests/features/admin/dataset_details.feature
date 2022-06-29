@@ -163,3 +163,10 @@ Feature: Dataset details
     And resource created with params {"id": 998, "title": "Title as link", "dataset_id": 999}
     When admin's page /datasets/dataset/999/change/#resources is requested
     Then admin's response page contains <a href="/resources/resource/998/change/">Title as link</a>
+
+  Scenario: Promoted datasets limit is raised
+    Given 5 promoted datasets
+    When admin's request method is POST
+    And admin's request posted dataset data is {"is_promoted": true}
+    And admin's page /datasets/dataset/add/ is requested
+    Then admin's response page contains Obecnie zostało już zaznaczone 5 zbiorów danych jako promowane. Jeżeli chcesz zaznaczyć ten zbiór musisz odznaczyć inny.

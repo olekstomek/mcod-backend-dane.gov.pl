@@ -12,14 +12,12 @@ def forwards_func(apps, schema_editor):
     Tag = apps.get_model('tags', 'Tag')
     Dataset = apps.get_model('datasets', 'Dataset')
     Application = apps.get_model('applications', 'Application')
-    Article = apps.get_model('articles', 'Article')
 
     tag_id_to_keywords = defaultdict(list)
     datasets = Dataset.objects.prefetch_related('tags').all()
-    articles = Article.objects.prefetch_related('tags').all()
     applications = Application.objects.prefetch_related('tags').all()
 
-    for obj in itertools.chain(datasets, articles, applications):
+    for obj in itertools.chain(datasets, applications):
         for tag in obj.tags.all():
             if tag.id not in tag_id_to_keywords:
                 keyword_pl, _ = Tag.objects.get_or_create(name=tag.name, language='pl')

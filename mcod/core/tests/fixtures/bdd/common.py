@@ -9,6 +9,7 @@ from io import BytesIO
 from pydoc import locate
 
 import dpath
+import magic
 import requests_mock
 from django.apps import apps
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -60,35 +61,8 @@ def email_file_path_is_empty():
     shutil.rmtree(settings.EMAIL_FILE_PATH, ignore_errors=True)
 
 
-@then('remove <object_type> with id 999')
-def remove_object_with_id_999(object_type):
-    _factory = factories_registry.get_factory(object_type)
-    model = _factory._meta.model
-    instance = model.objects.get(pk=999)
-    instance.is_removed = True
-    instance.save()
-
-
-@then('restore <object_type> with id 999')
-def restore_object_with_id_999(object_type):
-    _factory = factories_registry.get_factory(object_type)
-    model = _factory._meta.model
-    instance = model.raw.get(pk=999)
-    instance.is_removed = False
-    instance.save()
-
-
 @given(parsers.parse('remove {object_type} with id {object_id:d}'))
-def remove_object_with_id_pp(object_type, object_id):
-    _factory = factories_registry.get_factory(object_type)
-    model = _factory._meta.model
-    instance = model.objects.get(pk=object_id)
-    instance.is_removed = True
-    instance.save()
-
-
-@then(parsers.parse('remove {object_type} with id {object_id:d}'))
-def remove_object_with_id_p(object_type, object_id):
+def remove_object_with_id(object_type, object_id):
     _factory = factories_registry.get_factory(object_type)
     model = _factory._meta.model
     instance = model.objects.get(pk=object_id)
@@ -97,162 +71,20 @@ def remove_object_with_id_p(object_type, object_id):
 
 
 @then(parsers.parse('restore {object_type} with id {object_id:d}'))
-def restore_object_with_id_p(object_type, object_id):
+def restore_object_with_id(object_type, object_id):
     _factory = factories_registry.get_factory(object_type)
     model = _factory._meta.model
     instance = model.raw.get(pk=object_id)
     instance.is_removed = False
-    instance.save()
-
-
-@given(parsers.parse('restore {object_type} with id {object_id:d}'))
-def restore_object_with_id_pp(object_type, object_id):
-    _factory = factories_registry.get_factory(object_type)
-    model = _factory._meta.model
-    instance = model.raw.get(pk=object_id)
-    instance.is_removed = False
-    instance.save()
-
-
-@given('<object_type> with id 900')
-def object_with_id_900_p(object_type):
-    return create_object(object_type, 900)
-
-
-@given('<object_type> with id 901')
-def object_with_id_901_p(object_type):
-    return create_object(object_type, 901)
-
-
-@given('<object_type> with id 902')
-def object_with_id_902_p(object_type):
-    return create_object(object_type, 902)
-
-
-@given('<object_type> with id 903')
-def object_with_id_903_p(object_type):
-    return create_object(object_type, 903)
-
-
-@given('<object_type> with id 904')
-def object_with_id_904_p(object_type):
-    return create_object(object_type, 904)
-
-
-@given('<object_type> with id 905')
-def object_with_id_905_p(object_type):
-    return create_object(object_type, 905)
-
-
-@given('<object_type> with id 906')
-def object_with_id_906_p(object_type):
-    return create_object(object_type, 906)
-
-
-@given('<object_type> with id 907')
-def object_with_id_907_p(object_type):
-    return create_object(object_type, 907)
-
-
-@given('<object_type> with id 908')
-def object_with_id_908_p(object_type):
-    return create_object(object_type, 908)
-
-
-@given('<object_type> with id 909')
-def object_with_id_909_p(object_type):
-    return create_object(object_type, 909)
-
-
-@given('<object_type> with id 910')
-def object_with_id_910_p(object_type):
-    return create_object(object_type, 910)
-
-
-@given(parsers.parse('{object_type} with id 900'))
-def object_with_id_900(object_type):
-    return create_object(object_type, 900)
-
-
-@given(parsers.parse('{object_type} with id 901'))
-def object_with_id_901(object_type):
-    return create_object(object_type, 901)
-
-
-@given(parsers.parse('{object_type} with id 902'))
-def object_with_id_902(object_type):
-    return create_object(object_type, 902)
-
-
-@given(parsers.parse('{object_type} with id 903'))
-def object_with_id_903(object_type):
-    return create_object(object_type, 903)
-
-
-@given(parsers.parse('{object_type} with id 904'))
-def object_with_id_904(object_type):
-    return create_object(object_type, 904)
-
-
-@given(parsers.parse('{object_type} with id 905'))
-def object_with_id_905(object_type):
-    return create_object(object_type, 905)
-
-
-@given(parsers.parse('{object_type} with id 906'))
-def object_with_id_906(object_type):
-    return create_object(object_type, 906)
-
-
-@given(parsers.parse('{object_type} with id 907'))
-def object_with_id_907(object_type):
-    return create_object(object_type, 907)
-
-
-@given(parsers.parse('{object_type} with id 908'))
-def object_with_id_908(object_type):
-    return create_object(object_type, 908)
-
-
-@given(parsers.parse('{object_type} with id 909'))
-def object_with_id_909(object_type):
-    return create_object(object_type, 909)
-
-
-@given(parsers.parse('{object_type} with id 910'))
-def object_with_id_910(object_type):
-    return create_object(object_type, 910)
-
-
-@then(parsers.parse('set status draft on {object_type} with id {object_id:d}'))
-def draft_object_with_id_999_p(object_type, object_id):
-    _factory = factories_registry.get_factory(object_type)
-    instance = _factory(pk=object_id)
-    instance.status = 'draft'
-    instance.save()
-
-
-@then(parsers.parse('set {attr_name} to {attr_value} on {object_type} with id {object_id:d}'))
-def attr_to_object_with_id_p(attr_name, attr_value, object_type, object_id):
-    _factory = factories_registry.get_factory(object_type)
-    instance = _factory._meta.model.objects.get(pk=object_id)
-    setattr(instance, attr_name, attr_value)
     instance.save()
 
 
 @given(parsers.parse('set {attr_name} to {attr_value} on {object_type} with id {object_id:d}'))
-def attr_to_object_with_id_ppp(attr_name, attr_value, object_type, object_id):
+@then(parsers.parse('set {attr_name} to {attr_value} on {object_type} with id {object_id:d}'))
+def attr_to_object_with_id(attr_name, attr_value, object_type, object_id):
     _factory = factories_registry.get_factory(object_type)
     instance = _factory._meta.model.objects.get(pk=object_id)
     setattr(instance, attr_name, attr_value)
-    instance.save()
-
-
-@then(parsers.parse('set status published on {object_type} with id {object_id:d}'))
-def publish_object_with_id_999_p(object_type, object_id):
-    _factory = factories_registry.get_factory(object_type)
-    instance = _factory(pk=object_id)
-    instance.status = 'published'
     instance.save()
 
 
@@ -338,21 +170,14 @@ def parse_and_create(context, object_type, params, mocker=None):
     create_object(object_type, object_id, **params)
 
 
-@given('<object_type> created with params <params>')
 @given(parsers.parse('{object_type} created with params {params}'))
 def object_type_created_with_params(context, object_type, params, mocker):
     parse_and_create(context, object_type, params, mocker)
 
 
-@given('another <object_type> created with params <another_params>')
-@given(parsers.parse('another {object_type} created with params {another_params}'))
-def another_object_type_created_with_params(context, object_type, another_params):
-    parse_and_create(context, object_type, another_params)
-
-
 @given('translated objects')
 def translated_objects():
-    for object_type in ['showcase', 'article', 'dataset', 'institution', 'resource']:
+    for object_type in ['showcase', 'dataset', 'institution', 'resource']:
         translated_object_type(object_type)
 
 
@@ -361,65 +186,15 @@ def object_with_id_and_2_params(object_type, object_id, field_name1, value1, fie
     return create_object(object_type, object_id, **{field_name1: value1, field_name2: value2})
 
 
-@given(parsers.parse('{object_type} with id {object_id:d} and {field_name} is {value}'))
-def object_with_id_and_param_p(object_type, object_id, field_name, value):
-    return create_object(object_type, object_id, **{field_name: value})
-
-
-@given('<param_object_type> with id <param_object_id> and <param_field_name> is <param_value>')
-def object_with_id_and_param_for_outline(param_object_type, param_object_id, param_field_name, param_value):
+@given(parsers.parse('{param_object_type} with id {param_object_id} and {param_field_name} is {param_value}'))
+def object_with_id_and_param(param_object_type, param_object_id, param_field_name, param_value):
     return create_object(param_object_type, param_object_id, **{param_field_name: param_value})
 
 
-@given(parsers.parse('another {object_type} with id {object_id:d} and {field_name} is {value}'))
-def another_object_with_id_and_param_p(object_type, object_id, field_name, value):
-    return create_object(object_type, object_id, **{field_name: value})
-
-
-@given('another <param_object_type> with id <another_param_object_id> and <param_field_name> is <another_param_value>')
-def another_object_with_id_and_param_p_for_outline(param_object_type, another_param_object_id,
-                                                   param_field_name, another_param_value):
-    return create_object(param_object_type, another_param_object_id, **{param_field_name: another_param_value})
-
-
-@given(parsers.parse(
-    'another {object_type} with id {object_id:d} and {field_name1} is {value1} and {field_name2} is {value2}'))
-def another_object_with_id_and_2_params(object_type, object_id, field_name1, value1, field_name2, value2):
-    return create_object(object_type, object_id, **{field_name1: value1, field_name2: value2})
-
-
-@given(parsers.parse(
-    'one more {object_type} with id {object_id:d} and {field_name1} is {value1} and {field_name2} is {value2}'))
-def one_more_object_with_id_and_2_params(object_type, object_id, field_name1, value1, field_name2, value2):
-    return create_object(object_type, object_id, **{field_name1: value1, field_name2: value2})
-
-
-@given(parsers.parse('6 random instances of {object_type}'))
-def six_articles(object_type):
+@given(parsers.parse('{objects_count:d} random instances of {object_type}'))
+def random_instances(objects_count, object_type):
     _factory = factories_registry.get_factory(object_type)
-    return _factory.create_batch(6)
-
-
-@then(parsers.parse('6 random instances of {object_type}'))
-def six_articles_p(object_type):
-    _factory = factories_registry.get_factory(object_type)
-    return _factory.create_batch(6)
-
-
-@then('set status draft on <object_type> with id 999')
-def draft_object_with_id_999(object_type):
-    _factory = factories_registry.get_factory(object_type)
-    instance = _factory(pk=999)
-    instance.status = 'draft'
-    instance.save()
-
-
-@then('set status published on <object_type> with id 999')
-def publish_object_with_id_999(object_type):
-    _factory = factories_registry.get_factory(object_type)
-    instance = _factory(pk=999)
-    instance.status = 'published'
-    instance.save()
+    return _factory.create_batch(objects_count)
 
 
 @when(parsers.parse('admin request body field {field} is {value}'))
@@ -427,19 +202,17 @@ def admin_request_body_field(context, field, value):
     dpath.new(context.obj, field, value)
 
 
-@when(parsers.parse('admin\'s request method is {request_method}'))
+@when(parsers.parse("admin's request method is {request_method}"))
 def admin_request_method(admin_context, request_method):
     admin_context.admin.method = request_method
 
 
 @given(parsers.parse('form class is {form_class}'))
-@given('form class is <form_class>')
 def form_class_is(admin_context, form_class):
     admin_context.form_class = locate(form_class)
     assert admin_context.form_class
 
 
-@given(parsers.parse('form has image to upload'))
 @given('form has image to upload')
 def form_has_image_to_upload(admin_context, small_image):
     admin_context.form_files = {'image': small_image}
@@ -458,7 +231,6 @@ def get_data(resource):
 
 
 @given(parsers.parse('form {object_type} data is {form_data}'))
-@given('form <object_type> data is <form_data>')
 def form_data_is(admin_context, institution, tag_pl, tag_en, categories, buzzfeed_fakenews_resource,
                  geo_tabular_data_resource, object_type, form_data):
     data_map = {
@@ -498,7 +270,6 @@ def form_data_is(admin_context, institution, tag_pl, tag_en, categories, buzzfee
 
 
 @given(parsers.parse('form instance is {form_instance}'))
-@given('form instance is <form_instance>')
 def form_instance_is(admin_context, geo_tabular_data_resource, tabular_resource, form_instance):
     if form_instance == 'geo_tabular_data_resource':
         admin_context.form_instance = geo_tabular_data_resource
@@ -506,8 +277,7 @@ def form_instance_is(admin_context, geo_tabular_data_resource, tabular_resource,
         admin_context.form_instance = tabular_resource
 
 
-@given(parsers.parse('admin\'s request logged user is {user_type}'))
-@given('admin\'s request logged user is <user_type>')
+@given(parsers.parse("admin's request logged user is {user_type}"))
 def admin_request_logged_user_is(admin_context, user_type):
     _factory = factories_registry.get_factory(user_type)
     assert _factory is not None
@@ -518,7 +288,7 @@ def admin_request_logged_user_is(admin_context, user_type):
     )
 
 
-@given(parsers.parse('admin\'s request logged {user_type} created with params {user_params}'))
+@given(parsers.parse("admin's request logged {user_type} created with params {user_params}"))
 def admin_request_logged_user_with_id(admin_context, user_type, user_params):
     _factory = factories_registry.get_factory(user_type)
     assert _factory is not None
@@ -526,13 +296,12 @@ def admin_request_logged_user_with_id(admin_context, user_type, user_params):
     admin_context.admin.user = _factory(**data)
 
 
-@given('admin\'s request user is unauthenticated')
+@given("admin's request user is unauthenticated")
 def admin_request_user_unauthenticated(admin_context):
     admin_context.admin.user = None
 
 
-@when(parsers.parse('admin\'s request posted {data_type} data is {req_post_data}'))
-@when('admin\'s request posted <data_type> data is <req_post_data>')
+@when(parsers.parse("admin's request posted {data_type} data is {req_post_data}"))
 def api_request_post_data(admin_context, data_type, req_post_data):
     post_data = json.loads(req_post_data)
     default_post_data = {
@@ -843,8 +612,7 @@ def api_request_post_data(admin_context, data_type, req_post_data):
     admin_context.obj = data
 
 
-@when(parsers.parse('admin\'s request posted files {req_post_files}'))
-@when('admin\'s request posted files <req_post_files>')
+@when(parsers.parse("admin's request posted files {req_post_files}"))
 def api_request_post_files(admin_context, req_post_files):
     post_file_names = json.loads(req_post_files)
     posted_files = {}
@@ -852,6 +620,34 @@ def api_request_post_files(admin_context, req_post_files):
         with open(os.path.join(settings.TEST_SAMPLES_PATH, file_name), 'rb') as f:
             posted_files[field_name] = SimpleUploadedFile(file_name, f.read())
     admin_context.obj.update(posted_files)
+
+
+@when(parsers.parse('admin\'s request posted links {req_post_links}'))
+@when('admin\'s request posted links <req_post_links>')
+def api_request_post_links(admin_context, httpsserver, req_post_links):
+    _magic = magic.Magic(mime=True, mime_encoding=True)
+    data = json.loads(req_post_links)
+    posted_links = {}
+    for field_name, file_name in data.items():
+        file_path = os.path.join(settings.TEST_SAMPLES_PATH, file_name)
+        with open(file_path, 'rb') as file:
+            content = file.read()
+        httpsserver.serve_content(
+            content=content,
+            headers={
+                'Content-Disposition': f'attachment; filename="{file_name}"',
+                'Content-Type': _magic.from_buffer(content),
+            }
+        )
+        posted_links[field_name] = httpsserver.url
+
+    admin_context.obj.update(posted_links)
+
+
+@when("admin's request save and continue will be chosen")
+def admin_request_save_and_continue(admin_context):
+    admin_context.obj.pop('_save', None)
+    admin_context.obj['_continue'] = ''
 
 
 def form_is_validated(admin_context):
@@ -885,7 +681,6 @@ def form_is_saved(admin_context):
 
 
 @then(parsers.parse('form field {field_name} error is {error_msg}'))
-@then('form field <field_name> error is <error_msg>')
 def form_field_error_is(admin_context, field_name, error_msg):
     form_is_validated(admin_context)
     form = admin_context.form
@@ -895,7 +690,7 @@ def form_field_error_is(admin_context, field_name, error_msg):
     assert any([error_msg in x for x in errors]), f'"{error_msg}" not found in {errors}'
 
 
-@then(parsers.parse('admin\'s response status code is {status_code:d}'))
+@then(parsers.parse("admin's response status code is {status_code:d}"))
 def admin_response_status_code(admin_context, status_code):
     assert status_code == admin_context.response.status_code, 'Response status should be "%s", is "%s"' % (
         status_code,
@@ -903,17 +698,7 @@ def admin_response_status_code(admin_context, status_code):
     )
 
 
-@then(parsers.parse("admin's response status code is 200 if {has_trash:d} else 404"))
-@then("admin's response status code is 200 if <has_trash> else 404")
-def admin_response_status_code_is_200_or_404(admin_context, has_trash):
-    status_code = 200 if has_trash else 404
-    assert status_code == admin_context.response.status_code, 'Response status should be "%s", is "%s"' % (
-        status_code,
-        admin_context.response.status_code
-    )
-
-
-@then(parsers.parse('admin\'s response page is not editable'))
+@then(parsers.parse("admin's response page is not editable"))
 def admin_response_page_not_editable(admin_context):
     assert admin_context.response.status_code == 200
     cnt = admin_context.response.content.decode()
@@ -924,15 +709,13 @@ def admin_response_page_not_editable(admin_context):
     assert 'id="revalidate_button"' not in cnt
 
 
-@then(parsers.parse('admin\'s response page contains {contained_value}'))
-@then('admin\'s response page contains <contained_value>')
+@then(parsers.parse("admin's response page contains {contained_value}"))
 def admin_response_page_contains(admin_context, contained_value):
     content = admin_context.response.content.decode()
     assert contained_value in content, f'Page content should contain phrase: \"{contained_value}\"'
 
 
-@then(parsers.parse('admin\'s response body field {field} is {value}'))
-@then('admin\'s response body field <field> is <value>')
+@then(parsers.parse("admin's response body field {field} is {value}"))
 def admin_response_body_field(admin_context, field, value):
     data = admin_context.response.json()
     values = [str(value) for value in dpath.util.values(data, field)]
@@ -940,22 +723,20 @@ def admin_response_body_field(admin_context, field, value):
         {value}, set(values), data)
 
 
-@then(parsers.parse('admin\'s response page form contains {contained_value} and {another_value}'))
-@then('admin\'s response page form contains <contained_value> and <another_value>')
+@then(parsers.parse("admin's response page form contains {contained_value} and {another_value}"))
 def admin_response_page_contains_values(admin_context, contained_value, another_value):
     content = admin_context.response.content.decode()
     assert contained_value in content and another_value in content,\
         f'Page content should contain phrases: \"{contained_value}\" and \"{another_value}\"'
 
 
-@then(parsers.parse('admin\'s response page not contains {value}'))
+@then(parsers.parse("admin's response page not contains {value}"))
 def admin_response_page_not_contains(admin_context, value):
     content = admin_context.response.content.decode()
     assert value not in content, f'Page content should not contain phrase: \"{value}\"'
 
 
-@then(parsers.parse('admin\'s response resolved url name is {url_name}'))
-@then('admin\'s response resolved url name is <url_name>')
+@then(parsers.parse("admin's response resolved url name is {url_name}"))
 def admin_response_resolved_url_name_is(admin_context, url_name):
     resolved_url_name = admin_context.response.resolver_match.url_name
     assert url_name == resolved_url_name, f'Resolved name is: {resolved_url_name}'
@@ -976,25 +757,21 @@ def get_response(admin_context):
     return response
 
 
-@when('admin\'s page is requested')
-@then('admin\'s page is requested')
+@when("admin's page is requested")
+@then("admin's page is requested")
 def admin_path_is_requested(admin_context):
     admin_context.response = get_response(admin_context)
 
 
-@when(parsers.parse('admin\'s page {page_url} is requested'))
-@when('admin\'s page <page_url> is requested')
-@then(parsers.parse('admin\'s page {page_url} is requested'))
-@then('admin\'s page <page_url> is requested')
+@when(parsers.parse("admin's page {page_url} is requested"))
+@then(parsers.parse("admin's page {page_url} is requested"))
 def admin_page_is_requested(admin_context, page_url):
     admin_context.admin.path = page_url
     admin_context.response = get_response(admin_context)
 
 
-@when(parsers.parse('admin\'s page with mocked geo api {page_url} is requested'))
-@when('admin\'s page with mocked geo api <page_url> is requested')
-@then(parsers.parse('admin\'s page with mocked geo api {page_url} is requested'))
-@then('admin\'s page with mocked geo api <page_url> is requested')
+@when(parsers.parse("admin's page with mocked geo api {page_url} is requested"))
+@then(parsers.parse("admin's page with mocked geo api {page_url} is requested"))
 def admin_page_with_mocked_geo_api_is_requested(admin_context, page_url, main_regions_response,
                                                 additional_regions_response):
     client = Client()
@@ -1013,21 +790,35 @@ def admin_page_with_mocked_geo_api_is_requested(admin_context, page_url, main_re
     admin_context.response = response
 
 
-@then(parsers.parse('api\'s response data has length {number:d}'))
-@then('api\'s response data has length <number>')
+@when(parsers.parse("admin's page with geocoder mocked api for tabular data {page_url} is requested"))
+@then(parsers.parse("admin's page with geocoder mocked api for tabular data {page_url} is requested"))
+def admin_page_with_geo_mocked_api_for_tabular_data_is_requested(admin_context, page_url, geo_tabular_data_response):
+    client = Client()
+    api_expr = re.compile(settings.GEOCODER_URL + r'/v1/search/structured\?postalcode=\d{2}-\d{3}&locality=\w+')
+    client.force_login(admin_context.admin.user)
+    translation.activate('pl')
+    if admin_context.admin.method == 'POST':
+        with requests_mock.Mocker(real_http=True) as mock_request:
+            mock_request.get(api_expr, json=geo_tabular_data_response)
+            response = client.post(page_url, data=getattr(admin_context, 'obj', None), follow=True)
+    else:
+        response = client.get(page_url, follow=True)
+    admin_context.response = response
+
+
+@then(parsers.parse("api's response data has length {number:d}"))
 def api_response_data_has_length(context, number):
     data = context.response.json['data']
     v_len = len(data) if data else 0
     assert v_len == int(number), 'data length should be {}, but is {}'.format(number, v_len)
 
 
-@when(parsers.parse('send_mail will raise SMTPException'))
+@when('send_mail will raise SMTPException')
 def api_request_csrf_token(context, mocker):
     mocker.patch('mcod.core.db.models.send_mail', side_effect=smtplib.SMTPException)
 
 
 @then(parsers.parse('sparql store contains {item_type} {item_value}'))
-@then('sparql store contains <item_type> <item_value>')
 def sparql_store_contains_subject(sparql_registry, item_type, item_value):
     items = {
         'subject': 's',
@@ -1042,7 +833,6 @@ def sparql_store_contains_subject(sparql_registry, item_type, item_value):
 
 
 @then(parsers.parse('sparql store does not contain subject {subject}'))
-@then('sparql store does not contain subject <subject>')
 def sparql_store_does_not_contain_subject(sparql_registry, subject):
     store_query = f'SELECT ?s WHERE {{ GRAPH {sparql_registry.graph_name} {{ ?s ?p ?o . FILTER (?s = {subject}) }} }}'
     response = sparql_registry.sparql_store.query(store_query)
@@ -1051,7 +841,6 @@ def sparql_store_does_not_contain_subject(sparql_registry, subject):
 
 
 @then(parsers.parse('sparql store contains triple with attributes {attributes}'))
-@then('sparql store contains triple with attributes <attributes>')
 def sparql_store_contains_triple(sparql_registry, attributes):
     parsed_attrs = json.loads(attributes)
     subject = parsed_attrs.get('subject') or '?s'
@@ -1075,14 +864,28 @@ def latest_object_attribute_is(obj_type, attr, value):
         assert attr_val == value, f'{obj} attribute {attr} should be {value}, but is {attr_val}'
 
 
-@given('removed <object_type> objects with ids <object_ids>')
-def removed_objects_with_ids(object_type, object_ids):
+@given(parsers.parse('removed {object_type} objects with ids "{object_ids}"'))
+def removed_objects_with_ids_2(object_type, object_ids):
     _factory = factories_registry.get_factory(object_type)
     split_ids = object_ids.split(',')
     for obj_id in split_ids:
         instance = _factory(pk=int(obj_id))
         instance.is_removed = True
         instance.save()
+
+
+@given(parsers.parse('removed {object_type} objects with ids {object_with_related_removed_ids} and removed related '
+                     '{related_object_type} through {relation_name}'))
+def removed_objects_with_ids_and_removed_related_object(
+        object_type, object_with_related_removed_ids, related_object_type, relation_name):
+    _factory = factories_registry.get_factory(object_type)
+    _related_factory = factories_registry.get_factory(related_object_type)
+    split_ids = object_with_related_removed_ids.split(',')
+    related_object = _related_factory.create(is_removed=True)
+    factory_kwargs = {'is_removed': True, relation_name: related_object}
+    for obj_id in split_ids:
+        factory_kwargs['pk'] = int(obj_id)
+        _factory.create(**factory_kwargs)
 
 
 @then(parsers.parse('{object_type} with title {title} contains data {data_str}'))
@@ -1097,22 +900,7 @@ def obj_with_title_attribute_is(object_type, title, data_str):
         assert obj_attr == attr_value, f'{object_type} attribute {attr_name} should be {attr_value}, but is {obj_attr}'
 
 
-@given('removed <object_type> objects with ids <object_with_related_removed_ids> and'
-       ' removed related <related_object_type> through <relation_name>')
-def removed_objects_with_ids_and_removed_related_object(
-        object_type, object_with_related_removed_ids, related_object_type, relation_name):
-    _factory = factories_registry.get_factory(object_type)
-    _related_factory = factories_registry.get_factory(related_object_type)
-    split_ids = object_with_related_removed_ids.split(',')
-    related_object = _related_factory.create(is_removed=True)
-    factory_kwargs = {'is_removed': True, relation_name: related_object}
-    for obj_id in split_ids:
-        factory_kwargs['pk'] = int(obj_id)
-        _factory.create(**factory_kwargs)
-
-
 @then(parsers.parse('{object_type} with id {obj_id} contains data {data_str}'))
-@then('<object_type> with id <obj_id> contains data <data_str>')
 def obj_with_id_attribute_is(object_type, obj_id, data_str):
     model = apps.get_model(object_type)
     obj = model.objects.get(id=obj_id)
@@ -1124,8 +912,7 @@ def obj_with_id_attribute_is(object_type, obj_id, data_str):
         assert obj_attr == attr_value, f'{object_type} attribute {attr_name} should be {attr_value}, but is {obj_attr}'
 
 
-@then(parsers.parse('api\'s response data has zipped {files_count} files'), converters=dict(files_count=int))
-@then('api\'s response data has zipped <files_count> files')
+@then(parsers.parse("api's response data has zipped {files_count:d} files"))
 def api_response_data_has_zipped_files(context, files_count):
     with zipfile.ZipFile(BytesIO(context.response.content)) as z:
         assert len(z.filelist) == files_count

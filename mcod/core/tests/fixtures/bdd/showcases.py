@@ -1,3 +1,4 @@
+import pytest
 from django.apps import apps
 from pytest_bdd import given, parsers, then, when
 
@@ -6,24 +7,19 @@ from mcod.resources.factories import ResourceFactory
 from mcod.showcases.factories import ShowcaseFactory
 
 
-@given(parsers.parse('showcase'))
+@pytest.fixture
 def showcase():
     return ShowcaseFactory.create()
 
 
-@given(parsers.parse('removed showcase'))
+@given('showcase')
+def create_showcase(showcase):
+    return showcase
+
+
+@given('removed showcase')
 def removed_showcase():
     return ShowcaseFactory.create(is_removed=True, title='Removed showcase')
-
-
-@given(parsers.parse('second showcase with id {showcase_id:d}'))
-def second_showcase_with_id(showcase_id):
-    return ShowcaseFactory.create(id=showcase_id, title='Second showcase %s' % showcase_id)
-
-
-@given(parsers.parse('another showcase with id {showcase_id:d}'))
-def another_showcase_with_id(showcase_id):
-    return ShowcaseFactory.create(id=showcase_id, title='Another showcase %s' % showcase_id)
 
 
 @given(parsers.parse('draft showcase with id {showcase_id:d}'))
@@ -38,7 +34,7 @@ def removed_showcase_with_id(showcase_id):
         id=showcase_id, title='Removed showcase {}'.format(showcase_id), is_removed=True)
 
 
-@given(parsers.parse('showcase with datasets'))
+@given('showcase with datasets')
 def showcase_with_datasets():
     showcase = ShowcaseFactory.create()
     DatasetFactory.create_batch(2, showcase=showcase)
@@ -55,13 +51,8 @@ def showcase_with_id_and_datasets(showcase_id, num):
     return showcase
 
 
-@given(parsers.parse('3 showcases'))
-def showcases():
-    return ShowcaseFactory.create_batch(3)
-
-
 @given(parsers.parse('{num:d} showcases'))
-def x_showcases(num):
+def showcases(num):
     return ShowcaseFactory.create_batch(num)
 
 

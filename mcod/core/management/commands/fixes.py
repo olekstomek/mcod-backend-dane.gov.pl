@@ -8,7 +8,6 @@ from django.db.models import F, Q
 from django_elasticsearch_dsl.registries import registry
 
 from mcod import settings
-from mcod.articles.models import ArticleCategory
 from mcod.cms.models import FormPageSubmission
 from mcod.cms.models.formpage import Formset
 from mcod.core.api.search.tasks import update_document_task, update_with_related_task
@@ -17,9 +16,9 @@ from mcod.datasets.models import Dataset
 from mcod.histories.models import History
 from mcod.histories.tasks import save_history_as_log_entry
 from mcod.reports.models import Report
-from mcod.resources.models import Resource
+from mcod.resources.models import Resource, ResourceFile
 from mcod.resources.tasks import (
-    process_resource_file_task,
+    process_resource_res_file_task,
     update_resource_has_table_has_map_task,
     update_resource_validation_results_task,
 )
@@ -271,55 +270,6 @@ class Command(BaseCommand):
         for d in datasets:
             Dataset.objects.filter(pk=d.id).update(slug=d.get_unique_slug())
 
-    def fix_article_categories(self):
-        """Set Articles Category to base values"""
-        user_id = 1
-
-        news = ArticleCategory.objects.get(pk=1)
-        news.name = "Aktualności"
-        news.description = "Aktualności (dawne artykuły) - zakładka Aktualności"
-        news.name_en = "News"
-        news.description_en = "News - news tab"
-        news.created_by_id = user_id
-        news.modified_by_id = user_id
-        news.save()
-
-        help = ArticleCategory.objects.get(pk=2)
-        help.name = "Pomoc"
-        help.description = "Pomoc - zakładka Baza wiedzy"
-        help.name_en = "Help"
-        help.description_en = "Help - Knowledge base tab"
-        help.created_by_id = user_id
-        help.modified_by_id = user_id
-        help.save()
-
-        training = ArticleCategory.objects.get(pk=3)
-        training.name = "Materiały szkoleniowe"
-        training.description = "Materiały szkoleniowe - zakładka Baza wiedzy"
-        training.name_en = "Training materials"
-        training.description_en = "Training - Knowledge base tab"
-        training.created_by_id = user_id
-        training.modified_by_id = user_id
-        training.save()
-
-        question = ArticleCategory.objects.get(pk=4)
-        question.name = "Często zadawane pytania"
-        question.description = "Często zadawane pytania - zakładka Baza wiedzy"
-        question.name_en = "FAQ"
-        question.description_en = "Question - Knowledge base tab"
-        question.created_by_id = user_id
-        question.modified_by_id = user_id
-        question.save()
-
-        about = ArticleCategory.objects.get(pk=5)
-        about.name = "O serwisie"
-        about.description = "O serwisie - stopka portalu"
-        about.name_en = "About"
-        about.description_en = "About - portal footer"
-        about.created_by_id = user_id
-        about.modified_by_id = user_id
-        about.save()
-
     def fix_resources_data_date(self):
         """
         Ustawia dla istniejących zasobów data_date na wartość z created
@@ -527,10 +477,11 @@ class Command(BaseCommand):
     def fix_resources_formats(self):
         print("Fixing invalid resource formats (with format='True')")
 
-        objs = Resource.raw.filter(format='True')
+        res_ids = list(Resource.raw.filter(format='True').values_list('pk', flat=True))
+        objs = ResourceFile.objects.filter(resource_id__in=res_ids)
         for obj in objs:
-            print(f'Resource with invalid format found: id:{obj.id} , format:{obj.format}')
-            process_resource_file_task.s(obj.id, update_link=False).apply_async(
+            print(f'Resource with invalid format found: id:{obj.resource_id} , format:{obj.resource.format}')
+            process_resource_res_file_task.s(obj.id, update_link=False).apply_async(
                 countdown=1)
         if objs.count():
             print('Done.')
@@ -730,7 +681,7 @@ class Command(BaseCommand):
         if not options['action']:
             raise CommandError(
                 "No action specified. Must be one of"
-                " '--all','--searchhistories', '--resources', '--datasets', '--articlecategories', "
+                " '--all','--searchhistories', '--resources', '--datasets', "
                 "'--resourcedatadate', '--resourcesformats', '--migratefollowings', '--migratehistory', "
                 "'--setverified', '--resources-links', '--resources-validation-results', "
                 "'--resources-has-table-has-map', '--submissions-to-new-format', '--submissions-to-old-format', "
@@ -740,7 +691,6 @@ class Command(BaseCommand):
         action = options['action']
 
         actions = {
-            'articlecategories': self.fix_article_categories,
             'datasets': self.fix_datasets,
             'resources-links': self.fix_resources_links,
             'migratefollowings': self.fix_followings,
@@ -765,7 +715,6 @@ class Command(BaseCommand):
             self.fix_searchhistories()
             self.fix_datasets()
             self.fix_resources()
-            self.fix_article_categories()
         elif action == 'migratehistory':
             self.fix_history(**options)
         elif action == 'resource-http-link':

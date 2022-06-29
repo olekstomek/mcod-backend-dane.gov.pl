@@ -1,8 +1,12 @@
 import os
 import tempfile
+import zipfile
 
 import libarchive
+import magic
+import py7zr
 import rarfile
+from mimeparse import parse_mime_type
 
 from mcod import settings
 
@@ -13,6 +17,67 @@ class UnsupportedArchiveError(Exception):
 
 def is_archive_file(content_type):
     return content_type in settings.ARCHIVE_CONTENT_TYPES
+
+
+def is_password_protected_7z(source):
+    if not py7zr.is_7zfile(source):
+        return False
+    try:
+        with py7zr.SevenZipFile(source) as file:
+            return file.needs_password()
+    except py7zr.PasswordRequired:
+        return True
+
+
+def is_password_protected_zip(source):
+    try:
+        with zipfile.ZipFile(source) as zip_file:
+            for zinfo in zip_file.filelist:
+                is_encrypted = zinfo.flag_bits & 0x1
+                if is_encrypted:
+                    return True
+    except zipfile.BadZipFile:
+        pass
+    return False
+
+
+def is_password_protected_rar(source):
+    if not rarfile.is_rarfile(source):
+        return False
+    try:
+        with rarfile.RarFile(source) as file:
+            return file.needs_password()
+    except rarfile.PasswordRequired:
+        return True
+
+
+def get_memory_file_info(file):
+    _magic = magic.Magic(mime=True, mime_encoding=True)
+    result = _magic.from_buffer(file.read(1024))
+    file.seek(0)
+    return parse_mime_type(result)
+
+
+def is_password_protected_archive_file(file):
+    family, content_type, options = get_memory_file_info(file)
+    content_type_2_func = {
+        **{
+            ct: is_password_protected_rar
+            for ct in settings.ARCHIVE_RAR_CONTENT_TYPES
+        },
+        **{
+            ct: is_password_protected_7z
+            for ct in settings.ARCHIVE_7Z_CONTENT_TYPES
+        },
+        **{
+            ct: is_password_protected_zip
+            for ct in settings.ARCHIVE_ZIP_CONTENT_TYPES
+        },
+    }
+    if content_type not in content_type_2_func:
+        return False
+
+    return content_type_2_func[content_type](getattr(file, 'file', file))
 
 
 def has_archive_extension(path):

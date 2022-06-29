@@ -10,7 +10,7 @@ def search_histories_for_admin(num, admin):
     SearchHistoryFactory.create_batch(num, user=admin)
 
 
-@then('search history list in response is sorted by <sort>')
+@then(parsers.parse('search history list in response is sorted by {sort}'))
 def searchhistory_list_in_response_is_sorted_by(context, sort):
     data = context.response.json['data']
     if 'title' in sort:

@@ -138,7 +138,6 @@ Feature: Resources list API
     Examples:
       | request_path                       |
       | /1.4/showcases?q=noresultsfound    |
-      | /1.4/articles?q=noresultsfound     |
       | /1.4/datasets?q=noresultsfound     |
       | /1.4/histories?q=noresultsfound    |
       | /1.4/institutions?q=noresultsfound |

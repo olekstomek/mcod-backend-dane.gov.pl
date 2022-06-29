@@ -2,8 +2,7 @@
 Feature: Tabular data API
   Scenario: Test resource data sum aggregation
     Given resource with id 1000 and simple csv file
-    When api request method is GET
-    And api request path is /1.4/resources/1000/data?sum=col1,col2,col3,col4
+    When api request path is /1.4/resources/1000/data?sum=col1,col2,col3,col4
     And send api request and fetch the response
     Then api's response status code is 200
     And api's response sum aggregation column col1 is 26
@@ -14,7 +13,6 @@ Feature: Tabular data API
   Scenario: Test listing
     Given I have buzzfeed resource with tabular data
     When I search in tabular data rows
-    And api request method is GET
     And api request header X-API-VERSION is 1.4
     And api request header Accept-Language is pl
     And api request param page is 1
@@ -26,8 +24,7 @@ Feature: Tabular data API
 
   Scenario: Test filtering by keyword
     Given I have buzzfeed resource with tabular data
-    When api request method is GET
-    And resource api tabular data endpoint is requested
+    When resource api tabular data endpoint is requested
     And api request param q is col1.keyword:"Former first lady Barbara Bush dies at 92 - CNN"
     And send api request and fetch the response
     Then api's response status code is 200
@@ -36,8 +33,7 @@ Feature: Tabular data API
 
   Scenario: Test filtering by wildcard
     Given I have buzzfeed resource with tabular data
-    When api request method is GET
-    And resource api tabular data endpoint is requested
+    When resource api tabular data endpoint is requested
     And api request param q is col1:"*lady Barbara Bush dies*"
     And send api request and fetch the response
     Then api's response status code is 200
@@ -46,8 +42,7 @@ Feature: Tabular data API
 
   Scenario: Test sorting
     Given I have buzzfeed resource with tabular data
-    When api request method is GET
-    And resource api tabular data endpoint is requested
+    When resource api tabular data endpoint is requested
     And api request param sort is col2
     And send api request and fetch the response
     Then api's response status code is 200
@@ -56,16 +51,14 @@ Feature: Tabular data API
 
   Scenario: Test dates schemas
     Given I have resource with date and datetime
-    When api request method is GET
-    And resource api tabular data with date and datetime endpoint is requested
+    When resource api tabular data with date and datetime endpoint is requested
     And send api request and fetch the response
     Then api's response status code is 200
     And size of api's response body field data is 20
 
   Scenario: Test missing tabular data repr is not None
     Given I have buzzfeed resource with tabular data
-    When api request method is GET
-    And resource api tabular data endpoint is requested
+    When resource api tabular data endpoint is requested
     And send api request and fetch the response
     Then api's response status code is 200
     And api's response body field /data/*/attributes/col6/val is None
@@ -73,8 +66,7 @@ Feature: Tabular data API
 
   Scenario Outline: Escaping functionality
     Given I have buzzfeed resource with tabular data
-    When api request method is GET
-    And api request has params <req_params>
+    When api request has params <req_params>
     And resource api tabular data endpoint is requested
     And send api request and fetch the response
     Then api's response status code is 200

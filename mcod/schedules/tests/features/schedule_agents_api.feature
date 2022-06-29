@@ -2,8 +2,7 @@ Feature: Schedule agents API
   Scenario Outline: Schedule agent details endpoint is not accessible for active user
     Given logged active user
     And logged out agent user created with {"id": 999}
-    When api request method is GET
-    And api request language is <lang_code>
+    When api request language is <lang_code>
     And api request path is /auth/schedule_agents/999
     Then send api request and fetch the response
     And api's response status code is 403
@@ -17,8 +16,7 @@ Feature: Schedule agents API
   Scenario Outline: Schedule agent details endpoint is not accessible for agent
     Given logged out agent user created with {"id": 999, "email": "agent1@dane.gov.pl"}
     And logged agent user
-    When api request method is GET
-    And api request language is <lang_code>
+    When api request language is <lang_code>
     And api request path is /auth/schedule_agents/999
     Then send api request and fetch the response
     And api's response status code is 403
@@ -33,8 +31,7 @@ Feature: Schedule agents API
     Given logged out agent user created with {"id": 999}
     And schedule data created with {"schedule_id": 999, "schedule_state": "planned"}
     And logged admin user
-    When api request method is GET
-    And api request path is /auth/schedule_agents/9999
+    When api request path is /auth/schedule_agents/9999
     Then send api request and fetch the response
     And api's response status code is 404
 
@@ -42,8 +39,7 @@ Feature: Schedule agents API
     Given logged out agent user created with {"id": 999}
     And schedule data created with {"schedule_id": 999, "schedule_state": "planned"}
     And logged admin user
-    When api request method is GET
-    And api request path is /auth/schedule_agents/999
+    When api request path is /auth/schedule_agents/999
     Then send api request and fetch the response
     And api's response status code is 200
     And api's response body has field data/attributes/planned_user_schedule/institution

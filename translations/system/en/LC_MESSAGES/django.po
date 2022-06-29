@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-05-18 23:50+0200\n"
+"POT-Creation-Date: 2022-06-08 08:53+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -714,6 +714,9 @@ msgstr ""
 msgid "Link validation status"
 msgstr ""
 
+msgid "Promoted datasets"
+msgstr ""
+
 msgid "Filter by institution name"
 msgstr ""
 
@@ -786,6 +789,12 @@ msgid ""
 "recommend .png files with a transparent background"
 msgstr ""
 
+#, python-format
+msgid ""
+"By checking the checkbox, the item will be promoted on the list of datasets. "
+"You can promote a maximum of %(limit)s datasets."
+msgstr ""
+
 msgid "Availability date"
 msgstr ""
 
@@ -811,9 +820,21 @@ msgid ""
 "contact the administrator at kontakt@dane.gov.pl."
 msgstr ""
 
+#, python-format
+msgid ""
+"Currently %(limit)s datasets have already been marked as promoted. If you "
+"want to select this dataset, you have to uncheck another one."
+msgstr ""
+
 msgid ""
 "You can't publish this dataset, because his organization has the status of a "
 "draft Please set status to draft or set status to publish for organization: "
+msgstr ""
+
+#, python-format
+msgid ""
+"Currently %(limit)s datasets have already been marked as promoted. If you "
+"want to promote another one, you need to uncheck any of them."
 msgstr ""
 
 msgid ""
@@ -982,6 +1003,9 @@ msgstr ""
 msgid "Custom CC BY 40 conditions"
 msgstr ""
 
+msgid "promoting the dataset"
+msgstr ""
+
 msgid "modified"
 msgstr ""
 
@@ -1052,6 +1076,15 @@ msgstr ""
 msgid "The number of followers"
 msgstr ""
 
+msgid "Dataset has high value data"
+msgstr ""
+
+msgid "Dataset has dynamic data"
+msgstr ""
+
+msgid "Dataset has research data"
+msgstr ""
+
 msgid "Dataset URL"
 msgstr ""
 
@@ -1074,15 +1107,6 @@ msgid "Terms of use"
 msgstr ""
 
 msgid "License"
-msgstr ""
-
-msgid "Dataset has high value data"
-msgstr ""
-
-msgid "Dataset has dynamic data"
-msgstr ""
-
-msgid "Dataset has research data"
 msgstr ""
 
 msgid "Dataset regions"
@@ -2805,6 +2829,9 @@ msgstr ""
 msgid "Maps and plots"
 msgstr ""
 
+msgid "Manual update"
+msgstr ""
+
 msgid "Special Signs"
 msgstr ""
 
@@ -2917,6 +2944,9 @@ msgstr ""
 msgid "Invalid file extension: %(ext)s."
 msgstr ""
 
+msgid "Password protected archives are not allowed."
+msgstr ""
+
 msgid ""
 "You can't restore this resource, because it's dataset is still removed. "
 "Please first restore dataset: "
@@ -3010,6 +3040,18 @@ msgstr ""
 msgid "is chart creation blocked?"
 msgstr ""
 
+msgid "Data date update period"
+msgstr ""
+
+msgid "Data date start date update"
+msgstr ""
+
+msgid "Data date end date update"
+msgstr ""
+
+msgid "Endless data date update"
+msgstr ""
+
 msgid "acc: Resource"
 msgstr ""
 
@@ -3018,6 +3060,17 @@ msgstr ""
 
 #, python-format
 msgid "A comment was posted on the resource %(title)s"
+msgstr ""
+
+msgid "Please provide specific date or set endless update."
+msgstr ""
+
+msgid ""
+"Data date end cant be chosen when endless data date update is selected. "
+"Please choose one."
+msgstr ""
+
+msgid "Update end date cant be earlier than start date."
 msgstr ""
 
 msgid "link"
@@ -3047,6 +3100,15 @@ msgstr ""
 msgid "downloads_count"
 msgstr ""
 
+msgid "Resource has high value data"
+msgstr ""
+
+msgid "Resource has dynamic data"
+msgstr ""
+
+msgid "Resource has research data"
+msgstr ""
+
 msgid "Resource URL"
 msgstr ""
 
@@ -3063,15 +3125,6 @@ msgid "Resource views count"
 msgstr ""
 
 msgid "Resource downloads count"
-msgstr ""
-
-msgid "Resource has high value data"
-msgstr ""
-
-msgid "Resource has dynamic data"
-msgstr ""
-
-msgid "Resource has research data"
 msgstr ""
 
 msgid "Resource regions"

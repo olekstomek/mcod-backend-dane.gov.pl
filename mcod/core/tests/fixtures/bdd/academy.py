@@ -41,25 +41,25 @@ def current_course_with_id(course_id):
     return _course
 
 
-@given('<planned> planned academy courses')
+@given(parsers.parse('{planned:d} planned academy courses'))
 def planned_courses(planned: int):
     return CourseModuleFactory.create_batch(
-        size=int(planned),
+        size=planned,
         start=timezone.now().date() + relativedelta(days=3)
     )
 
 
-@given('<current> current academy courses')
+@given(parsers.parse('{current:d} current academy courses'))
 def current_courses(current: int):
     return CourseModuleFactory.create_batch(
-        size=int(current),
+        size=current,
         start=timezone.now().date()
     )
 
 
-@given('<finished> finished academy courses')
+@given(parsers.parse('{finished:d} finished academy courses'))
 def finished_courses(finished: int):
     return CourseModuleFactory.create_batch(
-        size=int(finished),
+        size=finished,
         start=timezone.now().date() - relativedelta(days=3)
     )

@@ -6,7 +6,7 @@ from pytest_bdd import given, parsers, then
 from mcod.laboratory.factories import LabEventFactory, ReportFactory
 
 
-@given('<researches> laboratory researches')
+@given(parsers.parse('{researches} laboratory researches'))
 def laboratory_research(researches):
     researches = int(researches)
     return LabEventFactory.create_batch(
@@ -15,7 +15,7 @@ def laboratory_research(researches):
     )
 
 
-@given('<analyses> laboratory analyses')
+@given(parsers.parse('{analyses} laboratory analyses'))
 def laboratory_analysis(analyses):
     analyses = int(analyses)
     return LabEventFactory.create_batch(
@@ -24,14 +24,14 @@ def laboratory_analysis(analyses):
     )
 
 
-@then("dashboard api's response laboratory researches is <researches>")
+@then(parsers.parse("dashboard api's response laboratory researches is {researches}"))
 def dashboard_api_response_researches(researches, context):
     researches = int(researches)
     value = dpath.util.get(context.response.json, '/meta/aggregations/lab/researches')
     assert value == researches, 'researches on dashboard is %s, expected %s' % (value, researches)
 
 
-@then("dashboard api's response laboratory analyses is <analyses>")
+@then(parsers.parse("dashboard api's response laboratory analyses is {analyses}"))
 def dashboard_api_response_analyses(analyses, context):
     analyses = int(analyses)
     value = dpath.util.get(context.response.json, '/meta/aggregations/lab/analyses')

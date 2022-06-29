@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-05-20 16:36+0200\n"
+"POT-Creation-Date: 2022-06-08 08:53+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -737,6 +737,9 @@ msgstr "Status walidacji pliku"
 msgid "Link validation status"
 msgstr "Status walidacji linku"
 
+msgid "Promoted datasets"
+msgstr "Promowane zbiory danych"
+
 msgid "Filter by institution name"
 msgstr "Filtruj według nazwy instytucji"
 
@@ -815,6 +818,14 @@ msgstr ""
 "Dopuszczalne typy plików: jpg, gif, png. Ze względu na lepszą czytelność "
 "zalecamy plik .png z przezroczystym tłem"
 
+#, python-format
+msgid ""
+"By checking the checkbox, the item will be promoted on the list of datasets. "
+"You can promote a maximum of %(limit)s datasets."
+msgstr ""
+"Zaznaczenie checkboxa spowoduje, że zbiór będzie promowany na liście zbiorów "
+"danych. Możesz promować maksymalnie %(limit)s zbiorów danych."
+
 msgid "Availability date"
 msgstr "Data udostępnienia"
 
@@ -845,12 +856,28 @@ msgstr ""
 "Wybrane warunki ponownego wykorzystania danych oznaczają, że zawierają one "
 "dane osobowe. Skontaktuj się z administratorem portalu kontakt@dane.gov.pl"
 
+#, python-format
+msgid ""
+"Currently %(limit)s datasets have already been marked as promoted. If you "
+"want to select this dataset, you have to uncheck another one."
+msgstr ""
+"Obecnie zostało już zaznaczone %(limit)s zbiorów danych jako promowane. "
+"Jeżeli chcesz zaznaczyć ten zbiór musisz odznaczyć inny."
+
 msgid ""
 "You can't publish this dataset, because his organization has the status of a "
 "draft Please set status to draft or set status to publish for organization: "
 msgstr ""
 "Nie można opublikować zbioru, ponieważ organizacja do której należy ma "
 "status szkic. Ustaw status szkic lub zmień opublikuj organizację: "
+
+#, python-format
+msgid ""
+"Currently %(limit)s datasets have already been marked as promoted. If you "
+"want to promote another one, you need to uncheck any of them."
+msgstr ""
+"Obecnie zostało już zaznaczone %(limit)s zbiorów danych jako promowane. "
+"Jeżeli chcesz promować kolejny, musisz odznaczyć któryś z nich."
 
 msgid ""
 "You can't restore this dataset, because it's organization is still removed. "
@@ -1071,6 +1098,9 @@ msgstr ""
 msgid "Custom CC BY 40 conditions"
 msgstr "Indywidualne warunki licencji w ramach zakresu"
 
+msgid "promoting the dataset"
+msgstr "promowanie zbioru danych"
+
 msgid "modified"
 msgstr "zmodyfikowany"
 
@@ -1142,6 +1172,15 @@ msgstr "zmodyfikowany przez"
 msgid "The number of followers"
 msgstr "Liczba obserwujących"
 
+msgid "Dataset has high value data"
+msgstr "Zbiór zawiera dane o wysokiej wartości"
+
+msgid "Dataset has dynamic data"
+msgstr "Zbiór zawiera dane dynamiczne"
+
+msgid "Dataset has research data"
+msgstr "Zbiór zawiera dane badawcze"
+
 msgid "Dataset URL"
 msgstr "URL zbioru"
 
@@ -1165,15 +1204,6 @@ msgstr "Warunki wykorzystywania"
 
 msgid "License"
 msgstr "Licencja"
-
-msgid "Dataset has high value data"
-msgstr "Zbiór zawiera dane o wysokiej wartości"
-
-msgid "Dataset has dynamic data"
-msgstr "Zbiór zawiera dane dynamiczne"
-
-msgid "Dataset has research data"
-msgstr "Zbiór zawiera dane badawcze"
 
 msgid "Dataset regions"
 msgstr "Lokalizacje zbiorów danych"
@@ -2018,18 +2048,6 @@ msgid ""
 msgstr ""
 "Zasób z id: %(r_id)s, id zbioru: %(d_id)s i instytucji \"%(ins)s\" nie "
 "został znaleziony."
-
-msgid "Please provide specific date or set endless update."
-msgstr "Należy wprowadzić konkretną datę lub ustawić aktualizację bez daty zakończenia."
-
-msgid ""
-"Data date end cant be chosen when endless data date update is selected. "
-"Please choose one."
-msgstr "Nie można jednocześnie wprowadzić daty zakończenia aktualizacji oraz wybrać opcji bez daty zakończenia."
-"Proszę wybrać tylko jedną z tych opcji."
-
-msgid "Update end date cant be earlier than start date."
-msgstr "Data zakończenia aktualizacji nie może być wcześniejsza lub taka sama jak data rozpoczęcia."
 
 #, python-format
 msgid "Dataset with id: %(d_id)s and institution: \"%(ins)s\" was not found."
@@ -3100,15 +3118,6 @@ msgstr "Szerokość geograficzna powinna być liczbą"
 msgid "special signs"
 msgstr "znaki umowne"
 
-msgid "Please provide specific date or select endless update."
-msgstr "Należy podać konkretną datę zakończenia aktualizacji lub wybrać opcję bez daty zakończenia."
-
-msgid ""
-"Endless data date update cant be selected when data date end is chosen. "
-"Please choose one."
-msgstr "Nie można wybrać opcji aktualizacji bez daty zakończenia w"
-"przypadku wprowadzenia konkretnej daty zakończenia aktualizacji."
-
 msgid ""
 "You can't set status of this resource to published, because it's dataset is "
 "still a draft. You should first published that dataset: "
@@ -3141,6 +3150,9 @@ msgstr "Dane na dzień"
 #, python-format
 msgid "Invalid file extension: %(ext)s."
 msgstr "Niepoprawne rozszerzenie pliku: %(ext)s."
+
+msgid "Password protected archives are not allowed."
+msgstr "Pliki archiwum zabezpieczone hasłem nie są dozwolone."
 
 msgid ""
 "You can't restore this resource, because it's dataset is still removed. "
@@ -3260,6 +3272,23 @@ msgstr "Zasób"
 msgid "A comment was posted on the resource %(title)s"
 msgstr "Zgłoszono uwagę do zasobu %(title)s"
 
+msgid "Please provide specific date or set endless update."
+msgstr ""
+"Należy wprowadzić konkretną datę lub ustawić aktualizację bez daty "
+"zakończenia."
+
+msgid ""
+"Data date end cant be chosen when endless data date update is selected. "
+"Please choose one."
+msgstr ""
+"Nie można jednocześnie wprowadzić daty zakończenia aktualizacji oraz wybrać "
+"opcji bez daty zakończenia.Proszę wybrać tylko jedną z tych opcji."
+
+msgid "Update end date cant be earlier than start date."
+msgstr ""
+"Data zakończenia aktualizacji nie może być wcześniejsza lub taka sama jak "
+"data rozpoczęcia."
+
 msgid "link"
 msgstr ""
 
@@ -3287,6 +3316,15 @@ msgstr "licznik odwiedzin"
 msgid "downloads_count"
 msgstr "licznik pobrań"
 
+msgid "Resource has high value data"
+msgstr "Zasób zawiera dane o wysokiej wartości"
+
+msgid "Resource has dynamic data"
+msgstr "Zasób zawiera dane dynamiczne"
+
+msgid "Resource has research data"
+msgstr "Zasób zawiera dane badawcze"
+
 msgid "Resource URL"
 msgstr "URL danych"
 
@@ -3304,15 +3342,6 @@ msgstr "Liczba wyświetleń danych"
 
 msgid "Resource downloads count"
 msgstr "Liczba pobrań danych"
-
-msgid "Resource has high value data"
-msgstr "Zasób zawiera dane o wysokiej wartości"
-
-msgid "Resource has dynamic data"
-msgstr "Zasób zawiera dane dynamiczne"
-
-msgid "Resource has research data"
-msgstr "Zasób zawiera dane badawcze"
 
 msgid "Resource regions"
 msgstr "Lokalizacje danych"

@@ -1,4 +1,4 @@
-FROM python:3.8.6
+FROM python:3.8.13
 
 ARG UID=1000
 ARG GID=1000
@@ -7,7 +7,8 @@ ARG UNAME=mcod
 ENV PYTHONUNBUFFERED 1
 ENV VIRTUAL_ENV=/usr/src/mcod_backend/venv
 
-RUN apt-get update && apt-get install -y --allow-unauthenticated gettext locales libarchive13 libmagickwand-dev libmagickcore-6.q16-3-extra curl dirmngr apt-transport-https lsb-release ca-certificates firefox-esr ffmpeg unrar-free
+RUN apt-get update && apt-get install -y software-properties-common && add-apt-repository "deb http://deb.debian.org/debian bullseye main contrib non-free"
+RUN apt-get update && apt-get install -y --allow-unauthenticated gettext locales libarchive13 libmagickwand-dev libmagickcore-6.q16-3-extra curl dirmngr apt-transport-https lsb-release ca-certificates firefox-esr ffmpeg unrar
 
 RUN curl -sL https://deb.nodesource.com/setup_14.x | bash -
 

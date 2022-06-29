@@ -6,27 +6,15 @@ from mcod.datasets.factories import DatasetFactory
 from mcod.resources.factories import ResourceFactory
 
 
-@given(parsers.parse('application'))
+@given('application')
 def application():
     org = ApplicationFactory.create()
     return org
 
 
-@given(parsers.parse('removed application'))
+@given('removed application')
 def removed_application():
     org = ApplicationFactory.create(is_removed=True, title='Removed application')
-    return org
-
-
-@given(parsers.parse('second application with id {application_id:d}'))
-def second_application_with_id(application_id):
-    org = ApplicationFactory.create(id=application_id, title='Second application %s' % application_id)
-    return org
-
-
-@given(parsers.parse('another application with id {application_id:d}'))
-def another_application_with_id(application_id):
-    org = ApplicationFactory.create(id=application_id, title='Another application %s' % application_id)
     return org
 
 
@@ -44,7 +32,7 @@ def removed_application_with_id(application_id):
     return org
 
 
-@given(parsers.parse('application with datasets'))
+@given('application with datasets')
 def application_with_datasets():
     org = ApplicationFactory.create()
     DatasetFactory.create_batch(2, application=org)
@@ -61,13 +49,8 @@ def application_with_id_and_datasets(application_id, num):
     return application
 
 
-@given(parsers.parse('3 applications'))
-def applications():
-    return ApplicationFactory.create_batch(3)
-
-
 @given(parsers.parse('{num:d} applications'))
-def x_applications(num):
+def applications(num):
     return ApplicationFactory.create_batch(num)
 
 

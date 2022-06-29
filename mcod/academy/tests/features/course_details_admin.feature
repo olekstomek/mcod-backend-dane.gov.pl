@@ -4,16 +4,14 @@ Feature: Course details page in admin panel
   Scenario: Course change page is not visible for NOT academy admin
     Given course created with params {"id": 999, "title": "Course with id: 999"}
     And admin's request logged user is active user
-    When admin's request method is GET
-    And admin's page /academy/course/999/change/ is requested
+    When admin's page /academy/course/999/change/ is requested
     Then admin's response status code is 200
     And admin's response page contains Zaloguj się
 
   Scenario: Course change page is visible for academy admin
     Given admin's request logged user is academy admin
     And course created with params {"id": 999, "title": "Testowy kurs 999"}
-    When admin's request method is GET
-    And admin's page /academy/course/999/change/ is requested
+    When admin's page /academy/course/999/change/ is requested
     Then admin's response status code is 200
     And admin's response page contains Testowy kurs 999
 

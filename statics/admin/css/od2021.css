@@ -58,6 +58,7 @@ p.irreversible-deletion-warning {
 }
 .od2021 .alert.alert-error {
 	color: #a33;
+	list-style-type:none;
 }
 .od2021 .breadcrumb ~ .alert {
     margin: 0 0 0.75rem 0;
@@ -720,4 +721,8 @@ a.disabledTab {
     display:block;
     border-bottom:1px solid black;
     width:35%;
+}
+label[for="is_promoted"] {
+	font-size:16px;
+	margin-left:15px;
 }

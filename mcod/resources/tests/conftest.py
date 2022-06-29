@@ -7,10 +7,15 @@ from mcod.core.tests.fixtures.bdd.common import prepare_file
 from mcod.resources.models import Resource, ResourceFile
 
 
-@given('I have buzzfeed resource with tabular data')
+@pytest.fixture
 def tabular_resource(buzzfeed_fakenews_resource):
     buzzfeed_fakenews_resource = Resource.objects.get(pk=buzzfeed_fakenews_resource.pk)
     return buzzfeed_fakenews_resource
+
+
+@given('I have buzzfeed resource with tabular data')
+def create_tabular_resource(tabular_resource):
+    return tabular_resource
 
 
 @given('I have resource with date and datetime')

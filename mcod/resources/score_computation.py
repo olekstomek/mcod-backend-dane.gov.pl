@@ -8,6 +8,8 @@ from rdflib import ConjunctiveGraph, URIRef
 from requests.exceptions import RequestException
 
 from mcod import settings
+from mcod.resources.archives import ArchiveReader, is_archive_file
+from mcod.resources.file_validation import get_file_info
 from mcod.resources.link_validation import content_type_from_file_format
 
 
@@ -65,10 +67,16 @@ class OpennessScoreCalculator:
             context['data'] = None
         return context
 
-    def get_file_context_data(self, file):
+    def get_file_context_data(self, field_file):
         context = {}
-        with open(file.path, 'rb') as outfile:
-            context['data'] = outfile.read()
+        path = field_file.path
+        _, content_type, _ = get_file_info(field_file.path)
+        if is_archive_file(content_type):
+            extracted = ArchiveReader(path)
+            if len(extracted) == 1:
+                path = extracted[0]
+        with open(path, 'rb') as file:
+            context['data'] = file.read()
         return context
 
     def calculate_score(self, context):

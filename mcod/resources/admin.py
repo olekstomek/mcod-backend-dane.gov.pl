@@ -69,7 +69,7 @@ class FormatFilter(admin.SimpleListFilter):
     title = 'Format'
 
     def lookups(self, request, model_admin):
-        return supported_formats_choices()
+        return supported_formats_choices(with_archives=True)
 
     def queryset(self, request, queryset):
         val = self.value()

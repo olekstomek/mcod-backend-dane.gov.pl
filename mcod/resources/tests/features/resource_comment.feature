@@ -12,14 +12,12 @@ Feature: Resource Comment
     Then api's response status code is 200
     And api's response body field data/attributes/comment is Some comment for resource 999.
     And sent email contains Some comment for resource 999.
-    And sent email contains <text>
+    And sent email contains została zgłoszona uwaga
 
     Examples:
-    | req_header_name | req_header_value | text                                 |
-    # For now only PL translated emails are sent.
-    # | Accept-Language | en               | A comment was posted on the resource |
-    | Accept-Language | en               | Zgłoszono uwagę do zasobu            |
-    | Accept-Language | pl               | Zgłoszono uwagę do zasobu            |
+    | req_header_name | req_header_value |
+    | Accept-Language | en               |
+    | Accept-Language | pl               |
 
   Scenario Outline: Valid resource comment
     Given resource with id 999

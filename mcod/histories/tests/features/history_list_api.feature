@@ -3,8 +3,7 @@ Feature: History list API
 
   Scenario Outline: History list endpoint returns required data
     Given 3 log entries
-    When api request method is GET
-    And api request path is <request_path>
+    When api request path is <request_path>
     And send api request and fetch the response
     Then api's response status code is 200
     And api's response body field data/*/type is history
@@ -18,8 +17,7 @@ Feature: History list API
   Scenario Outline: History list endpoint is filtered by id
     Given log entry with id 999
     And 3 log entries
-    When api request method is GET
-    And api request path is <request_path>
+    When api request path is <request_path>
     And send api request and fetch the response
     Then api's response status code is 200
     And api's response data has length 1

@@ -5,8 +5,7 @@ Feature: User Login
     Given logged active user
     #And logged active user with email piotrek@mc.gov.pl and password 1234.Abcde
     #And second logged active user with email tomek@mc.gov.pl and password 1234.Abcde
-    When api request method is GET
-    And api request path is /auth/subscriptions
+    When api request path is /auth/subscriptions
     And send api request and fetch the response
     Then api's response status code is 200
 

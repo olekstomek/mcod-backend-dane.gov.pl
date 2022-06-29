@@ -198,11 +198,6 @@ class User(AdminMixin, ApiMixin, AbstractBaseUser, PermissionsMixin, SoftDeletab
                                                    through='users.UserFollowingApplication',
                                                    through_fields=('follower', 'application'),
                                                    related_name='users_following', related_query_name="user")
-    followed_articles = models.ManyToManyField('articles.Article',
-                                               verbose_name=_('Followed articles'), blank=True,
-                                               through='users.UserFollowingArticle',
-                                               through_fields=('follower', 'article'),
-                                               related_name='users_following', related_query_name="user")
     followed_datasets = models.ManyToManyField('datasets.Dataset',
                                                verbose_name=_('Followed datasets'), blank=True,
                                                through='users.UserFollowingDataset',
@@ -730,13 +725,6 @@ class UserFollowingApplication(FollowingModel):
         db_table = 'user_following_application'
 
 
-class UserFollowingArticle(FollowingModel):
-    article = models.ForeignKey('articles.Article', on_delete=models.CASCADE)
-
-    class Meta:
-        db_table = 'user_following_article'
-
-
 class UserFollowingDataset(FollowingModel):
     dataset = models.ForeignKey('datasets.Dataset', on_delete=models.CASCADE)
 
@@ -829,8 +817,6 @@ class MeetingTrash(Meeting, metaclass=TrashModelBase):
 
 @receiver(post_delete, sender=UserFollowingApplication)
 @receiver(post_save, sender=UserFollowingApplication)
-@receiver(post_delete, sender=UserFollowingArticle)
-@receiver(post_save, sender=UserFollowingArticle)
 @receiver(post_delete, sender=UserFollowingDataset)
 @receiver(post_save, sender=UserFollowingDataset)
 def es_refresh(sender, instance, *args, **kwargs):

@@ -1,10 +1,10 @@
-from pytest_bdd import given, then
+from pytest_bdd import given, parsers, then
 
 from mcod.core.tests.fixtures import *  # noqa
 from mcod.datasets.documents import DatasetDocument
 
 
-@then('datasets list in response is sorted by <sort>')
+@then(parsers.parse('datasets list in response is sorted by {sort}'))
 def datasets_list_in_response_is_sorted_by(context, sort):
     data = context.response.json['data']
     if 'title' in sort:

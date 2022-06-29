@@ -2,8 +2,7 @@
 Feature: Global Search API
   Scenario: Test that endpoint returns english message about too short search phrase
     Given institution with id 777 and 2 datasets
-    When api request method is GET
-    And api request path is /1.4/search/
+    When api request path is /1.4/search/
     And api request language is en
     And api request param q is a
     And send api request and fetch the response
@@ -12,8 +11,7 @@ Feature: Global Search API
 
   Scenario: Test that endpoint returns polish message about too short search phrase
     Given institution with id 777 and 2 datasets
-    When api request method is GET
-    And api request path is /1.4/search/
+    When api request path is /1.4/search/
     And api request language is pl
     And api request param q is c
     And send api request and fetch the response
@@ -22,8 +20,7 @@ Feature: Global Search API
 
   Scenario Outline: Test that search returns valid response for different queries
     Given <object_type> created with params <params>
-    When api request method is GET
-    And api request path is /1.4/search/
+    When api request path is /1.4/search/
     And api request param per_page is 100
     And api request has params <req_params>
     And api request language is <lang_code>
@@ -42,19 +39,12 @@ Feature: Global Search API
     | application | {"id": 999, "tags": ["app_tag_en"]}          | {"model": "application", "q": "app_tag_en"}   | en        | title,notes,author,image_thumb_url,image_alt,tags |
     | application | {"id": 999, "tags": ["app_tag_pl"]}          | {"model": "application", "q": "app_tag_pl"}   | pl        | title,notes,author,image_thumb_url,image_alt,tags |
 
-    | article     | {"id": 999, "title_en": "title_en"}          | {"model": "article", "q": "title_en"}         | en        | title,notes              |
-    | article     | {"id": 999, "title": "title_pl"}             | {"model": "article", "q": "title_pl"}         | pl        | title,notes              |
-    | article     | {"id": 999, "notes_en": "notes_en"}          | {"model": "article", "q": "notes_en"}         | en        | title,notes              |
-    | article     | {"id": 999, "notes": "notes_pl"}             | {"model": "article", "q": "notes_pl"}         | pl        | title,notes              |
-    | article     | {"id": 999, "tags": ["article_tag_en"]}      | {"model": "article", "q": "article_tag_en"}   | en        | title,notes,tags         |
-    | article     | {"id": 999, "tags": ["article_tag_pl"]}      | {"model": "article", "q": "article_tag_pl"}   | pl        | title,notes,tags         |
-
-    | dataset     | {"id": 999, "title_en": "ds_title_en"}       | {"model": "dataset", "q": "ds_title_en"}      | en        | title,notes              |
-    | dataset     | {"id": 999, "title": "ds_title_pl"}          | {"model": "dataset", "q": "ds_title_pl"}      | pl        | title,notes              |
-    | dataset     | {"id": 999, "notes_en": "ds_notes_en"}       | {"model": "dataset", "q": "ds_notes_en"}      | en        | title,notes              |
-    | dataset     | {"id": 999, "notes": "ds_notes_pl"}          | {"model": "dataset", "q": "ds_notes_pl"}      | pl        | title,notes              |
-    | dataset     | {"id": 999, "tags": ["ds_tag_en"]}           | {"model": "dataset", "q": "ds_tag_en"}        | en        | title,notes,tags         |
-    | dataset     | {"id": 999, "tags": ["ds_tag_pl"]}           | {"model": "dataset", "q": "ds_tag_pl"}        | pl        | title,notes,tags         |
+    | dataset     | {"id": 999, "title_en": "ds_title_en"}       | {"model": "dataset", "q": "ds_title_en"}      | en        | title,notes,is_promoted              |
+    | dataset     | {"id": 999, "title": "ds_title_pl"}          | {"model": "dataset", "q": "ds_title_pl"}      | pl        | title,notes,is_promoted              |
+    | dataset     | {"id": 999, "notes_en": "ds_notes_en"}       | {"model": "dataset", "q": "ds_notes_en"}      | en        | title,notes,is_promoted              |
+    | dataset     | {"id": 999, "notes": "ds_notes_pl"}          | {"model": "dataset", "q": "ds_notes_pl"}      | pl        | title,notes,is_promoted              |
+    | dataset     | {"id": 999, "tags": ["ds_tag_en"]}           | {"model": "dataset", "q": "ds_tag_en"}        | en        | title,notes,tags,is_promoted         |
+    | dataset     | {"id": 999, "tags": ["ds_tag_pl"]}           | {"model": "dataset", "q": "ds_tag_pl"}        | pl        | title,notes,tags,is_promoted         |
 
     | resource    | {"id": 999, "title_en": "res_title_en"}      | {"model": "resource", "q": "res_title_en"}    | en        | title,notes              |
     | resource    | {"id": 999, "title": "res_title_pl"}         | {"model": "resource", "q": "res_title_pl"}    | pl        | title,notes              |
@@ -81,8 +71,7 @@ Feature: Global Search API
     Given dataset with id 998
     And resource with id 999 dataset id 998 and single main region
     And 3 resources
-    When api request method is GET
-    And api request path is <request_path>
+    When api request path is <request_path>
     Then send api request and fetch the response
     And api's response status code is 200
     And has assigned Polska,Warszawa as name for regions
@@ -133,3 +122,12 @@ Feature: Global Search API
     | /1.4/search/?regions[bbox][geo_shape]=19.259214,53.481806,23.128409,51.013112,10&model[terms]=resource&per_page=10 |meta/aggregations/map_by_regions/[0]/region_name     |pow. Warszawa, woj. mazowieckie                            |
     | /1.4/search/?regions[bbox][geo_shape]=19.259214,53.481806,23.128409,51.013112,11&model[terms]=resource&per_page=10 |meta/aggregations/map_by_regions/[0]/region_name     |Gmina Warszawa, pow. Warszawa, woj. mazowieckie            |
     | /1.4/search/?regions[bbox][geo_shape]=19.259214,53.481806,23.128409,51.013112,12&model[terms]=resource&per_page=10 |meta/aggregations/map_by_regions/[0]/region_name     |Warszawa, Gmina Warszawa, pow. Warszawa, woj. mazowieckie  |
+
+  Scenario: Search returns promoted datasets as first
+    Given dataset created with params {"id": 998, "is_promoted": true}
+    And dataset with id 999
+    When api request path is /search?model[terms]=dataset&sort=-search_date
+    Then send api request and fetch the response
+    And api's response status code is 200
+    And api's response body field data/[0]/id is 998
+    And api's response body field data/[0]/attributes/is_promoted is True

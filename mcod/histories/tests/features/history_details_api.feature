@@ -3,8 +3,7 @@ Feature: History details API
 
   Scenario Outline: History details endpoint returns required data
     Given log entry with id 999
-    When api request method is GET
-    And api request path is <request_path>
+    When api request path is <request_path>
     And send api request and fetch the response
     Then api's response status code is 200
     And api's response body field data/type is history

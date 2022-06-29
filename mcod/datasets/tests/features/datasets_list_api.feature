@@ -3,16 +3,14 @@ Feature: Datasets list API
 
   Scenario: Test datasets list does not contain included section by default in API 1.4
     Given dataset with id 999 and 3 resources
-    When api request method is GET
-    And api request path is /1.4/datasets/
+    When api request path is /1.4/datasets/
     Then send api request and fetch the response
     And api's response status code is 200
     And api's response body has no field included
 
   Scenario: Test datasets list contains included section in API 1.4
     Given dataset with id 999 and 3 resources
-    When api request method is GET
-    And api request path is /1.4/datasets/
+    When api request path is /1.4/datasets/
     And api request param include is institution
     Then send api request and fetch the response
     And api's response status code is 200
@@ -20,8 +18,7 @@ Feature: Datasets list API
 
   Scenario: Test number of returned datasets is the same in API 1.0 and API 1.4
     Given dataset with title unikalny_tytuł and 3 resources
-    When api request method is GET
-    And api request path is /1.0/datasets/
+    When api request path is /1.0/datasets/
     And api request param q is unikalny_tytuł
     Then send api request and fetch the response
     And api's response status code is 200
@@ -33,8 +30,7 @@ Feature: Datasets list API
 
   Scenario: Test datasets list elements contain valid links to related items
     Given 3 datasets with 3 resources
-    When api request method is GET
-    And api request path is /1.4/datasets/
+    When api request path is /1.4/datasets/
     Then send api request and fetch the response
     And api's response status code is 200
     And api's response datasets contain valid links to related resources
@@ -42,13 +38,12 @@ Feature: Datasets list API
   Scenario: Test dataset openness scores contains scores only from related resources that are published
     Given dataset with id 10001
     And resource created with params {"id": 10000, "dataset_id": 10001, "openness_score": 3}
-    And another resource created with params {"id": 10001, "dataset_id": 10001, "openness_score": 2}
-    When api request method is GET
-    And api request path is /1.4/datasets/10001
+    And resource created with params {"id": 10001, "dataset_id": 10001, "openness_score": 2}
+    When api request path is /1.4/datasets/10001
     Then send api request and fetch the response
     And api's response status code is 200
     And api's response body field data/attributes/openness_scores is [2, 3]
-    Then set status draft on resource with id 10001
+    Then set status to draft on resource with id 10001
     Then send api request and fetch the response
     And api's response status code is 200
     And api's response body field data/attributes/openness_scores is [3]
@@ -56,8 +51,7 @@ Feature: Datasets list API
   Scenario Outline: Test datasets list is filtered by openness_scores
     Given dataset with id 999
     And resource created with params {"id": 999, "dataset_id": 999, "openness_score": 3}
-    When api request method is GET
-    And api request path is <request_path>
+    When api request path is <request_path>
     And api request param <req_param_name> is <req_param_value>
     Then send api request and fetch the response
     And api's response status code is 200
@@ -70,8 +64,7 @@ Feature: Datasets list API
 
   Scenario Outline: Test datasets list can be sorted
     Given 3 datasets
-    When api request method is GET
-    And api request language is pl
+    When api request language is pl
     And api request path is <request_path>
     And api request param per_page is 100
     And api request param <req_param_name> is <req_param_value>
@@ -108,8 +101,7 @@ Feature: Datasets list API
 
   Scenario Outline: Test filtering of datasets by unknown visualization_type returns empty list
     Given dataset with tabular resource
-    When api request method is GET
-    And api request path is <request_path>
+    When api request path is <request_path>
     Then send api request and fetch the response
     And api's response status code is 200
     And api's response data has length 0
@@ -122,8 +114,7 @@ Feature: Datasets list API
 
   Scenario Outline: Test datasets with local file resources can be filtered by resource visualization types
     Given dataset with local file resource
-    When api request method is GET
-    And api request path is <request_path>
+    When api request path is <request_path>
     Then send api request and fetch the response
     And api's response status code is 200
     And api's response body list /data/*/attributes/visualization_types contains any from <values>
@@ -136,8 +127,7 @@ Feature: Datasets list API
 
   Scenario Outline: Test datasets with remote file resources doesn't show when filtering by resource visualization types
     Given dataset with remote file resource
-    When api request method is GET
-    And api request path is <request_path>
+    When api request path is <request_path>
     Then send api request and fetch the response
     And api's response status code is 200
     And api's response body field data is []
@@ -150,8 +140,7 @@ Feature: Datasets list API
 
   Scenario Outline: Test datasets can be filtered by resource types
     Given Datasets with resources of type [{"website": 1}, {"api": 1}, {"file": 1}]
-    When api request method is GET
-    And api request path is <request_path>
+    When api request path is <request_path>
     Then send api request and fetch the response
     And api's response status code is 200
     And api's response body list /data/*/attributes/types contains any from <values>
@@ -170,8 +159,7 @@ Feature: Datasets list API
 
   Scenario Outline: Test datasets can be filtered by created in API 1.4
     Given three datasets with created dates in 2018-02-02T10:00:00Z|2019-02-02T10:00:00Z|2020-02-02T10:00:00Z
-    When api request method is GET
-    And api request path is <request_path>
+    When api request path is <request_path>
     Then send api request and fetch the response
     And api's response status code is 200
     And api's response data has length <number>
@@ -190,8 +178,7 @@ Feature: Datasets list API
   Scenario: Related resources regions are assigned to dataset
     Given dataset with id 998
     And resource with id 999 dataset id 998 and single main region
-    When api request method is GET
-    And api request path is /1.4/datasets/?id=998
+    When api request path is /1.4/datasets/?id=998
     And send api request and fetch the response
     Then api's response body field data/[0]/attributes/regions/[0]/name is Polska
     And api's response body field data/[0]/attributes/regions/[0]/region_id is 85633723
@@ -200,8 +187,7 @@ Feature: Datasets list API
 
   Scenario: Dataset without regions has poland as assigned region
     Given dataset with id 999 and 3 resources
-    When api request method is GET
-    And api request path is /1.4/datasets/?id=999
+    When api request path is /1.4/datasets/?id=999
     And send api request and fetch the response
     Then api's response body field data/[0]/attributes/regions/[0]/name is Polska
     And api's response body field data/[0]/attributes/regions/[0]/region_id is 85633723
@@ -220,3 +206,11 @@ Feature: Datasets list API
     | request_path           |
     | /1.0/datasets/?sort=id |
     | /1.4/datasets/?sort=id |
+
+  Scenario: Promoted datasets on list
+    Given dataset created with params {"id": 998, "is_promoted": true}
+    And dataset with id 999
+    When api request path is /datasets/?sort=-created
+    And send api request and fetch the response
+    Then api's response body field data/[0]/id is 998
+    And api's response body field data/[0]/attributes/is_promoted is True

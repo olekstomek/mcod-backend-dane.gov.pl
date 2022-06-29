@@ -18,6 +18,7 @@ import unicodecsv
 from celery.signals import task_failure, task_postrun, task_prerun, task_success
 from constance import config
 from csvwlib import CSVWConverter
+from dateutil import rrule
 from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -26,7 +27,7 @@ from django.contrib.postgres.indexes import GinIndex
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.core.validators import MaxValueValidator, MinValueValidator
-from django.db import models
+from django.db import models, transaction
 from django.db.models import Max, Sum
 from django.db.models.signals import post_save, pre_delete, pre_save
 from django.dispatch import receiver
@@ -79,7 +80,6 @@ from mcod.resources.signals import (
 )
 from mcod.resources.tasks import (
     process_resource_file_data_task,
-    process_resource_file_task,
     process_resource_from_url_task,
     process_resource_res_file_task,
     update_last_day_data_date,
@@ -105,15 +105,17 @@ class ResourceDataValidationError(Exception):
     pass
 
 
-def supported_formats():
+def supported_formats(with_archives=False):
     data = []
     for item in settings.SUPPORTED_CONTENT_TYPES:
         data.extend(item[2])
+    if with_archives:
+        data.extend(settings.ARCHIVE_EXTENSIONS)
     return sorted(list(set(data)))
 
 
-def supported_formats_choices():
-    return [(i, i.upper()) for i in supported_formats()]
+def supported_formats_choices(with_archives=False):
+    return [(i, i.upper()) for i in supported_formats(with_archives=with_archives)]
 
 
 SUPPORTED_FILE_EXTENSIONS = [x[0] for x in supported_formats_choices()]
@@ -1258,17 +1260,36 @@ class Resource(ExtendedModel):
 
     def schedule_interval_data_date_update(self, *args, **kwargs):
         logger.debug(f'Scheduling interval data date update for resource with id {self.pk}')
+        warsaw_tz = pytz.timezone(settings.TIME_ZONE)
+        days_count, freq = (1, rrule.DAILY) if self.data_date_update_period == 'daily' else (7, rrule.WEEKLY)
         schedule, _ = IntervalSchedule.objects.get_or_create(
-            every=1 if self.data_date_update_period == 'daily' else 7,
+            every=days_count,
             period=IntervalSchedule.DAYS
         )
         task_kwargs = {'interval': schedule}
+        start_dt = datetime.datetime.combine(self.automatic_data_date_start, datetime.time(0, 5))
+        localized_start = warsaw_tz.localize(start_dt)
+        task_kwargs['start_time'] = localized_start
+        localized_now = now().astimezone(warsaw_tz)
+        if localized_start <= localized_now:
+            last_run_at = localized_start
+            for dt in rrule.rrule(freq, localized_start, until=localized_now):
+                last_run_at = dt
+            task_kwargs['last_run_at'] = last_run_at
         self._create_schedule_periodic_task(task_kwargs=task_kwargs)
 
     def schedule_crontab_data_date_update(self, schedule_date):
         logger.debug(f'Scheduling crontab data date update for resource with id {self.pk}')
+        warsaw_tz = pytz.timezone(settings.TIME_ZONE)
+        localized_today = now().astimezone(warsaw_tz).date()
         task_kwargs = {}
         if self.is_last_day_of_month(schedule_date):
+            if schedule_date < localized_today:
+                m_range = monthrange(localized_today.year, localized_today.month)
+                month_last_day = datetime.date(localized_today.year, localized_today.month, m_range[1])
+                while schedule_date < month_last_day:
+                    schedule_date += relativedelta(months=1)
+                    schedule_date = self.correct_last_moth_day(schedule_date)
             crontab_kwargs = {
                 'minute': '30',
                 'hour': '0',
@@ -1298,7 +1319,15 @@ class Resource(ExtendedModel):
         day_of_month = schedule_date.day
         return m_range[1] == day_of_month
 
-    def _create_schedule_periodic_task(self, task_kwargs=None, schedule_date=None):
+    def correct_last_moth_day(self, schedule_date):
+        if not self.is_last_day_of_month(schedule_date):
+            proper_last_day = monthrange(schedule_date.year, schedule_date.month)[1]
+            schedule_date = schedule_date.replace(day=proper_last_day)
+        return schedule_date
+
+    def _create_schedule_periodic_task(self, task_kwargs, schedule_date=None):
+        warsaw_tz = pytz.timezone(settings.TIME_ZONE)
+        localized_today = now().astimezone(warsaw_tz).date()
         if schedule_date is None:
             schedule_date = self.automatic_data_date_start
         obj_kwargs = {
@@ -1306,24 +1335,27 @@ class Resource(ExtendedModel):
             'args': json.dumps([self.pk]),
             'queue': 'periodic'
         }
-        if task_kwargs:
-            obj_kwargs.update(task_kwargs)
-        start_dt = datetime.datetime.combine(self.automatic_data_date_start, datetime.time(0, 0))
-        localized_start = pytz.timezone('Europe/Warsaw').localize(start_dt)
-        obj_kwargs['start_time'] = localized_start
+        obj_kwargs.update(task_kwargs)
         if self.automatic_data_date_end:
             end_dt = datetime.datetime.combine(self.automatic_data_date_end, datetime.time(1, 0))
-            localized_end = pytz.timezone('Europe/Warsaw').localize(end_dt)
+            localized_end = warsaw_tz.localize(end_dt)
             obj_kwargs['expires'] = localized_end
-        PeriodicTask.objects.update_or_create(
-            name=self.data_date_task_name, defaults=obj_kwargs
-        )
-        if now().date() == schedule_date:
+        try:
+            PeriodicTask.objects.update_or_create(
+                name=self.data_date_task_name, defaults=obj_kwargs
+            )
+        except ValidationError:
+            PeriodicTask.objects.get(
+                name=self.data_date_task_name
+            ).delete()
+            PeriodicTask.objects.create(name=self.data_date_task_name, **obj_kwargs)
+        if localized_today == schedule_date:
             update_task = obj_kwargs['task']
-            locate(update_task).s(self.pk, False).apply_async(countdown=1)
+            transaction.on_commit(lambda: locate(update_task).s(self.pk, False).apply_async())
 
     def cancel_data_date_update(self):
         try:
+            logger.debug(f'Deleting task: {self.data_date_task_name}')
             PeriodicTask.objects.get(name=self.data_date_task_name).delete()
         except PeriodicTask.DoesNotExist:
             pass
@@ -1574,6 +1606,11 @@ def handle_resource_post_save(sender, instance, *args, **kwargs):
         Dataset.objects.filter(pk=instance.dataset.id).update(verified=max_created)  # we don't want signals here
     else:
         Dataset.objects.filter(pk=instance.dataset.id).update(verified=instance.dataset.created)
+    if instance.tracker.has_changed('dataset_id') and is_enabled('S52_update_es_institution.be'):
+        dataset_id = instance.tracker.previous('dataset_id')
+        if dataset_id:
+            # update related ES documents for previously set dataset, if any.
+            update_with_related_task.s('datasets', 'Dataset', dataset_id).apply_async(countdown=2)
 
 
 @receiver(revalidate_resource, sender=Resource)
@@ -1624,7 +1661,7 @@ def update_dataset_watcher(sender, instance, *args, state=None, **kwargs):
 
 
 def resource_special_signs_changed(sender, instance, *args, **kwargs):
-    process_resource_file_data_task.s(instance.id).apply_async()
+    transaction.on_commit(lambda: process_resource_file_data_task.s(instance.id).apply_async())
 
 
 @receiver(cancel_data_date_update, sender=Resource)
@@ -1679,19 +1716,6 @@ def process_resource_from_url_task_prerun_handler(sender, task_id, task, signal,
         result_task.save()
         resource.link_tasks.add(result_task)
         Resource.raw.filter(pk=resource_id).update(link_tasks_last_status=result_task.status)
-    except Exception:
-        pass
-
-
-@task_prerun.connect(sender=process_resource_file_task)
-def process_resource_file_task_prerun_handler(sender, task_id, task, signal, **kwargs):
-    try:
-        resource_id = int(kwargs['args'][0])
-        resource = Resource.objects.get(pk=resource_id)
-        result_task = TaskResult.objects.get_task(task_id)
-        result_task.save()
-        resource.file_tasks.add(result_task)
-        Resource.raw.filter(pk=resource_id).update(file_tasks_last_status=result_task.status)
     except Exception:
         pass
 
@@ -1773,11 +1797,6 @@ def process_resource_from_url_task_postrun_handler(sender, task_id, task, signal
     update_resource(task_id, update_link_tasks_last_status=True, update_revalidated_data=True, **kwargs)
 
 
-@task_postrun.connect(sender=process_resource_file_task)
-def process_resource_file_task_postrun_handler(sender, task_id, task, signal, **kwargs):
-    update_resource(task_id, update_file_tasks_last_status=True, update_revalidated_data=True, **kwargs)
-
-
 @task_postrun.connect(sender=process_resource_res_file_task)
 def process_resource_res_file_task_postrun_handler(sender, task_id, task, signal, **kwargs):
     resource_file_id = int(kwargs['args'][0])
@@ -1804,6 +1823,7 @@ def reschedule_last_day_of_month_dd_update(sender, task_id, task, signal, **kwar
     current_date = result.get('current_date')
     if current_date:
         new_schedule_date = current_date + relativedelta(months=1)
+        new_schedule_date = resource.correct_last_moth_day(new_schedule_date)
         resource.schedule_crontab_data_date_update(new_schedule_date)
 
 
@@ -1840,7 +1860,6 @@ def process_resource_from_url_task_failure_handler(sender, task_id, exception, a
     update_resource(task_id, **kwargs)
 
 
-@task_success.connect(sender=process_resource_file_task)
 @task_success.connect(sender=process_resource_res_file_task)
 def process_resource_file_task_success_handler(sender, result, *args, **kwargs):
     if sender.request.is_eager:
@@ -1848,27 +1867,6 @@ def process_resource_file_task_success_handler(sender, result, *args, **kwargs):
         result_task.result = json.dumps(result)
         result_task.status = 'SUCCESS'
         result_task.save()
-
-
-@task_failure.connect(sender=process_resource_file_task)
-def process_resource_file_task_failure_handler(sender, task_id, exception, args, traceback, einfo, signal, **kwargs):
-    resource_id = int(args[0])
-    resource = Resource.objects.get(pk=resource_id)
-    result = {
-        'exc_type': exception.__class__.__name__,
-        'exc_message': str(exception),
-        'uuid': str(resource.uuid),
-        'link': resource.link,
-        'format': resource.format,
-        'type': resource.type
-    }
-
-    result_task = TaskResult.objects.get_task(task_id)
-    if sender.request.is_eager:
-        result_task.status = 'FAILURE'
-    result_task.result = json.dumps(result)
-    result_task.save()
-    update_resource(task_id, **kwargs)
 
 
 @task_failure.connect(sender=process_resource_res_file_task)

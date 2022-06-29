@@ -20,6 +20,7 @@ from mcod.lib.widgets import (
     ResourceMapsAndPlotsWidget,
 )
 from mcod.regions.fields import RegionsMultipleChoiceField
+from mcod.resources.archives import is_password_protected_archive_file
 from mcod.resources.models import SUPPORTED_FILE_EXTENSIONS, Resource, ResourceFile, Supplement
 from mcod.special_signs.models import SpecialSign
 from mcod.unleash import is_enabled
@@ -323,6 +324,8 @@ class AddResourceForm(ResourceForm, LinkOrFileUploadForm):
             _name, ext = os.path.splitext(file.name)
             if ext.lower() not in SUPPORTED_FILE_EXTENSIONS:
                 self.add_error('file', _('Invalid file extension: %(ext)s.') % {'ext': ext or '-'})
+            elif is_password_protected_archive_file(file):
+                self.add_error('file', _('Password protected archives are not allowed.'))
         return file
 
 

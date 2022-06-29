@@ -66,7 +66,7 @@ def schedule_data(context, params):  # noqa: C901
         NotificationFactory.create(id=notification_id, **notification_kwargs, **kwargs)
 
 
-@when(parsers.parse('send schedule notifications task'))
+@when('send schedule notifications task')
 def schedule_notifications_task_is_sent(context):
     context.send_schedule_notifications_task_result = send_schedule_notifications_task()
 

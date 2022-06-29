@@ -40,7 +40,6 @@ def create_stats_document_for_user(user_type, params=None):
 
 
 @given(parsers.parse('stats document viewed by {user_type}'))
-@given('stats document viewed by <user_type>')
 def stats_document_for_admin(user_type, ctx):
     doc = create_stats_document_for_user(user_type)
     ctx['document'] = doc
@@ -48,7 +47,6 @@ def stats_document_for_admin(user_type, ctx):
 
 
 @given(parsers.parse('stats document viewed by agent created with params {params}'))
-@given('stats document viewed by agent created with params <params>')
 def stats_document_for_admin_with_params(params, ctx):
     doc = create_stats_document_for_user('agent user', params)
     ctx['document'] = doc
@@ -65,7 +63,6 @@ def figures_rendered(ctx):
 
 
 @given(parsers.parse('Chart user {user_type}'))
-@given('Chart user <user_type>')
 def chart_user(user_type, ctx):
     created_user = create_user_with_params(user_type)
     ctx['user'] = created_user
@@ -73,7 +70,6 @@ def chart_user(user_type, ctx):
 
 
 @given(parsers.parse('chart agent user created with params {params}'))
-@given('chart agent user created with params <params>')
 def chart_agent_user(ctx, params):
     created_user = create_user_with_params('agent user', params)
     ctx['user'] = created_user
@@ -81,7 +77,6 @@ def chart_agent_user(ctx, params):
 
 
 @given(parsers.parse('chart panel of class {chart_cls}'))
-@given('chart panel of class <chart_cls>')
 def create_chart_panel(chart_cls, ctx):
     doc = Document()
     charts_kwargs = {
@@ -101,7 +96,6 @@ def create_chart_panel(chart_cls, ctx):
 
 
 @when(parsers.parse('chart select widget has set {selected_options}'))
-@when('chart select widget has set <selected_options>')
 def set_select_widget_value(selected_options, ctx):
     chart_column = ctx['chart_panel'].objects[2]
     if len(ctx['chart_panel'].objects) == 6:
@@ -118,7 +112,6 @@ def set_select_widget_value(selected_options, ctx):
 
 
 @then(parsers.parse('chart dataframe contains columns {headers}'))
-@then('chart dataframe contains columns <headers>')
 def dataframe_contains_columns(ctx, headers):
     expected_columns = set(headers.split(','))
     current_columns = set(ctx['chart_instance'].cached_df.columns)

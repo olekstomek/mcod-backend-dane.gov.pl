@@ -14,9 +14,8 @@ class UsersConfig(ExtendedAppMixin, AppConfig):
             MeetingTrash,
             User,
             UserFollowingApplication,
-            UserFollowingArticle,
             UserFollowingDataset,
         )
         self.connect_core_signals(Meeting)
         self.connect_core_signals(MeetingTrash)
-        self.connect_history(Meeting, User, UserFollowingApplication, UserFollowingArticle, UserFollowingDataset)
+        self.connect_history(Meeting, User, UserFollowingApplication, UserFollowingDataset)

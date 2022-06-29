@@ -66,9 +66,9 @@ Feature: Subscriptions API
   Scenario: Listing filtering with object_name and object_id for logged in user
     Given logged active user
     And subscription with id 2107 of dataset with id 1205 as dataset-1205
-    And second subscription with id 2108 of dataset with id 1206 as dataset-1206
+    And subscription with id 2108 of dataset with id 1206 as dataset-1206
     And query subscription with id 2109 for url /search?model[terms]=dataset as query-2109
-    And second query subscription with id 2110 for url /search?model[terms]=resource as query-2110
+    And query subscription with id 2110 for url /search?model[terms]=resource as query-2110
 
     When api request path is /auth/subscriptions
     And send api request and fetch the response
@@ -91,8 +91,8 @@ Feature: Subscriptions API
   Scenario: Listing filtering with object_id for logged in user
     Given logged active user
     And subscription with id 2111 of dataset with id 1206 as dataset-1206
-    And second subscription with id 2112 of dataset with id 1207 as dataset-1207
-    And third subscription with id 2113 of institution with id 1206 as institution-1206
+    And subscription with id 2112 of dataset with id 1207 as dataset-1207
+    And subscription with id 2113 of institution with id 1206 as institution-1206
 
     When api request path is /auth/subscriptions?object_id=1206
     And send api request and fetch the response
@@ -235,7 +235,7 @@ Feature: Subscriptions API
   Scenario: Delete subscription for dataset
     Given logged active user
     And subscription with id 2118 of dataset with id 1215 as dataset-1215
-    And second subscription with id 2119 of dataset with id 1216 as dataset-1216
+    And subscription with id 2119 of dataset with id 1216 as dataset-1216
 
     When api request method is DELETE
     And api request path is /auth/subscriptions/2118
@@ -312,7 +312,7 @@ Feature: Subscriptions API
     And api's response body has no field /data/[0]/relationships/subscription
 
 
-  Scenario: Subscription info not available in object with id 999 for anonymous user
+  Scenario: Subscription info not available in object with id 2125 for anonymous user
     Given admin has subscription with id 2125 of dataset with id 1223 as dataset-1223
 
     When api request path is /datasets
@@ -325,7 +325,7 @@ Feature: Subscriptions API
   Scenario: Deleted subscription info is not available on datasets listing
     Given logged active user
     And subscription with id 2126 of dataset with id 1224 as dataset-1224
-    And second subscription with id 2127 of dataset with id 1225 as dataset-1225
+    And subscription with id 2127 of dataset with id 1225 as dataset-1225
 
     When api request path is /datasets
     And send api request and fetch the response
@@ -571,7 +571,7 @@ Feature: Subscriptions API
   Scenario: Subscribed object has been changed to draft
     Given logged active user
     And subscription with id 2139 of dataset with id 1228 as dataset-1228
-    And second subscription with id 2140 of dataset with id 1229 as dataset-1229
+    And subscription with id 2140 of dataset with id 1229 as dataset-1229
 
     When api request path is /auth/subscriptions
     And send api request and fetch the response
@@ -584,7 +584,7 @@ Feature: Subscriptions API
     And api's response status code is 200
     And api's response body field /data/attributes/title is dataset-1228
 
-    And set status draft on dataset with id 1228
+    And set status to draft on dataset with id 1228
 
     And api request path is /auth/subscriptions
     And send api request and fetch the response
@@ -594,7 +594,7 @@ Feature: Subscriptions API
     And send api request and fetch the response
     And api's response status code is 404
 
-    And set status published on dataset with id 1228
+    And set status to published on dataset with id 1228
 
     And api request path is /auth/subscriptions
     And send api request and fetch the response
@@ -608,7 +608,7 @@ Feature: Subscriptions API
   Scenario: Subscribed object has been removed
     Given logged active user
     And subscription with id 2141 of dataset with id 1230 as dataset-1230
-    And second subscription with id 2142 of dataset with id 1231 as dataset-1231
+    And subscription with id 2142 of dataset with id 1231 as dataset-1231
 
     When api request path is /auth/subscriptions
     And send api request and fetch the response

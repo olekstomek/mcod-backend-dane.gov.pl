@@ -94,6 +94,10 @@ class DataAggregations(ExtSchema):
                 'field': 'institution_type',
                 'size': 10
             },
+            'by_is_promoted': {
+                'field': 'is_promoted',
+                'size': 10
+            },
             'by_license_code': {
                 'field': 'license_code',
                 'size': 100
@@ -281,6 +285,14 @@ class ApiSearchRequest(ListingSchema):
             doc_base_url='/search',
             doc_field_name='has_research_data'
         )
+    if is_enabled('S52_dataset_is_promoted.be'):
+        is_promoted = fields.FilterField(
+            BooleanTermSchema,
+            query_field='is_promoted',
+            doc_template='docs/generic/fields/boolean_term_field.html',
+            doc_base_url='/search',
+            doc_field_name='is_promoted'
+        )
     if is_enabled('S39_filter_by_geodata.be'):
         regions = fields.FilterField(RegionsFilterSchema)
 
@@ -372,7 +384,6 @@ class ApiSuggestRequest(CommonSchema):
     )
     _supported_models = {
         'application',
-        'article',
         'dataset',
         'institution',
         'knowledge_base',

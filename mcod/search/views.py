@@ -43,7 +43,6 @@ PLURAL_MODEL_NAMES = {
     'dataset': 'datasets',
     'resource': 'resources',
     'institution': 'institutions',
-    'article': 'articles',
     'knowledge_base': 'knowledge_base',
     'organization': 'organizations',
     'searchhistory': 'searchhistories',
@@ -58,7 +57,6 @@ ALLOWED_MODELS = [
     'dataset',
     'resource',
     'institution',
-    'article',
     'knowledge_base',
     'organization',
     'searchhistory',
@@ -125,6 +123,10 @@ class SearchView(JsonAPIView):
     class GET(SubscriptionSearchHdlr, NoneVisualizationCleaner):
         deserializer_schema = ApiSearchRequest
         serializer_schema = partial(CommonObjectResponse, many=True)
+
+        def __init__(self, request, response):
+            super().__init__(request, response)
+            self.deserializer.context['dataset_promotion_enabled'] = is_enabled('S52_dataset_is_promoted.be')
 
         def _get_model_names(self):
             models = None

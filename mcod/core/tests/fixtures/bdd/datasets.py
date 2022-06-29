@@ -36,36 +36,34 @@ from mcod.special_signs.factories import SpecialSignFactory
 from mcod.tags.factories import TagFactory
 
 
-@given(parsers.parse('dataset'))
+@pytest.fixture
 def dataset():
     _dataset = DatasetFactory.create()
     TagFactory.create_batch(2, datasets=(_dataset,))
     return _dataset
 
 
-@given(parsers.parse('removed dataset'))
+@given('dataset')
+def create_dataset(dataset):
+    return dataset
+
+
+@given('removed dataset')
 def removed_dataset():
     _dataset = DatasetFactory.create(is_removed=True, title='Removed dataset')
     return _dataset
 
 
-@given(parsers.parse('second dataset with id {dataset_id:d}'))
-def second_dataset_with_id(dataset_id):
-    _dataset = DatasetFactory.create(id=dataset_id, title='Second dataset %s' % dataset_id)
-    return _dataset
-
-
-@given(parsers.parse('another dataset with id {dataset_id:d}'))
-def another_dataset_with_id(dataset_id):
-    _dataset = DatasetFactory.create(id=dataset_id, title='Another dataset %s' % dataset_id)
-    return _dataset
-
-
-@given(parsers.parse('dataset with resources'))
+@pytest.fixture
 def dataset_with_resources():
     _dataset = DatasetFactory.create()
     ResourceFactory.create_batch(2, dataset=_dataset)
     return _dataset
+
+
+@given('dataset with resources')
+def create_dataset_with_resources(dataset_with_resources):
+    return dataset_with_resources
 
 
 @given(parsers.parse('dataset with id {dataset_id:d} and institution {organization_id:d}'))
@@ -80,7 +78,7 @@ def dataset_with_title_and_organization(dataset_id, dataset_title, organization_
     return create_object('dataset', dataset_id, title=dataset_title, organization=organization)
 
 
-@given(parsers.parse('dataset with chart as visualization type'))
+@given('dataset with chart as visualization type')
 def dataset_with_chart_as_visualization_type():
     _dataset = DatasetFactory.create()
     _resource = ResourceFactory(
@@ -92,7 +90,7 @@ def dataset_with_chart_as_visualization_type():
     return _dataset
 
 
-@given(parsers.parse('dataset with map as visualization type'))
+@given('dataset with map as visualization type')
 def dataset_with_map_as_visualization_type(geo_tabular_data_resource):
     return geo_tabular_data_resource.dataset
 
@@ -123,7 +121,7 @@ def imported_resource_of_type(resource_id, source_type, name, portal_url, res_ty
     return _resource
 
 
-@given(parsers.parse('dataset with resource'))
+@pytest.fixture
 def dataset_with_resource():
     _dataset = DatasetFactory.create()
     ResourceFactory.create(dataset=_dataset)
@@ -131,13 +129,23 @@ def dataset_with_resource():
     return _dataset
 
 
-@given(parsers.parse('dataset with resource with special signs'))
+@given('dataset with resource')
+def create_dataset_with_resource(dataset_with_resource):
+    return dataset_with_resource
+
+
+@pytest.fixture
 def dataset_with_resource_with_special_signs():
     _dataset = DatasetFactory.create()
     _resource = ResourceFactory.create(dataset=_dataset)
     CategoryFactory.create_batch(2, datasets=(_dataset,))
     SpecialSignFactory.create_batch(2, special_signs_resources=(_resource,))
     return _dataset
+
+
+@given('dataset with resource with special signs')
+def create_dataset_with_resource_with_special_signs(dataset_with_resource_with_special_signs):
+    return dataset_with_resource_with_special_signs
 
 
 @pytest.fixture
@@ -147,26 +155,6 @@ def dataset_with_supplements_plus_resource_with_supplements():
     CategoryFactory.create_batch(2, datasets=(_dataset,))
     ResourceSupplementFactory.create_batch(2, resource=_resource)
     DatasetSupplementFactory.create_batch(2, dataset=_dataset)
-    return _dataset
-
-
-@given(parsers.parse('dataset with resource having {field_name} with value {field_value}'))
-def dataset_with_resource_and_params(field_name, field_value):
-    _dataset = DatasetFactory.create()
-    kwargs = {
-        field_name: field_value
-    }
-    ResourceFactory.create(dataset=_dataset, **kwargs)
-    CategoryFactory.create_batch(2, datasets=(_dataset,))
-    return _dataset
-
-
-@given(parsers.parse('dataset with id {dataset_id:d}'))
-def dataset_with_id(dataset_id):
-    _dataset = DatasetFactory.create(
-        id=dataset_id,
-        title=f'test dataset with id {dataset_id}',
-    )
     return _dataset
 
 
@@ -199,13 +187,6 @@ def number_of_datasets_with_resources(number_of_datasets, num):
         ResourceFactory.create_batch(num, dataset=_dataset)
 
 
-@given(parsers.parse('{number_of_datasets:d} datasets with {num:d} resources with {res_type} type'))
-def number_of_datasets_with_resources_with_type(number_of_datasets, num, res_type):
-    for x in range(number_of_datasets):
-        _dataset = DatasetFactory.create()
-        ResourceFactory.create_batch(num, dataset=_dataset, type=res_type)
-
-
 @given(parsers.parse('Datasets with resources of type {datasets_data}'))
 def datasets_with_resources_of_type(datasets_data):
     data = json.loads(datasets_data)
@@ -216,14 +197,19 @@ def datasets_with_resources_of_type(datasets_data):
     time.sleep(1)  # time to index data before request is made.
 
 
-@given(parsers.parse('3 datasets'))
+@pytest.fixture
 def datasets():
-    return DatasetFactory.create_batch(3)
+    return DatasetFactory.create_batch(2)
 
 
 @given(parsers.parse('{num:d} datasets'))
 def x_datasets(num):
     return DatasetFactory.create_batch(num)
+
+
+@given(parsers.parse('{num:d} promoted datasets'))
+def x_promoted_datasets(num):
+    return DatasetFactory.create_batch(num, is_promoted=True)
 
 
 @when(parsers.parse('remove dataset with id {dataset_id}'))
@@ -253,7 +239,7 @@ def change_dataset_status(status, dataset_id):
     inst.save()
 
 
-@then(parsers.parse('api\'s response datasets contain valid links to related resources'))
+@then("api's response datasets contain valid links to related resources")
 def api_response_datasets_contain_valid_links_to_related_resources(context):
     dataset_model = apps.get_model('datasets.Dataset')
     for x in context.response.json['data']:
@@ -261,7 +247,7 @@ def api_response_datasets_contain_valid_links_to_related_resources(context):
         assert obj.ident in x['relationships']['resources']['links']['related']
 
 
-@then(parsers.parse("api's response data is None"))
+@then("api's response data is None")
 def api_response_data_is_none(context):
     data = context.response.json['data']
     assert data is None
@@ -437,6 +423,11 @@ def empty_rar_file():
 
 
 @pytest.fixture
+def empty_docx_packed_rar_file():
+    return prepare_file('empty_docx_packed.rar')
+
+
+@pytest.fixture
 def empty_7z_file():
     return prepare_file('empty_file.7z')
 
@@ -495,19 +486,64 @@ def example_binary_netcdf():
     return prepare_file('madis-maritime.nc')
 
 
-@given(parsers.parse('I have file {file_type}'))
-@given('I have file <file_type>')
-def validated_file(empty_zip_file, empty_rar_file, empty_7z_file, empty_tar_gz_file, empty_tar_bz2_file,
-                   example_docx_file, example_geojson_file, example_geojson_file_without_extension, example_gpx_file,
-                   example_jsonld_file, example_jsonstat_file, example_json_file_with_geojson_content,
-                   example_kml_file, example_n3_file, example_n_triples_file, example_n_quads_file, example_ods_file,
-                   example_trig_file, example_trix_file, example_turtle_file, example_xlsx_file, example_rdf_file,
-                   multi_file_pack, single_csv_zip, multi_file_zip_pack, single_file_pack, shapefile_arch,
-                   example_grib, example_hdf_netcdf, example_binary_netcdf, file_type):
+@pytest.fixture
+def example_regular_zip():
+    return prepare_file('regular.zip')
+
+
+@pytest.fixture
+def example_encrypted_content_zip():
+    return prepare_file('encrypted_content.zip')
+
+
+@pytest.fixture
+def example_regular_7z():
+    return prepare_file('regular.7z')
+
+
+@pytest.fixture
+def example_encrypted_content_7z():
+    return prepare_file('encrypted_content.7z')
+
+
+@pytest.fixture
+def example_encrypted_content_and_headers_7z():
+    return prepare_file('encrypted_content_and_headers.7z')
+
+
+@pytest.fixture
+def example_regular_rar():
+    return prepare_file('regular.rar')
+
+
+@pytest.fixture
+def example_encrypted_content_rar():
+    return prepare_file('encrypted_content.rar')
+
+
+@pytest.fixture
+def example_encrypted_content_and_headers_rar():
+    return prepare_file('encrypted_content_and_headers.rar')
+
+
+@given(parsers.parse('I have file {file_type}'), target_fixture="validated_file")
+def validated_file(
+    empty_zip_file, empty_rar_file, empty_docx_packed_rar_file, empty_7z_file, empty_tar_gz_file, empty_tar_bz2_file,
+    example_docx_file, example_geojson_file, example_geojson_file_without_extension, example_gpx_file,
+    example_jsonld_file, example_jsonstat_file, example_json_file_with_geojson_content,
+    example_kml_file, example_n3_file, example_n_triples_file, example_n_quads_file, example_ods_file,
+    example_trig_file, example_trix_file, example_turtle_file, example_xlsx_file, example_rdf_file,
+    multi_file_pack, single_csv_zip, multi_file_zip_pack, single_file_pack, shapefile_arch,
+    example_grib, example_hdf_netcdf, example_binary_netcdf, file_type,
+    example_regular_zip, example_encrypted_content_zip,
+    example_regular_7z, example_encrypted_content_7z, example_encrypted_content_and_headers_7z,
+    example_regular_rar, example_encrypted_content_rar, example_encrypted_content_and_headers_rar,
+):
     file_types = {
         'docx': example_docx_file,
         'empty_file.zip': empty_zip_file,
         'empty_file.rar': empty_rar_file,
+        'empty_docx_packed.rar': empty_docx_packed_rar_file,
         'empty_file.7z': empty_7z_file,
         'empty_file.tar.gz': empty_tar_gz_file,
         'empty_file.tar.bz2': empty_tar_bz2_file,
@@ -534,7 +570,15 @@ def validated_file(empty_zip_file, empty_rar_file, empty_7z_file, empty_tar_gz_f
         'gpx': example_gpx_file,
         'grib': example_grib,
         'hdf_netcdf': example_hdf_netcdf,
-        'binary_netcdf': example_binary_netcdf
+        'binary_netcdf': example_binary_netcdf,
+        'regular.zip': example_regular_zip,
+        'encrypted_content.zip': example_encrypted_content_zip,
+        'regular.7z': example_regular_7z,
+        'encrypted_content.7z': example_encrypted_content_7z,
+        'encrypted_content_and_headers.7z': example_encrypted_content_and_headers_7z,
+        'regular.rar': example_regular_rar,
+        'encrypted_content.rar': example_encrypted_content_rar,
+        'encrypted_content_and_headers.rar': example_encrypted_content_and_headers_rar,
     }
     if file_type.endswith('.dbf'):
         return prepare_dbf_file(file_type)
@@ -549,7 +593,7 @@ def dataset_with_id_and_resources(dataset_id, slug):
     return _dataset
 
 
-@then(parsers.parse('api response is csv file with {record_count} records'), converters=dict(record_count=int))
+@then(parsers.parse('api response is csv file with {record_count:d} records'))
 def api_response_is_csv_file_with_records(context, record_count):
     csv_reader = csv.reader(io.StringIO(context.response.content.decode('utf-8')), delimiter=';')
     csv_record_count = -1
@@ -558,10 +602,7 @@ def api_response_is_csv_file_with_records(context, record_count):
     assert record_count == csv_record_count
 
 
-@then(parsers.parse('api response is xml file with {datasets_count} datasets and {resources_count} resources'), converters={
-    'datasets_count': int,
-    'resources_count': int,
-})
+@then(parsers.parse('api response is xml file with {datasets_count:d} datasets and {resources_count:d} resources'))
 def api_response_is_xml_file_with_datasets_and_resources(context, datasets_count, resources_count):
     root = ET.fromstring(context.response.content.decode('utf-8'))
     assert root.tag == 'catalog'
@@ -569,7 +610,7 @@ def api_response_is_xml_file_with_datasets_and_resources(context, datasets_count
     assert len(root.findall('dataset/resources/resource')) == resources_count
 
 
-@then("api's response body conforms to <lang_code> xsd schema")
+@then(parsers.parse("api's response body conforms to {lang_code} xsd schema"))
 def api_response_body_conforms_to_xsd_schema(context, lang_code):
     content = context.response.content.decode('utf-8')
     xsd_path = f'{settings.SCHEMAS_DIR}/{lang_code}/katalog.xsd'
@@ -577,7 +618,7 @@ def api_response_body_conforms_to_xsd_schema(context, lang_code):
     xml_schema.validate(content)
 
 
-@given(parsers.parse('created catalog csv file'))
+@given('created catalog csv file')
 def create_catalog_csv_file():
     src = str(os.path.join(settings.TEST_SAMPLES_PATH, 'datasets', 'pl', 'katalog.csv'))
     dest = str(os.path.join(settings.METADATA_MEDIA_ROOT, 'pl', 'katalog.csv'))
@@ -586,7 +627,7 @@ def create_catalog_csv_file():
     copyfile(src, dest)
 
 
-@given(parsers.parse('created catalog xml file'))
+@given('created catalog xml file')
 def create_catalog_xml_file():
     for lang_code in ('pl', 'en'):
         src = str(os.path.join(settings.TEST_SAMPLES_PATH, 'datasets', lang_code, 'katalog.xml'))
@@ -596,9 +637,7 @@ def create_catalog_xml_file():
         copyfile(src, dest)
 
 
-@then(parsers.parse('Dataset with id {dataset_id} has archive containing {files_count} files'), converters={
-    'files_count': int,
-})
+@then(parsers.parse('Dataset with id {dataset_id} has archive containing {files_count:d} files'))
 def archive_contains_files(dataset_id, files_count):
     model = apps.get_model('datasets', 'dataset')
     inst = model.objects.get(pk=dataset_id)
@@ -634,7 +673,6 @@ def no_archive_created(dataset_id):
 
 
 @then(parsers.parse('latest dataset has categories with ids {categories_ids}'))
-@then('latest dataset has categories with ids <categories_ids>')
 def dataset_has_categories_with_ids(categories_ids):
     dataset = DatasetFactory._meta.model.raw.latest('id')
     categories_ids = [int(x) for x in categories_ids.split(',')]
@@ -642,11 +680,8 @@ def dataset_has_categories_with_ids(categories_ids):
     assert all(x in dataset_categories_ids for x in categories_ids)
 
 
-@when(parsers.parse('Dataset with id {first_id} resource\'s data_date delay equals {first_delay} and'
-                    ' dataset with id {second_id} resource\'s data_date delay equals {second_delay}'),
-      converters={'first_delay': int, 'second_delay': int})
-@when('Dataset with id <param_value> resource\'s data_date delay equals <first_delay> and'
-      ' dataset with id <another_param_value> resource\'s data_date delay equals <second_delay>')
+@when(parsers.parse('Dataset with id {param_value} resource\'s data_date delay equals {first_delay:d} and'
+                    ' dataset with id {another_param_value} resource\'s data_date delay equals {second_delay:d}'))
 def dataset_resources_has_set_data_date(param_value, another_param_value, first_delay, second_delay, admin):
     freq_updates_with_delays = {
         'yearly': {'default_delay': 7, 'relative_delta': relativedelta(years=1)},
@@ -686,7 +721,6 @@ def dataset_reminders_are_sent():
 
 @override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend')
 @then(parsers.parse('There is 1 sent reminder for dataset with title {dataset_title}'))
-@then('There is 1 sent reminder for dataset with title <dataset_title>')
 def single_sent_reminder(dataset_title):
     from django.core import mail
     assert len(mail.outbox) == 1

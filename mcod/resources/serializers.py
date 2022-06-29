@@ -499,6 +499,10 @@ class ResourceCSVSchema(CSVSerializer):
     openness_score = fields.Int(data_key=_("openness_score"), default=None)
     views_count = fields.Int(attribute='computed_views_count', data_key=_("views_count"), default=None)
     downloads_count = fields.Int(attribute='computed_downloads_count', data_key=_("downloads_count"), default=None)
+    has_high_value_data = fields.MetaDataNullBoolean(data_key=_('Resource has high value data'))
+    has_dynamic_data = fields.MetaDataNullBoolean(data_key=_('Resource has dynamic data'))
+    if is_enabled('S47_research_data.be'):
+        has_research_data = fields.MetaDataNullBoolean(data_key=_('Resource has research data'))
 
     class Meta:
         ordered = True

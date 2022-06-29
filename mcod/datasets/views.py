@@ -43,6 +43,7 @@ from mcod.datasets.serializers import (
 from mcod.resources.deserializers import ResourceApiSearchRequest
 from mcod.resources.documents import ResourceDocument
 from mcod.resources.serializers import ResourceApiResponse
+from mcod.unleash import is_enabled
 
 
 class DatasetSearchView(JsonAPIView):
@@ -65,6 +66,10 @@ class DatasetSearchView(JsonAPIView):
         serializer_schema = partial(DatasetApiResponse, many=True)
         search_document = DatasetDocument()
         include_default = ['institution']
+
+        def __init__(self, request, response):
+            super().__init__(request, response)
+            self.deserializer.context['dataset_promotion_enabled'] = is_enabled('S52_dataset_is_promoted.be')
 
 
 class DatasetApiView(JsonAPIView):

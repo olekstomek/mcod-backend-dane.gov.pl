@@ -25,14 +25,12 @@ def log_in_to_forum(context):
     context.response = response
 
 
-@when('forum request posted data is <req_post_data>')
 @when(parsers.parse('forum request posted data is {req_post_data}'))
 def forum_request_post_data(context, req_post_data):
     context.obj = json.loads(req_post_data)
 
 
 @given(parsers.parse('admin with forum access and data{data_str}'))
-@given('admin with forum access and data<data_str>')
 def forum_admin_for_data(context, data_str):
     data = json.loads(data_str)
     data['state'] = 'active'
@@ -43,7 +41,6 @@ def forum_admin_for_data(context, data_str):
 
 
 @given(parsers.parse('admin without forum access and data{data_str}'))
-@given('admin without forum access and data<data_str>')
 def forum_admin_without_access_for_data(context, data_str):
     data = json.loads(data_str)
     data['state'] = 'active'
@@ -52,7 +49,6 @@ def forum_admin_without_access_for_data(context, data_str):
 
 
 @given(parsers.parse('inactive forum admin with data {data_str}'))
-@given('inactive forum admin with data <data_str>')
 def inactive_admin_with_data(context, data_str):
     data = json.loads(data_str)
     data['is_active'] = False
@@ -63,7 +59,6 @@ def inactive_admin_with_data(context, data_str):
 
 
 @given(parsers.parse('forum admin with status {user_status}'))
-@given('forum admin with status <user_status>')
 def admin_with_status_and_data(context, user_status):
     data = {
         'state': user_status,
@@ -108,6 +103,5 @@ def logged_in_user_has_inactive_account(context):
 
 
 @then(parsers.parse('login form error {status_error} is displayed'))
-@then('login form error <status_error> is displayed')
 def status_error_is_displayed(context, status_error):
     assert status_error in context.response.content.decode('utf-8')

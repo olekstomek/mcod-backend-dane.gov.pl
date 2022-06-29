@@ -313,6 +313,7 @@ class BoolDataAggregation(schemas.ExtSchema):
 
     @ma.post_dump(pass_many=True)
     def ensure_keys(self, data, many, **kwargs):
+        only_true = self.context.get('only_true', False)
         val_dict = {'false': _('No'), 'true': _('Yes')}
         if many:
             values = [x['id'] for x in data]
@@ -322,6 +323,7 @@ class BoolDataAggregation(schemas.ExtSchema):
                 data.append({'id': 'true', 'doc_count': 0})
             for item in data:
                 item['title'] = str(val_dict.get(item['id']))
+            data = [x for x in data if x['id'] == 'true'] if only_true else data
         return data
 
 
@@ -465,6 +467,8 @@ class DatasetApiAttrs(ObjectAttrs, HighlightObjectMixin):
     has_high_value_data = fields.Boolean()
     if is_enabled('S47_research_data.be'):
         has_research_data = fields.Boolean()
+    if is_enabled('S52_dataset_is_promoted.be'):
+        is_promoted = fields.Boolean()
     if is_enabled('S37_resources_admin_region_data.be'):
         regions = fields.Nested(RegionSchema, many=True)
     archived_resources_files_url = fields.Str()
@@ -520,6 +524,10 @@ class DatasetCSVSchema(CSVSerializer):
     modified_by = fields.Int(attribute='modified_by.id', data_key=_("modified_by"), default=None)
     modified = fields.DateTime(data_key=_("modified"), default=None)
     followers_count = fields.Str(data_key=_("The number of followers"), default=None)
+    has_high_value_data = fields.MetaDataNullBoolean(data_key=_('Dataset has high value data'))
+    has_dynamic_data = fields.MetaDataNullBoolean(data_key=_('Dataset has dynamic data'))
+    if is_enabled('S47_research_data.be'):
+        has_research_data = fields.MetaDataNullBoolean(data_key=_('Dataset has research data'))
 
     class Meta:
         ordered = True

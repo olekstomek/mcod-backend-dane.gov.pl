@@ -3,16 +3,14 @@ Feature: Search history list API
 
   Scenario: Test search history list for unauthorized user
     Given 5 search histories for admin
-    When api request method is GET
-    And api request path is /searchhistories/
+    When api request path is /searchhistories/
     Then send api request and fetch the response
     And api's response status code is 401
 
   Scenario: Test search history list of admin is empty for another user
     Given 5 search histories for admin
     And logged active user
-    When api request method is GET
-    And api request path is /searchhistories/
+    When api request path is /searchhistories/
     Then send api request and fetch the response
     And api's response status code is 200
     And api's response data has length 0
@@ -20,8 +18,7 @@ Feature: Search history list API
   Scenario: Test search history list for authorized user with histories
     Given 5 search histories for admin
     And logged admin user
-    When api request method is GET
-    And api request path is /searchhistories/
+    When api request path is /searchhistories/
     Then send api request and fetch the response
     And api's response status code is 200
     And api's response data has length 5
@@ -29,8 +26,7 @@ Feature: Search history list API
   Scenario Outline: Test search history list can be sorted
     Given 5 search histories for admin
     And logged admin user
-    When api request method is GET
-    And api request language is pl
+    When api request language is pl
     And api request path is <request_path>
     And api request param per_page is 100
     And api request param <req_param_name> is <req_param_value>

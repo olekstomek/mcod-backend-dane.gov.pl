@@ -4,6 +4,7 @@ from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 
 from mcod.datasets.forms import (
+    DatasetFormSet,
     DatasetForm,
     DatasetStackedNoSaveForm,
     SupplementForm as DatasetSupplementForm,
@@ -91,8 +92,11 @@ class AddDatasetStacked(ObjectPermissionsStackedInline):
     use_translated_fields = True
     prepopulated_fields = {"slug": ("title",)}
     model = Dataset
+    dataset_promotion_enabled = is_enabled('S52_dataset_is_promoted.be')
     extra = 0
     form = DatasetForm
+    if dataset_promotion_enabled:
+        formset = DatasetFormSet
     suit_classes = 'suit-tab suit-tab-datasets'
     has_research_data = ['has_research_data'] if is_enabled('S47_research_data.be') else []
     license_fields = [
@@ -105,81 +109,87 @@ class AddDatasetStacked(ObjectPermissionsStackedInline):
         'license_condition_cc40_responsibilities',
     ]
     if is_enabled('S49_nested_dataset_admin.be'):
-        fieldsets = [
-            (
-                None,
-                {
-                    'fields': (
-                        'title',
-                        'title_en',
-                        'slug',
-                        'slug_en',
-                        'notes',
-                        'notes_en',
-                        'url',
-                        'image',
-                        'image_alt',
-                        'image_alt_en',
-                        'customfields',
-                        'update_frequency',
-                        'is_update_notification_enabled',
-                        'update_notification_frequency',
-                        'update_notification_recipient_email',
-                        'categories',
-                        'status',
-                        'tags_pl',
-                        'tags_en',
-                    )
-                }
-            ),
-            (
-                _('Terms of use'),
-                {
-                    'classes': ('collapse', ),
-                    'fields': (
-                        *license_fields,
-                        'license_condition_db_or_copyrighted',
-                        'license_chosen',
-                        'license_condition_personal_data',
-                    )
-                }
-            ),
-            (
-                None,
-                {
-                    'fields': (
-                        'has_dynamic_data',
-                        'has_high_value_data',
-                        *has_research_data,
-                    )
-                }
-            ),
-        ]
+        def get_fieldsets(self, request, obj=None):
+            is_promoted = ['is_promoted'] if request.user.is_superuser and self.dataset_promotion_enabled else []
+            return [
+                (
+                    None,
+                    {
+                        'fields': (
+                            'title',
+                            'title_en',
+                            'slug',
+                            'slug_en',
+                            'notes',
+                            'notes_en',
+                            'url',
+                            'image',
+                            'image_alt',
+                            'image_alt_en',
+                            'customfields',
+                            'update_frequency',
+                            'is_update_notification_enabled',
+                            'update_notification_frequency',
+                            'update_notification_recipient_email',
+                            'categories',
+                            'status',
+                            'tags_pl',
+                            'tags_en',
+                        )
+                    }
+                ),
+                (
+                    _('Terms of use'),
+                    {
+                        'classes': ('collapse', ),
+                        'fields': (
+                            *self.license_fields,
+                            'license_condition_db_or_copyrighted',
+                            'license_chosen',
+                            'license_condition_personal_data',
+                        )
+                    }
+                ),
+                (
+                    None,
+                    {
+                        'fields': (
+                            'has_dynamic_data',
+                            'has_high_value_data',
+                            *self.has_research_data,
+                            *is_promoted,
+                        )
+                    }
+                ),
+            ]
     else:
-        fields = (
-            'title',
-            'slug',
-            'notes',
-            'url',
-            'image',
-            'image_alt',
-            'customfields',
-            'update_frequency',
-            'is_update_notification_enabled',
-            'update_notification_frequency',
-            'update_notification_recipient_email',
-            'categories',
-            'status',
-            'tags_pl',
-            'tags_en',
-            *license_fields,
-            'license_condition_db_or_copyrighted',
-            'license_chosen',
-            'license_condition_personal_data',
-            'has_dynamic_data',
-            'has_high_value_data',
-            *has_research_data,
-        )
+        def get_fields(self, request, obj=None):
+            is_promoted = ['is_promoted'] if request.user.is_superuser and self.dataset_promotion_enabled else []
+            return (
+                'title',
+                'slug',
+                'notes',
+                'url',
+                'image',
+                'image_alt',
+                'customfields',
+                'update_frequency',
+                'is_update_notification_enabled',
+                'update_notification_frequency',
+                'update_notification_recipient_email',
+                'categories',
+                'status',
+                'tags_pl',
+                'tags_en',
+                *self.license_fields,
+                'license_condition_db_or_copyrighted',
+                'license_chosen',
+                'license_condition_personal_data',
+                'has_dynamic_data',
+                'has_high_value_data',
+                *self.has_research_data,
+                *is_promoted,
+            )
 
     autocomplete_fields = ['tags', ]
 

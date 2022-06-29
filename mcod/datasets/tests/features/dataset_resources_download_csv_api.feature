@@ -3,8 +3,7 @@ Feature: Dataset resources download CSV API
 
   Scenario: Single dataset resources can be downloaded as csv file
     Given dataset with id 999 and 3 resources
-    When api request method is GET
-    And api request path is /datasets/999/resources/metadata.csv
+    When api request path is /datasets/999/resources/metadata.csv
     And api request header x-api-version is 1.0
     And send api request and fetch the response
     Then api's response status code is 200
@@ -12,8 +11,7 @@ Feature: Dataset resources download CSV API
 
   Scenario: All datasets resources can be downloaded as csv file
     Given created catalog csv file
-    When api request method is GET
-    And api request path is /datasets/resources/metadata.csv
+    When api request path is /datasets/resources/metadata.csv
     And api request header x-api-version is 1.0
     And send api request and fetch the response
     Then api's response status code is 200

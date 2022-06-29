@@ -3,10 +3,11 @@ import os
 from django.db import migrations, models
 from django.conf import settings
 
+
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('users', '0007_auto_20180820_1143'),
+        ('users', '0007_auto_20180820_1143')
     ]
 
     operations = [

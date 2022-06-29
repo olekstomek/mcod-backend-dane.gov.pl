@@ -143,3 +143,65 @@ Feature: Resource with file creation
     Then admin's response status code is 200
     And admin's response page contains /change/">test resource title</a>" został pomyślnie dodany.
     And resource has assigned file
+
+  Scenario Outline: Password protected archives are not allowed in file widget
+    Given dataset with id 10000
+    When admin's request method is POST
+    And admin's request posted resource data is {"title": "test resource title", "description": "more than 20 characters", "switcher": "file", "link": "", "dataset": 10000, "data_date": "22.05.2020", "status": "published"}
+    And admin's request posted files <req_post_files>
+    And admin's page /resources/resource/add/ is requested
+    Then admin's response status code is 200
+    And admin's response page contains <contained_value>
+    And admin's response page not contains <value>
+
+    Examples:
+    | req_post_files                                 | contained_value                                             | value                                                        |
+    | {"file": "regular.zip"}                        | /change/">test resource title</a>" został pomyślnie dodany. | Pliki archiwum zabezpieczone hasłem nie są dozwolone.        |
+    | {"file": "encrypted_content.zip"}              | Pliki archiwum zabezpieczone hasłem nie są dozwolone.       | /change/">test resource title</a>" został pomyślnie dodany.  |
+
+    | {"file": "regular.rar"}                        | /change/">test resource title</a>" został pomyślnie dodany. | Pliki archiwum zabezpieczone hasłem nie są dozwolone.        |
+    | {"file": "encrypted_content.rar"}              | Pliki archiwum zabezpieczone hasłem nie są dozwolone.       | /change/">test resource title</a>" został pomyślnie dodany.  |
+    | {"file": "encrypted_content_and_headers.rar"}  | Pliki archiwum zabezpieczone hasłem nie są dozwolone.       | /change/">test resource title</a>" został pomyślnie dodany.  |
+
+    | {"file": "regular.7z"}                         | /change/">test resource title</a>" został pomyślnie dodany. | Pliki archiwum zabezpieczone hasłem nie są dozwolone.        |
+    | {"file": "encrypted_content.7z"}               | Pliki archiwum zabezpieczone hasłem nie są dozwolone.       | /change/">test resource title</a>" został pomyślnie dodany.  |
+    | {"file": "encrypted_content_and_headers.7z"}   | Pliki archiwum zabezpieczone hasłem nie są dozwolone.       | /change/">test resource title</a>" został pomyślnie dodany.  |
+
+  Scenario Outline: Password protected archives added by link fail file validation
+    Given dataset with id 10001
+    When admin's request method is POST
+    And admin's request posted resource data is {"title": "test resource title", "description": "more than 20 characters", "switcher": "link", "dataset": 10001, "data_date": "22.05.2020", "status": "published"}
+    And admin's request posted links <req_post_links>
+    And admin's request save and continue will be chosen
+    And admin's page /resources/resource/add/ is requested
+    Then admin's response status code is 200
+    And admin's response page contains <status>
+    And admin's response page contains <message>
+    And admin's response page contains <recommendation>
+    And admin's response page contains <added message>
+
+    Examples:
+    | req_post_links                                 | status                                               | message                                                         | recommendation                                                                                      | added message                                                 |
+    | {"link": "encrypted_content.zip"}              | <span class="label label-important">FAILURE</span>   | <td>Pliki archiwum zabezpieczone hasłem nie są dozwolone.</td>  | <td><p>Upewnij się, że podany link prowadzi do pliku archiwum niezabezpieczonego hasłem.</p></td>   | /change/">test resource title</a>" został pomyślnie dodany.   |
+    | {"link": "encrypted_content.rar"}              | <span class="label label-important">FAILURE</span>   | <td>Pliki archiwum zabezpieczone hasłem nie są dozwolone.</td>  | <td><p>Upewnij się, że podany link prowadzi do pliku archiwum niezabezpieczonego hasłem.</p></td>   | /change/">test resource title</a>" został pomyślnie dodany.   |
+    | {"link": "encrypted_content_and_headers.rar"}  | <span class="label label-important">FAILURE</span>   | <td>Pliki archiwum zabezpieczone hasłem nie są dozwolone.</td>  | <td><p>Upewnij się, że podany link prowadzi do pliku archiwum niezabezpieczonego hasłem.</p></td>   | /change/">test resource title</a>" został pomyślnie dodany.   |
+    | {"link": "encrypted_content.7z"}               | <span class="label label-important">FAILURE</span>   | <td>Pliki archiwum zabezpieczone hasłem nie są dozwolone.</td>  | <td><p>Upewnij się, że podany link prowadzi do pliku archiwum niezabezpieczonego hasłem.</p></td>   | /change/">test resource title</a>" został pomyślnie dodany.   |
+    | {"link": "encrypted_content_and_headers.7z"}   | <span class="label label-important">FAILURE</span>   | <td>Pliki archiwum zabezpieczone hasłem nie są dozwolone.</td>  | <td><p>Upewnij się, że podany link prowadzi do pliku archiwum niezabezpieczonego hasłem.</p></td>   | /change/">test resource title</a>" został pomyślnie dodany.   |
+
+  Scenario Outline: Simple archives with single csv file added by link succeed file validation
+    Given dataset with id 10002
+    When admin's request method is POST
+    And admin's request posted resource data is {"title": "test resource title", "description": "more than 20 characters", "switcher": "link", "dataset": 10002, "data_date": "22.05.2020", "status": "published"}
+    And admin's request posted links <req_post_links>
+    And admin's request save and continue will be chosen
+    And admin's page /resources/resource/add/ is requested
+    Then admin's response status code is 200
+    And admin's response page contains <status>
+    And admin's response page contains <added message>
+    And admin's response page not contains <failure status>
+
+    Examples:
+    | req_post_links                       | status                                               | added message                                                 | failure status                                      |
+    | {"link": "regular.zip"}              | <span class="label label-success">SUCCESS</span>     | /change/">test resource title</a>" został pomyślnie dodany.   | <span class="label label-important">FAILURE</span>  |
+    | {"link": "regular.rar"}              | <span class="label label-success">SUCCESS</span>     | /change/">test resource title</a>" został pomyślnie dodany.   | <span class="label label-important">FAILURE</span>  |
+    | {"link": "regular.7z"}               | <span class="label label-success">SUCCESS</span>     | /change/">test resource title</a>" został pomyślnie dodany.   | <span class="label label-important">FAILURE</span>  |

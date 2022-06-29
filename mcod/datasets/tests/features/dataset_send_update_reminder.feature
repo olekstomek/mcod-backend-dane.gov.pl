@@ -2,9 +2,9 @@ Feature: Send dataset update reminders
 
   Scenario Outline: Dataset to send update reminders is selected properly from multiple objects
     Given <object_type> created with params <params>
-    And another <object_type> created with params <another_params>
+    And <object_type> created with params <another_params>
     And <param_object_type> with id <param_object_id> and <param_field_name> is <param_value>
-    And another <param_object_type> with id <another_param_object_id> and <param_field_name> is <another_param_value>
+    And <param_object_type> with id <another_param_object_id> and <param_field_name> is <another_param_value>
     When Dataset with id <param_value> resource's data_date delay equals <first_delay> and dataset with id <another_param_value> resource's data_date delay equals <second_delay>
     And Dataset update reminders are sent
     Then There is 1 sent reminder for dataset with title <dataset_title>
