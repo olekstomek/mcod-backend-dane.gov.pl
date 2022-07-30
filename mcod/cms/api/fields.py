@@ -13,7 +13,6 @@ from wagtailvideos import get_video_model
 from mcod.cms.api.exceptions import UnprocessableEntity
 from mcod.cms.api.utils import get_object_detail_url
 from mcod.cms.models import CustomImage
-from mcod.unleash import is_enabled
 
 
 class TypeField(drff.Field):
@@ -360,20 +359,19 @@ class LocalizedHyperField(HyperField):
         super().__init__(*args, **kwargs)
 
     def get_uploaded_video(self, block_settings):
-        if is_enabled('S45_cms_embed_od_videos.be'):
-            od_pattern = [pattern for pattern in settings.OD_EMBED['urls'] if re.match(
-                pattern, block_settings.get('video_url', ''))]
-            if od_pattern:
-                match = re.search(r'/(\d+)/?', block_settings.get('video_url', ''))
-                video_pk = match.group(1)
-                try:
-                    video = get_video_model().objects.get(pk=video_pk)
-                    video_data = {'title': video.title,
-                                  'thumbnail_url': video.thumbnail_url,
-                                  'download_url': video.video_url}
-                except get_video_model().DoesNotExist:
-                    video_data = {}
-                block_settings['uploaded_video'] = video_data
+        od_pattern = [pattern for pattern in settings.OD_EMBED['urls'] if re.match(
+            pattern, block_settings.get('video_url', ''))]
+        if od_pattern:
+            match = re.search(r'/(\d+)/?', block_settings.get('video_url', ''))
+            video_pk = match.group(1)
+            try:
+                video = get_video_model().objects.get(pk=video_pk)
+                video_data = {'title': video.title,
+                              'thumbnail_url': video.thumbnail_url,
+                              'download_url': video.video_url}
+            except get_video_model().DoesNotExist:
+                video_data = {}
+            block_settings['uploaded_video'] = video_data
 
     def from_db_value(self, value, expression, connection, context=None):
         # Django>=3.0 upgrade fix.
@@ -381,20 +379,19 @@ class LocalizedHyperField(HyperField):
         return self.to_python(value)
 
     def update_general_settings(self, block):
-        if is_enabled('S42_cms_header_nav_manage.be'):
-            for block_type, default_classes_str in self.default_classes.items():
-                if block['settings'].get(block_type) and 'id' in block:
-                    classes = [
-                        class_name
-                        for class_name in block['general'].get('classes', '').split(' ')
-                        if class_name
-                    ]
-                    classes.extend([
-                        class_name
-                        for class_name in default_classes_str.split(' ')
-                        if class_name not in classes
-                    ])
-                    block['general']['classes'] = ' '.join(classes)
+        for block_type, default_classes_str in self.default_classes.items():
+            if block['settings'].get(block_type) and 'id' in block:
+                classes = [
+                    class_name
+                    for class_name in block['general'].get('classes', '').split(' ')
+                    if class_name
+                ]
+                classes.extend([
+                    class_name
+                    for class_name in default_classes_str.split(' ')
+                    if class_name not in classes
+                ])
+                block['general']['classes'] = ' '.join(classes)
 
     def to_python(self, value):
         """

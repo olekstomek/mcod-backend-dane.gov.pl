@@ -50,6 +50,7 @@ class CreateSubscriptionAttrs(ObjectAttrs):
                                                              error=_('Unsupported object name')))
     object_ident = core_fields.String(description='Object ID or query url.', example='12342',
                                       required=True)
+    objects_count = core_fields.Integer(description='Objects count.', example='2', required=False, default=0)
     name = core_fields.String(description='Subscription name', example='my query 1', required=False)
     customfields = core_fields.Raw()
 

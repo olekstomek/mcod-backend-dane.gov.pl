@@ -1,5 +1,4 @@
 from django.utils.translation import gettext_lazy as _
-from marshmallow import post_dump
 
 from mcod.core.api import fields
 from mcod.core.api.jsonapi.serializers import (
@@ -14,23 +13,34 @@ from mcod.core.api.schemas import ExtSchema
 from mcod.core.serializers import CSVSerializer
 from mcod.lib.serializers import TranslatedStr
 from mcod.watchers.serializers import SubscriptionMixin
+from mcod.unleash import is_enabled
 
 
 class InstitutionApiRelationships(Relationships):
-    datasets = fields.Nested(
+    published_datasets = fields.Nested(
         Relationship,
-        many=False, default=[],
+        many=False,
+        default=[],
+        data_key='datasets',
         _type='dataset',
         url_template='{object_url}/datasets',
         required=True,
     )
-    subscription = fields.Nested(Relationship, many=False, _type='subscription',
-                                 url_template='{api_url}/auth/subscriptions/{ident}')
-
-    def filter_data(self, data, **kwargs):
-        if not self.context.get('is_listing', False):
-            data['datasets'] = data['datasets'].filter(status='published')
-        return data
+    if is_enabled('S53_institutions_fixes.be'):
+        published_resources = fields.Nested(
+            Relationship,
+            many=False,
+            default=[],
+            data_key='resources',
+            _type='resource',
+            required=True,
+        )
+    subscription = fields.Nested(
+        Relationship,
+        many=False,
+        _type='subscription',
+        url_template='{api_url}/auth/subscriptions/{ident}',
+    )
 
 
 class InstitutionApiAggs(ExtSchema):
@@ -62,7 +72,9 @@ class InstitutionApiAttrs(ObjectAttrs, HighlightObjectMixin):
     abbreviation = fields.Str()
     city = fields.Str()
     created = fields.Str()
-    datasets_count = fields.Int(attribute='published_datasets_count')
+    if not is_enabled('S53_institutions_fixes.be'):
+        datasets_count = fields.Int(attribute='published_datasets_count')
+        resources_count = fields.Int(attribute='published_resources_count')
     email = fields.Str()
     epuap = fields.Str()
     fax = fields.Str()
@@ -72,9 +84,9 @@ class InstitutionApiAttrs(ObjectAttrs, HighlightObjectMixin):
     institution_type = fields.Str()
     modified = fields.Str()
     description = TranslatedStr()
+    notes = TranslatedStr()
     postal_code = fields.Str()
     regon = fields.Str()
-    resources_count = fields.Int(attribute='published_resources_count')
     slug = TranslatedStr()
     sources = fields.Nested(DataSourceAttr, many=True)
     street = fields.Str()
@@ -89,11 +101,6 @@ class InstitutionApiAttrs(ObjectAttrs, HighlightObjectMixin):
         object_type = 'institution'
         url_template = '{api_url}/institutions/{ident}'
         model = 'organizations.Organization'
-
-    @post_dump(pass_many=False)
-    def prepare_notes(self, data, **kwargs):
-        data["notes"] = data.get("description")
-        return data
 
 
 class InstitutionApiResponse(SubscriptionMixin, TopLevel):

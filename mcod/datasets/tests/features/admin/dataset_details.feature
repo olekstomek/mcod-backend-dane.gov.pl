@@ -170,3 +170,11 @@ Feature: Dataset details
     And admin's request posted dataset data is {"is_promoted": true}
     And admin's page /datasets/dataset/add/ is requested
     Then admin's response page contains Obecnie zostało już zaznaczone 5 zbiorów danych jako promowane. Jeżeli chcesz zaznaczyć ten zbiór musisz odznaczyć inny.
+
+  Scenario: Dataset promotion is disabled when dataset is moved to trash
+    Given dataset created with params {"id": 999, "is_promoted": true}
+    When admin's request method is POST
+    And admin's request posted dataset data is {"post": "yes"}
+    And admin's page /datasets/dataset/999/delete/ is requested
+    Then admin's response status code is 200
+    And datasets.Dataset with id 999 contains data {"is_promoted": false}

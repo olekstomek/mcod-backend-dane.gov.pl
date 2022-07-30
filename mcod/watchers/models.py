@@ -15,10 +15,10 @@ from django.utils.functional import cached_property
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from model_utils import FieldTracker
-from model_utils.models import TimeStampedModel
 
 from mcod.core.api.search.tasks import update_document_task
 from mcod.core.db.mixins import ApiMixin
+from mcod.core.db.models import TimeStampedModel
 from mcod.core.versioning import VERSIONS
 from mcod.watchers.signals import query_watcher_created
 from mcod.watchers.tasks import model_watcher_updated_task, query_watcher_updated_task
@@ -140,6 +140,17 @@ class Watcher(TimeStampedModel):
             return instance
 
         return None
+
+    @property
+    def obj_type(self):
+        return MODEL_TO_OBJECT_NAME.get(self.object_name, '').lower() if self.watcher_type == 'model' else 'query'
+
+    def get_obj_url(self, api_url):
+        if self.watcher_type == 'model':
+            url = self.obj.get_api_url(base_url=api_url) if self.obj else None
+        else:
+            url = self.object_ident
+        return url
 
     def get_object_name_display(self):
         return _(MODEL_TO_OBJECT_NAME[self.object_name].title())
@@ -286,14 +297,14 @@ class SearchQueryWatcherManager(models.Manager):
             except (KeyError, ValueError, InvalidRefValue):
                 continue
 
-    def create_from_url(self, url, headers=None):
+    def create_from_url(self, url, objects_count, headers=None):
         _headers = self._prepare_headers(headers)
         _url = self._normalize_url(url)
         watcher = self.create(
             object_name='query',
             object_ident=_url,
             ref_field='/meta/count',
-            ref_value=0,
+            ref_value=objects_count,
             last_ref_change=now(),
             customfields={
                 'headers': _headers
@@ -345,12 +356,12 @@ class SearchQueryWatcherManager(models.Manager):
             customfields__headers__api_version=api_version
         )
 
-    def get_or_create_from_url(self, url, headers=None):
+    def get_or_create_from_url(self, url, objects_count, headers=None):
         created = False
         try:
             watcher = self.get_from_url(url, headers=headers)
         except SearchQueryWatcher.DoesNotExist:
-            watcher = self.create_from_url(url, headers=headers)
+            watcher = self.create_from_url(url, objects_count, headers=headers)
             created = True
         return watcher, created
 
@@ -375,7 +386,7 @@ class SubscriptionManager(models.Manager):
         _name = data['object_name']
         _ident = data['object_ident']
         if _name == 'query':
-            watcher, _ = SearchQueryWatcher.objects.get_or_create_from_url(_ident, headers=headers)
+            watcher, _ = SearchQueryWatcher.objects.get_or_create_from_url(_ident, data.get('objects_count', 0), headers=headers)
         else:
             instance = self.__get_instance(_name, _ident)
             can_create = True
@@ -442,9 +453,8 @@ class SubscriptionManager(models.Manager):
 
         return Subscription.objects.get(watcher=watcher, user=user)
 
-    def get_paginated_results(self, user, data):
+    def get_paginated_results(self, data):
         filters = {
-            "user": user,
             "watcher__is_active": True
         }
         object_name = (data.get('object_name') or '').lower()
@@ -457,7 +467,7 @@ class SubscriptionManager(models.Manager):
         if object_id:
             filters['watcher__object_ident'] = object_id
 
-        qs = Subscription.objects.filter(**filters).order_by(('-modified'))
+        qs = self.get_queryset().filter(**filters).order_by('-modified')
         page, per_page = data.pop('page', 1), data.pop('per_page', 20)
 
         paginator = Paginator(qs, per_page)

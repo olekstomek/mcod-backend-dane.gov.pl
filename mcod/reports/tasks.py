@@ -5,6 +5,7 @@ import logging
 import os
 from collections import OrderedDict
 from pathlib import Path
+from time import time
 
 from celery import chord, shared_task
 from celery.signals import task_failure, task_prerun, task_success
@@ -17,11 +18,12 @@ from django.utils.translation import get_language
 from django_celery_results.models import TaskResult
 
 from mcod import settings
-from mcod.applications.serializers import ApplicationProposalCSVSerializer
 from mcod.celeryapp import app
+from mcod.core.api.rdf.namespaces import NAMESPACES
 from mcod.core.serializers import csv_serializers_registry as csr
 from mcod.core.utils import save_as_csv
 from mcod.datasets.models import Dataset
+from mcod.lib.rdf.store import get_sparql_store
 from mcod.reports.models import Report, SummaryDailyReport
 from mcod.resources.models import Resource
 from mcod.resources.tasks import validate_link
@@ -31,6 +33,7 @@ from mcod.unleash import is_enabled
 
 User = get_user_model()
 logger = logging.getLogger('mcod')
+kronika_logger = logging.getLogger('kronika-sparql-performance')
 
 
 @shared_task(name='reports', ignore_result=False)
@@ -38,9 +41,7 @@ def generate_csv(pks, model_name, user_id, file_name_postfix):
     app, _model = model_name.split('.')
     model = apps.get_model(app, _model)
     serializer_cls = csr.get_serializer(model)
-    if _model == 'ApplicationProposal':  # TODO: how to register it in csr?
-        serializer_cls = ApplicationProposalCSVSerializer
-    elif _model == 'DatasetSubmission':  # TODO: how to register it in csr?
+    if _model == 'DatasetSubmission':  # TODO: how to register it in csr?
         serializer_cls = DatasetSubmissionCSVSerializer
     elif _model == 'ShowcaseProposal':
         serializer_cls = ShowcaseProposalCSVSerializer
@@ -343,3 +344,29 @@ def create_daily_resources_report():
     )
 
     return {}
+
+
+@shared_task
+def check_kronika_connection_performance():
+    logger.info('Executing check_kronika_connection_performance task')
+    format_ = 'json'
+    store = get_sparql_store(readonly=True, return_format=format_,
+                             external_sparql_endpoint='kronika')
+    query = 'SELECT ?s ?p ?o WHERE {?s a dcat:distribution}'
+    log_msg = f'Sending query "{query}" to kronika sparql api;'
+    try:
+        start = time()
+        response = store.query(query, initNs=NAMESPACES)
+        end = time()
+        if isinstance(response, tuple):
+            log_msg += f'Kronika SPARQL api returned status code {response[0]}. Details: {response[1]};'
+        time_delta = end - start
+        try:
+            result = json.loads(response.serialize(format=format_, encoding="utf-8"))
+            res_count = len(result['results']['bindings'])
+        except AttributeError:
+            res_count = 0
+        log_msg += f'Request execution took {time_delta:.4f} seconds; Query returned {res_count} items;'
+        kronika_logger.info(log_msg)
+    except Exception as err:
+        kronika_logger.error(f'{log_msg} Exception occurred while sending request to kronika api: {err};')

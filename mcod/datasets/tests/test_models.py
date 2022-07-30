@@ -10,7 +10,6 @@ from pytest_bdd import scenarios
 from mcod.datasets.models import Dataset
 from mcod.organizations.models import Organization
 from mcod.resources.models import Resource
-from mcod.unleash import is_enabled
 from mcod.users.models import User, UserFollowingDataset
 
 scenarios('features/dataset_create_resources_files_zip.feature')
@@ -178,10 +177,7 @@ class TestDatasetModel:
     def test_dataset_has_unique_regions_from_resources(self, dataset_with_resources, additional_regions):
         for res in dataset_with_resources.resources.all():
             res.regions.set(additional_regions)
-        if is_enabled("S48_by_region_aggregation.be"):
-            assert dataset_with_resources.regions.count() == 4
-        else:
-            assert dataset_with_resources.regions.count() == 3
+        assert dataset_with_resources.regions.count() == 4
 
 
 class TestDatasetsUserRoles:

@@ -1,11 +1,9 @@
-import panel as pn
 import param
 from django.utils.translation import gettext as _
 
 from mcod.organizations.models import Organization
 from mcod.pn_apps.widgets import BootstrapSelectWidget, ExtendedRadioButtonGroup
 from mcod.resources.models import RESOURCE_TYPE
-from mcod.unleash import is_enabled
 
 
 class BaseStatsParamWidget:
@@ -123,10 +121,7 @@ class ResourceTypeParamWidget(MultiSelectParamWidget):
 
 class TimePeriodParamWidget(BaseStatsParamWidget):
     param_cls = param.Selector
-    if is_enabled('S40_WCAG_stats_tabindex.be'):
-        widget_cls = ExtendedRadioButtonGroup
-    else:
-        widget_cls = pn.widgets.RadioButtonGroup
+    widget_cls = ExtendedRadioButtonGroup
 
     def __init__(self, **kwargs):
         super().__init__(_('Period'), **kwargs)
@@ -174,10 +169,7 @@ class VizTypeParamWidget(MultiSelectParamWidget):
 
 class PresentationTypeParamWidget(BaseStatsParamWidget):
     param_cls = param.Selector
-    if is_enabled('S40_WCAG_stats_tabindex.be'):
-        widget_cls = ExtendedRadioButtonGroup
-    else:
-        widget_cls = pn.widgets.RadioButtonGroup
+    widget_cls = ExtendedRadioButtonGroup
 
     def __init__(self, **kwargs):
         super().__init__(_('Way of presentation'), **kwargs)

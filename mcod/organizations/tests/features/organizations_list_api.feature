@@ -24,13 +24,12 @@ Feature: Organizations API
     When api request path is <request_path>
     Then send api request and fetch the response
     And api's response body has field /data/*/attributes/abbreviation
-    And api's response body has field /data/*/attributes/datasets_count
     And api's response body has field /data/*/attributes/description
     And api's response body has field /data/*/attributes/notes
-    And api's response body has field /data/*/attributes/resources_count
     And api's response body has field /data/*/attributes/sources
     And api's response body has field /data/*/relationships/datasets/meta/count
     And api's response body has field /data/*/relationships/datasets/links/related
+    And api's response body has field /data/*/relationships/resources/meta/count
 
     Examples:
     | request_path       |

@@ -67,6 +67,7 @@ scenarios(
     'features/resource_openness.feature',
     'features/resource_details_admin.feature',
     'features/resources_list_admin.feature',
+    'features/update_data_date_task.feature',
 )
 
 

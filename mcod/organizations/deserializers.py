@@ -120,7 +120,7 @@ class InstitutionApiSearchRequest(ListingSchema):
 
     q = search_fields.MultiMatchField(
         query_fields={'title': ['title^4'], 'description': ['description^2']},
-        nested_query_fields={'datasets': ['title', ]},
+        nested_query_fields={'published_datasets': ['title', ]},
         doc_template='docs/generic/fields/query_field.html',
         doc_base_url='/institutions',
         doc_field_name='q'

@@ -204,13 +204,20 @@ class ChangeResourceNestedStacked(ChangeResourceStacked):
 
 
 class AddResourceMixin:
+    if is_enabled('S53_resource_language.be'):
+        autocomplete_fields = ['related_resource']
     template = 'admin/resources/inline-new.html'
     use_translated_fields = True
-
+    language = ['language'] if is_enabled('S53_resource_language.be') else []
+    related_resource = ['related_resource'] if is_enabled('S53_resource_language.be') else []
     add_fieldsets = [
         (None, {
             'classes': ('suit-tab', 'suit-tab-general'),
-            'fields': ('switcher', 'file', 'link'),
+            'fields': (
+                'switcher',
+                'file',
+                'link',
+            ),
         }),
         (None, {
             'classes': ('suit-tab', 'suit-tab-general'),
@@ -230,14 +237,14 @@ class AddResourceMixin:
     add_readonly_fields = ()
 
     has_research_data = ['has_research_data'] if is_enabled('S47_research_data.be') else []
-    regions = ['regions_'] if is_enabled('S37_resources_admin_region_data.be') else []
     _fields = (
         'title',
         'title_en',
         'description',
         'description_en',
         'dataset',
-        *regions,
+        *related_resource,
+        'regions_',
         'data_date',
         'status',
         'special_signs',
@@ -250,7 +257,7 @@ class AddResourceMixin:
         (
             None,
             {
-                'fields': ('switcher', 'file', 'link')
+                'fields': ('switcher', 'file', 'link', *language)
             }
         ),
         (
@@ -447,10 +454,6 @@ class DatasetAdminMixin(HistoryMixin):
             self.dataset_promotion_enabled,
         ])
         is_promoted = ['is_promoted'] if show_is_promoted else []
-        license_fields = ['license_condition_default_cc40', 'license_condition_custom_description'] if\
-            is_enabled('S49_cc_by_40_conditions_unification.be') else\
-            ['license_condition_source', 'license_condition_modification',
-             'license_condition_responsibilities', 'license_condition_cc40_responsibilities']
         return [
             (
                 None,
@@ -493,7 +496,9 @@ class DatasetAdminMixin(HistoryMixin):
                 None,
                 {
                     'classes': ('suit-tab', 'suit-tab-licenses',),
-                    'fields': license_fields + [
+                    'fields': [
+                        'license_condition_default_cc40',
+                        'license_condition_custom_description',
                         'license_condition_db_or_copyrighted',
                         'license_chosen',
                         'license_condition_personal_data',

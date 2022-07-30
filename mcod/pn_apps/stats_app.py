@@ -1140,18 +1140,18 @@ class MostUsedTags(RankingPanel):
                 dataset__is_permanently_removed=False,
                 dataset__status='published'
             ), distinct=True)).values('dataset_tags_count')
-        application_subquery = base_sub_qs.annotate(application_tags_count=Count(
-            'application',
+        showcases_subquery = base_sub_qs.annotate(showcase_tags_count=Count(
+            'showcase',
             filter=Q(
-                application__is_removed=False,
-                application__is_permanently_removed=False,
-                application__status='published'),
-            distinct=True)).values('application_tags_count')
+                showcase__is_removed=False,
+                showcase__is_permanently_removed=False,
+                showcase__status='published'),
+            distinct=True)).values('showcase_tags_count')
         return qs.values('name').annotate(
             dataset_tags=Subquery(dataset_subquery, output_field=IntegerField()),
-            application_tags=Subquery(application_subquery, output_field=IntegerField())
+            showcase_tags=Subquery(showcases_subquery, output_field=IntegerField())
         ).annotate(
-            overall_tags=F('dataset_tags') + F('application_tags')
+            overall_tags=F('dataset_tags') + F('showcase_tags')
         ).order_by('-overall_tags')
 
 

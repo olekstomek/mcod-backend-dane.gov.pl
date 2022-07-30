@@ -3,10 +3,11 @@ from django.contrib.postgres.indexes import GinIndex
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from model_utils import Choices
-from model_utils.models import StatusModel, TimeStampedModel
+from model_utils.models import StatusModel
 from modeltrans.fields import TranslationField
 
 from mcod.core.db.mixins import AdminMixin
+from mcod.core.db.models import TimeStampedModel
 
 User = get_user_model()
 

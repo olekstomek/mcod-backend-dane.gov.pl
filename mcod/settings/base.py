@@ -1,6 +1,11 @@
 import string
 from collections import OrderedDict
 from datetime import date
+import sentry_sdk
+from sentry_sdk.integrations.django import DjangoIntegration
+from sentry_sdk.integrations.celery import CeleryIntegration
+from mcod.lib.sentry_falcon import FalconIntegration  # Update to Sentry's integration when
+# https://github.com/getsentry/sentry-python/pull/1297 will be merged and released
 
 import environ
 from bokeh.util.paths import bokehjsdir
@@ -254,6 +259,8 @@ HARVESTER_XML_VERSION_TO_SCHEMA_PATH = {
     '1.6': HARVESTER_DATA_DIR.path('xml_import_otwarte_dane_1_6.xsd').root,
     '1.7': HARVESTER_DATA_DIR.path('xml_import_otwarte_dane_1_7.xsd').root,
     '1.8': HARVESTER_DATA_DIR.path('xml_import_otwarte_dane_1_8.xsd').root,
+    '1.9': HARVESTER_DATA_DIR.path('xml_import_otwarte_dane_1_9.xsd').root,
+    '1.10': HARVESTER_DATA_DIR.path('xml_import_otwarte_dane_1_10.xsd').root,
 }
 
 HARVESTER_IMPORTERS = {
@@ -788,8 +795,6 @@ CELERY_TASK_ROUTES = {
     'mcod.harvester.tasks.harvester_supervisor': {'queue': 'harvester'},
     'mcod.harvester.tasks.import_data_task': {'queue': 'harvester'},
     'mcod.harvester.tasks.validate_xml_url_task': {'queue': 'harvester'},
-    'mcod.histories.tasks.index_history': {'queue': 'periodic'},
-    'mcod.histories.tasks.save_history_as_log_entry': {'queue': 'history'},
     'mcod.datasets.tasks.send_dataset_comment': {'queue': 'notifications'},
     'mcod.newsletter.tasks.remove_inactive_subscription': {'queue': 'newsletter'},
     'mcod.newsletter.tasks.send_newsletter': {'queue': 'newsletter'},
@@ -957,6 +962,12 @@ LOGGING = {
             'filename': f'{LOGS_DIR}/kibana_statistics.log',
             'formatter': 'console'
         },
+        'kronika-sparql-performance': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': f'{LOGS_DIR}/kronika_performance.log',
+            'formatter': 'console'
+        },
         # Check if these are required
         'mail-admins': {
             'level': 'ERROR',
@@ -1019,7 +1030,12 @@ LOGGING = {
             'handlers': ['stats-log', ],
             'level': STATS_LOG_LEVEL,
             'propagate': True
-        }
+        },
+        'kronika-sparql-performance': {
+            'handlers': ['kronika-sparql-performance', ],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
     },
 }
 
@@ -1286,8 +1302,7 @@ CONSTANCE_CONFIG_FIELDSETS = OrderedDict((
         'CATALOG__ISSUED', 'CATALOG__PUBLISHER__NAME_PL', 'CATALOG__PUBLISHER__NAME_EN',
         'CATALOG__PUBLISHER__EMAIL', 'CATALOG__PUBLISHER__HOMEPAGE',
         'DATASET__CONTACT_POINT__FN', 'DATASET__CONTACT_POINT__HAS_EMAIL',
-    )
-    ),
+    )),
 ))
 
 SHOW_GENERATE_RAPORT_BUTTOON = env('SHOW_GENERATE_RAPORT_BUTTOON', default='yes') in ['yes', '1', 'true']
@@ -1640,7 +1655,6 @@ ZABBIX_API = {
 DEFAULT_REGION_ID = 85633723
 
 DATASET_ARCHIVE_FILES_TASK_DELAY = env('DATASET_ARCHIVE_FILES_TASK_DELAY', default=180)
-
 DATASET_IS_PROMOTED_LIMIT = env('DATASET_IS_PROMOTED_LIMIT', default=5)
 
 ALLOWED_MINIMUM_SPACE = 1024*1024*1024*env('ALLOWED_MINIMUM_FREE_GB', default=20)
@@ -1656,3 +1670,43 @@ PRIVATE_LICENSES_ARTICLE_URL = env("PRIVATE_LICENSES_ARTICLE_URL",
                                    default='/pl/page/opis-warunkow-i-licencji-dla-dostawcow-sektora-prywatnego')
 PUBLIC_LICENSES_ARTICLE_URL = env("PUBLIC_LICENSES_ARTICLE_URL",
                                   default='/pl/page/opis-warunkow-i-licencji-dla-dostawcow-sektora-publicznego')
+
+
+ENABLE_SENTRY = env('ENABLE_SENTRY', default='no') in ['yes', '1', 'true']
+
+SENTRY_SDK_KWARGS = {
+    'admin': {
+        'dsn': env('ADMIN_SENTRY_DSN', default='http://token@127.0.0.1:9000/1'),
+        'integrations': [DjangoIntegration()],
+        'traces_sample_rate': env('ADMIN_SAMPLE_RATE', default=1.0),
+        'send_default_pii': True,
+        'environment': ENVIRONMENT
+    },
+    'cms': {
+        'dsn': env('CMS_SENTRY_DSN', default='http://token@127.0.0.1:9000/2'),
+        'integrations': [DjangoIntegration()],
+        'traces_sample_rate': env('CMS_SAMPLE_RATE', default=1.0),
+        'send_default_pii': True,
+        'environment': ENVIRONMENT
+    },
+    'celery': {
+        'dsn': env('CELERY_SENTRY_DSN', default='http://token@127.0.0.1:9000/3'),
+        'integrations': [CeleryIntegration()],
+        'traces_sample_rate': env('CELERY_SAMPLE_RATE', default=1.0),
+        'environment': ENVIRONMENT
+    },
+    'api': {
+        'dsn': env('API_SENTRY_DSN', default='http://token@127.0.0.1:9000/4'),
+        'integrations': [FalconIntegration()],
+        'traces_sample_rate': env('API_SAMPLE_RATE', default=1.0),
+        'environment': ENVIRONMENT
+    },
+    'ws': {
+        'dsn': env('WS_SENTRY_DSN', default='http://token@127.0.0.1:9000/5'),
+        'traces_sample_rate': env('WS_SAMPLE_RATE', default=1.0),
+        'environment': ENVIRONMENT
+    }
+}
+
+if COMPONENT in ['admin', 'cms', 'celery'] and ENABLE_SENTRY:
+    sentry_sdk.init(**SENTRY_SDK_KWARGS[COMPONENT])

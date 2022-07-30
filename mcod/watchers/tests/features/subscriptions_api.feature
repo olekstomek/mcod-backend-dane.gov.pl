@@ -579,6 +579,11 @@ Feature: Subscriptions API
     And api's response body field /meta/count is 2
     And api's response body field /data/[0]/attributes/title is dataset-1229
 
+    # check that number of observed datasets on user's dashboard is the same.
+    And api request path is /auth/user/dashboard
+    And send api request and fetch the response
+    And api's response body field /meta/aggregations/subscriptions/datasets is 2
+
     And api request path is /auth/subscriptions/2139
     And send api request and fetch the response
     And api's response status code is 200
@@ -590,6 +595,16 @@ Feature: Subscriptions API
     And send api request and fetch the response
     And api's response body field /meta/count is 1
 
+    # check that number of observed datasets on user's dashboard is the same.
+    And api request path is /auth/user/dashboard
+    And send api request and fetch the response
+    And api's response body field /meta/aggregations/subscriptions/datasets is 1
+
+    # check that notifications response status is ok.
+    And api request path is /auth/notifications?object_name=dataset
+    And send api request and fetch the response
+    And api's response status code is 200
+
     And api request path is /auth/subscriptions/2139
     And send api request and fetch the response
     And api's response status code is 404
@@ -600,10 +615,23 @@ Feature: Subscriptions API
     And send api request and fetch the response
     And api's response body field /meta/count is 2
 
+    # check that number of observed datasets on user's dashboard is the same.
+    And api request path is /auth/user/dashboard
+    And send api request and fetch the response
+    And api's response body field /meta/aggregations/subscriptions/datasets is 2
+
+    # check that notifications response status is ok.
+    And api request path is /auth/notifications?object_name=dataset
+    And send api request and fetch the response
+    And api's response status code is 200
+
     And api request path is /auth/subscriptions/2139
     And send api request and fetch the response
     And api's response status code is 200
 
+    And api request path is /auth/notifications?object_name=dataset
+    And send api request and fetch the response
+    And api's response status code is 200
 
   Scenario: Subscribed object has been removed
     Given logged active user
@@ -615,6 +643,11 @@ Feature: Subscriptions API
     Then api's response status code is 200
     And api's response body field /meta/count is 2
     And api's response body field /data/[1]/attributes/title is dataset-1230
+
+    # check that number of observed datasets on user's dashboard is the same.
+    And api request path is /auth/user/dashboard
+    And send api request and fetch the response
+    And api's response body field /meta/aggregations/subscriptions/datasets is 2
 
     And api request path is /auth/subscriptions/2141
     And send api request and fetch the response
@@ -628,6 +661,16 @@ Feature: Subscriptions API
     And api's response body field /meta/count is 1
     And api's response body field /data/[0]/attributes/title is dataset-1231
 
+    # check that number of observed datasets on user's dashboard is the same.
+    And api request path is /auth/user/dashboard
+    And send api request and fetch the response
+    And api's response body field /meta/aggregations/subscriptions/datasets is 1
+
+    # check that notifications response status is ok.
+    And api request path is /auth/notifications?object_name=dataset
+    And send api request and fetch the response
+    And api's response status code is 200
+
     And api request path is /auth/subscriptions/2141
     And send api request and fetch the response
     And api's response status code is 404
@@ -639,7 +682,21 @@ Feature: Subscriptions API
     And api's response body field /meta/count is 2
     And api's response body field /data/[1]/attributes/title is dataset-1230
 
+    # check that number of observed datasets on user's dashboard is the same.
+    And api request path is /auth/user/dashboard
+    And send api request and fetch the response
+    And api's response body field /meta/aggregations/subscriptions/datasets is 2
+
+    # check that notifications response status is ok.
+    And api request path is /auth/notifications?object_name=dataset
+    And send api request and fetch the response
+    And api's response status code is 200
+
     And api request path is /auth/subscriptions/2141
     And send api request and fetch the response
     And api's response status code is 200
     And api's response body field /data/attributes/title is dataset-1230
+
+    And api request path is /auth/notifications?object_name=dataset
+    And send api request and fetch the response
+    And api's response status code is 200

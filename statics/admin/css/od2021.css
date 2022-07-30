@@ -694,14 +694,14 @@ a.disabledTab {
     margin-left:10px;
 }
 
-.control-group.field-is_manual_data_date .control-label,
+.control-group.field-is_auto_data_date .control-label,
 .control-group.field-automatic_data_date_start .control-label,
 .control-group.field-data_date_update_period .control-label,
 .control-group.field-automatic_data_date_end .control-label{
    border-bottom: none;
 }
 
-.control-group.field-is_manual_data_date label,
+.control-group.field-is_auto_data_date label,
 .control-group.field-automatic_data_date_start label,
 .control-group.field-data_date_update_period label,
 .control-group.field-automatic_data_date_end label,
@@ -717,7 +717,7 @@ a.disabledTab {
 .control-group.field-endless_data_date_update .controls input{
     margin-left:50px
 }
-.field-is_manual_data_date span.conf-label{
+.field-is_auto_data_date span.conf-label{
     display:block;
     border-bottom:1px solid black;
     width:35%;

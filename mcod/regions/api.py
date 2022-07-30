@@ -2,7 +2,10 @@ import logging
 
 import requests
 from django.conf import settings
+from django.utils.translation import gettext_lazy as _
 from requests.auth import HTTPBasicAuth
+
+from mcod.regions.exceptions import MalformedTerytCodeError
 
 logger = logging.getLogger('mcod')
 
@@ -125,3 +128,49 @@ class PeliasApi(BaseApi):
                         name = f'woj. {name}'
                     labels.append(name)
             reg['properties']['hierarchy_label'] = ', '.join(labels)
+
+    def convert_teryt_id(self, teryt_id):
+        len_mapping = {
+            2: 'region',
+            4: 'county',
+            7: 'admin_or_locality'
+        }
+        try:
+            region_type = len_mapping[len(teryt_id)]
+        except KeyError:
+            raise MalformedTerytCodeError(_(f'Malformed teryt code: {teryt_id}.'
+                                            f' Provided code does not seems to refer to region, county,'
+                                            f' localadmin or locality'))
+        region_type = self.verify_teryt_region(teryt_id) if region_type == 'admin_or_locality' else region_type
+        return f'teryt:{region_type}:{teryt_id}'
+
+    @staticmethod
+    def is_valid_simc_code(teryt_id):
+        control_num = teryt_id[-1]
+        base_num = teryt_id[:-1]
+        id_sum = sum([(i + 2) * int(num) for i, num in enumerate(base_num)])
+        check_sum = id_sum % 11
+        check_sum = '0' if check_sum == 10 else str(check_sum)
+        return check_sum == control_num
+
+    def verify_teryt_region(self, teryt_id):
+        return 'locality' if self.is_valid_simc_code(teryt_id) else 'localadmin'
+
+    def convert_teryt_to_gids(self, ids):
+        gids = []
+        for reg_id in ids:
+            gids.append(self.convert_teryt_id(reg_id))
+        return gids
+
+    def translate_teryt_to_wof_ids(self, teryt_codes):
+        wof_ids = []
+        if teryt_codes:
+            gids = self.convert_teryt_to_gids(teryt_codes)
+            places_details = self.place(gids)
+            for reg in places_details['features']:
+                teryt_gid = reg['properties']['gid']
+                gid_elems = teryt_gid.split(':')
+                wof_gid = f'{gid_elems[1]}_gid'
+                region_id = reg['properties'][wof_gid].split(':')[2]
+                wof_ids.append(region_id)
+        return wof_ids

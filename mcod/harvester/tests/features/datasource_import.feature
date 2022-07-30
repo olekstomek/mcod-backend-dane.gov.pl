@@ -4,7 +4,7 @@ Feature: Datasource import
     Given active ckan_datasource with id 100 for data {"portal_url": "http://mock-portal.pl", "api_url": "http://api.mock-portal.pl/items"}
     When ckan datasource with id 100 finishes importing objects
     Then ckan datasource with id 100 created all data in db
-
+  @periodic_task
   Scenario Outline: XML resources are properly imported
     Given active xml_datasource with id 101 for data {"xml_url": "http://api.mock-portal.pl/some-xml.xml"}
     When xml datasource with id <obj_id> of version <version> finishes importing objects
@@ -15,6 +15,8 @@ Feature: Datasource import
     | 101    | 1.5     |
     | 101    | 1.6     |
     | 101    | 1.7     |
+    | 101    | 1.8     |
+    | 101    | 1.9     |
 
   Scenario: DCAT resources are properly imported
     Given active dcat_datasource with id 101 for data {"api_url": "http://api.mock-portal.pl/dcat/endpoint"}

@@ -3,7 +3,7 @@ import copy
 import functools
 import operator
 import re
-from collections import namedtuple, OrderedDict
+from collections import OrderedDict, namedtuple
 from functools import reduce
 
 import six
@@ -327,6 +327,8 @@ class FilterField(ElasticField, fields.Nested):
         return list(value.values())
 
     def _prepare_queryset(self, queryset, data):
+        if self._metadata.get('no_prepare', False):
+            return queryset
         for f, d in data:
             if self._condition:
                 d = Bool(must=[self._condition, d])
@@ -932,7 +934,7 @@ class RegionsGeoShapeField(BaseBboxField):
 
     @classmethod
     def bbox(cls, value):
-        if is_enabled('S50_bbox_zoom_to_hierarchy.be') and isinstance(value, str):
+        if isinstance(value, str):
             values = value.split(',')
             coords = (float(val) for val in values[:4])
             zoom = int(values[4]) if len(value) > 4 else 0
@@ -984,18 +986,9 @@ class RegionsGeoShapeField(BaseBboxField):
         return queryset.query(nested_hierarchy_q)
 
     def get_top_hierarchy(self, queryset, bbox):
-        if is_enabled('S50_bbox_zoom_to_hierarchy.be'):
-            for r in self.ZOOM_TO_HIERARCHY:
-                if r[0][0] <= int(bbox.zoom) <= r[0][1]:
-                    return r[1]
-        else:
-            geo_shape_q = self.get_geo_shape_query(bbox)
-            top_hierarchy_agg = self.aggregate_bbox_regions(
-                bbox, ('top_hierarchy', A('max', field='regions.hierarchy_level')), geo_shape_q)
-            queryset.aggs.bucket('top_agg', top_hierarchy_agg)
-            c_resp = queryset.execute()
-            _top_hierarchy = c_resp.aggregations.top_agg.resources_regions.bbox_regions.top_hierarchy.value
-            return _top_hierarchy or self.NO_REGION_HIERARCHY
+        for r in self.ZOOM_TO_HIERARCHY:
+            if r[0][0] <= int(bbox.zoom) <= r[0][1]:
+                return r[1]
 
     def get_regions_aggregation(self, bbox, top_hierarchy):
         top_regions_agg = self.aggregate_bbox_regions(bbox, (

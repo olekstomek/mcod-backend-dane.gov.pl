@@ -78,22 +78,6 @@ class HistoryManager(Manager):
         }
         return self.raw(sql)
 
-    def get_item(self, history_id, is_history_other):
-        if is_history_other:
-            objs = self.get_history_other(history_id=history_id)
-            obj = objs[0] if objs else None
-        else:
-            obj = self.get_queryset().filter(id=history_id).first()
-        return obj
-
-    def to_migrate(self, table_name, is_other_history=False):
-        if is_other_history:
-            objs = [x.id for x in self.get_history_other(table_name)]
-            return objs, len(objs)
-        query = {'table_name': table_name} if table_name else {}
-        objs = self.get_queryset().filter(**query).order_by('id').values_list('id', flat=True)
-        return objs, objs.count()
-
 
 class LogEntryManager(BaseLogEntryManager):
 

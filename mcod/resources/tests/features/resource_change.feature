@@ -16,7 +16,7 @@ Feature: Change resource in admin panel
     Given dataset with id 990
     And draft remote file resource of api type with id 986
     When admin's request method is POST
-    And admin's request posted resource data is {"title": "test", "description": "more than 20 characters", "dataset": 990, "status": "published", "is_manual_data_date": "False", "data_date": "22.05.2022","automatic_data_date_start": "22.05.2022", "data_date_update_period": "daily", "automatic_data_date_end": "24.05.2022"}
+    And admin's request posted resource data is {"title": "test", "description": "more than 20 characters", "dataset": 990, "status": "published", "is_auto_data_date": "True", "data_date": "22.05.2022","automatic_data_date_start": "22.05.2022", "data_date_update_period": "daily", "automatic_data_date_end": "24.05.2022"}
     And admin's page /resources/resource/986/change/ is requested
     Then admin's response status code is 200
     And resource with id 986 has periodic task with interval schedule
@@ -27,7 +27,7 @@ Feature: Change resource in admin panel
     Given dataset with id 990
     And draft remote file resource of api type with id 987
     When admin's request method is POST
-    And admin's request posted resource data is {"title": "test", "description": "more than 20 characters", "dataset": 990, "status": "published", "is_manual_data_date": "False", "data_date": "22.05.2022", "automatic_data_date_start": "22.05.2022", "data_date_update_period": "monthly", "endless_data_date_update": "True"}
+    And admin's request posted resource data is {"title": "test", "description": "more than 20 characters", "dataset": 990, "status": "published", "is_auto_data_date": "True", "data_date": "22.05.2022", "automatic_data_date_start": "22.05.2022", "data_date_update_period": "monthly", "endless_data_date_update": "True"}
     And admin's page /resources/resource/987/change/ is requested
     Then admin's response status code is 200
     And resource with id 987 has periodic task with crontab schedule
@@ -37,7 +37,7 @@ Feature: Change resource in admin panel
     Given dataset with id 990
     And resource with id 995 and status published and data date update periodic task with interval schedule
     When admin's request method is POST
-    And admin's request posted resource data is {"title": "test", "description": "more than 20 characters", "dataset": 990, "status": "published", "is_manual_data_date": "True", "data_date": "22.05.2022", "automatic_data_date_start": "22.05.2022", "data_date_update_period": "monthly", "endless_data_date_update": "True"}
+    And admin's request posted resource data is {"title": "test", "description": "more than 20 characters", "dataset": 990, "status": "published", "is_auto_data_date": "False", "data_date": "22.05.2022", "automatic_data_date_start": "22.05.2022", "data_date_update_period": "monthly", "endless_data_date_update": "True"}
     And admin's page /resources/resource/995/change/ is requested
     Then admin's response status code is 200
     And resource with id 995 has no data date periodic task
@@ -47,7 +47,7 @@ Feature: Change resource in admin panel
     Given dataset with id 990
     And resource with id 997 and status published and data date update periodic task with interval schedule
     When admin's request method is POST
-    And admin's request posted resource data is {"title": "test", "description": "more than 20 characters", "dataset": 990, "status": "draft", "is_manual_data_date": "False", "data_date": "22.05.2022", "automatic_data_date_start": "22.05.2022", "data_date_update_period": "monthly", "endless_data_date_update": "True"}
+    And admin's request posted resource data is {"title": "test", "description": "more than 20 characters", "dataset": 990, "status": "draft", "is_auto_data_date": "True", "data_date": "22.05.2022", "automatic_data_date_start": "22.05.2022", "data_date_update_period": "monthly", "endless_data_date_update": "True"}
     And admin's page /resources/resource/997/change/ is requested
     Then admin's response status code is 200
     And resource with id 997 has no data date periodic task
@@ -57,7 +57,18 @@ Feature: Change resource in admin panel
     Given dataset with id 990
     And resource with id 997 and status published and data date update periodic task with interval schedule
     When admin's request method is POST
-    And admin's request posted resource data is {"title": "test", "description": "more than 20 characters", "dataset": 990, "status": "published", "is_manual_data_date": "False", "data_date": "22.05.2022", "automatic_data_date_start": "22.05.2022", "data_date_update_period": "monthly", "endless_data_date_update": "True"}
+    And admin's request posted resource data is {"title": "test", "description": "more than 20 characters", "dataset": 990, "status": "published", "is_auto_data_date": "True", "data_date": "22.05.2022", "automatic_data_date_start": "22.05.2022", "data_date_update_period": "monthly", "endless_data_date_update": "True"}
     And admin's page /resources/resource/997/change/ is requested
     Then admin's response status code is 200
     And resource with id 997 has periodic task with crontab schedule
+
+  @periodic_task
+  Scenario: Auto data date with end date can be set on resource with remote file
+    Given dataset with id 990
+    And remote file resource with id 1001
+    When admin's request method is POST
+    And admin's request posted resource data is {"title": "test remote file", "description": "more than 20 characters", "dataset": 990, "status": "published", "is_auto_data_date": "True", "data_date": "22.05.2022","automatic_data_date_start": "22.05.2022", "data_date_update_period": "daily", "automatic_data_date_end": "24.05.2022"}
+    And admin's page /resources/resource/1001/change/ is requested
+    Then admin's response status code is 200
+    And resource with id 1001 has periodic task with interval schedule
+    And Periodic task for resource with id 1001 has last_run_at attr set

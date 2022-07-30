@@ -17,7 +17,6 @@ from pygments.lexers.data import JsonLexer
 
 from mcod.core.api.search.helpers import get_document_for_model
 from mcod.core.api.search.tasks import delete_document_task, update_document_task
-from mcod.core.registries import history_registry
 from mcod.histories.managers import HistoryManager, LogEntryManager
 
 
@@ -122,30 +121,6 @@ class History(models.Model):
         )
         obj.save()
         return obj.to_dict(include_meta=True)
-
-    def create_log_entry(self):
-        params = history_registry.get_params(self.table_name)
-        if params:
-            content_type = ContentType.objects.get_by_natural_key(*params)
-            obj, created = LogEntry.objects.update_or_create(
-                timestamp=self.change_timestamp,
-                object_id=self.row_id,
-                content_type=content_type,
-                defaults={
-                    'action': self.logentry_action,
-                    'actor_id': self.change_user_id,
-                    'object_pk': str(self.row_id),
-                    'changes': self.logentry_changes,
-                }
-            )
-            obj.timestamp = self.change_timestamp  # https://stackoverflow.com/q/7499767/1845230
-            obj.save(update_fields=['timestamp'])
-            return obj, created
-        return None, False
-
-
-class HistoryIndexSync(models.Model):
-    last_indexed = models.DateTimeField()
 
 
 class LogEntry(BaseLogEntry):

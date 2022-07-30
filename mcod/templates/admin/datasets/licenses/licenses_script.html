@@ -1,5 +1,4 @@
 {% load core_tags %}
-{% is_unleash_enabled "S49_cc_by_40_conditions_unification.be" as S49_cc_by_40_conditions_unification %}
 
 <script>
     const institutionTypePrivate = 'private';
@@ -119,15 +118,9 @@
         var $licenseChosenContent = $licenseChosen.find("span.readonly");
         $licenseChosenContent.css('display', 'block').removeClass('readonly');
         $licenseConditionDbOrCopyrighted.find("span.readonly").prepend($licenseChosenContent);
-        {% if S49_cc_by_40_conditions_unification %}
-            let resp_content = $(".control-group.field-license_condition_custom_description").find("span.readonly");
-            let def_resp_content = $(".control-group.field-license_condition_default_cc40").find("span.readonly");
-            $(".control-group.field-license_condition_default_cc40").css("display", "none");
-        {% else %}
-            let resp_content = $(".control-group.field-license_condition_responsibilities").find("span.readonly");
-            let def_resp_content = $(".control-group.field-license_condition_cc40_responsibilities").find("span.readonly");
-            $(".control-group.field-license_condition_cc40_responsibilities").css("display", "none");
-        {% endif %}
+        let resp_content = $(".control-group.field-license_condition_custom_description").find("span.readonly");
+        let def_resp_content = $(".control-group.field-license_condition_default_cc40").find("span.readonly");
+        $(".control-group.field-license_condition_default_cc40").css("display", "none");
         resp_content.html(def_resp_content.html())
         $licenseChosen.hide();
     } else {
@@ -203,31 +196,4 @@
         }
         return ckeditor_id
     }
-
-    $(document).ready(function() {
-        {% if not S49_cc_by_40_conditions_unification %}
-            let ckeditor_data = {};
-            let $defaultResponibilities = $('.field-license_condition_cc40_responsibilities input');
-            let responsibilities_editor;
-            $defaultResponibilities.change(function(){
-                let ckeditor_id = get_ckeditor_id(this);
-                responsibilities_editor = CKEDITOR.instances[ckeditor_id];
-                if(this.checked){
-                    ckeditor_data[ckeditor_id] = responsibilities_editor.getData();
-                    responsibilities_editor.setReadOnly(true);
-                    responsibilities_editor.setData('');
-                }
-                else{
-                    responsibilities_editor.setData(ckeditor_data[ckeditor_id]);
-                    responsibilities_editor.setReadOnly(false);
-                }
-            })
-            $defaultResponibilities.each(function(i, obj){
-                if($(this).is(":checked")){
-                    let ckeditor_id = get_ckeditor_id(obj);
-                    CKEDITOR.instances[ckeditor_id].config.readOnly = true;
-                }
-            });
-        {% endif %}
-    })
 </script>

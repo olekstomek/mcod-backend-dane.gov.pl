@@ -12,7 +12,6 @@ from wagtail.images.blocks import ImageChooserBlock as WagtailImageChooserBlock
 from wagtailvideos.blocks import VideoChooserBlock
 
 from mcod.cms.widgets import ColorPickerWidget
-from mcod.unleash import is_enabled
 
 
 class ImageChooserBlock(WagtailImageChooserBlock):
@@ -165,11 +164,6 @@ class UploadedVideoChooserBlock(VideoChooserBlock):
 
 class VideoBlock(blocks.StructBlock):
 
-    def __init__(self, local_blocks=None, **kwargs):
-        super().__init__(local_blocks=local_blocks, **kwargs)
-        if not is_enabled('S44_cms_upload_videos.be'):
-            self.child_blocks.pop('uploaded_video')
-
     video = EmbedBlock(
         required=False,
         label='Wideo',
@@ -185,11 +179,7 @@ class VideoBlock(blocks.StructBlock):
     def clean(self, value):
         cleaned_data = super().clean(value)
         error = None
-        if not is_enabled('S44_cms_upload_videos.be') and not cleaned_data['video']:
-            raise StructBlockValidationError({
-                'video': ErrorList([ValidationError('To pole jest wymagane.')]),
-            })
-        elif not cleaned_data['video'] and not cleaned_data.get('uploaded_video'):
+        if not cleaned_data['video'] and not cleaned_data.get('uploaded_video'):
             error = ValidationError('Należy uzupełnić jedno z pól.')
         elif cleaned_data['video'] and cleaned_data.get('uploaded_video'):
             error = ValidationError('Należy uzupełnić tylko jedno z pól.')

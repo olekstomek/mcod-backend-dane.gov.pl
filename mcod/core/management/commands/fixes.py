@@ -11,10 +11,7 @@ from mcod import settings
 from mcod.cms.models import FormPageSubmission
 from mcod.cms.models.formpage import Formset
 from mcod.core.api.search.tasks import update_document_task, update_with_related_task
-from mcod.core.registries import history_registry
 from mcod.datasets.models import Dataset
-from mcod.histories.models import History
-from mcod.histories.tasks import save_history_as_log_entry
 from mcod.reports.models import Report
 from mcod.resources.models import Resource, ResourceFile
 from mcod.resources.tasks import (
@@ -83,14 +80,6 @@ class Command(BaseCommand):
             dest='action',
             const='migratefollowings',
             help='Copy following to subscriptions'
-        )
-
-        parser.add_argument(
-            '--migratehistory',
-            action='store_const',
-            dest='action',
-            const='migratehistory',
-            help='Migrate history from old to new'
         )
 
         parser.add_argument(
@@ -409,27 +398,8 @@ class Command(BaseCommand):
         self.verified_for_draft_datasets()
 
     def fix_followings(self):
-        from mcod.users.models import (
-            UserFollowingApplication,
-            UserFollowingArticle,
-            UserFollowingDataset,
-        )
+        from mcod.users.models import UserFollowingDataset
         from mcod.watchers.models import ModelWatcher, Subscription
-        for following in UserFollowingArticle.objects.all():
-            watcher, _ = ModelWatcher.objects.get_or_create_from_instance(following.article)
-            Subscription.objects.get_or_create(
-                user=following.follower,
-                watcher=watcher,
-                name='article-%i' % following.article.id
-            )
-
-        for following in UserFollowingApplication.objects.all():
-            watcher, _ = ModelWatcher.objects.get_or_create_from_instance(following.application)
-            Subscription.objects.get_or_create(
-                user=following.follower,
-                watcher=watcher,
-                name='application-%i' % following.application.id
-            )
         for following in UserFollowingDataset.objects.all():
             watcher, _ = ModelWatcher.objects.get_or_create_from_instance(following.dataset)
             Subscription.objects.get_or_create(
@@ -437,29 +407,6 @@ class Command(BaseCommand):
                 watcher=watcher,
                 name='dataset-%i' % following.dataset.id
             )
-
-    def fix_history(self, **options):
-        answer = options['yes']
-        table_name = options['table_name']
-        is_other_history = options['history_other']
-        table_names = history_registry.get_table_names()
-        if table_name and table_name not in table_names:
-            raise CommandError(
-                'Invalid table-name param. Should be one of: {}'.format(', '.join(table_names)))
-
-        objs, objs_count = History.objects.to_migrate(table_name, is_other_history)
-
-        if answer is None:
-            self.stdout.write('This action will migrate {} history items.'.format(objs_count))
-            response = input('Are you sure you want to continue? [y/N]: ').lower().strip()
-            answer = response == 'y'
-
-        if answer:
-            for id_ in objs:
-                save_history_as_log_entry.s(id_, is_other_history).apply_async()
-            self.stdout.write('Migrate history delegated to {} Celery tasks.'.format(objs_count))
-        else:
-            self.stdout.write('Aborted.')
 
     def fix_resources_links(self):
         self.stdout.write('Fixing of resources broken links - with . (dot) suffix.')
@@ -682,7 +629,7 @@ class Command(BaseCommand):
             raise CommandError(
                 "No action specified. Must be one of"
                 " '--all','--searchhistories', '--resources', '--datasets', "
-                "'--resourcedatadate', '--resourcesformats', '--migratefollowings', '--migratehistory', "
+                "'--resourcedatadate', '--resourcesformats', '--migratefollowings', "
                 "'--setverified', '--resources-links', '--resources-validation-results', "
                 "'--resources-has-table-has-map', '--submissions-to-new-format', '--submissions-to-old-format', "
                 "'--submissions-formdata-save', '--submissions-formdata-load', '--reports-id-column',"
@@ -694,7 +641,6 @@ class Command(BaseCommand):
             'datasets': self.fix_datasets,
             'resources-links': self.fix_resources_links,
             'migratefollowings': self.fix_followings,
-            'migratehistory': self.fix_history,
             'resourcedatadate': self.fix_resources_data_date,
             'resources': self.fix_resources,
             'resourcesformats': self.fix_resources_formats,
@@ -715,8 +661,6 @@ class Command(BaseCommand):
             self.fix_searchhistories()
             self.fix_datasets()
             self.fix_resources()
-        elif action == 'migratehistory':
-            self.fix_history(**options)
         elif action == 'resource-http-link':
             self.fix_resource_http_link(**options)
         elif action in actions.keys():

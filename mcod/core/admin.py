@@ -19,6 +19,16 @@ class AdminAutocomplete(autocomplete.Select2QuerySetView):
         return apps.get_model(self.model).objects.autocomplete(self.request.user, self.q)
 
 
+class ResourceAutocomplete(AdminAutocomplete):
+    model = 'resources.Resource'
+
+    def get_result_label(self, result):
+        return result.label_from_instance
+
+    def get_queryset(self):
+        return apps.get_model(self.model).objects.autocomplete(self.request.user, self.q, self.forwarded)
+
+
 class ResourceTypeFilter(BaseResourceTypeFilter):
     title = _('table name')
 

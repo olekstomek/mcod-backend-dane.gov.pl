@@ -10,7 +10,6 @@ import tempfile
 from calendar import monthrange
 from collections import namedtuple
 from io import BytesIO
-from pydoc import locate
 
 import magic
 import pytz
@@ -334,6 +333,10 @@ class TaskResult(TaskResultOrig):
 
 
 class Resource(ExtendedModel):
+    LANGUAGE_CHOICES = [
+        ('pl', _('polish')),
+        ('en', _('english')),
+    ]
     SIGNALS_MAP = {
         'updated': (
             rdf_signals.update_graph,
@@ -451,16 +454,22 @@ class Resource(ExtendedModel):
     is_chart_creation_blocked = models.BooleanField(verbose_name=_('is chart creation blocked?'), default=False)
     tabular_data_schema = JSONField(null=True, blank=True)
     data_date = models.DateField(null=True, verbose_name=_("Data date"))
+    language = models.CharField(
+        max_length=2, choices=LANGUAGE_CHOICES, default=LANGUAGE_CHOICES[0][0],
+        verbose_name=_('language version of the data'), db_index=True)
 
     verified = models.DateTimeField(blank=True, default=now, verbose_name=_("Update date"))
     from_resource = models.ForeignKey("self", blank=True, null=True, on_delete=models.DO_NOTHING)
+    related_resource = models.ForeignKey(
+        'self', blank=True, null=True, on_delete=models.DO_NOTHING, related_name='related_data',
+        verbose_name=_('related data'))
     special_signs = models.ManyToManyField(
         'special_signs.SpecialSign', verbose_name=_('special signs'), blank=True,
         related_name='special_signs_resources')
     regions = RegionManyToManyField(
         'regions.Region', blank=True, related_name='region_resources',
         related_query_name='resource', through='regions.ResourceRegion', verbose_name=_('Regions'))
-    is_manual_data_date = models.BooleanField(verbose_name=_('Manual update'), default=True)
+    is_auto_data_date = models.BooleanField(verbose_name=_('Automatic update'), default=False)
     data_date_update_period = models.CharField(verbose_name=_('Data date update period'),
                                                choices=RESOURCE_DATA_DATE_PERIODS, max_length=10, null=True, blank=True)
     automatic_data_date_start = models.DateField(verbose_name=_('Data date start date update'), blank=True, null=True)
@@ -650,6 +659,10 @@ class Resource(ExtendedModel):
     @property
     def dataset_slug_en(self):
         return self.dataset.slug_en
+
+    @property
+    def label_from_instance(self):
+        return f'{self.title} ({self.STATUS[self.status]})'
 
     @property
     def link_is_valid(self):
@@ -853,9 +866,12 @@ class Resource(ExtendedModel):
     def revalidate(self, **kwargs):
         if not self.link or self.is_link_internal:
             if self._main_file:
-                process_resource_res_file_task.s(self._main_file.pk, **kwargs).apply_async(countdown=2)
+                transaction.on_commit(lambda: process_resource_res_file_task.s(self._main_file.pk, **kwargs).apply_async())
         else:
-            process_resource_from_url_task.s(self.id, **kwargs).apply_async(countdown=2)
+            transaction.on_commit(lambda: process_resource_from_url_task.s(self.id, **kwargs).apply_async())
+
+    def revalidate_tabular_data(self):
+        transaction.on_commit(lambda: process_resource_file_data_task.s(self.id).apply_async())
 
     @classmethod
     def accusative_case(cls):
@@ -1253,7 +1269,7 @@ class Resource(ExtendedModel):
             'weekly': 'schedule_interval_data_date_update',
             'monthly': 'schedule_crontab_data_date_update'
         }
-        if self.is_manual_data_date is False and self.type == 'api':
+        if self.is_auto_data_date and self.is_auto_data_date_allowed:
             getattr(self, period_method[self.data_date_update_period])(
                 schedule_date=self.automatic_data_date_start
             )
@@ -1312,7 +1328,7 @@ class Resource(ExtendedModel):
             }
         schedule, _ = CrontabSchedule.objects.get_or_create(**crontab_kwargs)
         task_kwargs['crontab'] = schedule
-        self._create_schedule_periodic_task(task_kwargs=task_kwargs, schedule_date=schedule_date)
+        self._create_schedule_periodic_task(task_kwargs=task_kwargs)
 
     def is_last_day_of_month(self, schedule_date):
         m_range = monthrange(schedule_date.year, schedule_date.month)
@@ -1325,11 +1341,8 @@ class Resource(ExtendedModel):
             schedule_date = schedule_date.replace(day=proper_last_day)
         return schedule_date
 
-    def _create_schedule_periodic_task(self, task_kwargs, schedule_date=None):
+    def _create_schedule_periodic_task(self, task_kwargs):
         warsaw_tz = pytz.timezone(settings.TIME_ZONE)
-        localized_today = now().astimezone(warsaw_tz).date()
-        if schedule_date is None:
-            schedule_date = self.automatic_data_date_start
         obj_kwargs = {
             'task': 'mcod.resources.tasks.update_data_date',
             'args': json.dumps([self.pk]),
@@ -1349,9 +1362,6 @@ class Resource(ExtendedModel):
                 name=self.data_date_task_name
             ).delete()
             PeriodicTask.objects.create(name=self.data_date_task_name, **obj_kwargs)
-        if localized_today == schedule_date:
-            update_task = obj_kwargs['task']
-            transaction.on_commit(lambda: locate(update_task).s(self.pk, False).apply_async())
 
     def cancel_data_date_update(self):
         try:
@@ -1366,9 +1376,9 @@ class Resource(ExtendedModel):
 
     @staticmethod
     def get_auto_data_date_errors(data, is_xml_import=False):
-        manual_data_date = data.get('is_manual_data_date')
+        auto_data_date = data.get('is_auto_data_date')
         if (not is_enabled('S51_xml_harvester_data_date_update.be') and is_xml_import) or\
-                manual_data_date or manual_data_date is None:
+                not auto_data_date:
             return
 
         dd_start = data.get('automatic_data_date_start')
@@ -1393,6 +1403,15 @@ class Resource(ExtendedModel):
 
         if dd_start and dd_end and dd_end <= dd_start:
             return DataError('automatic_data_date_end', _('Update end date cant be earlier than start date.'))
+
+    def import_regions_from_harvester(self, regions):
+        for f in self._meta.many_to_many:
+            if f.name == 'regions':
+                f.save_harvester_data(self, regions)
+
+    @property
+    def is_auto_data_date_allowed(self):
+        return self.type == RESOURCE_TYPE_API or (self.is_linked and self.type == RESOURCE_TYPE_FILE)
 
 
 class Chart(ExtendedModel):
@@ -1610,25 +1629,30 @@ def handle_resource_post_save(sender, instance, *args, **kwargs):
         dataset_id = instance.tracker.previous('dataset_id')
         if dataset_id:
             # update related ES documents for previously set dataset, if any.
-            update_with_related_task.s('datasets', 'Dataset', dataset_id).apply_async(countdown=2)
+            transaction.on_commit(lambda: update_with_related_task.s('datasets', 'Dataset', dataset_id).apply_async())
 
 
 @receiver(revalidate_resource, sender=Resource)
 def process_resource(sender, instance, *args, **kwargs):
     sender.log_debug(instance, 'Processing resource', 'pre_save')
-    is_manual_data_date_changed =\
-        is_enabled('S51_data_date_update.be') and instance.tracker.has_changed('is_manual_data_date')
-    auto_data_date_fields = ['is_manual_data_date', 'automatic_data_date_start', 'data_date_update_period',
+    is_auto_data_date_changed =\
+        is_enabled('S51_data_date_update.be') and instance.tracker.has_changed('is_auto_data_date')
+    auto_data_date_fields = ['is_auto_data_date', 'automatic_data_date_start', 'data_date_update_period',
                              'automatic_data_date_end', 'endless_data_date_update']
     auto_data_date_fields_changed = any([instance.tracker.has_changed(f) for f in auto_data_date_fields])
-    if is_enabled('S51_data_date_update.be') and not instance.is_manual_data_date and\
-            (instance.state_restored or auto_data_date_fields_changed):
+    schedule_auto_data_date_update = is_enabled(
+        'S51_data_date_update.be') and instance.is_auto_data_date and (
+            instance.state_restored or auto_data_date_fields_changed)
+    cancel_auto_data_date_update = is_auto_data_date_changed and not instance.is_auto_data_date
+    if schedule_auto_data_date_update:
         instance.schedule_data_date_update()
-    elif is_manual_data_date_changed and instance.is_manual_data_date:
+    elif cancel_auto_data_date_update:
         instance.cancel_data_date_update()
     if instance.is_link_updated:
         process_resource_from_url_task.s(instance.id, update_file_archive=True,
-                                         forced_file_changed=instance.has_forced_file_changed).apply_async(countdown=2)
+                                         forced_file_changed=instance.has_forced_file_changed,
+                                         schedule_auto_data_date=schedule_auto_data_date_update,
+                                         cancel_auto_data_date=cancel_auto_data_date_update).apply_async(countdown=2)
     elif instance.state_restored:
         process_resource_res_file_task.s(instance._main_file.pk, update_file_archive=True).apply_async(countdown=2)
     elif instance.tracker.has_changed('dataset_id') and instance.tracker.previous('dataset_id') is not None:
@@ -1660,10 +1684,6 @@ def update_dataset_watcher(sender, instance, *args, state=None, **kwargs):
     )
 
 
-def resource_special_signs_changed(sender, instance, *args, **kwargs):
-    transaction.on_commit(lambda: process_resource_file_data_task.s(instance.id).apply_async())
-
-
 @receiver(cancel_data_date_update, sender=Resource)
 def cancel_data_date_update_schedule(sender, instance, *args, **kwargs):
     instance.cancel_data_date_update()
@@ -1677,15 +1697,13 @@ def process_created_file(sender, instance, created, *args, **kwargs):
 
 @receiver(core_signals.notify_removed, sender=Resource)
 def remove_regions(sender, instance, *args, **kwargs):
-    if is_enabled('S37_resources_admin_region_data.be'):
-        bulk_delete_documents_task.s('regions', 'Region', instance.regions_to_conceal).apply_async(countdown=2)
+    bulk_delete_documents_task.s('regions', 'Region', instance.regions_to_conceal).apply_async(countdown=2)
 
 
 @receiver(core_signals.notify_restored, sender=Resource)
 @receiver(core_signals.notify_published, sender=Resource)
 def restore_regions(sender, instance, *args, **kwargs):
-    if is_enabled('S37_resources_admin_region_data.be'):
-        update_related_task.s('regions', 'Region', instance.regions_to_publish).apply_async(countdown=2)
+    update_related_task.s('regions', 'Region', instance.regions_to_publish).apply_async(countdown=2)
 
 
 core_signals.notify_published.connect(update_watcher, sender=Resource)
@@ -1700,10 +1718,6 @@ core_signals.notify_published.connect(update_watcher, sender=ResourceTrash)
 core_signals.notify_restored.connect(update_watcher, sender=ResourceTrash)
 core_signals.notify_updated.connect(update_watcher, sender=ResourceTrash)
 core_signals.notify_removed.connect(update_watcher, sender=ResourceTrash)
-
-core_signals.notify_m2m_added.connect(resource_special_signs_changed, sender=Resource.special_signs.through)
-core_signals.notify_m2m_removed.connect(resource_special_signs_changed, sender=Resource.special_signs.through)
-core_signals.notify_m2m_cleaned.connect(resource_special_signs_changed, sender=Resource.special_signs.through)
 
 
 @task_prerun.connect(sender=validate_link)

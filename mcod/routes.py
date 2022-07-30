@@ -1,5 +1,4 @@
 from mcod.academy import views as academy_views
-from mcod.applications import views as app_views
 from mcod.core.api.utils import views as core_views
 from mcod.datasets import views as dataset_views
 from mcod.guides import views as guides_views
@@ -14,7 +13,6 @@ from mcod.searchhistories import views as searchhistory_views
 from mcod.showcases import views as showcases_views
 from mcod.suggestions import views as submission_views
 from mcod.tools import views as tools_views
-from mcod.unleash import is_enabled
 from mcod.users import views as user_views
 from mcod.watchers import views as watcher_views
 
@@ -213,16 +211,5 @@ routes = [
     ('/showcases/suggest', showcases_views.ShowcaseProposalView()),
 ]
 
-if not is_enabled('S49_delete_application_app.be'):
-    routes.extend([
-        # Applications
-        ('/applications', app_views.ApplicationSearchApiView()),
-        ('/applications/{id:int}', app_views.ApplicationApiView()),
-        ('/applications/{id:int},{slug}', app_views.ApplicationApiView()),
-        ('/applications/{id:int}/datasets', app_views.ApplicationDatasetsView()),
-        ('/applications/{id:int},{slug}/datasets', app_views.ApplicationDatasetsView()),
-        ('/applications/suggest', app_views.ApplicationSubmitView()),
-        ('/applications/submissions', app_views.ApplicationSubmitView()),
-    ])
 
 routes.extend(list(map(lambda x: ("/{api_version}" + x[0], *x[1:]), routes)))

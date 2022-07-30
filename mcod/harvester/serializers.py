@@ -16,6 +16,8 @@ from marshmallow.fields import URL, UUID, Bool, Date, DateTime, Int, List, Metho
 from mcod import settings
 from mcod.core.api.rdf.profiles.dcat_ap import DCATDatasetDeserializer
 from mcod.datasets.models import Dataset
+from mcod.regions.api import PeliasApi
+from mcod.regions.exceptions import MalformedTerytCodeError
 from mcod.resources.link_validation import download_file
 from mcod.resources.models import RESOURCE_DATA_DATE_PERIODS, Resource, supported_formats_choices
 from mcod.unleash import is_enabled
@@ -318,12 +320,14 @@ class XMLResourceSchema(ResourceMixin, XMLPreProcessedSchema):
     has_research_data = Bool(data_key='hasResearchData', allow_none=True)
     supplements = Nested(XMLSupplementSchema, many=True)
     if is_enabled('S51_xml_harvester_data_date_update.be'):
-        is_manual_data_date = Bool(data_key='isManualDataDate')
+        is_auto_data_date = Bool(data_key='isAutoDataDate')
         data_date_update_period = Str(data_key='dataDateUpdatePeriod',
                                       validate=validate.OneOf(choices=[p[0] for p in RESOURCE_DATA_DATE_PERIODS]))
         automatic_data_date_start = Date(data_key='autoDataDateStart')
         automatic_data_date_end = Date(data_key='autoDataDateEnd')
         endless_data_date_update = Bool(data_key='endlessDataDateUpdate')
+    if is_enabled('S53_xml_harvester_region_import.be'):
+        regions = List(Str())
 
     class Meta:
         ordered = True
@@ -343,7 +347,9 @@ class XMLResourceSchema(ResourceMixin, XMLPreProcessedSchema):
         supplements = data.pop('supplements', {})
         if 'supplement' in supplements:
             data['supplements'] = supplements['supplement']
-
+        regions = data.pop('regions', {})
+        if 'terytIdent' in regions:
+            data['regions'] = regions['terytIdent']
         return data
 
     @validates_schema
@@ -364,6 +370,33 @@ class XMLResourceSchema(ResourceMixin, XMLPreProcessedSchema):
         err = Resource.get_auto_data_date_errors(data, True)
         if err:
             raise ValidationError(err.field_name, err.message)
+
+    @validates_schema
+    def validate_regions(self, data, **kwargs):
+        regions = data.get('regions')
+        if is_enabled('S53_xml_harvester_region_import.be') and regions:
+            ext_ident = data.get('ext_ident')
+            pelias = PeliasApi()
+            try:
+                gids = pelias.convert_teryt_to_gids(regions)
+            except MalformedTerytCodeError as err:
+                raise ValidationError(_(f'Exception occurred for resource with id {ext_ident}: {err}'),
+                                      field_name='regions')
+            places_details = pelias.place(gids)
+            found_regions = []
+            for reg in places_details['features']:
+                found_gid = reg['properties']['gid']
+                gid_elems = found_gid.split(':')
+                if f'{gid_elems[1]}_gid' in reg['properties']:
+                    found_regions.append(found_gid)
+            if len(found_regions) != len(gids):
+                found_set = set(found_regions)
+                orig_set = set(gids)
+                missing_gids = orig_set.difference(found_set)
+                missing_ids = [gid.split(':')[2] for gid in missing_gids]
+                raise ValidationError(_(f'Resource with id {ext_ident} has assigned unknown TERYT codes:'
+                                        f' {", ".join(missing_ids)}. Please check if those codes are valid'
+                                        f' region, county, localadmin or locality codes.'), field_name='regions')
 
 
 class XMLDatasetSchema(XMLPreProcessedSchema):

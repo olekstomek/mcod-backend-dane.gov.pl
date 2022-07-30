@@ -50,6 +50,18 @@ class PrefetchResourceFilesMixin:
 
 class SoftDeletableMetadataQuerySet(PrefetchResourceFilesMixin, SoftDeletableQuerySet):
 
+    def autocomplete(self, user, query=None, forwarded=None):
+        if not user.is_authenticated:
+            return self.none()
+        kwargs = forwarded
+        resource_id = kwargs.pop('id', None)
+        if not user.is_superuser:
+            kwargs['dataset__organization_id__in'] = user.organizations.all()
+        if query:
+            kwargs['title__icontains'] = query
+        queryset = self.filter(**kwargs)
+        return queryset.exclude(id=resource_id) if resource_id else queryset
+
     def with_metadata(self):
         tag_model = apps.get_model('tags', 'Tag')
         res_filter = Q(dataset__resources__status='published', dataset__resources__is_removed=False,
@@ -113,6 +125,9 @@ class SoftDeletableMetadataQuerySet(PrefetchResourceFilesMixin, SoftDeletableQue
 
 class ResourceManager(SoftDeletableManager):
     _queryset_class = SoftDeletableMetadataQuerySet
+
+    def autocomplete(self, user, query=None, forwarded=None):
+        return super().get_queryset().autocomplete(user, query=query, forwarded=forwarded)
 
     def get_queryset(self):
         return super().get_queryset().with_prefetched_files()

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-06-08 08:53+0200\n"
+"POT-Creation-Date: 2022-07-15 11:00+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -197,70 +197,7 @@ msgstr ""
 msgid "Alert"
 msgstr ""
 
-msgid "Tags"
-msgstr ""
-
-msgid "Datasets"
-msgstr ""
-
-msgid "Logo"
-msgstr ""
-
-msgid "Illustrative graphics"
-msgstr ""
-
-msgid "Preview link"
-msgstr ""
-
-msgid "Delete selected application proposals"
-msgstr ""
-
-msgid "Datasets being used to build application"
-msgstr ""
-
-msgid "Decision not taken"
-msgstr ""
-
-msgid "decision"
-msgstr ""
-
-msgid "External public data used"
-msgstr ""
-
-msgid "Application creation task was launched!"
-msgstr ""
-
 msgid "Applications"
-msgstr ""
-
-msgid "This field is required"
-msgstr ""
-
-msgid "Notes"
-msgstr ""
-
-msgid "datasets"
-msgstr ""
-
-msgid "Dataset"
-msgstr ""
-
-msgid "External datasets"
-msgstr ""
-
-msgid "Application author"
-msgstr ""
-
-msgid "Decision made"
-msgstr ""
-
-msgid "Application notes"
-msgstr ""
-
-msgid "Application name"
-msgstr ""
-
-msgid "Application link / Application info page address"
 msgstr ""
 
 msgid "First"
@@ -273,6 +210,9 @@ msgid "Third"
 msgstr ""
 
 msgid "Fourth"
+msgstr ""
+
+msgid "Notes"
 msgstr ""
 
 msgid "Author"
@@ -299,10 +239,16 @@ msgstr ""
 msgid "illustrative graphics"
 msgstr ""
 
+msgid "datasets"
+msgstr ""
+
 msgid "keywords"
 msgstr ""
 
 msgid "report date"
+msgstr ""
+
+msgid "decision"
 msgstr ""
 
 msgid "decision date"
@@ -342,6 +288,9 @@ msgid "illustrative graphics alternative text"
 msgstr ""
 
 msgid "Alternative text"
+msgstr ""
+
+msgid "Datasets"
 msgstr ""
 
 msgid "Tag"
@@ -387,6 +336,9 @@ msgid "License ID"
 msgstr ""
 
 msgid "Category"
+msgstr ""
+
+msgid "Tags"
 msgstr ""
 
 msgid "acc: Article"
@@ -741,6 +693,9 @@ msgstr ""
 msgid "Update frequency"
 msgstr ""
 
+msgid "Logo"
+msgstr ""
+
 msgid "Available categories"
 msgstr ""
 
@@ -815,15 +770,18 @@ msgid ""
 "license responsibilities at the same time. Please choose one."
 msgstr ""
 
-msgid ""
-"Chosen conditions for re-use mean that they contain personal data. Please "
-"contact the administrator at kontakt@dane.gov.pl."
-msgstr ""
-
 #, python-format
 msgid ""
 "Currently %(limit)s datasets have already been marked as promoted. If you "
 "want to select this dataset, you have to uncheck another one."
+msgstr ""
+
+msgid "Only published dataset can be assigned as promoted!"
+msgstr ""
+
+msgid ""
+"Chosen conditions for re-use mean that they contain personal data. Please "
+"contact the administrator at kontakt@dane.gov.pl."
 msgstr ""
 
 msgid ""
@@ -1029,6 +987,9 @@ msgid "A comment was posted on the data set %(title)s%(version)s"
 msgstr ""
 
 msgid "This dataset can be used under following conditions: "
+msgstr ""
+
+msgid "Dataset"
 msgstr ""
 
 msgid "language"
@@ -1898,6 +1859,14 @@ msgid ""
 "\" was not found."
 msgstr ""
 
+#, python-brace-format
+msgid "Exception occurred for resource with id {ext_ident}: {err}"
+msgstr ""
+
+#, python-brace-format
+msgid "Resource with id {ext_ident} has assigned unknown TERYT codes:"
+msgstr ""
+
 #, python-format
 msgid "Dataset with id: %(d_id)s and institution: \"%(ins)s\" was not found."
 msgstr ""
@@ -2027,6 +1996,9 @@ msgid "Select %s to view"
 msgstr ""
 
 msgid "Decision taken"
+msgstr ""
+
+msgid "Decision not taken"
 msgstr ""
 
 msgid "Task for CSV generation queued"
@@ -2300,6 +2272,9 @@ msgid "Newsletter"
 msgstr ""
 
 msgid "E-mail address you entered is not valid"
+msgstr ""
+
+msgid "This field is required"
 msgstr ""
 
 msgid "polish"
@@ -2677,6 +2652,10 @@ msgstr ""
 msgid "Unauthorized"
 msgstr ""
 
+#, python-brace-format
+msgid "Malformed teryt code: {teryt_id}."
+msgstr ""
+
 msgid "Regions"
 msgstr ""
 
@@ -2829,6 +2808,9 @@ msgstr ""
 msgid "Maps and plots"
 msgstr ""
 
+msgid "data language"
+msgstr ""
+
 msgid "Manual update"
 msgstr ""
 
@@ -2917,6 +2899,9 @@ msgstr ""
 msgid ""
 "You can't set status of this resource to published, because it's dataset is "
 "still a draft. You should first published that dataset: "
+msgstr ""
+
+msgid "Only resource from related dataset resources is valid!"
 msgstr ""
 
 msgid "Do not allow user charts to be created"
@@ -3038,6 +3023,15 @@ msgid "has table?"
 msgstr ""
 
 msgid "is chart creation blocked?"
+msgstr ""
+
+msgid "language version of the data"
+msgstr ""
+
+msgid "related data"
+msgstr ""
+
+msgid "Automatic update"
 msgstr ""
 
 msgid "Data date update period"
@@ -3420,10 +3414,22 @@ msgstr ""
 msgid "House number"
 msgstr ""
 
+msgid "Illustrative graphics"
+msgstr ""
+
+msgid "Preview link"
+msgstr ""
+
 msgid "Application type"
 msgstr ""
 
 msgid "Delete selected showcase proposals"
+msgstr ""
+
+msgid "Datasets being used to build application"
+msgstr ""
+
+msgid "External public data used"
 msgstr ""
 
 msgid "Showcase creation task was launched!"
@@ -3436,10 +3442,19 @@ msgstr ""
 msgid "link to the application"
 msgstr ""
 
+msgid "External datasets"
+msgstr ""
+
 msgid "At least one url for mobile app (iOS, Android) is required!"
 msgstr ""
 
 msgid "At least one url for desktop app (Windows, Linux, MacOS) is required!"
+msgstr ""
+
+msgid "Decision made"
+msgstr ""
+
+msgid "Application link / Application info page address"
 msgstr ""
 
 msgid "Mobile Applications"
@@ -4296,9 +4311,8 @@ msgstr ""
 msgid ""
 "Wiadomość została wygenerowana automatycznie przez oprogramowanie portalu "
 "Dane.gov.pl w wyniku zgłoszenia przez użytkownika uwagi o treści jak wyżej."
-"<br>Prosimy nie używać funkcji Odpowiedz nadawcy.<br><br>Kontakt z Zespołem "
-"portalu Dane.gov.pl: <a href=\"mailto:kontakt@dane.gov.pl\" target=\"_blank"
-"\">kontakt@dane.gov.pl</a>"
+"<br><br>Kontakt z Zespołem portalu Dane.gov.pl: <a href=\"mailto:"
+"kontakt@dane.gov.pl\" target=\"_blank\">kontakt@dane.gov.pl</a>"
 msgstr ""
 
 msgid "recipients"
@@ -4756,12 +4770,6 @@ msgid "main organization of agent"
 msgstr ""
 
 msgid "extra agent of"
-msgstr ""
-
-msgid "Followed applications"
-msgstr ""
-
-msgid "Followed articles"
 msgstr ""
 
 msgid "Followed datasets"

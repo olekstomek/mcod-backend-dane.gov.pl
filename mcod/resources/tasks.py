@@ -16,7 +16,8 @@ logger = logging.getLogger('mcod')
 
 @shared_task(ignore_result=False)
 def process_resource_from_url_task(resource_id, update_file=True,
-                                   update_file_archive=False, forced_file_changed=False, **kwargs):
+                                   update_file_archive=False, forced_file_changed=False,
+                                   schedule_auto_data_date=False, cancel_auto_data_date=False, **kwargs):
     Resource = apps.get_model('resources', 'Resource')
     resource = Resource.raw.get(id=resource_id)
     if resource.is_imported_from_ckan:
@@ -30,7 +31,9 @@ def process_resource_from_url_task(resource_id, update_file=True,
             resource_type = 'api'
         process_for_separate_file_model(resource_id, resource, options,
                                         resource_type, update_file_archive=update_file_archive,
-                                        forced_file_changed=forced_file_changed, **kwargs)
+                                        forced_file_changed=forced_file_changed,
+                                        schedule_auto_data_date=schedule_auto_data_date,
+                                        cancel_auto_data_date=cancel_auto_data_date, **kwargs)
 
     resource = Resource.raw.get(id=resource_id)
     result = {
@@ -64,7 +67,9 @@ def get_or_create_main_res_file(resource_id, openness_score):
 
 
 def process_for_separate_file_model(resource_id, resource, options, resource_type,
-                                    update_file_archive, forced_file_changed, **kwargs):
+                                    update_file_archive, forced_file_changed,
+                                    schedule_auto_data_date, cancel_auto_data_date, **kwargs):
+    process_auto_data_date = True
     Resource = apps.get_model('resources', 'Resource')
     ResourceFile = apps.get_model('resources', 'ResourceFile')
     openness_score, _ = resource.get_openness_score(options['format'])
@@ -82,8 +87,11 @@ def process_for_separate_file_model(resource_id, resource, options, resource_typ
                 format=options['format'],
                 openness_score=openness_score
             )
+        process_auto_data_date = False
         process_resource_res_file_task.s(res_file.pk, update_link=False,
-                                         update_file_archive=update_file_archive, **kwargs).apply_async(countdown=2)
+                                         update_file_archive=update_file_archive,
+                                         schedule_auto_data_date=schedule_auto_data_date,
+                                         cancel_auto_data_date=cancel_auto_data_date, **kwargs).apply_async(countdown=2)
     else:  # API or WWW
         ResourceFile.objects.filter(resource_id=resource_id).delete()
         if forced_file_changed:
@@ -93,6 +101,11 @@ def process_for_separate_file_model(resource_id, resource, options, resource_typ
             format=options['format'],
             openness_score=openness_score
         )
+    resource.refresh_from_db()
+    if schedule_auto_data_date and process_auto_data_date:
+        resource.schedule_data_date_update()
+    elif cancel_auto_data_date and process_auto_data_date:
+        resource.cancel_data_date_update()
 
 
 @shared_task(ignore_result=False)
@@ -227,7 +240,8 @@ def process_resource_data_indexing_task(resource_id):
 
 
 @shared_task(ignore_result=False)
-def process_resource_res_file_task(resource_file_id, update_link=True, update_file_archive=False, **kwargs):
+def process_resource_res_file_task(resource_file_id, update_link=True, update_file_archive=False,
+                                   schedule_auto_data_date=False, cancel_auto_data_date=False, **kwargs):
     ResourceFile = apps.get_model('resources', 'ResourceFile')
     Resource = apps.get_model('resources', 'Resource')
     resource_file = ResourceFile.objects.get(pk=resource_file_id)
@@ -272,6 +286,10 @@ def process_resource_res_file_task(resource_file_id, update_link=True, update_fi
             countdown=2)
     if update_file_archive:
         resource.dataset.archive_files()
+    if schedule_auto_data_date:
+        resource.schedule_data_date_update()
+    elif cancel_auto_data_date:
+        resource.cancel_data_date_update()
     return json.dumps({
         'uuid': str(resource.uuid),
         'link': resource.link,
@@ -283,17 +301,19 @@ def process_resource_res_file_task(resource_file_id, update_link=True, update_fi
 
 
 @shared_task
-def update_data_date(resource_id, update_es=True):
+def update_data_date(resource_id):
     Resource = apps.get_model('resources', 'Resource')
     res_q = Resource.objects.filter(pk=resource_id)
     res = res_q.first()
-    if res.is_manual_data_date is False:
+    if res.is_auto_data_date and res.is_auto_data_date_allowed:
         warsaw_tz = pytz.timezone(settings.TIME_ZONE)
         current_dt = now().astimezone(warsaw_tz).date()
         res_q.update(data_date=current_dt)
         logger.debug(f'Updated data date for resource with id {resource_id} with date {current_dt}')
-        if update_es:
+        if res.type == 'api':
             res.update_es_and_rdf_db()
+        elif res.is_linked:
+            process_resource_from_url_task.s(res.id, update_file_archive=True).apply_async()
         return {
             'current_date': current_dt
         }

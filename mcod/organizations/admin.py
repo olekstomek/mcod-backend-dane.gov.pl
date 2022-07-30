@@ -4,8 +4,8 @@ from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 
 from mcod.datasets.forms import (
-    DatasetFormSet,
     DatasetForm,
+    DatasetFormSet,
     DatasetStackedNoSaveForm,
     SupplementForm as DatasetSupplementForm,
 )
@@ -102,11 +102,6 @@ class AddDatasetStacked(ObjectPermissionsStackedInline):
     license_fields = [
         'license_condition_default_cc40',
         'license_condition_custom_description',
-    ] if is_enabled('S49_cc_by_40_conditions_unification.be') else [
-        'license_condition_source',
-        'license_condition_modification',
-        'license_condition_responsibilities',
-        'license_condition_cc40_responsibilities',
     ]
     if is_enabled('S49_nested_dataset_admin.be'):
         def get_fieldsets(self, request, obj=None):

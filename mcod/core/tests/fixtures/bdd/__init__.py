@@ -2,7 +2,6 @@ from mcod.core.tests.fixtures.bdd.academy import *  # noqa
 from mcod.core.tests.fixtures.bdd.admin import *  # noqa
 from mcod.core.tests.fixtures.bdd.alerts import *  # noqa
 from mcod.core.tests.fixtures.bdd.api import *  # noqa
-from mcod.core.tests.fixtures.bdd.applications import *  # noqa
 from mcod.core.tests.fixtures.bdd.categories import *  # noqa
 from mcod.core.tests.fixtures.bdd.cms import *  # noqa
 from mcod.core.tests.fixtures.bdd.common import *  # noqa

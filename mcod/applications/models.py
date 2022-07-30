@@ -11,8 +11,6 @@ from django.contrib.postgres.fields import ArrayField, JSONField
 from django.contrib.postgres.indexes import GinIndex
 from django.core.files.base import ContentFile
 from django.db import models
-from django.db.models.signals import pre_save
-from django.dispatch import receiver
 from django.forms.models import model_to_dict
 from django.template.loader import render_to_string
 from django.utils import timezone, translation
@@ -30,13 +28,9 @@ from wagtail.embeds.blocks import EmbedBlock
 from wagtail.images.blocks import ImageChooserBlock
 from wagtail.search import index
 
-from mcod.applications.managers import ApplicationProposalManager, ApplicationProposalTrashManager
-from mcod.applications.signals import generate_thumbnail, update_application_document
-from mcod.applications.tasks import generate_logo_thumbnail_task
-from mcod.core import signals as core_signals, storages
-from mcod.core.api.search import signals as search_signals
+from mcod.core import storages
 from mcod.core.db.managers import TrashManager
-from mcod.core.db.models import ExtendedModel, TrashModelBase, update_watcher
+from mcod.core.db.models import ExtendedModel, TrashModelBase
 from mcod.core.managers import SoftDeletableManager
 
 User = get_user_model()
@@ -250,8 +244,6 @@ class ApplicationProposal(ApplicationMixin):
         related_name='application_proposals_modified'
     )
 
-    objects = ApplicationProposalManager()
-    trash = ApplicationProposalTrashManager()
     i18n = TranslationField()
     tracker = FieldTracker()
 
@@ -468,18 +460,6 @@ class ApplicationProposalTrash(ApplicationProposal, metaclass=TrashModelBase):
 
 
 class Application(ApplicationMixin):
-    SIGNALS_MAP = {
-        'updated': (generate_thumbnail, core_signals.notify_updated),
-        'published': (generate_thumbnail, core_signals.notify_published),
-        'restored': (search_signals.update_document_with_related, generate_thumbnail, core_signals.notify_restored),
-        'removed': (search_signals.remove_document_with_related, core_signals.notify_removed),
-        'pre_m2m_added': (core_signals.notify_m2m_added,),
-        'pre_m2m_removed': (core_signals.notify_m2m_removed,),
-        'pre_m2m_cleaned': (core_signals.notify_m2m_cleaned,),
-        'post_m2m_added': (update_application_document, search_signals.update_document_related,),
-        'post_m2m_removed': (update_application_document, search_signals.update_document_related,),
-        'post_m2m_cleaned': (update_application_document, search_signals.update_document_related,),
-    }
 
     image = models.ImageField(
         max_length=200, storage=storages.get_storage('applications'),
@@ -655,49 +635,8 @@ class Application(ApplicationMixin):
         indexes = [GinIndex(fields=["i18n"]), ]
 
 
-@receiver(pre_save, sender=ApplicationProposal)
-def handle_application_proposal_pre_save(sender, instance, *args, **kwargs):
-    if not instance.report_date and instance.created:
-        instance.report_date = instance.created.date()
-    if instance.tracker.has_changed('decision'):
-        instance.decision_date = timezone.now().date() if any([instance.is_accepted, instance.is_rejected]) else None
-
-
-@receiver(generate_thumbnail, sender=Application)
-def regenerate_thumbnail(sender, instance, *args, **kwargs):
-    sender.log_debug(instance, 'Regenerating thumbnail ', 'generate_thumbnail')
-    if any([instance.tracker.has_changed('image'),
-            instance.tracker.has_changed('status') and instance.status == instance.STATUS.published]):
-        generate_logo_thumbnail_task.s(instance.id).apply_async(countdown=1)
-    else:
-        search_signals.update_document.send(sender, instance)
-
-
-@receiver(update_application_document, sender=Application)
-def update_application_document_handler(sender, instance, *args, **kwargs):
-    if instance.status == instance.STATUS.published:
-        search_signals.update_document.send(sender, instance, *args, **kwargs)
-
-
-@receiver(pre_save, sender=Application)
-def handle_application_pre_save(sender, instance, *args, **kwargs):
-    if instance.is_removed and instance.main_page_position is not None:
-        instance.main_page_position = None
-
-
 class ApplicationTrash(Application, metaclass=TrashModelBase):
     class Meta:
         proxy = True
         verbose_name = _("Trash")
         verbose_name_plural = _("Trash")
-
-
-core_signals.notify_published.connect(update_watcher, sender=Application)
-core_signals.notify_restored.connect(update_watcher, sender=Application)
-core_signals.notify_updated.connect(update_watcher, sender=Application)
-core_signals.notify_removed.connect(update_watcher, sender=Application)
-
-core_signals.notify_published.connect(update_watcher, sender=ApplicationTrash)
-core_signals.notify_restored.connect(update_watcher, sender=ApplicationTrash)
-core_signals.notify_updated.connect(update_watcher, sender=ApplicationTrash)
-core_signals.notify_removed.connect(update_watcher, sender=ApplicationTrash)

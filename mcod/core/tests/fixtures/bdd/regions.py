@@ -24,6 +24,231 @@ def main_regions_response():
 
 
 @pytest.fixture
+def main_region_response():
+    return {"101752777": {"id": 101752777, "name": "Warszawa", "placetype": "locality", "rank": {"min": 9, "max": 10},
+                          "population": 1702139, "lineage":
+                              [{"continent_id": 102191581, "country_id": 85633723, "county_id": 1477743805,
+                                "localadmin_id": 1125365875, "locality_id": 101752777, "region_id": 85687257}],
+                          "geom": {"area": 0.068027, "bbox": "20.851688,52.09785,21.271151,52.368154", "lat": 52.237695,
+                                   "lon": 21.005427},
+                          "names": {"eng": ["Warsaw"], "pol": ["Warszawa"]}}}
+
+
+@pytest.fixture
+def warsaw_additional_regions_response():
+    return {"85687257": {"id": 85687257, "name": "Mazowieckie", "abbr": "MZ", "placetype": "region",
+                         "rank": {"min": 14, "max": 15}, "population": 5268660,
+                         "lineage": [{"continent_id": 102191581, "country_id": 85633723, "region_id": 85687257}],
+                         "geom": {"area": 4.689476, "bbox": "19.259214,51.013112,23.128409,53.481806", "lat": 52.512784,
+                                  "lon": 21.125296}, "names": {"eng": ["Mazowieckie"], "pol": ["mazowieckie"]}},
+            "1125365875": {"id": 1125365875, "name": "Gmina Warszawa", "placetype": "localadmin",
+                           "rank": {"min": 11, "max": 12}, "lineage":
+                               [{"continent_id": 102191581, "country_id": 85633723, "county_id": 1477743805,
+                                 "localadmin_id": 1125365875, "region_id": 85687257}],
+                           "geom": {"area": 0.068027, "bbox": "20.851688337,52.097849611,21.271151295,52.368153943",
+                                    "lat": 52.2331, "lon": 21.0614},
+                           "names": {"deu": ["Warschau"], "eng": ["Warsaw"], "fra": ["Varsovie"],
+                                     "pol": ["Gmina Warszawa"]}},
+            "1477743805": {"id": 1477743805, "name": "Warszawa", "placetype": "county", "rank": {"min": 12, "max": 13},
+                           "lineage": [{"continent_id": 102191581, "country_id": 85633723, "county_id": 1477743805,
+                                        "region_id": 85687257}],
+                           "geom": {"area": 0.068027, "bbox": "20.851688,52.09785,21.271151,52.368154",
+                                    "lat": 52.245513, "lon": 21.001878},
+                           "names": {"fra": ["Varsovie"], "pol": ["Warszawa"]}}}
+
+
+@pytest.fixture
+def wof_ids_regions_response():
+    return {
+        "features": [
+            {
+                "type": "Feature",
+                "geometry": {
+                    "type": "Point",
+                    "coordinates": [
+                        21.005427,
+                        52.237695
+                    ]
+                },
+                "properties": {
+                    "id": "101752777",
+                    "gid": "whosonfirst:locality:101752777",
+                    "layer": "locality",
+                    "source": "whosonfirst",
+                    "source_id": "101752777",
+                    "country_code": "PL",
+                    "name": "Warszawa",
+                    "accuracy": "centroid",
+                    "country": "Polska",
+                    "country_gid": "whosonfirst:country:85633723",
+                    "country_a": "POL",
+                    "region": "mazowieckie",
+                    "region_gid": "whosonfirst:region:85687257",
+                    "region_a": "MZ",
+                    "county": "Warszawa",
+                    "county_gid": "whosonfirst:county:1477743805",
+                    "localadmin": "Gmina Warszawa",
+                    "localadmin_gid": "whosonfirst:localadmin:1125365875",
+                    "locality": "Warszawa",
+                    "locality_gid": "whosonfirst:locality:101752777",
+                    "label": "Warszawa, MZ, Polska",
+                    "addendum": {
+                        "concordances": {
+                            "dbp:id": "Warsaw",
+                            "fb:id": "en.warsaw",
+                            "fct:id": "024ce880-8f76-11e1-848f-cfd5bf3ef515",
+                            "gn:id": 756135,
+                            "gp:id": 523920,
+                            "loc:id": "n79018894",
+                            "ne:id": 1159151299,
+                            "nyt:id": "N38439611599745838241",
+                            "qs_pg:id": 900428,
+                            "wd:id": "Q270",
+                            "wk:page": "Warsaw"
+                        }
+                    }
+                },
+                "bbox": [
+                    20.851688,
+                    52.09785,
+                    21.271151,
+                    52.368154
+                ]
+            },
+            {
+                "type": "Feature",
+                "geometry": {
+                    "type": "Point",
+                    "coordinates": [
+                        21.0614,
+                        52.2331
+                    ]
+                },
+                "properties": {
+                    "id": "1125365875",
+                    "gid": "whosonfirst:localadmin:1125365875",
+                    "layer": "localadmin",
+                    "source": "whosonfirst",
+                    "source_id": "1125365875",
+                    "country_code": "PL",
+                    "name": "Gmina Warszawa",
+                    "accuracy": "centroid",
+                    "country": "Polska",
+                    "country_gid": "whosonfirst:country:85633723",
+                    "country_a": "POL",
+                    "region": "mazowieckie",
+                    "region_gid": "whosonfirst:region:85687257",
+                    "region_a": "MZ",
+                    "county": "Warszawa",
+                    "county_gid": "whosonfirst:county:1477743805",
+                    "localadmin": "Gmina Warszawa",
+                    "localadmin_gid": "whosonfirst:localadmin:1125365875",
+                    "label": "Gmina Warszawa, MZ, Polska",
+                    "addendum": {
+                        "concordances": {
+                            "gn:id": 7531926,
+                            "gp:id": 24548810,
+                            "qs_pg:id": 1175844,
+                            "qs:id": 1175844
+                        }
+                    }
+                },
+                "bbox": [
+                    20.851688337,
+                    52.097849611,
+                    21.271151295,
+                    52.368153943
+                ]
+            },
+            {
+                "type": "Feature",
+                "geometry": {
+                    "type": "Point",
+                    "coordinates": [
+                        21.125296,
+                        52.512784
+                    ]
+                },
+                "properties": {
+                    "id": "85687257",
+                    "gid": "whosonfirst:region:85687257",
+                    "layer": "region",
+                    "source": "whosonfirst",
+                    "source_id": "85687257",
+                    "country_code": "PL",
+                    "name": "mazowieckie",
+                    "accuracy": "centroid",
+                    "country": "Polska",
+                    "country_gid": "whosonfirst:country:85633723",
+                    "country_a": "POL",
+                    "region": "mazowieckie",
+                    "region_gid": "whosonfirst:region:85687257",
+                    "region_a": "MZ",
+                    "label": "mazowieckie, Polska",
+                    "addendum": {
+                        "concordances": {
+                            "digitalenvoy:region_code": 14344,
+                            "fips:code": "PL78",
+                            "hasc:id": "PL.MZ",
+                            "iso:id": "PL-MZ",
+                            "pl-gugik": "14",
+                            "unlc:id": "PL-MZ",
+                            "wd:id": "Q54169"
+                        }
+                    }
+                },
+                "bbox": [
+                    19.259214,
+                    51.013112,
+                    23.128409,
+                    53.481806
+                ]
+            },
+            {
+                "type": "Feature",
+                "geometry": {
+                    "type": "Point",
+                    "coordinates": [
+                        21.001878,
+                        52.245513
+                    ]
+                },
+                "properties": {
+                    "id": "1477743805",
+                    "gid": "whosonfirst:county:1477743805",
+                    "layer": "county",
+                    "source": "whosonfirst",
+                    "source_id": "1477743805",
+                    "country_code": "PL",
+                    "name": "Warszawa",
+                    "accuracy": "centroid",
+                    "country": "Polska",
+                    "country_gid": "whosonfirst:country:85633723",
+                    "country_a": "POL",
+                    "region": "mazowieckie",
+                    "region_gid": "whosonfirst:region:85687257",
+                    "region_a": "MZ",
+                    "county": "Warszawa",
+                    "county_gid": "whosonfirst:county:1477743805",
+                    "label": "Warszawa, MZ, Polska",
+                    "addendum": {
+                        "concordances": {
+                            "pl-gugik": "1465"
+                        }
+                    }
+                },
+                "bbox": [
+                    20.851688,
+                    52.09785,
+                    21.271151,
+                    52.368154
+                ]
+            }
+        ]
+    }
+
+
+@pytest.fixture
 def additional_regions_response():
     return {"85687257": {"id": 85687257, "name": "Mazowieckie", "abbr": "MZ", "placetype": "region",
                          "rank": {"min": 14, "max": 15}, "population": 5268660,
@@ -87,6 +312,48 @@ def wroclaw_main_region():
         geonames_id=None,
         hierarchy_label='Wrocław, Gmina Wrocław, pow. Wrocław, woj. dolnośląskie'
     )
+
+
+@pytest.fixture
+def teryt_regions_response():
+    return {
+        "features": [
+            {
+                "type": "Feature",
+                "geometry": {
+                    "type": "Point",
+                    "coordinates": [
+                        21.047816,
+                        52.229286
+                    ]
+                },
+                "properties": {
+                    "id": "0918123",
+                    "gid": "teryt:locality:0918123",
+                    "layer": "locality",
+                    "source": "teryt",
+                    "source_id": "0918123",
+                    "country_code": "PL",
+                    "name": "Warszawa",
+                    "accuracy": "centroid",
+                    "country": "Polska",
+                    "country_gid": "whosonfirst:country:85633723",
+                    "country_a": "POL",
+                    "region": "mazowieckie",
+                    "region_gid": "whosonfirst:region:85687257",
+                    "region_a": "MZ",
+                    "county": "Warszawa",
+                    "county_gid": "whosonfirst:county:1477743805",
+                    "localadmin": "Gmina Warszawa",
+                    "localadmin_gid": "whosonfirst:localadmin:1125365875",
+                    "locality": "Warszawa",
+                    "locality_gid": "whosonfirst:locality:101752777",
+                    "label": "Warszawa, MZ, Polska"
+                }
+            }
+        ],
+
+    }
 
 
 @pytest.fixture

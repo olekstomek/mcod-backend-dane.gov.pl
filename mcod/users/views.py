@@ -51,7 +51,7 @@ from mcod.users.serializers import (
     UserApiResponse,
     VerifyEmailApiResponse,
 )
-from mcod.watchers.models import Subscription
+
 
 User = get_user_model()
 
@@ -230,7 +230,7 @@ class DashboardView(JsonAPIView):
 
         def _get_aggregations(self, user):
             result = {
-                'subscriptions': self._get_user_subscriptions(user),
+                'subscriptions': user.get_dashboard_subscriptions(),
             }
             if user.has_access_to_academy_in_dashboard:
                 result.update({
@@ -262,18 +262,6 @@ class DashboardView(JsonAPIView):
                     'cms_url': settings.CMS_URL
                 })
             return result
-
-        @staticmethod
-        def _get_user_subscriptions(user: User):
-            return {
-                "datasets": Subscription.objects.filter(
-                    user=user,
-                    watcher__object_name='datasets.Dataset',
-                ).count(),
-                "queries": user.subscriptions.filter(
-                    watcher__object_name='query',
-                ).count(),
-            }
 
         @staticmethod
         def _get_laboratory_aggregations():

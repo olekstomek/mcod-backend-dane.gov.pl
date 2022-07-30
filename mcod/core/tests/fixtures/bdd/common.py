@@ -7,11 +7,13 @@ import smtplib
 import zipfile
 from io import BytesIO
 from pydoc import locate
+from unittest import mock
 
 import dpath
 import magic
 import requests_mock
 from django.apps import apps
+from django.contrib import admin
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client
 from django.utils import translation
@@ -383,6 +385,7 @@ def api_request_post_data(admin_context, data_type, req_post_data):
             "resources-2-MAX_NUM_FORMS": "1000",
             "resources-2-0-has_high_value_data": False,
             "resources-2-0-has_dynamic_data": False,
+            "resources-2-0-language": "pl",
 
             # nested admin required fields.
             "resources-2-0-supplements-TOTAL_FORMS": "0",
@@ -558,11 +561,13 @@ def api_request_post_data(admin_context, data_type, req_post_data):
 
             "_save": "",
             "from_resource": "",
+            "related_resource": "",
             "title_en": "",
             "description_en": "",
             "slug_en": "",
             "has_high_value_data": False,
             "has_dynamic_data": False,
+            "language": "pl",
         },
         'showcase': {
             "category": "app",
@@ -770,6 +775,54 @@ def admin_page_is_requested(admin_context, page_url):
     admin_context.response = get_response(admin_context)
 
 
+@when(parsers.parse("'{admin_class_path}' creation page is requested"))
+@then(parsers.parse("'{admin_class_path}' creation page is requested"))
+def creation_page_is_requested(admin_context, admin_class_path):
+    admin_class_path_to_model = {
+        f'{admin_class.__class__.__module__}.{admin_class.__class__.__name__}': (model, admin_class)
+        for model, admin_class in admin.site._registry.items()
+    }
+    model, admin_class_instance = admin_class_path_to_model[admin_class_path]
+    admin_class = type(admin_class_instance)
+    admin_context.admin.path = getattr(model, 'get_admin_add_url')()
+
+    admin_context.object_id = None
+    admin_context.object_model = model
+
+    def save_model(self, request, obj, form, change):
+        original_save_model(self, request, obj, form, change)
+        admin_context.object_id = obj.id
+
+    original_save_model = getattr(admin_class, 'save_model')
+    with mock.patch(f'{admin_class_path}.save_model', save_model):
+        admin_context.response = get_response(admin_context)
+
+
+@when(parsers.parse("'{field_name}' field of created object is '{params}'"))
+@then(parsers.parse("'{field_name}' field of created object is '{params}'"))
+def field_of_created_object_is(admin_context, field_name, params):
+    params = json.loads(params)
+    model = admin_context.object_model.objects.get(id=admin_context.object_id)
+    assert getattr(model, field_name) == params
+
+
+@when(parsers.parse("set language to '{language}'"))
+@then(parsers.parse("set language to '{language}'"))
+def set_language_to(admin_context, language):
+    admin_context.language = language
+
+
+@when(parsers.parse("check if queryset.values match '{params}'"))
+@then(parsers.parse("check if queryset.values match '{params}'"))
+def check_if_queryset_values_match(admin_context, params):
+    language = getattr(admin_context, 'language', settings.LANGUAGE_CODE)
+    params = json.loads(params)
+    with translation.override(language):
+        values = admin_context.object_model.objects.filter(id=admin_context.object_id).values(*params).first()
+    for key, value in params.items():
+        assert values[key] == value
+
+
 @when(parsers.parse("admin's page with mocked geo api {page_url} is requested"))
 @then(parsers.parse("admin's page with mocked geo api {page_url} is requested"))
 def admin_page_with_mocked_geo_api_is_requested(admin_context, page_url, main_regions_response,
@@ -792,7 +845,8 @@ def admin_page_with_mocked_geo_api_is_requested(admin_context, page_url, main_re
 
 @when(parsers.parse("admin's page with geocoder mocked api for tabular data {page_url} is requested"))
 @then(parsers.parse("admin's page with geocoder mocked api for tabular data {page_url} is requested"))
-def admin_page_with_geo_mocked_api_for_tabular_data_is_requested(admin_context, page_url, geo_tabular_data_response):
+def admin_page_with_geo_mocked_api_for_tabular_data_is_requested(admin_context, page_url, geo_tabular_data_response,
+                                                                 django_capture_on_commit_callbacks):
     client = Client()
     api_expr = re.compile(settings.GEOCODER_URL + r'/v1/search/structured\?postalcode=\d{2}-\d{3}&locality=\w+')
     client.force_login(admin_context.admin.user)
@@ -800,7 +854,8 @@ def admin_page_with_geo_mocked_api_for_tabular_data_is_requested(admin_context, 
     if admin_context.admin.method == 'POST':
         with requests_mock.Mocker(real_http=True) as mock_request:
             mock_request.get(api_expr, json=geo_tabular_data_response)
-            response = client.post(page_url, data=getattr(admin_context, 'obj', None), follow=True)
+            with django_capture_on_commit_callbacks(execute=True):
+                response = client.post(page_url, data=getattr(admin_context, 'obj', None), follow=True)
     else:
         response = client.get(page_url, follow=True)
     admin_context.response = response
@@ -903,7 +958,7 @@ def obj_with_title_attribute_is(object_type, title, data_str):
 @then(parsers.parse('{object_type} with id {obj_id} contains data {data_str}'))
 def obj_with_id_attribute_is(object_type, obj_id, data_str):
     model = apps.get_model(object_type)
-    obj = model.objects.get(id=obj_id)
+    obj = model.raw.get(id=obj_id) if hasattr(model, 'raw') else model.objects.get(id=obj_id)
     data = json.loads(data_str)
     for attr_name, attr_value in data.items():
         obj_attr = getattr(obj, attr_name)

@@ -41,7 +41,7 @@ class InstitutionSearchView(JsonAPIView):
         self.handle(request, response, self.GET, *args, **kwargs)
 
     class GET(SubscriptionSearchHdlr):
-        deserializer_schema = partial(InstitutionApiSearchRequest, many=False)
+        deserializer_schema = InstitutionApiSearchRequest
         serializer_schema = partial(InstitutionApiResponse, many=True)
         search_document = InstitutionDocument()
 

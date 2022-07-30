@@ -1,6 +1,7 @@
+from functools import partial
+
 from django.apps import apps
 from django.utils.translation import get_language
-from functools import partial
 from marshmallow import missing, pre_dump
 
 from mcod import settings
@@ -96,7 +97,7 @@ class CommonObjectApiAttrs(ObjectAttrs, HighlightObjectMixin):
     data_date = fields.Date()
     visualization_types = fields.List(fields.Str())
 
-    # applications, showcases
+    # showcases
     author = fields.Str()
     illustrative_graphics_alt = TranslatedStr()
     illustrative_graphics_url = fields.Str()
@@ -120,12 +121,11 @@ class CommonObjectApiAttrs(ObjectAttrs, HighlightObjectMixin):
     html_url = fields.Str()
     author_i18n = TranslatedStr()
 
-    if is_enabled('S39_filter_by_geodata.be'):
-        # regions
-        region_id = fields.Int()
-        hierarchy_label = TranslatedStr()
-        bbox = fields.List(fields.List(fields.Float), attribute='bbox.coordinates')
-        regions = fields.Nested(RegionSchema, many=True)
+    # regions
+    region_id = fields.Int()
+    hierarchy_label = TranslatedStr()
+    bbox = fields.List(fields.List(fields.Float), attribute='bbox.coordinates')
+    regions = fields.Nested(RegionSchema, many=True)
 
     def get_showcase_category_name(self, obj):
         val = getattr(obj, 'showcase_category', None)
@@ -158,7 +158,6 @@ class SearchCounterAggregation(ExtSchema):
     datasets = fields.Integer()
     resources = fields.Integer()
     showcases = fields.Integer()
-    applications = fields.Integer()
     institutions = fields.Integer()
     news = fields.Integer()
     knowledge_base = fields.Integer()
@@ -247,27 +246,26 @@ class CommonObjectApiAggregations(ExtSchema):
     @pre_dump(pass_many=True)
     def prepare_data(self, data, **kwargs):
         regions_data = []
-        if is_enabled('S48_by_region_aggregation.be'):
-            regions_agg = getattr(data, 'regions_agg', None)
-            unique_regions = regions_agg.resources_regions.bbox_regions.top_regions.unique_regions.buckets if \
-                regions_agg and not hasattr(regions_agg, 'model_types') else []
-            if hasattr(regions_agg, 'model_types'):
-                regions_data.append({
-                    'region_name': regions_agg.resources_regions.single_region.region_data.hits[0].hierarchy_label,
-                    'doc_count': regions_agg.doc_count,
-                    'resources_count': regions_agg.model_types.buckets.resources.doc_count,
-                    'datasets_count': regions_agg.model_types.buckets.datasets.doc_count,
-                    'centroid': [regions_agg.resources_regions.single_region.region_data.hits[0].coords.lon,
-                                 regions_agg.resources_regions.single_region.region_data.hits[0].coords.lat]
-                })
-            for bucket in unique_regions:
-                regions_data.append({
-                    'region_name': bucket.region_data.hits[0].hierarchy_label,
-                    'doc_count': bucket.doc_count,
-                    'resources_count': bucket.model_types.buckets.resources.doc_count,
-                    'datasets_count': bucket.model_types.buckets.datasets.doc_count,
-                    'centroid': [bucket.region_data.hits[0].coords.lon, bucket.region_data.hits[0].coords.lat]
-                })
+        regions_agg = getattr(data, 'regions_agg', None)
+        unique_regions = regions_agg.resources_regions.bbox_regions.top_regions.unique_regions.buckets if \
+            regions_agg and not hasattr(regions_agg, 'model_types') else []
+        if hasattr(regions_agg, 'model_types'):
+            regions_data.append({
+                'region_name': regions_agg.resources_regions.single_region.region_data.hits[0].hierarchy_label,
+                'doc_count': regions_agg.doc_count,
+                'resources_count': regions_agg.model_types.buckets.resources.doc_count,
+                'datasets_count': regions_agg.model_types.buckets.datasets.doc_count,
+                'centroid': [regions_agg.resources_regions.single_region.region_data.hits[0].coords.lon,
+                             regions_agg.resources_regions.single_region.region_data.hits[0].coords.lat]
+            })
+        for bucket in unique_regions:
+            regions_data.append({
+                'region_name': bucket.region_data.hits[0].hierarchy_label,
+                'doc_count': bucket.doc_count,
+                'resources_count': bucket.model_types.buckets.resources.doc_count,
+                'datasets_count': bucket.model_types.buckets.datasets.doc_count,
+                'centroid': [bucket.region_data.hits[0].coords.lon, bucket.region_data.hits[0].coords.lat]
+            })
         if regions_data:
             setattr(data, 'map_by_regions', regions_data)
         return data

@@ -38,6 +38,7 @@ from mcod.resources.file_validation import (
     check_support,
 )
 from mcod.resources.link_validation import DangerousContentError, _get_resource_type, download_file
+from mcod.resources.tasks import update_data_date
 
 
 @pytest.fixture
@@ -130,6 +131,31 @@ def resource_with_date_and_datetime(buzzfeed_dataset, buzzfeed_editor, mocker):
 @pytest.fixture
 def geo_tabular_data_resource(buzzfeed_dataset, buzzfeed_editor, mocker):
     return create_geo_res(buzzfeed_dataset, buzzfeed_editor)
+
+
+def create_remote_file_resource_with_params(params, httpserver):
+    simple_csv_path = os.path.join(settings.TEST_SAMPLES_PATH, 'simple.csv')
+    httpserver.serve_content(
+        content=open(simple_csv_path).read(),
+        headers={
+            'content-type': 'application/csv'
+        },
+    )
+    with open(simple_csv_path, 'rb') as f:
+        from mcod.resources.link_validation import session
+        adapter = requests_mock.Adapter()
+        adapter.register_uri('GET', httpserver.url, content=f.read(), headers={'Content-Type': 'application/csv'})
+        session.mount(httpserver.url, adapter)
+    params_ = {
+        'type': 'file',
+        'format': 'csv',
+        'link': httpserver.url,
+    }
+    params_.update(params)
+    res = ResourceFactory(
+        **params_
+    )
+    return res
 
 
 @pytest.fixture
@@ -558,7 +584,8 @@ def resource_with_xls_file_converted_to_csv(res_id, example_xls_file, buzzfeed_d
 
 
 @given(parsers.parse('resource with csv file converted to jsonld with params {params_str}'))
-def resource_with_csv_file_converted_to_jsonld(csv2jsonld_csv_file, csv2jsonld_jsonld_file, params_str):
+def resource_with_csv_file_converted_to_jsonld(csv2jsonld_csv_file, csv2jsonld_jsonld_file, params_str,
+                                               django_capture_on_commit_callbacks):
     from mcod.resources.models import Resource
     params = json.loads(params_str)
     obj_id = params.pop('id')
@@ -578,7 +605,8 @@ def resource_with_csv_file_converted_to_jsonld(csv2jsonld_csv_file, csv2jsonld_j
     resource_score, files_score = res.get_openness_score()
     Resource.objects.filter(pk=res.pk).update(openness_score=resource_score)
     res = Resource.objects.get(pk=res.pk)
-    res.revalidate()
+    with django_capture_on_commit_callbacks(execute=True):
+        res.revalidate()
     return res
 
 
@@ -649,7 +677,7 @@ def resource_with_periodic_task(res_id, status):
         format=None,
         main_file__file=factory.django.FileField(from_func=get_json_file, filename='{}.json'.format(str(uuid.uuid4()))),
         main_file__content_type="application/json",
-        is_manual_data_date=False,
+        is_auto_data_date=True,
         automatic_data_date_start=datetime(2022, 5, 20).date(),
         endless_data_date_update=True
     )
@@ -1002,3 +1030,34 @@ def resource_has_no_periodic_task(res_id):
 @then(parsers.parse('Periodic task for resource with id {res_id:d} has last_run_at attr set'))
 def resource_periodic_task_has_last_run_at_set(res_id):
     assert PeriodicTask.objects.get(name__contains=res_id).last_run_at is not None
+
+
+@given(parsers.parse('remote file resource with id {res_id}'))
+def remote_file_resource_with_id(res_id, httpsserver_custom):
+    return create_remote_file_resource_with_params({'id': res_id}, httpsserver_custom)
+
+
+@given(parsers.parse('remote file resource with enabled auto data date update and id {res_id}'))
+def remote_file_resource_with_id_and_auto_data_date_enabled(res_id, httpsserver_custom):
+    params_ = {
+        'id': res_id,
+        'is_auto_data_date': True,
+        'automatic_data_date_start': datetime(2022, 5, 20).date(),
+        'endless_data_date_update': True,
+        'data_date_update_period': 'daily',
+        'openness_score': 0
+    }
+    return create_remote_file_resource_with_params(params_, httpsserver_custom)
+
+
+@when(parsers.parse('update data date task for resource with id {res_id} is executed'))
+def run_auto_data_date_update_task(res_id):
+    update_data_date.s(res_id).apply_async()
+
+
+@then(parsers.parse('resource with id {res_id} has {result_count:d} {validation_type} validation results'))
+def resource_has_file_validation_results(res_id, result_count, validation_type):
+    model = apps.get_model('resources', 'resource')
+    res = model.objects.get(pk=res_id)
+    validation_tasks = getattr(res, f'{validation_type}_tasks')
+    assert validation_tasks.all().count() == result_count

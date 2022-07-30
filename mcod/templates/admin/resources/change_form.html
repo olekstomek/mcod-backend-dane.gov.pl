@@ -41,11 +41,27 @@
     <script>
 
         function disable_auto_data_date_fields(){
-            $(".field-is_manual_data_date, .field-automatic_data_date_start, .field-data_date_update_period, .field-automatic_data_date_end, .field-endless_data_date_update").hide();
+            $(".field-is_auto_data_date, .field-automatic_data_date_start, .field-data_date_update_period, .field-automatic_data_date_end, .field-endless_data_date_update").hide();
         };
 
         function enable_auto_data_date_fields(){
-            $(".field-is_manual_data_date, .field-automatic_data_date_start, .field-data_date_update_period, .field-automatic_data_date_end, .field-endless_data_date_update").show();
+            $(".field-is_auto_data_date, .field-automatic_data_date_start, .field-data_date_update_period, .field-automatic_data_date_end, .field-endless_data_date_update").show();
+        };
+
+        function reformat_auto_data_date_fields($isAutoDataDateInput, $dataDateInput, dataDateDivSpan){
+            var $newDiv = $('<div/>', { class: 'tmp-is-manual-data-date-update' });
+            $(".field-automatic_data_date_start .control-label label").insertAfter($(".field-automatic_data_date_start .controls span.datetimeshortcuts"));
+            $(".field-automatic_data_date_end .control-label label").insertAfter($(".field-automatic_data_date_end .controls span.datetimeshortcuts"));
+            $newDiv.insertAfter(dataDateDivSpan);
+            $("div.field-is_auto_data_date div.control-label label").appendTo($newDiv);
+            $isAutoDataDateInput.appendTo($newDiv);
+            if($isAutoDataDateInput[0].checked){
+                $dataDateInput.attr('disabled', 'disabled');
+                $("div.field-data_date span.datetimeshortcuts").hide();
+            }
+            else{
+                disable_auto_data_date_fields();
+            }
         };
 
         (function ($) {
@@ -67,44 +83,49 @@
                 {% if S51_data_date_update %}
                     var $dataDateField = $("div.field-data_date div .controls span.datetimeshortcuts");
                     var $dataDateInput = $("div.field-data_date div.controls input");
-                    var $isManualDataDateLabel = $("div.field-is_manual_data_date div.control-label label");
-                    var $isManualDataDateInput = $("div.field-is_manual_data_date div.controls input");
-                    if($isManualDataDateInput.length){
-                        $(".field-is_manual_data_date div.controls").html("<span class='conf-label'>Okres obowiązywania</span>");
-                        $(".field-automatic_data_date_start .control-label label").insertAfter($(".field-automatic_data_date_start .controls span.datetimeshortcuts"));
+                    var $isAutoDataDateLabel = $("div.field-is_auto_data_date div.control-label label");
+                    var $isAutoDataDateInput = $("div.field-is_auto_data_date div.controls input");
+                    var $AutoDataDateStartInput = $("div.field-automatic_data_date_start div.controls input");
+                    if($isAutoDataDateInput.length){
+                        $(".field-is_auto_data_date div.controls").html("<span class='conf-label'>Okres obowiązywania</span>");
                         $(".field-data_date_update_period .control-label label").insertAfter($(".field-data_date_update_period .controls select"));
-                        $(".field-automatic_data_date_end .control-label label").insertAfter($(".field-automatic_data_date_end .controls span.datetimeshortcuts"));
                         $(".field-endless_data_date_update .control-label label").insertAfter($(".field-endless_data_date_update .controls input"));
-                        $newDiv = $('<div/>', { class: 'tmp-is-manual-data-date-update' });
                         if($dataDateField.length){
-                           $newDiv.insertAfter($dataDateField);
+                            reformat_auto_data_date_fields($isAutoDataDateInput, $dataDateInput, $dataDateField);
                         }
                         else{
-                            $newDiv.insertAfter($("div.field-data_date div .controls span.readonly"));
+                            const targetNode = document.getElementById('id_data_date').parentNode;
+                            const config = { childList: true};
+
+                            const callback = function(mutationList, observer) {
+                                for(const mutation of mutationList) {
+                                    if (mutation.type === 'childList' && mutation.addedNodes[0].classList.contains('datetimeshortcuts')) {
+                                        reformat_auto_data_date_fields($isAutoDataDateInput, $dataDateInput, mutation.addedNodes[0]);
+                                    }
+                                }
+                            };
+                            const observer = new MutationObserver(callback);
+                            observer.observe(targetNode, config);
                         }
-                        $("div.field-is_manual_data_date div.control-label label").appendTo($newDiv);
-                        $isManualDataDateInput.appendTo($newDiv);
-                        if($isManualDataDateInput[0].checked){
-                            disable_auto_data_date_fields();
-                        }
-                        else{
-                            $dataDateInput.attr('disabled', 'disabled');
-                            $("div.field-data_date span.datetimeshortcuts").hide();
-                        }
+
+
                         $(".field-automatic_data_date_start .controls input").on("change paste focus",function(){
                             $(".field-data_date .controls input").val($(this).val());
                         });
-                        $isManualDataDateInput.change(function(){
+                        $isAutoDataDateInput.change(function(){
                             if(this.checked){
+                                enable_auto_data_date_fields();
+                                let initial_val = $AutoDataDateStartInput.val();
+                                if(initial_val){
+                                    $dataDateInput.val(initial_val);
+                                }
+                                $dataDateInput.attr('disabled', 'disabled');
+                                $("div.field-data_date span.datetimeshortcuts").hide();
+                            }
+                            else{
                                 disable_auto_data_date_fields();
                                 $dataDateInput.removeAttr('disabled');
                                 $("div.field-data_date span.datetimeshortcuts").show();
-                            }
-                            else{
-                                enable_auto_data_date_fields();
-                                $dataDateInput.val("");
-                                $dataDateInput.attr('disabled', 'disabled');
-                                $("div.field-data_date span.datetimeshortcuts").hide();
                             }
                         });
 
@@ -116,8 +137,12 @@
                 {% endif %}
 
                 {% is_unleash_enabled "S47_research_data.be" as S47_research_data %}
-                {% if add %}
+                {% is_unleash_enabled "S53_resource_language.be" as S53_resource_language %}
                 $(document).on('change', '#id_dataset', function() {
+                {% if S53_resource_language %}
+                    $("#id_related_resource").val('').trigger('change');
+                {% endif %}
+                {% if add %}
                   var dataset_id = $(this).val();
                   if (dataset_id){
                       $.ajax({
@@ -156,8 +181,8 @@
                           }
                       });
                   }
-                });
                 {% endif %}
+                });
             });
 
         }(django.jQuery));

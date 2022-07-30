@@ -110,8 +110,7 @@ class ResourceDocument(ExtendedDocument):
     has_dynamic_data = fields.BooleanField()
     has_high_value_data = fields.BooleanField()
     has_research_data = fields.BooleanField()
-    if is_enabled('S37_resources_admin_region_data.be'):
-        regions = regions_field(attr='all_regions')
+    regions = regions_field(attr='all_regions')
     files = files_field(attr='all_files')
 
     class Index:

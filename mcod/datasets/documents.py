@@ -15,7 +15,6 @@ Organization = apps.get_model('organizations', 'Organization')
 Category = apps.get_model('categories', 'Category')
 Tag = apps.get_model('tags', 'Tag')
 Resource = apps.get_model('resources', 'Resource')
-Application = apps.get_model('applications', 'Application')
 DataSource = apps.get_model('harvester', 'DataSource')
 Showcase = apps.get_model('showcases', 'Showcase')
 
@@ -45,14 +44,8 @@ class DatasetDocument(ExtendedDocument):
     license_condition_timestamp = fields.BooleanField()
     license_name = fields.TextField()
     license_description = fields.TextField()
-    if is_enabled('S49_cc_by_40_conditions_unification.be'):
-        license_condition_custom_description = fields.TextField()
-        license_condition_default_cc40 = fields.BooleanField()
-    else:
-        license_condition_modification = fields.BooleanField()
-        license_condition_responsibilities = fields.TextField()
-        license_condition_cc40_responsibilities = fields.BooleanField()
-        license_condition_source = fields.BooleanField()
+    license_condition_custom_description = fields.TextField()
+    license_condition_default_cc40 = fields.BooleanField()
     resource_modified = fields.DateField(attr='last_modified_resource')
     url = fields.KeywordField()
     source = fields.NestedField(
@@ -108,12 +101,6 @@ class DatasetDocument(ExtendedDocument):
             'title': TranslatedTextField('title')
         }
     )
-    applications = fields.NestedField(
-        properties={
-            'id': fields.IntegerField(),
-            'title': TranslatedTextField('title')
-        }
-    )
     showcases = fields.NestedField(
         attr='showcases_published',
         properties={
@@ -144,8 +131,7 @@ class DatasetDocument(ExtendedDocument):
     has_research_data = fields.BooleanField()
     if is_enabled('S52_dataset_is_promoted.be'):
         is_promoted = fields.BooleanField()
-    if is_enabled('S37_resources_admin_region_data.be'):
-        regions = regions_field()
+    regions = regions_field()
 
     class Index:
         name = mcs.ELASTICSEARCH_INDEX_NAMES['datasets']
@@ -155,7 +141,6 @@ class DatasetDocument(ExtendedDocument):
     class Django:
         model = Dataset
         related_models = [
-            Application,
             Category,
             DataSource,
             Organization,
@@ -165,10 +150,6 @@ class DatasetDocument(ExtendedDocument):
         ]
 
     def get_instances_from_related(self, related_instance):
-        if isinstance(related_instance, UserFollowingDataset):
-            return related_instance.follower.followed_applications.all()
-        if isinstance(related_instance, Application):
-            return related_instance.datasets.filter(status='published')
         if isinstance(related_instance, Resource):
             return related_instance.dataset
         if isinstance(related_instance, Category):

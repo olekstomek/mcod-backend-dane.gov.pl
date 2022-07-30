@@ -5,7 +5,6 @@ from pytest_bdd import scenarios
 
 from mcod.datasets.models import Dataset
 from mcod.datasets.serializers import _UPDATE_FREQUENCY
-from mcod.unleash import is_enabled
 
 scenarios(
     'features/dataset_comment.feature',
@@ -19,10 +18,7 @@ scenarios(
     'features/datasets_list_api.feature',
 )
 
-if is_enabled('S49_cc_by_40_conditions_unification.be'):
-    scenarios('features/dataset_unified_conditions.feature')
-else:
-    scenarios('features/dataset_conditions.feature')
+scenarios('features/dataset_unified_conditions.feature')
 
 
 @pytest.mark.elasticsearch

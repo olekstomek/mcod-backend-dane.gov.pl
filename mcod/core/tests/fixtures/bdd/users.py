@@ -36,16 +36,6 @@ def session_is_flushed():
     flush_sessions()
 
 
-@given('logged active user')
-def logged_active_user(context):
-    context.user = UserFactory(
-        email='active_user@dane.gov.pl',
-        password='12345.Abcde',
-        state='active'
-    )
-    DjangoClient().force_login(context.user)
-
-
 @given(parsers.parse('logged agent user created with {params}'))
 def logged_agent_user_created_with_params(context, params):
     _factory = factories_registry.get_factory('agent user')

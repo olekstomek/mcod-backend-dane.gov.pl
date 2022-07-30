@@ -1,11 +1,15 @@
 import hashlib
 import json
 import os
+import re
+from datetime import datetime
 from unittest.mock import MagicMock, patch
 
+import pytz
 import requests_mock
 from django.conf import settings
 from django.test import Client
+from django_celery_beat.models import PeriodicTask
 from pytest_bdd import given, parsers, then, when
 
 from mcod.core.registries import factories_registry
@@ -108,17 +112,23 @@ def datasource_imported_resources(obj_id):
 def xml_datasource_finishes_import(
         obj_id, version, harvester_decoded_xml_1_2_import_data, harvester_decoded_xml_1_4_import_data,
         harvester_decoded_xml_1_5_import_data, harvester_decoded_xml_1_6_import_data,
-        harvester_decoded_xml_1_7_import_data, **kwargs):
+        harvester_decoded_xml_1_7_import_data, harvester_decoded_xml_1_8_import_data,
+        harvester_decoded_xml_1_9_import_data,
+        main_region_response, warsaw_additional_regions_response, teryt_regions_response,
+        wof_ids_regions_response, file_jsonapi, **kwargs):
     mock_request = kwargs['mock_request']
     obj = DataSource.objects.get(pk=obj_id)
     simple_csv_path = os.path.join(settings.TEST_SAMPLES_PATH, 'simple.csv')
     with open(simple_csv_path, 'rb') as tmp_file:
-        mock_request.get('http://mock-resource.com.pl/simple.csv',
+        mock_request.get('https://mock-resource.com.pl/simple.csv',
                          headers={'content-type': 'application/csv'}, content=tmp_file.read())
     txt_path = os.path.join(settings.TEST_SAMPLES_PATH, 'example.txt')
     with open(txt_path, 'rb') as txt:
         mock_request.get('https://mock-resource.com.pl/example.txt',
                          headers={'content-type': 'text/plain'}, content=txt.read())
+    mock_request.get('https://mock-resource.com.pl/json-api',
+                     headers={'content-type': 'application/json'},
+                     json={'some_attr': 'some_val'})
     mock_request.post(settings.SPARQL_UPDATE_ENDPOINT)
     xml_data_path = os.path.join(settings.TEST_SAMPLES_PATH, 'harvester', f'import_example{version}.xml')
     with open(xml_data_path, 'rb') as xml_resp_data:
@@ -138,7 +148,22 @@ def xml_datasource_finishes_import(
         '1.5': harvester_decoded_xml_1_5_import_data,
         '1.6': harvester_decoded_xml_1_6_import_data,
         '1.7': harvester_decoded_xml_1_7_import_data,
+        '1.8': harvester_decoded_xml_1_8_import_data,
+        '1.9': harvester_decoded_xml_1_9_import_data,
     }
+    teryt_reg_expr = re.compile(
+        settings.GEOCODER_URL + r'/v1/place\?ids=teryt%3Alocality%3A\d{7}')
+    main_reg_expr = re.compile(settings.PLACEHOLDER_URL + r'/parser/findbyid\?ids=\d{9,10}')
+    additional_reg_expr = re.compile(
+        settings.PLACEHOLDER_URL + r'/parser/findbyid\?ids=\d{8,10}%2C\d{8,10}%2C\d{8,10}')
+    wof_id_reg_exp = re.compile(
+        settings.GEOCODER_URL + r'/v1/place\?ids=whosonfirst%3Alocality%3A\d{8,10}'
+                                r'%2Cwhosonfirst%3Alocaladmin%3A\d{8,10}'
+                                r'%2Cwhosonfirst%3Aregion%3A\d{8,10}%2Cwhosonfirst%3Acounty%3A\d{8,10}')
+    mock_request.get(main_reg_expr, json=main_region_response)
+    mock_request.get(additional_reg_expr, json=warsaw_additional_regions_response)
+    mock_request.get(teryt_reg_expr, json=teryt_regions_response)
+    mock_request.get(wof_id_reg_exp, json=wof_ids_regions_response)
     with patch('mcod.harvester.utils.urlretrieve') as mock_urlretrieve:
         with patch('mcod.harvester.utils.decode_xml') as mock_to_dict:
             mock_urlretrieve.return_value = xml_data_path, {}
@@ -148,13 +173,24 @@ def xml_datasource_finishes_import(
 
 @then(parsers.parse('xml datasource with id {obj_id:d} of version {version} created all data in db'))
 def xml_datasource_imported_resources(obj_id, version):
+    ver_no = int(version.split('.')[1])  # version as string ('1.4') to version number (4)
     obj = DataSourceImport.objects.get(datasource_id=obj_id)
+    if ver_no < 8:
+        res_count = 2
+        created_res_count = 2
+        res_idents = {'zasob_extId_zasob_1', 'zasob_extId_zasob_2'}
+        res_titles = {'ZASOB CSV LOCAL', 'ZASOB csv REMOTE'}
+    else:
+        res_count = 4
+        created_res_count = 4
+        res_idents = {'zasob_extId_zasob_1', 'zasob_extId_zasob_2', 'zasob_extId_zasob_3', 'zasob_extId_zasob_4'}
+        res_titles = {'ZASOB CSV LOCAL', 'ZASOB csv REMOTE', 'ZASOB json API', 'ZASOB csv REMOTE 2'}
     assert obj.error_desc == ''
     assert obj.status == 'ok'
     assert obj.datasets_count == 1
     assert obj.datasets_created_count == 1
-    assert obj.resources_count == 2
-    assert obj.resources_created_count == 2
+    assert obj.resources_count == res_count
+    assert obj.resources_created_count == created_res_count
     dataset = Dataset.objects.get(source_id=obj_id)
     res = Resource.objects.filter(dataset__source_id=obj_id)
     assert dataset.ext_ident == 'zbior_extId_1'
@@ -163,11 +199,10 @@ def xml_datasource_imported_resources(obj_id, version):
     assert dataset.license_chosen == 1
     assert set(dataset.categories.values_list('code', flat=True)) == {'TRAN', 'ECON'}
     assert dataset.keywords_list == [{'name': '2028_tagPL', 'language': 'pl'}]
-    assert set(res.values_list('ext_ident', flat=True)) == {'zasob_extId_zasob_1', 'zasob_extId_zasob_2'}
-    assert set(res.values_list('title', flat=True)) == {'ZASOB CSV LOCAL', 'ZASOB csv REMOTE'}
-    ver_no = int(version.split('.')[1])  # version as string ('1.4') to version number (4)
+    assert set(res.values_list('ext_ident', flat=True)) == res_idents
+    assert set(res.values_list('title', flat=True)) == res_titles
     if ver_no == 4:  # from 1.4 version special_signs of resources are imported also.
-        for resource in res:
+        for resource in res.filter(ext_ident__in={'zasob_extId_zasob_1', 'zasob_extId_zasob_2'}):
             assert resource.special_signs_symbols_list == ['-']
     if ver_no >= 5:  # from 1.5 version: has_high_value_data, has_dynamic_data attrs are imported also.
         assert dataset.has_high_value_data
@@ -180,6 +215,21 @@ def xml_datasource_imported_resources(obj_id, version):
     if ver_no >= 7:  # from 1.7 supplements are imported.
         assert dataset.supplements.count() == 1
         assert res.get(title='ZASOB csv REMOTE').supplements.count() == 1
+    if ver_no >= 8:  # from 1.8 auto data date update meta data are imported
+        warsaw_tz = pytz.timezone('Europe/Warsaw')
+        third_res = res.get(ext_ident='zasob_extId_zasob_3')
+        fourth_res = res.get(ext_ident='zasob_extId_zasob_4')
+        assert PeriodicTask.objects.all().count() == 2
+        p_task = PeriodicTask.objects.get(name=third_res.data_date_task_name)
+        second_p_task = PeriodicTask.objects.get(name=fourth_res.data_date_task_name)
+        assert second_p_task.crontab is not None
+        assert p_task.interval is not None
+        assert p_task.start_time.astimezone(warsaw_tz).date() == datetime(2021, 10, 10).date()
+    if ver_no >= 9:  # from 1.9 regions are imported
+        first_res = res.get(ext_ident='zasob_extId_zasob_1')
+        assert first_res.all_regions.count() == 5
+        assert first_res.all_regions.filter(
+            region_id=101752777, resourceregion__is_additional=False).exists()
 
 
 @patch('rdflib.plugins.stores.sparqlconnector.urlopen')

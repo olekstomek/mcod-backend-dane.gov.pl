@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<xs:schema xmlns="urn:otwarte-dane:harvester:1.7" xmlns:xs="http://www.w3.org/2001/XMLSchema"
-           targetNamespace="urn:otwarte-dane:harvester:1.7" elementFormDefault="unqualified">
+<xs:schema xmlns="urn:otwarte-dane:harvester:1.8" xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           targetNamespace="urn:otwarte-dane:harvester:1.8" elementFormDefault="unqualified">
     <xs:complexType name="datasetType">
         <xs:all>
             <xs:element name="extIdent" minOccurs="1" maxOccurs="1">
@@ -325,7 +325,7 @@
                     </xs:sequence>
                 </xs:complexType>
             </xs:element>
-            <xs:element name="isManualDataDate" type="xs:boolean" maxOccurs="1" minOccurs="0" default="true">
+            <xs:element name="isAutoDataDate" type="xs:boolean" maxOccurs="1" minOccurs="0" default="false">
                 <xs:annotation>
                     <xs:documentation>
                         Czy metadana dane na dzień ma być aktualizowana automatycznie?

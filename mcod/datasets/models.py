@@ -11,7 +11,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.postgres.fields import JSONField
 from django.contrib.postgres.indexes import GinIndex
 from django.core.exceptions import ValidationError
-from django.db import models
+from django.db import models, transaction
 from django.db.models import Max, Q, Sum
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
@@ -143,8 +143,10 @@ class Dataset(ExtendedModel):
     LICENSE_CC_BY_NC_SA = 5
     LICENSE_CC_BY_ND = 6
     LICENSE_CC_BY_NC_ND = 7
+
+    LICENSE_CC0_TUPLE = (LICENSE_CC0, "CC0 1.0")
     LICENSES = (
-        (LICENSE_CC0, "CC0 1.0"),
+        LICENSE_CC0_TUPLE,
         (LICENSE_CC_BY, "CC BY 4.0"),
         (LICENSE_CC_BY_SA, "CC BY-SA 4.0"),
         (LICENSE_CC_BY_NC, "CC BY-NC 4.0"),
@@ -294,6 +296,11 @@ class Dataset(ExtendedModel):
 
     def __str__(self):
         return self.title
+
+    def delete(self, using=None, soft=True, permanent=False, *args, **kwargs):
+        if self.is_promoted:
+            self.is_promoted = False
+        super().delete(using=using, soft=soft, permanent=permanent, *args, **kwargs)
 
     @cached_property
     def has_table(self):
@@ -656,11 +663,7 @@ class Dataset(ExtendedModel):
 
     @property
     def current_condition_descriptions(self):
-        if is_enabled('S49_cc_by_40_conditions_unification.be'):
-            labels = {'custom_description': self.license_condition_labels['responsibilities']}
-        else:
-            labels = dict(self.license_condition_labels)
-            labels['cc40_responsibilities'] = CC_BY_40_RESPONSIBILITIES_LABELS[self.institution_type]
+        labels = {'custom_description': self.license_condition_labels['responsibilities']}
         descriptions = {}
         for key, val in labels.items():
             condition_field = f'license_condition_{key}'
@@ -787,17 +790,20 @@ class Supplement(BaseSupplement):
 def handle_dataset_pre_save(sender, instance, *args, **kwargs):
     if not instance.id:
         instance.verified = instance.created
+    if instance.is_promoted and instance.status == instance.STATUS.draft:
+        instance.is_promoted = False  # only published dataset can be promoted.
 
 
 @receiver(post_save, sender=Dataset)
 def handle_dataset_without_resources(sender, instance, *args, **kwargs):
-    if not instance.resources.all():
+    if not instance.resources.exists():
         Dataset.objects.filter(pk=instance.id).update(verified=instance.created)
     if instance.tracker.has_changed('organization_id') and is_enabled('S52_update_es_institution.be'):
         organization_id = instance.tracker.previous('organization_id')
         if organization_id:
             # update ES document for previously set organization, if any.
-            update_document_task.s('organizations', 'Organization', organization_id).apply_async(countdown=2)
+            transaction.on_commit(
+                lambda: update_document_task.s('organizations', 'Organization', organization_id).apply_async())
 
 
 @receiver(remove_related_resources, sender=Dataset)
@@ -828,18 +834,15 @@ def update_related_watchers(sender, instance, *args, state=None, **kwargs):
         'notify_{}'.format(state),
         state,
     )
-    instances = list(instance.applications.all())
-    instances.append(instance.organization)
 
-    for i in instances:
-        update_model_watcher_task.s(
-            i._meta.app_label,
-            i._meta.object_name,
-            i.id,
-            obj_state=state
-        ).apply_async(
-            countdown=1
-        )
+    update_model_watcher_task.s(
+        instance.organization._meta.app_label,
+        instance.organization._meta.object_name,
+        instance.organization.id,
+        obj_state=state
+    ).apply_async(
+        countdown=1
+    )
 
 
 core_signals.notify_published.connect(update_watcher, sender=Dataset)

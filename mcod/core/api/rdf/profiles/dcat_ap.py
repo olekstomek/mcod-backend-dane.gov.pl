@@ -166,8 +166,7 @@ class DCATDataset(RDFClass):
     update_frequency = RDFNestedField('DCTFrequency', predicate=ns.DCT.accrualPeriodicity)
     language_pl = RDFNestedField('DCTLinguisticSystem', predicate=ns.DCT.language)
     language_en = RDFNestedField('DCTLinguisticSystem', predicate=ns.DCT.language)
-    if is_enabled('S38_dcat_spatial_data.be'):
-        spatial = RDFNestedField('GeonamesDCTLocation', predicate=ns.DCT.spatial, many=True)
+    spatial = RDFNestedField('GeonamesDCTLocation', predicate=ns.DCT.spatial, many=True)
 
     identifier = RDFField(predicate=ns.DCT.identifier)
     title_pl = RDFField(predicate=ns.DCT.title, object_type=partial(Literal, lang='pl'))

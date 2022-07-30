@@ -1,5 +1,6 @@
 import os
 
+from dal import autocomplete, forward
 import magic
 from dateutil.utils import today
 from django import forms
@@ -24,6 +25,8 @@ from mcod.resources.archives import is_password_protected_archive_file
 from mcod.resources.models import SUPPORTED_FILE_EXTENSIONS, Resource, ResourceFile, Supplement
 from mcod.special_signs.models import SpecialSign
 from mcod.unleash import is_enabled
+
+RESOURCE_LANGUAGE_ENABLED = is_enabled('S53_resource_language.be')
 
 
 class ResourceSourceSwitcher(forms.widgets.HiddenInput):
@@ -172,8 +175,7 @@ class ResourceForm(forms.ModelForm):
         queryset=SpecialSign.objects.published(), required=False, label=_('Special Signs'),
         widget=FilteredSelectMultiple(_('special signs'), False),
     )
-    if is_enabled('S37_resources_admin_region_data.be'):
-        regions = RegionsMultipleChoiceField(required=False, label=_('Regions'))
+    regions = RegionsMultipleChoiceField(required=False, label=_('Regions'))
     has_dynamic_data = forms.ChoiceField(
         required=True,
         label=_('dynamic data').capitalize(),
@@ -206,6 +208,17 @@ class ResourceForm(forms.ModelForm):
             widget=CheckboxSelect(attrs={'class': 'inline'}),
         )
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if 'related_resource' in self.fields and RESOURCE_LANGUAGE_ENABLED:
+            self.fields['related_resource'].label_from_instance = lambda obj: obj.label_from_instance
+            self.fields['related_resource'].widget = autocomplete.ModelSelect2(
+                url='resource-autocomplete',
+                attrs={'data-html': True},
+                forward=['dataset', forward.Const(self.instance.id, 'id')])
+            # https://stackoverflow.com/a/42629593/1845230
+            self.fields['related_resource'].widget.choices = self.fields['related_resource'].choices
+
     def clean(self):
         data = super().clean()
         dataset = data.get('dataset')
@@ -217,6 +230,9 @@ class ResourceForm(forms.ModelForm):
                 "You can't set status of this resource to published, because it's dataset is still a draft. "
                 "You should first published that dataset: ")
             self.add_error('status', mark_safe(error_message + dataset.title_as_link))
+        related_resource = data.get('related_resource')
+        if related_resource and related_resource not in dataset.resources.all():
+            self.add_error('related_resource', _('Only resource from related dataset resources is valid!'))
         return data
 
 
@@ -250,6 +266,17 @@ class ChangeResourceForm(ResourceForm):
             self.fields['maps_and_plots'].widget.instance = self.instance
             if 'regions' in self.fields:
                 self.fields['regions'].choices = self.instance.regions.all().values_list('region_id', 'hierarchy_label')
+
+    def clean(self):
+        data = super().clean()
+        # `tabular_data_schema` field's widget modifies original `self.instance.tabular_data_schema`
+        # then `maps_and_plots` field's widget makes use (and also modify) `self.instance.tabular_data_schema`.
+        # Thanks to that `maps_and_plots` validators can make use of newest (if modified) column types.
+        # In the result, the correct new value of `tabular_data_schema` is in both:
+        # - `self.instance.tabular_data_schema` and `data['maps_and_plots']`.
+        # TODO refactor
+        data['tabular_data_schema'] = self.instance.tabular_data_schema
+        return data
 
     class Meta:
         model = Resource
@@ -298,8 +325,7 @@ class AddResourceForm(ResourceForm, LinkOrFileUploadForm):
     from_resource = forms.ModelChoiceField(queryset=Resource.objects.all(), widget=forms.HiddenInput(), required=False)
     link = forms.URLField(widget=ResourceLinkWidget(attrs={'style': 'width: 99%', 'placeholder': 'https://'}))
 
-    if is_enabled('S37_resources_admin_region_data.be'):
-        regions_ = RegionsMultipleChoiceField(required=False, label=_('Regions'))
+    regions_ = RegionsMultipleChoiceField(required=False, label=_('Regions'))
 
     def clean_link(self):
         link = super().clean_link()

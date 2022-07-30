@@ -203,6 +203,7 @@ class ApiSearchRequest(ListingSchema):
         doc_template='docs/search/fields/model.html',
         doc_base_url='/search',
         doc_field_name='models',
+        no_prepare=is_enabled('S53_search_aggregations_counters.be'),
     )
     institution = fields.FilterField(InstitutionFilterSchema)
     category = fields.FilterField(DatasetCategoryFilterSchema)
@@ -293,8 +294,7 @@ class ApiSearchRequest(ListingSchema):
             doc_base_url='/search',
             doc_field_name='is_promoted'
         )
-    if is_enabled('S39_filter_by_geodata.be'):
-        regions = fields.FilterField(RegionsFilterSchema)
+    regions = fields.FilterField(RegionsFilterSchema)
 
     showcase_category = fields.FilterField(
         StringTermSchema,
@@ -390,16 +390,12 @@ class ApiSuggestRequest(CommonSchema):
         'news',
         'resource',
         'showcase',
+        'region'
     }
 
     _completion_models = {'region'}
     models = fields.StringField()
     advanced = fields.StringField()
-
-    def __init__(self, *args, **kwargs):
-        if is_enabled('S39_filter_by_geodata.be'):
-            self._supported_models.add('region')
-        super().__init__(*args, **kwargs)
 
     def get_queryset(self, queryset, data):
         phrase = data.get('q')
@@ -418,7 +414,7 @@ class ApiSuggestRequest(CommonSchema):
 
         for model in models:
             query = Search(index=settings.ELASTICSEARCH_COMMON_ALIAS_NAME)
-            if is_enabled('S39_filter_by_geodata.be') and model in self._completion_models:
+            if model in self._completion_models:
                 query = query.filter('term', model=model).query(
                     nested_query_with_advanced_opts(phrase, 'hierarchy_label', lang, 'and', suffix, 'standard')
                 ).extra(size=per_model)

@@ -6,7 +6,6 @@ from django.db import models
 from django.db.models import Case, F, Q, Value, When
 
 from mcod.regions.api import PeliasApi
-from mcod.unleash import is_enabled
 
 
 class RegionQueryset(models.QuerySet):
@@ -102,20 +101,10 @@ class RegionManager(models.Manager):
         q = Q(resourceregion__resource__dataset_id=dataset_id,
               resourceregion__resource__is_removed=False,
               resourceregion__resource__status='published')
-        default_is_additional = False
-        is_enabled_region_aggregation = is_enabled('S48_by_region_aggregation.be')
-        if is_enabled_region_aggregation or has_no_region_resources:
-            default_is_additional = (is_enabled_region_aggregation and not has_no_region_resources) or \
-                                    (not is_enabled_region_aggregation and not has_no_region_resources)
-            q |= Q(region_id=settings.DEFAULT_REGION_ID)
+        default_is_additional = not has_no_region_resources
+        q |= Q(region_id=settings.DEFAULT_REGION_ID)
         return self.get_queryset().filter(q).annotate_is_additional(default_is_additional).distinct().order_by('pk')
 
     def for_resource_with_id(self, resource_id, has_other_regions):
-        q = Q(resourceregion__resource_id=resource_id)
-        default_is_additional = False
-        if is_enabled('S48_by_region_aggregation.be'):
-            default_is_additional = has_other_regions
-            q |= Q(region_id=settings.DEFAULT_REGION_ID)
-        elif not has_other_regions:
-            q |= Q(region_id=settings.DEFAULT_REGION_ID)
-        return self.get_queryset().filter(q).annotate_is_additional(default_is_additional).order_by('pk')
+        q = Q(resourceregion__resource_id=resource_id) | Q(region_id=settings.DEFAULT_REGION_ID)
+        return self.get_queryset().filter(q).annotate_is_additional(has_other_regions).order_by('pk')

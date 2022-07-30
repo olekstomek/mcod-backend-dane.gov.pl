@@ -38,14 +38,6 @@ class CategoriesFilterSchema(ExtSchema):
         default_field = 'term'
 
 
-class ApplicationFilterSchema(ExtSchema):
-    id = search_fields.FilterField(NumberTermSchema, search_path='application', nested_search=True,
-                                   query_field='application.id')
-
-    class Meta:
-        default_field = 'term'
-
-
 class InstitutionFilterSchema(ExtSchema):
     id = search_fields.FilterField(NumberTermSchema, search_path='institution', nested_search=True,
                                    query_field='institution.id')
@@ -164,7 +156,6 @@ class DatasetApiSearchRequest(ListingSchema):
     category = search_fields.FilterField(CategoryFilterSchema)
     categories = search_fields.FilterField(CategoriesFilterSchema)
     institution = search_fields.FilterField(InstitutionFilterSchema)
-    application = search_fields.FilterField(ApplicationFilterSchema)
     tag = search_fields.FilterField(StringTermSchema,
                                     doc_template='docs/generic/fields/string_term_field.html',
                                     doc_base_url='/datasets',

@@ -6,6 +6,7 @@ from functools import partial
 import django
 import elasticapm
 import falcon
+import sentry_sdk
 from elasticapm.conf import setup_logging
 from elasticapm.handlers.logging import LoggingHandler
 from falcon import DEFAULT_MEDIA_TYPE
@@ -139,6 +140,8 @@ def get_api_app():
     from mcod.routes import routes
 
     os.environ.setdefault("COMPONENT", "api")
+    if settings.ENABLE_SENTRY:
+        sentry_sdk.init(**settings.SENTRY_SDK_KWARGS['api'])
 
     _middlewares = [
         middlewares.ContentTypeMiddleware(),

@@ -7,7 +7,6 @@ from wagtail.core.fields import StreamField
 from mcod.cms.api.fields import HyperEditorJSONField, LocalizedHyperField
 from mcod.cms.blocks.common import CarouselBlock
 from mcod.cms.models.base import BasePage
-from mcod.unleash import is_enabled
 
 
 class RootPage(BasePage):
@@ -48,43 +47,37 @@ class RootPage(BasePage):
 
     fixed_url_path = ''
 
-    header_and_nav_management = is_enabled('S42_cms_header_nav_manage.be')
-
     api_fields = BasePage.api_fields + [
         APIField('over_login_section_cb', serializer=StreamFieldSerializer(source='over_login_section_cb_i18n')),
         APIField('over_search_field_cb', serializer=StreamFieldSerializer(source='over_search_field_cb_i18n')),
         APIField('over_latest_news_cb', serializer=StreamFieldSerializer(source='over_latest_news_cb_i18n')),
+        APIField('footer_nav', serializer=HyperEditorJSONField(source='footer_nav_i18n')),
+        APIField('footer_logos', serializer=StreamFieldSerializer(source='footer_logos_i18n'))
     ]
 
     content_panels_pl = BasePage.content_panels_pl + [
         StreamFieldPanel('over_login_section_cb'),
         StreamFieldPanel('over_search_field_cb'),
         StreamFieldPanel('over_latest_news_cb'),
+        HyperFieldPanel('footer_nav'),
+        StreamFieldPanel('footer_logos')
     ]
 
     content_panels_en = BasePage.content_panels_en + [
         StreamFieldPanel('over_login_section_cb_en'),
         StreamFieldPanel('over_search_field_cb_en'),
         StreamFieldPanel('over_latest_news_cb_en'),
-
+        HyperFieldPanel('footer_nav_en'),
+        StreamFieldPanel('footer_logos_en')
     ]
 
-    i18n_fields = BasePage.i18n_fields + ['over_login_section_cb', 'over_search_field_cb', 'over_latest_news_cb']
-    if header_and_nav_management:
-        i18n_fields += ['footer_nav', 'footer_logos']
-        api_fields += [APIField('footer_nav', serializer=HyperEditorJSONField(source='footer_nav_i18n')),
-                       APIField('footer_logos', serializer=StreamFieldSerializer(source='footer_logos_i18n'))]
-        content_panels_pl += [HyperFieldPanel('footer_nav'),
-                              StreamFieldPanel('footer_logos')]
-        content_panels_en += [HyperFieldPanel('footer_nav_en'),
-                              StreamFieldPanel('footer_logos_en')]
+    i18n_fields = BasePage.i18n_fields + ['over_login_section_cb', 'over_search_field_cb',
+                                          'over_latest_news_cb', 'footer_nav', 'footer_logos']
 
     class Meta:
         verbose_name = "Strona główna"
         verbose_name_plural = "Strony główne"
 
     def get_copyable_fields(self):
-        page_fields = ['over_login_section_cb', 'over_search_field_cb', 'over_latest_news_cb']
-        if self.header_and_nav_management:
-            page_fields += ['footer_nav', 'footer_logos']
+        page_fields = ['over_login_section_cb', 'over_search_field_cb', 'over_latest_news_cb', 'footer_nav', 'footer_logos']
         return super().get_copyable_fields() + page_fields

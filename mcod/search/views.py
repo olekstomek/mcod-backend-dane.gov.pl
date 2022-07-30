@@ -46,7 +46,7 @@ PLURAL_MODEL_NAMES = {
     'knowledge_base': 'knowledge_base',
     'organization': 'organizations',
     'searchhistory': 'searchhistories',
-    'history': 'histories',
+    'logentry': 'logentries',
     'news': 'news',
     'showcase': 'showcases',
 }
@@ -60,7 +60,7 @@ ALLOWED_MODELS = [
     'knowledge_base',
     'organization',
     'searchhistory',
-    'history',
+    'logentry',
     'news',
     'showcase',
 ]
@@ -123,19 +123,19 @@ class SearchView(JsonAPIView):
     class GET(SubscriptionSearchHdlr, NoneVisualizationCleaner):
         deserializer_schema = ApiSearchRequest
         serializer_schema = partial(CommonObjectResponse, many=True)
+        is_post_filter_used = is_enabled('S53_search_aggregations_counters.be')
 
         def __init__(self, request, response):
             super().__init__(request, response)
             self.deserializer.context['dataset_promotion_enabled'] = is_enabled('S52_dataset_is_promoted.be')
 
-        def _get_model_names(self):
+        def _get_model_names(self, field='models'):
+            models_query = self.request.context.cleaned_data.get(field, {})
             models = None
-            if 'models' in self.request.context.cleaned_data:
-                models_query = self.request.context.cleaned_data['models']
-                if 'term' in models_query:
-                    models = (models_query['term'], )
-                elif 'terms' in models_query:
-                    models = models_query['terms']
+            if 'term' in models_query:
+                models = (models_query['term'], )
+            elif 'terms' in models_query:
+                models = models_query['terms']
 
             models = models or ALLOWED_MODELS
 
@@ -158,6 +158,11 @@ class SearchView(JsonAPIView):
                 'counters',
                 A('filters', filters=filters)
             )
+
+            if self.is_post_filter_used:
+                models = self.request.context.cleaned_data.get('model', {})
+                for key, value in models.items():
+                    queryset = queryset.post_filter(key, model=value)
             return queryset
 
         def _get_data(self, cleaned, *args, **kwargs):
@@ -175,23 +180,6 @@ class SearchView(JsonAPIView):
                     search_date_range[limit] = data.aggregations[agg_name]['value_as_string'][:10]
             if search_date_range:
                 data.aggregations['search_date_range'] = search_date_range
-            regions_data = []
-            if not is_enabled('S48_by_region_aggregation.be'):
-                for agg_name in data.aggregations._d_.keys():
-                    if agg_name.startswith('tile'):
-                        agg = getattr(data.aggregations, agg_name)
-                        tile = {
-                            'tile_name': agg_name,
-                            'doc_count': agg.doc_count,
-                            'resources_count': agg.model_types.buckets.resources.doc_count,
-                            'datasets_count': agg.model_types.buckets.datasets.doc_count,
-                        }
-                        if agg.doc_count != 0:
-                            tile['centroid'] = [agg.resources_regions.tile_regions.centroid.location.lon,
-                                                agg.resources_regions.tile_regions.centroid.location.lat]
-                            regions_data.append(tile)
-            if regions_data:
-                setattr(data.aggregations, 'by_tiles', regions_data)
             return data
 
 

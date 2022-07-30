@@ -40,9 +40,9 @@ Feature: Resource details page in admin panel
   Scenario: Auto data date checkbox is visible on form for resource with type api
     Given draft remote file resource of api type with id 998
     When admin's page /resources/resource/998/change/ is requested
-    Then admin's response page contains is_manual_data_date
+    Then admin's response page contains is_auto_data_date
 
   Scenario: Auto data date checkbox is not visible on form for resource with type file
     Given resource created with params {"id": 1999, "type": "file"}
     When admin's page /resources/resource/998/change/ is requested
-    Then admin's response page not contains is_manual_data_date
+    Then admin's response page not contains is_auto_data_date

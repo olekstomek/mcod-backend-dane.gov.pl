@@ -51,6 +51,16 @@ def harvester_decoded_xml_1_7_import_data():
 
 
 @pytest.fixture
+def harvester_decoded_xml_1_8_import_data():
+    return get_harvested_xml_as_dict('1.8')
+
+
+@pytest.fixture
+def harvester_decoded_xml_1_9_import_data():
+    return get_harvested_xml_as_dict('1.9')
+
+
+@pytest.fixture
 def harvester_xml_expected_data():
     data = [OrderedDict([
         ('ext_ident', 'zbior_extId_1'), ('status', 'published'), ('title_pl', 'Zbiór danych - nowy scheme CC0 1.0'),

@@ -193,11 +193,6 @@ class User(AdminMixin, ApiMixin, AbstractBaseUser, PermissionsMixin, SoftDeletab
         'self', models.SET_NULL, blank=True, null=True, limit_choices_to=agents_choices,
         verbose_name=_('extra agent of'), related_name='extra_agent')
     from_agent = models.ForeignKey('self', models.SET_NULL, blank=True, null=True)
-    followed_applications = models.ManyToManyField('applications.Application',
-                                                   verbose_name=_('Followed applications'), blank=True,
-                                                   through='users.UserFollowingApplication',
-                                                   through_fields=('follower', 'application'),
-                                                   related_name='users_following', related_query_name="user")
     followed_datasets = models.ManyToManyField('datasets.Dataset',
                                                verbose_name=_('Followed datasets'), blank=True,
                                                through='users.UserFollowingDataset',
@@ -522,6 +517,14 @@ class User(AdminMixin, ApiMixin, AbstractBaseUser, PermissionsMixin, SoftDeletab
         perms = Permission.objects.filter(content_type__app_label='laboratory', codename__in=LABS_PERMS_CODENAMES)
         self.user_permissions.add(*perms) if is_labs_admin else self.user_permissions.remove(*perms)
 
+    def get_dashboard_subscriptions(self):
+        return {
+            'datasets': self.subscriptions.filter(
+                watcher__object_name='datasets.Dataset', watcher__is_active=True).count(),
+            'queries': self.subscriptions.filter(
+                watcher__object_name='query', watcher__is_active=True).count(),
+        }
+
     def get_unread_notifications(self):
         result = Notification.objects.filter(subscription__user=self, status='new').values(
             'subscription__watcher__object_name').annotate(
@@ -718,13 +721,6 @@ class FollowingModel(models.Model):
         abstract = True
 
 
-class UserFollowingApplication(FollowingModel):
-    application = models.ForeignKey('applications.Application', on_delete=models.CASCADE)
-
-    class Meta:
-        db_table = 'user_following_application'
-
-
 class UserFollowingDataset(FollowingModel):
     dataset = models.ForeignKey('datasets.Dataset', on_delete=models.CASCADE)
 
@@ -815,8 +811,6 @@ class MeetingTrash(Meeting, metaclass=TrashModelBase):
         verbose_name_plural = _('Trash (Meetings)')
 
 
-@receiver(post_delete, sender=UserFollowingApplication)
-@receiver(post_save, sender=UserFollowingApplication)
 @receiver(post_delete, sender=UserFollowingDataset)
 @receiver(post_save, sender=UserFollowingDataset)
 def es_refresh(sender, instance, *args, **kwargs):

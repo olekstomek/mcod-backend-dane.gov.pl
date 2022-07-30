@@ -1,5 +1,22 @@
 @elasticsearch
 Feature: Organization details page in admin panel
+  Scenario: Organization created without translation fields have i18n field empty
+    When admin's request method is POST
+    And admin's request posted institution data is {"title": "POLSKI TYTUŁ 1", "description": "POLSKI OPIS 1", "slug": "polski-tytul-1"}
+    And 'mcod.organizations.admin.OrganizationAdmin' creation page is requested
+    Then admin's response status code is 200
+    And 'i18n' field of created object is '{}'
+    Then set language to 'en'
+    And check if queryset.values match '{"title_i18n": "POLSKI TYTUŁ 1", "description_i18n": "POLSKI OPIS 1", "slug_i18n": "polski-tytul-1"}'
+
+  Scenario: Organization created with translation fields have i18n field filled properly
+    When admin's request method is POST
+    And admin's request posted institution data is {"title": "POLSKI TYTUŁ 2", "description": "POLSKI OPIS 2", "slug": "polski-tytul-2", "title_en": "ENGLISH TITLE 2", "description_en": "ENGLISH DESCRIPTION 2", "slug_en": "english-title-2"}
+    And 'mcod.organizations.admin.OrganizationAdmin' creation page is requested
+    Then admin's response status code is 200
+    And 'i18n' field of created object is '{"title_en": "ENGLISH TITLE 2", "slug_en": "english-title-2", "description_en": "ENGLISH DESCRIPTION 2"}'
+    Then set language to 'en'
+    And check if queryset.values match '{"title_i18n": "ENGLISH TITLE 2", "slug_i18n": "english-title-2", "description_i18n": "ENGLISH DESCRIPTION 2"}'
 
   Scenario: Organization creation is ok when already existing slug is used
     Given institution created with params {"id": 999, "slug": "test-institution-slug"}

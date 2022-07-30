@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-06-08 08:53+0200\n"
+"POT-Creation-Date: 2022-07-15 11:00+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -203,71 +203,8 @@ msgstr "komunikat"
 msgid "Alert"
 msgstr "Komunikat"
 
-msgid "Tags"
-msgstr "Słowa kluczowe"
-
-msgid "Datasets"
-msgstr "Zbiory danych"
-
-msgid "Logo"
-msgstr ""
-
-msgid "Illustrative graphics"
-msgstr "Grafika ilustracyjna"
-
-msgid "Preview link"
-msgstr "Link podglądu"
-
-msgid "Delete selected application proposals"
-msgstr "Usuń wybrane propozycje aplikacji"
-
-msgid "Datasets being used to build application"
-msgstr "Zbiory danych które zostały wykorzystane do budowy"
-
-msgid "Decision not taken"
-msgstr "Decyzja niepodjęta"
-
-msgid "decision"
-msgstr "decyzja"
-
-msgid "External public data used"
-msgstr "Wykorzystane dane publiczne spoza portalu"
-
-msgid "Application creation task was launched!"
-msgstr "Zadanie utworzenia aplikacji zostało uruchomione!"
-
 msgid "Applications"
 msgstr "Aplikacje"
-
-msgid "This field is required"
-msgstr "To pole jest obowiązkowe"
-
-msgid "Notes"
-msgstr "Opis"
-
-msgid "datasets"
-msgstr "zbiory"
-
-msgid "Dataset"
-msgstr "Zbiór danych"
-
-msgid "External datasets"
-msgstr "Zewnętrzne zbiory danych"
-
-msgid "Application author"
-msgstr "Autor aplikacji"
-
-msgid "Decision made"
-msgstr "Podjęta decyzja"
-
-msgid "Application notes"
-msgstr "Opis aplikacji"
-
-msgid "Application name"
-msgstr "Nazwa aplikacji"
-
-msgid "Application link / Application info page address"
-msgstr "Link do aplikacji / Adres strony z informacją o aplikacji"
 
 msgid "First"
 msgstr "Pierwsza"
@@ -280,6 +217,9 @@ msgstr "Trzecia"
 
 msgid "Fourth"
 msgstr "Czwarta"
+
+msgid "Notes"
+msgstr "Opis"
 
 msgid "Author"
 msgstr "Autor"
@@ -305,11 +245,17 @@ msgstr "adres URL obrazu"
 msgid "illustrative graphics"
 msgstr "grafika ilustracyjna"
 
+msgid "datasets"
+msgstr "zbiory"
+
 msgid "keywords"
 msgstr "słowa kluczowe"
 
 msgid "report date"
 msgstr "data zgłoszenia"
+
+msgid "decision"
+msgstr "decyzja"
 
 msgid "decision date"
 msgstr "data decyzji"
@@ -349,6 +295,9 @@ msgstr "Tekst zastępczy grafiki ilustracyjnej"
 
 msgid "Alternative text"
 msgstr "Tekst zastępczy"
+
+msgid "Datasets"
+msgstr "Zbiory danych"
 
 msgid "Tag"
 msgstr "Słowo kluczowe"
@@ -394,6 +343,9 @@ msgstr "Identyfikator licencji"
 
 msgid "Category"
 msgstr "Kategoria"
+
+msgid "Tags"
+msgstr "Słowa kluczowe"
 
 msgid "acc: Article"
 msgstr "artykuł"
@@ -764,6 +716,9 @@ msgstr "zawiera dane badawcze"
 msgid "Update frequency"
 msgstr "Częstotliwość aktualizacji"
 
+msgid "Logo"
+msgstr ""
+
 msgid "Available categories"
 msgstr "Dostępne kategorie"
 
@@ -849,13 +804,6 @@ msgstr ""
 "odpowiedzialności i równocześnie wybrać domyślne warunki licencji CC BY 4.0 "
 "dot. odpowiedzialności. Proszę uzupełnić tylko 1 pole."
 
-msgid ""
-"Chosen conditions for re-use mean that they contain personal data. Please "
-"contact the administrator at kontakt@dane.gov.pl."
-msgstr ""
-"Wybrane warunki ponownego wykorzystania danych oznaczają, że zawierają one "
-"dane osobowe. Skontaktuj się z administratorem portalu kontakt@dane.gov.pl"
-
 #, python-format
 msgid ""
 "Currently %(limit)s datasets have already been marked as promoted. If you "
@@ -863,6 +811,16 @@ msgid ""
 msgstr ""
 "Obecnie zostało już zaznaczone %(limit)s zbiorów danych jako promowane. "
 "Jeżeli chcesz zaznaczyć ten zbiór musisz odznaczyć inny."
+
+msgid "Only published dataset can be assigned as promoted!"
+msgstr "Tylko opublikowany zbiór danych może być oznaczony jako promowany!"
+
+msgid ""
+"Chosen conditions for re-use mean that they contain personal data. Please "
+"contact the administrator at kontakt@dane.gov.pl."
+msgstr ""
+"Wybrane warunki ponownego wykorzystania danych oznaczają, że zawierają one "
+"dane osobowe. Skontaktuj się z administratorem portalu kontakt@dane.gov.pl"
 
 msgid ""
 "You can't publish this dataset, because his organization has the status of a "
@@ -1126,6 +1084,9 @@ msgstr "Zgłoszono uwagę do zbioru %(title)s%(version)s"
 msgid "This dataset can be used under following conditions: "
 msgstr ""
 "Ten zbiór danych może być ponownie wykorzystywany pod poniższymi warunkami: "
+
+msgid "Dataset"
+msgstr "Zbiór danych"
 
 msgid "language"
 msgstr "język"
@@ -2049,6 +2010,14 @@ msgstr ""
 "Zasób z id: %(r_id)s, id zbioru: %(d_id)s i instytucji \"%(ins)s\" nie "
 "został znaleziony."
 
+#, python-brace-format
+msgid "Exception occurred for resource with id {ext_ident}: {err}"
+msgstr "Wystąpił błąd podczas importu zasobu o id {ext_ident}: {err}"
+
+#, python-brace-format
+msgid "Resource with id {ext_ident} has assigned unknown TERYT codes:"
+msgstr "Zasób o id {ext_ident} ma przypisane nieznane kody TERYT:"
+
 #, python-format
 msgid "Dataset with id: %(d_id)s and institution: \"%(ins)s\" was not found."
 msgstr ""
@@ -2186,6 +2155,9 @@ msgstr "Wybierz %s do obejrzenia"
 
 msgid "Decision taken"
 msgstr "Decyzja podjęta"
+
+msgid "Decision not taken"
+msgstr "Decyzja niepodjęta"
 
 msgid "Task for CSV generation queued"
 msgstr "Tworzenie pliku CSV dodane do kolejki zadań"
@@ -2488,6 +2460,9 @@ msgstr ""
 
 msgid "E-mail address you entered is not valid"
 msgstr "Niepoprawny adres poczty elektronicznej"
+
+msgid "This field is required"
+msgstr "To pole jest obowiązkowe"
 
 msgid "polish"
 msgstr "polski"
@@ -2871,6 +2846,10 @@ msgstr "Liczba pobrań zbiorów danych"
 msgid "Unauthorized"
 msgstr ""
 
+#, python-brace-format
+msgid "Malformed teryt code: {teryt_id}."
+msgstr "Błędny kod TERYT: {teryt_id}"
+
 msgid "Regions"
 msgstr "Lokalizacja danych"
 
@@ -3027,6 +3006,9 @@ msgstr "Weryfikacja jakości"
 msgid "Maps and plots"
 msgstr "Mapy i wykresy"
 
+msgid "data language"
+msgstr "język danych"
+
 msgid "Manual update"
 msgstr "Aktualizacja manualna"
 
@@ -3125,6 +3107,10 @@ msgstr ""
 "Nie można ustawić status opublikowany dla tego zasobu, ponieważ zbiór do "
 "którego przynależy ma status szkic. Aby zmienić status należy najpierw "
 "opublikować zbiór: "
+
+msgid "Only resource from related dataset resources is valid!"
+msgstr ""
+"Tylko zasób należący do zasobów powiązanego zbioru jest poprawnym wyborem!"
 
 msgid "Do not allow user charts to be created"
 msgstr "Nie zezwalaj na tworzenie wykresów przez użytkownika"
@@ -3249,6 +3235,15 @@ msgstr "ma tabelę?"
 
 msgid "is chart creation blocked?"
 msgstr "tworzenie wykresu zablokowane?"
+
+msgid "language version of the data"
+msgstr "wersja językowa danych"
+
+msgid "related data"
+msgstr "powiązane dane"
+
+msgid "Automatic update"
+msgstr "Aktualizacja automatyczna"
 
 msgid "Data date update period"
 msgstr "powtarzać co"
@@ -3641,11 +3636,23 @@ msgstr "Miejscowość"
 msgid "House number"
 msgstr "Numer domu"
 
+msgid "Illustrative graphics"
+msgstr "Grafika ilustracyjna"
+
+msgid "Preview link"
+msgstr "Link podglądu"
+
 msgid "Application type"
 msgstr "Rodzaj aplikacji"
 
 msgid "Delete selected showcase proposals"
 msgstr "Usuń wybrane propozycje ponownego wykorzystania"
+
+msgid "Datasets being used to build application"
+msgstr "Zbiory danych które zostały wykorzystane do budowy"
+
+msgid "External public data used"
+msgstr "Wykorzystane dane publiczne spoza portalu"
 
 msgid "Showcase creation task was launched!"
 msgstr "Zadanie utworzenia ponownego wykorzystania zostało uruchomione!"
@@ -3657,6 +3664,9 @@ msgstr "Przekazanie co najmniej jednego z: %(items)s jest wymagane!"
 msgid "link to the application"
 msgstr "link do aplikacji"
 
+msgid "External datasets"
+msgstr "Zewnętrzne zbiory danych"
+
 msgid "At least one url for mobile app (iOS, Android) is required!"
 msgstr ""
 "Co najmniej jeden link do aplikacji mobilnej (iOS, Android) jest wymagany!"
@@ -3665,6 +3675,12 @@ msgid "At least one url for desktop app (Windows, Linux, MacOS) is required!"
 msgstr ""
 "Co najmniej jeden link do aplikacji desktopowej (Windows, Linux, MacOS) jest "
 "wymagany!"
+
+msgid "Decision made"
+msgstr "Podjęta decyzja"
+
+msgid "Application link / Application info page address"
+msgstr "Link do aplikacji / Adres strony z informacją o aplikacji"
 
 msgid "Mobile Applications"
 msgstr "Aplikacje mobilne"
@@ -4548,9 +4564,8 @@ msgstr "adresaci:"
 msgid ""
 "Wiadomość została wygenerowana automatycznie przez oprogramowanie portalu "
 "Dane.gov.pl w wyniku zgłoszenia przez użytkownika uwagi o treści jak wyżej."
-"<br>Prosimy nie używać funkcji Odpowiedz nadawcy.<br><br>Kontakt z Zespołem "
-"portalu Dane.gov.pl: <a href=\"mailto:kontakt@dane.gov.pl\" target=\"_blank"
-"\">kontakt@dane.gov.pl</a>"
+"<br><br>Kontakt z Zespołem portalu Dane.gov.pl: <a href=\"mailto:"
+"kontakt@dane.gov.pl\" target=\"_blank\">kontakt@dane.gov.pl</a>"
 msgstr ""
 
 msgid "recipients"
@@ -5052,12 +5067,6 @@ msgstr "główna instytucja pełnomocnika"
 
 msgid "extra agent of"
 msgstr "dodatkowy pełnomocnik dla"
-
-msgid "Followed applications"
-msgstr "Obserwowane aplikacje"
-
-msgid "Followed articles"
-msgstr "Obserwowane artykuły"
 
 msgid "Followed datasets"
 msgstr "Obserwowane zbiory danych"

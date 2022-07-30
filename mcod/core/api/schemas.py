@@ -8,7 +8,6 @@ from marshmallow.utils import is_collection
 
 from mcod import settings
 from mcod.core.api.search import fields
-from mcod.unleash import is_enabled
 
 
 class ExtSchemaMeta(SchemaMeta):
@@ -211,10 +210,7 @@ class ListTermsSchema(ExtSchema):
 
 class GeoShapeSchema(ExtSchema):
 
-    if is_enabled('S48_by_region_aggregation.be'):
-        geo_shape = fields.RegionsGeoShapeField()
-    else:
-        geo_shape = fields.GeoShapeField()
+    geo_shape = fields.RegionsGeoShapeField()
 
     class Meta:
         default_field = 'geo_shape'
@@ -230,10 +226,7 @@ class GeoDistanceSchema(ExtSchema):
 
 class RegionIdTermsSchema(ExtSchema):
 
-    if is_enabled('S48_by_region_aggregation.be'):
-        terms = fields.RegionAggregatedTermsField(example=10)
-    else:
-        terms = fields.TileAggregatedTermsField(example=10)
+    terms = fields.RegionAggregatedTermsField(example=10)
 
     class Meta:
         default_field = 'terms'

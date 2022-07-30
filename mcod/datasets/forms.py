@@ -113,8 +113,18 @@ class DatasetForm(ModelFormWithKeywords):
             widget=CheckboxSelect(attrs={'class': 'inline'}),
         )
 
-    def __init__(self, *args, instance=None, **kwargs):
+    def __init__(self, *args, instance=None, **kwargs):  # noqa
         super().__init__(*args, instance=instance, **kwargs)
+        instance_has_cc0_chosen = instance and instance.license_chosen == Dataset.LICENSE_CC0
+        if (
+            is_enabled('S53_CC0_hide.be')
+            and 'license_chosen' in self.fields
+            and not instance_has_cc0_chosen
+        ):
+            license_chosen_choices = list(self.fields['license_chosen'].choices)
+            license_chosen_choices.remove(Dataset.LICENSE_CC0_TUPLE)
+            self.fields['license_chosen'].choices = license_chosen_choices
+
         if 'categories' in self.fields:
             self.fields['categories'].required = True
         try:
@@ -174,14 +184,14 @@ class DatasetForm(ModelFormWithKeywords):
             'license_chosen',
             'license_condition_personal_data',
             'status',
+            'is_promoted',
         ]
         help_texts = {
-            'update_notification_recipient_email': (
-                'Uwaga! Adres email zostanie nadpisany adresem edytora, który będzie modyfikował metadane zbioru.'),
             'is_promoted': _(
                 'By checking the checkbox, the item will be promoted on the list of datasets. '
-                'You can promote a maximum of %(limit)s datasets.') % {
-                'limit': settings.DATASET_IS_PROMOTED_LIMIT}
+                'You can promote a maximum of %(limit)s datasets.') % {'limit': settings.DATASET_IS_PROMOTED_LIMIT},
+            'update_notification_recipient_email': (
+                'Uwaga! Adres email zostanie nadpisany adresem edytora, który będzie modyfikował metadane zbioru.'),
         }
         labels = {
             'created': _("Availability date"),
@@ -206,17 +216,8 @@ class DatasetForm(ModelFormWithKeywords):
                 'license_condition_responsibilities',
                 _('You can\'t enter custom license responsibilities and select'
                   ' default CC BY 4.0 license responsibilities at the same time. Please choose one.'))
-        return cleaned_data
 
-    def clean_license_condition_personal_data(self):
-        if self.cleaned_data.get('license_condition_personal_data'):
-            raise forms.ValidationError(_('Chosen conditions for re-use mean that they contain personal data. '
-                                          'Please contact the administrator at kontakt@dane.gov.pl.'))
-        return self.cleaned_data['license_condition_personal_data']
-
-    def clean_is_promoted(self):
-        is_promoted = self.cleaned_data.get('is_promoted')
-        if is_promoted:
+        if cleaned_data.get('is_promoted'):
             limit = settings.DATASET_IS_PROMOTED_LIMIT
             msg = _('Currently %(limit)s datasets have already been marked as promoted. '
                     'If you want to select this dataset, you have to uncheck another one.') % {'limit': limit}
@@ -224,7 +225,15 @@ class DatasetForm(ModelFormWithKeywords):
             promoted_datasets = queryset.exclude(id=self.instance.id) if self.instance else queryset
             if promoted_datasets.count() >= limit:
                 self.add_error('is_promoted', msg)
-        return is_promoted
+            if cleaned_data.get('status') == 'draft':
+                self.add_error('is_promoted', _('Only published dataset can be assigned as promoted!'))
+        return cleaned_data
+
+    def clean_license_condition_personal_data(self):
+        if self.cleaned_data.get('license_condition_personal_data'):
+            raise forms.ValidationError(_('Chosen conditions for re-use mean that they contain personal data. '
+                                          'Please contact the administrator at kontakt@dane.gov.pl.'))
+        return self.cleaned_data['license_condition_personal_data']
 
     def clean_status(self):
         if self.instance.id:
@@ -265,16 +274,16 @@ class DatasetFormSet(forms.BaseInlineFormSet):
     def clean(self):
         super().clean()
         promoted_datasets_count = Dataset.objects.filter(status='published', is_promoted=True).count()
+        limit = settings.DATASET_IS_PROMOTED_LIMIT
         for form in self.forms:
             if self.can_delete and self._should_delete_form(form):
                 continue
             is_promoted = form.cleaned_data.get('is_promoted') and form.cleaned_data.get('status') == 'published'
             if is_promoted:
                 promoted_datasets_count += 1
-        if promoted_datasets_count > settings.DATASET_IS_PROMOTED_LIMIT:
+        if promoted_datasets_count > limit:
             msg = _('Currently %(limit)s datasets have already been marked as promoted. '
-                    'If you want to promote another one, you need to uncheck any of them.') % {
-                'limit': settings.DATASET_IS_PROMOTED_LIMIT}
+                    'If you want to promote another one, you need to uncheck any of them.') % {'limit': limit}
             raise forms.ValidationError(msg)
 
 

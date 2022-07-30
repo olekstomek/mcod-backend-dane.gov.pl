@@ -9,7 +9,7 @@ from modeltrans.fields import TranslationField
 
 from mcod.core.api.search.tasks import bulk_delete_documents_task, update_related_task
 from mcod.core.db.models import BaseExtendedModel
-from mcod.regions.api import PlaceholderApi
+from mcod.regions.api import PeliasApi, PlaceholderApi
 from mcod.regions.managers import RegionManager
 from mcod.regions.signals import regions_updated
 
@@ -20,8 +20,16 @@ class RegionManyToManyField(models.ManyToManyField):
 
     def save_form_data(self, instance, data):
         pks = frozenset(data)
-        instance._original_regions = list(getattr(instance, self.attname).values_list('pk', flat=True))
         main_regions, additional_regions = self.save_regions_data(pks)
+        self.set_regions(instance, main_regions, additional_regions)
+
+    def save_harvester_data(self, instance, data):
+        pelias = PeliasApi()
+        pks = pelias.translate_teryt_to_wof_ids(data)
+        self.save_form_data(instance, pks)
+
+    def set_regions(self, instance, main_regions, additional_regions):
+        instance._original_regions = list(getattr(instance, self.attname).values_list('pk', flat=True))
         getattr(instance, self.attname).clear()
         getattr(instance, self.attname).add(*main_regions)
         getattr(instance, self.attname).add(*additional_regions, through_defaults={'is_additional': True})
@@ -133,9 +141,10 @@ def update_search_regions(sender, instance, *args, **kwargs):
         original = set(instance._original_regions)
         new = current.difference(original)
         deleted = original.difference(current)
-        to_update = Region.objects.assigned_regions(new)
-        to_delete = Region.objects.unassigned_regions(deleted)
-        if to_delete:
-            bulk_delete_documents_task.s('regions', 'Region', to_delete).apply_async(countdown=2)
-        if to_update:
-            update_related_task.s('regions', 'Region', to_update).apply_async(countdown=2)
+        if new or deleted:
+            to_update = Region.objects.assigned_regions(new)
+            to_delete = Region.objects.unassigned_regions(deleted)
+            if to_delete:
+                bulk_delete_documents_task.s('regions', 'Region', to_delete).apply_async(countdown=2)
+            if to_update:
+                update_related_task.s('regions', 'Region', to_update).apply_async(countdown=2)

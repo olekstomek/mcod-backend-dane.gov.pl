@@ -11,7 +11,7 @@ from mcod.core.api.jsonapi.serializers import (
     TopLevel,
 )
 from mcod.core.api.schemas import ExtSchema
-from mcod.watchers.models import MODEL_TO_OBJECT_NAME, Subscription
+from mcod.watchers.models import Subscription
 
 
 class SubscriptionMixin:
@@ -60,20 +60,13 @@ class SubscriptionRelationship(ExtSchema):
 
     @pre_dump
     def prepare_data(self, data, **kwargs):
-        if data.watcher_type == 'model':
-            obj_name = MODEL_TO_OBJECT_NAME[data.object_name]
-            related = data.obj.get_api_url(base_url=self.api_url) if hasattr(self, 'api_url') else data.obj.api_url
-        else:
-            obj_name = 'query'
-            related = data.object_ident
-        obj_name = obj_name.lower()
         return {
             'data': {
                 'id': str(data.object_ident),
-                '_type': obj_name
+                '_type': data.obj_type
             },
             'links': {
-                'related': related
+                'related': data.get_obj_url(self.api_url)
             },
         }
 

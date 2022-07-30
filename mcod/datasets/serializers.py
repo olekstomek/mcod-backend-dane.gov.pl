@@ -137,8 +137,7 @@ class DatasetRDFResponseSchema(ProfilesMixin, RDFResponseSchema):
     update_frequency = DcatUpdateFrequencyField()
     license = ma.fields.Function(lambda ds: ds.license_link)
     logo = ma.fields.Str(attribute='image_absolute_url')
-    if is_enabled('S38_dcat_spatial_data.be'):
-        spatial = ma.fields.Nested(RDFRegionSchema, many=True, attribute='regions')
+    spatial = ma.fields.Nested(RDFRegionSchema, many=True, attribute='regions')
 
     @staticmethod
     def _from_path(es_resp, path):
@@ -240,9 +239,8 @@ class LicenseConditionDescriptionSchema(ExtSchema):
     license_condition_responsibilities = fields.Str()
     license_condition_cc40_responsibilities = fields.Str()
     license_condition_source = fields.Str()
-    if is_enabled('S49_cc_by_40_conditions_unification.be'):
-        license_condition_custom_description = fields.Str()
-        license_condition_default_cc40 = fields.Str()
+    license_condition_custom_description = fields.Str()
+    license_condition_default_cc40 = fields.Str()
 
 
 class SourceSchema(ExtSchema):
@@ -440,14 +438,8 @@ class DatasetApiAttrs(ObjectAttrs, HighlightObjectMixin):
     license_condition_personal_data = fields.String()
     license_condition_original = fields.Boolean()
     license_condition_timestamp = fields.Boolean()
-    if is_enabled('S49_cc_by_40_conditions_unification.be'):
-        license_condition_custom_description = fields.String()
-        license_condition_default_cc40 = fields.Boolean()
-    else:
-        license_condition_responsibilities = fields.String()
-        license_condition_cc40_responsibilities = fields.Boolean()
-        license_condition_source = fields.Boolean()
-        license_condition_modification = fields.Boolean()
+    license_condition_custom_description = fields.String()
+    license_condition_default_cc40 = fields.Boolean()
     license_name = fields.String()
     license_description = fields.String()
     update_frequency = TransUpdateFreqField()
@@ -469,8 +461,7 @@ class DatasetApiAttrs(ObjectAttrs, HighlightObjectMixin):
         has_research_data = fields.Boolean()
     if is_enabled('S52_dataset_is_promoted.be'):
         is_promoted = fields.Boolean()
-    if is_enabled('S37_resources_admin_region_data.be'):
-        regions = fields.Nested(RegionSchema, many=True)
+    regions = fields.Nested(RegionSchema, many=True)
     archived_resources_files_url = fields.Str()
     current_condition_descriptions = fields.Nested(LicenseConditionDescriptionSchema)
     if is_enabled('S49_dataset_supplements.be'):
@@ -559,8 +550,7 @@ class DatasetXMLSerializer(ExtSchema):
     has_dynamic_data = fields.Bool()
     if is_enabled('S47_research_data.be'):
         has_research_data = fields.Bool()
-    if is_enabled('S37_resources_admin_region_data.be'):
-        regions = fields.Nested(RegionBaseSchema, many=True)
+    regions = fields.Nested(RegionBaseSchema, many=True)
 
     def get_organization(self, dataset):
         context = {
@@ -592,8 +582,7 @@ class DatasetResourcesCSVSerializer(CSVSerializer):
     has_dynamic_data = fields.MetaDataNullBoolean(data_key=_('Dataset has dynamic data'))
     if is_enabled('S47_research_data.be'):
         has_research_data = fields.MetaDataNullBoolean(data_key=_('Dataset has research data'))
-    if is_enabled('S37_resources_admin_region_data.be'):
-        regions = fields.Str(data_key=_('Dataset regions'), attribute='regions_str')
+    regions = fields.Str(data_key=_('Dataset regions'), attribute='regions_str')
     if is_enabled('S49_dataset_supplements.be'):
         supplements = fields.Str(
             attribute='supplements_str', data_key=_('Dataset supplements (name, language, url, file size)'))

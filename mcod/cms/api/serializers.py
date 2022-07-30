@@ -1,5 +1,4 @@
 from modelcluster.models import get_all_child_relations
-from rest_framework import serializers
 from wagtail.api.v2.serializers import BaseSerializer, TagsField
 
 from mcod.cms.api.fields import (
@@ -66,11 +65,3 @@ def get_serializer_class(model,
         attrs.update(field_serializer_overrides)
 
     return type(str(model_.__name__ + 'Serializer'), (base, ), attrs)
-
-
-class VideoOEmbedSerializer(BaseSerializer):
-    title = serializers.ReadOnlyField()
-    thumbnail_url = serializers.ReadOnlyField()
-    provider_name = serializers.ReadOnlyField(default='dane.gov.pl')
-    html = serializers.ReadOnlyField(source='embed_html')
-    type = serializers.ReadOnlyField(default='video')

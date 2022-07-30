@@ -1,5 +1,6 @@
 import phonenumbers
 from bs4 import BeautifulSoup
+from django.apps import apps
 from django.contrib.auth import get_user_model
 from django.contrib.postgres.indexes import GinIndex
 from django.db import models
@@ -110,6 +111,18 @@ class Organization(ExtendedModel):
         return self._get_absolute_url(self.image_url, use_lang=False) if self.image_url else ''
 
     @property
+    def notes(self):
+        return self.description
+
+    @property
+    def notes_en(self):
+        return self.description_en
+
+    @property
+    def notes_pl(self):
+        return self.description_pl
+
+    @property
     def short_description(self):
         clean_text = ""
         if self.description:
@@ -152,6 +165,11 @@ class Organization(ExtendedModel):
     @property
     def published_datasets_count(self):
         return self.published_datasets.count()
+
+    @property
+    def published_resources(self):
+        resource_model = apps.get_model('resources.Resource')
+        return resource_model.objects.filter(status='published', dataset__organization_id=self.id)
 
     @property
     def published_resources_count(self):

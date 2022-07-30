@@ -11,7 +11,6 @@
       Examples:
       | object_type      | object_ids  | requested_object_ids | restored_object_ids | unrestored_object_ids |
       | course           | 999,998,997 | 999,998              | 999,998             | 997                   |
-      # | application      | 999,998,997 | 999,998              | 999,998             | 997                   |
       | institution      | 999,998,997 | 999,998              | 999,998             | 997                   |
       | category         | 999,998,997 | 999,998              | 999,998             | 997                   |
       | lab_event        | 999,998,997 | 999,998              | 999,998             | 997                   |

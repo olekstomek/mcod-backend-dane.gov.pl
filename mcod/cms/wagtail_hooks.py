@@ -19,7 +19,6 @@ from mcod.cms.handlers import (
 )
 from mcod.cms.urls import chooser_urls, form_urls
 from mcod.cms.utils import get_forms_for_user, to_i18n_url
-from mcod.unleash import is_enabled
 
 CUSTOM_STYLESHEETS = [
     'cms/custom.css',
@@ -296,9 +295,3 @@ def register_mail_link(features):
             'entity_decorators': {'EMAIL_LINK': titled_link_entity}
         }
     })
-
-
-@hooks.register('construct_main_menu')
-def flagged_listing_main(request, menu_items):
-    if not is_enabled('S44_cms_upload_videos.be'):
-        menu_items[:] = [item for item in menu_items if item.name != 'videos']

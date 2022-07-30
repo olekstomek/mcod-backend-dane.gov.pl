@@ -45,7 +45,7 @@ class SubscriptionsView(JsonAPIView):
         self.handle_post(request, response, self.POST, *args, **kwargs)
 
     class POST(CreateOneHdlr):
-        deserializer_schema = partial(SubscriptionCreateApiRequest)
+        deserializer_schema = SubscriptionCreateApiRequest
         serializer_schema = partial(SubscriptionApiResponse, many=False)
         database_model = apps.get_model('watchers', 'Subscription')
 
@@ -69,17 +69,12 @@ class SubscriptionsView(JsonAPIView):
             return [result.to_jsonapi(api_version=getattr(self.request, 'api_version', None))]
 
     class GET(RetrieveManyHdlr):
-        deserializer_schema = partial(SubscriptionListApiRequest)
+        deserializer_schema = SubscriptionListApiRequest
         serializer_schema = partial(SubscriptionApiResponse, many=True)
         database_model = apps.get_model('watchers', 'Subscription')
 
-        def clean(self, *args, validators=None, locations=None, **kwargs):
-            result = super().clean(*args, validators == validators, locations=locations, **kwargs)
-            return result
-
         def _get_queryset(self, *args, **kwargs):
-            cleaned = self.request.context.cleaned_data
-            return self.database_model.objects.get_paginated_results(self.request.user, cleaned)
+            return self.request.user.subscriptions.get_paginated_results(self.request.context.cleaned_data)
 
         def _get_included(self, result, *args, **kwargs):
             api_version = getattr(self.request, 'api_version', None)
@@ -197,14 +192,15 @@ class NotificationsView(JsonAPIView):
         self.handle_bulk_delete(request, response, self.DELETE, *args, **kwargs)
 
     class GET(RetrieveManyHdlr):
-        deserializer_schema = partial(NotificationApiListRequest)
+        deserializer_schema = NotificationApiListRequest
         serializer_schema = partial(NotificationApiResponse, many=True)
         database_model = apps.get_model('watchers', 'Notification')
 
         def _get_queryset(self, *args, **kwargs):
-            cleaned = self.request.context.cleaned_data
-            result = self.database_model.objects.get_paginated_results(self.request.user, cleaned)
-            return result
+            return self.database_model.objects.get_paginated_results(
+                self.request.user,
+                self.request.context.cleaned_data,
+            )
 
         def _get_included(self, result, *args, **kwargs):
             incl, ids = [], []

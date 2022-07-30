@@ -18,10 +18,7 @@ Resource = apps.get_model('resources', 'Resource')
 class InstitutionDocument(ExtendedDocument):
     NOTES_FIELD_NAME = 'description'
     image_url = fields.TextField()
-    if is_enabled('S46_org_abbr_upppercase_search.be'):
-        abbreviation = fields.KeywordField(normalizer=keyword_uppercase)
-    else:
-        abbreviation = fields.KeywordField()
+    abbreviation = fields.KeywordField(normalizer=keyword_uppercase)
     postal_code = fields.KeywordField()
     city = fields.KeywordField()
     street_type = fields.KeywordField()
@@ -46,7 +43,12 @@ class InstitutionDocument(ExtendedDocument):
     )
 
     description = TranslatedTextField('description')
-    datasets = datasets_field(attr='published_datasets')
+    published_datasets = datasets_field()
+    published_resources = fields.NestedField(
+        properties={
+            'id': fields.IntegerField(),
+        }
+    )
 
     class Index:
         name = mcs.ELASTICSEARCH_INDEX_NAMES['institutions']

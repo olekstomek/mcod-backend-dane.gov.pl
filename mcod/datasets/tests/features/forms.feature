@@ -69,3 +69,8 @@ Feature: Dataset forms
     And form dataset data is {"title": "Test image upload", "slug": "test-image-upload"}
     And form has image to upload
     Then form is valid
+
+  Scenario: Dataset form promotion if status is draft
+    Given form class is mcod.datasets.forms.DatasetForm
+    And form dataset data is {"title": "Test dataset is promoted", "slug": "test-dataset-is-promoted", "status": "draft", "is_promoted": "on"}
+    Then form field is_promoted error is Tylko opublikowany zbiór danych może być oznaczony jako promowany!

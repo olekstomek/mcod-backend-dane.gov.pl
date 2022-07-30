@@ -160,9 +160,7 @@ class Command(BaseCommand):
 
         for doc in registry.get_documents(models):
             # Move history index
-            if doc.Index.name == 'histories':
-                _last_doc = doc
-            elif doc.Index.name == 'logentries':
+            if doc.Index.name == 'logentries':
                 _logentries_doc = doc
             else:
                 _docs.append(doc)

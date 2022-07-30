@@ -126,3 +126,4 @@ cachier==1.5.4
 wagtailvideos==2.10.9
 rarfile==4.0
 py7zr==0.18.5
+sentry-sdk[falcon]==1.6.0

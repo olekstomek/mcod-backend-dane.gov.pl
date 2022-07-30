@@ -12,7 +12,7 @@ from mcod.users.models import User
 
 class OrganizationForm(forms.ModelForm):
     title = forms.CharField(label=_('Name'), max_length=110)
-    title_en = forms.CharField(label=_('Name') + ' (EN)', max_length=110, required=False)
+    title_en = forms.CharField(label=_('Name') + ' (EN)', max_length=110, required=False, empty_value=None)
     description = forms.CharField(
         widget=CKEditorWidget(
             attrs={
@@ -29,7 +29,8 @@ class OrganizationForm(forms.ModelForm):
             }
         ),
         label=_("Description") + " (EN)",
-        required=False
+        required=False,
+        empty_value=None,
     )
     tel = PhoneNumberField(label=_("Phone number"), required=True)
     fax = PhoneNumberField(label=_("Fax number"), required=False)

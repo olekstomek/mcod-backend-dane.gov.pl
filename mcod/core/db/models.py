@@ -5,7 +5,9 @@ import uuid
 from functools import partial
 from mimetypes import guess_extension, guess_type
 
+from django.apps import apps
 from django.conf import settings
+from django.core.exceptions import FieldDoesNotExist
 from django.core.files.base import ContentFile
 from django.core.mail import EmailMultiAlternatives, get_connection, send_mail
 from django.db import models
@@ -13,6 +15,7 @@ from django.db.models.base import ModelBase
 from django.db.models.deletion import get_candidate_relations_to_delete
 from django.dispatch import receiver
 from django.template.defaultfilters import truncatechars
+from django.utils.decorators import classproperty
 from django.utils.functional import cached_property
 from django.utils.text import slugify
 from django.utils.translation import get_language, gettext_lazy as _
@@ -27,7 +30,6 @@ from mcod.core.registries import rdf_serializers_registry as rsr
 from mcod.core.serializers import csv_serializers_registry as csr
 from mcod.core.signals import permanently_remove_related_objects
 from mcod.core.utils import sizeof_fmt
-from mcod.watchers.models import ModelWatcher, Subscription
 from mcod.watchers.tasks import update_model_watcher_task
 
 signal_logger = logging.getLogger('signals')
@@ -117,6 +119,14 @@ class Model(MailMixin, models.Model):
 
 class TimeStampedModel(MailMixin, BaseTimeStampedModel):
 
+    @classproperty
+    def has_created_field(cls):
+        try:
+            field = cls._meta.get_field('created')
+        except FieldDoesNotExist:
+            field = None
+        return bool(field)
+
     class Meta:
         abstract = True
 
@@ -158,10 +168,12 @@ class BaseExtendedModel(LogMixin, AdminMixin, ApiMixin, StatusModel, TimeStamped
         return _cached_subscription
 
     def set_subscription(self, usr):
+        model_watcher_model = apps.get_model('watchers.ModelWatcher')
+        subscription_model = apps.get_model('watchers.Subscription')
         try:
-            watcher = ModelWatcher.objects.get_from_instance(self)
-            self._cached_subscription = Subscription.objects.get(watcher=watcher, user=usr)
-        except (Subscription.DoesNotExist, ModelWatcher.DoesNotExist):
+            watcher = model_watcher_model.objects.get_from_instance(self)
+            self._cached_subscription = subscription_model.objects.get(watcher=watcher, user=usr)
+        except (subscription_model.DoesNotExist, model_watcher_model.DoesNotExist):
             self._cached_subscription = None
 
     @classmethod
