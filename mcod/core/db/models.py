@@ -5,6 +5,7 @@ import uuid
 from functools import partial
 from mimetypes import guess_extension, guess_type
 
+from constance import config
 from django.apps import apps
 from django.conf import settings
 from django.core.exceptions import FieldDoesNotExist
@@ -15,10 +16,11 @@ from django.db.models.base import ModelBase
 from django.db.models.deletion import get_candidate_relations_to_delete
 from django.dispatch import receiver
 from django.template.defaultfilters import truncatechars
+from django.template.loader import render_to_string
 from django.utils.decorators import classproperty
 from django.utils.functional import cached_property
 from django.utils.text import slugify
-from django.utils.translation import get_language, gettext_lazy as _
+from django.utils.translation import get_language, gettext_lazy as _, override
 from model_utils import Choices
 from model_utils.models import MonitorField, StatusModel, TimeStampedModel as BaseTimeStampedModel
 
@@ -76,20 +78,24 @@ class LogMixin:
 
 class MailMixin:
     @classmethod
-    def send_mail_message(cls, subject, body, from_email, to, body_html, attachments=None):
-        mail = EmailMultiAlternatives(
-            subject,
-            body,
-            from_email=from_email,
-            to=to,
-            connection=get_connection(settings.EMAIL_BACKEND),
-        )
-        mail.mixed_subtype = 'related'
-        mail.attach_alternative(body_html, 'text/html')
-        if attachments:
-            for item in attachments:
-                mail.attach(item)
-        return mail.send()
+    def send_mail_message(cls, subject, context, template, html_template, from_email=None, attachments=None):
+        context['host'] = settings.BASE_URL
+        from_email = from_email or config.NO_REPLY_EMAIL
+        to = [config.TESTER_EMAIL] if settings.DEBUG and config.TESTER_EMAIL else [config.CONTACT_MAIL]
+        with override('pl'):
+            mail = EmailMultiAlternatives(
+                subject,
+                render_to_string(template, context),
+                from_email=from_email,
+                to=to,
+                connection=get_connection(settings.EMAIL_BACKEND),
+            )
+            mail.mixed_subtype = 'related'
+            mail.attach_alternative(render_to_string(html_template, context), 'text/html')
+            if attachments:
+                for item in attachments:
+                    mail.attach(item)
+            return mail.send()
 
     @classmethod
     def send_mail_messages(cls, data):

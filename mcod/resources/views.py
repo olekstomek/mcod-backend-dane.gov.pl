@@ -70,7 +70,7 @@ class ResourcesView(JsonAPIView):
         self.handle(request, response, self.GET, *args, **kwargs)
 
     class GET(SubscriptionSearchHdlr):
-        deserializer_schema = partial(ResourceApiSearchRequest)
+        deserializer_schema = ResourceApiSearchRequest
         serializer_schema = partial(ResourceApiResponse, many=True)
         search_document = ResourceDocument()
 
@@ -91,7 +91,7 @@ class ResourceView(JsonAPIView):
         self.handle(request, response, self.GET, *args, **kwargs)
 
     class GET(RetrieveOneHdlr):
-        deserializer_schema = partial(ResourceApiRequest)
+        deserializer_schema = ResourceApiRequest
         database_model = apps.get_model('resources', 'Resource')
         serializer_schema = partial(ResourceApiResponse, many=False)
         include_default = ['dataset', 'institution']

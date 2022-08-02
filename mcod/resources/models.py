@@ -337,6 +337,7 @@ class Resource(ExtendedModel):
         ('pl', _('polish')),
         ('en', _('english')),
     ]
+    LANGUAGE_NAMES = dict(LANGUAGE_CHOICES)
     SIGNALS_MAP = {
         'updated': (
             rdf_signals.update_graph,
@@ -952,6 +953,11 @@ class Resource(ExtendedModel):
             return False
 
     @property
+    def related_resource_published(self):
+        if self.related_resource and self.related_resource.is_published and not self.related_resource.is_removed:
+            return self.related_resource
+
+    @property
     def visualization_types(self):
         result = []
         if self.is_linked:
@@ -1407,7 +1413,10 @@ class Resource(ExtendedModel):
     def import_regions_from_harvester(self, regions):
         for f in self._meta.many_to_many:
             if f.name == 'regions':
-                f.save_harvester_data(self, regions)
+                if is_enabled('S54_teryt_based_spatial_search.be'):
+                    f.save_form_data(self, regions)
+                else:
+                    f.save_harvester_data(self, regions)
 
     @property
     def is_auto_data_date_allowed(self):

@@ -3,7 +3,6 @@ import os
 from email.mime.image import MIMEImage
 from mimetypes import guess_extension, guess_type
 
-from constance import config
 from django.apps import apps
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -12,8 +11,7 @@ from django.contrib.postgres.indexes import GinIndex
 from django.core.files.base import ContentFile
 from django.db import models
 from django.forms.models import model_to_dict
-from django.template.loader import render_to_string
-from django.utils import timezone, translation
+from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from model_utils import FieldTracker
@@ -403,25 +401,19 @@ class ApplicationProposal(ApplicationMixin):
              if 'url' in eds else eds.get('title'))
             for eds in external_datasets
         )
-        data['host'] = settings.BASE_URL
 
-        emails = [config.TESTER_EMAIL] if settings.DEBUG and config.TESTER_EMAIL else [config.CONTACT_MAIL]
-        with translation.override('pl'):
-            msg_plain = render_to_string('mails/propose-application.txt', data)
-            msg_html = render_to_string('mails/propose-application.html', data)
-            attachments = []
-            if img_data:
-                attachments.append(image)
-            if illustrative_graphics:
-                attachments.append(illustrative_graphics_img)
-            cls.send_mail_message(
-                'Zgłoszono propozycję aplikacji {}'.format(title.replace('\n', ' ').replace('\r', '')),
-                msg_plain,
-                config.NO_REPLY_EMAIL,
-                emails,
-                msg_html,
-                attachments=attachments,
-            )
+        attachments = []
+        if img_data:
+            attachments.append(image)
+        if illustrative_graphics:
+            attachments.append(illustrative_graphics_img)
+        cls.send_mail_message(
+            'Zgłoszono propozycję aplikacji {}'.format(title.replace('\n', ' ').replace('\r', '')),
+            data,
+            'mails/propose-application.txt',
+            'mails/propose-application.html',
+            attachments=attachments,
+        )
 
     def migrate_to_showcase_proposal(self, showcase=None):
         sp_model = apps.get_model('showcases.ShowcaseProposal')

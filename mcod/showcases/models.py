@@ -1,7 +1,6 @@
 import os
 from io import BytesIO
 
-from constance import config
 from django.apps import apps
 from django.contrib.auth import get_user_model
 from django.contrib.postgres.fields import ArrayField, JSONField
@@ -11,9 +10,8 @@ from django.db import models
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
 from django.forms.models import model_to_dict
-from django.template.loader import render_to_string
 from django.templatetags.static import static
-from django.utils import timezone, translation
+from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _, pgettext_lazy
 from model_utils import FieldTracker
@@ -369,18 +367,12 @@ class ShowcaseProposal(ShowcaseMixin):
 
     @classmethod
     def send_showcase_proposal_mail(cls, obj):
-        emails = [config.TESTER_EMAIL] if settings.DEBUG and config.TESTER_EMAIL else [config.CONTACT_MAIL]
-        context = {'obj': obj, 'host': settings.BASE_URL}
-        with translation.override('pl'):
-            msg_plain = render_to_string('mails/showcaseproposal.txt', context)
-            msg_html = render_to_string('mails/showcaseproposal.html', context)
-            cls.send_mail_message(
-                'Powiadomienie - Nowe zgłoszenie PoCoTo',
-                msg_plain,
-                config.NO_REPLY_EMAIL,
-                emails,
-                msg_html,
-            )
+        cls.send_mail_message(
+            'Powiadomienie - Nowe zgłoszenie PoCoTo',
+            {'obj': obj},
+            'mails/showcaseproposal.txt',
+            'mails/showcaseproposal.html',
+        )
 
 
 class ShowcaseProposalTrash(ShowcaseProposal, metaclass=TrashModelBase):

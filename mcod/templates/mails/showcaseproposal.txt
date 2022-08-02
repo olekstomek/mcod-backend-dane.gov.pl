@@ -1,22 +1,41 @@
 Zgłoszenie propozycji wykorzystania danych w zakładce PoCoTo:
 
-E-mail zgłaszającego:
-{{ obj.applicant_email }}
+Kategoria:
+{{ obj.category_name }}
 
 Nazwa propozycji wykorzystania danych:
 {{ obj.title }}
 
-Kategoria:
-{{ obj.category_name }}
+Adres URL do rozwiązania wykorzystującego dane:
+{{ obj.url }}
+{% if obj.is_app %}
+iOS - link do aplikacji mobilnej:
+{{ obj.mobile_apple_url|default:"-" }}
+
+Android - link do aplikacji mobilnej:
+{{ obj.mobile_google_url|default:"-" }}
+
+Windows - link do aplikacji desktopowej:
+{{ obj.desktop_windows_url|default:"-" }}
+
+Linux - link do aplikacji desktopowej:
+{{ obj.desktop_linux_url|default:"-" }}
+
+MacOS - link do aplikacji desktopowej:
+{{ obj.desktop_macos_url|default:"-" }}
+{% endif %}
+{% if not obj.is_other %}
+Rodzaj licencji:
+{{ obj.get_license_type_display|default:"-" }}
+{% endif %}
+Opis rozwiązania ponownego wykorzystania otwartych danych:
+{{ obj.notes }}
+
+Słowa kluczowe (opcjonalne):
+{{ obj.keywords|join:", "|default:"-" }}
 
 Autor:
 {{ obj.author }}
-
-Adres URL do rozwiązania wykorzystującego dane:
-{{ obj.url }}
-
-Opis rozwiązania ponownego wykorzystania otwartych danych:
-{{ obj.notes }}
 
 Logo (opcjonalne, ale zalecane):
 {{ obj.image_absolute_url|default:"-" }}
@@ -30,5 +49,5 @@ Lista zbiorów z portalu dane.gov.pl wykorzystanych w propozycji (opcjonalne):
 Lista zbiorów danych zewnętrznych wykorzystanych w propozycji (opcjonalne):
 {{ obj.external_datasets_info|default:"-" }}
 
-Słowa kluczowe (opcjonalne):
-{{ obj.keywords|join:", "|default:"-" }}
+E-mail zgłaszającego:
+{{ obj.applicant_email }}

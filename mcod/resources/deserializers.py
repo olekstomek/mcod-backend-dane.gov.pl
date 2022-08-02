@@ -69,6 +69,10 @@ class ResourceAggregations(ExtSchema):
                 'size': 500,
                 'field': 'visualization_types'
             },
+            'by_language': {
+                'size': 2,
+                'field': 'language'
+            }
         }
     )
 
@@ -179,6 +183,13 @@ class ResourceApiSearchRequest(ListingSchema):
             doc_template='docs/generic/fields/boolean_term_field.html',
             doc_base_url='/resources',
             doc_field_name='has_research_data',
+        )
+    if is_enabled('S53_resource_language.be'):
+        language = search_fields.FilterField(
+            StringTermSchema,
+            doc_template='docs/generic/fields/string_term_field.html',
+            doc_base_url='/resources',
+            doc_field_name='language'
         )
 
     class Meta:

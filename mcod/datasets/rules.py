@@ -10,3 +10,8 @@ rules.add_perm('datasets.delete_dataset', users_is_editor)
 
 rules.add_perm('datasets.view_datasettrash', users_is_editor)
 rules.add_perm('datasets.change_datasettrash', users_is_editor)
+
+rules.add_perm('datasets.add_supplement', assigned_to_organization)
+rules.add_perm('datasets.view_supplement', assigned_to_organization)
+rules.add_perm('datasets.change_supplement', assigned_to_organization)
+rules.add_perm('datasets.delete_supplement', users_is_editor)

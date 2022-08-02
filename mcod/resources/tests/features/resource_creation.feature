@@ -119,7 +119,7 @@ Feature: Resource from link creation
   Scenario: Resource creation with regions is ok and regions are imported from api
     Given dataset with id 999
     When admin's request method is POST
-    And admin's request posted resource data is {"title": "test", "description": "more than 20 characters", "switcher": "link", "file": "", "link": "https://test.to.resource.pl/1.xls", "dataset": 999, "data_date": "22.05.2020", "status": "published", "regions": [101752777, 1309742673]}
+    And admin's request posted resource data is {"title": "test", "description": "more than 20 characters", "switcher": "link", "file": "", "link": "https://test.to.resource.pl/1.xls", "dataset": 999, "data_date": "22.05.2020", "status": "published", "regions": ["0005084", "0918123"]}
     And admin's page with mocked geo api /resources/resource/add/ is requested
     Then admin's response status code is 200
     And resource has assigned main and additional regions

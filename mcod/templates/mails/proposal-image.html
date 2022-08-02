@@ -4,5 +4,7 @@
 {% block val %}
     {% if image_src %}
     <img src="{{ image_src }}" style="max-width:580px;" alt="{% trans 'Download images' %}">
+    {% else %}
+        -
     {% endif %}
 {% endblock %}

@@ -87,7 +87,7 @@ Feature: Resources list API
       | /1.4/resources?visualization_type=table | 1      |
       | /1.4/resources?visualization_type=na    | 0      |
 
-  Scenario Outline: Test resources can be filtered by resource type in API 1.0
+  Scenario Outline: Test resources can be filtered by resource type
     Given resource with buzzfeed file
     When api request path is <request_path>
     Then send api request and fetch the response
@@ -98,21 +98,11 @@ Feature: Resources list API
       | /1.0/resources?type=website | 0      |
       | /1.0/resources?type=api     | 0      |
       | /1.0/resources?type=file    | 1      |
-
-
-  Scenario Outline: Test resources can be filtered by resource type in API 1.4
-    Given resource with buzzfeed file
-    When api request path is <request_path>
-    Then send api request and fetch the response
-    And api's response status code is 200
-    And api's response data has length <number>
-    Examples:
-      | request_path                | number |
       | /1.4/resources?type=website | 0      |
       | /1.4/resources?type=api     | 0      |
       | /1.4/resources?type=file    | 1      |
 
-  Scenario Outline: Test resources can be filtered by created in API 1.4
+  Scenario Outline: Test resources can be filtered by created
     Given three resources with created dates in 2018-02-02T10:00:00Z|2019-02-02T10:00:00Z|2020-02-02T10:00:00Z
     When api request path is <request_path>
     Then send api request and fetch the response
@@ -130,11 +120,26 @@ Feature: Resources list API
       | /resources?created[lt]=2018-01-01                        | 0      |
       | /resources?created[gt]=2019-01-01&created[lt]=2020-01-01 | 1      |
 
+  Scenario Outline: Test resources can be filtered by language
+    Given <object_type> created with params <params>
+    When api request path is <request_path>
+    Then send api request and fetch the response
+    And api's response status code is 200
+    And api's response data has length <number>
+    And api's response body has field data/[0]/attributes/language
+    And api's response body field <resp_body_field> is <resp_body_value>
+
+    Examples:
+      | object_type | params                        | request_path                                                   | number | resp_body_field                         | resp_body_value |
+      | resource    | {"id": 999, "language": "en"} | /resources?language=en&id=999&facet[terms]=by_language         | 1      | meta/aggregations/by_language/[0]/title | angielski       |
+      | resource    | {"id": 999, "language": "pl"} | /resources?language=pl&id=999&facet[terms]=by_language         | 1      | meta/aggregations/by_language/[0]/title | polski          |
+      | resource    | {"id": 999, "language": "en"} | /resources?language=en&id=999&facet[terms]=by_language&lang=en | 1      | meta/aggregations/by_language/[0]/title | English         |
+      | resource    | {"id": 999, "language": "pl"} | /resources?language=pl&id=999&facet[terms]=by_language&lang=en | 1      | meta/aggregations/by_language/[0]/title | Polish          |
+
   Scenario Outline: Test listing endpoints returns empty list if no results in API 1.4
     When api request path is <request_path>
     Then send api request and fetch the response
     And api's response body field data is []
-
     Examples:
       | request_path                       |
       | /1.4/showcases?q=noresultsfound    |

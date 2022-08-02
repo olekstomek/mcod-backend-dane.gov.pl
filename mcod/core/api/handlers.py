@@ -89,8 +89,11 @@ class IncludeMixin:
         'user': 'users.User',
         'user_schedule': 'schedules.UserSchedule',
         'user_schedule_item': 'schedules.UserScheduleItem',
+        'related_resource': 'resources.Resource',
     }
-    _include_map = {}
+    _include_map = {
+        'related_resource': 'related_resource_published',
+    }
 
     def _get_included_ids(self, result, field):
         if issubclass(result.__class__, (AbstractBaseUser, BaseExtendedModel)):

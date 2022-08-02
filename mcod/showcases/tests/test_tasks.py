@@ -25,7 +25,12 @@ class TestApplicationsTasks:
             author='Jan Kowalski',
             url='http://www.anywhere.any',
             datasets=[ds.id for ds in datasets[:2]],
-            image=''.join(image_b64)
+            image=''.join(image_b64),
+            mobile_apple_url='https://example.com/apple',
+            mobile_google_url='https://example.com/google',
+            desktop_linux_url='https://example.com/linux',
+            desktop_macos_url='https://example.com/macos',
+            desktop_windows_url='https://example.com/windows',
         )
         obj = ShowcaseProposal.create(data)
         assert obj.is_app
@@ -45,7 +50,17 @@ class TestApplicationsTasks:
             plain = mail[plain_begin:html_begin]
             html = mail[html_begin:image_begin]
 
-            for key in ('title', 'applicant_email', 'url', 'author'):
+            for key in (
+                    'applicant_email',
+                    'author',
+                    'desktop_linux_url',
+                    'desktop_macos_url',
+                    'desktop_windows_url',
+                    'mobile_apple_url',
+                    'mobile_google_url',
+                    'title',
+                    'url',
+            ):
                 assert data[key] in plain
                 assert data[key] in html
             for ds in datasets[:2]:
@@ -54,3 +69,5 @@ class TestApplicationsTasks:
 
             assert data['notes'] in plain
             assert data['notes'].replace('\n', '<br>') in html
+            assert 'Darmowa aplikacja' in plain
+            assert 'Darmowa aplikacja' in html

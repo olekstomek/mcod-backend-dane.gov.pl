@@ -52,21 +52,12 @@ class Suggestion(Model):
     created = models.DateTimeField(auto_now_add=True)
 
     def send_data_suggestion_mail(self):
-        context = {
-            'host': settings.BASE_URL,
-            'notes': self.notes,
-        }
-        with override('pl'):
-            msg_plain = render_to_string('mails/data-suggestion.txt', context)
-            msg_html = render_to_string('mails/data-suggestion.html', context)
-            emails = [config.TESTER_EMAIL] if settings.DEBUG and config.TESTER_EMAIL else [config.CONTACT_MAIL]
-            return self.send_mail_message(
-                _('Resource demand reported'),
-                msg_plain,
-                config.NO_REPLY_EMAIL,
-                emails,
-                msg_html,
-            )
+        return self.send_mail_message(
+            _('Resource demand reported'),
+            {'notes': self.notes},
+            'mails/data-suggestion.txt',
+            'mails/data-suggestion.html',
+        )
 
 
 @receiver(post_save, sender=Suggestion)
@@ -163,21 +154,12 @@ class DatasetSubmission(DatasetSubmissionMixin):
         return _("acc: Dataset submission")
 
     def send_dataset_suggestion_mail(self):
-        emails = [config.TESTER_EMAIL] if settings.DEBUG and config.TESTER_EMAIL else [config.CONTACT_MAIL]
-        context = {
-            'obj': self,
-            'host': settings.BASE_URL,
-        }
-        with override('pl'):
-            msg_plain = render_to_string('mails/dataset-suggestion.txt', context)
-            msg_html = render_to_string('mails/dataset-suggestion.html', context)
-            return self.send_mail_message(
-                _('Resource demand reported'),
-                msg_plain,
-                config.NO_REPLY_EMAIL,
-                emails,
-                msg_html,
-            )
+        return self.send_mail_message(
+            _('Resource demand reported'),
+            {'obj': self},
+            'mails/dataset-suggestion.txt',
+            'mails/dataset-suggestion.html',
+        )
 
 
 class AcceptedDatasetSubmission(DatasetSubmissionMixin):

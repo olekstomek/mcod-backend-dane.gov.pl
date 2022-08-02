@@ -816,6 +816,8 @@ CELERY_TASK_ROUTES = {
     'mcod.suggestions.tasks.send_dataset_suggestion_mail_task': {'queue': 'notifications'},
     'mcod.suggestions.tasks.send_data_suggestion': {'queue': 'notifications'},
 
+    'mcod.users.tasks.send_registration_email_task': {'queue': 'notifications'},
+
     'mcod.watchers.tasks.update_model_watcher_task': {'queue': 'watchers'},
     'mcod.watchers.tasks.remove_user_notifications_task': {'queue': 'watchers'},
     'mcod.watchers.tasks.update_notifications_task': {'queue': 'watchers'},

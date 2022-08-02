@@ -9,7 +9,10 @@ from suit.widgets import SuitDateWidget, SuitTimeWidget
 from mcod import settings
 from mcod.lib.forms.fields import InternalPhoneNumberField, PhoneNumberField
 from mcod.lib.widgets import CKEditorWidget
+from mcod.unleash import is_enabled
 from mcod.users.models import Meeting, User
+
+RESEND_REGISTRATION_MAIL_ENABLED = is_enabled('S53_resend_registration_mail.be')
 
 
 class FilteredSelectMultipleCustom(FilteredSelectMultiple):
@@ -165,6 +168,12 @@ class UserCreationForm(UserForm):
             'organizations',
         ]
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for name in ['email', 'password1', 'password2']:  # https://stackoverflow.com/a/32578659/1845230
+            self.fields[name].widget.attrs['readonly'] = True
+            self.fields[name].widget.attrs['onfocus'] = "this.removeAttribute('readonly');"
+
     def clean_email(self):
         email = self.data.get('email', "")
         if email and User.objects.filter(email__iexact=email).exists():
@@ -203,6 +212,14 @@ class UserChangeForm(UserForm):
         f = self.fields.get('user_permissions', None)
         if f is not None:
             f.queryset = f.queryset.select_related('content_type')
+        if all([
+            RESEND_REGISTRATION_MAIL_ENABLED,
+            'state' in self.fields,
+            hasattr(self, '_request_user') and self._request_user.is_superuser,
+            self.instance.state == 'pending',
+        ]):
+            url = self.instance.send_registration_email_admin_url
+            self.fields['state'].help_text = f'<a href="{url}">Wyślij ponownie email z linkiem do aktywacji konta</a>'
 
     def clean_password(self):
         return self.initial["password"] if 'password' in self.initial else None

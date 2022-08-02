@@ -502,6 +502,10 @@ class User(AdminMixin, ApiMixin, AbstractBaseUser, PermissionsMixin, SoftDeletab
     def discourse_username(self):
         return self.discourse_user_name
 
+    @property
+    def send_registration_email_admin_url(self):
+        return self._reverse('admin:send-registration-email', args=[self.id])
+
     @classmethod
     def accusative_case(cls):
         return _("acc: User")

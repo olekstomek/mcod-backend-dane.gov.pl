@@ -282,27 +282,8 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):
         'fields': ('has_research_data',),
     })] if is_enabled('S47_research_data.be') else []
 
-    change_readonly_fields = (
-        'formats',
-        'file',
-        'csv_file',
-        'jsonld_file',
-        'packed_file',
-        'link',
-        'modified',
-        'created',
-        'verified',
-        'type',
-        'file_info',
-        'file_encoding',
-        'special_signs_symbols',
-        'link_tasks',
-        'file_tasks',
-        'data_tasks',
-    )
-
-    add_readonly_fields = ()
     col2 = ['lang'] if is_enabled('S53_resource_language.be') else ['uuid']
+    language_fields = ['language', 'related_resource'] if is_enabled('S53_resource_language.be') else []
     list_display = [
         'title',
         *col2,
@@ -527,7 +508,24 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):
         return history
 
     def get_readonly_fields(self, request, obj=None):
-        readonly_fields = self.change_readonly_fields if obj and obj.id else self.add_readonly_fields
+        readonly_fields = (
+            'formats',
+            'file',
+            'csv_file',
+            'jsonld_file',
+            'packed_file',
+            'link',
+            'modified',
+            'created',
+            'verified',
+            'type',
+            'file_info',
+            'file_encoding',
+            'special_signs_symbols',
+            'link_tasks',
+            'file_tasks',
+            'data_tasks',
+        ) if obj and obj.id else ()
         new_fields_mapping = {
             'file': 'main_file',
             'file_info': 'main_file_info',
@@ -554,9 +552,23 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):
                     'endless_data_date_update'
                 ] if obj.is_auto_data_date else ['is_auto_data_date_info']
             readonly_fields = (
-                *readonly_fields, 'dataset', 'data_date', *auto_data_date_fields, 'description', 'description_en',
-                'show_tabular_view', 'slug_en', 'status', 'title', 'title_en', 'is_chart_creation_blocked',
-                'has_dynamic_data_info', 'has_high_value_data_info', 'has_research_data_info')
+                *readonly_fields,
+                'dataset',
+                'data_date',
+                *auto_data_date_fields,
+                'description',
+                'description_en',
+                'show_tabular_view',
+                'slug_en',
+                'status',
+                'title',
+                'title_en',
+                'is_chart_creation_blocked',
+                'has_dynamic_data_info',
+                'has_high_value_data_info',
+                'has_research_data_info',
+                *self.language_fields,
+            )
         return tuple(set(readonly_fields))
 
     def is_data_date_read_only(self, obj):

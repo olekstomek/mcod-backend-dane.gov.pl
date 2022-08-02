@@ -59,6 +59,10 @@ class ResourceDocument(ExtendedDocument):
             'last_import_timestamp': fields.DateField(),
         }
     )
+    related_resource_published = fields.NestedField(properties={
+        'id': fields.IntegerField(),
+        'slug': TranslatedTextField('slug')
+    })
 
     # ResourceDoc
     uuid = fields.TextField()
@@ -112,6 +116,7 @@ class ResourceDocument(ExtendedDocument):
     has_research_data = fields.BooleanField()
     regions = regions_field(attr='all_regions')
     files = files_field(attr='all_files')
+    language = fields.KeywordField()
 
     class Index:
         name = mcs.ELASTICSEARCH_INDEX_NAMES['resources']
@@ -120,13 +125,19 @@ class ResourceDocument(ExtendedDocument):
 
     class Django:
         model = Resource
-        related_models = [Dataset, SpecialSign]
+        related_models = [
+            Dataset,
+            SpecialSign,
+            Resource,
+        ]
 
     def get_instances_from_related(self, related_instance):
         if isinstance(related_instance, Dataset):
             return related_instance.resources.filter(status='published')
         elif isinstance(related_instance, SpecialSign):
             return related_instance.special_signs_resources.filter(status='published')
+        elif isinstance(related_instance, Resource):
+            return related_instance.related_data.filter(status='published')
 
     def prepare_model_name(self, instance):
         return instance.category.type

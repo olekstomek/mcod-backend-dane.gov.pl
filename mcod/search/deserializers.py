@@ -130,6 +130,10 @@ class DataAggregations(ExtSchema):
                 'field': 'showcase_platforms',
                 'size': 10
             },
+            'by_language': {
+                'field': 'language',
+                'size': 2
+            }
         }
     )
 
@@ -316,6 +320,13 @@ class ApiSearchRequest(ListingSchema):
         doc_base_url='/search',
         doc_field_name='showcase platforms'
     )
+    if is_enabled('S53_resource_language.be'):
+        language = fields.FilterField(
+            StringTermSchema,
+            doc_template='docs/generic/fields/string_term_field.html',
+            doc_base_url='/search',
+            doc_field_name='language'
+        )
 
     @validates('q')
     def validate_q(self, queries, down_limit=2, up_limit=3000):

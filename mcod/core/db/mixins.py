@@ -30,6 +30,9 @@ class AdminMixin:
     def mark_safe(self, value):
         return mark_safe(value)
 
+    def _reverse(self, *args, **kwargs):
+        return reverse(*args, **kwargs)
+
 
 class ApiMixin:
 

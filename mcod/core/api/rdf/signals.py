@@ -36,7 +36,7 @@ class SparqlSignalProcessor(SignalLoggerMixin):
 
     @staticmethod
     def get_task_kwargs(instance):
-        return{
+        return {
             'app_label': instance._meta.app_label,
             'object_name': instance._meta.concrete_model._meta.object_name,
             'instance_id': instance.id

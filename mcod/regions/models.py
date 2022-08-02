@@ -12,6 +12,7 @@ from mcod.core.db.models import BaseExtendedModel
 from mcod.regions.api import PeliasApi, PlaceholderApi
 from mcod.regions.managers import RegionManager
 from mcod.regions.signals import regions_updated
+from mcod.unleash import is_enabled
 
 # Create your models here.
 
@@ -45,7 +46,16 @@ class RegionManyToManyField(models.ManyToManyField):
         additional_regions = []
         if values:
             placeholder = PlaceholderApi()
-            reg_data, all_regions_ids = placeholder.get_all_regions_details(values)
+            if is_enabled('S54_teryt_based_spatial_search.be'):
+                pelias_api = PeliasApi()
+                all_regions_list, wof_teryt_mapping = pelias_api.get_regions_details_by_teryt(values)
+                reg_data = placeholder.convert_to_placeholder_format(
+                    all_regions_list, wof_teryt_mapping
+                )
+                pelias_api.fill_geonames_data(reg_data, wof_teryt_mapping)
+                all_regions_ids = list(reg_data.keys())
+            else:
+                reg_data, all_regions_ids = placeholder.get_all_regions_details(values)
             existing_regions = Region.objects.filter(region_id__in=all_regions_ids)
             existing_regions_ids = list(
                 existing_regions.values_list('region_id', flat=True)
@@ -78,7 +88,7 @@ class Region(BaseExtendedModel):
                     )
     name = models.CharField(max_length=150, verbose_name=_("title"))
     hierarchy_label = models.CharField(max_length=250, verbose_name=_("Hierarchy label"), null=True)
-    region_id = models.PositiveIntegerField()
+    region_id = models.CharField(max_length=10)
     region_type = models.CharField(max_length=15, choices=REGION_TYPES)
     bbox = JSONField(blank=True, null=True, verbose_name=_('Boundary box'))
     lat = models.DecimalField(max_digits=10, decimal_places=8, verbose_name=_('Latitude'))

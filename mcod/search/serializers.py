@@ -28,7 +28,7 @@ from mcod.datasets.serializers import (
 from mcod.lib.serializers import KeywordsList, TranslatedStr
 from mcod.organizations.serializers import DataSourceAttr
 from mcod.regions.serializers import RegionAggregationSerializer, RegionSchema
-from mcod.resources.serializers import GeoRegionAggregation, GeoTileAggregation
+from mcod.resources.serializers import GeoRegionAggregation, GeoTileAggregation, LanguageAggregation
 from mcod.showcases.serializers import (
     ShowcaseCategoryAggregation,
     ShowcasePlatformAggregation,
@@ -59,6 +59,14 @@ class CommonObjectRelationships(Relationships):
         _type='subscription',
         url_template='{api_url}/auth/subscriptions/{ident}'
     )
+    if is_enabled('S53_resource_language.be'):
+        related_resource = fields.Nested(
+            Relationship,
+            many=False,
+            _type='resource',
+            url_template='{api_url}/resources/{ident}',
+            attribute='related_resource_published',
+        )
 
 
 class Category(ExtSchema):
@@ -96,6 +104,8 @@ class CommonObjectApiAttrs(ObjectAttrs, HighlightObjectMixin):
     # resources
     data_date = fields.Date()
     visualization_types = fields.List(fields.Str())
+    if is_enabled('S53_resource_language.be'):
+        language = fields.Str()
 
     # showcases
     author = fields.Str()
@@ -122,7 +132,7 @@ class CommonObjectApiAttrs(ObjectAttrs, HighlightObjectMixin):
     author_i18n = TranslatedStr()
 
     # regions
-    region_id = fields.Int()
+    region_id = fields.Str()
     hierarchy_label = TranslatedStr()
     bbox = fields.List(fields.List(fields.Float), attribute='bbox.coordinates')
     regions = fields.Nested(RegionSchema, many=True)
@@ -242,6 +252,9 @@ class CommonObjectApiAggregations(ExtSchema):
         GeoRegionAggregation,
         many=True,
     )
+    if is_enabled('S53_resource_language.be'):
+        by_language = fields.Nested(
+            LanguageAggregation, many=True, attribute='_filter_by_language.by_language.buckets')
 
     @pre_dump(pass_many=True)
     def prepare_data(self, data, **kwargs):

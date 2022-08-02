@@ -34,9 +34,13 @@ var confirmExitIfModified = (function () {
                 }
             }
             else if (type == "select-one" || type == "select-multiple") {
+                var cls = element.getAttribute('class');
+                if (!cls) cls = '';
                 for (var j = 0; j < element.options.length; j++) {
                     if (element.options[j].selected !=
-                        element.options[j].defaultSelected) {
+                        element.options[j].defaultSelected &&
+                        cls.indexOf('ignore-changes') == -1
+                    ) {
                         return true;
                     }
                 }

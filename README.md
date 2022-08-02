@@ -26,7 +26,6 @@ Proces budowania środowiska może trwać nawet kilkadziesiąt minut w zależno�
     $ docker-compose up -d mcod-db
     $ docker-compose exec mcod-db dropdb mcod --username=mcod
     $ docker-compose exec mcod-db createdb mcod -O mcod --username=mcod
-    $ docker-compose exec mcod-db pg_restore -Fc -d mcod /dumps/mcod_db.pgdump --username=mcod
     $ docker-compose up -d mcod-db mcod-elasticsearch mcod-nginx mcod-rabbitmq mcod-rdfdb mcod-redis
 
 W przypadku korzystania z IDE PyCharm (Professional) możliwe jest dodanie konfiguracji dotyczącej zarządzania kontenerami.
@@ -39,9 +38,9 @@ Więcej: https://www.jetbrains.com/help/pycharm/docker-compose.html#working
     $ source venv/bin/activate
     (venv) $ pip install -r requirements-devel.txt
 
-## Zaaplikowanie migracji
+## Zaaplikowanie migracji i inicjalnych danych
 
-    (venv) $ python manage.py migrate
+    (venv) $ python manage.py init_mcod_db
 
 ## Utworzenie indeksów w ES
 
@@ -133,7 +132,10 @@ Poza specyficznymi dla każdej usługi zmiennymi środowiskowymi, dla wszystkich
 
     (venv) $ python manage.py runserver 0:8001
 
-Po uruchomieniu usługi, pod adresem https://admin.mcod.local będzie dostępny panel administracyjny ~~(login: admin@mcod.local, hasło: Otwarte.1)~~
+Po uruchomieniu usługi, pod adresem https://admin.mcod.local będzie dostępny panel administracyjny.
+Możliwe jest zalogowanie się na konta 2 użytkowników:
+* login: admin@mcod.local, hasło:testadmin123!
+* login: pelnomocnik@mcod.local, hasło: User123!
 
 
 ### Usługa API (api.mcod.local)

@@ -7,7 +7,6 @@ from django import forms
 from django.contrib.admin.widgets import AdminDateWidget, FilteredSelectMultiple
 from django.contrib.postgres.forms.jsonb import JSONField
 from django.core.exceptions import ValidationError
-from django.urls import reverse
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 
@@ -365,10 +364,7 @@ class TrashResourceForm(forms.ModelForm):
                 "You can't restore this resource, because it's dataset is still removed. Please first restore dataset: "
             )
 
-            error_message += "<a href='{}'>{}</a>".format(
-                reverse('admin:datasets_datasettrash_change', args=[dataset.id]),
-                dataset.title
-            )
+            error_message += "<a href='{}'>{}</a>".format(dataset.admin_trash_change_url, dataset.title)
 
             raise forms.ValidationError(mark_safe(error_message))
 

@@ -825,18 +825,14 @@ def check_if_queryset_values_match(admin_context, params):
 
 @when(parsers.parse("admin's page with mocked geo api {page_url} is requested"))
 @then(parsers.parse("admin's page with mocked geo api {page_url} is requested"))
-def admin_page_with_mocked_geo_api_is_requested(admin_context, page_url, main_regions_response,
-                                                additional_regions_response):
+def admin_page_with_mocked_geo_api_is_requested(admin_context, page_url, mocked_geocoder_responses):
     client = Client()
-    main_reg_expr = re.compile(settings.PLACEHOLDER_URL + r'/parser/findbyid\?ids=\d{9,10}%2C\d{9,10}')
-    additional_reg_expr = re.compile(
-        settings.PLACEHOLDER_URL + r'/parser/findbyid\?ids=\d{8,10}%2C\d{8,10}%2C\d{8,10}%2C\d{8,10}')
     client.force_login(admin_context.admin.user)
     translation.activate('pl')
     if admin_context.admin.method == 'POST':
         with requests_mock.Mocker(real_http=True) as mock_request:
-            mock_request.get(main_reg_expr, json=main_regions_response)
-            mock_request.get(additional_reg_expr, json=additional_regions_response)
+            for resp in mocked_geocoder_responses:
+                mock_request.get(resp[0], json=resp[1])
             response = client.post(page_url, data=getattr(admin_context, 'obj', None), follow=True)
     else:
         response = client.get(page_url, follow=True)

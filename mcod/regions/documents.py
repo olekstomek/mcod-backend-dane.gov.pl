@@ -10,7 +10,7 @@ from mcod.regions.models import Region
 
 def regions_field(**kwargs):
     return fields.NestedField(properties={
-        'region_id': fields.IntegerField(),
+        'region_id': fields.KeywordField(),
         'name': TranslatedTextField('name'),
         'hierarchy_label': TranslatedTextField('hierarchy_label'),
         'bbox': fields.GeoShapeField('wkt_bbox'),
@@ -21,7 +21,7 @@ def regions_field(**kwargs):
 
 @registry.register_document
 class RegionDocument(Document):
-    region_id = fields.IntegerField()
+    region_id = fields.KeywordField()
     title = TranslatedTextField('name')
     hierarchy_label = TranslatedTextField('hierarchy_label', analyzers=autocomplete_analyzers)
     model = fields.KeywordField()

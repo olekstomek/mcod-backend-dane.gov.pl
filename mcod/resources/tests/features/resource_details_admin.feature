@@ -46,3 +46,15 @@ Feature: Resource details page in admin panel
     Given resource created with params {"id": 1999, "type": "file"}
     When admin's page /resources/resource/998/change/ is requested
     Then admin's response page not contains is_auto_data_date
+
+  Scenario: Admin can add supplements to resource
+    When admin's page /resources/resource/add/ is requested
+    Then admin's response page contains Pliki dokumentów mające na celu uzupełnienie danych znajdujących się w zasobie.
+    And admin's response page contains Dodaj dokument
+
+  Scenario: Editor can add supplements to resource
+    Given institution with id 999
+    And admin's request logged editor user created with params {"id": 999, "organizations": [999]}
+    When admin's page /resources/resource/add/ is requested
+    Then admin's response page contains Pliki dokumentów mające na celu uzupełnienie danych znajdujących się w zasobie.
+    And admin's response page contains Dodaj dokument

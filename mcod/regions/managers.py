@@ -6,6 +6,7 @@ from django.db import models
 from django.db.models import Case, F, Q, Value, When
 
 from mcod.regions.api import PeliasApi
+from mcod.unleash import is_enabled
 
 
 class RegionQueryset(models.QuerySet):
@@ -46,15 +47,16 @@ class RegionManager(models.Manager):
         return RegionQueryset(self.model, using=self._db)
 
     def create_new_regions(self, to_create_regions):
-        pelias = PeliasApi()
         region = apps.get_model('regions', 'region')
-        wof_ids = ['whosonfirst:{}:{}'.format(reg_data['placetype'], reg_id) for
-                   reg_id, reg_data in to_create_regions.items()]
-        places_details = pelias.place(wof_ids)
-        geonames_ids = {feat['properties']['id']: feat['properties']['addendum']['concordances']['gn:id']
-                        for feat in places_details.get('features', [])
-                        if feat['properties'].get('addendum') and
-                        feat['properties']['addendum']['concordances'].get('gn:id')}
+        if not is_enabled('S54_teryt_based_spatial_search.be'):
+            pelias = PeliasApi()
+            wof_ids = ['whosonfirst:{}:{}'.format(reg_data['placetype'], reg_id) for
+                       reg_id, reg_data in to_create_regions.items()]
+            places_details = pelias.place(wof_ids)
+            geonames_ids = {feat['properties']['id']: feat['properties']['addendum']['concordances']['gn:id']
+                            for feat in places_details.get('features', [])
+                            if feat['properties'].get('addendum') and
+                            feat['properties']['addendum']['concordances'].get('gn:id')}
         to_create_regions_obj = []
         for reg_id, reg_data in to_create_regions.items():
             _bbox = reg_data['geom']['bbox'].split(',')
@@ -78,7 +80,10 @@ class RegionManager(models.Manager):
                 lat=reg_data['geom']['lat'],
                 lng=reg_data['geom']['lon']
             )
-            gn_id = geonames_ids.get(str(reg_id))
+            if is_enabled('S54_teryt_based_spatial_search.be'):
+                gn_id = reg_data.get('geonames_id')
+            else:
+                gn_id = geonames_ids.get(str(reg_id))
             if gn_id:
                 region_props['geonames_id'] = gn_id
             to_create_regions_obj.append(region(**region_props))

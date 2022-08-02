@@ -1,7 +1,6 @@
 import hashlib
 import json
 import os
-import re
 from datetime import datetime
 from unittest.mock import MagicMock, patch
 
@@ -17,6 +16,7 @@ from mcod.datasets.models import Dataset
 from mcod.harvester.factories import CKANDataSourceFactory
 from mcod.harvester.models import DataSource, DataSourceImport
 from mcod.resources.models import Resource
+from mcod.unleash import is_enabled
 
 
 @given(parsers.parse('CKAN datasource with id {obj_id:d} active'))
@@ -113,9 +113,7 @@ def xml_datasource_finishes_import(
         obj_id, version, harvester_decoded_xml_1_2_import_data, harvester_decoded_xml_1_4_import_data,
         harvester_decoded_xml_1_5_import_data, harvester_decoded_xml_1_6_import_data,
         harvester_decoded_xml_1_7_import_data, harvester_decoded_xml_1_8_import_data,
-        harvester_decoded_xml_1_9_import_data,
-        main_region_response, warsaw_additional_regions_response, teryt_regions_response,
-        wof_ids_regions_response, file_jsonapi, **kwargs):
+        harvester_decoded_xml_1_9_import_data, mocked_geocoder_responses_for_xml_import, **kwargs):
     mock_request = kwargs['mock_request']
     obj = DataSource.objects.get(pk=obj_id)
     simple_csv_path = os.path.join(settings.TEST_SAMPLES_PATH, 'simple.csv')
@@ -151,19 +149,8 @@ def xml_datasource_finishes_import(
         '1.8': harvester_decoded_xml_1_8_import_data,
         '1.9': harvester_decoded_xml_1_9_import_data,
     }
-    teryt_reg_expr = re.compile(
-        settings.GEOCODER_URL + r'/v1/place\?ids=teryt%3Alocality%3A\d{7}')
-    main_reg_expr = re.compile(settings.PLACEHOLDER_URL + r'/parser/findbyid\?ids=\d{9,10}')
-    additional_reg_expr = re.compile(
-        settings.PLACEHOLDER_URL + r'/parser/findbyid\?ids=\d{8,10}%2C\d{8,10}%2C\d{8,10}')
-    wof_id_reg_exp = re.compile(
-        settings.GEOCODER_URL + r'/v1/place\?ids=whosonfirst%3Alocality%3A\d{8,10}'
-                                r'%2Cwhosonfirst%3Alocaladmin%3A\d{8,10}'
-                                r'%2Cwhosonfirst%3Aregion%3A\d{8,10}%2Cwhosonfirst%3Acounty%3A\d{8,10}')
-    mock_request.get(main_reg_expr, json=main_region_response)
-    mock_request.get(additional_reg_expr, json=warsaw_additional_regions_response)
-    mock_request.get(teryt_reg_expr, json=teryt_regions_response)
-    mock_request.get(wof_id_reg_exp, json=wof_ids_regions_response)
+    for resp in mocked_geocoder_responses_for_xml_import:
+        mock_request.get(resp[0], json=resp[1])
     with patch('mcod.harvester.utils.urlretrieve') as mock_urlretrieve:
         with patch('mcod.harvester.utils.decode_xml') as mock_to_dict:
             mock_urlretrieve.return_value = xml_data_path, {}
@@ -228,8 +215,9 @@ def xml_datasource_imported_resources(obj_id, version):
     if ver_no >= 9:  # from 1.9 regions are imported
         first_res = res.get(ext_ident='zasob_extId_zasob_1')
         assert first_res.all_regions.count() == 5
+        reg_id = '0918123' if is_enabled('S54_teryt_based_spatial_search.be') else '101752777'
         assert first_res.all_regions.filter(
-            region_id=101752777, resourceregion__is_additional=False).exists()
+            region_id=reg_id, resourceregion__is_additional=False).exists()
 
 
 @patch('rdflib.plugins.stores.sparqlconnector.urlopen')

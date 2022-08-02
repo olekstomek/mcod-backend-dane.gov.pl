@@ -1,15 +1,19 @@
 from admin_confirm import AdminConfirmMixin
-from django.contrib import admin
+from django.contrib import admin, messages
 from django.contrib.admin.exceptions import DisallowedModelAdminToField
 from django.contrib.admin.options import TO_FIELD_VAR
 from django.contrib.admin.utils import unquote
 from django.contrib.auth.admin import AdminPasswordChangeForm
 from django.core.exceptions import PermissionDenied
 from django.db.models import Q
+from django.http import HttpResponseRedirect
+from django.shortcuts import get_object_or_404
 from django.utils.translation import gettext_lazy as _
+from django.urls import path
 from django_admin_multiple_choice_list_filter.list_filters import MultipleChoiceListFilter
 
 from mcod.lib.admin_mixins import HistoryMixin, MCODChangeList, ModelAdmin, TrashMixin, UserAdmin
+from mcod.unleash import is_enabled
 from mcod.users.forms import (
     FilteredSelectMultipleCustom,
     MeetingForm,
@@ -24,6 +28,7 @@ from mcod.users.models import (
     MeetingTrash,
     User,
 )
+from mcod.users.tasks import send_registration_email_task
 
 
 class UserChangeList(MCODChangeList):
@@ -92,6 +97,7 @@ class UserRoleListFilter(MultipleChoiceListFilter):
 class UserAdmin(HistoryMixin, AdminConfirmMixin, UserAdmin):
     add_form_template = 'admin/users/user/add_form.html'
     actions_on_top = True
+    autocomplete_fields = ['agent_organization_main']
     export_to_csv = True
     list_display = [
         'email', 'fullname', 'state_label', 'last_login', 'is_staff', 'is_official', 'is_agent', '_is_superuser',
@@ -106,6 +112,7 @@ class UserAdmin(HistoryMixin, AdminConfirmMixin, UserAdmin):
     change_password_form = AdminPasswordChangeForm
     confirm_change = True
     confirmation_fields = ['is_agent']
+    resend_registration_mail_enabled = is_enabled('S53_resend_registration_mail.be')
 
     def _change_confirmation_view(self, request, object_id, form_url, extra_context):  # noqa: C901
         to_field = request.POST.get(TO_FIELD_VAR, request.GET.get(TO_FIELD_VAR))
@@ -177,14 +184,11 @@ class UserAdmin(HistoryMixin, AdminConfirmMixin, UserAdmin):
         }
         return self.render_change_confirmation(request, context)
 
-    def get_autocomplete_fields(self, request):
-        return ['agent_organization_main']
-
     def get_changelist(self, request, **kwargs):
         return UserChangeList  # overriden to fix pagination links for multi user role filtering.
 
     def get_list_filter(self, request):
-        return['state', UserRoleListFilter]
+        return ['state', UserRoleListFilter]
 
     def formfield_for_dbfield(self, db_field, request, **kwargs):
         formfield = super().formfield_for_dbfield(db_field, request, **kwargs)
@@ -205,6 +209,8 @@ class UserAdmin(HistoryMixin, AdminConfirmMixin, UserAdmin):
                 self.admin_site,
                 can_add_related=False,
             )
+        if db_field.name == 'agent_organization_main':
+            formfield.widget.attrs['class'] = 'ignore-changes'  # prevents showing of confirmExitIfModified popup.
         return formfield
 
     def get_readonly_fields(self, request, obj=None):
@@ -216,7 +222,23 @@ class UserAdmin(HistoryMixin, AdminConfirmMixin, UserAdmin):
         self._request = request
         form = super().get_form(request, obj=obj, **kwargs)
         form.declared_fields['phone'].required = form.base_fields['fullname'].required = request.user.is_normal_staff
+        form._request_user = request.user
         return form
+
+    def send_registration_email_view(self, request, object_id, *args, **kwargs):
+        if not request.user.is_superuser:
+            raise PermissionDenied
+        user = get_object_or_404(User, id=object_id, state='pending')
+        send_registration_email_task.s(object_id).apply_async()
+        messages.info(request, 'Zadanie wysyłki wiadomości email z linkiem do aktywacji konta zostało zlecone.')
+        return HttpResponseRedirect(user.admin_change_url)
+
+    def get_urls(self):
+        urls = super().get_urls()
+        return [
+            path('<path:object_id>/send_registration_email/', self.send_registration_email_view,
+                 name='send-registration-email'),
+        ] + urls
 
     def extra_agents_list(self, obj):
         return obj.extra_agents_list or '-'

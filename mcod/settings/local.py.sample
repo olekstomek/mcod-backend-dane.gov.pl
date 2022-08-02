@@ -29,7 +29,7 @@ FIXTURE_DIRS = [
     str(ROOT_DIR('test-data/fixtures')),
 ]
 
-MEDIA_ROOT = str(ROOT_DIR('test-data/media'))
+MEDIA_ROOT = str(ROOT_DIR('media'))
 ACADEMY_MEDIA_ROOT = str(ROOT_DIR.path(MEDIA_ROOT, 'academy'))
 IMAGES_MEDIA_ROOT = str(ROOT_DIR.path(MEDIA_ROOT, 'images'))
 LABORATORY_MEDIA_ROOT = str(ROOT_DIR.path(MEDIA_ROOT, 'lab_reports'))

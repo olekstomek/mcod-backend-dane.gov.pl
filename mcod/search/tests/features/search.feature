@@ -129,3 +129,19 @@ Feature: Global Search API
     And api's response body field data/[0]/attributes/model is dataset
     And api's response body field meta/aggregations/counters/datasets is 1
     And api's response body field meta/aggregations/counters/institutions is not 0
+
+  Scenario Outline: Search returns resources with specified language in results and aggregations depending on request language
+    Given <object_type> created with params <params>
+    When api request path is <request_path>
+    Then send api request and fetch the response
+    And api's response status code is 200
+    And api's response data has length <number>
+    And api's response body has field data/[0]/attributes/language
+    And api's response body field <resp_body_field> is <resp_body_value>
+
+    Examples:
+      | object_type | params                        | request_path                                                   | number | resp_body_field                         | resp_body_value |
+      | resource    | {"id": 999, "language": "en"} | /search?language=en&id=999&facet[terms]=by_language            | 1      | meta/aggregations/by_language/[0]/title | angielski       |
+      | resource    | {"id": 999, "language": "pl"} | /search?language=pl&id=999&facet[terms]=by_language            | 1      | meta/aggregations/by_language/[0]/title | polski          |
+      | resource    | {"id": 999, "language": "en"} | /resources?language=en&id=999&facet[terms]=by_language&lang=en | 1      | meta/aggregations/by_language/[0]/title | English         |
+      | resource    | {"id": 999, "language": "pl"} | /resources?language=pl&id=999&facet[terms]=by_language&lang=en | 1      | meta/aggregations/by_language/[0]/title | Polish          |

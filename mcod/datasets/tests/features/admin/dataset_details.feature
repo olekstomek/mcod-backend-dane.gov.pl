@@ -178,3 +178,15 @@ Feature: Dataset details
     And admin's page /datasets/dataset/999/delete/ is requested
     Then admin's response status code is 200
     And datasets.Dataset with id 999 contains data {"is_promoted": false}
+
+  Scenario: Admin can add supplements to dataset
+    When admin's page /datasets/dataset/add/ is requested
+    Then admin's response page contains Pliki dokumentów mające na celu uzupełnienie danych znajdujących się w zbiorze.
+    And admin's response page contains Dodaj dokument
+
+  Scenario: Editor can add supplements to dataset
+    Given institution with id 999
+    And admin's request logged editor user created with params {"id": 999, "organizations": [999]}
+    When admin's page /datasets/dataset/add/ is requested
+    Then admin's response page contains Pliki dokumentów mające na celu uzupełnienie danych znajdujących się w zbiorze.
+    And admin's response page contains Dodaj dokument

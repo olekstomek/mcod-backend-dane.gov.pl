@@ -125,3 +125,32 @@ Feature: User Admin
     Then admin's response status code is 200
     And admin's response page contains został pomyślnie zmieniony.
     And user with id 987 attribute is_agent is True
+
+  Scenario: Send registration mail link is displayed in pending user form for admin
+    Given pending user for data {"id": 999, "email": "SendRegistrationMailUser@dane.gov.pl", "password": "12345.Abcde"}
+    When admin's page /users/user/999/change/ is requested
+    Then admin's response status code is 200
+    And admin's response page contains Wyślij ponownie email z linkiem do aktywacji konta
+
+  Scenario: Send registration mail link is not displayed in active user form for admin
+    Given active user for data {"id": 999, "email": "SendRegistrationMailUser@dane.gov.pl", "password": "12345.Abcde"}
+    When admin's page /users/user/999/change/ is requested
+    Then admin's response status code is 200
+    And admin's response page not contains Wyślij ponownie email z linkiem do aktywacji konta
+
+  Scenario: Send registration mail link works properly for admin
+    Given pending user for data {"id": 999, "email": "SendRegistrationMailUser@dane.gov.pl", "password": "12345.Abcde"}
+    When admin's page /users/user/999/send_registration_email/ is requested
+    Then admin's response status code is 200
+    And admin's response page contains Zadanie wysyłki wiadomości email z linkiem do aktywacji konta zostało zlecone.
+
+  Scenario: Send registration mail link is not working for non admin
+    Given pending user for data {"id": 999, "email": "SendRegistrationMailUser@dane.gov.pl", "password": "12345.Abcde"}
+    And admin's request logged user is editor user
+    When admin's page /users/user/999/send_registration_email/ is requested
+    Then admin's response status code is 403
+
+  Scenario: Send registration mail link is not working if invalid id is used (99999)
+    Given pending user for data {"id": 999, "email": "SendRegistrationMailUser@dane.gov.pl", "password": "12345.Abcde"}
+    When admin's page /users/user/99999/send_registration_email/ is requested
+    Then admin's response status code is 404

@@ -479,7 +479,10 @@ p.irreversible-deletion-warning {
 }
 /*/ FORMS */
 
-
+#user_form input[type="email"]:read-only, #user_form input[type="password"]:read-only {
+	cursor: text;
+	background-color: #fff;
+}
 
 /* TABS */
 .od2021 ul.nav-tabs {

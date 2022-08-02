@@ -30,6 +30,19 @@ from mcod.unleash import is_enabled
 from mcod.watchers.serializers import SubscriptionMixin
 
 
+class LanguageAggregation(ExtSchema):
+    id = fields.String(attribute='key')
+    title = fields.String()
+    doc_count = fields.Integer()
+
+    @ma.pre_dump
+    def prepare_data(self, data, **kwargs):
+        request = self.context.get('request')
+        title = Resource.LANGUAGE_NAMES.get(data.key)
+        data['title'] = title.capitalize() if request.language == 'en' else title
+        return data
+
+
 class ResourceApiRelationships(Relationships):
     dataset = fields.Nested(
         Relationship,
@@ -74,6 +87,14 @@ class ResourceApiRelationships(Relationships):
         attribute="chartable",
         url_template='{api_url}/resources/{ident}/chart'
     )
+    if is_enabled('S53_resource_language.be'):
+        related_resource = fields.Nested(
+            Relationship,
+            many=False,
+            _type='resource',
+            url_template='{api_url}/resources/{ident}',
+            attribute='related_resource_published',
+        )
 
 
 class SpecialSignSchema(ExtSchema):
@@ -133,6 +154,8 @@ class ResourceApiAttrs(ObjectAttrs, HighlightObjectMixin):
     files = fields.Method('get_files')
     if is_enabled('S48_resource_supplements.be'):
         supplement_docs = fields.Nested(SupplementSchema, data_key='supplements', many=True)
+    if is_enabled('S53_resource_language.be'):
+        language = fields.Str()
 
     class Meta:
         relationships_schema = ResourceApiRelationships
@@ -184,6 +207,12 @@ class ResourceApiAggregations(ExtSchema):
         many=True,
         attribute='_filter_by_visualization_type.by_visualization_type.buckets'
     )
+    if is_enabled('S53_resource_language.be'):
+        by_language = fields.Nested(
+            LanguageAggregation,
+            many=True,
+            attribute='_filter_by_language.by_language.buckets'
+        )
 
 
 class ResourceApiResponse(SubscriptionMixin, TopLevel):
