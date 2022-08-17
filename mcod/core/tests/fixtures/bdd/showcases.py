@@ -2,6 +2,7 @@ import pytest
 from django.apps import apps
 from pytest_bdd import given, parsers, then, when
 
+from mcod.core.tests.helpers.tasks import run_on_commit_events
 from mcod.datasets.factories import DatasetFactory
 from mcod.resources.factories import ResourceFactory
 from mcod.showcases.factories import ShowcaseFactory
@@ -9,7 +10,9 @@ from mcod.showcases.factories import ShowcaseFactory
 
 @pytest.fixture
 def showcase():
-    return ShowcaseFactory.create()
+    showcase = ShowcaseFactory.create()
+    run_on_commit_events()
+    return showcase
 
 
 @given('showcase')

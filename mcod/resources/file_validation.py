@@ -13,6 +13,7 @@ from mcod.resources.archives import (
 )
 from mcod.resources.geo import analyze_shapefile, are_shapefiles, check_geodata, has_geotiff_files
 from mcod.resources.meteo import check_meteo_data
+from mcod.unleash import is_enabled
 
 logger = logging.getLogger('mcod')
 
@@ -100,14 +101,9 @@ def _analyze_office_file(path, encoding, content_type, extension):
 
 
 def file_format_from_content_type(content_type, family=None, extension=None):
-    if family:
-        results = list(filter(
-            lambda x: x[0] == family and x[1] == content_type,
-            settings.SUPPORTED_CONTENT_TYPES))
-    else:
-        results = list(filter(
-            lambda x: x[1] == content_type,
-            settings.SUPPORTED_CONTENT_TYPES))
+    items = settings.CONTENT_TYPE_TO_EXTENSION_MAP
+    results = list(filter(
+        lambda x: x[0] == family and x[1] == content_type if family else x[1] == content_type, items))
 
     if not results:
         return None
@@ -147,28 +143,61 @@ def analyze_file(path):  # noqa: C901
     logger.debug(f"analyze_resource_file({path})")
     family, content_type, options = get_file_info(path)
     extracted = None
-    analyze_exc = None
+    extracted_extension = None
+    extracted_mimetype = None
+    extracted_encoding = None
+    is_password_protected_archive = False
     if is_archive_file(content_type):
         with open(path, 'rb') as file:
             if is_password_protected_archive_file(file):
                 logger.debug(f"  password protected file {path}")
-                raise PasswordProtectedArchiveError()
+                is_password_protected_archive = True
 
-        extracted = ArchiveReader(path)
-        if len(extracted) == 1:
-            path = extracted[0]
-            family, content_type, options = get_file_info(path)
-            logger.debug(f"  extracted file {path}")
-        else:
-            if are_shapefiles(extracted):
-                shp_type, options = analyze_shapefile(extracted)
-                content_type = 'shapefile'
-            elif has_geotiff_files(extracted):
-                family = 'image'
-                content_type = 'tiff;application=geotiff'
+        if not is_password_protected_archive:
+            extracted = ArchiveReader(path)
+            if len(extracted) == 1:
+                extracted_path = extracted[0]
+                extracted_family, extracted_content_type, extracted_options = get_file_info(extracted_path)
+                if is_enabled('S55_separate_extracted_file_format.be'):
+                    logger.debug(f"  extracted file {extracted_path}")
+                    extracted_extension, _, extracted_encoding, _, extracted_mimetype, _ = evaluate_file_details(
+                        extracted_content_type, extracted_family, extracted_options, extracted_path, bool(extracted)
+                    )
+                    logger.debug(f'  extracted extension: {extracted_extension}')
+                    logger.debug(f'  extracted mimetype: {extracted_mimetype}')
+                else:
+                    path = extracted_path
+                    family = extracted_family
+                    content_type = extracted_content_type
+                    options = extracted_options
+            else:
+                if are_shapefiles(extracted):
+                    shp_type, options = analyze_shapefile(extracted)
+                    content_type = 'shapefile'
+                elif has_geotiff_files(extracted):
+                    family = 'image'
+                    content_type = 'tiff;application=geotiff'
 
+    extension, file_info, encoding, path, file_mimetype, analyze_exc = evaluate_file_details(
+        content_type, family, options, path, bool(extracted)
+    )
+
+    if is_password_protected_archive and not analyze_exc:
+        analyze_exc = PasswordProtectedArchiveError()
+
+    logger.debug(f'  finally: extension = {extension}, file_info = {file_info}, encoding = {encoding}')
+
+    if extracted:
+        extracted.cleanup()
+
+    return extension, file_info, encoding, path, file_mimetype, analyze_exc,\
+        extracted_extension, extracted_mimetype, extracted_encoding
+
+
+def evaluate_file_details(content_type, family, options, path, is_extracted):
+    analyze_exc = None
     try:
-        content_type, family = check_geodata(path, content_type, family, is_extracted=bool(extracted))
+        content_type, family = check_geodata(path, content_type, family, is_extracted=is_extracted)
     except Exception as exc:
         analyze_exc = Exception(
             [{'code': 'geodata-error', 'message': 'Błąd podczas analizy pliku: {}.'.format(exc.message)}])
@@ -180,7 +209,7 @@ def analyze_file(path):  # noqa: C901
     encoding = options.get('charset', 'unknown')
     logger.debug(f"  encoding: {encoding}")
 
-    extension = file_format_from_content_type(content_type, family=family, extension=None) or path.rsplit('.')[-1]
+    extension = file_format_from_content_type(content_type, family=family) or path.rsplit('.')[-1]
 
     logger.debug(f"  extension: {extension}")
 
@@ -189,10 +218,4 @@ def analyze_file(path):  # noqa: C901
 
     if _is_office_file(extension, content_type):
         extension, encoding = _analyze_office_file(path, encoding, content_type, extension)
-
-    logger.debug(f'  finally: extension = {extension}, file_info = {file_info}, encoding = {encoding}')
-
-    if extracted:
-        extracted.cleanup()
-
     return extension, file_info, encoding, path, file_mimetype, analyze_exc

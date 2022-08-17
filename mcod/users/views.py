@@ -16,7 +16,7 @@ from django.utils.translation import gettext_lazy as _
 
 from mcod.academy.models import Course
 from mcod.core.api.handlers import CreateOneHdlr, RetrieveOneHdlr, SearchHdlr, UpdateOneHdlr
-from mcod.core.api.hooks import login_required
+from mcod.core.api.hooks import login_required, get_expired_token_description, get_user_pending_description
 from mcod.core.api.views import JsonAPIView
 from mcod.core.versioning import versioned
 from mcod.laboratory.models import LabEvent
@@ -26,6 +26,7 @@ from mcod.lib.triggers import session_store
 from mcod.schedules.models import Schedule
 from mcod.suggestions.models import AcceptedDatasetSubmission
 from mcod.tools.api.dashboard import DashboardMetaSerializer, DashboardSerializer
+from mcod.unleash import is_enabled
 from mcod.users.deserializers import (
     ChangePasswordApiRequest,
     ConfirmResetPasswordApiRequest,
@@ -96,7 +97,7 @@ class LoginView(JsonAPIView):
                 if user.state == 'pending':
                     raise falcon.HTTPForbidden(
                         title='403 Forbidden',
-                        description=_('Email address not confirmed'),
+                        description=get_user_pending_description(),
                         code='account_inactive'
                     )
 
@@ -439,6 +440,7 @@ class VerifyEmailView(JsonAPIView):
     class GET(RetrieveOneHdlr):
         database_model = get_user_model()
         serializer_schema = VerifyEmailApiResponse
+        S53_resend_registration_mail = is_enabled('S53_resend_registration_mail.be')
 
         def clean(self, token, *args, **kwargs):
             try:
@@ -448,11 +450,11 @@ class VerifyEmailView(JsonAPIView):
 
             if not token.is_valid:
                 raise falcon.HTTPBadRequest(
-                    description=_('Expired token'),
+                    description=get_expired_token_description(),
                     code='expired_token'
                 )
 
-            if not token.user.email_confirmed:
+            if self.S53_resend_registration_mail or not token.user.email_confirmed:
                 token.user.state = 'active' if token.user.state == 'pending' else token.user.state
                 token.user.email_confirmed = timezone.now()
                 token.user.save()

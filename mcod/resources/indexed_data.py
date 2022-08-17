@@ -28,6 +28,7 @@ from mcod.resources.geo import (
 )
 from mcod.resources.goodtables_checks import ZERO_DATA_ROWS
 from mcod.resources.type_guess import Table
+from mcod.unleash import is_enabled
 
 es_connections = Connections()
 es_connections.configure(**settings.ELASTICSEARCH_DSL)
@@ -482,6 +483,18 @@ class TabularData(IndexedData):
         fields = self.schema['fields']
         return len(fields) > 1 and any((field['type'] in ('number', 'integer') for field in fields))
 
+    @property
+    def resource_format(self):
+        compressed_format = self.resource.main_file_compressed_format
+        return compressed_format if is_enabled('S55_separate_extracted_file_format.be') and\
+                                    compressed_format else self.resource.format
+
+    @property
+    def resource_encoding(self):
+        compressed_encoding = self.resource.main_file_compressed_encoding
+        return compressed_encoding if is_enabled('S55_separate_extracted_file_format.be') and\
+                                      compressed_encoding else self.resource.main_file_encoding
+
     def prepare_doc(self):
         _fields, _map = {}, {}
         for idx, _f in enumerate(self.schema['fields'], 1):
@@ -558,13 +571,13 @@ class TabularData(IndexedData):
         if not self.resource.main_file:
             raise ValidationError(_('File does not exist'))
 
-        if self.resource.format not in ('csv', 'tsv', 'xls', 'xlsx', 'ods'):
+        if not self.resource.has_tabular_format():
             raise ValidationError(_('Invalid file type'))
 
         _table = Table(self.resource.file_data_path,
                        ignore_blank_headers=True,
-                       format=self.resource.format,
-                       encoding=self.resource.main_file_encoding or 'utf-8',
+                       format=self.resource_format,
+                       encoding=self.resource_encoding or 'utf-8',
                        skip_rows={'type': 'preset', 'value': 'blank'})
         _schema = _table.infer(limit=5000, missing_values=self.missing_values)
         [x.update({'type': 'string'}) for x in _schema['fields'] if x['type'] in ['geopoint', 'missing']]
@@ -576,7 +589,7 @@ class TabularData(IndexedData):
         if not self.resource.main_file:
             raise ValidationError(_('File does not exist'))
 
-        if self.resource.format not in ('csv', 'tsv', 'xls', 'xlsx', 'ods'):
+        if not self.resource.has_tabular_format():
             raise ValidationError(_('Invalid file type'))
 
         if not self._schema_cache:
@@ -592,9 +605,9 @@ class TabularData(IndexedData):
             checks=['structure', 'schema', ZERO_DATA_ROWS],
             skip_checks=['extra-header', 'blank-header', 'blank-row', 'duplicate-row'],
             error_limit=10,
-            format=self.resource.format,
+            format=self.resource_format,
             preset='table',
-            encoding=self.resource.main_file_encoding,
+            encoding=self.resource_encoding,
             skip_rows={'type': 'preset', 'value': 'blank'},
         )
         if self.resource.tabular_data_schema:
@@ -618,8 +631,8 @@ class TabularData(IndexedData):
             self._table_cache = Table(self.resource.file_data_path,
                                       ignore_blank_headers=True,
                                       schema=self.schema or None,
-                                      format=self.resource.format,
-                                      encoding=self.resource.main_file_encoding or 'utf-8')
+                                      format=self.resource_format,
+                                      encoding=self.resource_encoding or 'utf-8')
         return self._table_cache
 
     @staticmethod

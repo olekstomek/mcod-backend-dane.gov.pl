@@ -34,6 +34,7 @@ from mcod.pn_apps.utils import (
     reformat_time_period,
 )
 from mcod.pn_apps.widgets import BootstrapTableTemplate, TabbedBootstrapTableTemplate
+from mcod.unleash import is_enabled
 
 q_log = logging.getLogger('stats-queries')
 profile_log = logging.getLogger('stats-profile')
@@ -334,25 +335,26 @@ class StatsPanel(param.Parameterized):
         }
         if self.agent_type and self.agent_type.is_mobile:
             del fav_chart_kwargs['css_classes']
-        col = pn.Column(
-            pn.pane.HTML(
-                f'<h2 class="heading heading--sm heading--separator">{self.name}</>',
-                sizing_mode='stretch_width'
-            ),
-
+        default_kwargs = {
+            'sizing_mode': 'stretch_both',
+            'width_policy': 'max',
+            'height_policy': 'max',
+            'css_classes': ['stat-container'],
+            'margin': (24, 0)
+        }
+        default_args = [
             pn.Row(
                 _("**Add to dashboard:**"),
                 self.fav_chart_1_widget,
                 self.fav_chart_2_widget,
                 **fav_chart_kwargs
             ),
-
             pn.Column(pn.panel(
                 self.param,
                 show_name=False,
                 show_labels=False,
                 sizing_mode='stretch_both',
-                ** kwargs
+                **kwargs
             ),
                 sizing_mode='stretch_width',
                 width_policy='max',
@@ -370,12 +372,32 @@ class StatsPanel(param.Parameterized):
                 ),
             ),
             pn.Column(self.toggle_widget, margin=(12, 0, 0, 0)),
-            self.table,
-            margin=(24, 0),
-            sizing_mode='stretch_both',
-            width_policy='max',
-            height_policy='max',
-            css_classes=['stat-container'],
+            self.table
+        ]
+        if is_enabled('S55_stats_accordion.be'):
+            pn_component = pn.Card
+            default_kwargs.update({
+                'header': pn.pane.HTML(
+                    f'<h2 class="heading heading--sm">{self.name}</>',
+                    sizing_mode='stretch_width',
+                    style={'text-align': 'left', 'margin-top': '18px'},
+                ),
+                'margin': (6, 0),
+                'header_background': '#fff',
+                'collapsed': True,
+                'button_css_classes': ['stats-card-button']
+            })
+        else:
+            pn_component = pn.Column
+            default_args = [
+                pn.pane.HTML(
+                    f'<h2 class="heading heading--sm heading--separator">{self.name}</>',
+                    sizing_mode='stretch_width'
+                )
+            ] + default_args
+        col = pn_component(
+            *default_args,
+            **default_kwargs
         )
         end = time()
         total = end - start

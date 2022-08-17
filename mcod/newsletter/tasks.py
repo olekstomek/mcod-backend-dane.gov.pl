@@ -1,12 +1,13 @@
 import logging
 
-from celery import shared_task
 from django.apps import apps
+
+from mcod.core.tasks import extended_shared_task
 
 logger = logging.getLogger('mcod')
 
 
-@shared_task
+@extended_shared_task
 def remove_inactive_subscription(obj_id):
     subscription_model = apps.get_model('newsletter.Subscription')
     objs = subscription_model.objects.filter(id=obj_id, is_active=False)
@@ -17,7 +18,7 @@ def remove_inactive_subscription(obj_id):
     return {}
 
 
-@shared_task
+@extended_shared_task
 def send_newsletter_mail(newsletter_id, subscription_id, html_message):
     submission_model = apps.get_model('newsletter.Submission')
     obj, created = submission_model.objects.update_or_create(
@@ -30,7 +31,7 @@ def send_newsletter_mail(newsletter_id, subscription_id, html_message):
     return {}
 
 
-@shared_task
+@extended_shared_task
 def send_subscription_confirm_mail(obj_id):
     subscription_model = apps.get_model('newsletter.Subscription')
     obj = subscription_model.objects.filter(id=obj_id).first()
@@ -44,7 +45,7 @@ def send_subscription_confirm_mail(obj_id):
         return {}
 
 
-@shared_task
+@extended_shared_task
 def send_newsletter():
     newsletter_model = apps.get_model('newsletter.Newsletter')
     for newsletter in newsletter_model.objects.to_send_today():

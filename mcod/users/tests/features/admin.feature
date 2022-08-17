@@ -130,13 +130,13 @@ Feature: User Admin
     Given pending user for data {"id": 999, "email": "SendRegistrationMailUser@dane.gov.pl", "password": "12345.Abcde"}
     When admin's page /users/user/999/change/ is requested
     Then admin's response status code is 200
-    And admin's response page contains Wyślij ponownie email z linkiem do aktywacji konta
+    And admin's response page contains Wyślij ponownie link do aktywacji konta
 
   Scenario: Send registration mail link is not displayed in active user form for admin
     Given active user for data {"id": 999, "email": "SendRegistrationMailUser@dane.gov.pl", "password": "12345.Abcde"}
     When admin's page /users/user/999/change/ is requested
     Then admin's response status code is 200
-    And admin's response page not contains Wyślij ponownie email z linkiem do aktywacji konta
+    And admin's response page not contains Wyślij ponownie link do aktywacji konta
 
   Scenario: Send registration mail link works properly for admin
     Given pending user for data {"id": 999, "email": "SendRegistrationMailUser@dane.gov.pl", "password": "12345.Abcde"}

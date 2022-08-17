@@ -693,7 +693,7 @@ CKEDITOR_CONFIGS = {
 
 CKEDITOR_ALLOW_NONIMAGE_FILES = True
 
-TOKEN_EXPIRATION_TIME = 24  # In hours
+TOKEN_EXPIRATION_TIME = env('TOKEN_EXPIRATION_TIME', default=72)  # In hours
 
 PER_PAGE_LIMIT = 200
 PER_PAGE_DEFAULT = 20
@@ -1163,6 +1163,9 @@ SUPPORTED_CONTENT_TYPES = [
     ('application', 'trix', ('trix',), 4, {5}),
     ('application', 'trig', ('trig',), 4, {5}),
 ]
+
+CONTENT_TYPE_TO_EXTENSION_MAP = [(x[0], x[1], x[2]) for x in SUPPORTED_CONTENT_TYPES]
+CONTENT_TYPE_TO_EXTENSION_MAP.extend([('application', 'zip', ('zip',))])
 
 ARCHIVE_RAR_CONTENT_TYPES = {
     'rar',

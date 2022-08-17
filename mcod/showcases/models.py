@@ -362,7 +362,7 @@ class ShowcaseProposal(ShowcaseMixin):
         obj = cls.objects.create(**data)
         if datasets_ids:
             obj.datasets.set(datasets_ids)
-        send_showcase_proposal_mail_task.s(obj.id).apply_async(countdown=1)
+        send_showcase_proposal_mail_task.s(obj.id).apply_async_on_commit(countdown=1)
         return obj
 
     @classmethod
@@ -575,7 +575,7 @@ def regenerate_thumbnail(sender, instance, *args, **kwargs):
     sender.log_debug(instance, 'Regenerating thumbnail ', 'generate_thumbnail')
     if any([instance.tracker.has_changed('image'),
             instance.tracker.has_changed('status') and instance.status == instance.STATUS.published]):
-        generate_logo_thumbnail_task.s(instance.id).apply_async(countdown=1)
+        generate_logo_thumbnail_task.s(instance.id).apply_async_on_commit(countdown=1)
     else:
         search_signals.update_document.send(sender, instance)
 

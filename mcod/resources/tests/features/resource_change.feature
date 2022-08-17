@@ -33,14 +33,24 @@ Feature: Change resource in admin panel
     And resource with id 987 has periodic task with crontab schedule
 
   @periodic_task
+  Scenario: Auto data date without end date can be set on resource with type website
+    Given dataset with id 990
+    And resource of type website with id 988
+    When admin's request method is POST
+    And admin's request posted resource data is {"title": "test", "description": "more than 20 characters", "dataset": 990, "status": "published", "is_auto_data_date": "True", "data_date": "22.05.2022", "automatic_data_date_start": "22.05.2022", "data_date_update_period": "weekly", "endless_data_date_update": "True"}
+    And admin's page /resources/resource/988/change/ is requested
+    Then admin's response status code is 200
+    And resource with id 988 has periodic task with interval schedule
+
+  @periodic_task
   Scenario: Data date update can be canceled by is manual data date checkbox
     Given dataset with id 990
-    And resource with id 995 and status published and data date update periodic task with interval schedule
+    And resource with status published and data date update periodic task with interval schedule
     When admin's request method is POST
     And admin's request posted resource data is {"title": "test", "description": "more than 20 characters", "dataset": 990, "status": "published", "is_auto_data_date": "False", "data_date": "22.05.2022", "automatic_data_date_start": "22.05.2022", "data_date_update_period": "monthly", "endless_data_date_update": "True"}
-    And admin's page /resources/resource/995/change/ is requested
+    And 'mcod.resources.admin.ResourceAdmin' edition page is requested for created object
     Then admin's response status code is 200
-    And resource with id 995 has no data date periodic task
+    And created resource has no data date periodic task
 
   @periodic_task
   Scenario: Data date update can be canceled by setting status to draft
@@ -55,20 +65,32 @@ Feature: Change resource in admin panel
   @periodic_task
   Scenario: Data date update task can be changed from interval to crontab schedule
     Given dataset with id 990
-    And resource with id 997 and status published and data date update periodic task with interval schedule
+    And resource with status published and data date update periodic task with interval schedule
     When admin's request method is POST
     And admin's request posted resource data is {"title": "test", "description": "more than 20 characters", "dataset": 990, "status": "published", "is_auto_data_date": "True", "data_date": "22.05.2022", "automatic_data_date_start": "22.05.2022", "data_date_update_period": "monthly", "endless_data_date_update": "True"}
-    And admin's page /resources/resource/997/change/ is requested
+    And 'mcod.resources.admin.ResourceAdmin' edition page is requested for created object
     Then admin's response status code is 200
-    And resource with id 997 has periodic task with crontab schedule
+    And created resource has periodic task with crontab schedule
 
   @periodic_task
   Scenario: Auto data date with end date can be set on resource with remote file
     Given dataset with id 990
     And remote file resource with id 1001
+    And update link of remote file resource with id '1001'
     When admin's request method is POST
     And admin's request posted resource data is {"title": "test remote file", "description": "more than 20 characters", "dataset": 990, "status": "published", "is_auto_data_date": "True", "data_date": "22.05.2022","automatic_data_date_start": "22.05.2022", "data_date_update_period": "daily", "automatic_data_date_end": "24.05.2022"}
     And admin's page /resources/resource/1001/change/ is requested
     Then admin's response status code is 200
     And resource with id 1001 has periodic task with interval schedule
     And Periodic task for resource with id 1001 has last_run_at attr set
+
+  @periodic_task
+  Scenario: End of month data date update correctly updates next scheduled update date
+    Given dataset with id 990
+    And draft remote file resource of api type with id 986
+    When admin's request method is POST
+    And admin's request posted resource data is {"title": "test", "description": "more than 20 characters", "dataset": 990, "status": "published", "is_auto_data_date": "True", "data_date": "31.05.2022", "automatic_data_date_start": "31.05.2022", "data_date_update_period": "monthly", "endless_data_date_update": "True"}
+    And admin's page /resources/resource/986/change/ is requested
+    Then admin's response status code is 200
+    And resource with id 986 has periodic task with crontab schedule
+    And crontab schedule for resource with id 986 has current month last day set up as run date

@@ -32,6 +32,7 @@ Feature: Registration
     And api's response body field data/attributes has no fields password1,password2,phone,phone_internal
     And sent email recipient is tester2@mc.gov.pl
     And valid confirmation link for tester2@mc.gov.pl in mail content
+    And sent email contains Link jest ważny przez 72 godziny.
 
     Examples:
     | request_path           | req_post_data                                                                                                                                             |

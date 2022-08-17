@@ -3,6 +3,7 @@ from django.conf import settings
 from django.db.models import Count, Manager, Prefetch, Q
 
 from mcod.core.managers import RawManager, SoftDeletableManager, SoftDeletableQuerySet
+from mcod.unleash import is_enabled
 
 
 class ChartQuerySet(SoftDeletableQuerySet):
@@ -62,6 +63,9 @@ class SoftDeletableMetadataQuerySet(PrefetchResourceFilesMixin, SoftDeletableQue
         queryset = self.filter(**kwargs)
         return queryset.exclude(id=resource_id) if resource_id else queryset
 
+    def confirm_delete_items(self, limit=10):
+        return self.order_by('title')[:limit]
+
     def with_metadata(self):
         tag_model = apps.get_model('tags', 'Tag')
         res_filter = Q(dataset__resources__status='published', dataset__resources__is_removed=False,
@@ -95,7 +99,11 @@ class SoftDeletableMetadataQuerySet(PrefetchResourceFilesMixin, SoftDeletableQue
         return self.by_formats(formats).filter(**query)
 
     def by_formats(self, formats):
-        return self.filter(files__isnull=False, format__in=formats).distinct()
+        f_q = Q(format__in=formats)
+        if is_enabled('S55_separate_extracted_file_format.be'):
+            f_q = (f_q | Q(files__is_main=True, files__compressed_file_format__in=formats))
+        q = Q(files__isnull=False) & f_q
+        return self.filter(q).distinct()
 
     def published(self):
         return self.filter(status='published')
@@ -153,6 +161,9 @@ class ResourceManager(SoftDeletableManager):
 
     def file_details_list(self, dataset_id):
         return self.get_queryset().file_details_list(dataset_id)
+
+    def confirm_delete_items(self, limit=10):
+        return self.get_queryset().confirm_delete_items(limit=limit)
 
 
 class ResourceRawManager(PrefetchResourceFilesMixin, RawManager):

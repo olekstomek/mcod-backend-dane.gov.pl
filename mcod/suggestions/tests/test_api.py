@@ -2,6 +2,7 @@ import pytest
 from falcon import HTTP_NOT_FOUND, HTTP_OK
 from pytest_bdd import scenarios
 
+from mcod.core.tests.helpers.tasks import run_on_commit_events
 from mcod.suggestions.tasks import deactivate_accepted_dataset_submissions, send_data_suggestion
 
 scenarios(
@@ -13,6 +14,7 @@ scenarios(
 @pytest.mark.elasticsearch
 def test_only_published_accepted_submission_in_public_list_view(
         public_accepted_dataset_submission, accepted_dataset_submission, client14):
+    run_on_commit_events()
     resp = client14.simulate_get('/submissions/accepted/public')
     assert HTTP_OK == resp.status
     assert len(resp.json['data']) == 1

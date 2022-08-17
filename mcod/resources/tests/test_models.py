@@ -1,10 +1,10 @@
-from datetime import date
-
 import pytest
 from celery import states
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
+from django.utils import timezone
 
+from mcod.core.tests.helpers.tasks import run_on_commit_events
 from mcod.resources.models import Chart, Resource, TaskResult, update_resource
 
 
@@ -79,20 +79,20 @@ class TestResourceModel:
         with pytest.raises(ObjectDoesNotExist):
             Resource.trash.get(id=resource.id)
 
-    def test_file_url_and_path(self, resource, mocker, django_capture_on_commit_callbacks):
-        with django_capture_on_commit_callbacks(execute=True):
-            mocker.patch('mcod.resources.link_validation.download_file', return_value=('file', {}))
-            resource = Resource.objects.get(pk=resource.pk)
-            assert resource.main_file
-            date_folder = date.today().isoformat().replace('-', '')
-            file_name = resource.main_file.name
-            assert resource.main_file.url == f"/media/resources/{file_name}"
-            assert resource.main_file.path == f"{settings.RESOURCES_MEDIA_ROOT}/{file_name}"
-            assert date_folder in resource.main_file.url
-            assert date_folder in resource.main_file.path
-            k = len(TaskResult.objects.all())
-            assert k > 0
-            resource.revalidate()
+    def test_file_url_and_path(self, resource, mocker):
+        mocker.patch('mcod.resources.link_validation.download_file', return_value=('file', {}))
+        resource = Resource.objects.get(pk=resource.pk)
+        assert resource.main_file
+        date_folder = timezone.now().date().isoformat().replace('-', '')
+        file_name = resource.main_file.name
+        assert resource.main_file.url == f"/media/resources/{file_name}"
+        assert resource.main_file.path == f"{settings.RESOURCES_MEDIA_ROOT}/{file_name}"
+        assert date_folder in resource.main_file.url
+        assert date_folder in resource.main_file.path
+        k = len(TaskResult.objects.all())
+        assert k > 0
+        resource.revalidate()
+        run_on_commit_events()
         assert len(TaskResult.objects.all()) > k
 
     def test_update_resource_sets_has_map_attribute_if_geo_data_available(

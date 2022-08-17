@@ -1,13 +1,13 @@
 from urllib.parse import parse_qs, urlparse
 
-from celery import shared_task
 from django_redis import get_redis_connection
 
+from mcod.core.tasks import extended_shared_task
 from mcod.searchhistories.models import SearchHistory
 from mcod.users.models import User
 
 
-@shared_task
+@extended_shared_task
 def save_searchhistories_task():
     key_pattern = "search_history_user_*"
 

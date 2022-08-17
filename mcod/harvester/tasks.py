@@ -1,11 +1,11 @@
 import logging
 import time
 
-from celery import shared_task
 from celery_progress.backend import ProgressRecorder
 from django.apps import apps
 from django.utils.translation import gettext_lazy as _
 
+from mcod.core.tasks import extended_shared_task
 from mcod.harvester.utils import (
     check_content_type,
     check_xml_filename,
@@ -19,7 +19,7 @@ from mcod.harvester.utils import (
 logger = logging.getLogger('mcod')
 
 
-@shared_task
+@extended_shared_task
 def import_data_task(obj_id, force=False):
     data_source_model = apps.get_model('harvester.DataSource')
     obj = data_source_model.objects.active().filter(id=obj_id).first()
@@ -28,7 +28,7 @@ def import_data_task(obj_id, force=False):
     return {}
 
 
-@shared_task
+@extended_shared_task
 def harvester_supervisor():
     data_source_model = apps.get_model('harvester.DataSource')
     for obj in data_source_model.objects.active():
@@ -38,7 +38,7 @@ def harvester_supervisor():
     return {}
 
 
-@shared_task(bind=True, ignore_result=False)
+@extended_shared_task(bind=True, ignore_result=False)
 def validate_xml_url_task(self, url):
     progress_recorder = ProgressRecorder(self)
 

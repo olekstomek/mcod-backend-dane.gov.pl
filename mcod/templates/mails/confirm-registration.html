@@ -46,6 +46,11 @@
                         {{ link }}
                     </a>
                 </p>
+            {% if limit %}
+                <p style="text-align:left;font-family: Open Sans Light , Arial, Helvetica, sans-serif;text-decoration:none solid rgb(102, 102, 102);color:rgb(102, 102, 102);line-height:140%;display: block !important;">
+                    {% blocktrans %}The link is valid for {{ limit }} hours.{% endblocktrans %}
+                </p>
+            {% endif %}
             </td>
         </tr>
 

@@ -1,13 +1,14 @@
 from datetime import date
 
 import pytz
-from celery import shared_task
 from django.apps import apps
 from django.contrib.auth import get_user_model
 from django.utils.timezone import datetime, timedelta
 
+from mcod.core.tasks import extended_shared_task
 
-@shared_task
+
+@extended_shared_task
 def update_model_watcher_task(app_name, model_name, instance_id, obj_state='updated'):
     from mcod.watchers.models import OBJ_STATE_2_NOTIFICATION_TYPES
     ModelWatcher = apps.get_model('watchers', 'ModelWatcher')
@@ -36,7 +37,7 @@ def update_model_watcher_task(app_name, model_name, instance_id, obj_state='upda
         return {}
 
 
-@shared_task
+@extended_shared_task
 def remove_user_notifications_task(user_id, data):
     Notification = apps.get_model('watchers', 'Notification')
     qs = Notification.objects.filter(subscription__user_id=user_id)
@@ -47,7 +48,7 @@ def remove_user_notifications_task(user_id, data):
     return {}
 
 
-@shared_task
+@extended_shared_task
 def update_notifications_task(user_id, data):
     Notification = apps.get_model('watchers', 'Notification')
     qs = Notification.objects.filter(subscription__user_id=user_id)
@@ -57,7 +58,7 @@ def update_notifications_task(user_id, data):
     return {}
 
 
-@shared_task
+@extended_shared_task
 def update_notifications_status_task(user_id, status='read'):
     Notification = apps.get_model('watchers', 'Notification')
     _status = 'new' if status == 'read' else 'read'
@@ -66,7 +67,7 @@ def update_notifications_status_task(user_id, status='read'):
     return {}
 
 
-@shared_task
+@extended_shared_task
 def model_watcher_updated_task(watcher_id, notification_type, prev_value):
     ModelWatcher = apps.get_model('watchers', 'ModelWatcher')
     Notification = apps.get_model('watchers', 'Notification')
@@ -81,14 +82,14 @@ def model_watcher_updated_task(watcher_id, notification_type, prev_value):
     return {}
 
 
-@shared_task
+@extended_shared_task
 def update_query_watchers_task():
     SearchQueryWatcher = apps.get_model('watchers', 'SearchQueryWatcher')
     SearchQueryWatcher.objects.reload()
     return {}
 
 
-@shared_task
+@extended_shared_task
 def query_watcher_updated_task(watcher_id, notification_type, prev_value):
     SearchQueryWatcher = apps.get_model('watchers', 'SearchQueryWatcher')
     Notification = apps.get_model('watchers', 'Notification')
@@ -102,7 +103,7 @@ def query_watcher_updated_task(watcher_id, notification_type, prev_value):
     return {}
 
 
-@shared_task
+@extended_shared_task
 def send_report_from_subscriptions():
     User = get_user_model()
     date_till = datetime.combine(date.today(), datetime.min.time()).replace(tzinfo=pytz.utc)

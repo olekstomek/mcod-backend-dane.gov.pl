@@ -1,5 +1,5 @@
-{% load static %}
-
+{% load static core_tags %}
+{% is_unleash_enabled "S55_stats_accordion.be" as S55_stats_accordion %}
 {% block doc %}
 <!doctype html>
 <html lang="pl">
@@ -19,9 +19,16 @@
     <link href="https://unpkg.com/bootstrap-table@1.18.0/dist/bootstrap-table.min.css" rel="stylesheet">
 
     <style>
-        body {
+        {% if S55_stats_accordion %}
+        body#stats {
+            background-color: #f9f9f9;
+            overflow-y: auto;
+        }
+        {% else %}
+         body {
             background-color: #f9f9f9;
         }
+        {% endif %}
 
         #stats .bk-root {
             font-family: inherit;
@@ -117,6 +124,23 @@
         .bk-tooltip-row-label {
            white-space: nowrap !important;
         }
+        {% if S55_stats_accordion %}
+        .card-header h2{
+            color:#0865c9;
+        }
+
+        .stats-card-button {
+            position:absolute;
+            right:10px;
+            color:#0865c9;
+        }
+
+        .stat-container{
+            background:#fff;
+            padding-bottom:24px;
+            padding-top:24px;
+        }
+        {% endif %}
     </style>
     {% endblock styles %}
     {% endblock head %}
@@ -126,7 +150,7 @@
     {% block body %}
 
     {% block content %}
-    <div class="container-fluid">
+    <div class="container-fluid" id="main-stats-div">
         <div class="row">
             {{ script | safe }}
         </div>
@@ -159,6 +183,26 @@
                     var s = document.createElement("script");
                     s.src = "{% static 'pn-apps/js/mcod_bokeh_extensions/mcod_bokeh_extensions.min.js' %}";
                     $("head").append(s);
+                    const targetNode = document.getElementById('main-stats-div');
+                    const config = { childList: true, subtree: true};
+
+                    const callback = function(mutationList, observer) {
+                        for(const mutation of mutationList) {
+                            if (mutation.type === 'childList' && mutation.addedNodes.length && mutation.addedNodes[0].childNodes.length && mutation.addedNodes[0].childNodes[0].classList && mutation.addedNodes[0].childNodes[0].classList.contains('stats-card-button')) {
+                                var cardButton = mutation.addedNodes[0].childNodes[0];
+                                cardButton.style.fontSize = '35px';
+                                if (cardButton.childNodes[0].data == "\u25ba"){
+                                    cardButton.childNodes[0].data = "\u2303";
+                                }
+                                else{
+                                    cardButton.style.top = "-10px";
+                                    cardButton.childNodes[0].data = "\u2304";
+                                }
+                            }
+                        }
+                    };
+                    const observer = new MutationObserver(callback);
+                    observer.observe(targetNode, config);
                 }
                 oldDebug.apply(console, arguments);
             };

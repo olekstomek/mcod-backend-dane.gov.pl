@@ -11,9 +11,22 @@ from django.utils.translation import gettext as _
 from pytest_bdd import given, parsers, scenarios
 
 import mcod.unleash
+from mcod.core.tests.helpers.tasks import run_on_commit_events
 from mcod.datasets.documents import Resource
 
 logger = logging.getLogger('mcod')
+
+
+scenarios(
+    'features/file_validation.feature',
+    'features/resource_creation.feature',
+    'features/resource_change.feature',
+    'features/resource_validation.feature',
+    'features/resource_openness.feature',
+    'features/resource_details_admin.feature',
+    'features/resources_list_admin.feature',
+    'features/update_data_date_task.feature',
+)
 
 
 @given(parsers.parse('resource is created for link {link} with {media_type} content'))
@@ -57,18 +70,6 @@ def create_resource_for_link(
         response = client.post(
             '/resources/resource/add/', data=data, follow=True)
         admin_context.response = response
-
-
-scenarios(
-    'features/file_validation.feature',
-    'features/resource_creation.feature',
-    'features/resource_change.feature',
-    'features/resource_validation.feature',
-    'features/resource_openness.feature',
-    'features/resource_details_admin.feature',
-    'features/resources_list_admin.feature',
-    'features/update_data_date_task.feature',
-)
 
 
 class TestEditorAccess:
@@ -216,8 +217,8 @@ class TestResourceAndDataset:
 
 class TestResourceTabularDataRules:
 
-    def test_verification_tabs_should_not_be_available_for_resources_without_tabular_data_schema(self, resource,
-                                                                                                 admin):
+    def test_verification_tabs_should_not_be_available_for_resources_without_tabular_data_schema(self, another_resource, admin):
+        resource = another_resource
         assert not resource.tabular_data_schema
 
         client = Client()
@@ -229,6 +230,7 @@ class TestResourceTabularDataRules:
 
     def test_verification_tabs_should_be_available_for_resources_with_tabular_data_schema(self, tabular_resource,
                                                                                           admin):
+        run_on_commit_events()
         tabular_resource.revalidate()
         rs = Resource.objects.get(pk=tabular_resource.id)
         assert rs.tabular_data_schema
@@ -242,6 +244,7 @@ class TestResourceTabularDataRules:
         assert 'class="disabled disabledTab"' not in content
 
     def test_verification_rules_validates_if_selected_properly(self, geo_tabular_data_resource, admin):
+        run_on_commit_events()
         geo_tabular_data_resource.revalidate()
         geo_tabular_data_resource.refresh_from_db()
         client = Client()
@@ -268,6 +271,7 @@ class TestResourceTabularDataRules:
                  ).format(colname='y', rule=_('Numeric')) in content
 
     def test_verification_rules_shows_validation_error(self, geo_tabular_data_resource, admin):
+        run_on_commit_events()
         geo_tabular_data_resource.revalidate()
         geo_tabular_data_resource.refresh_from_db()
         client = Client()
@@ -295,6 +299,7 @@ class TestResourceTabularDataRules:
                  ' with the rule "%(rule)s" detected errors (max 5)') % {'colname': 'y', 'rule': 'NIP'} in content
 
     def test_verification_rules_shows_validation_error_for_unknown_rule(self, resource_with_date_and_datetime, admin):
+        run_on_commit_events()
         resource_with_date_and_datetime.revalidate()
         resource_with_date_and_datetime.refresh_from_db()
         client = Client()
@@ -321,8 +326,8 @@ class TestResourceTabularDataRules:
 
 class TestResourceChangeType:
 
-    def test_change_type_tab_should_not_be_available_for_resources_without_tabular_data_schema(self, resource,
-                                                                                               admin):
+    def test_change_type_tab_should_not_be_available_for_resources_without_tabular_data_schema(self, another_resource, admin):
+        resource = another_resource
         assert not resource.tabular_data_schema
         client = Client()
         client.force_login(admin)
@@ -336,6 +341,7 @@ class TestResourceChangeType:
         def true_is_enabled(value):
             return True
 
+        run_on_commit_events()
         with monkeypatch.context() as m:
             m.setattr(mcod.unleash, "is_enabled", true_is_enabled)
 
@@ -400,7 +406,8 @@ class TestResourceChangeList:
         assert resource_with_failure_tasks_statuses.title in content
         assert resource_with_success_tasks_statuses.title not in content
 
-    def test_list_link_status_na_filter(self, buzzfeed_fakenews_resource, resource, admin):
+    def test_list_link_status_na_filter(self, buzzfeed_fakenews_resource, another_resource, admin):
+        resource = another_resource
         buzzfeed_fakenews_resource.revalidate()
         resource.link_tasks.clear()
         client = Client()
@@ -427,6 +434,7 @@ class TestResourceForm:
         assert 'csv_file' not in content
 
     def test_xls_resource_display_csv_file_data(self, admin, resource_with_xls_file):
+        run_on_commit_events()
         client = Client()
         client.force_login(admin)
         resp = client.get(resource_with_xls_file.admin_change_url)

@@ -26,7 +26,7 @@ from django.contrib.postgres.indexes import GinIndex
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.core.validators import MaxValueValidator, MinValueValidator
-from django.db import models, transaction
+from django.db import models
 from django.db.models import Max, Sum
 from django.db.models.signals import post_save, pre_delete, pre_save
 from django.dispatch import receiver
@@ -507,7 +507,10 @@ class Resource(ExtendedModel):
 
     @property
     def is_data_processable(self):
-        return self.format in ('csv', 'tsv', 'xls', 'xlsx', 'ods', 'shp') and self.main_file
+        processable_formats = ('csv', 'tsv', 'xls', 'xlsx', 'ods', 'shp')
+        return (self.format in processable_formats or
+                (is_enabled('S55_separate_extracted_file_format.be') and
+                 self.main_file_compressed_format in processable_formats)) and self.main_file
 
     @property
     def is_linked(self):
@@ -582,7 +585,8 @@ class Resource(ExtendedModel):
 
     @property
     def is_archived_csv(self):
-        return self.is_archived_file and self.format == 'csv'
+        return self.is_archived_file and (self.format == 'csv' or (
+            is_enabled('S55_separate_extracted_file_format.be') and self.main_file_compressed_format == 'csv'))
 
     def get_csv_file_internal_url(self, suffix='.utf8_encoded.csv'):
         """
@@ -794,7 +798,10 @@ class Resource(ExtendedModel):
 
     def increase_openness_score(self):
         csv_file = None
-        if self.format in ['xls', 'xlsx'] and not self.is_linked and self.has_data and self.data.table:
+        xls_formats = ['xls', 'xlsx']
+        if (self.format in xls_formats or (
+                is_enabled('S55_separate_extracted_file_format.be') and self.main_file_compressed_format in xls_formats
+        )) and not self.is_linked and self.has_data and self.data.table:
             csv_filename = os.path.splitext(self.file_basename)[0]
             headers = self.data.table.schema.field_names
             f = BytesIO()
@@ -867,12 +874,12 @@ class Resource(ExtendedModel):
     def revalidate(self, **kwargs):
         if not self.link or self.is_link_internal:
             if self._main_file:
-                transaction.on_commit(lambda: process_resource_res_file_task.s(self._main_file.pk, **kwargs).apply_async())
+                process_resource_res_file_task.s(self._main_file.pk, **kwargs).apply_async_on_commit(force_enabled=True)
         else:
-            transaction.on_commit(lambda: process_resource_from_url_task.s(self.id, **kwargs).apply_async())
+            process_resource_from_url_task.s(self.id, **kwargs).apply_async_on_commit(force_enabled=True)
 
     def revalidate_tabular_data(self):
-        transaction.on_commit(lambda: process_resource_file_data_task.s(self.id).apply_async())
+        process_resource_file_data_task.s(self.id).apply_async_on_commit(force_enabled=True)
 
     @classmethod
     def accusative_case(cls):
@@ -1033,7 +1040,8 @@ class Resource(ExtendedModel):
     def has_tabular_format(self, extra_formats=tuple()):
         base_formats = ['csv', 'tsv', 'xls', 'xlsx', 'ods']
         base_formats += extra_formats
-        return self.format in base_formats
+        return self.format in base_formats or (is_enabled('S55_separate_extracted_file_format.be') and
+                                               self.main_file_compressed_format in base_formats)
 
     @property
     def computed_downloads_count(self):
@@ -1178,6 +1186,14 @@ class Resource(ExtendedModel):
         return getattr(self._main_file, 'mimetype', None)
 
     @property
+    def main_file_compressed_format(self):
+        return getattr(self._main_file, 'compressed_file_format', None)
+
+    @property
+    def main_file_compressed_encoding(self):
+        return getattr(self._main_file, 'compressed_file_encoding', None)
+
+    @property
     def _main_file(self):
         main_file = getattr(self, '_cached_file', [])
         if not main_file:
@@ -1257,7 +1273,7 @@ class Resource(ExtendedModel):
     def update_es_and_rdf_db(self):
         if self.needs_es_and_rdf_db_update:
             update_with_related_task.s('resources', 'Resource', self.pk).apply_async()
-            update_graph_task.s('resources', 'Resource', self.pk).apply_async(countdown=1)
+            update_graph_task.s('resources', 'Resource', self.pk).apply_async_on_commit(countdown=1)
 
     @property
     def regions_to_conceal(self):
@@ -1420,7 +1436,8 @@ class Resource(ExtendedModel):
 
     @property
     def is_auto_data_date_allowed(self):
-        return self.type == RESOURCE_TYPE_API or (self.is_linked and self.type == RESOURCE_TYPE_FILE)
+        return self.type == RESOURCE_TYPE_API or (self.is_linked and self.type == RESOURCE_TYPE_FILE) or (
+            self.type == RESOURCE_TYPE_WEBSITE and is_enabled('S56_website_auto_data_date_update.be'))
 
 
 class Chart(ExtendedModel):
@@ -1523,12 +1540,19 @@ class ResourceFile(models.Model):
                             max_length=2000, blank=True, null=True)
     format = models.CharField(max_length=150, blank=True, null=True, verbose_name=_("Format"),
                               choices=supported_formats_choices())
+    compressed_file_format = models.CharField(max_length=150, blank=True, null=True,
+                                              verbose_name=_("Compressed file format"),
+                                              choices=supported_formats_choices())
+    compressed_file_mime_type = models.TextField(
+        blank=True, null=True, editable=False, verbose_name=_("Compressed file mimetype"))
+    compressed_file_encoding = models.CharField(
+        max_length=150, null=True, blank=True, editable=False, verbose_name=_("Compressed file encoding"))
     mimetype = models.TextField(blank=True, null=True, editable=False, verbose_name=_("File mimetype"))
     info = models.TextField(blank=True, null=True, editable=False, verbose_name=_("File info"))
     encoding = models.CharField(max_length=150, null=True, blank=True, editable=False, verbose_name=_("File encoding"))
     is_main = models.BooleanField(default=False)
-    openness_score = models.IntegerField(default=0, verbose_name=_("Openness score"),
-                                         validators=[MinValueValidator(0), MaxValueValidator(5)])
+    openness_score = models.IntegerField(default=1, verbose_name=_("Openness score"),
+                                         validators=[MinValueValidator(1), MaxValueValidator(5)])
 
     tracker = FieldTracker()
     objects = ResourceFileManager()
@@ -1557,7 +1581,9 @@ class ResourceFile(models.Model):
         return analyze_file(self.file.file.name)
 
     def check_support(self):
-        return check_support(self.format, self.mimetype)
+        format_ = self.format if not self.compressed_file_format else self.compressed_file_format
+        mimetype = self.mimetype if not self.compressed_file_mime_type else self.compressed_file_mime_type
+        return check_support(format_, mimetype)
 
     def save_file(self, content, filename):
         dt = self.resource.created.date() if self.resource.created else now().date()
@@ -1570,7 +1596,7 @@ class ResourceFile(models.Model):
         return '%s/%s' % (subdir, filename)
 
     def get_openness_score(self, format_=None):
-        format_ = format_ or self.format
+        format_ = format_ or self.compressed_file_format or self.format
         if format_ == 'jsonstat':
             format_ = 'json'
         if format_ is None:
@@ -1638,7 +1664,7 @@ def handle_resource_post_save(sender, instance, *args, **kwargs):
         dataset_id = instance.tracker.previous('dataset_id')
         if dataset_id:
             # update related ES documents for previously set dataset, if any.
-            transaction.on_commit(lambda: update_with_related_task.s('datasets', 'Dataset', dataset_id).apply_async())
+            update_with_related_task.s('datasets', 'Dataset', dataset_id).apply_async_on_commit(force_enabled=True)
 
 
 @receiver(revalidate_resource, sender=Resource)
@@ -1661,9 +1687,9 @@ def process_resource(sender, instance, *args, **kwargs):
         process_resource_from_url_task.s(instance.id, update_file_archive=True,
                                          forced_file_changed=instance.has_forced_file_changed,
                                          schedule_auto_data_date=schedule_auto_data_date_update,
-                                         cancel_auto_data_date=cancel_auto_data_date_update).apply_async(countdown=2)
+                                         cancel_auto_data_date=cancel_auto_data_date_update).apply_async_on_commit(countdown=2)
     elif instance.state_restored:
-        process_resource_res_file_task.s(instance._main_file.pk, update_file_archive=True).apply_async(countdown=2)
+        process_resource_res_file_task.s(instance._main_file.pk, update_file_archive=True).apply_async_on_commit(countdown=2)
     elif instance.tracker.has_changed('dataset_id') and instance.tracker.previous('dataset_id') is not None:
         instance.dataset.archive_files()
         previous_ds = instance.tracker.previous('dataset_id')
@@ -1688,9 +1714,7 @@ def update_dataset_watcher(sender, instance, *args, state=None, **kwargs):
         instance.dataset._meta.object_name,
         instance.id,
         obj_state=state
-    ).apply_async(
-        countdown=1
-    )
+    ).apply_async_on_commit(countdown=1)
 
 
 @receiver(cancel_data_date_update, sender=Resource)
@@ -1701,18 +1725,18 @@ def cancel_data_date_update_schedule(sender, instance, *args, **kwargs):
 @receiver(post_save, sender=ResourceFile)
 def process_created_file(sender, instance, created, *args, **kwargs):
     if instance.file and instance.is_main and created and instance.resource.is_published:
-        process_resource_res_file_task.s(instance.id, update_file_archive=True).apply_async(countdown=2)
+        process_resource_res_file_task.s(instance.id, update_file_archive=True).apply_async_on_commit(countdown=2)
 
 
 @receiver(core_signals.notify_removed, sender=Resource)
 def remove_regions(sender, instance, *args, **kwargs):
-    bulk_delete_documents_task.s('regions', 'Region', instance.regions_to_conceal).apply_async(countdown=2)
+    bulk_delete_documents_task.s('regions', 'Region', instance.regions_to_conceal).apply_async_on_commit(countdown=2)
 
 
 @receiver(core_signals.notify_restored, sender=Resource)
 @receiver(core_signals.notify_published, sender=Resource)
 def restore_regions(sender, instance, *args, **kwargs):
-    update_related_task.s('regions', 'Region', instance.regions_to_publish).apply_async(countdown=2)
+    update_related_task.s('regions', 'Region', instance.regions_to_publish).apply_async_on_commit(countdown=2)
 
 
 core_signals.notify_published.connect(update_watcher, sender=Resource)

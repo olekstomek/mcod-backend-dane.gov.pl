@@ -6,6 +6,7 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 
 from mcod.core.db.models import STATUS_CHOICES
+from mcod.core.widgets import ExtendedSelect
 from mcod.datasets.models import Dataset
 from mcod.lib.widgets import CKEditorUploadingWidget, ExternalDatasetsWidget
 from mcod.showcases.models import Showcase, ShowcaseProposal
@@ -138,6 +139,7 @@ class ShowcaseProposalForm(forms.ModelForm):
         }
         widgets = {
             'comment': forms.Textarea(attrs={'rows': '1', 'class': 'input-block-level'}),
+            'decision': ExtendedSelect(),
         }
 
     def __init__(self, *args, **kwargs):

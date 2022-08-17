@@ -97,15 +97,17 @@ def create_chart_panel(chart_cls, ctx):
 
 @when(parsers.parse('chart select widget has set {selected_options}'))
 def set_select_widget_value(selected_options, ctx):
-    chart_column = ctx['chart_panel'].objects[2]
-    if len(ctx['chart_panel'].objects) == 6:
-        chart_widgets = chart_column.objects
+    widgets_column = ctx['chart_panel'].objects[1]
+    if len(ctx['chart_panel'].objects) == 5:
+        chart_widgets = widgets_column.objects
+        if hasattr(chart_widgets[0], 'objects'):
+            chart_widgets = chart_widgets[0].objects
     else:
-        chart = chart_column.objects[0]
+        chart = widgets_column.objects[0]
         chart_widgets = chart.objects
     selected_value = [(v, '') for v in selected_options.split(',')]
     for widget in chart_widgets:
-        if isinstance(widget, BootstrapSelectWidget):
+        if isinstance(widget, BootstrapSelectWidget) and widget.alt_title != 'Instytucje':
             select_widget = widget
             select_widget.value = selected_value
     return ctx

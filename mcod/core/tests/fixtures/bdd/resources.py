@@ -1,22 +1,28 @@
 import json
 import os
+import re
 import uuid
+from calendar import monthrange
+from datetime import date
 from io import BytesIO
 
 import factory
 import pytest
+import pytz
 import requests
 import requests_mock
 from dateutil import parser
+from dateutil.relativedelta import relativedelta
 from django.apps import apps
 from django.core.files import File
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.utils.timezone import datetime
+from django.utils.timezone import datetime, now
 from django_celery_beat.models import IntervalSchedule, PeriodicTask
 from pytest_bdd import given, parsers, then, when
 
 from mcod import settings
 from mcod.core.tests.fixtures.bdd.common import copyfile, prepare_file
+from mcod.core.tests.helpers.tasks import run_on_commit_events
 from mcod.counters.factories import ResourceDownloadCounterFactory, ResourceViewCounterFactory
 from mcod.counters.lib import Counter
 from mcod.counters.tasks import save_counters
@@ -36,6 +42,7 @@ from mcod.resources.file_validation import (
     PasswordProtectedArchiveError,
     analyze_file,
     check_support,
+    file_format_from_content_type,
 )
 from mcod.resources.link_validation import DangerousContentError, _get_resource_type, download_file
 from mcod.resources.tasks import update_data_date
@@ -119,8 +126,10 @@ def create_res_with_regions(res_id, dataset_id, main_region, additional_regions,
 
 
 @pytest.fixture
-def buzzfeed_fakenews_resource(buzzfeed_dataset, buzzfeed_editor, mocker):
-    return create_res(buzzfeed_dataset, buzzfeed_editor, filename='buzzfeed-2018-fake-news-1000-lines.csv')
+def buzzfeed_fakenews_resource(buzzfeed_dataset, buzzfeed_editor):
+    res = create_res(buzzfeed_dataset, buzzfeed_editor, filename='buzzfeed-2018-fake-news-1000-lines.csv')
+    run_on_commit_events()
+    return res
 
 
 @pytest.fixture
@@ -130,10 +139,12 @@ def resource_with_date_and_datetime(buzzfeed_dataset, buzzfeed_editor, mocker):
 
 @pytest.fixture
 def geo_tabular_data_resource(buzzfeed_dataset, buzzfeed_editor, mocker):
-    return create_geo_res(buzzfeed_dataset, buzzfeed_editor)
+    res = create_geo_res(buzzfeed_dataset, buzzfeed_editor)
+    run_on_commit_events()
+    return res
 
 
-def create_remote_file_resource_with_params(params, httpserver):
+def create_remote_file_resource_with_params(params, httpserver, admin_context=None):
     simple_csv_path = os.path.join(settings.TEST_SAMPLES_PATH, 'simple.csv')
     httpserver.serve_content(
         content=open(simple_csv_path).read(),
@@ -151,6 +162,9 @@ def create_remote_file_resource_with_params(params, httpserver):
         'format': 'csv',
         'link': httpserver.url,
     }
+    if admin_context:
+        admin_context.link = httpserver.url
+
     params_.update(params)
     res = ResourceFactory(
         **params_
@@ -159,7 +173,7 @@ def create_remote_file_resource_with_params(params, httpserver):
 
 
 @pytest.fixture
-def remote_file_resource(buzzfeed_dataset, buzzfeed_editor, mocker, httpserver):
+def remote_file_resource(buzzfeed_dataset, buzzfeed_editor, httpserver):
     from mcod.resources.models import Resource
 
     simple_csv_path = os.path.join(settings.TEST_SAMPLES_PATH, 'simple.csv')
@@ -184,6 +198,7 @@ def remote_file_resource(buzzfeed_dataset, buzzfeed_editor, mocker, httpserver):
         data_date=datetime.today()
     )
     res.save()
+    run_on_commit_events()
     return res
 
 
@@ -252,7 +267,7 @@ def remote_file_resource_with_forced_file_type(remote_file_resource):
 
 
 @pytest.fixture
-def local_file_resource(buzzfeed_dataset, buzzfeed_editor, mocker):
+def local_file_resource(buzzfeed_dataset, buzzfeed_editor):
     kwargs = {
         'filename': 'geo.csv',
         'title': 'Local file resource',
@@ -260,6 +275,7 @@ def local_file_resource(buzzfeed_dataset, buzzfeed_editor, mocker):
     }
     res = create_res(buzzfeed_dataset, buzzfeed_editor, **kwargs)
     ChartFactory.create(resource=res, is_default=True)
+    run_on_commit_events()
     return res
 
 
@@ -315,7 +331,13 @@ def resource_with_failure_tasks_statuses(other_remote_file_resource):
 @pytest.fixture
 def resource():
     res = ResourceFactory.create()
+    run_on_commit_events()
     return res
+
+
+@pytest.fixture
+def another_resource():
+    return ResourceFactory.create()
 
 
 @pytest.fixture
@@ -475,22 +497,32 @@ def geo_tabular_data_response():
     }
 
 
+def create_website_resource(**kwargs):
+    obj_kwargs = {
+        'type': 'website',
+        'format': 'html',
+        'link': 'https://google.com',
+        'main_file': None
+    }
+    obj_kwargs.update(kwargs)
+    return ResourceFactory.create(
+        **obj_kwargs
+    )
+
+
 @pytest.fixture
 def resource_of_type_website():
-    res = ResourceFactory.create(
-        type="website",
-        format=None,
-        main_file__file=factory.django.FileField(
-            from_func=get_html_file, filename='{}.html'.format(str(uuid.uuid4()))
-        ),
-        main_file__content_type="text/html",
-    )
-    return res
+    return create_website_resource()
 
 
 @given('resource of type website')
 def create_resource_of_type_website(resource_of_type_website):
     return resource_of_type_website
+
+
+@given(parsers.parse('resource of type website with id {res_id}'))
+def website_resource_with_id(res_id):
+    return create_website_resource(id=res_id)
 
 
 @pytest.fixture
@@ -514,6 +546,18 @@ def create_resource_of_type_api(resource_of_type_api):
 @given('resource with buzzfeed file')
 def resource_with_buzzfeed_file(buzzfeed_fakenews_resource):
     return buzzfeed_fakenews_resource
+
+
+@given(parsers.parse('resource with regular zip file and id {res_id}'))
+def resource_with_zip_file(res_id):
+    return ResourceFactory.create(
+        id=res_id,
+        type="file",
+        format='csv',
+        main_file__file=factory.django.FileField(
+            from_path=os.path.join(settings.TEST_SAMPLES_PATH, 'regular.zip'), filename='regular.zip'
+        )
+    )
 
 
 @given(parsers.parse('geo_tabular_data_resource with params {params}'))
@@ -577,15 +621,34 @@ def resource_with_xls_file_converted_to_csv(res_id, example_xls_file, buzzfeed_d
         'openness_score': 1
     }
     res = create_res(buzzfeed_dataset, buzzfeed_editor, **params)
+    res.revalidate()
+    run_on_commit_events()
+    res = Resource.objects.get(pk=res.pk)
     resource_score, files_score = res.get_openness_score()
     Resource.objects.filter(pk=res.pk).update(openness_score=resource_score)
-    res.revalidate()
+    res = Resource.objects.get(pk=res.pk)
     return res
 
 
+@given(parsers.parse('resource with id {res_id} and xls file with conversion to jsonld'),
+       target_fixture='resource_xls_converted_to_jsonld')
+@requests_mock.Mocker(kw='mock_request')
+def resource_xls_converted_to_jsonld(res_id, example_xls_file, buzzfeed_dataset, buzzfeed_editor, **kwargs):
+    mock_request = kwargs['mock_request']
+    url_regex = re.compile(settings.API_URL_INTERNAL + r'/media/resources/\d{8}/example_xls_file\.csv$')
+    url_short_meta_regex = re.compile(settings.API_URL_INTERNAL + r'/.*csv-metadata\.json$')
+    mock_request.get('http://localhost/.well-known/csvm', status_code=404)
+    with open(os.path.join(settings.TEST_SAMPLES_PATH, 'simple.csv'), 'rb') as f:
+        f_data = f.read()
+        mock_request.get(url_short_meta_regex, status_code=404)
+        mock_request.head(url_regex, content=f_data, headers={'Content-Type': 'application/csv'})
+        mock_request.get(url_regex, content=f_data, headers={'Content-Type': 'application/csv'})
+        res = resource_with_xls_file_converted_to_csv(res_id, example_xls_file, buzzfeed_dataset, buzzfeed_editor)
+        return res
+
+
 @given(parsers.parse('resource with csv file converted to jsonld with params {params_str}'))
-def resource_with_csv_file_converted_to_jsonld(csv2jsonld_csv_file, csv2jsonld_jsonld_file, params_str,
-                                               django_capture_on_commit_callbacks):
+def resource_with_csv_file_converted_to_jsonld(csv2jsonld_csv_file, csv2jsonld_jsonld_file, params_str):
     from mcod.resources.models import Resource
     params = json.loads(params_str)
     obj_id = params.pop('id')
@@ -605,8 +668,8 @@ def resource_with_csv_file_converted_to_jsonld(csv2jsonld_csv_file, csv2jsonld_j
     resource_score, files_score = res.get_openness_score()
     Resource.objects.filter(pk=res.pk).update(openness_score=resource_score)
     res = Resource.objects.get(pk=res.pk)
-    with django_capture_on_commit_callbacks(execute=True):
-        res.revalidate()
+    res.revalidate()
+    run_on_commit_events()
     return res
 
 
@@ -619,6 +682,7 @@ def resource_with_simple_csv(res_id, simple_csv_file):
         link=None,
         main_file__file=simple_csv_file,
     )
+    run_on_commit_events()
     res.data_tasks_last_status = res.data_tasks.all().last().status
     res.file_tasks_last_status = res.file_tasks.all().last().status
     res.save()
@@ -692,6 +756,24 @@ def resource_with_periodic_task(res_id, status):
         queue='periodic',
         interval=schedule
     )
+
+
+@given(parsers.parse(
+    'resource with status {status} and data date update periodic task with interval schedule'
+))
+def resource_with_status_and_periodic_task(admin_context, status):
+    res = ResourceFactory(
+        status=status,
+        type="api",
+        format=None,
+        main_file__file=factory.django.FileField(from_func=get_json_file, filename='{}.json'.format(str(uuid.uuid4()))),
+        main_file__content_type="application/json",
+        is_auto_data_date=True,
+        automatic_data_date_start=datetime(2022, 5, 20).date(),
+        endless_data_date_update=True,
+        data_date_update_period='daily',
+    )
+    admin_context.object_id = res.id
 
 
 @when(parsers.parse('resource document with id {resource_id:d} is reindexed using regular queryset'))
@@ -847,6 +929,25 @@ def resource_with_id_and_filename(filename, dataset, obj_id):
         )
 
 
+@given(parsers.parse('resource with {filename} file, dataset_id {dataset_id} and id {obj_id}'))
+def resource_with_id_and_filename_and_dataset_id(filename, dataset_id, obj_id):
+    from mcod.resources.models import Resource
+    full_filename = prepare_file(filename)
+    with open(full_filename, 'rb') as outfile:
+        res = Resource.objects.create(
+            id=obj_id,
+            title='Local file resource',
+            description='Resource with file',
+            dataset_id=dataset_id,
+            data_date=datetime.today(),
+            status='published'
+        )
+        ResourceFileFactory.create(
+            resource_id=res.pk,
+            file=File(outfile),
+        )
+
+
 @given(parsers.parse('draft remote file resource of api type with id {obj_id}'))
 def draft_remote_file_resource(obj_id, httpsserver_custom):
     httpsserver_custom.serve_content(
@@ -884,8 +985,14 @@ def resource_field_value_is(context, r_field, r_value):
 
 @then(parsers.parse('file is validated and result is {file_format}'))
 def file_format(validated_file, file_format):
-    ext, file_info, encoding, path, file_mimetype, exc = analyze_file(validated_file)
+    ext, *other = analyze_file(validated_file)
     assert ext == file_format, f'Analyzed {validated_file} file format is not: "{file_format}", but: "{ext}"'
+
+
+@then(parsers.parse('extracted file is validated and result is {file_format}'))
+def extracted_file_format(validated_file, file_format):
+    ext, _, _, _, _, _, extracted_ext, *other = analyze_file(validated_file)
+    assert extracted_ext == file_format, f'Analyzed {validated_file} file format is not: "{file_format}", but: "{ext}"'
 
 
 @then(parsers.parse('archive file is successfully unpacked and has {files_number} files'))
@@ -901,22 +1008,23 @@ def file_archive(validated_file, files_number):
 
 @then(parsers.parse('file is validated and result mimetype is {mimetype}'))
 def file_mimetype(validated_file, mimetype):
-    extension, file_info, encoding, path, file_mimetype, exc = analyze_file(validated_file)
+    _, _, _, _, file_mimetype, *other = analyze_file(validated_file)
     assert file_mimetype == mimetype
 
 
 @then('file is validated and UnsupportedArchiveError is raised')
 def file_validation_exception(validated_file):
     with pytest.raises(UnsupportedArchiveError) as e:
-        extension, file_info, file_encoding, path, file_mimetype, exc = analyze_file(validated_file)
+        extension, _, _, _, file_mimetype, *other = analyze_file(validated_file)
         check_support(extension, file_mimetype)
         assert str(e.value) == 'archives-are-not-supported'
 
 
 @then(parsers.parse('file is validated and PasswordProtectedArchiveError is raised'))
 def archive_file_validation_exception(validated_file):
-    with pytest.raises(PasswordProtectedArchiveError):
-        analyze_file(validated_file)
+    format, file_info, file_encoding, p, file_mimetype, analyze_exc,\
+        extracted_format, extracted_mimetype, extracted_encoding = analyze_file(validated_file)
+    assert analyze_exc.__class__ == PasswordProtectedArchiveError
 
 
 @given(parsers.parse('resource with id {res_id} is viewed and counter incrementing task is executed'))
@@ -947,6 +1055,13 @@ def draft_resource_with_region(res_id, dataset_id, main_region, additional_regio
 def resource_with_supplement(res_id, dataset_id, supplement_id):
     resource = ResourceFactory.create(id=res_id, dataset_id=dataset_id)
     SupplementFactory.create(id=supplement_id, resource_id=resource.id)
+
+
+@given(parsers.parse('function file_format_from_content_type works properly for all supported content types'))
+def file_format_from_content_type_works_properly():
+    for family, content_type, extensions, *other in settings.SUPPORTED_CONTENT_TYPES:
+        assert file_format_from_content_type(content_type, family) == extensions[0]
+    assert file_format_from_content_type('zip', 'application') == 'zip'
 
 
 @when(parsers.parse('resource with id {obj_id} is revalidated'))
@@ -1022,9 +1137,22 @@ def resource_has_periodic_task_with_schedule_type(res_id, schedule_type):
     assert getattr(task, schedule_type) is not None
 
 
+@then(parsers.parse('created resource has periodic task with {schedule_type} schedule'))
+def created_resource_has_periodic_task_with_schedule_type(admin_context, schedule_type):
+    from mcod.resources.models import Resource
+    res = Resource.objects.get(pk=admin_context.object_id)
+    task = PeriodicTask.objects.get(name=res.data_date_task_name)
+    assert getattr(task, schedule_type) is not None
+
+
 @then(parsers.parse('resource with id {res_id} has no data date periodic task'))
 def resource_has_no_periodic_task(res_id):
     assert not PeriodicTask.objects.filter(name__contains=res_id).exists()
+
+
+@then(parsers.parse('created resource has no data date periodic task'))
+def created_resource_has_no_periodic_task(admin_context):
+    assert not PeriodicTask.objects.filter(name__contains=admin_context.object_id).exists()
 
 
 @then(parsers.parse('Periodic task for resource with id {res_id:d} has last_run_at attr set'))
@@ -1033,8 +1161,14 @@ def resource_periodic_task_has_last_run_at_set(res_id):
 
 
 @given(parsers.parse('remote file resource with id {res_id}'))
-def remote_file_resource_with_id(res_id, httpsserver_custom):
-    return create_remote_file_resource_with_params({'id': res_id}, httpsserver_custom)
+def remote_file_resource_with_id(res_id, httpsserver_custom, admin_context):
+    return create_remote_file_resource_with_params({'id': res_id}, httpsserver_custom, admin_context=admin_context)
+
+
+@given(parsers.parse("update link of remote file resource with id '{res_id}'"))
+def update_link_of_remote_file_resource_with_id(res_id, admin_context):
+    from mcod.resources.models import Resource
+    Resource.objects.filter(id=res_id).update(link=admin_context.link)
 
 
 @given(parsers.parse('remote file resource with enabled auto data date update and id {res_id}'))
@@ -1047,7 +1181,9 @@ def remote_file_resource_with_id_and_auto_data_date_enabled(res_id, httpsserver_
         'data_date_update_period': 'daily',
         'openness_score': 0
     }
-    return create_remote_file_resource_with_params(params_, httpsserver_custom)
+    res = create_remote_file_resource_with_params(params_, httpsserver_custom)
+    update_data_date.s(res_id).apply_async()
+    return res
 
 
 @when(parsers.parse('update data date task for resource with id {res_id} is executed'))
@@ -1061,3 +1197,27 @@ def resource_has_file_validation_results(res_id, result_count, validation_type):
     res = model.objects.get(pk=res_id)
     validation_tasks = getattr(res, f'{validation_type}_tasks')
     assert validation_tasks.all().count() == result_count
+
+
+@then(parsers.parse('resource with title {res_title} has zipped xlsx converted to csv'))
+def zipped_xlsx_has_converted_csv(res_title):
+    from mcod.resources.models import ResourceFile
+    res_file = ResourceFile.objects.filter(resource__title=res_title, is_main=False, format='csv')
+    assert res_file.exists()
+
+
+@then(parsers.parse('crontab schedule for resource with id {res_id} has current month last day set up as run date'))
+def crontab_with_current_month_last_day(res_id):
+    from mcod.resources.models import Resource
+    res = Resource.objects.get(pk=res_id)
+    warsaw_tz = pytz.timezone(settings.TIME_ZONE)
+    localized_today = now().astimezone(warsaw_tz).date()
+    m_range = monthrange(localized_today.year, localized_today.month)
+    month_last_day = date(localized_today.year, localized_today.month, m_range[1])
+    schedule_date = res.automatic_data_date_start
+    while schedule_date < month_last_day:
+        schedule_date += relativedelta(months=1)
+        schedule_date = res.correct_last_moth_day(schedule_date)
+    task_schedule = PeriodicTask.objects.get(name=res.data_date_task_name).crontab
+    assert task_schedule.day_of_month == str(schedule_date.day)
+    assert task_schedule.month_of_year == str(schedule_date.month)

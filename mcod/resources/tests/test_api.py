@@ -7,6 +7,7 @@ from pytest_bdd import scenarios, then, when
 
 from mcod.api import app
 from mcod.core.tests.helpers.openapi_wrappers import FalconOpenAPIWrapper
+from mcod.core.tests.helpers.tasks import run_on_commit_events
 from mcod.core.utils import jsonapi_validator
 from mcod.resources.models import Resource
 from mcod.settings.test import API_URL
@@ -73,6 +74,7 @@ scenarios(
 
 @pytest.mark.elasticsearch
 def test_tabular_data_api14(buzzfeed_fakenews_resource, client14, mocker):
+    run_on_commit_events()
     _rid = buzzfeed_fakenews_resource.id
 
     resp = client14.simulate_get('/resources/{}/data/spec/1.4'.format(_rid))

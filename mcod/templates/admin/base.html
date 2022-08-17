@@ -42,10 +42,14 @@
       {% block header %}
         {% if not is_popup %}
           <!-- Header -->
-          <div id="header" class="header">
+          <div id="header" class="header" role="banner">
+
             <div id="branding">
-              <a href="{% url 'admin:index' %}"><h1 id="site-name">{% block branding %}{{ 'ADMIN_NAME'|suit_conf }}{% endblock %}</h1></a>
+              {% block branding %}
+              <a href="{% url 'admin:index' %}"><h1 id="site-name">{{ 'ADMIN_NAME'|suit_conf }}</h1></a>
+              {% endblock %}
             </div>
+
 
             {% block header_time %}
             <div class="header-content header-content-first">
@@ -123,7 +127,7 @@
         {% endblock %}
 
         {% block content-center %}
-          <div id="suit-center" class="suit-column">
+          <div id="suit-center" class="suit-column" role="main">
 
             {% if not is_popup %}
               {% block breadcrumbs %}
@@ -182,7 +186,7 @@
 
 {% block footer %}
   {% if not is_popup %}
-  <div id="footer" class="footer">
+  <div id="footer" class="footer" role="contentinfo">
     <div class="content">
       <div class="tools">
         {% block footer_links %}

@@ -28,7 +28,7 @@ class ValidateXMLDataSourceView(FormView):
     form_class = XMLValidationForm
 
     def form_valid(self, form):
-        result = validate_xml_url_task.s(form.cleaned_data['xml_url']).apply_async(countdown=1)
+        result = validate_xml_url_task.s(form.cleaned_data['xml_url']).apply_async_on_commit(countdown=1)
         progress_url = reverse('admin:validate-xml-task-status', args=[result.task_id])
         return JsonResponse({'success': True, 'progress_url': progress_url})
 

@@ -85,7 +85,7 @@ def export_to_csv(self, request, queryset):
                    self.model._meta.label,
                    request.user.id,
                    now().strftime('%Y%m%d%H%M%S.%s')
-                   ).apply_async(countdown=1)
+                   ).apply_async_on_commit(countdown=1)
     messages.add_message(request, messages.SUCCESS, _('Task for CSV generation queued'))
 
 
@@ -566,7 +566,11 @@ class ModelAdminMixin(ListDisplayMixin, LangFieldsOnlyMixin, AdminListMixin, Exp
 
 
 class ModelAdmin(ModelAdminMixin, admin.ModelAdmin):
-    pass
+    def action_checkbox(self, obj):
+        return super().action_checkbox(obj)
+
+    action_checkbox.short_description = mark_safe(
+        '<input type="checkbox" id="action-toggle" aria-label="zaznacza wszystkie elementy w tabeli">')
 
 
 class NestedModelAdmin(ModelAdminMixin, nested_admin.NestedModelAdmin):

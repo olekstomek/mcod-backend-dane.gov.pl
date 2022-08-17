@@ -1,11 +1,11 @@
-from celery import shared_task
 from django.conf import settings
 from django.contrib.auth import get_user_model
 
+from mcod.core.tasks import extended_shared_task
 from mcod.discourse.client import DiscourseClient
 
 
-@shared_task
+@extended_shared_task
 def user_sync_task(user_id, created=False):
     User = get_user_model()
     user = User.raw.filter(pk=user_id).first()
@@ -43,7 +43,7 @@ def user_sync_task(user_id, created=False):
     return {'result': 'ok'}
 
 
-@shared_task
+@extended_shared_task
 def user_logout_task(user_id):
     client = DiscourseClient(settings.DISCOURSE_SYNC_HOST, settings.DISCOURSE_API_USER, settings.DISCOURSE_API_KEY)
     forum_user = client.by_external_id(user_id)

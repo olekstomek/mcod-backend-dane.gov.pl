@@ -101,3 +101,10 @@
     });
     </script>
 {% endblock extrajs %}
+
+{% block content %}
+    {{ block.super }}
+    <form id="resources_actions_form" method="post" action="{% url 'admin:resources_resource_changelist' %}" novalidate>
+    {% csrf_token %}
+    </form>
+{% endblock %}

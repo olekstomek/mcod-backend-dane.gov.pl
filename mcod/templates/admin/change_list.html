@@ -5,6 +5,9 @@
     <script>
         (function ($) {
             $(function () {
+                $("a > i.fas").each(function() {
+                   $(this).parent().attr('aria-label', $(this).attr('title'));
+                });
                 $("#searchbar").attr('placeholder', "{% blocktrans %}Search{% endblocktrans %}");
             });
         })(django.jQuery);

@@ -428,8 +428,7 @@ class Command(BaseCommand):
         objs = ResourceFile.objects.filter(resource_id__in=res_ids)
         for obj in objs:
             print(f'Resource with invalid format found: id:{obj.resource_id} , format:{obj.resource.format}')
-            process_resource_res_file_task.s(obj.id, update_link=False).apply_async(
-                countdown=1)
+            process_resource_res_file_task.s(obj.id, update_link=False).apply_async_on_commit(countdown=1)
         if objs.count():
             print('Done.')
         else:
@@ -558,8 +557,7 @@ class Command(BaseCommand):
         self.stdout.write('Updating resources score in db and ES.')
         Resource.objects.bulk_update(res_to_update, ['openness_score'])
         for res in res_to_update:
-            update_with_related_task.s('resources', 'Resource', res.id).apply_async(
-                countdown=2)
+            update_with_related_task.s('resources', 'Resource', res.id).apply_async_on_commit(countdown=2)
 
     def _get_pks(self, **options):
         pks_str = options.get('pks')

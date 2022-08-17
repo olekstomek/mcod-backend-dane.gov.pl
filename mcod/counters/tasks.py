@@ -1,11 +1,11 @@
 import logging
 import os
 
-from celery import shared_task
 from django.apps import apps
 from django.db.models import Sum
 
 from mcod import settings
+from mcod.core.tasks import extended_shared_task
 from mcod.counters.lib import Counter
 
 logger = logging.getLogger('kibana-statistics')
@@ -21,14 +21,14 @@ def get_directory_size(startpath):
     return total_size
 
 
-@shared_task
+@extended_shared_task
 def save_counters():
     counter = Counter()
     counter.save_counters()
     return {}
 
 
-@shared_task
+@extended_shared_task
 def kibana_statistics():
     download_counter_model = apps.get_model('counters.ResourceDownloadCounter')
     view_counter_model = apps.get_model('counters.ResourceViewCounter')

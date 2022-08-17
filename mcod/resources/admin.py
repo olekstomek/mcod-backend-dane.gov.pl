@@ -246,6 +246,7 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):
     resource_supplements = is_enabled('S48_resource_supplements.be')
     is_inlines_js_upgraded = is_enabled('S48_resource_inlines_js_upgrade.be')
     is_auto_data_date_update = is_enabled('S51_data_date_update.be')
+    is_auto_data_date_for_website = is_enabled('S56_website_auto_data_date_update.be')
 
     def get_suit_form_tabs(self, obj=None):
         tabs = [
@@ -573,7 +574,7 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):
 
     def is_data_date_read_only(self, obj):
         return (obj.type != "file" and not self.is_auto_data_date_update) or\
-               (self.is_auto_data_date_update and obj.type == 'website')
+               (self.is_auto_data_date_update and obj.type == 'website' and not self.is_auto_data_date_for_website)
 
     def lang(self, obj):
         return obj.get_language_display()

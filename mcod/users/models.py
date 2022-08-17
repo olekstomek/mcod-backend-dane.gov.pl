@@ -40,6 +40,7 @@ from mcod.users.managers import (
     MeetingManager,
     MeetingTrashManager,
 )
+from mcod.unleash import is_enabled
 from mcod.users.signals import user_changed
 from mcod.watchers.models import MODEL_TO_OBJECT_NAME, Notification
 
@@ -268,21 +269,21 @@ class User(AdminMixin, ApiMixin, AbstractBaseUser, PermissionsMixin, SoftDeletab
     def _get_absolute_url(url):
         return f'{settings.BASE_URL}/{get_language()}{url}'
 
-    def _get_or_create_token(self, token_type, expiration_delta=None):
-        now = timezone.now()
-        token = Token.objects.filter(
+    def _get_active_token(self, token_type):
+        return Token.objects.filter(
             user=self,
             token_type=token_type,
-            expiration_date__gte=now
+            expiration_date__gte=timezone.now()
         ).order_by('-expiration_date').first()
 
-        expiration_delta = expiration_delta or timezone.timedelta(hours=settings.TOKEN_EXPIRATION_TIME)
-
+    def _get_or_create_token(self, token_type, expiration_delta=None):
+        token = self._get_active_token(token_type)
         if not token:
+            expiration_delta = expiration_delta or timezone.timedelta(hours=settings.TOKEN_EXPIRATION_TIME)
             token = Token.objects.create(
                 user=self,
                 token_type=token_type,
-                expiration_date=now + expiration_delta
+                expiration_date=timezone.now() + expiration_delta
             )
         return token.token
 
@@ -607,7 +608,11 @@ class User(AdminMixin, ApiMixin, AbstractBaseUser, PermissionsMixin, SoftDeletab
         )
 
     def send_registration_email(self):
-        context = {'link': self.email_validation_absolute_url, 'host': settings.BASE_URL}
+        context = {
+            'link': self.email_validation_absolute_url,
+            'host': settings.BASE_URL,
+            'limit': settings.TOKEN_EXPIRATION_TIME if is_enabled('S53_resend_registration_mail.be') else None,
+        }
         msg_plain = render_to_string('mails/confirm-registration.txt', context)
         msg_html = render_to_string('mails/confirm-registration.html', context)
 

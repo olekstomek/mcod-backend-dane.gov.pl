@@ -233,7 +233,7 @@ def update_log_entry_handler(sender, instance, *args, **kwargs):
     update_document_task.s(
         LogEntry._meta.app_label,
         LogEntry._meta.object_name,
-        instance.id).apply_async(countdown=1, queue='history')
+        instance.id).apply_async_on_commit(countdown=1, queue='history')
 
 
 @receiver(post_delete, sender=LogEntry)

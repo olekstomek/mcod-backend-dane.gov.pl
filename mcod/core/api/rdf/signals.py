@@ -44,11 +44,11 @@ class SparqlSignalProcessor(SignalLoggerMixin):
 
     def update_graph(self, sender, instance, *args, **kwargs):
         self.debug('Updating graph in rdf db', sender, instance, 'update_graph')
-        update_graph_task.s(**self.get_task_kwargs(instance)).apply_async(countdown=1)
+        update_graph_task.s(**self.get_task_kwargs(instance)).apply_async_on_commit(countdown=1)
 
     def update_related_graph(self, sender, instance, *args, **kwargs):
         self.debug('Updating related graph in rdf db', sender, instance, 'update_related_graph')
-        update_related_graph_task.s(**self.get_task_kwargs(instance)).apply_async(countdown=2)
+        update_related_graph_task.s(**self.get_task_kwargs(instance)).apply_async_on_commit(countdown=2)
 
     def update_graph_with_conditional_related_update(self, sender, instance, *args, **kwargs):
         if registry.related_condition_changed(instance):
@@ -58,15 +58,15 @@ class SparqlSignalProcessor(SignalLoggerMixin):
 
     def update_graph_with_related(self, sender, instance, *args, **kwargs):
         self.debug('Updating graph with related in rdf db', sender, instance, 'update_graph_with_related')
-        update_graph_with_related_task.s(**self.get_task_kwargs(instance)).apply_async(countdown=2)
+        update_graph_with_related_task.s(**self.get_task_kwargs(instance)).apply_async_on_commit(countdown=2)
 
     def create_graph(self, sender, instance, *args, **kwargs):
         self.debug('Creating graph in rdf db', sender, instance, 'create_graph')
-        create_graph_task.s(**self.get_task_kwargs(instance)).apply_async(countdown=1)
+        create_graph_task.s(**self.get_task_kwargs(instance)).apply_async_on_commit(countdown=1)
 
     def create_graph_with_related_update(self, sender, instance, *args, **kwargs):
         self.debug('Creating graph with related update in rdf db', sender, instance, 'create_graph_with_related_update')
-        create_graph_with_related_update_task.s(**self.get_task_kwargs(instance)).apply_async(countdown=2)
+        create_graph_with_related_update_task.s(**self.get_task_kwargs(instance)).apply_async_on_commit(countdown=2)
 
     def delete_graph(self, sender, instance, *args, **kwargs):
         self.debug('Deleting graph in rdf db', sender, instance, 'delete_graph')
@@ -74,9 +74,9 @@ class SparqlSignalProcessor(SignalLoggerMixin):
         parents_to_remove = [graph(named_graph=registry.graph_name).is_parent_removed(instance) for graph in graphs_set]
         task_kwargs = self.get_task_kwargs(instance)
         if registry.is_parent_model(instance):
-            delete_sub_graphs.s(**task_kwargs).apply_async(countdown=1)
+            delete_sub_graphs.s(**task_kwargs).apply_async_on_commit(countdown=1)
         if not any(parents_to_remove):
-            delete_graph_task.s(**task_kwargs).apply_async(countdown=1)
+            delete_graph_task.s(**task_kwargs).apply_async_on_commit(countdown=1)
 
     def delete_graph_with_related_update(self, sender, instance, *args, **kwargs):
         self.debug('Deleting graph with related update in rdf db', sender, instance, 'delete_graph_with_related_update')
@@ -86,4 +86,4 @@ class SparqlSignalProcessor(SignalLoggerMixin):
             related_models = registry.get_related_models(instance)
             task_kwargs = self.get_task_kwargs(instance)
             task_kwargs['related_models'] = related_models
-            delete_graph_with_related_update_task.s(**task_kwargs).apply_async(countdown=2)
+            delete_graph_with_related_update_task.s(**task_kwargs).apply_async_on_commit(countdown=2)

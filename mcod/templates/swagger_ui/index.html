@@ -49,8 +49,28 @@
 
       body {
         margin: 0;
-        background: #fafafa;
+        background: #fff;
       }
+
+        .swagger-ui .info a {
+           color: #0865c9;
+        }
+
+        .swagger-ui .opblock.opblock-get .opblock-summary-method {
+           background: #575757;
+        }
+
+        .swagger-ui .info .title small {
+           background: #515461;
+        }
+
+        .swagger-ui .info .title small.version-stamp {
+           background-color: #3D5403;
+        }
+
+
+
+
     </style>
   </head>
 
@@ -60,6 +80,18 @@
     <script src="{% static 'swagger_ui/swagger-ui-bundle.js' %}"></script>
     <script src="{% static 'swagger_ui/swagger-ui-standalone-preset.js' %}"></script>
     <script>
+        function replace_tag_name(from_selector, to_tag_name) {
+            document.querySelectorAll(from_selector).forEach(function(from_element) {
+                let to_element = document.createElement(to_tag_name);
+                to_element.innerHTML = from_element.innerHTML;
+                for (let index = from_element.attributes.length - 1; index >= 0; --index) {
+                    to_element.attributes.setNamedItem(from_element.attributes[index].cloneNode());
+                }
+                from_element.parentNode.replaceChild(to_element, from_element);
+            });
+        }
+
+
       window.onload = function () {
           const HideEmptyTagsPlugin = () => {
               return {
@@ -90,13 +122,19 @@
                   SwaggerUIBundle.plugins.DownloadUrl,
                   HideEmptyTagsPlugin
               ],
-              layout: "StandaloneLayout"
+              layout: "StandaloneLayout",
+              onComplete: function() {
+                  replace_tag_name("h2.title", "h1");
+                  replace_tag_name("h3.opblock-tag", "h2");
+                  replace_tag_name("h4", "h3");
+                  replace_tag_name("h5", "h4");
+              }
           });
           // End Swagger UI call region
           window.ui = ui;
 
           topbar = document.getElementsByClassName('topbar-wrapper')[0];
-          span = topbar.getElementsByTagName('span')[0]
+          span = topbar.getElementsByTagName('span')[0];
           span.parentNode.removeChild(span);
           img = topbar.getElementsByTagName('img')[0];
           img.src = '/static/images/logo-175x50-white.png';

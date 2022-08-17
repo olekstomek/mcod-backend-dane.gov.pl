@@ -219,7 +219,8 @@ class UserChangeForm(UserForm):
             self.instance.state == 'pending',
         ]):
             url = self.instance.send_registration_email_admin_url
-            self.fields['state'].help_text = f'<a href="{url}">Wyślij ponownie email z linkiem do aktywacji konta</a>'
+            txt = _('Resend the account activation link')
+            self.fields['state'].help_text = f'<a href="{url}">{txt}</a>'
 
     def clean_password(self):
         return self.initial["password"] if 'password' in self.initial else None

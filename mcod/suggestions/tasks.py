@@ -1,14 +1,15 @@
-from celery import shared_task
 from dateutil import relativedelta
 from django.apps import apps
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.utils.timezone import now
 
+from mcod.core.tasks import extended_shared_task
+
 User = get_user_model()
 
 
-@shared_task
+@extended_shared_task
 def create_data_suggestion(data_suggestion):
     model = apps.get_model('suggestions', 'Suggestion')
     suggestion = model()
@@ -16,7 +17,7 @@ def create_data_suggestion(data_suggestion):
     suggestion.save()
 
 
-@shared_task
+@extended_shared_task
 def send_data_suggestion(suggestion_id):
     model = apps.get_model('suggestions', 'Suggestion')
     obj = model.objects.filter(id=suggestion_id).first()
@@ -26,7 +27,7 @@ def send_data_suggestion(suggestion_id):
     return {'suggestion': obj.notes} if obj else {}
 
 
-@shared_task
+@extended_shared_task
 def create_dataset_suggestion(data_suggestion):
     model = apps.get_model('suggestions', 'DatasetSubmission')
     if 'submitted_by' in data_suggestion:
@@ -37,7 +38,7 @@ def create_dataset_suggestion(data_suggestion):
     submission.save()
 
 
-@shared_task
+@extended_shared_task
 def send_dataset_suggestion_mail_task(obj_id):
     model = apps.get_model('suggestions', 'DatasetSubmission')
     obj = model.objects.filter(pk=obj_id).first()
@@ -48,7 +49,7 @@ def send_dataset_suggestion_mail_task(obj_id):
     }
 
 
-@shared_task
+@extended_shared_task
 def create_accepted_dataset_suggestion_task(obj_id):
     model = apps.get_model('suggestions.DatasetSubmission')
     obj = model.convert_to_accepted(obj_id)
@@ -58,7 +59,7 @@ def create_accepted_dataset_suggestion_task(obj_id):
     }
 
 
-@shared_task
+@extended_shared_task
 def deactivate_accepted_dataset_submissions():
     model = apps.get_model('suggestions.AcceptedDatasetSubmission')
     published_at_limit = now() - relativedelta.relativedelta(
@@ -70,7 +71,7 @@ def deactivate_accepted_dataset_submissions():
     return {'deactivated': objs.count()}
 
 
-@shared_task
+@extended_shared_task
 def send_accepted_submission_comment(obj_id, comment):
     model = apps.get_model('suggestions.AcceptedDatasetSubmission')
     obj = model.objects.filter(id=obj_id).first()

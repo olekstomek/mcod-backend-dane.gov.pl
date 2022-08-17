@@ -7,13 +7,16 @@ from pytest_bdd import given, parsers, then, when
 
 from mcod import settings
 from mcod.core.tests.fixtures.bdd.common import copyfile
+from mcod.core.tests.helpers.tasks import run_on_commit_events
 from mcod.datasets.factories import DatasetFactory
 from mcod.organizations.factories import OrganizationFactory
 
 
 @pytest.fixture
 def institution():
-    return OrganizationFactory.create()
+    org = OrganizationFactory.create()
+    run_on_commit_events()
+    return org
 
 
 @pytest.fixture
@@ -36,6 +39,7 @@ def removed_institution():
 def institution_with_datasets():
     org = OrganizationFactory.create()
     DatasetFactory.create_batch(2, organization=org)
+    run_on_commit_events()
     return org
 
 

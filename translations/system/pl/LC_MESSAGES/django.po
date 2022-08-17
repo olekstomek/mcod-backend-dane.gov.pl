@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-07-15 11:00+0200\n"
+"POT-Creation-Date: 2022-08-12 14:13+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -622,6 +622,36 @@ msgstr "źle sformułowane zapytanie"
 msgid "Additional permissions are required!"
 msgstr "Wymagane są dodatkowe uprawnienia!"
 
+#, python-format
+msgid ""
+"<b>Your account activation link has expired.</b><br>If you want to receive a "
+"new activation link, please contact us: <a href=\"mailto:%(email)s\">"
+"%(email)s</a>"
+msgstr ""
+"<b>Twój link do aktywacji konta wygasł.</b><br>Jeżeli chcesz otrzymać nowy "
+"link aktywacyjny, skontaktuj się z nami: <a href=\"mailto:%(email)s\">"
+"%(email)s</a>"
+
+msgid "Expired token"
+msgstr "Przeterminowany token"
+
+#, python-format
+msgid ""
+"<b>Your account has not been activated.</b><br>We sent an email to the e-"
+"mail address you used during registration with a link to activate your "
+"account.<br>If you have not received an e-mail from us, or the activation "
+"link has expired, please contact us: <a href=\"mailto:%(email)s\">%(email)s</"
+"a>"
+msgstr ""
+"<b>Twoje konto nie zostało aktywowane.</b><br>Na adres e-mail, którego "
+"użyłeś podczas rejestracji, wysłaliśmy wiadomość z linkiem aktywującym konto."
+"<br>Jeżeli nie otrzymałeś od nas wiadomości e-mail, bądź link aktywacyjny "
+"stracił ważność, skontaktuj się z nami: <a href=\"mailto:%(email)s\">"
+"%(email)s</a>"
+
+msgid "Email address not confirmed"
+msgstr "Adres email nie został potwierdzony"
+
 msgid "Missing token"
 msgstr "Brakujący token"
 
@@ -642,9 +672,6 @@ msgstr "Nie można się zalogować"
 
 msgid "Account is blocked"
 msgstr "Konto jest zablokowane"
-
-msgid "Email address not confirmed"
-msgstr "Adres email nie został potwierdzony"
 
 msgid "Referer checking failed - no Referer."
 msgstr "Nagłówek Referer nie został wysłany."
@@ -670,6 +697,24 @@ msgstr "Niepoprawny numer strony"
 
 msgid "Invalid page size"
 msgstr "Niepoprawny rozmiar strony."
+
+msgid "Save"
+msgstr "Zapisz"
+
+msgid "Save and continue editing"
+msgstr "Zapisz i kontynuuj edycję"
+
+msgid "Save and add another"
+msgstr "Zapisz i dodaj kolejny"
+
+msgid "Save as new"
+msgstr "Zapisz jako nowy"
+
+msgid "Close"
+msgstr "Zamknij"
+
+msgid "Delete"
+msgstr "Usuń"
 
 msgid "Published"
 msgstr "Opublikowany"
@@ -715,6 +760,9 @@ msgstr "zawiera dane badawcze"
 
 msgid "Update frequency"
 msgstr "Częstotliwość aktualizacji"
+
+msgid "Delete chosen elements"
+msgstr "Usuń wybrane elementy"
 
 msgid "Logo"
 msgstr ""
@@ -2712,9 +2760,6 @@ msgstr "Przesuń"
 msgid "Zoom"
 msgstr "Przybliż/Oddal"
 
-msgid "Save"
-msgstr "Zapisz"
-
 msgid "Reset"
 msgstr "Przywróć domyślny widok"
 
@@ -3283,6 +3328,15 @@ msgid "Update end date cant be earlier than start date."
 msgstr ""
 "Data zakończenia aktualizacji nie może być wcześniejsza lub taka sama jak "
 "data rozpoczęcia."
+
+msgid "Compressed file format"
+msgstr "Format skompresowanego pliku"
+
+msgid "Compressed file mimetype"
+msgstr "Typ MIME skompresowanego pliku"
+
+msgid "Compressed file encoding"
+msgstr "Kodowanie skompresowanego pliku"
 
 msgid "link"
 msgstr ""
@@ -4076,6 +4130,18 @@ msgstr ""
 msgid "Add %(name)s"
 msgstr "Dodaj %(name)s"
 
+#, python-format
+msgid ""
+"Deleting the dataset <b>\"%(title)s\"</b> will also delete data associated "
+"with it, that is:"
+msgstr ""
+"Usunięcie zbioru <b>\"%(title)s\"</b> spowoduje również skasowanie danych z "
+"nim powiązanych, to jest:"
+
+#, python-format
+msgid "And %(other_count)s other resources"
+msgstr "Oraz %(other_count)s innych zasobów"
+
 msgid "Datasets list"
 msgstr "Lista zbiorów danych"
 
@@ -4085,6 +4151,12 @@ msgstr "Dodaj %(verbose_name)s"
 
 msgid "Remove"
 msgstr "Usuń"
+
+msgid "Are you sure?"
+msgstr "Jesteś pewien?"
+
+msgid "Warning!"
+msgstr "Ostrzeżenie!"
 
 #, python-format
 msgid ""
@@ -4104,14 +4176,24 @@ msgid ""
 msgstr ""
 
 #, python-format
-msgid "Are you sure you want to delete the \"%(escaped_object)s\"? "
-msgstr "Czy na pewno chcesz usunąć \"%(escaped_object)s\"?"
+msgid ""
+"Are you sure you want to delete the (%(object_name)s): <b>"
+"\"%(escaped_object)s\"</b>?"
+msgstr ""
+"Czy na pewno chcesz usunąć (%(object_name)s): <b>\"%(escaped_object)s\"</b>?"
 
 msgid "Removing an object is an irreversible operation."
 msgstr "Usunięcie obiektu jest operacją nieodwracalną."
 
+#, python-format
+msgid "Yes, delete %(name)s"
+msgstr "Tak, skasuj %(name)s"
+
+msgid "No, stop the operation"
+msgstr "Nie, przerwij operację"
+
 msgid "Yes, I'm sure"
-msgstr "Tak, potwierdzam."
+msgstr "Tak, potwierdzam"
 
 msgid "No, take me back"
 msgstr "Nie, wróć"
@@ -4129,8 +4211,9 @@ msgid ""
 "protected related objects:"
 msgstr ""
 
-msgid "Are you sure you want to delete the objects?: "
-msgstr "Czy na pewno chcesz usunąć obiekty: "
+#, python-format
+msgid "Are you sure you want to delete the %(items)s?"
+msgstr "Czy na pewno chcesz usunąć %(items)s?"
 
 msgid ""
 "All existing datasets and resources imported from this source will be "
@@ -4177,9 +4260,6 @@ msgstr "Walidacja XML zakończona sukcesem!"
 
 msgid "XML Validation"
 msgstr "Walidacja XML"
-
-msgid "Close"
-msgstr "Zamknij"
 
 msgid "Active alerts"
 msgstr "Komunikaty"
@@ -4245,6 +4325,18 @@ msgstr ""
 msgid "unavailable tab - the resource does not have a tabular view"
 msgstr "zakładka niedostępna – zasób nie posiada widoku tabelarycznego"
 
+#, python-format
+msgid "0 of %(cnt)s selected"
+msgstr ""
+
+#, python-format
+msgid "%(total_count)s selected"
+msgid_plural "All %(total_count)s selected"
+msgstr[0] ""
+msgstr[1] ""
+msgstr[2] ""
+msgstr[3] ""
+
 msgid "Row number"
 msgstr "Numer wiersza"
 
@@ -4267,18 +4359,6 @@ msgid ""
 msgstr ""
 "Wybrany znak umowny %(obj)s jest wykorzystywany w zasobach poniżej. Znak "
 "umowny można usunąć tylko wtedy gdy nie jest wykorzystywany w żadnym zasobie."
-
-msgid "Save and continue editing"
-msgstr "Zapisz i kontynuuj edycję"
-
-msgid "Save and add another"
-msgstr "Zapisz i dodaj kolejny"
-
-msgid "Save as new"
-msgstr "Zapisz jako nowy"
-
-msgid "Delete"
-msgstr "Usunąć?"
 
 msgid "Cancel"
 msgstr "Anuluj"
@@ -4551,6 +4631,10 @@ msgid ""
 msgstr ""
 "W celu dokończenia procesu rejestracji kliknij (lub skopiuj i wklej w pole "
 "adres przeglądarki internetowej) poniższy link."
+
+#, python-format
+msgid "The link is valid for %(limit)s hours."
+msgstr "Link jest ważny przez %(limit)s godziny."
 
 msgid "A comment was posted on the data set"
 msgstr "Została zgłoszona uwaga do zbioru"
@@ -5023,6 +5107,9 @@ msgstr ""
 "użytkownika. Możesz jednak zmienić to hasło używając <a href=\"../password/"
 "\">tego formularza</a>."
 
+msgid "Resend the account activation link"
+msgstr "Wyślij ponownie link do aktywacji konta"
+
 msgid "You should confirm your email before logging in."
 msgstr "Musisz najpierw potwierdzić swój adres email."
 
@@ -5173,9 +5260,6 @@ msgstr "Email nie może być wysłany"
 
 msgid "Account not found"
 msgstr "Nie znaleziono konta"
-
-msgid "Expired token"
-msgstr "Przeterminowany token"
 
 msgid "Wrong password"
 msgstr "Niepoprawne hasło"

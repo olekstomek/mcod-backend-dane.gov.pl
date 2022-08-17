@@ -37,16 +37,16 @@ Feature: Datasets list API
 
   Scenario: Test dataset openness scores contains scores only from related resources that are published
     Given dataset with id 10001
-    And resource created with params {"id": 10000, "dataset_id": 10001, "openness_score": 3}
-    And resource created with params {"id": 10001, "dataset_id": 10001, "openness_score": 2}
+    And resource with example.html file, dataset_id 10001 and id 20000
+    And resource with example.txt file, dataset_id 10001 and id 20001
     When api request path is /1.4/datasets/10001
     Then send api request and fetch the response
     And api's response status code is 200
-    And api's response body field data/attributes/openness_scores is [2, 3]
-    Then set status to draft on resource with id 10001
+    And api's response body field data/attributes/openness_scores is [1, 3]
+    Then set status to draft on resource with id 20000
     Then send api request and fetch the response
     And api's response status code is 200
-    And api's response body field data/attributes/openness_scores is [3]
+    And api's response body field data/attributes/openness_scores is [1]
 
   Scenario Outline: Test datasets list is filtered by openness_scores
     Given dataset with id 999
@@ -139,7 +139,9 @@ Feature: Datasets list API
       | /1.4/datasets?visualization_types=chart                  |
 
   Scenario Outline: Test datasets can be filtered by resource types
-    Given Datasets with resources of type [{"website": 1}, {"api": 1}, {"file": 1}]
+    Given resource of type website
+    And resource of type api
+    And resource with buzzfeed file
     When api request path is <request_path>
     Then send api request and fetch the response
     And api's response status code is 200

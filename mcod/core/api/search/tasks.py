@@ -1,9 +1,9 @@
-from celery import shared_task
 from celery.utils.log import get_task_logger
 from django.apps import apps
 from django_elasticsearch_dsl.registries import registry
 
 from mcod.core.db.elastic import ProxyDocumentRegistry
+from mcod.core.tasks import extended_shared_task
 
 logger = get_task_logger('index_tasks')
 
@@ -26,7 +26,7 @@ def bulk_update_documents(app_label, object_name, ids_list, action='index'):
         doc().update(instances, action=action)
 
 
-@shared_task
+@extended_shared_task
 def update_document_task(app_label, object_name, instance_id):
     instance = _instance(app_label, object_name, instance_id)
     registry.update(instance)
@@ -37,7 +37,7 @@ def update_document_task(app_label, object_name, instance_id):
     }
 
 
-@shared_task
+@extended_shared_task
 def update_with_related_task(app_label, object_name, instance_id):
     instance = _instance(app_label, object_name, instance_id)
     registry.update(instance)
@@ -49,7 +49,7 @@ def update_with_related_task(app_label, object_name, instance_id):
     }
 
 
-@shared_task
+@extended_shared_task
 def update_related_task(app_label, object_name, pk_set, **kwargs):
     model = apps.get_model(app_label, object_name)
     docs = registry.get_documents((model,))
@@ -63,7 +63,7 @@ def update_related_task(app_label, object_name, pk_set, **kwargs):
     }
 
 
-@shared_task
+@extended_shared_task
 def delete_document_task(app_label, object_name, instance_id):
     model = apps.get_model(app_label, object_name)
     registry_proxy = ProxyDocumentRegistry(registry)
@@ -75,7 +75,7 @@ def delete_document_task(app_label, object_name, instance_id):
     }
 
 
-@shared_task
+@extended_shared_task
 def delete_with_related_task(related_instances_data, app_label, object_name, instance_id):
     for data in related_instances_data:
         instance = _instance(**data)
@@ -92,7 +92,7 @@ def delete_with_related_task(related_instances_data, app_label, object_name, ins
     }
 
 
-@shared_task
+@extended_shared_task
 def delete_related_documents_task(app_label, object_name, instance_id):
     instance = _instance(app_label, object_name, instance_id)
     registry.update_related(instance)
@@ -103,7 +103,7 @@ def delete_related_documents_task(app_label, object_name, instance_id):
     }
 
 
-@shared_task
+@extended_shared_task
 def null_field_in_related_task(app_label, object_name, instance_id):
     instance = _instance(app_label, object_name, instance_id)
     for rel in instance._meta.related_objects:
@@ -119,6 +119,6 @@ def null_field_in_related_task(app_label, object_name, instance_id):
             doc_instance.update(rel_inst)
 
 
-@shared_task
+@extended_shared_task
 def bulk_delete_documents_task(app_label, object_name, ids_list):
     return update_related_task(app_label, object_name, ids_list, action='delete')

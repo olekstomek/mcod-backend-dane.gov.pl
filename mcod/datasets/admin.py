@@ -1,5 +1,6 @@
 from dal_admin_filters import AutocompleteFilter
 from django.contrib import admin
+from django.contrib.admin import helpers
 from django.contrib.admin.views.main import ChangeList
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import EmptyPage, InvalidPage, Paginator
@@ -48,13 +49,14 @@ class InlineChangeList:
     multi_page = True
     get_query_string = ChangeList.__dict__['get_query_string']
 
-    def __init__(self, request, page_num, paginator, page_param='p'):
+    def __init__(self, request, page_num, paginator, page, page_param='p'):
         self.show_all = 'all' in request.GET
         self.page_num = page_num
         self.paginator = paginator
         self.result_count = paginator.count
         self.params = dict(request.GET.items())
         self.page_param = page_param
+        self.result_list = page.object_list
 
 
 class PaginationInline(TabularInline):
@@ -83,7 +85,7 @@ class PaginationInline(TabularInline):
                 except (EmptyPage, InvalidPage):
                     page = paginator.page(paginator.num_pages)
 
-                self.cl = InlineChangeList(request, page_num, paginator, page_param=self.page_param)
+                self.cl = InlineChangeList(request, page_num, paginator, page, page_param=self.page_param)
                 self.paginator = paginator
 
                 self._queryset = queryset if self.cl.show_all else page.object_list
@@ -560,6 +562,16 @@ class DatasetAdminMixin(HistoryMixin):
                 _new_js_lists.append(new_js_list)
             media._js_lists = _new_js_lists
             context['media'] = media
+
+        if obj and not obj.is_imported:
+            action_form = helpers.ActionForm(auto_id=None)
+            action_form.fields['action'].choices = [
+                ('', '---------'),
+                ('delete_selected', _('Delete chosen elements')),
+            ]
+            media += action_form.media
+            context['action_form'] = action_form
+            context['media'] = media
         return super().render_change_form(request, context, **kwargs)
 
     def save_model(self, request, obj, form, change):
@@ -646,7 +658,7 @@ class SupplementInline(SortableStackedInline):
 
     def get_readonly_fields(self, request, obj=None):
         if obj and obj.is_imported:
-            return ['name', 'name_en', 'file']
+            return ['name', 'name_en', 'file', 'language']
         return super().get_readonly_fields(request, obj=obj)
 
     def has_add_permission(self, request, obj=None):

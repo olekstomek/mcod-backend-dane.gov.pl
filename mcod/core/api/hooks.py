@@ -3,6 +3,7 @@ import uuid
 from importlib import import_module
 
 import falcon
+from constance import config
 from django.contrib.auth import get_user
 from django.contrib.auth.models import AnonymousUser
 from django.db import connection
@@ -11,6 +12,8 @@ from django_redis import get_redis_connection
 
 from mcod import settings
 from mcod.lib.jwt import decode_jwt_token
+from mcod.unleash import is_enabled
+
 
 session_store = import_module(settings.SESSION_ENGINE).SessionStore
 
@@ -35,6 +38,22 @@ def check_roles(user, roles):
             description=_('Additional permissions are required!'),
             code='additional_perms_required'
         )
+
+
+def get_expired_token_description():
+    return _(
+        '<b>Your account activation link has expired.</b><br>If you want to receive a new activation link, please '
+        'contact us: <a href="mailto:%(email)s">%(email)s</a>') % {
+        'email': config.CONTACT_MAIL} if is_enabled('S53_resend_registration_mail.be') else _('Expired token')
+
+
+def get_user_pending_description():
+    return _(
+        '<b>Your account has not been activated.</b><br>We sent an email to the e-mail address you used during '
+        'registration with a link to activate your account.<br>If you have not received an e-mail from us, or '
+        'the activation link has expired, please contact us: <a href="mailto:%(email)s">%(email)s</a>'
+    ) % {'email': config.CONTACT_MAIL} if is_enabled('S53_resend_registration_mail.be') else _(
+        'Email address not confirmed')
 
 
 def login_required(req, resp, resource, params, roles=('user', ), save=False, restore_from=None):  # noqa: C901
@@ -103,7 +122,7 @@ def login_required(req, resp, resource, params, roles=('user', ), save=False, re
         if user.state == 'pending':
             raise falcon.HTTPForbidden(
                 title='403 Forbidden',
-                description=_('Email address not confirmed'),
+                description=get_user_pending_description(),
                 code='account_inactive'
             )
 

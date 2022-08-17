@@ -98,7 +98,7 @@
 
                 {% block object-tools %}
                     {% if change %}{% if not is_popup %}
-                        <h4 class="italic-title">{% trans 'tools'|capfirst %}</h4>
+                        <h3 class="italic-title">{% trans 'tools'|capfirst %}</h3>
                         <ul class="box menu-box">
                             {% block object-tools-items %}
                                 <li>
@@ -139,13 +139,14 @@
                 {% csrf_token %}{% block form_top %}{% endblock %}
                 {% block suit_form_tabs %}
                     {% if adminform.model_admin.suit_form_tabs %}
-                        <ul id="suit_form_tabs" class="nav nav-tabs nav-tabs-suit" data-tab-prefix="suit-tab">
+                        <ul id="suit_form_tabs" class="nav nav-tabs nav-tabs-suit" data-tab-prefix="suit-tab" role="tablist">
                             {% for tab in adminform.model_admin.suit_form_tabs %}
-                                <li><a href="#{{ tab.0 }}">{{ tab.1 }}</a></li>{% endfor %}
+                                <li><a href="#{{ tab.0 }}" role="tab">{{ tab.1 }}</a></li>
+                            {% endfor %}
                         </ul>
                     {% endif %}
                 {% endblock %}
-                <div class="{% if adminform.model_admin.suit_form_tabs %} tab-content tab-content-main {% endif %}">
+                <div class="{% if adminform.model_admin.suit_form_tabs %} tab-content tab-content-main {% endif %}" role="tabpanel">
                     {% if is_popup %}
                         <input type="hidden" name="_popup" value="1"/>{% endif %}
                     {% if errors %}
@@ -175,7 +176,6 @@
                             {% include inline_admin_formset.opts.template %}
                         {% endfor %}
                     {% endblock %}
-
                 </div>
 
                 {% block after_related_objects %}{% endblock %}

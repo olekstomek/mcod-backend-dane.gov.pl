@@ -82,7 +82,7 @@ def filename_from_url(url, content_type=None):
 
 
 def content_type_from_file_format(file_format):
-    results = list(filter(lambda x: file_format in x[2], settings.SUPPORTED_CONTENT_TYPES))
+    results = list(filter(lambda x: file_format in x[2], settings.CONTENT_TYPE_TO_EXTENSION_MAP))
     if not results:
         return None, None
 

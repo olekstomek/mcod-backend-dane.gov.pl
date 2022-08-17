@@ -2,7 +2,6 @@ import csv
 import io
 import json
 import os
-import time
 import xml.etree.ElementTree as ET
 import zipfile
 from datetime import date
@@ -23,6 +22,7 @@ from mcod.core.tests.fixtures.bdd.common import (
     prepare_dbf_file,
     prepare_file,
 )
+from mcod.core.tests.helpers.tasks import run_on_commit_events
 from mcod.datasets.factories import DatasetFactory, SupplementFactory as DatasetSupplementFactory
 from mcod.datasets.tasks import send_dataset_update_reminder
 from mcod.harvester.factories import DataSourceFactory
@@ -40,6 +40,7 @@ from mcod.tags.factories import TagFactory
 def dataset():
     _dataset = DatasetFactory.create()
     TagFactory.create_batch(2, datasets=(_dataset,))
+    run_on_commit_events()
     return _dataset
 
 
@@ -58,6 +59,7 @@ def removed_dataset():
 def dataset_with_resources():
     _dataset = DatasetFactory.create()
     ResourceFactory.create_batch(2, dataset=_dataset)
+    run_on_commit_events()
     return _dataset
 
 
@@ -126,6 +128,7 @@ def dataset_with_resource():
     _dataset = DatasetFactory.create()
     ResourceFactory.create(dataset=_dataset)
     CategoryFactory.create_batch(2, datasets=(_dataset,))
+    run_on_commit_events()
     return _dataset
 
 
@@ -140,6 +143,7 @@ def dataset_with_resource_with_special_signs():
     _resource = ResourceFactory.create(dataset=_dataset)
     CategoryFactory.create_batch(2, datasets=(_dataset,))
     SpecialSignFactory.create_batch(2, special_signs_resources=(_resource,))
+    run_on_commit_events()
     return _dataset
 
 
@@ -155,6 +159,7 @@ def dataset_with_supplements_plus_resource_with_supplements():
     CategoryFactory.create_batch(2, datasets=(_dataset,))
     ResourceSupplementFactory.create_batch(2, resource=_resource)
     DatasetSupplementFactory.create_batch(2, dataset=_dataset)
+    run_on_commit_events()
     return _dataset
 
 
@@ -187,19 +192,11 @@ def number_of_datasets_with_resources(number_of_datasets, num):
         ResourceFactory.create_batch(num, dataset=_dataset)
 
 
-@given(parsers.parse('Datasets with resources of type {datasets_data}'))
-def datasets_with_resources_of_type(datasets_data):
-    data = json.loads(datasets_data)
-    for item in data:
-        _dataset = DatasetFactory.create()
-        for res_type, res_count in item.items():
-            ResourceFactory.create_batch(res_count, dataset=_dataset, type=res_type)
-    time.sleep(1)  # time to index data before request is made.
-
-
 @pytest.fixture
 def datasets():
-    return DatasetFactory.create_batch(2)
+    datasets = DatasetFactory.create_batch(2)
+    run_on_commit_events()
+    return datasets
 
 
 @given(parsers.parse('{num:d} datasets'))
@@ -278,8 +275,7 @@ def buzzfeed_editor(buzzfeed_organization):
 
 
 @pytest.fixture
-def buzzfeed_dataset(journalism_category, cc_4_license, buzzfeed_organization, buzzfeed_editor, fakenews_tag,
-                     top50_tag):
+def buzzfeed_dataset(journalism_category, cc_4_license, buzzfeed_organization, buzzfeed_editor, fakenews_tag, top50_tag):
     from mcod.datasets.models import Dataset
     ds = Dataset.objects.create(
         title="Analizy, dane i statystki stworzone przez Buzzfeed.com",
@@ -295,6 +291,7 @@ def buzzfeed_dataset(journalism_category, cc_4_license, buzzfeed_organization, b
         modified_by=buzzfeed_editor,
     )
     ds.tags.add(fakenews_tag, top50_tag)
+    run_on_commit_events()
     return ds
 
 
@@ -405,6 +402,11 @@ def multi_file_pack():
 @pytest.fixture
 def multi_file_zip_pack():
     return prepare_file('multi_pdf_xlsx.zip')
+
+
+@pytest.fixture
+def multi_file_zip_pack_no_extension():
+    return prepare_file('multi_pdf_xlsx')
 
 
 @pytest.fixture
@@ -533,8 +535,8 @@ def validated_file(
     example_jsonld_file, example_jsonstat_file, example_json_file_with_geojson_content,
     example_kml_file, example_n3_file, example_n_triples_file, example_n_quads_file, example_ods_file,
     example_trig_file, example_trix_file, example_turtle_file, example_xlsx_file, example_rdf_file,
-    multi_file_pack, single_csv_zip, multi_file_zip_pack, single_file_pack, shapefile_arch,
-    example_grib, example_hdf_netcdf, example_binary_netcdf, file_type,
+    multi_file_pack, single_csv_zip, multi_file_zip_pack, multi_file_zip_pack_no_extension, single_file_pack,
+    shapefile_arch, example_grib, example_hdf_netcdf, example_binary_netcdf, file_type,
     example_regular_zip, example_encrypted_content_zip,
     example_regular_7z, example_encrypted_content_7z, example_encrypted_content_and_headers_7z,
     example_regular_rar, example_encrypted_content_rar, example_encrypted_content_and_headers_rar,
@@ -562,6 +564,7 @@ def validated_file(
         'rdf': example_rdf_file,
         'zip with one csv': single_csv_zip,
         'zip with many files': multi_file_zip_pack,
+        'zip with many files no extension': multi_file_zip_pack_no_extension,
         'tar.gz with one csv': single_file_pack,
         'trig': example_trig_file,
         'trix': example_trix_file,

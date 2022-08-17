@@ -230,6 +230,11 @@ class TestVerifyEmail:
 
         resp = client.simulate_get(path=f'/auth/registration/verify-email/{token}')
         assert resp.status == falcon.HTTP_400
+        assert resp.json['code'] == 'expired_token'
+        assert resp.json['title'] == '400 Bad Request'
+        assert resp.json['description'] == (
+            '<b>Twój link do aktywacji konta wygasł.</b><br>Jeżeli chcesz otrzymać nowy link aktywacyjny, '
+            'skontaktuj się z nami: <a href="mailto:kontakt@dane.gov.pl">kontakt@dane.gov.pl</a>')
 
 
 class TestAdminPanelAccess:

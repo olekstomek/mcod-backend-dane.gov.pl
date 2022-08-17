@@ -1,5 +1,6 @@
 from django.urls import reverse
 from django.utils.safestring import mark_safe
+from django.utils.translation import gettext_lazy as _
 
 from mcod import settings
 from mcod.core.api.jsonapi.serializers import Object, object_attrs_registry as oar
@@ -26,6 +27,35 @@ class AdminMixin:
     @classmethod
     def admin_list_url(cls):
         return reverse(f'admin:{cls._meta.app_label}_{cls._meta.model_name}_changelist')
+
+    @classmethod
+    def html_title_save(cls):
+        return cls._html_title(_('Save'))
+
+    @classmethod
+    def html_title_save_and_continue(cls):
+        return cls._html_title(_('Save and continue editing'))
+
+    @classmethod
+    def html_title_save_and_add_another(cls):
+        return cls._html_title(_('Save and add another'))
+
+    @classmethod
+    def html_title_save_as_new(cls):
+        return cls._html_title(_('Save as new'))
+
+    @classmethod
+    def html_title_close(cls):
+        return cls._html_title(_('Close'))
+
+    @classmethod
+    def html_title_delete(cls):
+        return cls._html_title(_('Delete'))
+
+    @classmethod
+    def _html_title(cls, type_):
+        name = cls.accusative_case() if hasattr(cls, 'accusative_case') else ''
+        return f'{type_} {name}'
 
     def mark_safe(self, value):
         return mark_safe(value)

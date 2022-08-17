@@ -305,14 +305,14 @@
                 {% csrf_token %}{% block form_top %}{% endblock %}
                 {% block suit_form_tabs %}
                     {% if suit_form_tabs %}
-                        <ul id="suit_form_tabs" class="nav nav-tabs nav-tabs-suit" data-tab-prefix="suit-tab">
+                        <ul id="suit_form_tabs" class="nav nav-tabs nav-tabs-suit" data-tab-prefix="suit-tab" role="tablist">
                             {% for tab in suit_form_tabs %}
                                 <li {% if tab.2 == 'disabled' %}
                                     class="disabled disabledTab"
                                     title="{% blocktrans %}unavailable tab - the resource does not have a tabular view{% endblocktrans %}"
                                 {% endif %}
                                 >
-                                    <a {% if tab.2 == 'disabled' %} class="disabledTab" {% endif %} href="#{{ tab.0 }}">
+                                    <a {% if tab.2 == 'disabled' %} class="disabledTab" {% endif %} href="#{{ tab.0 }}" role="tab">
                                         {{ tab.1 }}
                                     </a>
                                 </li>
@@ -320,7 +320,7 @@
                         </ul>
                     {% endif %}
                 {% endblock %}
-                <div class="{% if adminform.model_admin.suit_form_tabs or suit_form_tabs %} tab-content tab-content-main {% endif %}">
+                <div class="{% if adminform.model_admin.suit_form_tabs or suit_form_tabs %} tab-content tab-content-main {% endif %}" role="tabpanel">
                     {% if is_popup %}
                         <input type="hidden" name="_popup" value="1"/>{% endif %}
                     {% if errors %}
@@ -361,6 +361,7 @@
                     <script type="text/javascript">
                         (function ($) {
                             $(document).ready(function () {
+                                $("label[for=id_special_signs]").removeAttr('for');
                                 $('.add-another').click(function (e) {
                                     e.preventDefault();
                                     showAddAnotherPopup(this);

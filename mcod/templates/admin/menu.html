@@ -2,7 +2,7 @@
 {% load i18n core_tags %}
 {% load url from suit_compat %}
 
-<div class="od-left-nav" id="left-nav">
+<div class="od-left-nav" id="left-nav" role="navigation">
   <ul>
     {% block menu_home %}
       {% url 'admin:index' as index_url %}

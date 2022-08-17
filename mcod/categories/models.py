@@ -85,7 +85,7 @@ class Category(ExtendedModel):
 @receiver(null_in_related_datasets, sender=Category)
 def null_category_in_datasets(sender, instance, *args, **kwargs):
     sender.log_debug(instance, 'Setting null in datasets', 'null_in_related_datasets')
-    null_field_in_related_task.apply_async(
+    null_field_in_related_task.apply_async_on_commit(
         args=(instance._meta.app_label, instance._meta.object_name, instance.id), countdown=3)
 
 

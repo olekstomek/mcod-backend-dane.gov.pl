@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-07-15 11:00+0200\n"
+"POT-Creation-Date: 2022-08-12 14:13+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -599,6 +599,28 @@ msgstr ""
 msgid "Additional permissions are required!"
 msgstr ""
 
+#, python-format
+msgid ""
+"<b>Your account activation link has expired.</b><br>If you want to receive a "
+"new activation link, please contact us: <a href=\"mailto:%(email)s\">"
+"%(email)s</a>"
+msgstr ""
+
+msgid "Expired token"
+msgstr ""
+
+#, python-format
+msgid ""
+"<b>Your account has not been activated.</b><br>We sent an email to the e-"
+"mail address you used during registration with a link to activate your "
+"account.<br>If you have not received an e-mail from us, or the activation "
+"link has expired, please contact us: <a href=\"mailto:%(email)s\">%(email)s</"
+"a>"
+msgstr ""
+
+msgid "Email address not confirmed"
+msgstr ""
+
 msgid "Missing token"
 msgstr ""
 
@@ -618,9 +640,6 @@ msgid "Cannot login"
 msgstr ""
 
 msgid "Account is blocked"
-msgstr ""
-
-msgid "Email address not confirmed"
 msgstr ""
 
 msgid "Referer checking failed - no Referer."
@@ -646,6 +665,24 @@ msgid "Invalid page number"
 msgstr ""
 
 msgid "Invalid page size"
+msgstr ""
+
+msgid "Save"
+msgstr ""
+
+msgid "Save and continue editing"
+msgstr ""
+
+msgid "Save and add another"
+msgstr ""
+
+msgid "Save as new"
+msgstr ""
+
+msgid "Close"
+msgstr ""
+
+msgid "Delete"
 msgstr ""
 
 msgid "Published"
@@ -691,6 +728,9 @@ msgid "has research data"
 msgstr ""
 
 msgid "Update frequency"
+msgstr ""
+
+msgid "Delete chosen elements"
 msgstr ""
 
 msgid "Logo"
@@ -2518,9 +2558,6 @@ msgstr ""
 msgid "Zoom"
 msgstr ""
 
-msgid "Save"
-msgstr ""
-
 msgid "Reset"
 msgstr ""
 
@@ -3065,6 +3102,15 @@ msgid ""
 msgstr ""
 
 msgid "Update end date cant be earlier than start date."
+msgstr ""
+
+msgid "Compressed file format"
+msgstr ""
+
+msgid "Compressed file mimetype"
+msgstr ""
+
+msgid "Compressed file encoding"
 msgstr ""
 
 msgid "link"
@@ -3837,6 +3883,16 @@ msgstr ""
 msgid "Add %(name)s"
 msgstr ""
 
+#, python-format
+msgid ""
+"Deleting the dataset <b>\"%(title)s\"</b> will also delete data associated "
+"with it, that is:"
+msgstr ""
+
+#, python-format
+msgid "And %(other_count)s other resources"
+msgstr ""
+
 msgid "Datasets list"
 msgstr ""
 
@@ -3845,6 +3901,12 @@ msgid "Add another %(verbose_name)s"
 msgstr ""
 
 msgid "Remove"
+msgstr ""
+
+msgid "Are you sure?"
+msgstr ""
+
+msgid "Warning!"
 msgstr ""
 
 #, python-format
@@ -3862,10 +3924,19 @@ msgid ""
 msgstr ""
 
 #, python-format
-msgid "Are you sure you want to delete the \"%(escaped_object)s\"? "
+msgid ""
+"Are you sure you want to delete the (%(object_name)s): <b>"
+"\"%(escaped_object)s\"</b>?"
 msgstr ""
 
 msgid "Removing an object is an irreversible operation."
+msgstr ""
+
+#, python-format
+msgid "Yes, delete %(name)s"
+msgstr ""
+
+msgid "No, stop the operation"
 msgstr ""
 
 msgid "Yes, I'm sure"
@@ -3887,7 +3958,8 @@ msgid ""
 "protected related objects:"
 msgstr ""
 
-msgid "Are you sure you want to delete the objects?: "
+#, python-format
+msgid "Are you sure you want to delete the %(items)s?"
 msgstr ""
 
 msgid ""
@@ -3932,9 +4004,6 @@ msgid "XML Validation successful!"
 msgstr ""
 
 msgid "XML Validation"
-msgstr ""
-
-msgid "Close"
 msgstr ""
 
 msgid "Active alerts"
@@ -3997,6 +4066,16 @@ msgstr ""
 msgid "unavailable tab - the resource does not have a tabular view"
 msgstr ""
 
+#, python-format
+msgid "0 of %(cnt)s selected"
+msgstr ""
+
+#, python-format
+msgid "%(total_count)s selected"
+msgid_plural "All %(total_count)s selected"
+msgstr[0] ""
+msgstr[1] ""
+
 msgid "Row number"
 msgstr ""
 
@@ -4016,18 +4095,6 @@ msgstr ""
 msgid ""
 "The selected convention mark %(obj)s is used in the resources below. A\n"
 "    convention mark can only be removed if it is not used on any resource."
-msgstr ""
-
-msgid "Save and continue editing"
-msgstr ""
-
-msgid "Save and add another"
-msgstr ""
-
-msgid "Save as new"
-msgstr ""
-
-msgid "Delete"
 msgstr ""
 
 msgid "Cancel"
@@ -4297,6 +4364,10 @@ msgstr ""
 msgid ""
 "In order to complete the registration process, click (or copy and paste in "
 "the address field of the web browser) into the link below."
+msgstr ""
+
+#, python-format
+msgid "The link is valid for %(limit)s hours."
 msgstr ""
 
 msgid "A comment was posted on the data set"
@@ -4731,6 +4802,9 @@ msgid ""
 "\">this form</a>."
 msgstr ""
 
+msgid "Resend the account activation link"
+msgstr ""
+
 msgid "You should confirm your email before logging in."
 msgstr ""
 
@@ -4876,9 +4950,6 @@ msgid "Email cannot be sent"
 msgstr ""
 
 msgid "Account not found"
-msgstr ""
-
-msgid "Expired token"
 msgstr ""
 
 msgid "Wrong password"

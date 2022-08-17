@@ -13,13 +13,13 @@ Feature: File validation
     | jsonstat                  | jsonstat    |
     | ods                       | ods         |
     | xlsx                      | xlsx        |
-    | zip with one csv          | csv         |
-    | tar.gz with one csv       | csv         |
-    | empty_file.7z             | csv         |
-    | empty_file.rar            | csv         |
-    | empty_docx_packed.rar     | docx        |
-    | empty_file.tar.gz         | csv         |
-    | empty_file.tar.bz2        | csv         |
+    | zip with one csv          | zip         |
+    | tar.gz with one csv       | gz          |
+    | empty_file.7z             | 7z          |
+    | empty_file.rar            | rar         |
+    | empty_docx_packed.rar     | rar         |
+    | empty_file.tar.gz         | gz          |
+    | empty_file.tar.bz2        | bz2         |
     | shapefile arch            | shp         |
     | gpx                       | gpx         |
     | grib                      | grib        |
@@ -41,9 +41,11 @@ Feature: File validation
     | turtle                    | ttl         |
     | trig                      | trig        |
     | trix                      | trix        |
-    | regular.zip               | csv         |
-    | regular.7z                | csv         |
-    | regular.rar               | csv         |
+    | regular.zip               | zip         |
+    | regular.7z                | 7z          |
+    | regular.rar               | rar         |
+    | zip with many files       | zip         |
+    | zip with many files no extension | zip  |
 
   Scenario Outline: Validation of password protected archives
     Given I have file <file_type>
@@ -84,3 +86,22 @@ Feature: File validation
     | empty_file.tar.gz   | 1            |
     | empty_file.tar.bz2  | 1            |
     | rar with many files | 2            |
+
+  Scenario: File format taken from content_type and optional family is ok
+      Given function file_format_from_content_type works properly for all supported content types
+
+  Scenario Outline: Validation of various extracted file types
+    Given I have file <file_type>
+    Then extracted file is validated and result is <file_format>
+    Examples:
+    | file_type                 | file_format |
+    | regular.zip               | csv         |
+    | regular.7z                | csv         |
+    | regular.rar               | csv         |
+    | zip with one csv          | csv         |
+    | tar.gz with one csv       | csv         |
+    | empty_file.7z             | csv         |
+    | empty_file.rar            | csv         |
+    | empty_docx_packed.rar     | docx        |
+    | empty_file.tar.gz         | csv         |
+    | empty_file.tar.bz2        | csv         |

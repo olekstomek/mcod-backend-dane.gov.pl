@@ -22,6 +22,7 @@ from pytest_bdd import given, parsers, then, when
 from mcod import settings
 from mcod.core.api.rdf.namespaces import NAMESPACES
 from mcod.core.registries import factories_registry
+from mcod.core.tests.helpers.tasks import run_on_commit_events
 from mcod.unleash import is_enabled
 
 
@@ -205,6 +206,7 @@ def admin_request_body_field(context, field, value):
 
 
 @when(parsers.parse("admin's request method is {request_method}"))
+@then(parsers.parse("admin's request method is {request_method}"))
 def admin_request_method(admin_context, request_method):
     admin_context.admin.method = request_method
 
@@ -222,6 +224,8 @@ def form_has_image_to_upload(admin_context, small_image):
 
 def get_data(resource):
     resource.revalidate()
+    run_on_commit_events()
+    resource.refresh_from_db()
     assert resource.tabular_data_schema
     data = resource.__dict__
     data['dataset'] = resource.dataset_id
@@ -629,7 +633,7 @@ def api_request_post_files(admin_context, req_post_files):
 
 @when(parsers.parse('admin\'s request posted links {req_post_links}'))
 @when('admin\'s request posted links <req_post_links>')
-def api_request_post_links(admin_context, httpsserver, req_post_links):
+def api_request_post_links(admin_context, httpsserver_custom, req_post_links):
     _magic = magic.Magic(mime=True, mime_encoding=True)
     data = json.loads(req_post_links)
     posted_links = {}
@@ -637,14 +641,14 @@ def api_request_post_links(admin_context, httpsserver, req_post_links):
         file_path = os.path.join(settings.TEST_SAMPLES_PATH, file_name)
         with open(file_path, 'rb') as file:
             content = file.read()
-        httpsserver.serve_content(
+        httpsserver_custom.serve_content(
             content=content,
             headers={
                 'Content-Disposition': f'attachment; filename="{file_name}"',
                 'Content-Type': _magic.from_buffer(content),
             }
         )
-        posted_links[field_name] = httpsserver.url
+        posted_links[field_name] = httpsserver_custom.url
 
     admin_context.obj.update(posted_links)
 
@@ -798,6 +802,18 @@ def creation_page_is_requested(admin_context, admin_class_path):
         admin_context.response = get_response(admin_context)
 
 
+@when(parsers.parse("'{admin_class_path}' edition page is requested for created object"))
+@then(parsers.parse("'{admin_class_path}' edition page is requested for created object"))
+def edition_page_is_requested(admin_context, admin_class_path):
+    admin_class_path_to_model = {
+        f'{admin_class.__class__.__module__}.{admin_class.__class__.__name__}': (model, admin_class)
+        for model, admin_class in admin.site._registry.items()
+    }
+    model, admin_class_instance = admin_class_path_to_model[admin_class_path]
+    admin_context.admin.path = getattr(model, 'get_admin_change_url')(admin_context.object_id)
+    admin_context.response = get_response(admin_context)
+
+
 @when(parsers.parse("'{field_name}' field of created object is '{params}'"))
 @then(parsers.parse("'{field_name}' field of created object is '{params}'"))
 def field_of_created_object_is(admin_context, field_name, params):
@@ -841,8 +857,7 @@ def admin_page_with_mocked_geo_api_is_requested(admin_context, page_url, mocked_
 
 @when(parsers.parse("admin's page with geocoder mocked api for tabular data {page_url} is requested"))
 @then(parsers.parse("admin's page with geocoder mocked api for tabular data {page_url} is requested"))
-def admin_page_with_geo_mocked_api_for_tabular_data_is_requested(admin_context, page_url, geo_tabular_data_response,
-                                                                 django_capture_on_commit_callbacks):
+def admin_page_with_geo_mocked_api_for_tabular_data_is_requested(admin_context, page_url, geo_tabular_data_response):
     client = Client()
     api_expr = re.compile(settings.GEOCODER_URL + r'/v1/search/structured\?postalcode=\d{2}-\d{3}&locality=\w+')
     client.force_login(admin_context.admin.user)
@@ -850,8 +865,8 @@ def admin_page_with_geo_mocked_api_for_tabular_data_is_requested(admin_context, 
     if admin_context.admin.method == 'POST':
         with requests_mock.Mocker(real_http=True) as mock_request:
             mock_request.get(api_expr, json=geo_tabular_data_response)
-            with django_capture_on_commit_callbacks(execute=True):
-                response = client.post(page_url, data=getattr(admin_context, 'obj', None), follow=True)
+            response = client.post(page_url, data=getattr(admin_context, 'obj', None), follow=True)
+            run_on_commit_events()
     else:
         response = client.get(page_url, follow=True)
     admin_context.response = response

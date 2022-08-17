@@ -173,12 +173,16 @@ Feature: Resource with file creation
     And admin's request posted resource data is {"title": "test resource title", "description": "more than 20 characters", "switcher": "link", "dataset": 10001, "data_date": "22.05.2020", "status": "published"}
     And admin's request posted links <req_post_links>
     And admin's request save and continue will be chosen
-    And admin's page /resources/resource/add/ is requested
+    And 'mcod.resources.admin.ResourceAdmin' creation page is requested
+    Then admin's response status code is 200
+    And admin's response page contains <added message>
+
+    Then admin's request method is GET
+    And 'mcod.resources.admin.ResourceAdmin' edition page is requested for created object
     Then admin's response status code is 200
     And admin's response page contains <status>
     And admin's response page contains <message>
     And admin's response page contains <recommendation>
-    And admin's response page contains <added message>
 
     Examples:
     | req_post_links                                 | status                                               | message                                                         | recommendation                                                                                      | added message                                                 |
@@ -194,10 +198,14 @@ Feature: Resource with file creation
     And admin's request posted resource data is {"title": "test resource title", "description": "more than 20 characters", "switcher": "link", "dataset": 10002, "data_date": "22.05.2020", "status": "published"}
     And admin's request posted links <req_post_links>
     And admin's request save and continue will be chosen
-    And admin's page /resources/resource/add/ is requested
+    And 'mcod.resources.admin.ResourceAdmin' creation page is requested
+    Then admin's response status code is 200
+    And admin's response page contains <added message>
+
+    Then admin's request method is GET
+    And 'mcod.resources.admin.ResourceAdmin' edition page is requested for created object
     Then admin's response status code is 200
     And admin's response page contains <status>
-    And admin's response page contains <added message>
     And admin's response page not contains <failure status>
 
     Examples:
@@ -205,3 +213,12 @@ Feature: Resource with file creation
     | {"link": "regular.zip"}              | <span class="label label-success">SUCCESS</span>     | /change/">test resource title</a>" został pomyślnie dodany.   | <span class="label label-important">FAILURE</span>  |
     | {"link": "regular.rar"}              | <span class="label label-success">SUCCESS</span>     | /change/">test resource title</a>" został pomyślnie dodany.   | <span class="label label-important">FAILURE</span>  |
     | {"link": "regular.7z"}               | <span class="label label-success">SUCCESS</span>     | /change/">test resource title</a>" został pomyślnie dodany.   | <span class="label label-important">FAILURE</span>  |
+
+  Scenario: Resource created with compressed xlsx has converted csv file
+    Given dataset with id 9000
+    When admin's request method is POST
+    And admin's request posted resource data is {"title": "test_zipped_xlsx", "description": "more than 20 characters", "switcher": "file", "link": "", "dataset": 9000, "data_date": "22.05.2020", "status": "published"}
+    And admin's request posted files {"file": "xlsx_in_archive.zip"}
+    And admin's page /resources/resource/add/ is requested
+    Then admin's response status code is 200
+    And resource with title test_zipped_xlsx has zipped xlsx converted to csv

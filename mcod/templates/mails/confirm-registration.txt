@@ -7,4 +7,5 @@
 
 {{ link }}
 
+{% if limit %}{% blocktrans %}The link is valid for {{ limit }} hours.{% endblocktrans %}{% endif %}
 {% include 'mails/_footer.txt' %}

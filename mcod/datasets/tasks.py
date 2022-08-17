@@ -4,7 +4,6 @@ import zipfile
 from datetime import datetime
 from shutil import disk_usage
 
-from celery import shared_task
 from celery_singleton import Singleton
 from dateutil.relativedelta import relativedelta
 from django.apps import apps
@@ -12,12 +11,13 @@ from django.conf import settings
 from django.utils import translation
 
 from mcod.core import storages
+from mcod.core.tasks import extended_shared_task
 from mcod.core.utils import clean_filename, save_as_csv, save_as_xml
 
 logger = logging.getLogger('mcod')
 
 
-@shared_task
+@extended_shared_task
 def send_dataset_comment(dataset_id, comment):
     model = apps.get_model('datasets', 'Dataset')
     dataset = model.objects.get(pk=dataset_id)
@@ -54,7 +54,7 @@ def create_catalog_metadata_file(qs_data, schema, extension, save_serialized_dat
             os.symlink(new_file, symlink_file)
 
 
-@shared_task
+@extended_shared_task
 def create_catalog_metadata_files():
     from mcod.datasets.serializers import DatasetResourcesCSVSerializer, DatasetXMLSerializer
     dataset_model = apps.get_model('datasets', 'Dataset')
@@ -71,7 +71,7 @@ def create_catalog_metadata_files():
     create_catalog_metadata_file(qs_data, csv_schema, 'csv', save_serialized_data_func)
 
 
-@shared_task
+@extended_shared_task
 def send_dataset_update_reminder():
     logger.debug('Attempting to send datasets update reminders.')
     dataset_model = apps.get_model('datasets', 'Dataset')
@@ -81,7 +81,7 @@ def send_dataset_update_reminder():
     logger.debug(f'Sent {sent_messages} messages with dataset update reminder.')
 
 
-@shared_task(base=Singleton)
+@extended_shared_task(base=Singleton)
 def archive_resources_files(dataset_id):
     free_space = disk_usage(settings.MEDIA_ROOT).free
     if free_space < settings.ALLOWED_MINIMUM_SPACE:

@@ -201,6 +201,12 @@ def test_content_type_from_file_format_unsupported_format():
     assert content_type is None
 
 
+def test_content_type_from_zip_format():
+    family, content_type = content_type_from_file_format('zip')
+    assert family == 'application'
+    assert content_type == 'zip'
+
+
 def test_filename_from_url_extension_from_content_type():
     filename, extension = filename_from_url('http://mocker-test.com/test-file', 'video/mp4')
     assert filename == 'test-file'

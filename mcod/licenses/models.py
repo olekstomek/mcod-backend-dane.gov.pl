@@ -48,9 +48,10 @@ class License(ExtendedModel):
 @receiver(null_in_related_datasets, sender=License)
 def null_license_in_datasets(sender, instance, *args, **kwargs):
     sender.log_debug(instance, 'Setting license to null in related datasets', 'null_in_related_datasets')
-    null_field_in_related_task.apply_async(
+    null_field_in_related_task.apply_async_on_commit(
         args=(instance._meta.app_label, instance._meta.object_name, instance.id),
-        countdown=2)
+        countdown=2,
+    )
 
 
 @receiver(update_related_datasets, sender=License)

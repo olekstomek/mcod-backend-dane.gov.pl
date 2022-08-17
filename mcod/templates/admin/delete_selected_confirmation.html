@@ -1,11 +1,31 @@
 {% extends "admin/delete_selected_confirmation.html" %}
 
-{% load core_tags admin_urls i18n l10n %}
+{% load admin_urls i18n l10n core_tags %}
+
+{% block title %}
+    {% is_unleash_enabled "S55_admin_delete_layout.be" as S55_admin_delete_layout %}
+    {% if S55_admin_delete_layout and title == _('Are you sure?') %}
+        {% trans 'Warning!' %}
+    {% else %}
+        {{ block.super }}
+    {% endif %}
+{% endblock %}
+
+{% block content_title %}
+    {% is_unleash_enabled "S55_admin_delete_layout.be" as S55_admin_delete_layout %}
+    {% if S55_admin_delete_layout and title == _('Are you sure?') %}
+        <h2 class="content-title">{% trans 'Warning!' %}</h2>
+    {% else %}
+        {{ block.super }}
+    {% endif %}
+{% endblock %}
 
 {% block content %}
+    {% is_unleash_enabled "S55_admin_delete_layout.be" as S55_admin_delete_layout %}
+    <div id="delete_confirmation"{% if S55_admin_delete_layout %} class="alert alert-block alert-error"{% endif %}>
     {% if perms_lacking %}
         {% block perms_lacking %}
-        <p>{% blocktrans %}Deleting the selected {{ objects_name }} would result in deleting related objects, but your account doesn't have permission to delete the following types of objects:{% endblocktrans %}</p>
+        <p class="lead">{% blocktrans %}Deleting the selected {{ objects_name }} would result in deleting related objects, but your account doesn't have permission to delete the following types of objects:{% endblocktrans %}</p>
         <ul>
             {% for obj in perms_lacking %}
                 <li>{{ obj }}</li>
@@ -13,20 +33,23 @@
         </ul>
         {% endblock perms_lacking %}
     {% elif protected %}
-        <p>{% blocktrans %}Deleting the selected {{ objects_name }} would require deleting the following protected related objects:{% endblocktrans %}</p>
+        <p class="lead">{% blocktrans %}Deleting the selected {{ objects_name }} would require deleting the following protected related objects:{% endblocktrans %}</p>
         <ul>
             {% for obj in protected %}
                 <li>{{ obj }}</li>
             {% endfor %}
         </ul>
     {% else %}
-        <p>{% blocktrans %}Are you sure you want to delete the objects?: {% endblocktrans %}</p>
-        {% for obj in queryset %}
-            <p> {%  if obj.title %}"{{ obj.title|truncatewords:"18" }}" {% elif obj.email %} "{{ obj.email }}" {% else %} "{{ obj|truncatewords:"18" }}" {% endif %}</p>
-            {% if obj.datasource_datasets %}
-              <p>({% trans 'All existing datasets and resources imported from this source will be deleted also.' %})</p>
-            {% endif %}
-        {% endfor %}
+        <p class="lead">{% blocktrans with items=objects_name|lower %}Are you sure you want to delete the {{ items }}?{% endblocktrans %}</p>
+        <ul>
+            {% for obj in queryset %}
+                <li>{% if obj.title %}{{ obj.title|truncatewords:"18" }}{% elif obj.email %}{{ obj.email }}{% else %}{{ obj|truncatewords:"18" }}{% endif %}</li>
+                {% if obj.datasource_datasets %}
+                    <li class="small">({% trans 'All existing datasets and resources imported from this source will be deleted also.' %})</li>
+                {% endif %}
+            {% endfor %}
+        </ul>
+
         {% if not queryset.model.trash_class or queryset.model.is_trash %}
             <p class="irreversible-deletion-warning">{% trans "Removing an object is an irreversible operation." %}</p>
         {% endif %}
@@ -38,14 +61,16 @@
                 {% endfor %}
                 <input type="hidden" name="action" value="delete_selected">
                 <input type="hidden" name="post" value="yes">
+            {% if S55_admin_delete_layout %}
+                <br>
+                <input type="submit" value="{% blocktrans with name=opts.verbose_name_plural|lower %}Yes, delete {{ name }}{% endblocktrans %}" class="btn btn-danger">
+                <a href="#" onclick="window.history.back()" class="btn btn-success cancel-link">{% trans "No, stop the operation" %}</a>
+            {% else %}
                 <input type="submit" value="{% trans "Yes, I'm sure" %}">
-                <a href="#" onclick="goBack()" class="button cancel-link">{% trans "No, take me back" %}</a>
+                <a href="#" onclick="window.history.back()" class="button cancel-link">{% trans "No, take me back" %}</a>
+            {% endif %}
             </div>
-            <script>
-                function goBack() {
-                    window.history.back();
-                }
-            </script>
         </form>
     {% endif %}
+    </div>
 {% endblock %}

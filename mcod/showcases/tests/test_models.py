@@ -6,6 +6,7 @@ from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import IntegrityError
 from django.db.models.query import QuerySet
 
+from mcod.core.tests.helpers.tasks import run_on_commit_events
 from mcod.showcases.models import Showcase, ShowcaseProposal
 
 
@@ -85,6 +86,7 @@ class TestShowcaseModel:
     def test_image_path_and_url(self, showcase, small_image):
         showcase.image = small_image
         showcase.save()
+        run_on_commit_events()
         showcase.refresh_from_db()
         assert showcase.image
         assert showcase.image_thumb

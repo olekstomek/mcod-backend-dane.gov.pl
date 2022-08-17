@@ -15,6 +15,7 @@ from mcod.core.tests.fixtures.rdf import *  # noqa
 from mcod.core.tests.fixtures.suggestions import *  # noqa
 from mcod.core.tests.fixtures.tags import *  # noqa
 from mcod.core.tests.fixtures.users import *  # noqa
+from mcod.core.tests.helpers.tasks import run_on_commit_events
 from mcod.lib.triggers import session_store
 
 adapter = requests_mock.Adapter()
@@ -79,6 +80,10 @@ def pytest_runtest_setup(item):
         graph_name = ''.join(random.choice(chars) for _ in range(18))
         graph_uri = f'<http://test.mcod/{graph_name}>'
         rdf_registry.create_named_graph(graph_uri)
+
+
+def pytest_bdd_after_step(request, feature, scenario, step, step_func, step_func_args):
+    run_on_commit_events()
 
 
 def pytest_runtest_teardown(item, nextitem):

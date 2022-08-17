@@ -2,10 +2,12 @@ import pytest
 from falcon import HTTP_OK
 
 from mcod import settings
+from mcod.core.tests.helpers.tasks import run_on_commit_events
 
 
 @pytest.mark.elasticsearch
 def test_links_to_indexed_data(client14, tabular_resource):
+    run_on_commit_events()
     response = client14.simulate_get(f'/resources/{tabular_resource.id}')
     assert HTTP_OK == response.status
     body = response.json

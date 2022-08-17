@@ -9,14 +9,14 @@ Feature: Statistics can be filtered by widgets
     Then chart dataframe contains columns <headers>
 
     Examples:
-    |chart_cls                                    | selected_options  | headers                 |
-    |Top10ProvidersByResourcesCount               | file,api          | Nazwa dostawcy,Plik,API |
-    |ResourcesCountByTimePeriod                   | file,api          | Okres,Liczba danych          |
-    |NewResourcesCountByTimePeriod                | file,api          | Okres,Liczba danych          |
+    |chart_cls                                    | selected_options  | headers                      |
+    |Top10ProvidersByResourcesCount               | file,api          | Nazwa dostawcy,Plik,API      |
+    |ResourcesCountByTimePeriod                   | file,api          | Okres,Plik,API               |
+    |NewResourcesCountByTimePeriod                | file,api          | Okres,Plik,API               |
     |Top10ProvidersByDatasetsCount                | ct_table,ct_chart | Nazwa dostawcy,Tabela,Wykres |
-    |DatasetsCountByTimePeriod                    | ct_table,ct_chart | Okres,Liczba     |
-    |NewDatasetsCountByTimePeriod                 | ct_table,ct_chart | Okres,Liczba     |
-    |Top10LastMonthOrganizationNewDatasets        | ct_table,ct_chart | Bezwzględna liczba nowych zbiorów danych,Instytucja     |
+    |DatasetsCountByTimePeriod                    | ct_table,ct_chart | Okres,Tabela,Wykres          |
+    |NewDatasetsCountByTimePeriod                 | ct_table,ct_chart | Okres,Tabela,Wykres          |
+    |Top10LastMonthOrganizationNewDatasets        | ct_table,ct_chart | Instytucja,Tabela,Wykres     |
 
     Scenario Outline: Select widget changes data range for agent statistics
     Given institution with id 999
@@ -29,8 +29,8 @@ Feature: Statistics can be filtered by widgets
 
     Examples:
     |chart_cls                                    | selected_options  | headers             |
-    |NewResourcesForInstitutionsGroupByTimePeriod | file,api          | Liczba,Okres        |
-    |DatasetsCountByTimePeriodForGroup            | ct_table,ct_chart | Liczba,Okres        |
-    |NewDatasetsByTimePeriodForGroup              | ct_table,ct_chart | Liczba,Okres        |
-    |ResourcesForInstitutionsGroupByTimePeriod    | file,api          | Liczba,Okres        |
+    |NewResourcesForInstitutionsGroupByTimePeriod | file,api          | Okres,Plik,API      |
+    |DatasetsCountByTimePeriodForGroup            | ct_table,ct_chart | Okres,Tabela,Wykres |
+    |NewDatasetsByTimePeriodForGroup              | ct_table,ct_chart | Okres,Tabela,Wykres |
+    |ResourcesForInstitutionsGroupByTimePeriod    | file,api          | Okres,Plik,API      |
     |TopResourceCountOrgfromGroup                 | file,api          | Instytucja,Plik,API |

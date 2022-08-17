@@ -11,7 +11,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.postgres.fields import JSONField
 from django.contrib.postgres.indexes import GinIndex
 from django.core.exceptions import ValidationError
-from django.db import models, transaction
+from django.db import models
 from django.db.models import Max, Q, Sum
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
@@ -802,8 +802,7 @@ def handle_dataset_without_resources(sender, instance, *args, **kwargs):
         organization_id = instance.tracker.previous('organization_id')
         if organization_id:
             # update ES document for previously set organization, if any.
-            transaction.on_commit(
-                lambda: update_document_task.s('organizations', 'Organization', organization_id).apply_async())
+            update_document_task.s('organizations', 'Organization', organization_id).apply_async_on_commit(force_enabled=True)
 
 
 @receiver(remove_related_resources, sender=Dataset)
@@ -840,9 +839,7 @@ def update_related_watchers(sender, instance, *args, state=None, **kwargs):
         instance.organization._meta.object_name,
         instance.organization.id,
         obj_state=state
-    ).apply_async(
-        countdown=1
-    )
+    ).apply_async_on_commit(countdown=1)
 
 
 core_signals.notify_published.connect(update_watcher, sender=Dataset)

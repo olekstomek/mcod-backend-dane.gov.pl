@@ -7,7 +7,7 @@ from collections import OrderedDict
 from pathlib import Path
 from time import time
 
-from celery import chord, shared_task
+from celery import chord
 from celery.signals import task_failure, task_prerun, task_success
 from django.apps import apps
 from django.contrib.auth import get_user_model
@@ -21,6 +21,7 @@ from mcod import settings
 from mcod.celeryapp import app
 from mcod.core.api.rdf.namespaces import NAMESPACES
 from mcod.core.serializers import csv_serializers_registry as csr
+from mcod.core.tasks import extended_shared_task
 from mcod.core.utils import save_as_csv
 from mcod.datasets.models import Dataset
 from mcod.lib.rdf.store import get_sparql_store
@@ -36,7 +37,7 @@ logger = logging.getLogger('mcod')
 kronika_logger = logging.getLogger('kronika-sparql-performance')
 
 
-@shared_task(name='reports', ignore_result=False)
+@extended_shared_task(name='reports', ignore_result=False)
 def generate_csv(pks, model_name, user_id, file_name_postfix):
     app, _model = model_name.split('.')
     model = apps.get_model(app, _model)
@@ -71,7 +72,7 @@ def generate_csv(pks, model_name, user_id, file_name_postfix):
     })
 
 
-@shared_task(ignore_result=False)
+@extended_shared_task(ignore_result=False)
 def create_no_resource_dataset_report():
     logger.debug('Running create_no_resource_dataset_report task.')
     app = 'datasets'
@@ -125,12 +126,12 @@ def create_resource_link_validation_report():
     })
 
 
-@shared_task(ignore_result=False)
+@extended_shared_task(ignore_result=False)
 def link_validation_success_callback():
     return create_resource_link_validation_report()
 
 
-@shared_task(ignore_result=False)
+@extended_shared_task(ignore_result=False)
 def link_validation_error_callback():
     return create_resource_link_validation_report()
 
@@ -155,7 +156,7 @@ def append_report_task(sender, task_id, task, signal, **kwargs):
         logger.error(f"reports.task: exception on append_report_task:\n{e}")
 
 
-@shared_task(ignore_result=False)
+@extended_shared_task(ignore_result=False)
 def create_resources_report_task(data, headers, report_name):
     logger.debug(f'Creating resource {report_name} report.')
     app_name = 'resources'
@@ -194,7 +195,7 @@ def generating_monthly_report_success(sender, result, **kwargs):
         logger.error(f"reports.task: exception on generating_monthly_report_success:\n{e}")
 
 
-@shared_task(ignore_result=False)
+@extended_shared_task(ignore_result=False)
 def validate_resources_links(ids=None):
     if ids:
         resources_ids = ids
@@ -346,7 +347,7 @@ def create_daily_resources_report():
     return {}
 
 
-@shared_task
+@extended_shared_task
 def check_kronika_connection_performance():
     logger.info('Executing check_kronika_connection_performance task')
     format_ = 'json'

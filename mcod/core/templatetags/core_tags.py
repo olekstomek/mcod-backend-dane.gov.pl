@@ -2,6 +2,8 @@ from django import template
 from django.apps import apps
 from django.conf import settings
 from django.contrib import admin
+from django.contrib.admin.templatetags.base import InclusionAdminNode
+from django.contrib.admin.templatetags.admin_list import admin_actions
 from django.http import HttpRequest
 from django.template.defaultfilters import capfirst
 from django.urls import reverse
@@ -147,3 +149,30 @@ def mcod_field_contents_foreign_linked(admin_field):
         if file_url:
             field_display = mark_safe("<a href='%s'>%s</a>" % (file_url, field))
     return field_display
+
+
+@register.filter(is_safe=True)
+def extendedstringformat(widget, name):
+    value = widget.get('attrs', {}).get(name)(widget)
+    if isinstance(value, tuple):
+        value = str(value)
+    try:
+        return "%s" % value
+    except (ValueError, TypeError):
+        return ""
+
+
+@register.simple_tag
+def is_value_callable(widget, name):
+    return callable(widget.get('attrs', {}).get(name))
+
+
+@register.simple_tag
+def title_attr(adminform, type_):
+    attr = getattr(adminform.form.instance, f'html_title_{type_}', None)
+    return format_html(f'title="{attr()}"') if attr and is_enabled('S55_admin_delete_layout.be') else ''
+
+
+@register.tag(name='resources_actions')
+def resources_actions_tag(parser, token):
+    return InclusionAdminNode(parser, token, func=admin_actions, template_name='resources_actions.html')

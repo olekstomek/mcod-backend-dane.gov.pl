@@ -1,5 +1,6 @@
 {% load suit_tags core_tags %}
 <fieldset class="module aligned{{ fieldset.name|yesno:' with-legend, first' }} {{ fieldset.classes }}">
+    <legend class="sr-only">Zgrupowane elementy</legend>
     {% if fieldset.name %}
         <h2 class="legend">{{ fieldset.name }}
             {% if fieldset.description %}

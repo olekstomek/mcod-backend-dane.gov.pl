@@ -1,10 +1,10 @@
-from celery import shared_task
 from django.apps import apps
 
 from mcod.core.api.search import signals as search_signals
+from mcod.core.tasks import extended_shared_task
 
 
-@shared_task
+@extended_shared_task
 def create_showcase_proposal_task(data):
     model = apps.get_model('showcases.ShowcaseProposal')
     obj = model.create(data)
@@ -14,7 +14,7 @@ def create_showcase_proposal_task(data):
     }
 
 
-@shared_task
+@extended_shared_task
 def create_showcase_task(showcase_proposal_id):
     model = apps.get_model('showcases.ShowcaseProposal')
     obj = model.objects.filter(id=showcase_proposal_id).first()
@@ -25,7 +25,7 @@ def create_showcase_task(showcase_proposal_id):
     }
 
 
-@shared_task
+@extended_shared_task
 def generate_logo_thumbnail_task(showcase_id):
     model = apps.get_model('showcases.Showcase')
     obj = model.objects.filter(pk=showcase_id).first()
@@ -38,7 +38,7 @@ def generate_logo_thumbnail_task(showcase_id):
     }
 
 
-@shared_task
+@extended_shared_task
 def send_showcase_proposal_mail_task(showcaseproposal_id):
     model = apps.get_model('showcases.ShowcaseProposal')
     obj = model.objects.filter(id=showcaseproposal_id).first()

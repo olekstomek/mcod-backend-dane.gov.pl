@@ -132,3 +132,11 @@ Feature: Resource details API
     And json api validation is skipped
     And send api request and fetch the response
     Then api's response status code is 200
+
+  Scenario: Resource with zipped file shows details about archive and main format
+    Given resource with regular zip file and id 1999
+    When api request path is /1.4/resources/1999/
+    And send api request and fetch the response
+    Then api's response body field data/attributes/files/[0]/format is zip
+    And api's response body field data/attributes/files/[0]/compressed_file_format is csv
+    And api's response body field data/attributes/files/[0]/openness_score is 3

@@ -81,7 +81,7 @@
 {% block sidebar %}
     <div id="content-related">
         <div class="module" id="recent-actions-module">
-            <h4 class="italic-title">{% trans 'My Actions' %}</h4>
+            <h3 class="italic-title">{% trans 'My Actions' %}</h3>
 
             {% load log %}
             {% get_admin_log 10 as admin_log for_user user %}

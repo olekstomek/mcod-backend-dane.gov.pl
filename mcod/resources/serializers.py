@@ -117,6 +117,8 @@ class ResourceFileSchema(ExtSchema):
     file_size = fields.Integer()
     download_url = fields.Str()
     format = fields.Str()
+    if is_enabled('S55_separate_extracted_file_format.be'):
+        compressed_file_format = fields.Str()
     openness_score = fields.Integer()
 
 

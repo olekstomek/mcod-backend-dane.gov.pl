@@ -103,7 +103,7 @@ class SubmissionView(JsonAPIView):
             _data['submission_date'] = date.today().strftime("%Y-%m-%d")
             if self.request.user and self.request.user.is_authenticated:
                 _data['submitted_by'] = self.request.user.id
-            create_dataset_suggestion.s(_data).apply_async(countdown=1)
+            create_dataset_suggestion.s(_data).apply_async_on_commit(countdown=1)
             fields, values = ['id'], [str(uuid4())]
             result = namedtuple('Submission', fields)(*values)
             return result

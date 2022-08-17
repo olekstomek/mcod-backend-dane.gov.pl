@@ -3,6 +3,7 @@ import os
 from django.conf import settings
 from django.test import override_settings
 
+from mcod.core.tests.helpers.tasks import run_on_commit_events
 from mcod.showcases.models import ShowcaseProposal
 
 
@@ -33,6 +34,7 @@ class TestApplicationsTasks:
             desktop_windows_url='https://example.com/windows',
         )
         obj = ShowcaseProposal.create(data)
+        run_on_commit_events()
         assert obj.is_app
         assert not obj.is_other
         mail_filename = sorted(os.listdir(settings.EMAIL_FILE_PATH))[-1]

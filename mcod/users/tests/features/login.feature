@@ -18,17 +18,22 @@ Feature: User Login
     And api's response status code is 201
     And api's response body field data/attributes/email is test@example.com
 
-  Scenario: Login pending user
+  Scenario Outline: Login pending user
     Given logged out pending user with email test@example.com and password 123
     When api request method is POST
     And api request path is /auth/login
+    And api request language is <lang_code>
     And api request posted data is {"data": {"type": "user", "attributes": {"email": "test@example.com", "password": "123"}}}
     Then send api request and fetch the response
     And api's response status code is 403
     And api's response body field errors/[0]/code is 403_forbidden
-    And api's response body field errors/[0]/detail is Adres email nie został potwierdzony
+    And api's response body field <resp_body_field> is <resp_body_value>
     And api's response body field errors/[0]/title is 403 Forbidden
     And api's response body field errors/[0]/status is 403 Forbidden
+    Examples:
+    | lang_code | resp_body_field   | resp_body_value                                                                                                                                                                                                                                                                                                                    |
+    | en        | errors/[0]/detail | <b>Your account has not been activated.</b><br>We sent an email to the e-mail address you used during registration with a link to activate your account.<br>If you have not received an e-mail from us, or the activation link has expired, please contact us: <a href="mailto:kontakt@dane.gov.pl">kontakt@dane.gov.pl</a>        |
+    | pl        | errors/[0]/detail | <b>Twoje konto nie zostało aktywowane.</b><br>Na adres e-mail, którego użyłeś podczas rejestracji, wysłaliśmy wiadomość z linkiem aktywującym konto.<br>Jeżeli nie otrzymałeś od nas wiadomości e-mail, bądź link aktywacyjny stracił ważność, skontaktuj się z nami: <a href="mailto:kontakt@dane.gov.pl">kontakt@dane.gov.pl</a> |
 
   Scenario: Login blocked user
     Given logged out blocked user with email test@example.com and password 123

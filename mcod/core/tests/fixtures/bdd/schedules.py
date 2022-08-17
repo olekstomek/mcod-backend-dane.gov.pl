@@ -1,5 +1,6 @@
 import json
 
+from django.contrib.auth import get_user_model
 from pytest_bdd import given, parsers, then, when
 
 from mcod.core.tests.fixtures.bdd.common import create_object
@@ -45,7 +46,7 @@ def schedule_data(context, params):  # noqa: C901
     if user_schedule_id:
         user_schedule_kwargs = {'schedule': schedule}
         if user_id:
-            user_schedule_kwargs['user_id'] = user_id
+            user_schedule_kwargs['user'] = get_user_model().objects.get(pk=user_id)
         if user_schedule_is_ready is not None:
             user_schedule_kwargs['is_ready'] = user_schedule_is_ready
         user_schedule = create_object('user_schedule', user_schedule_id, **user_schedule_kwargs, **kwargs)
