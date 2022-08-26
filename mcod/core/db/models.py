@@ -8,10 +8,10 @@ from mimetypes import guess_extension, guess_type
 from constance import config
 from django.apps import apps
 from django.conf import settings
-from django.core.exceptions import FieldDoesNotExist
+from django.core import exceptions
 from django.core.files.base import ContentFile
 from django.core.mail import EmailMultiAlternatives, get_connection, send_mail
-from django.db import models
+from django.db import models, router
 from django.db.models.base import ModelBase
 from django.db.models.deletion import get_candidate_relations_to_delete
 from django.dispatch import receiver
@@ -60,6 +60,78 @@ _SIGNALS_MAP = {
 
 def default_slug_value():
     return uuid.uuid4().hex
+
+
+class CustomManagerForeignKey(models.ForeignKey):
+
+    def __init__(self, *args, **kwargs):
+        # https://www.hoboes.com/Mimsy/hacks/custom-managers-django-foreignkeys/
+        self.manager_name = kwargs.pop('manager_name', None)
+        super().__init__(*args, **kwargs)
+
+    def _get_custom_manager(self):
+        return self.related_model._meta.managers_map.get(self.manager_name) if self.manager_name else None
+
+    def formfield(self, *args, **kwargs):
+        field = super().formfield(*args, **kwargs)
+        custom_manager = self._get_custom_manager()
+        if custom_manager:
+            field.queryset = custom_manager
+        return field
+
+    def field_validate(self, value, model_instance):
+        """Copy of ForeignKey parent's: Field.validate()."""
+        if not self.editable:
+            # Skip validation for non-editable fields.
+            return
+
+        if self.choices and value not in self.empty_values:
+            for option_key, option_value in self.choices:
+                if isinstance(option_value, (list, tuple)):
+                    # This is an optgroup, so look inside the group for
+                    # options.
+                    for optgroup_key, optgroup_value in option_value:
+                        if value == optgroup_key:
+                            return
+                elif value == option_key:
+                    return
+            raise exceptions.ValidationError(
+                self.error_messages['invalid_choice'],
+                code='invalid_choice',
+                params={'value': value},
+            )
+
+        if value is None and not self.null:
+            raise exceptions.ValidationError(self.error_messages['null'], code='null')
+
+        if not self.blank and value in self.empty_values:
+            raise exceptions.ValidationError(self.error_messages['blank'], code='blank')
+
+    def validate(self, value, model_instance):
+        if self.remote_field.parent_link:
+            return
+        self.field_validate(value, model_instance)
+        if value is None:
+            return
+
+        using = router.db_for_read(self.remote_field.model, instance=model_instance)
+
+        custom_manager = self._get_custom_manager()
+        manager = custom_manager or self.remote_field.model._default_manager  # use custom manager.
+
+        qs = manager.using(using).filter(
+            **{self.remote_field.field_name: value}
+        )
+        qs = qs.complex_filter(self.get_limit_choices_to())
+        if not qs.exists():
+            raise exceptions.ValidationError(
+                self.error_messages['invalid'],
+                code='invalid',
+                params={
+                    'model': self.remote_field.model._meta.verbose_name, 'pk': value,
+                    'field': self.remote_field.field_name, 'value': value,
+                },  # 'pk' is included for backwards compatibility
+            )
 
 
 class LogMixin:
@@ -129,7 +201,7 @@ class TimeStampedModel(MailMixin, BaseTimeStampedModel):
     def has_created_field(cls):
         try:
             field = cls._meta.get_field('created')
-        except FieldDoesNotExist:
+        except exceptions.FieldDoesNotExist:
             field = None
         return bool(field)
 

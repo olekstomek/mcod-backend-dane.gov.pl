@@ -12,6 +12,7 @@ from mcod.resources.archives import ArchiveReader, UnsupportedArchiveError
 from mcod.resources.file_validation import PasswordProtectedArchiveError, UnknownFileFormatError
 from mcod.resources.indexed_data import FileEncodingValidationError
 from mcod.resources.link_validation import check_link_scheme
+from mcod.unleash import is_enabled
 
 logger = logging.getLogger('mcod')
 
@@ -325,7 +326,7 @@ def update_data_date(resource_id):
         current_dt = now().astimezone(warsaw_tz).date()
         res_q.update(data_date=current_dt)
         logger.debug(f'Updated data date for resource with id {resource_id} with date {current_dt}')
-        if res.type == 'api':
+        if res.type == 'api' or is_enabled('S56_website_auto_data_date_update.be') and res.type == 'website':
             res.update_es_and_rdf_db()
         elif res.is_linked:
             process_resource_from_url_task.s(res.id, update_file_archive=True).apply_async()

@@ -68,14 +68,18 @@ Feature: Showcases list API
     And api's response status code is 200
     And 4 featured showcases are returned
 
-  Scenario: Suggest showcaseproposal
+  Scenario Outline: Suggest showcaseproposal
     Given dataset with id 999
     When api request method is POST
     And api request path is /showcases/suggest
-    And api request showcaseproposal data has {"title": "Suggest showcaseproposal test"}
+    And api request <object_type> data has <req_data>
     And send api request and fetch the response
     Then api's response status code is 201
     And api's response body field data/attributes/title is Suggest showcaseproposal test
+    Examples:
+    | object_type      | req_data                                                                                 |
+    | showcaseproposal | {"title": "Suggest showcaseproposal test", "keywords": []}                               |
+    | showcaseproposal | {"title": "Suggest showcaseproposal test", "image": "", "illustrative_graphics": ""}     |
 
   Scenario: Suggest showcaseproposal other app
     Given dataset with id 999

@@ -73,6 +73,7 @@ def remove_object_with_id(object_type, object_id):
     instance.save()
 
 
+@when(parsers.parse('restore {object_type} with id {object_id:d}'))
 @then(parsers.parse('restore {object_type} with id {object_id:d}'))
 def restore_object_with_id(object_type, object_id):
     _factory = factories_registry.get_factory(object_type)

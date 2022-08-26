@@ -27,11 +27,12 @@
   {% block extrahead %}{% endblock %}
   {% block blockbots %}
     <meta name="robots" content="NONE,NOARCHIVE"/>{% endblock %}
+  {% is_unleash_enabled "S55_matomo.be" as S55_matomo %}
+  {% if SETTINGS.MATOMO_URL and SETTINGS.MATOMO_SITE_ID and S55_matomo %}{% include 'admin/matomo.html' %}{% endif %}
 </head>
 {% load i18n %}
 
 <body class="{% if is_popup %}popup {% endif %}{% block bodyclass %}{% endblock %} od2021">
-
 <!-- Sticky footer wrap -->
 <div id="wrap">
 

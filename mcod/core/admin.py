@@ -26,7 +26,7 @@ class ResourceAutocomplete(AdminAutocomplete):
         return result.label_from_instance
 
     def get_queryset(self):
-        return apps.get_model(self.model).objects.autocomplete(self.request.user, self.q, self.forwarded)
+        return apps.get_model(self.model).raw.autocomplete(self.request.user, self.q, self.forwarded)
 
 
 class ResourceTypeFilter(BaseResourceTypeFilter):

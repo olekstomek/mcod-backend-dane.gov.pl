@@ -1647,6 +1647,18 @@ SPARQL_ENDPOINTS = {
     'kronika': {'query_endpoint': env('KRONIKA_SPARQL_URL', default='http://kronika.mcod.local'),
                 'returnFormat': 'json'}
 }
+
+MATOMO_SITE_IDS = {
+    'dev': '2',
+    'int': '3',
+    'preprod': '4',
+    'prod': '5',
+}
+
+if ENVIRONMENT in MATOMO_SITE_IDS:
+    MATOMO_URL = env('MATOMO_URL', default='stats.dane.gov.pl')
+    MATOMO_SITE_ID = env('MATOMO_SITE_ID', default=MATOMO_SITE_IDS[ENVIRONMENT])
+
 METABASE_URL = env('METABASE_URL', default='http://metabase.mcod.local')
 METABASE_API_KEY = env('METABASE_API_KEY', default='')
 

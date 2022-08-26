@@ -309,7 +309,7 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):
         TabularViewFilter
     ]
     search_fields = ['title', 'uuid']
-    autocomplete_fields = ['dataset', 'related_resource'] if is_enabled('S53_resource_language.be') else ['dataset']
+    autocomplete_fields = ['dataset']
     add_form = AddResourceForm
     form = ChangeResourceForm
 

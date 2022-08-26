@@ -18,6 +18,7 @@ logger = logging.getLogger('mcod')
 
 
 scenarios(
+    'features//autocomplete.feature',
     'features/file_validation.feature',
     'features/resource_creation.feature',
     'features/resource_change.feature',

@@ -1,6 +1,7 @@
 from django.apps import apps
 from django.conf import settings
 from django.db.models import Count, Manager, Prefetch, Q
+from django.db.models.query import QuerySet
 
 from mcod.core.managers import RawManager, SoftDeletableManager, SoftDeletableQuerySet
 from mcod.unleash import is_enabled
@@ -49,19 +50,29 @@ class PrefetchResourceFilesMixin:
         return main_file, other_files
 
 
-class SoftDeletableMetadataQuerySet(PrefetchResourceFilesMixin, SoftDeletableQuerySet):
+class AutocompleteMixin:
 
     def autocomplete(self, user, query=None, forwarded=None):
         if not user.is_authenticated:
             return self.none()
-        kwargs = forwarded
-        resource_id = kwargs.pop('id', None)
+
+        forwarded = forwarded or {}
+        dataset = forwarded.pop('dataset', None) or None
+        resource_id = forwarded.pop('id', None)
+        kwargs = {'dataset': dataset}
         if not user.is_superuser:
             kwargs['dataset__organization_id__in'] = user.organizations.all()
         if query:
             kwargs['title__icontains'] = query
         queryset = self.filter(**kwargs)
         return queryset.exclude(id=resource_id) if resource_id else queryset
+
+
+class ResourceQuerySet(AutocompleteMixin, QuerySet):
+    pass
+
+
+class SoftDeletableMetadataQuerySet(AutocompleteMixin, PrefetchResourceFilesMixin, SoftDeletableQuerySet):
 
     def confirm_delete_items(self, limit=10):
         return self.order_by('title')[:limit]
@@ -131,11 +142,14 @@ class SoftDeletableMetadataQuerySet(PrefetchResourceFilesMixin, SoftDeletableQue
         return files_details
 
 
-class ResourceManager(SoftDeletableManager):
-    _queryset_class = SoftDeletableMetadataQuerySet
+class AutocompleteManagerMixin:
 
     def autocomplete(self, user, query=None, forwarded=None):
         return super().get_queryset().autocomplete(user, query=query, forwarded=forwarded)
+
+
+class ResourceManager(AutocompleteManagerMixin, SoftDeletableManager):
+    _queryset_class = SoftDeletableMetadataQuerySet
 
     def get_queryset(self):
         return super().get_queryset().with_prefetched_files()
@@ -166,7 +180,9 @@ class ResourceManager(SoftDeletableManager):
         return self.get_queryset().confirm_delete_items(limit=limit)
 
 
-class ResourceRawManager(PrefetchResourceFilesMixin, RawManager):
+class ResourceRawManager(AutocompleteManagerMixin, PrefetchResourceFilesMixin, RawManager):
+    _queryset_class = ResourceQuerySet
+
     def get_queryset(self):
         main_file, other_files = self.get_files_prefetch()
         return super().get_queryset().prefetch_related(main_file, other_files)

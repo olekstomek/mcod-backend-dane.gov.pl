@@ -17,8 +17,9 @@ Feature: Showcase details admin
     And latest showcase attribute slug is test-with-showcase-title
 
   Scenario: Showcase creation with manual slug
+    Given dataset with id 999
     When admin's request method is POST
-    And admin's request posted showcase data is {"title": "Test with showcase title", "slug": "manual-name", "category": "other", "external_datasets": [{"url": "https://example.com", "title": "test"}]}
+    And admin's request posted showcase data is {"title": "Test with showcase title", "slug": "manual-name", "category": "other", "datasets": [999], "external_datasets": [{"url": "https://example.com", "title": "test"}]}
     And admin's page /showcases/showcase/add/ is requested
     Then admin's response status code is 200
     And admin's response page contains /change/">Test with showcase title</a>" zostało pomyślnie dodane.

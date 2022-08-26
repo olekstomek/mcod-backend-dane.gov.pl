@@ -53,7 +53,12 @@ from mcod.core.api.search.tasks import (
     update_with_related_task,
 )
 from mcod.core.db.managers import TrashManager
-from mcod.core.db.models import ExtendedModel, TrashModelBase, update_watcher
+from mcod.core.db.models import (
+    CustomManagerForeignKey,
+    ExtendedModel,
+    TrashModelBase,
+    update_watcher,
+)
 from mcod.counters.models import ResourceDownloadCounter, ResourceViewCounter
 from mcod.datasets.models import BaseSupplement, Dataset
 from mcod.lib.data_rules import painless_body
@@ -461,8 +466,8 @@ class Resource(ExtendedModel):
 
     verified = models.DateTimeField(blank=True, default=now, verbose_name=_("Update date"))
     from_resource = models.ForeignKey("self", blank=True, null=True, on_delete=models.DO_NOTHING)
-    related_resource = models.ForeignKey(
-        'self', blank=True, null=True, on_delete=models.DO_NOTHING, related_name='related_data',
+    related_resource = CustomManagerForeignKey(
+        'self', blank=True, null=True, on_delete=models.DO_NOTHING, related_name='related_data', manager_name='raw',
         verbose_name=_('related data'))
     special_signs = models.ManyToManyField(
         'special_signs.SpecialSign', verbose_name=_('special signs'), blank=True,
@@ -667,7 +672,8 @@ class Resource(ExtendedModel):
 
     @property
     def label_from_instance(self):
-        return f'{self.title} ({self.STATUS[self.status]})'
+        state = _('deleted') if self.is_removed else self.STATUS[self.status]
+        return f'{self.title} ({state})'
 
     @property
     def link_is_valid(self):
@@ -807,7 +813,7 @@ class Resource(ExtendedModel):
             f = BytesIO()
             csv_out = unicodecsv.writer(f, encoding='utf-8')
             csv_out.writerow(headers)
-            for row in self.data.table.iter(cast=False):
+            for row in self.data.table.iter(cast=is_enabled("S56_csv_data_cast.be")):
                 csv_out.writerow(row)
             f.seek(0)
             csv_file = self.save_file(f, f'{csv_filename}.csv')
@@ -1702,19 +1708,28 @@ def update_dataset_archive(sender, instance, *args, **kwargs):
 
 
 def update_dataset_watcher(sender, instance, *args, state=None, **kwargs):
-    state = 'm2m_{}'.format(state)
-    sender.log_debug(
-        instance,
-        '{} {}'.format(sender._meta.object_name, state),
-        'notify_{}'.format(state),
-        state,
-    )
-    update_model_watcher_task.s(
-        instance.dataset._meta.app_label,
-        instance.dataset._meta.object_name,
-        instance.id,
-        obj_state=state
-    ).apply_async_on_commit(countdown=1)
+    if not is_enabled('S56_related_objects_notifications.be'):
+        return
+
+    def inner(dataset_id, state):
+        sender.log_debug(
+            instance,
+            f'{sender._meta.object_name} {state}',
+            f'notify_{state}',
+            state,
+        )
+        update_model_watcher_task.s(
+            instance.dataset._meta.app_label,
+            instance.dataset._meta.object_name,
+            dataset_id,
+            obj_state=state
+        ).apply_async_on_commit(countdown=1)
+
+    if instance.tracker.has_changed('dataset_id'):
+        inner(instance.tracker.previous('dataset_id'), 'm2m_removed')
+        inner(instance.dataset_id, 'm2m_added')
+    else:
+        inner(instance.dataset_id, f'm2m_{state}')
 
 
 @receiver(cancel_data_date_update, sender=Resource)
@@ -1743,6 +1758,8 @@ core_signals.notify_published.connect(update_watcher, sender=Resource)
 core_signals.notify_restored.connect(update_watcher, sender=Resource)
 core_signals.notify_updated.connect(update_watcher, sender=Resource)
 core_signals.notify_removed.connect(update_watcher, sender=Resource)
+
+core_signals.notify_published.connect(update_dataset_watcher, sender=Resource)
 core_signals.notify_restored.connect(update_dataset_watcher, sender=Resource)
 core_signals.notify_updated.connect(update_dataset_watcher, sender=Resource)
 core_signals.notify_removed.connect(update_dataset_watcher, sender=Resource)
@@ -1751,6 +1768,11 @@ core_signals.notify_published.connect(update_watcher, sender=ResourceTrash)
 core_signals.notify_restored.connect(update_watcher, sender=ResourceTrash)
 core_signals.notify_updated.connect(update_watcher, sender=ResourceTrash)
 core_signals.notify_removed.connect(update_watcher, sender=ResourceTrash)
+
+core_signals.notify_published.connect(update_dataset_watcher, sender=ResourceTrash)
+core_signals.notify_restored.connect(update_dataset_watcher, sender=ResourceTrash)
+core_signals.notify_updated.connect(update_dataset_watcher, sender=ResourceTrash)
+core_signals.notify_removed.connect(update_dataset_watcher, sender=ResourceTrash)
 
 
 @task_prerun.connect(sender=validate_link)

@@ -263,23 +263,13 @@ class ShowcaseProposal(ShowcaseMixin):
 
     @property
     def external_datasets_links(self):
-        res = ''
-        for x in self.external_datasets:
-            url = x.get('url')
-            title = x.get('title', url)
-            if url:
-                res += '<a href="{}" target="_blank">{}</a><br>'.format(url, title)
-        return self.mark_safe(res)
+        data = [[x.get('url'), x.get('title') or x.get('url')] for x in self.external_datasets]
+        return self.mark_safe('<br>'.join([f'<a href="{x[0]}" target="_blank">{x[1]}</a>' for x in data]))
 
     @property
     def external_datasets_info(self):
-        res = ''
-        for x in self.external_datasets:
-            url = x.get('url')
-            title = x.get('title')
-            if url:
-                res += '{}: {}\n'.format(title or url, url)
-        return self.mark_safe(res)
+        data = [[x.get('title') or x.get('url'), x.get('url')] for x in self.external_datasets]
+        return self.mark_safe(''.join([f'{x[0]}: {x[1]}\n' for x in data]))
 
     @cached_property
     def image_absolute_url(self):
@@ -324,7 +314,7 @@ class ShowcaseProposal(ShowcaseMixin):
         image = data.pop('image')
         illustrative_graphics = data.pop('illustrative_graphics')
         datasets = data.pop('datasets')
-        keywords = data.pop('keywords')
+        keywords = data.pop('keywords', [])
         showcase = Showcase.objects.create(**data)
         if image:
             showcase.image = showcase.save_file(image, os.path.basename(image.path))
@@ -336,14 +326,13 @@ class ShowcaseProposal(ShowcaseMixin):
             showcase.save()
         if datasets:
             showcase.datasets.set(datasets)
-        if keywords:
-            tag_ids = []
-            for name in keywords:
-                tag, created = tag_model.objects.get_or_create(
-                    name=name, language='pl', defaults={'created_by_id': data['created_by_id']})
-                tag_ids.append(tag.id)
-            if tag_ids:
-                showcase.tags.set(tag_ids)
+        tag_ids = []
+        for name in keywords:
+            tag, created = tag_model.objects.get_or_create(
+                name=name, language='pl', defaults={'created_by_id': data['created_by_id']})
+            tag_ids.append(tag.id)
+        if tag_ids:
+            showcase.tags.set(tag_ids)
         self.showcase = showcase
         self.save()
         created = True

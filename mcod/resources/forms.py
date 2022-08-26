@@ -230,7 +230,7 @@ class ResourceForm(forms.ModelForm):
                 "You should first published that dataset: ")
             self.add_error('status', mark_safe(error_message + dataset.title_as_link))
         related_resource = data.get('related_resource')
-        if related_resource and related_resource not in dataset.resources.all():
+        if related_resource and related_resource not in Resource.raw.filter(dataset_id=dataset.id):
             self.add_error('related_resource', _('Only resource from related dataset resources is valid!'))
         return data
 

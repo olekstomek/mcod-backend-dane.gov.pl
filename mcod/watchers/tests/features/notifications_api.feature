@@ -269,95 +269,84 @@ Feature: Notifications API
     And api's response body field /data/0/id is 3010
 
 
-#  TODO refactor below tests to use Dataset <-> Resource relation in notifications once it's working
-#  Scenario: Notification type related_object_restored
-#    Given logged active user
-#    And dataset with id 900
-#    And article with id 1112
-#    And add dataset with id 900 to article with id 1112
-#
-#    And remove dataset with id 900
-#    And subscription with id 999 of article with id 1112 as article-1112
-#    And restore dataset with id 900
-#
-#    When api request path is /auth/notifications
-#    And send api request and fetch the response
-#    Then api's response status code is 200
-#    And api's response body field /meta/count is 1
-#    And api's response body field /data/0/attributes/status is new
-#    And api's response body field /data/0/attributes/notification_type is related_object_restored
+  Scenario: Notification type related_object_restored
+    Given logged active user
+    And dataset with id 1015
+    And resource with id 4001 and dataset_id is 1015
+    And remove resource with id 4001
+    And subscription with id 2015 of dataset with id 1015 as dataset-1015
 
-# TEN SAM TEST PRZEPISANY DLA RELACJI Resource <-> Dataset NIE PRZECHODZI
-#  Scenario: Notification type related_object_restored
-#    Given logged active user
-#    And dataset with id 900
-#    And resource with id 3000 and dataset_id is 900
-#
-#    And remove resource with id 3000
-#    And subscription with id 999 of dataset with id 900 as dataset-900
-#    And restore resource with id 3000
-#
-#    When api request path is /auth/notifications
-#    And send api request and fetch the response
-#    Then api's response status code is 200
-#    And api's response body field /meta/count is 1
-#    And api's response body field /data/0/attributes/status is new
-#    And api's response body field /data/0/attributes/notification_type is related_object_restored
+    When restore resource with id 4001
+    And api request path is /auth/notifications
+    And send api request and fetch the response
 
-#  Scenario: Notification type related_object_publicated
-#    Given logged active user
-#    And article with id 1112
-#    And dataset with id 900
-#    And subscription with id 999 of article with id 1112 as article-1112
-#    And add dataset with id 900 to article with id 1112
-#    When api request path is /auth/notifications
-#    And send api request and fetch the response
-#    Then api's response status code is 200
-#    And api's response body field /meta/count is 1
-#    And api's response body field /data/0/attributes/status is new
-#    And api's response body field /data/0/attributes/notification_type is related_object_publicated
-#
-#
-#  Scenario: Notification type related_object_removed (soft remove)
-#    Given logged active user
-#    And dataset with id 900
-#    And article with id 1112
-#    And add dataset with id 900 to article with id 1112
-#    And subscription with id 999 of article with id 1112 as article-1112
-#    And remove dataset with id 900
-#    When api request path is /auth/notifications
-#    And send api request and fetch the response
-#    Then api's response status code is 200
-#    And api's response body field /meta/count is 1
-#    And api's response body field /data/0/attributes/status is new
-#    And api's response body field /data/0/attributes/notification_type is related_object_removed
-#
-#
-#  Scenario: Notification type related_object_removed (m2m remove)
-#    Given logged active user
-#    And dataset with id 900
-#    And article with id 1112
-#    And add dataset with id 900 to article with id 1112
-#    And subscription with id 999 of article with id 1112 as article-1112
-#    And remove dataset with id 900 from article with id 1112
-#    When api request path is /auth/notifications
-#    And send api request and fetch the response
-#    Then api's response status code is 200
-#    And api's response body field /meta/count is 1
-#    And api's response body field /data/0/attributes/status is new
-#    And api's response body field /data/0/attributes/notification_type is related_object_removed
-#
-#
-#  Scenario: Notification type related_object_updated
-#    Given logged active user
-#    And dataset with id 900
-#    And article with id 1112
-#    And add dataset with id 900 to article with id 1112
-#    And subscription with id 999 of article with id 1112 as article-1112
-#    And set title to changed-title on dataset with id 900
-#    When api request path is /auth/notifications
-#    And send api request and fetch the response
-#    Then api's response status code is 200
-#    And api's response body field /meta/count is 1
-#    And api's response body field /data/0/attributes/status is new
-#    And api's response body field /data/0/attributes/notification_type is related_object_updated
+    Then api's response status code is 200
+    And api's response body field /meta/count is 1
+    And api's response body field /data/0/attributes/status is new
+    And api's response body field /data/0/attributes/notification_type is related_object_restored
+
+
+  Scenario: Notification type related_object_removed (soft remove)
+    Given logged active user
+    And dataset with id 1016
+    And resource with id 4002 and dataset_id is 1016
+    And subscription with id 2016 of dataset with id 1016 as dataset-1016
+    And remove resource with id 4002
+
+    When api request path is /auth/notifications
+    And send api request and fetch the response
+
+    Then api's response status code is 200
+    And api's response body field /meta/count is 1
+    And api's response body field /data/0/attributes/status is new
+    And api's response body field /data/0/attributes/notification_type is related_object_removed
+
+
+  Scenario: Notification type related_object_updated
+    Given logged active user
+    And dataset with id 1017
+    And resource with id 4003 and dataset_id is 1017
+    And subscription with id 2017 of dataset with id 1017 as dataset-1017
+    And set title to changed-title on resource with id 4003
+
+    When api request path is /auth/notifications
+    And send api request and fetch the response
+
+    Then api's response status code is 200
+    And api's response body field /meta/count is 1
+    And api's response body field /data/0/attributes/status is new
+    And api's response body field /data/0/attributes/notification_type is related_object_updated
+
+
+  Scenario: Notification type related_object_removed
+    Given logged active user
+    And dataset with id 1018
+    And dataset with id 1019
+    And resource with id 4004 and dataset_id is 1018
+    And subscription with id 2018 of dataset with id 1018 as dataset-1018
+    And set dataset_id to 1019 on resource with id 4004
+
+    When api request path is /auth/notifications
+    And send api request and fetch the response
+
+    Then api's response status code is 200
+    And api's response body field /meta/count is 1
+    And api's response body field /data/0/attributes/status is new
+    And api's response body field /data/0/attributes/notification_type is related_object_removed
+
+
+  Scenario: Notification type related_object_publicated
+    Given logged active user
+    And dataset with id 1020
+    And dataset with id 1021
+    And subscription with id 2016 of dataset with id 1020 as dataset-1020
+    And resource with id 4002 and dataset_id is 1021
+    And set dataset_id to 1020 on resource with id 4002
+
+    When api request path is /auth/notifications
+    And send api request and fetch the response
+
+    Then api's response status code is 200
+    And api's response body field /meta/count is 1
+    And api's response body field /data/0/attributes/status is new
+    And api's response body field /data/0/attributes/notification_type is related_object_publicated
