@@ -10,7 +10,7 @@ from django.utils.timezone import now
 from mcod.core.tasks import extended_shared_task
 from mcod.resources.archives import ArchiveReader, UnsupportedArchiveError
 from mcod.resources.file_validation import PasswordProtectedArchiveError, UnknownFileFormatError
-from mcod.resources.indexed_data import FileEncodingValidationError
+from mcod.resources.indexed_data import FileEncodingValidationError, ResourceDataValidationError
 from mcod.resources.link_validation import check_link_scheme
 from mcod.unleash import is_enabled
 
@@ -111,7 +111,7 @@ def process_for_separate_file_model(resource_id, resource, options, resource_typ
         resource.cancel_data_date_update()
 
 
-@extended_shared_task(ignore_result=False, atomic=True)
+@extended_shared_task(ignore_result=False, atomic=True, commit_on_errors=[ResourceDataValidationError])
 def process_resource_file_data_task(resource_id, **kwargs):
     resource_model = apps.get_model('resources', 'Resource')
     resource = resource_model.raw.get(id=resource_id)
