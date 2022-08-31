@@ -6,6 +6,7 @@ import pytz
 from django.apps import apps
 from django.conf import settings
 from django.utils.timezone import now
+from elasticsearch.helpers.errors import BulkIndexError
 
 from mcod.core.tasks import extended_shared_task
 from mcod.resources.archives import ArchiveReader, UnsupportedArchiveError
@@ -111,7 +112,7 @@ def process_for_separate_file_model(resource_id, resource, options, resource_typ
         resource.cancel_data_date_update()
 
 
-@extended_shared_task(ignore_result=False, atomic=True, commit_on_errors=[ResourceDataValidationError])
+@extended_shared_task(ignore_result=False, atomic=True, commit_on_errors=[ResourceDataValidationError, BulkIndexError])
 def process_resource_file_data_task(resource_id, **kwargs):
     resource_model = apps.get_model('resources', 'Resource')
     resource = resource_model.raw.get(id=resource_id)
