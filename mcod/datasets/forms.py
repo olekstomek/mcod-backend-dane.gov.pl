@@ -12,7 +12,6 @@ from mcod.lib.field_validators import ContainsLetterValidator
 from mcod.lib.widgets import CheckboxSelect, CKEditorWidget, JsonPairDatasetInputs
 from mcod.resources.forms import SupplementForm as ResourceSupplementForm
 from mcod.tags.forms import ModelFormWithKeywords
-from mcod.unleash import is_enabled
 
 
 class DatasetForm(ModelFormWithKeywords):
@@ -100,25 +99,23 @@ class DatasetForm(ModelFormWithKeywords):
             'url': f'{settings.BASE_URL}{settings.HIGH_VALUE_DATA_MANUAL_URL}'},
         widget=CheckboxSelect(attrs={'class': 'inline'}),
     )
-    if is_enabled('S47_research_data.be'):
-        has_research_data = forms.ChoiceField(
-            required=True,
-            label=_('has research data').capitalize(),
-            choices=[(True, _('Yes')), (False, _('No'))],
-            help_text=(
-                'Zaznaczenie TAK spowoduje oznaczenie wszystkich nowo dodanych danych w zbiorze jako dane badawcze.'
-                '<br><br>Jeżeli chcesz się więcej dowiedzieć na temat danych badawczych '
-                '<a href="%(url)s" target="_blank">przejdź do strony</a>') % {
-                'url': f'{settings.BASE_URL}{settings.RESEARCH_DATA_MANUAL_URL}'},
-            widget=CheckboxSelect(attrs={'class': 'inline'}),
-        )
+    has_research_data = forms.ChoiceField(
+        required=True,
+        label=_('has research data').capitalize(),
+        choices=[(True, _('Yes')), (False, _('No'))],
+        help_text=(
+            'Zaznaczenie TAK spowoduje oznaczenie wszystkich nowo dodanych danych w zbiorze jako dane badawcze.'
+            '<br><br>Jeżeli chcesz się więcej dowiedzieć na temat danych badawczych '
+            '<a href="%(url)s" target="_blank">przejdź do strony</a>') % {
+            'url': f'{settings.BASE_URL}{settings.RESEARCH_DATA_MANUAL_URL}'},
+        widget=CheckboxSelect(attrs={'class': 'inline'}),
+    )
 
     def __init__(self, *args, instance=None, **kwargs):  # noqa
         super().__init__(*args, instance=instance, **kwargs)
         instance_has_cc0_chosen = instance and instance.license_chosen == Dataset.LICENSE_CC0
         if (
-            is_enabled('S53_CC0_hide.be')
-            and 'license_chosen' in self.fields
+            'license_chosen' in self.fields
             and not instance_has_cc0_chosen
         ):
             license_chosen_choices = list(self.fields['license_chosen'].choices)

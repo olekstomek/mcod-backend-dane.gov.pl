@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-08-12 14:13+0200\n"
+"POT-Creation-Date: 2022-08-29 15:21+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -606,9 +606,6 @@ msgid ""
 "%(email)s</a>"
 msgstr ""
 
-msgid "Expired token"
-msgstr ""
-
 #, python-format
 msgid ""
 "<b>Your account has not been activated.</b><br>We sent an email to the e-"
@@ -616,9 +613,6 @@ msgid ""
 "account.<br>If you have not received an e-mail from us, or the activation "
 "link has expired, please contact us: <a href=\"mailto:%(email)s\">%(email)s</"
 "a>"
-msgstr ""
-
-msgid "Email address not confirmed"
 msgstr ""
 
 msgid "Missing token"
@@ -709,13 +703,13 @@ msgstr ""
 msgid "Filter by institution name"
 msgstr ""
 
-msgid "Supplements"
-msgstr ""
-
 msgid "Conditions"
 msgstr ""
 
 msgid "Resources"
+msgstr ""
+
+msgid "Supplements"
 msgstr ""
 
 msgid "dynamic data"
@@ -3083,6 +3077,9 @@ msgstr ""
 msgid "Endless data date update"
 msgstr ""
 
+msgid "deleted"
+msgstr ""
+
 msgid "acc: Resource"
 msgstr ""
 
@@ -3939,12 +3936,6 @@ msgstr ""
 msgid "No, stop the operation"
 msgstr ""
 
-msgid "Yes, I'm sure"
-msgstr ""
-
-msgid "No, take me back"
-msgstr ""
-
 #, python-format
 msgid ""
 "Deleting the selected %(objects_name)s would result in deleting related "
@@ -4028,9 +4019,6 @@ msgstr ""
 msgid "changed"
 msgstr ""
 
-msgid "deleted"
-msgstr ""
-
 msgid "Unknown content"
 msgstr ""
 
@@ -4089,6 +4077,19 @@ msgid "date done"
 msgstr ""
 
 msgid "recommendation"
+msgstr ""
+
+msgid "keyword"
+msgstr ""
+
+#, python-format
+msgid "%(counter)s result"
+msgid_plural "%(counter)s results"
+msgstr[0] ""
+msgstr[1] ""
+
+#, python-format
+msgid "%(full_result_count)s total"
 msgstr ""
 
 #, python-format
@@ -4950,6 +4951,9 @@ msgid "Email cannot be sent"
 msgstr ""
 
 msgid "Account not found"
+msgstr ""
+
+msgid "Expired token"
 msgstr ""
 
 msgid "Wrong password"

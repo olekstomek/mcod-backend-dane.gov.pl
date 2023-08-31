@@ -5,8 +5,6 @@ import os
 import celery
 from celery.schedules import crontab
 
-from mcod.unleash import is_enabled
-
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'mcod.settings.local')
 
 app = celery.Celery('mcod')
@@ -50,9 +48,8 @@ app.conf.beat_schedule['dataset_update_reminders'] = {
     'schedule': crontab(minute=0, hour=6)
 }
 
-if is_enabled('S53_kronika_SPARQL_api_performance_task.be'):
-    app.conf.beat_schedule['kronika_sparql_performance'] = {
-        'task': 'mcod.reports.tasks.check_kronika_connection_performance',
-        'options': {'queue': 'periodic'},
-        'schedule': crontab(minute=30, hour=11)
-    }
+app.conf.beat_schedule['kronika_sparql_performance'] = {
+    'task': 'mcod.reports.tasks.check_kronika_connection_performance',
+    'options': {'queue': 'periodic'},
+    'schedule': crontab(minute=30, hour=11)
+}

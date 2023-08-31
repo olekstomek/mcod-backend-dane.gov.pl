@@ -13,6 +13,17 @@
 
 ### Breaks
 
+
+## 2.31.3 - (2023-02-27)
+---
+
+### Fixes
+* Naprawa createsuperuser (OTD-11)
+* Naprawa błędów testów uruchamianych lokalnie (PBR-106)
+* Naprawa błędów budowania CI (PBR-123)
+* Podniesienie wersji paczek Pythonowych (PBR-123)
+
+
 ## 2.31.2 - (2022-08-30)
 ---
 

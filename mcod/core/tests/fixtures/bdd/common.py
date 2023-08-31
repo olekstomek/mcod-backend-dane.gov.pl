@@ -23,7 +23,6 @@ from mcod import settings
 from mcod.core.api.rdf.namespaces import NAMESPACES
 from mcod.core.registries import factories_registry
 from mcod.core.tests.helpers.tasks import run_on_commit_events
-from mcod.unleash import is_enabled
 
 
 def copyfile(src, dst):
@@ -232,8 +231,7 @@ def get_data(resource):
     data['dataset'] = resource.dataset_id
     data['has_dynamic_data'] = False
     data['has_high_value_data'] = False
-    if is_enabled('S47_research_data.be'):
-        data['has_research_data'] = False
+    data['has_research_data'] = False
     return data
 
 
@@ -373,6 +371,7 @@ def api_request_post_data(admin_context, data_type, req_post_data):
             "tags": [],
             "has_high_value_data": False,
             "has_dynamic_data": False,
+            "has_research_data": False,
 
             "resources-TOTAL_FORMS": "0",
             "resources-INITIAL_FORMS": "0",
@@ -391,6 +390,7 @@ def api_request_post_data(admin_context, data_type, req_post_data):
             "resources-2-0-has_high_value_data": False,
             "resources-2-0-has_dynamic_data": False,
             "resources-2-0-language": "pl",
+            "resources-2-0-has_research_data": False,
 
             # nested admin required fields.
             "resources-2-0-supplements-TOTAL_FORMS": "0",
@@ -515,6 +515,7 @@ def api_request_post_data(admin_context, data_type, req_post_data):
 
             "datasets-2-0-has_high_value_data": False,
             "datasets-2-0-has_dynamic_data": False,
+            "datasets-2-0-has_research_data": False,
 
             "datasets-2-0-supplements-TOTAL_FORMS": "0",
             "datasets-2-0-supplements-INITIAL_FORMS": "0",
@@ -572,6 +573,7 @@ def api_request_post_data(admin_context, data_type, req_post_data):
             "slug_en": "",
             "has_high_value_data": False,
             "has_dynamic_data": False,
+            "has_research_data": False,
             "language": "pl",
         },
         'showcase': {
@@ -606,13 +608,6 @@ def api_request_post_data(admin_context, data_type, req_post_data):
             "organizations": []
         }
     }
-    if is_enabled('S47_research_data.be'):
-        default_post_data['dataset'].update({
-            "has_research_data": False,
-            "resources-2-0-has_research_data": False,
-        })
-        default_post_data['institution']['datasets-2-0-has_research_data'] = False
-        default_post_data['resource']['has_research_data'] = False
 
     assert data_type in default_post_data.keys()
     default_post_data["datasets-2-0-tags_pl"] = []

@@ -37,7 +37,6 @@ from mcod.resources.serializers import (
     SupplementSchema,
     supplements_dump,
 )
-from mcod.unleash import is_enabled
 from mcod.watchers.serializers import SubscriptionMixin
 
 _UPDATE_FREQUENCY = dict(UPDATE_FREQUENCY)
@@ -457,15 +456,12 @@ class DatasetApiAttrs(ObjectAttrs, HighlightObjectMixin):
     image_alt = TranslatedStr()
     has_dynamic_data = fields.Boolean()
     has_high_value_data = fields.Boolean()
-    if is_enabled('S47_research_data.be'):
-        has_research_data = fields.Boolean()
-    if is_enabled('S52_dataset_is_promoted.be'):
-        is_promoted = fields.Boolean()
+    has_research_data = fields.Boolean()
+    is_promoted = fields.Boolean()
     regions = fields.Nested(RegionSchema, many=True)
     archived_resources_files_url = fields.Str()
     current_condition_descriptions = fields.Nested(LicenseConditionDescriptionSchema)
-    if is_enabled('S49_dataset_supplements.be'):
-        supplement_docs = fields.Nested(SupplementSchema, data_key='supplements', many=True)
+    supplement_docs = fields.Nested(SupplementSchema, data_key='supplements', many=True)
 
     class Meta:
         relationships_schema = DatasetApiRelationships
@@ -517,8 +513,7 @@ class DatasetCSVSchema(CSVSerializer):
     followers_count = fields.Str(data_key=_("The number of followers"), default=None)
     has_high_value_data = fields.MetaDataNullBoolean(data_key=_('Dataset has high value data'))
     has_dynamic_data = fields.MetaDataNullBoolean(data_key=_('Dataset has dynamic data'))
-    if is_enabled('S47_research_data.be'):
-        has_research_data = fields.MetaDataNullBoolean(data_key=_('Dataset has research data'))
+    has_research_data = fields.MetaDataNullBoolean(data_key=_('Dataset has research data'))
 
     class Meta:
         ordered = True
@@ -542,14 +537,12 @@ class DatasetXMLSerializer(ExtSchema):
     conditions = fields.Str(attribute='formatted_condition_descriptions')
     organization = fields.Method('get_organization')
     resources = fields.Nested(ResourceXMLSerializer, attribute='published_resources', many=True)
-    if is_enabled('S49_dataset_supplements.be'):
-        supplement_docs = fields.Nested(SupplementSchema, data_key='supplements', many=True)
+    supplement_docs = fields.Nested(SupplementSchema, data_key='supplements', many=True)
 
     source = fields.Nested(SourceXMLSchema)
     has_high_value_data = fields.Bool()
     has_dynamic_data = fields.Bool()
-    if is_enabled('S47_research_data.be'):
-        has_research_data = fields.Bool()
+    has_research_data = fields.Bool()
     regions = fields.Nested(RegionBaseSchema, many=True)
 
     def get_organization(self, dataset):
@@ -580,12 +573,10 @@ class DatasetResourcesCSVSerializer(CSVSerializer):
     dataset_source = fields.Nested(SourceXMLSchema, attribute='source', data_key=_('source'))
     has_high_value_data = fields.MetaDataNullBoolean(data_key=_('Dataset has high value data'))
     has_dynamic_data = fields.MetaDataNullBoolean(data_key=_('Dataset has dynamic data'))
-    if is_enabled('S47_research_data.be'):
-        has_research_data = fields.MetaDataNullBoolean(data_key=_('Dataset has research data'))
+    has_research_data = fields.MetaDataNullBoolean(data_key=_('Dataset has research data'))
     regions = fields.Str(data_key=_('Dataset regions'), attribute='regions_str')
-    if is_enabled('S49_dataset_supplements.be'):
-        supplements = fields.Str(
-            attribute='supplements_str', data_key=_('Dataset supplements (name, language, url, file size)'))
+    supplements = fields.Str(
+        attribute='supplements_str', data_key=_('Dataset supplements (name, language, url, file size)'))
     organization = fields.Method('get_organization')
     resources = fields.Nested(ResourceCSVMetadataSerializer, many=True, attribute='published_resources')
 

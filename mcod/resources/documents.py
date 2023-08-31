@@ -7,7 +7,6 @@ from mcod.harvester.serializers import DataSourceSerializer
 from mcod.lib.search.fields import TranslatedTextField
 from mcod.regions.documents import regions_field
 from mcod.search.documents import ExtendedDocument
-from mcod.unleash import is_enabled
 
 Resource = apps.get_model('resources', 'Resource')
 Dataset = apps.get_model('datasets', 'Dataset')
@@ -95,16 +94,15 @@ class ResourceDocument(ExtendedDocument):
             'description': TranslatedTextField('description')
         }
     )
-    if is_enabled('S48_resource_supplements.be'):
-        supplement_docs = fields.NestedField(
-            properties={
-                'id': fields.IntegerField(),
-                'name': TranslatedTextField('name'),
-                'api_file_url': fields.TextField(),
-                'file_size': fields.LongField(),
-                'language': fields.KeywordField(),
-            }
-        )
+    supplement_docs = fields.NestedField(
+        properties={
+            'id': fields.IntegerField(),
+            'name': TranslatedTextField('name'),
+            'api_file_url': fields.TextField(),
+            'file_size': fields.LongField(),
+            'language': fields.KeywordField(),
+        }
+    )
     is_chart_creation_blocked = fields.BooleanField()
 
     license_code = fields.IntegerField()

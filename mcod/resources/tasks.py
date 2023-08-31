@@ -13,7 +13,6 @@ from mcod.resources.archives import ArchiveReader, UnsupportedArchiveError
 from mcod.resources.file_validation import PasswordProtectedArchiveError, UnknownFileFormatError
 from mcod.resources.indexed_data import FileEncodingValidationError, ResourceDataValidationError
 from mcod.resources.link_validation import check_link_scheme
-from mcod.unleash import is_enabled
 
 logger = logging.getLogger('mcod')
 
@@ -95,7 +94,7 @@ def process_for_separate_file_model(resource_id, resource, options, resource_typ
         process_resource_res_file_task.s(res_file.pk, update_link=False,
                                          update_file_archive=update_file_archive,
                                          schedule_auto_data_date=schedule_auto_data_date,
-                                         cancel_auto_data_date=cancel_auto_data_date, **kwargs).apply_async_on_commit(countdown=2)
+                                         cancel_auto_data_date=cancel_auto_data_date, **kwargs).apply_async_on_commit()
     else:  # API or WWW
         ResourceFile.objects.filter(resource_id=resource_id).delete()
         if forced_file_changed:
@@ -298,9 +297,9 @@ def process_resource_res_file_task(resource_file_id, update_link=True, update_fi
         raise FileEncodingValidationError(
             [{'code': 'unknown-encoding', 'message': 'Nie udało się wykryć kodowania pliku.'}])
 
-    process_resource_file_data_task.s(resource_id, **kwargs).apply_async_on_commit(countdown=2)
+    process_resource_file_data_task.s(resource_id, **kwargs).apply_async_on_commit()
     if update_link:
-        process_resource_from_url_task.s(resource_id, update_file=False, **kwargs).apply_async_on_commit(countdown=2)
+        process_resource_from_url_task.s(resource_id, update_file=False, **kwargs).apply_async_on_commit()
     if update_file_archive:
         resource.dataset.archive_files()
     if schedule_auto_data_date:
@@ -327,7 +326,7 @@ def update_data_date(resource_id):
         current_dt = now().astimezone(warsaw_tz).date()
         res_q.update(data_date=current_dt)
         logger.debug(f'Updated data date for resource with id {resource_id} with date {current_dt}')
-        if res.type == 'api' or is_enabled('S56_website_auto_data_date_update.be') and res.type == 'website':
+        if res.type in ['api', 'website']:
             res.update_es_and_rdf_db()
         elif res.is_linked:
             process_resource_from_url_task.s(res.id, update_file_archive=True).apply_async()

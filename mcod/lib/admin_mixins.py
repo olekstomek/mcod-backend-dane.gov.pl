@@ -31,7 +31,6 @@ from mcod import settings
 from mcod.histories.models import LogEntry
 from mcod.reports.tasks import generate_csv
 from mcod.tags.views import TagAutocompleteJsonView
-from mcod.unleash import is_enabled
 
 
 class MCODChangeList(ChangeList):
@@ -85,7 +84,7 @@ def export_to_csv(self, request, queryset):
                    self.model._meta.label,
                    request.user.id,
                    now().strftime('%Y%m%d%H%M%S.%s')
-                   ).apply_async_on_commit(countdown=1)
+                   ).apply_async_on_commit()
     messages.add_message(request, messages.SUCCESS, _('Task for CSV generation queued'))
 
 
@@ -531,7 +530,6 @@ class ModelAdminMixin(ListDisplayMixin, LangFieldsOnlyMixin, AdminListMixin, Exp
 
     check_imported_obj_perms = False
     delete_selected_msg = None
-    order_by_created = is_enabled('S53_admin_order_by_created.be')
 
     def get_actions(self, request):
         """Override delete_selected action description."""
@@ -544,7 +542,7 @@ class ModelAdminMixin(ListDisplayMixin, LangFieldsOnlyMixin, AdminListMixin, Exp
     def get_ordering(self, request):
         ordering = super().get_ordering(request)
         has_created_field = hasattr(self, 'model') and getattr(self.model, 'has_created_field', False)
-        return ('-created',) if has_created_field and self.order_by_created else ordering
+        return ('-created',) if has_created_field else ordering
 
     def has_add_permission(self, request):
         if self.check_imported_obj_perms:

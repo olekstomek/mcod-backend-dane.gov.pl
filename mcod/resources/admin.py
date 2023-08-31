@@ -44,7 +44,6 @@ from mcod.resources.models import (
     Supplement,
     supported_formats_choices,
 )
-from mcod.unleash import is_enabled
 
 rules_names = {x[0]: x[1] for x in settings.VERIFICATION_RULES}
 
@@ -86,11 +85,6 @@ class TaskStatus(admin.SimpleListFilter):
             ('FAILURE', _('Validation failed')),
             ('PENDING', _('Validation in progress')),
             ('N/A', _('No validation'))
-        ) if is_enabled('S47_admin_resources_list_filters_translated.be') else (
-            ('SUCCESS', 'SUCCESS'),
-            ('FAILURE', 'ERROR'),
-            ('PENDING', 'WAITING'),
-            ('N/A', 'UNAVAILABLE')
         )
 
     def queryset(self, request, queryset):
@@ -243,10 +237,7 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):
     lang_fields = True
     soft_delete = True
     TYPE_FILTER = TypeFilter
-    resource_supplements = is_enabled('S48_resource_supplements.be')
-    is_inlines_js_upgraded = is_enabled('S48_resource_inlines_js_upgrade.be')
-    is_auto_data_date_update = is_enabled('S51_data_date_update.be')
-    is_auto_data_date_for_website = is_enabled('S56_website_auto_data_date_update.be')
+    is_inlines_js_upgraded = True
 
     def get_suit_form_tabs(self, obj=None):
         tabs = [
@@ -274,20 +265,12 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):
             if obj.tabular_data_schema:
                 maps_and_plots_tab = ("maps_and_plots", _("Maps and plots"))
             tabs.append(maps_and_plots_tab)
-        if self.resource_supplements:
-            tabs.append(('supplements', _('Supplements')))
+        tabs.append(('supplements', _('Supplements')))
         return tabs
 
-    has_research_data_fieldset = [(None, {
-        'classes': ('suit-tab', 'suit-tab-general'),
-        'fields': ('has_research_data',),
-    })] if is_enabled('S47_research_data.be') else []
-
-    col2 = ['lang'] if is_enabled('S53_resource_language.be') else ['uuid']
-    language_fields = ['language', 'related_resource'] if is_enabled('S53_resource_language.be') else []
     list_display = [
         'title',
-        *col2,
+        'lang',
         'formats',
         'dataset',
         'status_label',
@@ -317,9 +300,8 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):
         FileTaskResultInline,
         DataTaskResultInline,
         LinkTaskResultInline,
+        SupplementInline,
     ]
-    if is_enabled('S48_resource_supplements.be'):
-        inlines.append(SupplementInline)
     suit_form_includes = (
         ('widgets/resource_data_types_actions.html', 'bottom', 'types'),
         ('widgets/resource_data_rules_actions.html', 'bottom', 'rules'),
@@ -337,9 +319,6 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):
         return super().has_change_permission(request, obj=obj)
 
     def get_fieldsets(self, request, obj=None):
-        language = ['language'] if is_enabled('S53_resource_language.be') else []
-        related_resource = ['related_resource'] if is_enabled('S53_resource_language.be') else []
-
         if obj:
             jsonld_file = ['jsonld_converted_file'] if obj.jsonld_converted_file else []
             file = ['main_file']
@@ -350,9 +329,7 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):
             regions = ['regions'] if not obj.is_imported else []
             has_dynamic_data = ['has_dynamic_data'] if not obj.is_imported else ['has_dynamic_data_info']
             has_high_value_data = ['has_high_value_data'] if not obj.is_imported else ['has_high_value_data_info']
-            has_research_data = []
-            if is_enabled('S47_research_data.be'):
-                has_research_data = ['has_research_data'] if not obj.is_imported else ['has_research_data_info']
+            has_research_data = ['has_research_data'] if not obj.is_imported else ['has_research_data_info']
             extra_fields = []
             if obj.type == RESOURCE_TYPE_WEBSITE or obj.forced_api_type:
                 extra_fields = ['forced_api_type']
@@ -360,7 +337,7 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):
                     obj.type == RESOURCE_TYPE_API or obj.forced_file_type or
                     (obj.type == RESOURCE_TYPE_FILE and obj.tracker.has_changed('forced_file_type'))):
                 extra_fields = ['forced_file_type']
-            show_dd_update_fields = (self.is_auto_data_date_update and obj.is_auto_data_date_allowed and
+            show_dd_update_fields = (obj.is_auto_data_date_allowed and
                                      not obj.is_imported)
             dd_update_fields = [
                 'is_auto_data_date',
@@ -382,13 +359,13 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):
                             *csv_file,
                             *jsonld_file,
                             'packed_file',
-                            *language,
+                            'language',
                             'title',
                             'description',
                             'formats',
                             'dataset',
                             *regions,
-                            *related_resource,
+                            'related_resource',
                             'data_date',
                             *dd_update_fields,
                             *has_dynamic_data,
@@ -448,7 +425,7 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):
                         'switcher',
                         'file',
                         'link',
-                        *language,
+                        'language',
                     ),
                 }),
                 (None, {
@@ -460,7 +437,7 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):
                     'fields': (
                         'dataset',
                         'regions',
-                        *related_resource,
+                        'related_resource',
                     ),
                 }),
                 (None, {
@@ -475,7 +452,10 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):
                     'classes': ('suit-tab', 'suit-tab-general'),
                     'fields': ('has_high_value_data',),
                 }),
-                *self.has_research_data_fieldset,
+                (None, {
+                    'classes': ('suit-tab', 'suit-tab-general'),
+                    'fields': ('has_research_data',),
+                }),
                 (None, {
                     'classes': ('suit-tab', 'suit-tab-general'),
                     'fields': ('status', 'from_resource'),
@@ -501,12 +481,10 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):
 
     def get_history(self, obj):
         history = super().get_history(obj)
-        if self.resource_supplements:
-            supplements = Supplement.raw.filter(resource=obj)
-            supplements_history = LogEntry.objects.get_for_objects(supplements)
-            all_history = history.distinct() | supplements_history
-            return all_history.order_by('-timestamp')
-        return history
+        supplements = Supplement.raw.filter(resource=obj)
+        supplements_history = LogEntry.objects.get_for_objects(supplements)
+        all_history = history.distinct() | supplements_history
+        return all_history.order_by('-timestamp')
 
     def get_readonly_fields(self, request, obj=None):
         readonly_fields = (
@@ -540,18 +518,14 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):
         ]
         if obj and not obj.data_is_valid:
             readonly_fields = (*readonly_fields, 'show_tabular_view')
-        if obj and self.is_data_date_read_only(obj):
-            readonly_fields = (*readonly_fields, 'data_date')
         if obj and obj.is_imported:
-            auto_data_date_fields = []
-            if self.is_auto_data_date_update:
-                auto_data_date_fields = [
-                    'is_auto_data_date_info',
-                    'automatic_data_date_start',
-                    'data_date_update_period',
-                    'automatic_data_date_end',
-                    'endless_data_date_update'
-                ] if obj.is_auto_data_date else ['is_auto_data_date_info']
+            auto_data_date_fields = [
+                'is_auto_data_date_info',
+                'automatic_data_date_start',
+                'data_date_update_period',
+                'automatic_data_date_end',
+                'endless_data_date_update'
+            ] if obj.is_auto_data_date else ['is_auto_data_date_info']
             readonly_fields = (
                 *readonly_fields,
                 'dataset',
@@ -568,13 +542,10 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):
                 'has_dynamic_data_info',
                 'has_high_value_data_info',
                 'has_research_data_info',
-                *self.language_fields,
+                'language',
+                'related_resource',
             )
         return tuple(set(readonly_fields))
-
-    def is_data_date_read_only(self, obj):
-        return (obj.type != "file" and not self.is_auto_data_date_update) or\
-               (self.is_auto_data_date_update and obj.type == 'website' and not self.is_auto_data_date_for_website)
 
     def lang(self, obj):
         return obj.get_language_display()
@@ -656,13 +627,12 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):
         _('Link validation status')))
 
     def save_formset(self, request, form, formset, change):
-        if self.resource_supplements:
-            instances = formset.save(commit=False)
-            for instance in instances:
-                if isinstance(instance, Supplement):
-                    if not instance.id:
-                        instance.created_by = request.user
-                    instance.modified_by = request.user
+        instances = formset.save(commit=False)
+        for instance in instances:
+            if isinstance(instance, Supplement):
+                if not instance.id:
+                    instance.created_by = request.user
+                instance.modified_by = request.user
         super().save_formset(request, form, formset, change)
 
     def save_model(self, request, obj, form, change):
@@ -722,8 +692,7 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):
                 initial['slug_en'] = data.get('slug_en')
                 initial['has_dynamic_data'] = data.get('has_dynamic_data')
                 initial['has_high_value_data'] = data.get('has_high_value_data')
-                if is_enabled('S47_research_data.be'):
-                    initial['has_research_data'] = data.get('has_research_data')
+                initial['has_research_data'] = data.get('has_research_data')
         return initial
 
     def get_urls(self):
@@ -787,18 +756,16 @@ class TrashAdmin(HistoryMixin, TrashMixin):
         csv_file = ['csv_converted_file'] if obj and obj.csv_converted_file else []
         jsonld_file = ['jsonld_converted_file'] if obj and obj.jsonld_converted_file else []
         file = ['main_file'] if obj and obj.main_file else []
-        language = ['language'] if is_enabled('S53_resource_language.be') else []
-        related_resource = ['related_resource'] if is_enabled('S53_resource_language.be') else []
         return [
             *file,
             *csv_file,
             *jsonld_file,
             'link',
-            *language,
+            'language',
             'title',
             'description',
             'dataset',
-            *related_resource,
+            'related_resource',
             'status',
             'created',
             'modified',

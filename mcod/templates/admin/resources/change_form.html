@@ -65,7 +65,6 @@
         };
 
         (function ($) {
-            {% is_unleash_enabled "S51_data_date_update.be" as S51_data_date_update %}
             $(document).ready(function ($) {
                 $('body').trigger('form-ready', [$('#{% firstof opts.model_name opts.module_name %}_form')]);
                 $('input[name="has_high_value_data"]').click(function(){
@@ -80,68 +79,62 @@
                   $('input[name="has_research_data"]').prop('checked', false);
                   $(this).prop('checked', true);
                 });
-                {% if S51_data_date_update %}
-                    var $dataDateField = $("div.field-data_date div .controls span.datetimeshortcuts");
-                    var $dataDateInput = $("div.field-data_date div.controls input");
-                    var $isAutoDataDateLabel = $("div.field-is_auto_data_date div.control-label label");
-                    var $isAutoDataDateInput = $("div.field-is_auto_data_date div.controls input");
-                    var $AutoDataDateStartInput = $("div.field-automatic_data_date_start div.controls input");
-                    if($isAutoDataDateInput.length){
-                        $(".field-is_auto_data_date div.controls").html("<span class='conf-label'>Okres obowiązywania</span>");
-                        $(".field-data_date_update_period .control-label label").insertAfter($(".field-data_date_update_period .controls select"));
-                        $(".field-endless_data_date_update .control-label label").insertAfter($(".field-endless_data_date_update .controls input"));
-                        if($dataDateField.length){
-                            reformat_auto_data_date_fields($isAutoDataDateInput, $dataDateInput, $dataDateField);
+                var $dataDateField = $("div.field-data_date div .controls span.datetimeshortcuts");
+                var $dataDateInput = $("div.field-data_date div.controls input");
+                var $isAutoDataDateLabel = $("div.field-is_auto_data_date div.control-label label");
+                var $isAutoDataDateInput = $("div.field-is_auto_data_date div.controls input");
+                var $AutoDataDateStartInput = $("div.field-automatic_data_date_start div.controls input");
+                if($isAutoDataDateInput.length){
+                    $(".field-is_auto_data_date div.controls").html("<span class='conf-label'>Okres obowiązywania</span>");
+                    $(".field-data_date_update_period .control-label label").insertAfter($(".field-data_date_update_period .controls select"));
+                    $(".field-endless_data_date_update .control-label label").insertAfter($(".field-endless_data_date_update .controls input"));
+                    if($dataDateField.length){
+                        reformat_auto_data_date_fields($isAutoDataDateInput, $dataDateInput, $dataDateField);
+                    }
+                    else{
+                        const targetNode = document.getElementById('id_data_date').parentNode;
+                        const config = { childList: true};
+
+                        const callback = function(mutationList, observer) {
+                            for(const mutation of mutationList) {
+                                if (mutation.type === 'childList' && mutation.addedNodes[0].classList.contains('datetimeshortcuts')) {
+                                    reformat_auto_data_date_fields($isAutoDataDateInput, $dataDateInput, mutation.addedNodes[0]);
+                                }
+                            }
+                        };
+                        const observer = new MutationObserver(callback);
+                        observer.observe(targetNode, config);
+                    }
+
+
+                    $(".field-automatic_data_date_start .controls input").on("change paste focus",function(){
+                        $(".field-data_date .controls input").val($(this).val());
+                    });
+                    $isAutoDataDateInput.change(function(){
+                        if(this.checked){
+                            enable_auto_data_date_fields();
+                            let initial_val = $AutoDataDateStartInput.val();
+                            if(initial_val){
+                                $dataDateInput.val(initial_val);
+                            }
+                            $dataDateInput.attr('disabled', 'disabled');
+                            $("div.field-data_date span.datetimeshortcuts").hide();
                         }
                         else{
-                            const targetNode = document.getElementById('id_data_date').parentNode;
-                            const config = { childList: true};
-
-                            const callback = function(mutationList, observer) {
-                                for(const mutation of mutationList) {
-                                    if (mutation.type === 'childList' && mutation.addedNodes[0].classList.contains('datetimeshortcuts')) {
-                                        reformat_auto_data_date_fields($isAutoDataDateInput, $dataDateInput, mutation.addedNodes[0]);
-                                    }
-                                }
-                            };
-                            const observer = new MutationObserver(callback);
-                            observer.observe(targetNode, config);
+                            disable_auto_data_date_fields();
+                            $dataDateInput.removeAttr('disabled');
+                            $("div.field-data_date span.datetimeshortcuts").show();
                         }
+                    });
 
+                    $('#resource_form').submit(function(){
+                        $("input#id_data_date:disabled").removeAttr('disabled');
+                        return;
+                    });
+                }
 
-                        $(".field-automatic_data_date_start .controls input").on("change paste focus",function(){
-                            $(".field-data_date .controls input").val($(this).val());
-                        });
-                        $isAutoDataDateInput.change(function(){
-                            if(this.checked){
-                                enable_auto_data_date_fields();
-                                let initial_val = $AutoDataDateStartInput.val();
-                                if(initial_val){
-                                    $dataDateInput.val(initial_val);
-                                }
-                                $dataDateInput.attr('disabled', 'disabled');
-                                $("div.field-data_date span.datetimeshortcuts").hide();
-                            }
-                            else{
-                                disable_auto_data_date_fields();
-                                $dataDateInput.removeAttr('disabled');
-                                $("div.field-data_date span.datetimeshortcuts").show();
-                            }
-                        });
-
-                        $('#resource_form').submit(function(){
-                            $("input#id_data_date:disabled").removeAttr('disabled');
-                            return;
-                        });
-                    }
-                {% endif %}
-
-                {% is_unleash_enabled "S47_research_data.be" as S47_research_data %}
-                {% is_unleash_enabled "S53_resource_language.be" as S53_resource_language %}
                 $(document).on('change', '#id_dataset', function() {
-                {% if S53_resource_language %}
                     $("#id_related_resource").val('').trigger('change');
-                {% endif %}
                 {% if add %}
                   var dataset_id = $(this).val();
                   if (dataset_id){
@@ -167,7 +160,6 @@
                                       $('#id_has_dynamic_data_1').prop('checked', true);
                                   }
                               }
-                              {% if S47_research_data %}
                               if ('has_research_data' in data) {
                                   if (data.has_research_data == true){
                                       $('#id_has_research_data_0').prop('checked', true);
@@ -177,7 +169,6 @@
                                       $('#id_has_research_data_1').prop('checked', true);
                                   }
                               }
-                              {% endif %}
                           }
                       });
                   }

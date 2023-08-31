@@ -40,7 +40,6 @@ from mcod.users.managers import (
     MeetingManager,
     MeetingTrashManager,
 )
-from mcod.unleash import is_enabled
 from mcod.users.signals import user_changed
 from mcod.watchers.models import MODEL_TO_OBJECT_NAME, Notification
 
@@ -116,7 +115,7 @@ class UserManager(BaseUserManager):
         extra_fields.setdefault('state', 'pending')
         return self._create_user(email, password, **extra_fields)
 
-    def create_superuser(self, username, email, password, **extra_fields):
+    def create_superuser(self, email, password, **extra_fields):
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_official', True)
         extra_fields.setdefault('state', 'active')
@@ -611,7 +610,7 @@ class User(AdminMixin, ApiMixin, AbstractBaseUser, PermissionsMixin, SoftDeletab
         context = {
             'link': self.email_validation_absolute_url,
             'host': settings.BASE_URL,
-            'limit': settings.TOKEN_EXPIRATION_TIME if is_enabled('S53_resend_registration_mail.be') else None,
+            'limit': settings.TOKEN_EXPIRATION_TIME,
         }
         msg_plain = render_to_string('mails/confirm-registration.txt', context)
         msg_html = render_to_string('mails/confirm-registration.html', context)

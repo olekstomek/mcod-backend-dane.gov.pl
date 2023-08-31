@@ -13,7 +13,6 @@ from django.urls import path
 from django_admin_multiple_choice_list_filter.list_filters import MultipleChoiceListFilter
 
 from mcod.lib.admin_mixins import HistoryMixin, MCODChangeList, ModelAdmin, TrashMixin, UserAdmin
-from mcod.unleash import is_enabled
 from mcod.users.forms import (
     FilteredSelectMultipleCustom,
     MeetingForm,
@@ -112,7 +111,6 @@ class UserAdmin(HistoryMixin, AdminConfirmMixin, UserAdmin):
     change_password_form = AdminPasswordChangeForm
     confirm_change = True
     confirmation_fields = ['is_agent']
-    resend_registration_mail_enabled = is_enabled('S53_resend_registration_mail.be')
 
     def _change_confirmation_view(self, request, object_id, form_url, extra_context):  # noqa: C901
         to_field = request.POST.get(TO_FIELD_VAR, request.GET.get(TO_FIELD_VAR))

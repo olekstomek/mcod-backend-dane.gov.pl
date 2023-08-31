@@ -40,7 +40,6 @@ from mcod.resources.forms import (
     SupplementForm as ResourceSupplementForm,
 )
 from mcod.resources.models import Resource, Supplement as ResourceSupplement
-from mcod.unleash import is_enabled
 from mcod.users.forms import FilteredSelectMultipleCustom
 
 
@@ -206,12 +205,9 @@ class ChangeResourceNestedStacked(ChangeResourceStacked):
 
 
 class AddResourceMixin:
-    if is_enabled('S53_resource_language.be'):
-        autocomplete_fields = ['related_resource']
+    autocomplete_fields = ['related_resource']
     template = 'admin/resources/inline-new.html'
     use_translated_fields = True
-    language = ['language'] if is_enabled('S53_resource_language.be') else []
-    related_resource = ['related_resource'] if is_enabled('S53_resource_language.be') else []
     add_fieldsets = [
         (None, {
             'classes': ('suit-tab', 'suit-tab-general'),
@@ -235,37 +231,37 @@ class AddResourceMixin:
         }),
 
     ]
-
     add_readonly_fields = ()
-
-    has_research_data = ['has_research_data'] if is_enabled('S47_research_data.be') else []
-    _fields = (
-        'title',
-        'title_en',
-        'description',
-        'description_en',
-        'dataset',
-        *related_resource,
-        'regions_',
-        'data_date',
-        'status',
-        'special_signs',
-        'has_dynamic_data',
-        'has_high_value_data',
-        *has_research_data,
-    )
-
     fieldsets = (
         (
             None,
             {
-                'fields': ('switcher', 'file', 'link', *language)
+                'fields': (
+                    'switcher',
+                    'file',
+                    'link',
+                    'language',
+                )
             }
         ),
         (
             None,
             {
-                'fields': _fields
+                'fields': (
+                    'title',
+                    'title_en',
+                    'description',
+                    'description_en',
+                    'dataset',
+                    'related_resource',
+                    'regions_',
+                    'data_date',
+                    'status',
+                    'special_signs',
+                    'has_dynamic_data',
+                    'has_high_value_data',
+                    'has_research_data',
+                )
             }
         ),
     )
@@ -354,11 +350,9 @@ class DatasetAdminMixin(HistoryMixin):
     actions_on_top = True
     autocomplete_fields = ['tags', 'organization']
     check_imported_obj_perms = True
-    dataset_promotion_enabled = is_enabled('S52_dataset_is_promoted.be')
-    dataset_supplements = is_enabled('S49_dataset_supplements.be')
     export_to_csv = True
     form = DatasetForm
-    is_inlines_js_upgraded = is_enabled('S48_resource_inlines_js_upgrade.be')
+    is_inlines_js_upgraded = True
     list_display = [
         'title',
         'organization',
@@ -387,14 +381,13 @@ class DatasetAdminMixin(HistoryMixin):
 
     @property
     def suit_form_tabs(self):
-        supplements = [('supplements', _('Supplements'))] if self.dataset_supplements else []
         return (
             ('general', _('General')),
             *self.get_translations_tabs(),
             ('licenses', _('Conditions')),
             ('tags', _('Tags')),
             ('resources', _('Resources')),
-            *supplements,
+            ('supplements', _('Supplements')),
         )
 
     def suit_row_attributes(self, obj, request):
@@ -402,15 +395,13 @@ class DatasetAdminMixin(HistoryMixin):
 
     def get_history(self, obj):
         history = super().get_history(obj)
-        if self.dataset_supplements:
-            supplements = Supplement.raw.filter(dataset=obj)
-            supplements_history = LogEntry.objects.get_for_objects(supplements)
-            all_history = history.distinct() | supplements_history
-            return all_history.order_by('-timestamp')
-        return history
+        supplements = Supplement.raw.filter(dataset=obj)
+        supplements_history = LogEntry.objects.get_for_objects(supplements)
+        all_history = history.distinct() | supplements_history
+        return all_history.order_by('-timestamp')
 
     def get_list_filter(self, request):
-        is_promoted = [IsPromotedListFilter] if request.user.is_superuser and self.dataset_promotion_enabled else []
+        is_promoted = [IsPromotedListFilter] if request.user.is_superuser else []
         return [
             'categories',
             OrganizationFilter,
@@ -447,13 +438,10 @@ class DatasetAdminMixin(HistoryMixin):
             ]
         has_dynamic_data = ['has_dynamic_data_info'] if obj and obj.is_imported else ['has_dynamic_data']
         has_high_value_data = ['has_high_value_data_info'] if obj and obj.is_imported else ['has_high_value_data']
-        has_research_data = []
-        if is_enabled('S47_research_data.be'):
-            has_research_data = ['has_research_data_info'] if obj and obj.is_imported else ['has_research_data']
+        has_research_data = ['has_research_data_info'] if obj and obj.is_imported else ['has_research_data']
         show_is_promoted = all([
             request.user.is_superuser,
             not getattr(obj, 'is_imported', False),
-            self.dataset_promotion_enabled,
         ])
         is_promoted = ['is_promoted'] if show_is_promoted else []
         return [
@@ -676,18 +664,16 @@ class DatasetAdmin(DatasetAdminMixin, ModelAdmin):
     inlines = [
         ChangeResourceStacked,
         AddResourceStacked,
+        SupplementInline,
     ]
-    if is_enabled('S49_dataset_supplements.be'):
-        inlines.append(SupplementInline)
 
 
 class NestedDatasetAdmin(DatasetAdminMixin, NestedModelAdmin):
     inlines = [
         ChangeResourceNestedStacked,
         AddResourceNestedStacked,
+        SupplementInline,
     ]
-    if is_enabled('S49_dataset_supplements.be'):
-        inlines.append(SupplementInline)
 
 
 @admin.register(DatasetTrash)
@@ -767,7 +753,4 @@ class DatasetTrashAdmin(HistoryMixin, TrashMixin):
     tags_list_en.short_description = _('Tags') + ' (EN)'
 
 
-if is_enabled('S49_nested_dataset_admin.be'):
-    admin.site.register(Dataset, NestedDatasetAdmin)
-else:
-    admin.site.register(Dataset, DatasetAdmin)
+admin.site.register(Dataset, NestedDatasetAdmin)

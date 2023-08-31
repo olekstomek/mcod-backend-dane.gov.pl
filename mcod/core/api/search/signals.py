@@ -41,11 +41,11 @@ class AsyncSignalProcessor(SignalLoggerMixin, BaseSignalProcessor):
     def update(self, sender, instance, *args, **kwargs):
         self.debug('Updating document in elasticsearch', sender, instance, 'update_document')
         obj_name = self._get_object_name(instance)
-        update_document_task.s(instance._meta.app_label, obj_name, instance.id).apply_async_on_commit(countdown=1)
+        update_document_task.s(instance._meta.app_label, obj_name, instance.id).apply_async_on_commit()
 
     def update_related(self, sender, instance, model, pk_set, **kwargs):
         self.debug('Updating related documents in elasticsearch', sender, instance, 'update_related')
-        update_related_task.s(model._meta.app_label, model._meta.object_name, list(pk_set)).apply_async_on_commit(countdown=2)
+        update_related_task.s(model._meta.app_label, model._meta.object_name, list(pk_set)).apply_async_on_commit()
 
     def update_with_related(self, sender, instance, *args, **kwargs):
         self.debug(
@@ -53,12 +53,12 @@ class AsyncSignalProcessor(SignalLoggerMixin, BaseSignalProcessor):
             sender, instance, 'update_document_with_related'
         )
         obj_name = self._get_object_name(instance)
-        update_with_related_task.s(instance._meta.app_label, obj_name, instance.id).apply_async_on_commit(countdown=2)
+        update_with_related_task.s(instance._meta.app_label, obj_name, instance.id).apply_async_on_commit()
 
     def remove(self, sender, instance, *args, **kwargs):
         self.debug('Removing document from elasticsearch', sender, instance, 'remove_document')
         obj_name = self._get_object_name(instance)
-        delete_document_task.s(instance._meta.app_label, obj_name, instance.id).apply_async_on_commit(countdown=1)
+        delete_document_task.s(instance._meta.app_label, obj_name, instance.id).apply_async_on_commit()
 
     def remove_with_related(self, sender, instance, *args, **kwargs):
         self.debug(
@@ -69,7 +69,7 @@ class AsyncSignalProcessor(SignalLoggerMixin, BaseSignalProcessor):
         related_instances_data = registry_proxy.get_data_of_related_instances(instance)
         delete_with_related_task.s(
             related_instances_data, instance._meta.app_label, object_name, instance.id
-        ).apply_async_on_commit(countdown=2)
+        ).apply_async_on_commit()
 
     def handle_updated(self, sender, instance, **kwargs):
         is_indexable = getattr(instance, 'is_indexable', False)
@@ -84,21 +84,21 @@ class AsyncSignalProcessor(SignalLoggerMixin, BaseSignalProcessor):
                 related_instances_data = registry_proxy.get_data_of_related_instances(instance)
                 delete_with_related_task.s(
                     related_instances_data, instance._meta.app_label, object_name, instance.id
-                ).apply_async_on_commit(countdown=2)
+                ).apply_async_on_commit()
             else:
-                update_with_related_task.s(instance._meta.app_label, object_name, instance.id).apply_async_on_commit(countdown=2)
+                update_with_related_task.s(instance._meta.app_label, object_name, instance.id).apply_async_on_commit()
 
     def handle_pre_delete(self, sender, instance, **kwargs):
         is_indexable = getattr(instance, 'is_indexable', False)
         if is_indexable:
             object_name = instance._meta.concrete_model._meta.object_name
-            delete_related_documents_task.s(instance._meta.app_label, object_name, instance.id).apply_async_on_commit(countdown=1)
+            delete_related_documents_task.s(instance._meta.app_label, object_name, instance.id).apply_async_on_commit()
 
     def handle_delete(self, sender, instance, **kwargs):
         is_indexable = getattr(instance, 'is_indexable', False)
         if is_indexable:
             object_name = instance._meta.concrete_model._meta.object_name
-            delete_document_task.s(instance._meta.app_label, object_name, instance.id).apply_async_on_commit(countdown=1)
+            delete_document_task.s(instance._meta.app_label, object_name, instance.id).apply_async_on_commit()
 
     def handle_m2m_changed(self, sender, instance, action, **kwargs):
         if action in ('post_add', 'post_remove', 'post_clear'):

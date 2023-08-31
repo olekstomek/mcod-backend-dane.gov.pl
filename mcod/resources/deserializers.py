@@ -16,7 +16,6 @@ from mcod.core.api.schemas import (
 )
 from mcod.core.api.search import fields as search_fields
 from mcod.datasets.deserializers import RdfValidationRequest
-from mcod.unleash import is_enabled
 
 
 class ResourceDatasetFilterField(ExtSchema):
@@ -177,20 +176,18 @@ class ResourceApiSearchRequest(ListingSchema):
         doc_base_url='/resources',
         doc_field_name='has_high_value_data',
     )
-    if is_enabled('S47_research_data.be'):
-        has_research_data = search_fields.FilterField(
-            BooleanTermSchema,
-            doc_template='docs/generic/fields/boolean_term_field.html',
-            doc_base_url='/resources',
-            doc_field_name='has_research_data',
-        )
-    if is_enabled('S53_resource_language.be'):
-        language = search_fields.FilterField(
-            StringTermSchema,
-            doc_template='docs/generic/fields/string_term_field.html',
-            doc_base_url='/resources',
-            doc_field_name='language'
-        )
+    has_research_data = search_fields.FilterField(
+        BooleanTermSchema,
+        doc_template='docs/generic/fields/boolean_term_field.html',
+        doc_base_url='/resources',
+        doc_field_name='has_research_data',
+    )
+    language = search_fields.FilterField(
+        StringTermSchema,
+        doc_template='docs/generic/fields/string_term_field.html',
+        doc_base_url='/resources',
+        doc_field_name='language'
+    )
 
     class Meta:
         strict = True

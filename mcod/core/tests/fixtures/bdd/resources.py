@@ -1006,10 +1006,10 @@ def file_archive(validated_file, files_number):
     assert not os.path.exists(extracted.tmp_dir)
 
 
-@then(parsers.parse('file is validated and result mimetype is {mimetype}'))
-def file_mimetype(validated_file, mimetype):
+@then(parsers.parse('file is validated and result mimetype is {mimetypes}'))
+def file_mimetype(validated_file, mimetypes):
     _, _, _, _, file_mimetype, *other = analyze_file(validated_file)
-    assert file_mimetype == mimetype
+    assert file_mimetype in json.loads(mimetypes)
 
 
 @then('file is validated and UnsupportedArchiveError is raised')

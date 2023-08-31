@@ -13,7 +13,6 @@ from mcod.core.api.schemas import ExtSchema
 from mcod.core.serializers import CSVSerializer
 from mcod.lib.serializers import TranslatedStr
 from mcod.watchers.serializers import SubscriptionMixin
-from mcod.unleash import is_enabled
 
 
 class InstitutionApiRelationships(Relationships):
@@ -26,15 +25,14 @@ class InstitutionApiRelationships(Relationships):
         url_template='{object_url}/datasets',
         required=True,
     )
-    if is_enabled('S53_institutions_fixes.be'):
-        published_resources = fields.Nested(
-            Relationship,
-            many=False,
-            default=[],
-            data_key='resources',
-            _type='resource',
-            required=True,
-        )
+    published_resources = fields.Nested(
+        Relationship,
+        many=False,
+        default=[],
+        data_key='resources',
+        _type='resource',
+        required=True,
+    )
     subscription = fields.Nested(
         Relationship,
         many=False,
@@ -72,9 +70,6 @@ class InstitutionApiAttrs(ObjectAttrs, HighlightObjectMixin):
     abbreviation = fields.Str()
     city = fields.Str()
     created = fields.Str()
-    if not is_enabled('S53_institutions_fixes.be'):
-        datasets_count = fields.Int(attribute='published_datasets_count')
-        resources_count = fields.Int(attribute='published_resources_count')
     email = fields.Str()
     epuap = fields.Str()
     fax = fields.Str()

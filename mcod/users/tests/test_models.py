@@ -157,7 +157,7 @@ class TestLogin:
 
 
 def test_user_manager_create_superuser():
-    superuser = User.objects.create_superuser(None, "superadmin@test.pl", "password")
+    superuser = User.objects.create_superuser("superadmin@test.pl", "password")
     assert superuser.email == "superadmin@test.pl"
     assert superuser.is_staff
     assert superuser.is_superuser

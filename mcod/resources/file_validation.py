@@ -13,7 +13,6 @@ from mcod.resources.archives import (
 )
 from mcod.resources.geo import analyze_shapefile, are_shapefiles, check_geodata, has_geotiff_files
 from mcod.resources.meteo import check_meteo_data
-from mcod.unleash import is_enabled
 
 logger = logging.getLogger('mcod')
 
@@ -158,18 +157,12 @@ def analyze_file(path):  # noqa: C901
             if len(extracted) == 1:
                 extracted_path = extracted[0]
                 extracted_family, extracted_content_type, extracted_options = get_file_info(extracted_path)
-                if is_enabled('S55_separate_extracted_file_format.be'):
-                    logger.debug(f"  extracted file {extracted_path}")
-                    extracted_extension, _, extracted_encoding, _, extracted_mimetype, _ = evaluate_file_details(
-                        extracted_content_type, extracted_family, extracted_options, extracted_path, bool(extracted)
-                    )
-                    logger.debug(f'  extracted extension: {extracted_extension}')
-                    logger.debug(f'  extracted mimetype: {extracted_mimetype}')
-                else:
-                    path = extracted_path
-                    family = extracted_family
-                    content_type = extracted_content_type
-                    options = extracted_options
+                logger.debug(f"  extracted file {extracted_path}")
+                extracted_extension, _, extracted_encoding, _, extracted_mimetype, _ = evaluate_file_details(
+                    extracted_content_type, extracted_family, extracted_options, extracted_path, bool(extracted)
+                )
+                logger.debug(f'  extracted extension: {extracted_extension}')
+                logger.debug(f'  extracted mimetype: {extracted_mimetype}')
             else:
                 if are_shapefiles(extracted):
                     shp_type, options = analyze_shapefile(extracted)

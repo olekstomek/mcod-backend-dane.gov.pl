@@ -36,7 +36,6 @@ from mcod.datasets.managers import DatasetManager, SupplementManager
 from mcod.datasets.signals import remove_related_resources
 from mcod.datasets.tasks import archive_resources_files
 from mcod.regions.models import Region
-from mcod.unleash import is_enabled
 from mcod.watchers.tasks import update_model_watcher_task
 
 logger = logging.getLogger('mcod')
@@ -798,11 +797,11 @@ def handle_dataset_pre_save(sender, instance, *args, **kwargs):
 def handle_dataset_without_resources(sender, instance, *args, **kwargs):
     if not instance.resources.exists():
         Dataset.objects.filter(pk=instance.id).update(verified=instance.created)
-    if instance.tracker.has_changed('organization_id') and is_enabled('S52_update_es_institution.be'):
+    if instance.tracker.has_changed('organization_id'):
         organization_id = instance.tracker.previous('organization_id')
         if organization_id:
             # update ES document for previously set organization, if any.
-            update_document_task.s('organizations', 'Organization', organization_id).apply_async_on_commit(force_enabled=True)
+            update_document_task.s('organizations', 'Organization', organization_id).apply_async_on_commit()
 
 
 @receiver(remove_related_resources, sender=Dataset)
@@ -839,7 +838,7 @@ def update_related_watchers(sender, instance, *args, state=None, **kwargs):
         instance.organization._meta.object_name,
         instance.organization.id,
         obj_state=state
-    ).apply_async_on_commit(countdown=1)
+    ).apply_async_on_commit()
 
 
 core_signals.notify_published.connect(update_watcher, sender=Dataset)

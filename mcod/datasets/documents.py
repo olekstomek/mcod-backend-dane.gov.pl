@@ -7,7 +7,6 @@ from mcod.harvester.serializers import DataSourceSerializer
 from mcod.lib.search.fields import TranslatedKeywordField, TranslatedTextField
 from mcod.regions.documents import regions_field
 from mcod.search.documents import ExtendedDocument
-from mcod.unleash import is_enabled
 from mcod.users.models import UserFollowingDataset
 
 Dataset = apps.get_model('datasets', 'Dataset')
@@ -108,16 +107,15 @@ class DatasetDocument(ExtendedDocument):
             'title': TranslatedTextField('title')
         }
     )
-    if is_enabled('S49_dataset_supplements.be'):
-        supplement_docs = fields.NestedField(
-            properties={
-                'id': fields.IntegerField(),
-                'name': TranslatedTextField('name'),
-                'api_file_url': fields.TextField(),
-                'file_size': fields.LongField(),
-                'language': fields.KeywordField(),
-            }
-        )
+    supplement_docs = fields.NestedField(
+        properties={
+            'id': fields.IntegerField(),
+            'name': TranslatedTextField('name'),
+            'api_file_url': fields.TextField(),
+            'file_size': fields.LongField(),
+            'language': fields.KeywordField(),
+        }
+    )
 
     update_frequency = fields.KeywordField()
     users_following = fields.KeywordField(attr='users_following_list', multi=True)
@@ -129,8 +127,7 @@ class DatasetDocument(ExtendedDocument):
     has_dynamic_data = fields.BooleanField()
     has_high_value_data = fields.BooleanField()
     has_research_data = fields.BooleanField()
-    if is_enabled('S52_dataset_is_promoted.be'):
-        is_promoted = fields.BooleanField()
+    is_promoted = fields.BooleanField()
     regions = regions_field()
 
     class Index:

@@ -5,9 +5,6 @@ from django.conf import settings
 from django.db import models
 from django.db.models import Case, F, Q, Value, When
 
-from mcod.regions.api import PeliasApi
-from mcod.unleash import is_enabled
-
 
 class RegionQueryset(models.QuerySet):
 
@@ -48,20 +45,11 @@ class RegionManager(models.Manager):
 
     def create_new_regions(self, to_create_regions):
         region = apps.get_model('regions', 'region')
-        if not is_enabled('S54_teryt_based_spatial_search.be'):
-            pelias = PeliasApi()
-            wof_ids = ['whosonfirst:{}:{}'.format(reg_data['placetype'], reg_id) for
-                       reg_id, reg_data in to_create_regions.items()]
-            places_details = pelias.place(wof_ids)
-            geonames_ids = {feat['properties']['id']: feat['properties']['addendum']['concordances']['gn:id']
-                            for feat in places_details.get('features', [])
-                            if feat['properties'].get('addendum') and
-                            feat['properties']['addendum']['concordances'].get('gn:id')}
         to_create_regions_obj = []
         for reg_id, reg_data in to_create_regions.items():
             _bbox = reg_data['geom']['bbox'].split(',')
             # If both bbox coordinates are the same points, ES throws 'malformed shape error',
-            # so we 'enlarge' the shape a little bit.
+            # so we 'enlarge' the shape a little.
             if _bbox[0] == _bbox[2] and _bbox[1] == _bbox[3]:
                 coords = [Decimal(_bbox[2]), Decimal(_bbox[3])]
                 edited_coords = [coord + Decimal('0.000000001') for coord in coords]
@@ -80,10 +68,7 @@ class RegionManager(models.Manager):
                 lat=reg_data['geom']['lat'],
                 lng=reg_data['geom']['lon']
             )
-            if is_enabled('S54_teryt_based_spatial_search.be'):
-                gn_id = reg_data.get('geonames_id')
-            else:
-                gn_id = geonames_ids.get(str(reg_id))
+            gn_id = reg_data.get('geonames_id')
             if gn_id:
                 region_props['geonames_id'] = gn_id
             to_create_regions_obj.append(region(**region_props))

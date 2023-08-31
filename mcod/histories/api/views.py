@@ -9,7 +9,6 @@ from mcod.core.versioning import versioned
 from mcod.histories.deserializers import HistoryApiRequest, LogEntryApiSearchRequest
 from mcod.histories.documents import LogEntryDoc
 from mcod.histories.serializers import LogEntryApiResponse
-from mcod.unleash import is_enabled
 
 
 class HistoriesView(JsonAPIView):
@@ -40,18 +39,13 @@ class HistoryView(JsonAPIView):
         database_model = apps.get_model('histories', 'LogEntry')
         deserializer_schema = HistoryApiRequest
         serializer_schema = LogEntryApiResponse
-        is_anonymous = is_enabled('S47_anonymize_history.be')
 
         def _get_instance(self, id, *args, **kwargs):
             instance = getattr(self, '_cached_instance', None)
             if not instance:
                 try:
-                    if self.is_anonymous:
-                        self._cached_instance = self.database_model.objects.filter(
-                            content_type__model='dataset').exclude(actor_id=1).get(pk=id)
-                    else:
-                        self._cached_instance = self.database_model.objects.exclude(
-                            content_type__model='user').get(pk=id)
+                    self._cached_instance = self.database_model.objects.filter(
+                        content_type__model='dataset').exclude(actor_id=1).get(pk=id)
                 except self.database_model.DoesNotExist:
                     raise falcon.HTTPNotFound
             return self._cached_instance

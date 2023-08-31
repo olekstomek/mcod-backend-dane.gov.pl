@@ -34,7 +34,6 @@ from mcod.pn_apps.utils import (
     reformat_time_period,
 )
 from mcod.pn_apps.widgets import BootstrapTableTemplate, TabbedBootstrapTableTemplate
-from mcod.unleash import is_enabled
 
 q_log = logging.getLogger('stats-queries')
 profile_log = logging.getLogger('stats-profile')
@@ -374,28 +373,18 @@ class StatsPanel(param.Parameterized):
             pn.Column(self.toggle_widget, margin=(12, 0, 0, 0)),
             self.table
         ]
-        if is_enabled('S55_stats_accordion.be'):
-            pn_component = pn.Card
-            default_kwargs.update({
-                'header': pn.pane.HTML(
-                    f'<h2 class="heading heading--sm">{self.name}</>',
-                    sizing_mode='stretch_width',
-                    style={'text-align': 'left', 'margin-top': '18px'},
-                ),
-                'margin': (6, 0),
-                'header_background': '#fff',
-                'collapsed': True,
-                'button_css_classes': ['stats-card-button']
-            })
-        else:
-            pn_component = pn.Column
-            default_args = [
-                pn.pane.HTML(
-                    f'<h2 class="heading heading--sm heading--separator">{self.name}</>',
-                    sizing_mode='stretch_width'
-                )
-            ] + default_args
-        col = pn_component(
+        default_kwargs.update({
+            'header': pn.pane.HTML(
+                f'<h2 class="heading heading--sm">{self.name}</>',
+                sizing_mode='stretch_width',
+                style={'text-align': 'left', 'margin-top': '18px'},
+            ),
+            'margin': (6, 0),
+            'header_background': '#fff',
+            'collapsed': True,
+            'button_css_classes': ['stats-card-button']
+        })
+        col = pn.Card(
             *default_args,
             **default_kwargs
         )

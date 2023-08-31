@@ -527,7 +527,7 @@ class Subscription(ApiMixin, TimeStampedModel):
 def update_subscribed_object(sender, instance, *args, **kwargs):
     if instance.watcher.watcher_type == 'model':
         obj = instance.watcher.obj
-        update_document_task.s(obj._meta.app_label, obj._meta.object_name, obj.id).apply_async_on_commit(countdown=1)
+        update_document_task.s(obj._meta.app_label, obj._meta.object_name, obj.id).apply_async_on_commit()
 
 
 class NotificationManager(models.Manager):

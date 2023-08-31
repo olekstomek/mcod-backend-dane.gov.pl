@@ -5,8 +5,6 @@ from celery import shared_task
 from django.db import transaction
 from kombu.utils import uuid
 
-from mcod.unleash import is_enabled
-
 logger = logging.getLogger('mcod')
 
 
@@ -32,20 +30,16 @@ def atomic_shared_task(*task_args, commit_on_errors=None, **task_kwargs):
 
 
 def extended_shared_task(*task_args, atomic=False, commit_on_errors=None, **task_kwargs):
-    extended_shared_task_enabled = is_enabled('S55_extended_shared_task.be')
-
     def outer(func):
-        if atomic and extended_shared_task_enabled:
+        if atomic:
             task = atomic_shared_task(func, commit_on_errors=commit_on_errors, **task_kwargs)
         else:
             task = shared_task(func, **task_kwargs)
         if not hasattr(task, 'apply_async_on_commit'):
-            def apply_async_on_commit(self, *proxy_args, countdown=None, force_enabled=False, **proxy_kwargs):
-                if extended_shared_task_enabled or force_enabled:
-                    task_id = uuid()
-                    transaction.on_commit(lambda: self.apply_async(*proxy_args, task_id=task_id, **proxy_kwargs))
-                    return task_id
-                return self.apply_async(*proxy_args, countdown=countdown, **proxy_kwargs)
+            def apply_async_on_commit(self, *proxy_args, **proxy_kwargs):
+                task_id = uuid()
+                transaction.on_commit(lambda: self.apply_async(*proxy_args, task_id=task_id, **proxy_kwargs))
+                return task_id
 
             def s(self, *proxy_args, **proxy_kwargs):
                 signature = self.signature(proxy_args, proxy_kwargs)

@@ -1,5 +1,4 @@
 {% load static core_tags %}
-{% is_unleash_enabled "S55_stats_accordion.be" as S55_stats_accordion %}
 {% block doc %}
 <!doctype html>
 <html lang="pl">
@@ -19,16 +18,10 @@
     <link href="https://unpkg.com/bootstrap-table@1.18.0/dist/bootstrap-table.min.css" rel="stylesheet">
 
     <style>
-        {% if S55_stats_accordion %}
         body#stats {
             background-color: #f9f9f9;
             overflow-y: auto;
         }
-        {% else %}
-         body {
-            background-color: #f9f9f9;
-        }
-        {% endif %}
 
         #stats .bk-root {
             font-family: inherit;
@@ -124,7 +117,7 @@
         .bk-tooltip-row-label {
            white-space: nowrap !important;
         }
-        {% if S55_stats_accordion %}
+
         .card-header h2{
             color:#0865c9;
         }
@@ -140,7 +133,6 @@
             padding-bottom:24px;
             padding-top:24px;
         }
-        {% endif %}
     </style>
     {% endblock styles %}
     {% endblock head %}

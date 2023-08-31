@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-08-12 14:13+0200\n"
+"POT-Creation-Date: 2022-08-29 15:21+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -632,9 +632,6 @@ msgstr ""
 "link aktywacyjny, skontaktuj się z nami: <a href=\"mailto:%(email)s\">"
 "%(email)s</a>"
 
-msgid "Expired token"
-msgstr "Przeterminowany token"
-
 #, python-format
 msgid ""
 "<b>Your account has not been activated.</b><br>We sent an email to the e-"
@@ -648,9 +645,6 @@ msgstr ""
 "<br>Jeżeli nie otrzymałeś od nas wiadomości e-mail, bądź link aktywacyjny "
 "stracił ważność, skontaktuj się z nami: <a href=\"mailto:%(email)s\">"
 "%(email)s</a>"
-
-msgid "Email address not confirmed"
-msgstr "Adres email nie został potwierdzony"
 
 msgid "Missing token"
 msgstr "Brakujący token"
@@ -740,14 +734,14 @@ msgstr "Promowane zbiory danych"
 msgid "Filter by institution name"
 msgstr "Filtruj według nazwy instytucji"
 
-msgid "Supplements"
-msgstr "Dokumenty uzupełniające"
-
 msgid "Conditions"
 msgstr "Warunki"
 
 msgid "Resources"
 msgstr "Zasoby"
+
+msgid "Supplements"
+msgstr "Dokumenty uzupełniające"
 
 msgid "dynamic data"
 msgstr "Zawiera dane dynamiczne"
@@ -3302,6 +3296,9 @@ msgstr "Data zakończenia aktualizacji"
 msgid "Endless data date update"
 msgstr "Bez daty zakończenia"
 
+msgid "deleted"
+msgstr "usunięty"
+
 msgid "acc: Resource"
 msgstr "zasób"
 
@@ -4192,12 +4189,6 @@ msgstr "Tak, skasuj %(name)s"
 msgid "No, stop the operation"
 msgstr "Nie, przerwij operację"
 
-msgid "Yes, I'm sure"
-msgstr "Tak, potwierdzam"
-
-msgid "No, take me back"
-msgstr "Nie, wróć"
-
 #, python-format
 msgid ""
 "Deleting the selected %(objects_name)s would result in deleting related "
@@ -4283,9 +4274,6 @@ msgstr "dodany"
 msgid "changed"
 msgstr "zmieniony"
 
-msgid "deleted"
-msgstr "usunięty"
-
 msgid "Unknown content"
 msgstr "Nierozpoznana zawartość"
 
@@ -4351,6 +4339,23 @@ msgstr "data wykonania"
 
 msgid "recommendation"
 msgstr "zalecenie"
+
+#, fuzzy
+#| msgid "keywords"
+msgid "keyword"
+msgstr "słowa kluczowe"
+
+#, python-format
+msgid "%(counter)s result"
+msgid_plural "%(counter)s results"
+msgstr[0] ""
+msgstr[1] ""
+msgstr[2] ""
+msgstr[3] ""
+
+#, python-format
+msgid "%(full_result_count)s total"
+msgstr ""
 
 #, python-format
 msgid ""
@@ -5260,6 +5265,9 @@ msgstr "Email nie może być wysłany"
 
 msgid "Account not found"
 msgstr "Nie znaleziono konta"
+
+msgid "Expired token"
+msgstr "Przeterminowany token"
 
 msgid "Wrong password"
 msgstr "Niepoprawne hasło"

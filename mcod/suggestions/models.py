@@ -62,7 +62,7 @@ class Suggestion(Model):
 
 @receiver(post_save, sender=Suggestion)
 def handle_suggestion_post_save(sender, instance, *args, **kwargs):
-    send_data_suggestion.s(instance.id).apply_async_on_commit(countdown=1)
+    send_data_suggestion.s(instance.id).apply_async_on_commit()
 
 
 class DatasetSubmissionMixin(ExtendedModel):
@@ -519,10 +519,10 @@ def handle_dataset_submission_post_save(sender, instance, created, *args, **kwar
 @receiver(post_save, sender=DatasetComment)
 def handle_dataset_comment_post_save(sender, instance, created, *args, **kwargs):
     if created:
-        send_dataset_comment.s(instance.dataset.id, instance.comment).apply_async_on_commit(countdown=1)
+        send_dataset_comment.s(instance.dataset.id, instance.comment).apply_async_on_commit()
 
 
 @receiver(post_save, sender=ResourceComment)
 def handle_resource_comment_post_save(sender, instance, created, *args, **kwargs):
     if created:
-        send_resource_comment.s(instance.resource.id, instance.comment).apply_async_on_commit(countdown=1)
+        send_resource_comment.s(instance.resource.id, instance.comment).apply_async_on_commit()

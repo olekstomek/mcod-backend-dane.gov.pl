@@ -19,7 +19,6 @@ from mcod.core.api.schemas import (
     StringTermSchema,
 )
 from mcod.core.api.search import fields as search_fields
-from mcod.unleash import is_enabled
 
 
 class CategoryFilterSchema(ExtSchema):
@@ -239,20 +238,18 @@ class DatasetApiSearchRequest(ListingSchema):
         doc_base_url='/datasets',
         doc_field_name='has_high_value_data',
     )
-    if is_enabled('S47_research_data.be'):
-        has_research_data = search_fields.FilterField(
-            BooleanTermSchema,
-            doc_template='docs/generic/fields/boolean_term_field.html',
-            doc_base_url='/datasets',
-            doc_field_name='has_research_data',
-        )
-    if is_enabled('S52_dataset_is_promoted.be'):
-        is_promoted = search_fields.FilterField(
-            BooleanTermSchema,
-            doc_template='docs/generic/fields/boolean_term_field.html',
-            doc_base_url='/datasets',
-            doc_field_name='is_promoted',
-        )
+    has_research_data = search_fields.FilterField(
+        BooleanTermSchema,
+        doc_template='docs/generic/fields/boolean_term_field.html',
+        doc_base_url='/datasets',
+        doc_field_name='has_research_data',
+    )
+    is_promoted = search_fields.FilterField(
+        BooleanTermSchema,
+        doc_template='docs/generic/fields/boolean_term_field.html',
+        doc_base_url='/datasets',
+        doc_field_name='is_promoted',
+    )
 
     class Meta:
         strict = True

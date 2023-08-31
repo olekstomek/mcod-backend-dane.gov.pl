@@ -12,7 +12,6 @@ from mcod.core.db.models import BaseExtendedModel
 from mcod.regions.api import PeliasApi, PlaceholderApi
 from mcod.regions.managers import RegionManager
 from mcod.regions.signals import regions_updated
-from mcod.unleash import is_enabled
 
 # Create your models here.
 
@@ -46,16 +45,13 @@ class RegionManyToManyField(models.ManyToManyField):
         additional_regions = []
         if values:
             placeholder = PlaceholderApi()
-            if is_enabled('S54_teryt_based_spatial_search.be'):
-                pelias_api = PeliasApi()
-                all_regions_list, wof_teryt_mapping = pelias_api.get_regions_details_by_teryt(values)
-                reg_data = placeholder.convert_to_placeholder_format(
-                    all_regions_list, wof_teryt_mapping
-                )
-                pelias_api.fill_geonames_data(reg_data, wof_teryt_mapping)
-                all_regions_ids = list(reg_data.keys())
-            else:
-                reg_data, all_regions_ids = placeholder.get_all_regions_details(values)
+            pelias_api = PeliasApi()
+            all_regions_list, wof_teryt_mapping = pelias_api.get_regions_details_by_teryt(values)
+            reg_data = placeholder.convert_to_placeholder_format(
+                all_regions_list, wof_teryt_mapping
+            )
+            pelias_api.fill_geonames_data(reg_data, wof_teryt_mapping)
+            all_regions_ids = list(reg_data.keys())
             existing_regions = Region.objects.filter(region_id__in=all_regions_ids)
             existing_regions_ids = list(
                 existing_regions.values_list('region_id', flat=True)
@@ -155,6 +151,6 @@ def update_search_regions(sender, instance, *args, **kwargs):
             to_update = Region.objects.assigned_regions(new)
             to_delete = Region.objects.unassigned_regions(deleted)
             if to_delete:
-                bulk_delete_documents_task.s('regions', 'Region', to_delete).apply_async_on_commit(countdown=2)
+                bulk_delete_documents_task.s('regions', 'Region', to_delete).apply_async_on_commit()
             if to_update:
-                update_related_task.s('regions', 'Region', to_update).apply_async_on_commit(countdown=2)
+                update_related_task.s('regions', 'Region', to_update).apply_async_on_commit()

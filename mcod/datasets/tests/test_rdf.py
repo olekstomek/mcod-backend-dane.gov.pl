@@ -15,7 +15,6 @@ from mcod.core.api.rdf.profiles.dcat_ap_pl import VOCABULARIES as DCAT_AP_PL_VOC
 from mcod.core.api.rdf.vocabs.openness_score import OpennessScoreVocab
 from mcod.datasets.serializers import UPDATE_FREQUENCY_TO_DCAT
 from mcod.lib.extended_graph import ExtendedGraph
-from mcod.unleash import is_enabled
 
 scenarios('features/dataset_rdf.feature')
 scenarios('features/dataset_sparql.feature')
@@ -277,26 +276,24 @@ def get_dataset_dcat_ap_triples(dataset, config):
         ])
 
     dataset_supplements_triples = []
-    if is_enabled('S49_dataset_supplements.be'):
-        for supplement in dataset.supplement_docs:
-            if supplement.file_url is None:
-                continue
-            supplement_ref = URIRef(supplement.file_url)
-            dataset_supplements_triples.extend([
-                (supplement_ref, ns.RDF.type, ns.FOAF.Document),
-                (dataset_ref, ns.FOAF.page, supplement_ref),
-            ])
+    for supplement in dataset.supplement_docs:
+        if supplement.file_url is None:
+            continue
+        supplement_ref = URIRef(supplement.file_url)
+        dataset_supplements_triples.extend([
+            (supplement_ref, ns.RDF.type, ns.FOAF.Document),
+            (dataset_ref, ns.FOAF.page, supplement_ref),
+        ])
 
     resource_supplements_triples = []
-    if is_enabled('S48_resource_supplements.be'):
-        for supplement in resource.supplement_docs:
-            if supplement.file_url is None:
-                continue
-            supplement_ref = URIRef(supplement.file_url)
-            resource_supplements_triples.extend([
-                (supplement_ref, ns.RDF.type, ns.FOAF.Document),
-                (resource_ref, ns.FOAF.page, supplement_ref),
-            ])
+    for supplement in resource.supplement_docs:
+        if supplement.file_url is None:
+            continue
+        supplement_ref = URIRef(supplement.file_url)
+        resource_supplements_triples.extend([
+            (supplement_ref, ns.RDF.type, ns.FOAF.Document),
+            (resource_ref, ns.FOAF.page, supplement_ref),
+        ])
 
     accrual_periodicity = UPDATE_FREQUENCY_TO_DCAT.get(dataset.update_frequency)
     accrual_periodicity_triples = []

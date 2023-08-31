@@ -591,7 +591,7 @@ def update_watcher(sender, instance, *args, state=None, **kwargs):
         instance._meta.object_name,
         instance.id,
         obj_state=state
-    ).apply_async_on_commit(countdown=1)
+    ).apply_async_on_commit()
 
 
 class TrashModelBase(ModelBase):

@@ -20,7 +20,6 @@ from mcod.regions.api import PeliasApi
 from mcod.regions.exceptions import MalformedTerytCodeError
 from mcod.resources.link_validation import download_file
 from mcod.resources.models import RESOURCE_DATA_DATE_PERIODS, Resource, supported_formats_choices
-from mcod.unleash import is_enabled
 
 SUPPORTED_RESOURCE_FORMATS = [i[0] for i in supported_formats_choices()]
 SUPPORTED_RESOURCE_FORMATS.extend(settings.ARCHIVE_EXTENSIONS)
@@ -319,15 +318,13 @@ class XMLResourceSchema(ResourceMixin, XMLPreProcessedSchema):
     has_high_value_data = Bool(data_key='hasHighValueData', allow_none=True)
     has_research_data = Bool(data_key='hasResearchData', allow_none=True)
     supplements = Nested(XMLSupplementSchema, many=True)
-    if is_enabled('S51_xml_harvester_data_date_update.be'):
-        is_auto_data_date = Bool(data_key='isAutoDataDate')
-        data_date_update_period = Str(data_key='dataDateUpdatePeriod',
-                                      validate=validate.OneOf(choices=[p[0] for p in RESOURCE_DATA_DATE_PERIODS]))
-        automatic_data_date_start = Date(data_key='autoDataDateStart')
-        automatic_data_date_end = Date(data_key='autoDataDateEnd')
-        endless_data_date_update = Bool(data_key='endlessDataDateUpdate')
-    if is_enabled('S53_xml_harvester_region_import.be'):
-        regions = List(Str())
+    is_auto_data_date = Bool(data_key='isAutoDataDate')
+    data_date_update_period = Str(data_key='dataDateUpdatePeriod',
+                                  validate=validate.OneOf(choices=[p[0] for p in RESOURCE_DATA_DATE_PERIODS]))
+    automatic_data_date_start = Date(data_key='autoDataDateStart')
+    automatic_data_date_end = Date(data_key='autoDataDateEnd')
+    endless_data_date_update = Bool(data_key='endlessDataDateUpdate')
+    regions = List(Str())
 
     class Meta:
         ordered = True
@@ -374,7 +371,7 @@ class XMLResourceSchema(ResourceMixin, XMLPreProcessedSchema):
     @validates_schema
     def validate_regions(self, data, **kwargs):
         regions = data.get('regions')
-        if is_enabled('S53_xml_harvester_region_import.be') and regions:
+        if regions:
             ext_ident = data.get('ext_ident')
             pelias = PeliasApi()
             try:

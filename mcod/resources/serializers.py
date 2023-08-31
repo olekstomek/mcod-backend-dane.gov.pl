@@ -26,7 +26,6 @@ from mcod.lib.extended_graph import ExtendedGraph
 from mcod.lib.serializers import TranslatedStr
 from mcod.regions.serializers import RegionBaseSchema, RegionSchema
 from mcod.resources.models import Resource
-from mcod.unleash import is_enabled
 from mcod.watchers.serializers import SubscriptionMixin
 
 
@@ -87,14 +86,13 @@ class ResourceApiRelationships(Relationships):
         attribute="chartable",
         url_template='{api_url}/resources/{ident}/chart'
     )
-    if is_enabled('S53_resource_language.be'):
-        related_resource = fields.Nested(
-            Relationship,
-            many=False,
-            _type='resource',
-            url_template='{api_url}/resources/{ident}',
-            attribute='related_resource_published',
-        )
+    related_resource = fields.Nested(
+        Relationship,
+        many=False,
+        _type='resource',
+        url_template='{api_url}/resources/{ident}',
+        attribute='related_resource_published',
+    )
 
 
 class SpecialSignSchema(ExtSchema):
@@ -117,8 +115,7 @@ class ResourceFileSchema(ExtSchema):
     file_size = fields.Integer()
     download_url = fields.Str()
     format = fields.Str()
-    if is_enabled('S55_separate_extracted_file_format.be'):
-        compressed_file_format = fields.Str()
+    compressed_file_format = fields.Str()
     openness_score = fields.Integer()
 
 
@@ -150,14 +147,11 @@ class ResourceApiAttrs(ObjectAttrs, HighlightObjectMixin):
     is_chart_creation_blocked = fields.Bool()
     has_dynamic_data = fields.Boolean()
     has_high_value_data = fields.Boolean()
-    if is_enabled('S47_research_data.be'):
-        has_research_data = fields.Boolean()
+    has_research_data = fields.Boolean()
     regions = fields.Method('get_regions')
     files = fields.Method('get_files')
-    if is_enabled('S48_resource_supplements.be'):
-        supplement_docs = fields.Nested(SupplementSchema, data_key='supplements', many=True)
-    if is_enabled('S53_resource_language.be'):
-        language = fields.Str()
+    supplement_docs = fields.Nested(SupplementSchema, data_key='supplements', many=True)
+    language = fields.Str()
 
     class Meta:
         relationships_schema = ResourceApiRelationships
@@ -209,12 +203,11 @@ class ResourceApiAggregations(ExtSchema):
         many=True,
         attribute='_filter_by_visualization_type.by_visualization_type.buckets'
     )
-    if is_enabled('S53_resource_language.be'):
-        by_language = fields.Nested(
-            LanguageAggregation,
-            many=True,
-            attribute='_filter_by_language.by_language.buckets'
-        )
+    by_language = fields.Nested(
+        LanguageAggregation,
+        many=True,
+        attribute='_filter_by_language.by_language.buckets'
+    )
 
 
 class ResourceApiResponse(SubscriptionMixin, TopLevel):
@@ -531,8 +524,7 @@ class ResourceCSVSchema(CSVSerializer):
     downloads_count = fields.Int(attribute='computed_downloads_count', data_key=_("downloads_count"), default=None)
     has_high_value_data = fields.MetaDataNullBoolean(data_key=_('Resource has high value data'))
     has_dynamic_data = fields.MetaDataNullBoolean(data_key=_('Resource has dynamic data'))
-    if is_enabled('S47_research_data.be'):
-        has_research_data = fields.MetaDataNullBoolean(data_key=_('Resource has research data'))
+    has_research_data = fields.MetaDataNullBoolean(data_key=_('Resource has research data'))
 
     class Meta:
         ordered = True
@@ -612,11 +604,9 @@ class ResourceXMLSerializer(schemas.ExtSchema):
     data_special_signs = fields.Nested(SpecialSignSchema, data_key='special_signs', many=True)
     has_high_value_data = fields.Bool()
     has_dynamic_data = fields.Bool()
-    if is_enabled('S47_research_data.be'):
-        has_research_data = fields.Bool()
+    has_research_data = fields.Bool()
     all_regions = fields.Nested(RegionBaseSchema, data_key='regions', many=True)
-    if is_enabled('S48_resource_supplements.be'):
-        supplement_docs = fields.Nested(SupplementSchema, data_key='supplements', many=True)
+    supplement_docs = fields.Nested(SupplementSchema, data_key='supplements', many=True)
 
 
 class ResourceCSVMetadataSerializer(schemas.ExtSchema):
@@ -637,14 +627,12 @@ class ResourceCSVMetadataSerializer(schemas.ExtSchema):
     has_map = fields.Function(lambda obj: _('YES') if obj.has_map else _('NO'), data_key=_('Chart'))
     has_high_value_data = fields.MetaDataNullBoolean(data_key=_('Resource has high value data'))
     has_dynamic_data = fields.MetaDataNullBoolean(data_key=_('Resource has dynamic data'))
-    if is_enabled('S47_research_data.be'):
-        has_research_data = fields.MetaDataNullBoolean(data_key=_('Resource has research data'))
+    has_research_data = fields.MetaDataNullBoolean(data_key=_('Resource has research data'))
     regions = fields.Str(data_key=_('Resource regions'), attribute='all_regions_str')
     download_url = fields.Url(data_key=_('Download URL'))
     data_special_signs = fields.Nested(SpecialSignSchema, data_key=_('special signs'), many=True)
-    if is_enabled('S48_resource_supplements.be'):
-        supplements = fields.Str(
-            attribute='supplements_str', data_key=_('Resource supplements (name, language, url, file size)'))
+    supplements = fields.Str(
+        attribute='supplements_str', data_key=_('Resource supplements (name, language, url, file size)'))
 
     @ma.post_dump(pass_many=False)
     def prepare_nested_data(self, data, **kwargs):

@@ -1,5 +1,4 @@
 {% load static  core_tags %}
-{% is_unleash_enabled "S48_aria_label_added_to_hypereditor_links_opened_in_new_tab.be" as S48_aria_label_added_to_hypereditor_links_opened_in_new_tab %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -57,14 +56,12 @@
                 const node = super.create();
                 let newValue = jsonTryParse(value);
                 if (typeof(newValue) !== 'string') {
-                    {% if S48_aria_label_added_to_hypereditor_links_opened_in_new_tab %}
                     if (newValue.target === '_blank' && !newValue.ariaLabel) {
                         let linkAriaLabel = getLinkAriaLabel(newValue.innerText, newValue.title, true);
                         if (linkAriaLabel) {
                             newValue.ariaLabel = linkAriaLabel;
                         }
                     }
-                    {% endif %}
                     if (newValue.ariaLabel) {
                         node.setAttribute("aria-label", newValue.ariaLabel);
                     }
@@ -116,9 +113,7 @@
                     title: domNode.getAttribute('title'),
                     target: domNode.getAttribute('target'),
                     is_menu: domNode.getAttribute('role'),
-                    {% if S48_aria_label_added_to_hypereditor_links_opened_in_new_tab %}
                     ariaLabel: domNode.getAttribute('aria-label'),
-                    {% endif %}
                     css_classes: classes
                 });
             }
@@ -356,12 +351,10 @@
 
                 let linkData = {'href': value, 'title': title_value, 'target': target_value, 'is_menu': role_value, 'css_classes': css_classes};
 
-                {% if S48_aria_label_added_to_hypereditor_links_opened_in_new_tab %}
                 let linkAriaLabel = getLinkAriaLabel(this.linkInnerText, title_value, target_value);
                 if (linkAriaLabel) {
                     linkData.ariaLabel = linkAriaLabel;
                 }
-                {% endif %}
 
                 switch (this.root.getAttribute('data-mode')) {
                     case 'link': {

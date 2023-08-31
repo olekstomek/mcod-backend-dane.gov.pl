@@ -19,7 +19,6 @@ from mcod.core.api import fields
 from mcod.core.api.search.facets import FilterFacet, NestedFacet
 from mcod.core.query_string_escape import _escape_column_expression, _escape_non_column_expression
 from mcod.core.utils import flatten_list
-from mcod.unleash import is_enabled
 
 TRUE_VALUES = ('true', 'yes', 'on', '"true"', '1', '"on"', '"yes"')
 FALSE_VALUES = (
@@ -550,7 +549,6 @@ class SortField(ElasticField, fields.List):
     def __init__(self, cls_or_instance=fields.String, **kwargs):
         super().__init__(cls_or_instance, **kwargs)
         self.sort_map = []
-        self.with_boost = is_enabled('S52_sort_is_promoted_boost.be')
 
     def prepare_data(self, name, params):
         if name not in params and self.missing:
@@ -561,7 +559,6 @@ class SortField(ElasticField, fields.List):
         is_sorted_by_date = any(any(key in x for key in ['created', 'search_date']) for x in data)
         if all([
             self.context.get('dataset_promotion_enabled', False),
-            self.with_boost,
             is_sorted_by_date,
         ]):
             queryset = queryset.query(
@@ -602,12 +599,6 @@ class SortField(ElasticField, fields.List):
                     sort_opt = {field_path: opts}
                 else:
                     sort_opt = OrderedDict()
-                    if all([
-                        field_path in ['created', 'search_date'],
-                        self.context.get('dataset_promotion_enabled', False),
-                        not self.with_boost,
-                    ]):
-                        sort_opt['is_promoted'] = {'order': 'desc', 'unmapped_type': 'long'}
                     sort_opt[field_path] = opts
                     if field_path.startswith('col') and '.val' in field_path:
                         obsolete_field_path = field_path.replace('.val', '')

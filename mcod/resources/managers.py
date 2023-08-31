@@ -4,7 +4,6 @@ from django.db.models import Count, Manager, Prefetch, Q
 from django.db.models.query import QuerySet
 
 from mcod.core.managers import RawManager, SoftDeletableManager, SoftDeletableQuerySet
-from mcod.unleash import is_enabled
 
 
 class ChartQuerySet(SoftDeletableQuerySet):
@@ -110,9 +109,7 @@ class SoftDeletableMetadataQuerySet(AutocompleteMixin, PrefetchResourceFilesMixi
         return self.by_formats(formats).filter(**query)
 
     def by_formats(self, formats):
-        f_q = Q(format__in=formats)
-        if is_enabled('S55_separate_extracted_file_format.be'):
-            f_q = (f_q | Q(files__is_main=True, files__compressed_file_format__in=formats))
+        f_q = (Q(format__in=formats) | Q(files__is_main=True, files__compressed_file_format__in=formats))
         q = Q(files__isnull=False) & f_q
         return self.filter(q).distinct()
 

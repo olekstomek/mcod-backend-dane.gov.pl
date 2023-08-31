@@ -1,11 +1,10 @@
 {% extends "admin/delete_confirmation.html" %}
 
-{% load admin_urls i18n core_tags %}
+{% load admin_urls i18n %}
 
 
 {% block title %}
-    {% is_unleash_enabled "S55_admin_delete_layout.be" as S55_admin_delete_layout %}
-    {% if S55_admin_delete_layout and title == _('Are you sure?') %}
+    {% if title == _('Are you sure?') %}
         {% trans 'Warning!' %}
     {% else %}
         {{ block.super }}
@@ -13,8 +12,7 @@
 {% endblock %}
 
 {% block content_title %}
-    {% is_unleash_enabled "S55_admin_delete_layout.be" as S55_admin_delete_layout %}
-    {% if S55_admin_delete_layout and title == _('Are you sure?') %}
+    {% if title == _('Are you sure?') %}
         <h2 class="content-title">{% trans 'Warning!' %}</h2>
     {% else %}
         {{ block.super }}
@@ -22,8 +20,7 @@
 {% endblock %}
 
 {% block content %}
-    {% is_unleash_enabled "S55_admin_delete_layout.be" as S55_admin_delete_layout %}
-    <div id="delete_confirmation"{% if S55_admin_delete_layout %} class="alert alert-block alert-error"{% endif %}>
+    <div id="delete_confirmation" class="alert alert-block alert-error">
     {% if perms_lacking %}
         <p class="lead">{% blocktrans with escaped_object=object %}Deleting the {{ object_name }} '{{ escaped_object }}' would result
             in deleting related objects, but your account doesn't have permission to delete the following types of
@@ -54,14 +51,9 @@
                 {% if is_popup %}<input type="hidden" name="{{ is_popup_var }}" value="1">{% endif %}
                 {% if to_field %}<input type="hidden" name="{{ to_field_var }}" value="{{ to_field }}">{% endif %}
                 {% block delete_buttons %}
-                {% if S55_admin_delete_layout %}
                     <br>
                     <input type="submit" value="{% blocktrans with name=opts.verbose_name|lower %}Yes, delete {{ name }}{% endblocktrans %}" class="btn btn-danger">
                     <a href="#" onclick="window.history.back()" class="btn btn-success cancel-link">{% trans "No, stop the operation" %}</a>
-                {% else %}
-                    <input type="submit" value="{% trans "Yes, I'm sure" %}">
-                    <a href="#" onclick="window.history.back()" class="button cancel-link">{% trans "No, take me back" %}</a>
-                {% endif %}
                 {% endblock %}
             </div>
         </form>

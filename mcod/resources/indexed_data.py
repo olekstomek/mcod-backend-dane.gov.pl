@@ -28,7 +28,6 @@ from mcod.resources.geo import (
 )
 from mcod.resources.goodtables_checks import ZERO_DATA_ROWS
 from mcod.resources.type_guess import Table
-from mcod.unleash import is_enabled
 
 es_connections = Connections()
 es_connections.configure(**settings.ELASTICSEARCH_DSL)
@@ -486,14 +485,12 @@ class TabularData(IndexedData):
     @property
     def resource_format(self):
         compressed_format = self.resource.main_file_compressed_format
-        return compressed_format if is_enabled('S55_separate_extracted_file_format.be') and\
-                                    compressed_format else self.resource.format
+        return compressed_format if compressed_format else self.resource.format
 
     @property
     def resource_encoding(self):
         compressed_encoding = self.resource.main_file_compressed_encoding
-        return compressed_encoding if is_enabled('S55_separate_extracted_file_format.be') and\
-                                      compressed_encoding else self.resource.main_file_encoding
+        return compressed_encoding if compressed_encoding else self.resource.main_file_encoding
 
     def prepare_doc(self):
         _fields, _map = {}, {}

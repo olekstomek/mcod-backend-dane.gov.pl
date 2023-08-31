@@ -270,7 +270,7 @@ class Newsletter(TimeStampedModel):
                 for link in required_links:
                     updated_link = link.replace('href="#"', 'href="{}"'.format(obj.resign_newsletter_absolute_url))
                     html_message = html_message.replace(link, updated_link)
-                send_newsletter_mail.s(self.id, obj.id, html_message).apply_async_on_commit(countdown=1)
+                send_newsletter_mail.s(self.id, obj.id, html_message).apply_async_on_commit()
         self.sending_date = now()
         self.status = 'sent'
         self.save()

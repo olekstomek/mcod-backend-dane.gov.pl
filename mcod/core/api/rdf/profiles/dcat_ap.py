@@ -9,7 +9,6 @@ import mcod.core.api.rdf.namespaces as ns
 from mcod import settings
 from mcod.core.api.rdf.profiles.common import CATALOG_URL, RDFClass, RDFNestedField
 from mcod.lib.rdf.rdf_field import RDFField
-from mcod.unleash import is_enabled
 
 VOCABULARIES = {
     'theme': 'http://publications.europa.eu/resource/authority/data-theme/',
@@ -99,8 +98,7 @@ class DCATDistribution(RDFClass):
     language_pl = RDFNestedField('DCTLinguisticSystem', predicate=ns.DCT.language)
     language_en = RDFNestedField('DCTLinguisticSystem', predicate=ns.DCT.language)
     status = RDFNestedField('SKOSConcept', predicate=ns.ADMS.status)
-    if is_enabled('S48_resource_supplements.be'):
-        supplements = RDFNestedField('FOAFDocument', predicate=ns.FOAF.page, many=True)
+    supplements = RDFNestedField('FOAFDocument', predicate=ns.FOAF.page, many=True)
 
     title_pl = RDFField(predicate=ns.DCT.title, object_type=partial(Literal, lang='pl'))
     title_en = RDFField(predicate=ns.DCT.title, object_type=partial(Literal, lang='en'), allow_null=False)
@@ -161,8 +159,7 @@ class DCATDataset(RDFClass):
     contact_point = RDFNestedField('VCARDKind', predicate=ns.DCAT.contactPoint)
     categories = RDFNestedField('SKOSConcept', predicate=ns.DCAT.theme, many=True)
     landing_page = RDFNestedField('FOAFDocument', predicate=ns.DCAT.landingPage)
-    if is_enabled('S49_dataset_supplements.be'):
-        supplements = RDFNestedField('FOAFDocument', predicate=ns.FOAF.page, many=True)
+    supplements = RDFNestedField('FOAFDocument', predicate=ns.FOAF.page, many=True)
     update_frequency = RDFNestedField('DCTFrequency', predicate=ns.DCT.accrualPeriodicity)
     language_pl = RDFNestedField('DCTLinguisticSystem', predicate=ns.DCT.language)
     language_en = RDFNestedField('DCTLinguisticSystem', predicate=ns.DCT.language)

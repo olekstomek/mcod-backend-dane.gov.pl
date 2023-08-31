@@ -7,7 +7,6 @@ from django.conf import settings
 from pytest_bdd import parsers, then
 
 from mcod.regions.api import PlaceholderApi
-from mcod.unleash import is_enabled
 
 
 @pytest.fixture
@@ -908,29 +907,23 @@ def additional_regions(additional_regions_response):
 @pytest.fixture
 def mocked_geocoder_responses(main_regions_response, additional_regions_response, main_teryt_region_response,
                               additional_teryt_regions_response, placeholder_wof_response, wof_gn_response):
-    if is_enabled('S54_teryt_based_spatial_search.be'):
-        main_reg_expr = re.compile(settings.GEOCODER_URL +
-                                   r'/v1/place\?ids=teryt%3Alocality%3A\d{7}%2Cteryt%3Alocality%3A\d{7}')
-        additional_reg_expr = re.compile(
-            settings.GEOCODER_URL +
-            r'/v1/place\?ids=teryt%3A\w+%3A\d{2,7}%2Cteryt%3A\w+%3A\d{2,7}%2Cteryt%3A\w+%3A\d{2,7}%2C'
-            r'teryt%3A\w+%3A\d{2,7}%2Cteryt%3A\w+%3A\d{2,7}')
-        placeholder_resp_expr = re.compile(
-            settings.PLACEHOLDER_URL +
-            r'/parser/findbyid\?ids=\d{8,10}%2C\d{8,10}%2C\d{8,10}%2C\d{8,10}%2C\d{8,10}%2C\d{8,10}')
-        gn_reg_expr = re.compile(
-            settings.GEOCODER_URL + r'/v1/place\?ids=whosonfirst%3A\w+%3A\d{8,10}')
-        mocked_responses = [
-            (main_reg_expr, main_teryt_region_response),
-            (additional_reg_expr, additional_teryt_regions_response),
-            (placeholder_resp_expr, placeholder_wof_response),
-            (gn_reg_expr, wof_gn_response)
-        ]
-    else:
-        main_reg_expr = re.compile(settings.PLACEHOLDER_URL + r'/parser/findbyid\?ids=\d{9,10}%2C\d{9,10}')
-        additional_reg_expr = re.compile(
-            settings.PLACEHOLDER_URL + r'/parser/findbyid\?ids=\d{8,10}%2C\d{8,10}%2C\d{8,10}%2C\d{8,10}')
-        mocked_responses = [(main_reg_expr, main_regions_response), (additional_reg_expr, additional_regions_response)]
+    main_reg_expr = re.compile(settings.GEOCODER_URL +
+                               r'/v1/place\?ids=teryt%3Alocality%3A\d{7}%2Cteryt%3Alocality%3A\d{7}')
+    additional_reg_expr = re.compile(
+        settings.GEOCODER_URL +
+        r'/v1/place\?ids=teryt%3A\w+%3A\d{2,7}%2Cteryt%3A\w+%3A\d{2,7}%2Cteryt%3A\w+%3A\d{2,7}%2C'
+        r'teryt%3A\w+%3A\d{2,7}%2Cteryt%3A\w+%3A\d{2,7}')
+    placeholder_resp_expr = re.compile(
+        settings.PLACEHOLDER_URL +
+        r'/parser/findbyid\?ids=\d{8,10}%2C\d{8,10}%2C\d{8,10}%2C\d{8,10}%2C\d{8,10}%2C\d{8,10}')
+    gn_reg_expr = re.compile(
+        settings.GEOCODER_URL + r'/v1/place\?ids=whosonfirst%3A\w+%3A\d{8,10}')
+    mocked_responses = [
+        (main_reg_expr, main_teryt_region_response),
+        (additional_reg_expr, additional_teryt_regions_response),
+        (placeholder_resp_expr, placeholder_wof_response),
+        (gn_reg_expr, wof_gn_response)
+    ]
     return mocked_responses
 
 
@@ -939,43 +932,28 @@ def mocked_geocoder_responses_for_xml_import(main_regions_response, additional_r
                                              teryt_regions_response, wof_ids_regions_response,
                                              main_teryt_region_response, additional_teryt_regions_response,
                                              placeholder_wof_response, wof_gn_response):
-    if is_enabled('S54_teryt_based_spatial_search.be'):
-        main_reg_expr = re.compile(settings.GEOCODER_URL +
-                                   r'/v1/place\?ids=teryt%3Alocality%3A\d{7}')
-        additional_reg_expr = re.compile(
-            settings.GEOCODER_URL +
-            r'/v1/place\?ids=teryt%3A\w+%3A\d{2,7}%2Cteryt%3A\w+%3A\d{2,7}%2Cteryt%3A\w+%3A\d{2,7}')
-        placeholder_resp_expr = re.compile(
-            settings.PLACEHOLDER_URL +
-            r'/parser/findbyid\?ids=\d{8,10}%2C\d{8,10}%2C\d{8,10}%2C\d{8,10}')
-        gn_reg_expr = re.compile(
-            settings.GEOCODER_URL + r'/v1/place\?ids=whosonfirst%3A\w+%3A\d{8,10}')
-        main_teryt_region_response['features'].pop(0)
-        additional_teryt_regions_response['features'] =\
-            [f for f in additional_teryt_regions_response['features'] if
-             f['properties']['id'] not in ['1418032', '1418']]
-        placeholder_wof_response.pop('102079911')
-        placeholder_wof_response.pop('1125356333')
-        mocked_responses = [
-            (main_reg_expr, main_teryt_region_response),
-            (additional_reg_expr, additional_teryt_regions_response),
-            (placeholder_resp_expr, placeholder_wof_response),
-            (gn_reg_expr, wof_gn_response)
-        ]
-    else:
-        teryt_reg_expr = re.compile(
-            settings.GEOCODER_URL + r'/v1/place\?ids=teryt%3Alocality%3A\d{7}')
-        main_reg_expr = re.compile(settings.PLACEHOLDER_URL + r'/parser/findbyid\?ids=\d{9,10}')
-        additional_reg_expr = re.compile(
-            settings.PLACEHOLDER_URL + r'/parser/findbyid\?ids=\d{8,10}%2C\d{8,10}%2C\d{8,10}')
-        wof_id_reg_exp = re.compile(
-            settings.GEOCODER_URL + r'/v1/place\?ids=whosonfirst%3Alocality%3A\d{8,10}'
-                                    r'%2Cwhosonfirst%3Alocaladmin%3A\d{8,10}'
-                                    r'%2Cwhosonfirst%3Aregion%3A\d{8,10}%2Cwhosonfirst%3Acounty%3A\d{8,10}')
-        mocked_responses = [(main_reg_expr, main_regions_response),
-                            (additional_reg_expr, additional_regions_response),
-                            (teryt_reg_expr, teryt_regions_response),
-                            (wof_id_reg_exp, wof_ids_regions_response)]
+    main_reg_expr = re.compile(settings.GEOCODER_URL +
+                               r'/v1/place\?ids=teryt%3Alocality%3A\d{7}')
+    additional_reg_expr = re.compile(
+        settings.GEOCODER_URL +
+        r'/v1/place\?ids=teryt%3A\w+%3A\d{2,7}%2Cteryt%3A\w+%3A\d{2,7}%2Cteryt%3A\w+%3A\d{2,7}')
+    placeholder_resp_expr = re.compile(
+        settings.PLACEHOLDER_URL +
+        r'/parser/findbyid\?ids=\d{8,10}%2C\d{8,10}%2C\d{8,10}%2C\d{8,10}')
+    gn_reg_expr = re.compile(
+        settings.GEOCODER_URL + r'/v1/place\?ids=whosonfirst%3A\w+%3A\d{8,10}')
+    main_teryt_region_response['features'].pop(0)
+    additional_teryt_regions_response['features'] =\
+        [f for f in additional_teryt_regions_response['features'] if
+         f['properties']['id'] not in ['1418032', '1418']]
+    placeholder_wof_response.pop('102079911')
+    placeholder_wof_response.pop('1125356333')
+    mocked_responses = [
+        (main_reg_expr, main_teryt_region_response),
+        (additional_reg_expr, additional_teryt_regions_response),
+        (placeholder_resp_expr, placeholder_wof_response),
+        (gn_reg_expr, wof_gn_response)
+    ]
     return mocked_responses
 
 
@@ -983,12 +961,8 @@ def mocked_geocoder_responses_for_xml_import(main_regions_response, additional_r
 def resource_has_assigned_regions():
     model = apps.get_model('resources', 'resource')
     res = model.objects.all().last()
-    if is_enabled('S54_teryt_based_spatial_search.be'):
-        expected_main = ['0005084', '0918123']
-        expected_additional = ['14', '1418', '1418032', '1465', '1465011']
-    else:
-        expected_main = ['101752777', '1309742673']
-        expected_additional = ['85687257', '102079911', '1125356333', '1125365875', '1477743805']
+    expected_main = ['0005084', '0918123']
+    expected_additional = ['14', '1418', '1418032', '1465', '1465011']
     main_regions = list(res.regions.filter(
         resourceregion__is_additional=False
     ).values_list('region_id', flat=True))

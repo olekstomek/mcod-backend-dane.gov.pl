@@ -16,7 +16,6 @@ from mcod.datasets.models import Dataset
 from mcod.harvester.factories import CKANDataSourceFactory
 from mcod.harvester.models import DataSource, DataSourceImport
 from mcod.resources.models import Resource
-from mcod.unleash import is_enabled
 
 
 @given(parsers.parse('CKAN datasource with id {obj_id:d} active'))
@@ -215,9 +214,8 @@ def xml_datasource_imported_resources(obj_id, version):
     if ver_no >= 9:  # from 1.9 regions are imported
         first_res = res.get(ext_ident='zasob_extId_zasob_1')
         assert first_res.all_regions.count() == 5
-        reg_id = '0918123' if is_enabled('S54_teryt_based_spatial_search.be') else '101752777'
         assert first_res.all_regions.filter(
-            region_id=reg_id, resourceregion__is_additional=False).exists()
+            region_id='0918123', resourceregion__is_additional=False).exists()
 
 
 @patch('rdflib.plugins.stores.sparqlconnector.urlopen')

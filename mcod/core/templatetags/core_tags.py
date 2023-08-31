@@ -170,7 +170,7 @@ def is_value_callable(widget, name):
 @register.simple_tag
 def title_attr(adminform, type_):
     attr = getattr(adminform.form.instance, f'html_title_{type_}', None)
-    return format_html(f'title="{attr()}"') if attr and is_enabled('S55_admin_delete_layout.be') else ''
+    return format_html(f'title="{attr()}"') if attr else ''
 
 
 @register.tag(name='resources_actions')

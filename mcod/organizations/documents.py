@@ -7,7 +7,6 @@ from mcod.core.api.search.normalizers import keyword_uppercase
 from mcod.datasets.documents import datasets_field
 from mcod.lib.search.fields import TranslatedTextField
 from mcod.search.documents import ExtendedDocument
-from mcod.unleash import is_enabled
 
 Organization = apps.get_model('organizations', 'Organization')
 Dataset = apps.get_model('datasets', 'Dataset')
@@ -57,7 +56,7 @@ class InstitutionDocument(ExtendedDocument):
 
     class Django:
         model = Organization
-        related_models = [Dataset, Resource] if is_enabled('S52_update_es_institution.be') else [Dataset, ]
+        related_models = [Dataset, Resource]
 
     def prepare_model(self, instance):
         return 'institution'

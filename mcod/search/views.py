@@ -33,7 +33,6 @@ from mcod.search.serializers import (
     SparqlResponseSchema,
 )
 from mcod.search.utils import get_sparql_limiter_key
-from mcod.unleash import is_enabled
 
 logger = logging.getLogger('mcod')
 
@@ -123,11 +122,10 @@ class SearchView(JsonAPIView):
     class GET(SubscriptionSearchHdlr, NoneVisualizationCleaner):
         deserializer_schema = ApiSearchRequest
         serializer_schema = partial(CommonObjectResponse, many=True)
-        is_post_filter_used = is_enabled('S53_search_aggregations_counters.be')
 
         def __init__(self, request, response):
             super().__init__(request, response)
-            self.deserializer.context['dataset_promotion_enabled'] = is_enabled('S52_dataset_is_promoted.be')
+            self.deserializer.context['dataset_promotion_enabled'] = True
 
         def _get_model_names(self, field='models'):
             models_query = self.request.context.cleaned_data.get(field, {})
@@ -158,11 +156,9 @@ class SearchView(JsonAPIView):
                 'counters',
                 A('filters', filters=filters)
             )
-
-            if self.is_post_filter_used:
-                models = self.request.context.cleaned_data.get('model', {})
-                for key, value in models.items():
-                    queryset = queryset.post_filter(key, model=value)
+            models = self.request.context.cleaned_data.get('model', {})
+            for key, value in models.items():
+                queryset = queryset.post_filter(key, model=value)
             return queryset
 
         def _get_data(self, cleaned, *args, **kwargs):

@@ -6,7 +6,6 @@ from django.views.generic.edit import FormView
 
 from mcod.harvester.forms import XMLValidationForm
 from mcod.harvester.tasks import validate_xml_url_task
-from mcod.unleash import is_enabled
 
 
 class Progress(BaseProgress):
@@ -29,8 +28,7 @@ class ValidateXMLDataSourceView(FormView):
     form_class = XMLValidationForm
 
     def form_valid(self, form):
-        result = validate_xml_url_task.s(form.cleaned_data['xml_url']).apply_async_on_commit(countdown=1)
-        task_id = result if is_enabled('S55_extended_shared_task.be') else result.task_id
+        task_id = validate_xml_url_task.s(form.cleaned_data['xml_url']).apply_async_on_commit()
         progress_url = reverse('admin:validate-xml-task-status', args=[task_id])
         return JsonResponse({'success': True, 'progress_url': progress_url})
 

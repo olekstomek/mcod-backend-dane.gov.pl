@@ -9,10 +9,7 @@ from suit.widgets import SuitDateWidget, SuitTimeWidget
 from mcod import settings
 from mcod.lib.forms.fields import InternalPhoneNumberField, PhoneNumberField
 from mcod.lib.widgets import CKEditorWidget
-from mcod.unleash import is_enabled
 from mcod.users.models import Meeting, User
-
-RESEND_REGISTRATION_MAIL_ENABLED = is_enabled('S53_resend_registration_mail.be')
 
 
 class FilteredSelectMultipleCustom(FilteredSelectMultiple):
@@ -213,7 +210,6 @@ class UserChangeForm(UserForm):
         if f is not None:
             f.queryset = f.queryset.select_related('content_type')
         if all([
-            RESEND_REGISTRATION_MAIL_ENABLED,
             'state' in self.fields,
             hasattr(self, '_request_user') and self._request_user.is_superuser,
             self.instance.state == 'pending',

@@ -346,7 +346,7 @@ class ShowcaseProposalAdmin(ShowcaseProposalMixin, ModelAdmin):
             not obj.showcase or obj.showcase.is_permanently_removed)
         super().save_model(request, obj, form, change)
         if create_showcase:
-            create_showcase_task.s(obj.id).apply_async_on_commit(countdown=1)
+            create_showcase_task.s(obj.id).apply_async_on_commit()
             self.message_user(request, _('Showcase creation task was launched!'), level=messages.SUCCESS)
 
 

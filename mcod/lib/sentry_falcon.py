@@ -11,9 +11,9 @@ from sentry_sdk.integrations.wsgi import SentryWsgiMiddleware
 from sentry_sdk.utils import capture_internal_exceptions, event_from_exception
 
 if MYPY:
-    from typing import Any, Dict
+    from typing import Any, Dict    # noqa: F401
 
-    from sentry_sdk._types import EventProcessor
+    from sentry_sdk._types import EventProcessor    # noqa: F401
 
 try:
     import falcon  # type: ignore

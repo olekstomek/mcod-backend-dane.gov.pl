@@ -23,9 +23,6 @@ from mcod.regions.fields import RegionsMultipleChoiceField
 from mcod.resources.archives import is_password_protected_archive_file
 from mcod.resources.models import SUPPORTED_FILE_EXTENSIONS, Resource, ResourceFile, Supplement
 from mcod.special_signs.models import SpecialSign
-from mcod.unleash import is_enabled
-
-RESOURCE_LANGUAGE_ENABLED = is_enabled('S53_resource_language.be')
 
 
 class ResourceSourceSwitcher(forms.widgets.HiddenInput):
@@ -195,21 +192,20 @@ class ResourceForm(forms.ModelForm):
             'do strony</a>') % {'url': f'{settings.BASE_URL}{settings.HIGH_VALUE_DATA_MANUAL_URL}'},
         widget=CheckboxSelect(attrs={'class': 'inline'}),
     )
-    if is_enabled('S47_research_data.be'):
-        has_research_data = forms.ChoiceField(
-            required=True,
-            label=_('has research data').capitalize(),
-            choices=[(True, _('Yes')), (False, _('No'))],
-            help_text=(
-                'Wskazanie TAK oznacza, że zasób jest traktowany jako dane badawcze.<br><br>Jeżeli chcesz '
-                'się więcej dowiedzieć na temat danych badawczych <a href="%(url)s" target="_blank">przejdź '
-                'do strony</a>') % {'url': f'{settings.BASE_URL}{settings.RESEARCH_DATA_MANUAL_URL}'},
-            widget=CheckboxSelect(attrs={'class': 'inline'}),
-        )
+    has_research_data = forms.ChoiceField(
+        required=True,
+        label=_('has research data').capitalize(),
+        choices=[(True, _('Yes')), (False, _('No'))],
+        help_text=(
+            'Wskazanie TAK oznacza, że zasób jest traktowany jako dane badawcze.<br><br>Jeżeli chcesz '
+            'się więcej dowiedzieć na temat danych badawczych <a href="%(url)s" target="_blank">przejdź '
+            'do strony</a>') % {'url': f'{settings.BASE_URL}{settings.RESEARCH_DATA_MANUAL_URL}'},
+        widget=CheckboxSelect(attrs={'class': 'inline'}),
+    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        if 'related_resource' in self.fields and RESOURCE_LANGUAGE_ENABLED:
+        if 'related_resource' in self.fields:
             self.fields['related_resource'].label_from_instance = lambda obj: obj.label_from_instance
             self.fields['related_resource'].widget = autocomplete.ModelSelect2(
                 url='resource-autocomplete',

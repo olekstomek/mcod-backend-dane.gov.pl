@@ -26,7 +26,6 @@ from mcod.lib.triggers import session_store
 from mcod.schedules.models import Schedule
 from mcod.suggestions.models import AcceptedDatasetSubmission
 from mcod.tools.api.dashboard import DashboardMetaSerializer, DashboardSerializer
-from mcod.unleash import is_enabled
 from mcod.users.deserializers import (
     ChangePasswordApiRequest,
     ConfirmResetPasswordApiRequest,
@@ -440,7 +439,6 @@ class VerifyEmailView(JsonAPIView):
     class GET(RetrieveOneHdlr):
         database_model = get_user_model()
         serializer_schema = VerifyEmailApiResponse
-        S53_resend_registration_mail = is_enabled('S53_resend_registration_mail.be')
 
         def clean(self, token, *args, **kwargs):
             try:
@@ -454,11 +452,10 @@ class VerifyEmailView(JsonAPIView):
                     code='expired_token'
                 )
 
-            if self.S53_resend_registration_mail or not token.user.email_confirmed:
-                token.user.state = 'active' if token.user.state == 'pending' else token.user.state
-                token.user.email_confirmed = timezone.now()
-                token.user.save()
-                token.invalidate()
+            token.user.state = 'active' if token.user.state == 'pending' else token.user.state
+            token.user.email_confirmed = timezone.now()
+            token.user.save()
+            token.invalidate()
 
             return {}
 

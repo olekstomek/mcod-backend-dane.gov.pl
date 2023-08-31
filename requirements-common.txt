@@ -5,7 +5,7 @@ pyyaml==5.1
 ipython==8.0
 lxml==4.6.2
 html5lib==1.0.1
-urllib3==1.24.1
+urllib3==1.26.14
 Cython==0.29.21
 gunicorn==19.9.0
 psycopg2-binary==2.8.6
@@ -33,7 +33,7 @@ celery==5.0.2
 ezodf==0.3.2
 elasticsearch-dsl>=6.4.0,<7.0.0
 docutils==0.15.2
-boto3==1.9 # dependency fix
+boto3==1.26.47
 tableschema==1.20.1
 tabulator==1.51.3
 datapackage==1.15.2
@@ -49,7 +49,7 @@ json-api-doc==0.7.0
 astroid==2.4.2
 openapi-spec-validator==0.2.9
 openapi-core==0.7.1
-gevent==20.9.0
+gevent==22.10.2
 phonenumbers==8.10.5
 django==2.2.9
 django-constance[database]==2.8.0
@@ -106,7 +106,7 @@ django-notifications-hq==1.7.0
 django-admin-multiple-choice-list-filter==0.1.1
 falcon-caching==0.3.3
 # For chart thumbnails
-selenium==3.141.0
+selenium<5.0.0,>=4.0.0
 phantomjs==1.3.0
 user-agents==2.2.0
 ua-parser==0.10.0
@@ -127,3 +127,4 @@ wagtailvideos==2.10.9
 rarfile==4.0
 py7zr==0.18.5
 sentry-sdk[falcon]==1.6.0
+numpy==1.23.0

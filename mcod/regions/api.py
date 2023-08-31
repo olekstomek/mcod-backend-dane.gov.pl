@@ -6,7 +6,6 @@ from django.utils.translation import gettext_lazy as _
 from requests.auth import HTTPBasicAuth
 
 from mcod.regions.exceptions import MalformedTerytCodeError
-from mcod.unleash import is_enabled
 
 logger = logging.getLogger('mcod')
 
@@ -205,7 +204,7 @@ class PeliasApi(BaseApi):
     def autocomplete(self, text, lang='pl', layers=None):
         params = {'text': text,
                   'lang': lang,
-                  'sources': 'teryt' if is_enabled('S54_teryt_based_spatial_search.be') else 'wof',
+                  'sources': 'teryt',
                   'size': self.size}
         if layers:
             params['layers'] = layers
@@ -237,13 +236,11 @@ class PeliasApi(BaseApi):
                         'region_id': 'woj. '
                     }
                     area_type = area_type_mapping.get(r_type, '')
-                    if is_enabled('S54_teryt_based_spatial_search.be') and \
-                            type_label == 'locality' and teryt_name is not None and teryt_name.lower() != name.lower():
+                    if type_label == 'locality' and teryt_name is not None and teryt_name.lower() != name.lower():
                         name = teryt_name
                     area_type = '' if r_type == 'localadmin_id' and 'gmina' in name.lower() else area_type
                     labels.append(f'{area_type}{name}')
-                elif is_enabled('S54_teryt_based_spatial_search.be')\
-                        and not name and reg['properties']['layer'] == 'locality' and teryt_name:
+                elif not name and reg['properties']['layer'] == 'locality' and teryt_name:
                     name = teryt_name
                     labels.append(name)
             reg['properties']['hierarchy_label'] = ', '.join(labels)

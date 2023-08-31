@@ -34,7 +34,6 @@ from mcod.showcases.serializers import (
     ShowcasePlatformAggregation,
     ShowcaseTypeAggregation,
 )
-from mcod.unleash import is_enabled
 from mcod.watchers.serializers import SubscriptionMixin
 
 
@@ -59,14 +58,13 @@ class CommonObjectRelationships(Relationships):
         _type='subscription',
         url_template='{api_url}/auth/subscriptions/{ident}'
     )
-    if is_enabled('S53_resource_language.be'):
-        related_resource = fields.Nested(
-            Relationship,
-            many=False,
-            _type='resource',
-            url_template='{api_url}/resources/{ident}',
-            attribute='related_resource_published',
-        )
+    related_resource = fields.Nested(
+        Relationship,
+        many=False,
+        _type='resource',
+        url_template='{api_url}/resources/{ident}',
+        attribute='related_resource_published',
+    )
 
 
 class Category(ExtSchema):
@@ -93,19 +91,16 @@ class CommonObjectApiAttrs(ObjectAttrs, HighlightObjectMixin):
     category = fields.Nested(Category)
     has_dynamic_data = fields.Boolean()
     has_high_value_data = fields.Boolean()
-    if is_enabled('S47_research_data.be'):
-        has_research_data = fields.Boolean()
+    has_research_data = fields.Boolean()
 
     # datasets
     source = fields.Nested(SourceSchema)
-    if is_enabled('S52_dataset_is_promoted.be'):
-        is_promoted = fields.Boolean()
+    is_promoted = fields.Boolean()
 
     # resources
     data_date = fields.Date()
     visualization_types = fields.List(fields.Str())
-    if is_enabled('S53_resource_language.be'):
-        language = fields.Str()
+    language = fields.Str()
 
     # showcases
     author = fields.Str()
@@ -219,15 +214,15 @@ class CommonObjectApiAggregations(ExtSchema):
                                         attribute='_filter_by_update_frequency.by_update_frequency.buckets')
 
     by_has_dynamic_data = fields.Nested(
-        partial(BoolDataAggregation, context={'only_true': is_enabled('S52_remove_no_from_filters.be')}),
+        partial(BoolDataAggregation, context={'only_true': True}),
         many=True,
         attribute='_filter_by_has_dynamic_data.by_has_dynamic_data.buckets')
     by_has_high_value_data = fields.Nested(
-        partial(BoolDataAggregation, context={'only_true': is_enabled('S52_remove_no_from_filters.be')}),
+        partial(BoolDataAggregation, context={'only_true': True}),
         many=True,
         attribute='_filter_by_has_high_value_data.by_has_high_value_data.buckets')
     by_has_research_data = fields.Nested(
-        partial(BoolDataAggregation, context={'only_true': is_enabled('S52_remove_no_from_filters.be')}),
+        partial(BoolDataAggregation, context={'only_true': True}),
         many=True,
         attribute='_filter_by_has_research_data.by_has_research_data.buckets')
     by_showcase_category = fields.Nested(
@@ -252,9 +247,8 @@ class CommonObjectApiAggregations(ExtSchema):
         GeoRegionAggregation,
         many=True,
     )
-    if is_enabled('S53_resource_language.be'):
-        by_language = fields.Nested(
-            LanguageAggregation, many=True, attribute='_filter_by_language.by_language.buckets')
+    by_language = fields.Nested(
+        LanguageAggregation, many=True, attribute='_filter_by_language.by_language.buckets')
 
     @pre_dump(pass_many=True)
     def prepare_data(self, data, **kwargs):

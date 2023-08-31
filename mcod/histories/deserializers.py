@@ -6,9 +6,6 @@ from mcod.core.api.schemas import (
     StringMatchSchema,
 )
 from mcod.core.api.search import fields as search_fields
-from mcod.unleash import is_enabled
-
-IS_ANONYMOUS = is_enabled('S47_anonymize_history.be')
 
 
 class HistoryApiRequest(CommonSchema):
@@ -83,6 +80,4 @@ class LogEntryApiSearchRequest(ListingSchema):
 
     def get_queryset(self, queryset, data):
         queryset = super().get_queryset(queryset, data)
-        if IS_ANONYMOUS:
-            return queryset.filter('term', table_name='dataset').exclude('terms', change_user_id=[1])
-        return queryset.exclude('terms', change_user_id=[1])
+        return queryset.filter('term', table_name='dataset').exclude('terms', change_user_id=[1])

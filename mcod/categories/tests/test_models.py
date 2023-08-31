@@ -17,4 +17,5 @@ class TestCategoryModel:
         assert organization_category.description_i18n == 'Opis kategorii'
 
     def test_category_str(self, db, organization_category):
+        translation.activate('pl')
         assert str(organization_category) == organization_category.title

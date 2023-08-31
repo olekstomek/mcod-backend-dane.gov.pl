@@ -36,7 +36,6 @@ from mcod.harvester.utils import (
     retrieve_to_file,
 )
 from mcod.organizations.models import Organization
-from mcod.unleash import is_enabled
 
 logger = logging.getLogger('mcod')
 
@@ -535,8 +534,7 @@ class DataSource(AdminMixin, LogMixin, SoftDeletableModel, TimeStampedModel):
                 dataset=dataset, ext_ident=data['ext_ident'], defaults=data)
         if obj and modified:  # TODO: find a better way to save modification date with value from data.
             self.resource_model.raw.filter(id=obj.id).update(modified=modified)
-        if is_enabled('S53_xml_harvester_region_import.be'):
-            obj.import_regions_from_harvester(regions)
+        obj.import_regions_from_harvester(regions)
         new_special_signs = obj.special_signs.model.objects.filter(symbol__in=special_signs)
 
         revalidate = False

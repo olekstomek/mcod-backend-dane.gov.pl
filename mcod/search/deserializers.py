@@ -28,7 +28,6 @@ from mcod.search.fields import (
     get_advanced_options,
     nested_query_with_advanced_opts,
 )
-from mcod.unleash import is_enabled
 
 SPARQL_FORMATS = {
     # europeandataportal format choices: rdflib.SparqlStore valid params.
@@ -207,7 +206,7 @@ class ApiSearchRequest(ListingSchema):
         doc_template='docs/search/fields/model.html',
         doc_base_url='/search',
         doc_field_name='models',
-        no_prepare=is_enabled('S53_search_aggregations_counters.be'),
+        no_prepare=True,
     )
     institution = fields.FilterField(InstitutionFilterSchema)
     category = fields.FilterField(DatasetCategoryFilterSchema)
@@ -282,22 +281,20 @@ class ApiSearchRequest(ListingSchema):
         doc_base_url='/search',
         doc_field_name='has_high_value_data'
     )
-    if is_enabled('S47_research_data.be'):
-        has_research_data = fields.FilterField(
-            BooleanTermSchema,
-            query_field='has_research_data',
-            doc_template='docs/generic/fields/boolean_term_field.html',
-            doc_base_url='/search',
-            doc_field_name='has_research_data'
-        )
-    if is_enabled('S52_dataset_is_promoted.be'):
-        is_promoted = fields.FilterField(
-            BooleanTermSchema,
-            query_field='is_promoted',
-            doc_template='docs/generic/fields/boolean_term_field.html',
-            doc_base_url='/search',
-            doc_field_name='is_promoted'
-        )
+    has_research_data = fields.FilterField(
+        BooleanTermSchema,
+        query_field='has_research_data',
+        doc_template='docs/generic/fields/boolean_term_field.html',
+        doc_base_url='/search',
+        doc_field_name='has_research_data'
+    )
+    is_promoted = fields.FilterField(
+        BooleanTermSchema,
+        query_field='is_promoted',
+        doc_template='docs/generic/fields/boolean_term_field.html',
+        doc_base_url='/search',
+        doc_field_name='is_promoted'
+    )
     regions = fields.FilterField(RegionsFilterSchema)
 
     showcase_category = fields.FilterField(
@@ -320,13 +317,12 @@ class ApiSearchRequest(ListingSchema):
         doc_base_url='/search',
         doc_field_name='showcase platforms'
     )
-    if is_enabled('S53_resource_language.be'):
-        language = fields.FilterField(
-            StringTermSchema,
-            doc_template='docs/generic/fields/string_term_field.html',
-            doc_base_url='/search',
-            doc_field_name='language'
-        )
+    language = fields.FilterField(
+        StringTermSchema,
+        doc_template='docs/generic/fields/string_term_field.html',
+        doc_base_url='/search',
+        doc_field_name='language'
+    )
 
     @validates('q')
     def validate_q(self, queries, down_limit=2, up_limit=3000):

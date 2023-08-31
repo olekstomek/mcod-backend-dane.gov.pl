@@ -68,12 +68,12 @@ Feature: File validation
 
   Scenario Outline: Validation of various file mimetypes
     Given I have file <file_type>
-    Then file is validated and result mimetype is <mimetype>
+    Then file is validated and result mimetype is <mimetypes>
     Examples:
-    | file_type       | mimetype           |
-    | grib            | application/x-grib |
-    | hdf_netcdf      | application/netcdf |
-    | binary_netcdf   | application/netcdf |
+    | file_type       | mimetypes                                    |
+    | grib            | ["application/x-grib"]                       |
+    | hdf_netcdf      | ["application/netcdf", "application/x-hdf5"] |
+    | binary_netcdf   | ["application/netcdf"]                       |
 
   Scenario Outline: Unpacking of archive files
     Given I have file <file_type>
