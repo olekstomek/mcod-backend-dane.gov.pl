@@ -143,6 +143,7 @@ release-prod:
   script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD registry.dane.gov.pl
     #- docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN registry.dane.gov.pl
+    - docker pull $REGISTRY_PATH/backend:master
     - docker tag $REGISTRY_PATH/backend:master $REGISTRY_PATH/backend:master-$API_VERSION
     - docker tag $REGISTRY_PATH/backend:master $REGISTRY_PATH/backend:master-prod-latest
     - docker push $REGISTRY_PATH/backend:master-$API_VERSION

@@ -20,6 +20,7 @@ from mcod.regions.api import PeliasApi
 from mcod.regions.exceptions import MalformedTerytCodeError
 from mcod.resources.link_validation import download_file
 from mcod.resources.models import RESOURCE_DATA_DATE_PERIODS, Resource, supported_formats_choices
+from mcod.unleash import is_enabled
 
 SUPPORTED_RESOURCE_FORMATS = [i[0] for i in supported_formats_choices()]
 SUPPORTED_RESOURCE_FORMATS.extend(settings.ARCHIVE_EXTENSIONS)
@@ -472,12 +473,13 @@ class XMLDatasetSchema(XMLPreProcessedSchema):
     @validates_schema
     def validate_license_condition_personal_data(self, data, **kwargs):
         field_name = 'license_condition_personal_data'
-        if data.get(field_name):
-            raise ValidationError(
-                message=_('Chosen conditions for re-use mean that they contain personal data. '
-                          'Please contact the administrator at kontakt@dane.gov.pl.'),
-                field_name=field_name,
-            )
+        if not is_enabled("S57_without_personal_data_condition_validation"):
+            if data.get(field_name):
+                raise ValidationError(
+                    message=_('Chosen conditions for re-use mean that they contain personal data. '
+                              'Please contact the administrator at kontakt@dane.gov.pl.'),
+                    field_name=field_name,
+                )
 
     @validates_schema
     def validate_license_condition_db_or_copyrighted(self, data, **kwargs):

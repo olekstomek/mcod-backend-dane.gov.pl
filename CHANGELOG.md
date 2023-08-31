@@ -14,6 +14,22 @@
 ### Breaks
 
 
+## 2.31.5 - (2023-03-30)
+---
+
+### Fixes
+* Poprawa walidacji serializera w zakresie warunków ponownego wykorzystania informacji (OTD-39)
+
+
+## 2.31.4 - (2023-03-21)
+---
+
+### Fixes
+* Blokada dodawania warunków - incydent krytyczny (OTD-28)
+* Poprawa walidacji formularza oraz serializera w zakresie warunków ponownego wykorzystania informacji (OTD-30)
+* Poprawki zgłoszone przez administratorów po wydaniu na produkcję (OTD-34)
+
+
 ## 2.31.3 - (2023-02-27)
 ---
 
