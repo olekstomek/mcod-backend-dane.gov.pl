@@ -1,3 +1,5 @@
+import copy
+
 import pytest
 from namedlist import namedlist
 
@@ -68,6 +70,25 @@ minimal = change_namedlist(empty, {
 })
 
 validity_false = change_namedlist(minimal, {'validity': False})
+
+organization_form_data_requirement = {
+    "title": ["Organization title", True],
+    "slug": ["organization-title-2", False],
+    "institution_type": ["local", True],
+    "postal_code": ["00-001", True],
+    "city": ["Warszawa", True],
+    "street": ["Królewska", True],
+    "street_number": [1, False],
+    "flat_number": [1, False],
+    "street_type": ["ul", True],
+    "email": ["r@wp.pl", True],
+    "fax": ["123123123", False],
+    "tel": ["123123123", True],
+    "epuap": ["123123123", False],
+    "regon": ["123456785", True],
+    "website": ["http://test.pl", False],
+    "status": ["draft", True],
+}
 
 
 class TestOrganizationFormValidity:
@@ -301,3 +322,23 @@ class TestOrganizationFormValidity:
         saved_org = form.save(commit=False)
         with pytest.raises(ValueError):
             saved_org.users.all()
+
+    @pytest.mark.parametrize(
+        "tested_field, form_data",
+        [
+            (tested_field, copy.deepcopy(organization_form_data_requirement))
+            for tested_field in organization_form_data_requirement.keys()
+        ]
+    )
+    def test_organization_form_fields_requirement(self, tested_field, form_data):
+
+        is_field_required = form_data[tested_field][1]
+        del form_data[tested_field]
+
+        form_data_for_test = {k: form_data[k][0] for k in form_data.keys()}
+
+        form = OrganizationForm(data=form_data_for_test)
+        if is_field_required:
+            assert not form.is_valid()
+        else:
+            assert form.is_valid()

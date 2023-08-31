@@ -14,6 +14,13 @@
 ### Breaks
 
 
+## 2.31.6 - (2023-05-09)
+---
+
+### Fixes
+* Modyfikacja formularza profilu instytucji - pole website niewymagane (OTD-37)
+
+
 ## 2.31.5 - (2023-03-30)
 ---
 
