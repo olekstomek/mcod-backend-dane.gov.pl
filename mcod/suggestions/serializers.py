@@ -3,7 +3,7 @@ from django.utils.translation import gettext_lazy as _
 from mcod.core.api import fields
 from mcod.core.api.jsonapi.serializers import ObjectAttrs, TopLevel
 from mcod.core.api.schemas import ExtSchema
-from mcod.core.serializers import CSVSerializer
+from mcod.core.serializers import CSVSchemaRegistrator, CSVSerializer
 from mcod.lib.serializers import TranslatedStr
 
 
@@ -61,7 +61,7 @@ class PublicSubmissionApiResponse(TopLevel):
         attrs_schema = PublicSubmissionAttrs
 
 
-class DatasetSubmissionCSVSerializer(CSVSerializer):
+class DatasetSubmissionCSVSerializer(CSVSerializer, metaclass=CSVSchemaRegistrator):
     id = fields.Int(data_key='id', required=True, example=77)
     title = fields.Str(data_key=_('Title'), example='Propozycja nowych danych')
     notes = fields.Str(data_key=_('Notes'), default='', example='opis...')
@@ -80,7 +80,7 @@ class DatasetSubmissionCSVSerializer(CSVSerializer):
         model = 'suggestions.DatasetSubmission'
 
 
-class DatasetCommentCSVSerializer(CSVSerializer):
+class DatasetCommentCSVSerializer(CSVSerializer, metaclass=CSVSchemaRegistrator):
     id = fields.Int(data_key='id', required=True, example=77)
     title = fields.Str(data_key=_('Title'), attribute='dataset.title', example='Przykładowy zbiór danych')
     comment = fields.Str(data_key=_('text of comment'), example='Treść uwagi...')

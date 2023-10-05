@@ -257,7 +257,7 @@ def process_resource_res_file_task(resource_file_id, update_link=True, update_fi
     Resource = apps.get_model('resources', 'Resource')
     resource_file = ResourceFile.objects.get(pk=resource_file_id)
     resource_id = resource_file.resource_id
-    format, file_info, file_encoding, p, file_mimetype, analyze_exc,\
+    format, file_info, file_encoding, p, file_mimetype, analyze_exc, \
         extracted_format, extracted_mimetype, extracted_encoding = resource_file.analyze()
     if not resource_file.extension and format:
         ResourceFile.objects.filter(pk=resource_file_id).update(
@@ -358,7 +358,7 @@ def update_resource_with_archive_format(res_file_id):
         extracted.cleanup()
     if extracted_files == 1:
         logger.debug(f'Updating file details of ResourceFile[{res_file_id}] for Resource with id {rf.resource_id}')
-        format, file_info, file_encoding, p, file_mimetype, analyze_exc,\
+        format, file_info, file_encoding, p, file_mimetype, analyze_exc, \
             extracted_format, extracted_mimetype, extracted_encoding = rf.analyze()
         ResourceFile.objects.filter(pk=res_file_id).update(
             format=format,

@@ -21,7 +21,7 @@ from mcod.core.api.rdf.schema_mixins import ProfilesMixin
 from mcod.core.api.rdf.schemas import ResponseSchema as RDFResponseSchema
 from mcod.core.api.rdf.vocabs.common import VocabSKOSConcept, VocabSKOSConceptScheme
 from mcod.core.api.schemas import ExtSchema
-from mcod.core.serializers import CSVSerializer, ListWithoutNoneStrElement
+from mcod.core.serializers import CSVSchemaRegistrator, CSVSerializer, ListWithoutNoneStrElement
 from mcod.lib.extended_graph import ExtendedGraph
 from mcod.lib.serializers import TranslatedStr
 from mcod.regions.serializers import RegionBaseSchema, RegionSchema
@@ -501,7 +501,7 @@ class CommentApiResponse(TopLevel):
         max_items_num = 20000
 
 
-class ResourceCSVSchema(CSVSerializer):
+class ResourceCSVSchema(CSVSerializer, metaclass=CSVSchemaRegistrator):
     id = fields.Integer(data_key=_('id'), required=True)
     uuid = fields.Str(data_key=_("uuid"), default='')
     title = fields.Str(data_key=_("title"), default='')

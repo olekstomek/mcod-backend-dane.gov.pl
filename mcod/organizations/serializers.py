@@ -10,7 +10,7 @@ from mcod.core.api.jsonapi.serializers import (
     TopLevel,
 )
 from mcod.core.api.schemas import ExtSchema
-from mcod.core.serializers import CSVSerializer
+from mcod.core.serializers import CSVSchemaRegistrator, CSVSerializer
 from mcod.lib.serializers import TranslatedStr
 from mcod.watchers.serializers import SubscriptionMixin
 
@@ -104,7 +104,7 @@ class InstitutionApiResponse(SubscriptionMixin, TopLevel):
         aggs_schema = InstitutionApiAggs
 
 
-class InstitutionCSVSchema(CSVSerializer):
+class InstitutionCSVSchema(CSVSerializer, metaclass=CSVSchemaRegistrator):
     id = fields.Integer(data_key=_('id'), required=True)
     title = fields.Str(data_key=_("Title"), default='')
     institution_type = fields.Str(data_key=_("Institution type"), default='')

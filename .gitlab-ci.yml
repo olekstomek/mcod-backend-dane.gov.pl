@@ -111,6 +111,19 @@ test:
   tags:
     - docker
 
+check-docker-build:
+  stage: test
+  except:
+    - devel
+    - tags
+    - master
+    - schedules
+  script:
+    - docker build --build-arg REQ_FILE=requirements-common.txt -f docker/app/Dockerfile -t backend:${CI_COMMIT_REF_SLUG} .
+    - docker rmi backend:${CI_COMMIT_REF_SLUG}
+  tags:
+    - shell
+
 build-devel:
   stage: build
   only:

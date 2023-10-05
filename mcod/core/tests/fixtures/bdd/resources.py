@@ -1022,7 +1022,7 @@ def file_validation_exception(validated_file):
 
 @then(parsers.parse('file is validated and PasswordProtectedArchiveError is raised'))
 def archive_file_validation_exception(validated_file):
-    format, file_info, file_encoding, p, file_mimetype, analyze_exc,\
+    format, file_info, file_encoding, p, file_mimetype, analyze_exc, \
         extracted_format, extracted_mimetype, extracted_encoding = analyze_file(validated_file)
     assert analyze_exc.__class__ == PasswordProtectedArchiveError
 

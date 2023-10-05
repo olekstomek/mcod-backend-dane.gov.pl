@@ -12,7 +12,6 @@ from mcod.lib.field_validators import ContainsLetterValidator
 from mcod.lib.widgets import CheckboxSelect, CKEditorWidget, JsonPairDatasetInputs
 from mcod.resources.forms import SupplementForm as ResourceSupplementForm
 from mcod.tags.forms import ModelFormWithKeywords
-from mcod.unleash import is_enabled
 
 
 class DatasetForm(ModelFormWithKeywords):
@@ -226,13 +225,6 @@ class DatasetForm(ModelFormWithKeywords):
             if cleaned_data.get('status') == 'draft':
                 self.add_error('is_promoted', _('Only published dataset can be assigned as promoted!'))
         return cleaned_data
-
-    def clean_license_condition_personal_data(self):
-        if not is_enabled("S57_without_personal_data_condition_validation"):
-            if self.cleaned_data.get('license_condition_personal_data'):
-                raise forms.ValidationError(_('Chosen conditions for re-use mean that they contain personal data. '
-                                              'Please contact the administrator at kontakt@dane.gov.pl.'))
-        return self.cleaned_data['license_condition_personal_data']
 
     def clean_status(self):
         if self.instance.id:

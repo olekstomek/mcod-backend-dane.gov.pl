@@ -10,7 +10,7 @@ from mcod.core.api.jsonapi.serializers import (
     Relationships,
     TopLevel,
 )
-from mcod.core.serializers import CSVSerializer
+from mcod.core.serializers import CSVSchemaRegistrator, CSVSerializer
 from mcod.schedules.serializers import UserScheduleApiAttrs
 from mcod.users.models import Meeting
 
@@ -112,6 +112,20 @@ class UserCSVSerializer(CSVSerializer):
         fields = ('id', 'email', 'fullname', 'official_phone', 'is_staff', 'is_official', 'is_superuser',
                   'is_academy_admin', 'is_labs_admin', 'is_agent', 'extra_agent_of', 'state', 'institution1',
                   'institution2', 'last_login')
+
+
+class DefaultUserCSVSerializer(UserCSVSerializer, metaclass=CSVSchemaRegistrator):
+    """
+    To register in csv_serializers_registry.
+    """
+    pass
+
+
+class UserLocalTimeCSVSerializer(UserCSVSerializer):
+    last_login = fields.LocalDateTime(
+        data_key=_('Last login date'),
+        example='2021-01-01T00:00:00+02:00'
+    )
 
 
 class UserApiRelationships(Relationships):

@@ -14,6 +14,21 @@
 ### Breaks
 
 
+## 2.31.8 - (2023-08-03)
+---
+
+### Fixes
+* Poprawka budowania pipeline - freeze wersji zależności jupyter (OTD-99)
+
+
+## 2.31.7 - (2023-07-12)
+---
+
+### Fixes
+* Zmiana strefy czasowej na lokalną w raportach csv użytkowników (OTD-55)
+* Aktualizacja pakietów oraz repozytorium dla narzędzia pre-commit (OTD-59)
+
+
 ## 2.31.6 - (2023-05-09)
 ---
 
@@ -245,7 +260,7 @@
 * Nowa końcówka API do pobierania zasobu (MCOD-1428)
 * (WIP) Narzędzie dla dostawców do walidacji zasobów (MCOD-1455)
 * Rozszerzenie mechanizmu walidacji zasobów o nowe komunikaty o błędach (MCOD-1501)
-* 
+*
 ### Changes
 * migracja kolejnych końcówek API do wersji 1.4
 * dostosowanie formatu odpowiedzi w przypadku błędów do Json:API
@@ -331,16 +346,16 @@
 ### New
 * Wersjonowanie API
 * Wprowadzenie wersji 1.4 API (niektóre widoki)
-* Wyszukiwarka dla danych tabelarycznych 
-* Indywidualne API dla każadego zasobu tabelarycznego 
+* Wyszukiwarka dla danych tabelarycznych
+* Indywidualne API dla każadego zasobu tabelarycznego
 * Mechanizm tłumaczeń na bazie danych
 * Obsługa wyszukiwania przybliżonego (tzw. literówki)
-* Obsługa wyszukiwania po fragmencie fraz 
-* Obsługa wyszukiwania wyrazów bez polskich znaków 
-* Tłumaczenie kategorii 
-* Walidacja numerów telefonu i faxu w formularzach 
-* Komunikaty techniczne 
-* Obsługa sortowania zbiorów po popularności 
+* Obsługa wyszukiwania po fragmencie fraz
+* Obsługa wyszukiwania wyrazów bez polskich znaków
+* Tłumaczenie kategorii
+* Walidacja numerów telefonu i faxu w formularzach
+* Komunikaty techniczne
+* Obsługa sortowania zbiorów po popularności
 * Możliwość pobrania danych tabelarycznych w formacie JSON
 
 ### Changes
@@ -355,12 +370,12 @@
     - ENDSWITH
     - EXCLUDE
 * Poprawka do sortowania alfaberycznego wyników wyszukiwania dla języka polskiego
-* Bład typu 500 podczas wyświetlania dokumentacji 
-* Poprawka dotycząca właściwego rozpoznawania typu skompresowanego XLSX 
-* Poprawka do zunifikowanego mechanizmu logowania 
-* Poprawka komunikatu o błedzie wyświetlanego podczas logowania 
-* Różne poprawki związane z generowaniem raportów CSV 
-* Dodanie wymagalności na polu "słowa kluczowe" 
-* Dodanie ID użytkownika w raportach CSV 
-* Dodawanie zasobu z linki 
+* Bład typu 500 podczas wyświetlania dokumentacji
+* Poprawka dotycząca właściwego rozpoznawania typu skompresowanego XLSX
+* Poprawka do zunifikowanego mechanizmu logowania
+* Poprawka komunikatu o błedzie wyświetlanego podczas logowania
+* Różne poprawki związane z generowaniem raportów CSV
+* Dodanie wymagalności na polu "słowa kluczowe"
+* Dodanie ID użytkownika w raportach CSV
+* Dodawanie zasobu z linki
 * Obsługa nierozpoznanego kodowania znaków w pliku zasobu

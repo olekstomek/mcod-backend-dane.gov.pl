@@ -183,7 +183,7 @@ def analyze_file(path):  # noqa: C901
     if extracted:
         extracted.cleanup()
 
-    return extension, file_info, encoding, path, file_mimetype, analyze_exc,\
+    return extension, file_info, encoding, path, file_mimetype, analyze_exc, \
         extracted_extension, extracted_mimetype, extracted_encoding
 
 

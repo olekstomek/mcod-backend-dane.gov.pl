@@ -731,7 +731,7 @@ def admin_response_body_field(admin_context, field, value):
 @then(parsers.parse("admin's response page form contains {contained_value} and {another_value}"))
 def admin_response_page_contains_values(admin_context, contained_value, another_value):
     content = admin_context.response.content.decode()
-    assert contained_value in content and another_value in content,\
+    assert contained_value in content and another_value in content, \
         f'Page content should contain phrases: \"{contained_value}\" and \"{another_value}\"'
 
 

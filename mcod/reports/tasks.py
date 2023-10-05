@@ -30,6 +30,8 @@ from mcod.resources.models import Resource
 from mcod.resources.tasks import validate_link
 from mcod.showcases.serializers import ShowcaseProposalCSVSerializer
 from mcod.suggestions.serializers import DatasetSubmissionCSVSerializer
+from mcod.unleash import is_enabled
+from mcod.users.serializers import UserLocalTimeCSVSerializer
 
 User = get_user_model()
 logger = logging.getLogger('mcod')
@@ -45,6 +47,8 @@ def generate_csv(pks, model_name, user_id, file_name_postfix):
         serializer_cls = DatasetSubmissionCSVSerializer
     elif _model == 'ShowcaseProposal':
         serializer_cls = ShowcaseProposalCSVSerializer
+    elif is_enabled("S59_fix_datetime_in_users_csv_report.be") and _model == 'User':
+        serializer_cls = UserLocalTimeCSVSerializer
 
     if not serializer_cls:
         raise Exception('Cound not find serializer for model %s' % model_name)

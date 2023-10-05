@@ -275,7 +275,7 @@ class TestIdsSearchField:
         assert 'query' in qs
         assert 'ids' in qs['query']
         assert 'values' in qs['query']['ids']
-        assert type(qs['query']['ids']['values']) == list
+        assert type(qs['query']['ids']['values']) == list  # noqa
 
         qs_ids = set(qs['query']['ids']['values'])
         assert qs_ids == valid_ids

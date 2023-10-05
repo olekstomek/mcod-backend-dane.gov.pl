@@ -11,7 +11,7 @@ from mcod.core.api.jsonapi.serializers import (
     TopLevel,
 )
 from mcod.core.api.schemas import ExtSchema
-from mcod.core.serializers import CSVSerializer
+from mcod.core.serializers import CSVSchemaRegistrator, CSVSerializer
 from mcod.lib.serializers import KeywordsList, TranslatedStr
 from mcod.showcases.models import Showcase
 from mcod.watchers.serializers import SubscriptionMixin
@@ -133,7 +133,7 @@ class ShowcaseTypeAggregation(ShowcaseAggregationMixin):
         return data
 
 
-class ShowcaseProposalCSVSerializer(CSVSerializer):
+class ShowcaseProposalCSVSerializer(CSVSerializer, metaclass=CSVSchemaRegistrator):
     id = fields.Int(data_key='id', required=True, example=77)
     category_name = fields.Str(data_key=_('Category'), example='Aplikacja')
     title = fields.Str(data_key=_('Name'), example='Propozycja aplikacji')

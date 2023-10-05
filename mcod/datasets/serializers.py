@@ -21,7 +21,7 @@ from mcod.core.api.rdf.profiles.common import HYDRAPagedCollection
 from mcod.core.api.rdf.schema_mixins import ProfilesMixin
 from mcod.core.api.rdf.schemas import ResponseSchema as RDFResponseSchema
 from mcod.core.api.schemas import ExtSchema
-from mcod.core.serializers import CSVSerializer, ListWithoutNoneStrElement
+from mcod.core.serializers import CSVSchemaRegistrator, CSVSerializer, ListWithoutNoneStrElement
 from mcod.datasets.models import UPDATE_FREQUENCY
 from mcod.lib.extended_graph import ExtendedGraph
 from mcod.lib.serializers import KeywordsList, TranslatedStr
@@ -495,7 +495,7 @@ class CommentApiResponse(TopLevel):
         attrs_schema = CommentAttrs
 
 
-class DatasetCSVSchema(CSVSerializer):
+class DatasetCSVSchema(CSVSerializer, metaclass=CSVSchemaRegistrator):
     id = fields.Integer(data_key=_('id'), required=True)
     uuid = fields.Str(data_key=_("uuid"), default='')
     title = fields.Str(data_key=_("title"), default='')

@@ -4,25 +4,20 @@ from mcod.core.api import fields
 from mcod.core.registries import csv_serializers_registry
 
 
-class CSVSchemaMeta(SchemaMeta):
-    def __new__(mcs, name, bases, attrs):
-        klass = super().__new__(mcs, name, bases, attrs)
-        csv_serializers_registry.register(klass)
-        return klass
-
-
 class ModelSchemaOpts(SchemaOpts):
     def __init__(self, meta, **kwargs):
         SchemaOpts.__init__(self, meta, **kwargs)
         self.model_name = getattr(meta, 'model', None)
 
 
-class RDFSchema(BaseSchema, metaclass=SchemaMeta):
-    __doc__ = BaseSchema.__doc__
-    OPTIONS_CLASS = ModelSchemaOpts
+class CSVSchemaRegistrator(SchemaMeta):
+    def __new__(mcs, name, bases, attrs):
+        klass = super().__new__(mcs, name, bases, attrs)
+        csv_serializers_registry.register(klass)
+        return klass
 
 
-class CSVSerializer(BaseSchema, metaclass=CSVSchemaMeta):
+class CSVSerializer(BaseSchema):
     __doc__ = BaseSchema.__doc__
     OPTIONS_CLASS = ModelSchemaOpts
 
@@ -32,6 +27,11 @@ class CSVSerializer(BaseSchema, metaclass=CSVSchemaMeta):
             header = field.data_key or field_name
             result.append(header)
         return result
+
+
+class RDFSchema(BaseSchema, metaclass=SchemaMeta):
+    __doc__ = BaseSchema.__doc__
+    OPTIONS_CLASS = ModelSchemaOpts
 
 
 class ListWithoutNoneStrElement(fields.List):

@@ -196,3 +196,17 @@ Uruchomienie usługi jest niezbędne, jeżeli zamierzamy korzystać z zadań asy
 ### Zaindeksowanie pliku zasobu (wygenerowanie danych tabelarycznych)
 
     (venv) $ python manage.py index_file --pks <id_1,...,id_N>
+
+### Uruchomienie narzędzia pre-commit (lokalnie)
+
+Aby `pre-commit` uruchamiał się przy każdym commicie trzeba go zainstalować:
+
+    pre-commit install
+
+Dodanie pliku/plików jest niezbędne do sprawdzenia ich poprawności:
+
+    git add <filename>
+
+Uruchomienie pre-commit sprawdzającego m.in. poprawność stylu i importów.
+
+    (venv) $ pre-commit run

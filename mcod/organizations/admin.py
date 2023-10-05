@@ -232,7 +232,6 @@ class OrganizationAdmin(HistoryMixin, ObjectPermissionsModelAdmin):
     prepopulated_fields = {"slug": ("title",), }
     search_fields = ["slug", "title", "description"]
     soft_delete = True
-    suit_form_tabs = tuple()
 
     def autocomplete_view(self, request):
         return OrganizationAutocompleteJsonView.as_view(model_admin=self)(request)

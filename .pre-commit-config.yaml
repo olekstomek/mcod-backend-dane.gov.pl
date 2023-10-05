@@ -10,14 +10,14 @@ repos:
       - id: check-added-large-files
 
   - repo: https://github.com/pycqa/isort
-    rev: 5.10.1
+    rev: 5.12.0
     hooks:
       - id: isort
         args: [-m=3, --tc, -l=100, --ca]
         exclude: settings|migrations|docs|translations|docker|temp|frontend
 
-  - repo: https://gitlab.com/pycqa/flake8
-    rev: 3.9.2  # pick a git hash / tag to point to
+  - repo: https://github.com/pycqa/flake8
+    rev: 6.0.0  # pick a git hash / tag to point to
     hooks:
       - id: flake8
         exclude: settings|migrations|docs|translations|docker|temp|frontend

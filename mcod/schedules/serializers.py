@@ -3,7 +3,7 @@ from marshmallow import post_dump, pre_dump
 from mcod.core.api import fields
 from mcod.core.api.jsonapi.serializers import ObjectAttrs, Relationship, Relationships, TopLevel
 from mcod.core.api.schemas import ExtSchema
-from mcod.core.serializers import CSVSerializer
+from mcod.core.serializers import CSVSchemaRegistrator, CSVSerializer
 
 
 class UserScheduleApiAggs(ExtSchema):
@@ -322,7 +322,7 @@ class ExportUrlApiResponse(TopLevel):
         attrs_schema = ExportUrlApiAttrs
 
 
-class UserScheduleItemCSVSerializer(CSVSerializer):
+class UserScheduleItemCSVSerializer(CSVSerializer, metaclass=CSVSchemaRegistrator):
     row_no = fields.Int(data_key='L.p.', required=True, example=1, allow_none=True)
     organization_name = fields.Str(data_key='Ministerstwo (instytucja)', example='Ministerstwo Cyfryzacji')
     organization_unit = fields.Str(data_key='Jednostka podległa/nadzorowana')

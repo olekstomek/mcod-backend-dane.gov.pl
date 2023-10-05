@@ -4,6 +4,7 @@ import functools
 import inspect
 import operator
 from collections import defaultdict, namedtuple
+from datetime import datetime
 from functools import partial
 
 import markdown2
@@ -11,6 +12,7 @@ from django.template import loader
 from django.utils.translation import gettext_lazy as _
 from marshmallow import ValidationError, fields, missing, utils
 from marshmallow.orderedset import OrderedSet
+from tzlocal import get_localzone
 
 from mcod.core import utils as api_utils
 
@@ -641,6 +643,20 @@ class DateTime(ExtendedFieldMixin, fields.DateTime):
         ret['type'] = 'string'
         ret['format'] = 'date-time'
         return ret
+
+
+def iso_format_in_local_timezone(dt: datetime, *args, **kwargs) -> str:
+    """Return the ISO8601T in local timezone."""
+    local_tz = get_localzone()
+    local_date = dt.astimezone(local_tz)
+    return local_date.replace(microsecond=0).isoformat()
+
+
+class LocalDateTime(DateTime):
+    SERIALIZATION_FUNCS = {
+        **DateTime.SERIALIZATION_FUNCS,
+        'iso8601T': iso_format_in_local_timezone,
+    }
 
 
 class TimeDelta(ExtendedFieldMixin, fields.TimeDelta):

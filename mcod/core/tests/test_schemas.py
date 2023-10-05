@@ -76,7 +76,7 @@ class TestListSchema:
         cqb = qs['query']['bool']
         assert cqb.keys() == vqb.keys()
         assert cqb.get('minimum_should_match') == vqb['minimum_should_match']
-        for arr_key, arr in ((k, vqb[k]) for k in vqb.keys() if type(vqb[k]) == list):
+        for arr_key, arr in ((k, vqb[k]) for k in vqb.keys() if type(vqb[k]) == list):  # noqa
             assert len(cqb[arr_key]) == len(arr)
             for el in cqb[arr_key]:
                 assert el in arr

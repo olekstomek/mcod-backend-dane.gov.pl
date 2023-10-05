@@ -43,6 +43,9 @@ class SerializerRegistry:
     def get_serializer(self, model):
         return self._serializers.get(model)
 
+    def items(self):
+        return self._serializers.items()
+
 
 csv_serializers_registry = SerializerRegistry()
 object_attrs_registry = SerializerRegistry()
