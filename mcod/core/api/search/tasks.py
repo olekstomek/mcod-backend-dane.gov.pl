@@ -1,3 +1,4 @@
+from elasticsearch.exceptions import TransportError
 from celery.utils.log import get_task_logger
 from django.apps import apps
 from django_elasticsearch_dsl.registries import registry
@@ -37,7 +38,7 @@ def update_document_task(app_label, object_name, instance_id):
     }
 
 
-@extended_shared_task
+@extended_shared_task(max_retries=5, retry_on_errors=(TransportError,))
 def update_with_related_task(app_label, object_name, instance_id):
     instance = _instance(app_label, object_name, instance_id)
     registry.update(instance)

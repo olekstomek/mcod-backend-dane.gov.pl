@@ -14,6 +14,14 @@
 ### Breaks
 
 
+## 2.31.9 - (2023-10-26)
+---
+
+### Fixes
+* Uodpornienie asynchronicznych zadań na chwilową niedostępność infrastruktury (OTD-95)
+* Rozbudowa procedury walidacji linku zasobu (OTD-127)
+
+
 ## 2.31.8 - (2023-08-03)
 ---
 

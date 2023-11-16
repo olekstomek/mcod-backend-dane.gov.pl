@@ -8,6 +8,7 @@ from urllib import parse
 import requests
 from django.core.exceptions import ValidationError
 from django.core.validators import URLValidator
+from fake_useragent import UserAgent
 from mimeparse import MimeTypeParseException, parse_mime_type
 
 from mcod import settings
@@ -93,6 +94,10 @@ def simplified_url(url):
     return url.replace('http://', '').replace('https://', '').replace('www.', '').rstrip('/')
 
 
+def generate_random_user_agent() -> str:
+    return UserAgent(min_percentage=5.0).random
+
+
 def download_file(url, forced_file_type=False):  # noqa: C901
     logger.debug(f'download_file({url})')
     try:
@@ -102,7 +107,10 @@ def download_file(url, forced_file_type=False):  # noqa: C901
 
     filename, _format = None, None
 
-    response = session.get(url, stream=True, allow_redirects=True, verify=False, timeout=180)
+    headers = {
+        "User-Agent": generate_random_user_agent()
+    }
+    response = session.get(url, stream=True, allow_redirects=True, verify=False, timeout=180, headers=headers)
 
     if not response.url.startswith('https'):
         raise InvalidSchema('Invalid schema!')
@@ -203,9 +211,12 @@ def check_link_status(url, resource_type):
     except ValidationError:
         raise InvalidUrl('Invalid url address: %s' % url)
 
-    response = session.head(url, allow_redirects=True, timeout=30)
-    if response.status_code == 405:
-        response = session.get(url, allow_redirects=True, timeout=30)
+    headers = {
+        "User-Agent": generate_random_user_agent()
+    }
+    response = session.head(url, allow_redirects=True, timeout=30, headers=headers)
+    if response.status_code != 200:
+        response = session.get(url, allow_redirects=True, timeout=30, headers=headers)
 
     if response.status_code != 200:
         raise InvalidResponseCode('Invalid response code: %s' % response.status_code)

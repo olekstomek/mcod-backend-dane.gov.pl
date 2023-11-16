@@ -7,7 +7,6 @@ from mcod.lib.rdf.store import get_sparql_store
 
 
 class SparqlGraphRegistry:
-
     def __init__(self):
         self._models = defaultdict(set)
         self._related_models = defaultdict(set)
@@ -15,11 +14,18 @@ class SparqlGraphRegistry:
         self._named_graph = None
         self.sparql_store = get_sparql_store()
 
-    def process_graph(self, action, app_label, object_name, instance_id, *args, **kwargs):
+    def process_graph(
+        self, action, app_label, object_name, instance_id, *args, **kwargs
+    ):
         instance = _instance(app_label, object_name, instance_id)
         query, ns = getattr(self, action)(instance, *args, **kwargs)
-        if query:
+        if not query:
+            return
+        try:
             self.sparql_store.update(query, initNs=ns)
+        except Exception as e:
+            self.sparql_store.rollback()
+            raise e
 
     def register_graph(self, graph_cls):
         self._models[graph_cls.model].add(graph_cls)
@@ -31,77 +37,87 @@ class SparqlGraphRegistry:
             self._parent_models[parent_model].add(graph_cls.model)
 
     def related_condition_changed(self, instance):
-        condition_attr_changed = [graph(named_graph=self._named_graph).related_condition_changed(instance)
-                                  for graph in self._models.get(instance.__class__, set())]
+        condition_attr_changed = [
+            graph(named_graph=self._named_graph).related_condition_changed(instance)
+            for graph in self._models.get(instance.__class__, set())
+        ]
         return any(condition_attr_changed)
 
     def update(self, instance):
-        return self._process_action('update', instance)
+        return self._process_action("update", instance)
 
     def create(self, instance):
-        return self._process_action('create', instance)
+        return self._process_action("create", instance)
 
     def update_related(self, instance):
-        full_query = ''
+        queries = []
         ns = {}
         for related_graph_cls in self._get_related_graphs(instance.__class__):
             related_graph = related_graph_cls(named_graph=self._named_graph)
             related_instances = related_graph.get_related_from_instance(instance)
             if related_instances:
                 _q, _ns = related_graph.update(related_instances)
-                full_query += f'{_q}; '
+                queries.append(_q)
                 ns.update(**_ns)
+        full_query = "; ".join(queries)
         return full_query, ns
 
     def update_with_related(self, instance):
         update_q, update_ns = self.update(instance)
         related_q, related_ns = self.update_related(instance)
         update_ns.update(**related_ns)
-        return f'{update_q} {related_q}', update_ns
+        return f"{update_q} {related_q}", update_ns
 
     def create_with_related_update(self, instance):
         create_q, create_ns = self.create(instance)
         related_q, related_ns = self.update_related(instance)
         create_ns.update(**related_ns)
-        return f'{create_q} {related_q}', create_ns
+        return f"{create_q} {related_q}", create_ns
 
     def delete(self, instance):
-        return self._process_action('delete', instance)
+        return self._process_action("delete", instance)
 
     def delete_sub_graphs(self, instance):
-        full_query = ''
+        queries = []
         ns = {}
         for related_graph_cls in self._get_sub_graphs(instance.__class__):
             sub_graph = related_graph_cls(named_graph=self._named_graph)
             related_instances = sub_graph.get_related_from_instance(instance)
             if related_instances:
                 _q, _ns = sub_graph.delete(related_instances)
-                full_query += f'{_q}; '
+                queries.append(_q)
                 ns.update(**_ns)
+        full_query = "; ".join(queries)
         return full_query, ns
 
     def delete_with_related_update(self, instance, related_models):
-        full_query = ''
+        queries = []
         ns = {}
         for model in related_models:
-            related_instance = _instance(model['app_label'], model['model_cls'], model['instance_id'])
+            related_instance = _instance(
+                model["app_label"], model["model_cls"], model["instance_id"]
+            )
             _q, _ns = self.update(related_instance)
-            full_query += _q
+            queries.append(_q)
             ns.update(**_ns)
         del_q, del_ns = self.delete(instance)
-        full_query += del_q
+        queries.append(del_q)
+        full_query = "; ".join(queries)
         ns.update(**del_ns)
         return full_query, ns
 
     def _process_action(self, action, instance, *args, **kwargs):
         model_cls = instance.__class__
-        full_query = ''
+        queries = []
         ns = {}
         if model_cls in self._models:
             for graph in self._models[model_cls]:
-                _q, _ns = getattr(graph(named_graph=self._named_graph), action)(instance)
-                full_query += f'{_q}; '
+                _q, _ns = getattr(graph(named_graph=self._named_graph), action)(
+                    instance
+                )
+                queries.append(_q)
                 ns.update(**_ns)
+        full_query = "; ".join(queries)
         return full_query, ns
 
     def _get_related_graphs(self, model_cls):
@@ -131,11 +147,13 @@ class SparqlGraphRegistry:
         related_instances_details = []
         for obj in related_instances:
             if not obj.is_removed:
-                related_instances_details.append({
-                    'app_label': obj._meta.app_label,
-                    'model_cls': obj._meta.object_name,
-                    'instance_id': obj.id,
-                })
+                related_instances_details.append(
+                    {
+                        "app_label": obj._meta.app_label,
+                        "model_cls": obj._meta.object_name,
+                        "instance_id": obj.id,
+                    }
+                )
         return related_instances_details
 
     def get_graph(self, instance):
@@ -146,10 +164,10 @@ class SparqlGraphRegistry:
 
     def create_named_graph(self, graph_name):
         self._named_graph = graph_name
-        self.sparql_store.update(f'CREATE GRAPH {self._named_graph}')
+        self.sparql_store.update(f"CREATE GRAPH {self._named_graph}")
 
     def delete_named_graph(self):
-        self.sparql_store.update(f'DROP GRAPH {self._named_graph}')
+        self.sparql_store.update(f"DROP GRAPH {self._named_graph}")
 
     @property
     def graph_name(self):

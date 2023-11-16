@@ -15,7 +15,6 @@ from mcod.resources.link_validation import (
     filename_from_url,
 )
 
-
 scenarios(
     'features/resource_link_validation.feature',
 )
@@ -37,11 +36,11 @@ class TestCheckLinkStatus:
         mock_request = kwargs['mock_request']
         headers = {'Content-Type': 'application/json'}
         mock_request.head(self.url, headers=headers, status_code=504)
-        try:
+        mock_request.get(self.url, headers=headers, status_code=504)
+
+        with pytest.raises(InvalidResponseCode) as e:
             check_link_status(self.url, 'api')
-            raise pytest.fail('No exception occurred. Expected: InvalidResponseCode')
-        except InvalidResponseCode as err:
-            assert err.args[0] == 'Invalid response code: 504'
+        assert e.match('Invalid response code: 504')
 
     @requests_mock.Mocker(kw='mock_request')
     def test_invalid_content_type(self, **kwargs):
