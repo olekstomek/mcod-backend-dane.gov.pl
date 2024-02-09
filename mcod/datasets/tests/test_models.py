@@ -1,18 +1,22 @@
 import time
+from pathlib import Path
 
 import pytest
 from bs4 import BeautifulSoup
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.db.models import FileField
 from django.test import Client
 from django.utils.encoding import smart_str
 from pytest_bdd import scenarios
 
+from mcod.core.tests.helpers.tasks import run_on_commit_events
+from mcod.core.utils import clean_filename
 from mcod.datasets.models import Dataset
 from mcod.organizations.models import Organization
 from mcod.resources.models import Resource
 from mcod.users.models import User, UserFollowingDataset
 
-scenarios('features/dataset_create_resources_files_zip.feature')
+scenarios("features/dataset_create_resources_files_zip.feature")
 
 
 def create_organization(param):
@@ -45,19 +49,23 @@ def create_dataset(param, org):
 
 
 def create_editor(param, org):
-    usr = User.objects.create_user(param, '123!@#qweQWE')
-    usr.state = 'active'
+    usr = User.objects.create_user(param, "123!@#qweQWE")
+    usr.state = "active"
     usr.is_staff = True
     usr.phone = "+48123123123"
     usr.fullname = "Generated User"
-    usr.organizations.set([org, ])
+    usr.organizations.set(
+        [
+            org,
+        ]
+    )
     usr.save()
     return usr
 
 
 @pytest.fixture
 def html_table():
-    html = '''<html>
+    html = """<html>
 <head></head>
 <body>
 <table>
@@ -65,14 +73,14 @@ def html_table():
 <tr>2</tr>
 </table>
 </body>
-</html>'''
+</html>"""
     return html
 
 
 def get_datasets_list(content):
-    soup = BeautifulSoup(content, 'html.parser')
-    table = soup.find('table')
-    rows = table.find_all('tr')
+    soup = BeautifulSoup(content, "html.parser")
+    table = soup.find("table")
+    rows = table.find_all("tr")
     return rows
 
 
@@ -91,32 +99,32 @@ class TestDatasetModel:
     def test_dataset_fields(self, dataset):
         dataset_dict = dataset.__dict__
         fields = [
-            'slug',
-            'title',
-            'url',
-            'notes',
-            'license_id',
-            'organization_id',
-            'customfields',
-            'license_condition_db_or_copyrighted',
-            'license_condition_personal_data',
-            'license_condition_modification',
-            'license_condition_original',
-            'license_condition_responsibilities',
-            'license_condition_cc40_responsibilities',
-            'license_condition_source',
-            'update_frequency',
-            'category_id',
-            'status',
-            'image',
-            'image_alt'
+            "slug",
+            "title",
+            "url",
+            "notes",
+            "license_id",
+            "organization_id",
+            "customfields",
+            "license_condition_db_or_copyrighted",
+            "license_condition_personal_data",
+            "license_condition_modification",
+            "license_condition_original",
+            "license_condition_responsibilities",
+            "license_condition_cc40_responsibilities",
+            "license_condition_source",
+            "update_frequency",
+            "category_id",
+            "status",
+            "image",
+            "image_alt",
         ]
 
         for f in fields:
             assert f in dataset_dict
 
     def test_delete_dataset(self, dataset):
-        assert dataset.status == 'published'
+        assert dataset.status == "published"
         dataset.delete()
         assert dataset.is_removed is True
         with pytest.raises(ObjectDoesNotExist):
@@ -126,10 +134,10 @@ class TestDatasetModel:
     def test_safe_delete_dataset_also_delete_resource(self, dataset_with_resources):
         dataset = dataset_with_resources
         resource = dataset_with_resources.resources.first()
-        assert 'published' == dataset.status
-        assert 'published' == dataset.resources.first().status
+        assert "published" == dataset.status
+        assert "published" == dataset.resources.first().status
         assert resource in dataset.resources.all()
-        assert 'published' == dataset.resources.first().status
+        assert "published" == dataset.resources.first().status
         dataset.delete()
         assert dataset.is_removed is True
         resource = Resource.trash.get(id=resource.id)
@@ -147,7 +155,9 @@ class TestDatasetModel:
         with pytest.raises(ObjectDoesNotExist):
             Resource.objects.get(id=r_id)
 
-    def test_restore_dataset_is_not_restoring_its_resources(self, dataset_with_resources):
+    def test_restore_dataset_is_not_restoring_its_resources(
+        self, dataset_with_resources
+    ):
         dataset = dataset_with_resources
         resource = dataset_with_resources.resources.first()
         assert resource in dataset.resources.all()
@@ -161,20 +171,24 @@ class TestDatasetModel:
         assert resource not in Resource.objects.all()
         assert resource in Resource.trash.all()
 
-    def test_set_draft_for_dataset_also_change_his_resources_to_draft(self, dataset_with_resources):
+    def test_set_draft_for_dataset_also_change_his_resources_to_draft(
+        self, dataset_with_resources
+    ):
         dataset = dataset_with_resources
         resource = dataset_with_resources.resources.first()
         assert resource in dataset.resources.all()
-        assert dataset.status == 'published'
-        assert dataset.resources.all().first().status == 'published'
+        assert dataset.status == "published"
+        assert dataset.resources.all().first().status == "published"
 
         dataset.status = "draft"
         dataset.save()
 
-        assert dataset.status == 'draft'
-        assert dataset.resources.all().first().status == 'draft'
+        assert dataset.status == "draft"
+        assert dataset.resources.all().first().status == "draft"
 
-    def test_dataset_has_unique_regions_from_resources(self, dataset_with_resources, additional_regions):
+    def test_dataset_has_unique_regions_from_resources(
+        self, dataset_with_resources, additional_regions
+    ):
         for res in dataset_with_resources.resources.all():
             res.regions.set(additional_regions)
         assert dataset_with_resources.regions.count() == 4
@@ -187,7 +201,7 @@ class TestDatasetsUserRoles:
         active_editor.organizations.set([institution])
         response = client.get("/")
         assert response.status_code == 200
-        assert '/datasets/' in smart_str(response.content)
+        assert "/datasets/" in smart_str(response.content)
 
     def test_editor_can_go_to_datasets_in_admin_panel(self, active_editor, institution):
         client = Client()
@@ -201,7 +215,7 @@ class TestDatasetsUserRoles:
         client.force_login(admin)
         response = client.get("/")
         assert response.status_code == 200
-        assert '/datasets/' in smart_str(response.content)
+        assert "/datasets/" in smart_str(response.content)
 
     def test_admin_can_go_to_datasets_in_admin_panel(self, admin):
         client = Client()
@@ -209,7 +223,9 @@ class TestDatasetsUserRoles:
         response = client.get("/datasets/")
         assert response.status_code == 200
 
-    def test_editor_should_see_only_datasets_from_his_organization_admin_see_all(self, admin):
+    def test_editor_should_see_only_datasets_from_his_organization_admin_see_all(
+        self, admin
+    ):
         # create organization 1 and 2
         org_1 = create_organization("organization 1")
         org_2 = create_organization("organization 2")
@@ -250,7 +266,7 @@ class TestDatasetsUserRoles:
         response = client.get("/datasets/dataset/")
         datasets = get_datasets_list(response.content)
         assert len(datasets) == 2
-        nr = datasets[1].find('a').get('href').split("/")[3]
+        nr = datasets[1].find("a").get("href").split("/")[3]
         ds = Dataset.objects.get(id=int(nr))
         assert dataset_1 == ds
 
@@ -262,7 +278,7 @@ class TestDatasetsUserRoles:
         response = client.get("/datasets/dataset/")
         datasets = get_datasets_list(response.content)
         assert len(datasets) == 2
-        nr = datasets[1].find('a').get('href').split("/")[3]
+        nr = datasets[1].find("a").get("href").split("/")[3]
         ds = Dataset.objects.get(id=int(nr))
         assert dataset_2 == ds
 
@@ -281,11 +297,12 @@ class TestDatasetsUserRoles:
 
 
 class TestDatasetVerifiedDate:
-
     def test_new_dataset_has_verified_same_as_created(self, dataset):
         assert dataset.verified == dataset.created
 
-    def test_dataset_with_resource_has_verified_same_as_resourve_verified(self, dataset_with_resources):
+    def test_dataset_with_resource_has_verified_same_as_resourve_verified(
+        self, dataset_with_resources
+    ):
         dataset = dataset_with_resources
         resource = dataset.resources.last()
         rs = Resource.objects.get(pk=resource.id)
@@ -293,7 +310,9 @@ class TestDatasetVerifiedDate:
         assert rs in ds.resources.all()
         assert ds.verified == rs.created
 
-    def test_dataset_verified_is_created_after_delete_all_resources(self, dataset_with_resource):
+    def test_dataset_verified_is_created_after_delete_all_resources(
+        self, dataset_with_resource
+    ):
         dataset = dataset_with_resource
         resource = dataset.resources.first()
 
@@ -307,7 +326,9 @@ class TestDatasetVerifiedDate:
         ds = Dataset.objects.get(pk=dataset.id)
         assert ds.verified == dataset.created
 
-    def test_dataset_verified_is_same_as_created_when_all_his_resources_are_draft(self, dataset_with_resource):
+    def test_dataset_verified_is_same_as_created_when_all_his_resources_are_draft(
+        self, dataset_with_resource
+    ):
         dataset = dataset_with_resource
         resource = dataset.resources.first()
 
@@ -320,7 +341,9 @@ class TestDatasetVerifiedDate:
         ds = Dataset.objects.get(pk=dataset.id)
         assert ds.verified == dataset.created
 
-    def test_dataset_verified_change_after_resource_revalidate(self, dataset_with_resource):
+    def test_dataset_verified_change_after_resource_revalidate(
+        self, dataset_with_resource
+    ):
         dataset = dataset_with_resource
         assert dataset.resources.count() == 1
 
@@ -338,7 +361,9 @@ class TestDatasetVerifiedDate:
         assert rs.created == old
         assert ds.verified == old
 
-    def test_reval_of_resource_when_dataset_is_in_draft_state_should_not_change_verified(self, dataset_with_resources):
+    def test_reval_of_resource_when_dataset_is_in_draft_state_should_not_change_verified(
+        self, dataset_with_resources
+    ):
         dataset = dataset_with_resources
         resource = dataset.resources.last()
         rs = Resource.objects.get(pk=resource.id)
@@ -363,3 +388,39 @@ class TestDatasetVerifiedDate:
         ds = Dataset.objects.get(pk=dataset.id)
 
         assert ds.verified == ds.created
+
+
+class TestDatasetArchiveFunctionality:
+    def test_dataset_rename(self, dataset_with_resources_with_mocked_path: Dataset):
+        """
+        This method tests the renaming functionality for dataset archives.
+        It begins by asserting the existence of the current symlink based on the
+        dataset's title. Then, it changes the dataset's title to trigger the renaming
+        operation. Upon saving and refreshing the dataset, it asserts the existence
+        of the newly renamed symlink based on the updated title.
+        """
+        dataset: Dataset = dataset_with_resources_with_mocked_path
+        title: str = clean_filename(dataset.title)
+        abs_media_path: str = dataset.archived_resources_files.storage.location
+        archive_field: FileField = dataset.archived_resources_files.field
+
+        actual_symlink_name: str = archive_field.generate_filename(
+            dataset, f"{title}.zip"
+        )
+        abs_actual_symlink_path = Path(abs_media_path) / actual_symlink_name
+        assert abs_actual_symlink_path.exists()
+
+        # Changing dataset name will trigger task changing symlink name
+        dataset.title = "New title"
+        dataset.save()
+        run_on_commit_events()
+        dataset.refresh_from_db()
+
+        new_title: str = clean_filename(dataset.title)
+        new_symlink_name: str = archive_field.generate_filename(
+            dataset, f"{new_title}.zip"
+        )
+        new_abs_actual_symlink_path = Path(abs_media_path) / new_symlink_name
+
+        assert new_abs_actual_symlink_path.exists()
+        assert not abs_actual_symlink_path.exists()

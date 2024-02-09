@@ -146,6 +146,9 @@ msgstr "Wyświetlanie"
 msgid "Start date cannot be greater than finish date."
 msgstr "Data rozpoczęcia nie może być większa od daty zakończenia."
 
+msgid "Given text contains illegal character. Please revalidate provided data."
+msgstr "Podany tekst zawiera niedozwolony znak. Prosimy o weryfikację wprowadzonych danych."
+
 msgid "Finish date cannot be in the past."
 msgstr "Data zakończenia nie może być w przeszłości."
 

@@ -8,7 +8,6 @@ from mcod.lib.forms.fields import InternalPhoneNumberField, PhoneNumberField
 from mcod.lib.widgets import CKEditorWidget
 from mcod.organizations.models import Organization
 from mcod.users.models import User
-from mcod.unleash import is_enabled
 
 
 class OrganizationForm(forms.ModelForm):
@@ -51,11 +50,7 @@ class OrganizationForm(forms.ModelForm):
     )
     postal_code = PLPostalCodeField(label=_("Postal code"))
     regon = PLREGONField()
-    website = (
-        forms.URLField(label=_("Website"), required=False)
-        if is_enabled("S58_fix_institution_website_not_required.be")
-        else forms.URLField(label=_("Website"))
-    )
+    website = forms.URLField(label=_("Website"), required=False)
 
     status = forms.ChoiceField(
         choices=STATUS_CHOICES,

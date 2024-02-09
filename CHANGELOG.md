@@ -14,6 +14,16 @@
 ### Breaks
 
 
+## 2.31.10 - (2024-01-08)
+---
+
+### Fixes
+* Naprawienie problemu z błędnym generowaniem pliku symlink do archiwum plików zbiorów danych podczas zmiany nazwy zbioru. (OTD-155)
+* Poprawiono aktualizowanie archiwum zbioru danych o wszystkie zasoby. (OTD-155, OTD-196)
+* Wprowadzenie walidacji zasobów (tytułu i opisu) pod względem niedozwolonych znaków. (OTD-131)
+* Rozbicie taska odpowiedzialnego za tworzenie raportów CSV oraz XML na dwa osobne taski. (OTD-131)
+
+
 ## 2.31.9 - (2023-10-26)
 ---
 
