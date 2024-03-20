@@ -64,7 +64,7 @@ def update_related_task(app_label, object_name, pk_set, **kwargs):
     }
 
 
-@extended_shared_task
+@extended_shared_task(max_retries=5, retry_on_errors=(TransportError,))
 def delete_document_task(app_label, object_name, instance_id):
     model = apps.get_model(app_label, object_name)
     registry_proxy = ProxyDocumentRegistry(registry)
@@ -76,7 +76,7 @@ def delete_document_task(app_label, object_name, instance_id):
     }
 
 
-@extended_shared_task
+@extended_shared_task(max_retries=5, retry_on_errors=(TransportError,))
 def delete_with_related_task(related_instances_data, app_label, object_name, instance_id):
     for data in related_instances_data:
         instance = _instance(**data)

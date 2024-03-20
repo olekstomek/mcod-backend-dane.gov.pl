@@ -19,7 +19,9 @@ from django.template.loader import render_to_string
 from django.utils.functional import cached_property
 from django.utils.safestring import mark_safe
 from django.utils.timezone import now
-from django.utils.translation import get_language, gettext_lazy as _, override
+from django.utils.translation import get_language
+from django.utils.translation import gettext_lazy as _
+from django.utils.translation import override
 from model_utils import FieldTracker
 from modeltrans.fields import TranslationField
 
@@ -34,7 +36,8 @@ from mcod.core.storages import get_storage
 from mcod.counters.models import ResourceDownloadCounter, ResourceViewCounter
 from mcod.datasets.managers import DatasetManager, SupplementManager
 from mcod.datasets.signals import remove_related_resources
-from mcod.datasets.tasks import archive_resources_files, change_archive_symlink_name
+from mcod.datasets.tasks import (archive_resources_files,
+                                 change_archive_symlink_name)
 from mcod.regions.models import Region
 from mcod.unleash import is_enabled
 from mcod.watchers.tasks import update_model_watcher_task
@@ -75,7 +78,8 @@ TYPE = (
 
 
 def archives_upload_to(instance, filename):
-    return f"dataset_{instance.pk}/{filename}"
+    """Creates an archive file path."""
+    return f"{instance.archive_folder_name}/{filename}"
 
 
 LICENSE_CONDITION_LABELS = {
@@ -403,14 +407,13 @@ class Dataset(ExtendedModel):
         verbose_name=_("promoting the dataset"), default=False
     )
 
-    _old_title = None
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._old_title = self.title
-
     def __str__(self):
         return self.title
+
+    @property
+    def archive_folder_name(self) -> str:
+        """Returns a dataset folder name for archive files."""
+        return f"dataset_{self.pk}"
 
     def delete(self, using=None, soft=True, permanent=False, *args, **kwargs):
         if self.is_promoted:
@@ -923,12 +926,14 @@ class Dataset(ExtendedModel):
         archive symlink name associated with the dataset.
         """
         if is_enabled("S61_fix_for_dataset_rename_symlink_archive_problem.be"):
-            old_title = self._old_title
-            if self.title != old_title:
+            if self.pk and self.tracker.has_changed("title"):
+                # if the title is modified,trigger an asynchronous task to update the
+                # archive symlink name associated with the dataset.
                 change_archive_symlink_name.apply_async_on_commit(
-                    kwargs=dict(dataset_id=self.pk, old_name=old_title)
+                    kwargs=dict(
+                        dataset_id=self.pk, old_name=self.tracker.previous("title")
+                    )
                 )
-                self.__old_name = self.title
         return super().save(*args, **kwargs)
 
 

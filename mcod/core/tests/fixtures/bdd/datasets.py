@@ -14,28 +14,21 @@ from django.apps import apps
 from django.conf import settings
 from django.test import override_settings
 from pytest_bdd import given, parsers, then, when
-from pytest_mock import MockerFixture
 
 from mcod.categories.factories import CategoryFactory
-from mcod.core.tests.fixtures.bdd.common import (
-    copyfile,
-    create_object,
-    prepare_dbf_file,
-    prepare_file,
-)
+from mcod.core.tests.fixtures.bdd.common import (copyfile, create_object,
+                                                 prepare_dbf_file,
+                                                 prepare_file)
 from mcod.core.tests.helpers.tasks import run_on_commit_events
-from mcod.datasets.factories import (
-    DatasetFactory,
-    SupplementFactory as DatasetSupplementFactory,
-)
+from mcod.datasets.factories import DatasetFactory
+from mcod.datasets.factories import \
+    SupplementFactory as DatasetSupplementFactory
+from mcod.datasets.models import Dataset
 from mcod.datasets.tasks import send_dataset_update_reminder
 from mcod.harvester.factories import DataSourceFactory
-from mcod.resources.factories import (
-    ChartFactory,
-    ResourceFactory,
-    SupplementFactory as ResourceSupplementFactory,
-)
-from mcod.resources.models import Resource
+from mcod.resources.factories import ChartFactory, ResourceFactory
+from mcod.resources.factories import \
+    SupplementFactory as ResourceSupplementFactory
 from mcod.showcases.factories import ShowcaseFactory
 from mcod.special_signs.factories import SpecialSignFactory
 from mcod.tags.factories import TagFactory
@@ -57,32 +50,6 @@ def create_dataset(dataset):
 @given("removed dataset")
 def removed_dataset():
     _dataset = DatasetFactory.create(is_removed=True, title="Removed dataset")
-    return _dataset
-
-
-@pytest.fixture
-def dataset_with_resources():
-    _dataset = DatasetFactory.create()
-    ResourceFactory.create_batch(2, dataset=_dataset)
-    run_on_commit_events()
-    return _dataset
-
-
-@pytest.fixture
-def dataset_with_resources_with_mocked_path(
-    mocker: MockerFixture, tmp_path: str
-) -> Resource:
-    """
-    Fixture for generating a dataset with a resources. Overriding a media location
-    property for dataset archives, ensuring it returns a temporary path provided by the
-    'tmp_path' fixture. It is basically duplicated fixture dataset_with_resources,
-    adding an extra mocker.
-    """
-    mocker_object = "mcod.core.storages.DatasetsArchivesStorage.location"
-    mocker.patch(mocker_object, return_value=tmp_path, new_callable=mocker.PropertyMock)
-    _dataset = DatasetFactory.create()
-    ResourceFactory.create_batch(2, dataset=_dataset)
-    run_on_commit_events()
     return _dataset
 
 
@@ -341,7 +308,6 @@ def buzzfeed_dataset(
     fakenews_tag,
     top50_tag,
 ):
-    from mcod.datasets.models import Dataset
 
     ds = Dataset.objects.create(
         title="Analizy, dane i statystki stworzone przez Buzzfeed.com",

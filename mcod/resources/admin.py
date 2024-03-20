@@ -44,6 +44,7 @@ from mcod.resources.models import (
     Supplement,
     supported_formats_choices,
 )
+from mcod.unleash import is_enabled
 
 rules_names = {x[0]: x[1] for x in settings.VERIFICATION_RULES}
 
@@ -470,14 +471,37 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):
         return fieldsets
 
     def get_form(self, request, obj=None, **kwargs):
+        if is_enabled('S62_fix_admin_resource_data_change_type.be'):
+            defaults = dict(kwargs)
+            if obj is None:
+                defaults['form'] = self.add_form
+                return super().get_form(request, obj=obj, **defaults)
+
+            default_factory = super().get_form(request, obj=obj, **defaults)
+            if obj.is_imported:
+                return self.modify_change_form_for_imported(default_factory)
+
+            return default_factory
+        else:
+            defaults = {}
+            if obj is None:
+                defaults['form'] = self.add_form
+            defaults.update(kwargs)
+            return super().get_form(request, obj=obj, **defaults)
+
+    @staticmethod
+    def modify_change_form_for_imported(modelform_factory):
         """
-        Use special form during user creation
+        Return the factory with the modified ChangeResourceForm due to the fact
+        that some fields aren't editable for imported resources.
         """
-        defaults = {}
-        if obj is None:
-            defaults['form'] = self.add_form
-        defaults.update(kwargs)
-        return super().get_form(request, obj=obj, **defaults)
+        def factory(*args, **kwargs):
+            form = modelform_factory(*args, **kwargs)
+            form.fields['has_dynamic_data'].required = False
+            form.fields['has_high_value_data'].required = False
+            form.fields['has_research_data'].required = False
+            return form
+        return factory
 
     def get_history(self, obj):
         history = super().get_history(obj)

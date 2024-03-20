@@ -15,7 +15,7 @@ services:
       backend:
         ipv4_address: 172.18.18.18
     ports:
-      - 5432:5432
+      - "5432:5432"
 
   mcod-rabbitmq:
     image: rabbitmq:3.9.13-management
@@ -24,7 +24,8 @@ services:
     volumes:
       - rabbitmq_vol:/var/lib/rabbitmq
     ports:
-      - 5672:5672
+      - "5672:5672"
+      - "15672:15672"
     networks:
       backend:
         ipv4_address: 172.18.18.19
@@ -36,7 +37,7 @@ services:
     volumes:
       - redis_vol:/data
     ports:
-      - 6379:6379
+      - "6379:6379"
     networks:
       backend:
         ipv4_address: 172.18.18.20
@@ -61,7 +62,7 @@ services:
     volumes:
       - elastic_vol:/usr/share/elasticsearch/data
     ports:
-      - 9200:9200
+      - "9200:9200"
     networks:
       backend:
         ipv4_address: 172.18.18.21
@@ -71,8 +72,8 @@ services:
     image: mailhog/mailhog
     user: root
     ports:
-      - 8025:8025
-      - 1025:1025
+      - "8025:8025"
+      - "1025:1025"
     networks:
       backend:
         ipv4_address: 172.18.18.22
@@ -82,7 +83,7 @@ services:
     image: stain/jena-fuseki:3.14.0
     restart: "no"
     ports:
-      - 3030:3030
+      - "3030:3030"
     environment:
       - ADMIN_PASSWORD=Britenet.1
     volumes:
@@ -91,29 +92,17 @@ services:
       backend:
         ipv4_address: 172.18.18.23
 
-  mcod-frontend:
-    container_name: mcod-frontend
-    image: registry.dane.gov.pl/mcod/frontend/frontend-ssr:dev
-    restart: always
-    ports:
-      - 4000:4000
-    environment:
-      - WORKERS=1
-    networks:
-      backend:
-        ipv4_address: 172.18.18.50
-
   mcod-nginx:
     container_name: mcod-nginx
     image: nginx:1.16
     restart: "no"
     volumes:
       - $PWD/statics:/usr/share/nginx/html/statics
-      - $PWD/test-data/media:/usr/share/nginx/html/media
       - $PWD/configs/nginx:/etc/nginx/conf.d:ro
+      - $PWD/media:/usr/share/nginx/html/media
     ports:
-      - 80:80
-      - 443:443
+      - "80:80"
+      - "443:443"
     env_file:
       - .env
     networks:
@@ -126,7 +115,7 @@ services:
     container_name: mcod-discourse
     image: 'docker.io/bitnami/discourse:2-debian-10'
     ports:
-      - 3000:3000
+      - "3000:3000"
     depends_on:
       - mcod-db
       - mcod-redis
@@ -152,7 +141,7 @@ services:
     container_name: mcod-discourse-sidekiq
     image: 'docker.io/bitnami/discourse:2-debian-10'
     ports:
-      - 3001:3000
+      - "3001:3000"
     depends_on:
       - mcod-db
       - mcod-redis
@@ -186,7 +175,6 @@ networks:
         - subnet: 172.18.18.0/24
 
 volumes:
-  frontend_vol:
   postgres_vol:
   rabbitmq_vol:
   elastic_vol:

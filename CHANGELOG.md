@@ -14,6 +14,39 @@
 ### Breaks
 
 
+## 2.32.0 - (2024-03-12)
+---
+
+### New
+
+* Instalacja pakietów za pomocą pipenv lokalnie oraz w dokerze. (OTD-27)
+* Testy uruchamiane przez pipenv. (OTD-27)
+* Dokładne odwzorowanie środowiska w Pipfile.lock. (OTD-27)
+* Skrypt `redefine_datasets_symlink` do aktualizacji symlink'ów w folderze datasets archive. (OTD-303)
+* Fixture dla dataset. (OTD-303)
+* Logger'y dla cyklicznych zadań. (OTD-303)
+* Testy dla komendy `redefine_datasets_symlink`. (OTD-303)
+* Dodanie metody dla modelu datasets generującej nazwę folderu dla archiwum zbiorów. (OTD-303)
+
+### Changes
+
+* Aktualizacja `README.md`. (OTD-27, OTD-140)
+* Konfiguracje aplikacji dla Nginx'a. (OTD-140)
+* Nowy certyfikat (data ważności: 10 lat) dla Nginx`a. (OTD-140)
+* Dodanie pliku konfiguracyjnego dla Postgres'a `configs/postgresql`. (OTD-140)
+* Zmiany w `docker compose`. (OTD-140)
+* Aktualizacja `.gitlab-ci.yml` związana z bezpieczeństwem. (OTD-140)
+
+### Fixes
+
+* Przeniesiono fixture dataset'ów z modułu BBD do nowego `datasets_fixtures`. (OTD-140)
+* Zmiana funkcji `archives_upload_to`. (OTD-140)
+* Poprawka umożliwiająca zmiany typów danych w Panelu Admina, dla zasobów importowanych Harvesterem ze źródła typu XML. (OTD-270)
+
+### Removed
+
+* Nie wymagane `requirements-devel.txt` oraz `requirements-test.txt` na rzecz Pipenv. (OTD-27)
+
 ## 2.31.10 - (2024-01-08)
 ---
 

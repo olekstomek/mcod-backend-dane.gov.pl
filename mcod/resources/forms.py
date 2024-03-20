@@ -1,7 +1,7 @@
 import os
 
-from dal import autocomplete, forward
 import magic
+from dal import autocomplete, forward
 from dateutil.utils import today
 from django import forms
 from django.contrib.admin.widgets import AdminDateWidget, FilteredSelectMultiple
@@ -23,6 +23,7 @@ from mcod.regions.fields import RegionsMultipleChoiceField
 from mcod.resources.archives import is_password_protected_archive_file
 from mcod.resources.models import SUPPORTED_FILE_EXTENSIONS, Resource, ResourceFile, Supplement
 from mcod.special_signs.models import SpecialSign
+from mcod.unleash import is_enabled
 
 
 class ResourceSourceSwitcher(forms.widgets.HiddenInput):
@@ -52,7 +53,7 @@ class ResourceListForm(forms.ModelForm):
 def names_repr(names):
     names = map(_, names)
     names = map(str, names)
-    names = ", ".join(list(names))
+    names = ', '.join(list(names))
     return names
 
 
@@ -84,7 +85,7 @@ class MapsJSONField(JSONField):
                     f'{_("element")} {v} {_("occured more than once")}. {_("Redefine the map by selecting only once the required element of the map set.")}')  # noqa
 
     def from_different_sets(self, names):
-        groups = {'coordinates': ["b", "l"],
+        groups = {'coordinates': ['b', 'l'],
                   'uaddress': ['uaddress'],
                   'address': ['house_number', 'place', 'postal_code', 'street']}
         membership = set()
@@ -97,17 +98,17 @@ class MapsJSONField(JSONField):
                 if p in g:
                     membership.add(k)
         if len(membership) > 1:
-            err_msg = _("Selected items {} come from different map data sets.").format(names_repr(names))
+            err_msg = _('Selected items {} come from different map data sets.').format(names_repr(names))
             err_msg += str(_(' Redefine the map by selecting items from only one map data set.'))
             raise ValidationError(err_msg)
 
     def complete_group(self, names):
         groups = [
-            ({"label", "b", "l"}, 'geographical coordinates'),
-            ({"label", 'uaddress'}, 'universal address'),
-            ({"label", "place", "postal_code"}, 'address'),
-            ({"label", "house_number", "place", "postal_code"}, 'address'),
-            ({"label", 'house_number', 'place', 'postal_code', 'street'}, 'address'),
+            ({'label', 'uaddress'}, 'universal address'),
+            ({'label', 'place', 'postal_code'}, 'address'),
+            ({'label', 'b', 'l'}, 'geographical coordinates'),
+            ({'label', 'house_number', 'place', 'postal_code'}, 'address'),
+            ({'label', 'house_number', 'place', 'postal_code', 'street'}, 'address'),
         ]
         if names:
             names = set(names)
@@ -117,18 +118,18 @@ class MapsJSONField(JSONField):
                     return
 
             if names == {'label'}:
-                if self.widget.instance.format == "shp":
+                if self.widget.instance.format == 'shp':
                     return
-                raise ValidationError(_("The map data set is incomplete."))
+                raise ValidationError(_('The map data set is incomplete.'))
             else:
                 for g in groups:
                     if names.issubset(g[0]):
                         missing = names_repr(g[0] - names)
-                        err_msg = _("Missing elements: {} for the map data set: {}.").format(missing, _(g[1]))
-                        err_msg += str(_(" Redefine the map by selecting the selected items."))
+                        err_msg = _('Missing elements: {} for the map data set: {}.').format(missing, _(g[1]))
+                        err_msg += str(_(' Redefine the map by selecting the selected items.'))
                         raise ValidationError(err_msg)
 
-                raise ValidationError(_("The map data set is incomplete."))
+                raise ValidationError(_('The map data set is incomplete.'))
 
     @staticmethod
     def coordinates_should_be_numeric(fields):
@@ -136,9 +137,9 @@ class MapsJSONField(JSONField):
             geo = f.get('geo')
             f_type = f.get('type')
             if geo == 'l' and f_type not in ['integer', 'number']:
-                raise ValidationError(_("Longitude should be a number"))
+                raise ValidationError(_('Longitude should be a number'))
             if geo == 'b' and f_type not in ['integer', 'number']:
-                raise ValidationError(_("Latitude should be a number"))
+                raise ValidationError(_('Latitude should be a number'))
 
 
 class SpecialSignMultipleChoiceField(forms.ModelMultipleChoiceField):
@@ -148,59 +149,66 @@ class SpecialSignMultipleChoiceField(forms.ModelMultipleChoiceField):
 
 
 class ResourceForm(forms.ModelForm):
-    title = forms.CharField(widget=forms.Textarea(attrs={'style': 'width: 99%', 'rows': 2}), label=_("Title"))
+    title = forms.CharField(
+        widget=forms.Textarea(attrs={'style': 'width: 99%', 'rows': 2}),
+        label=_('Title'),
+    )
     title_en = forms.CharField(
-        widget=forms.Textarea(attrs={'style': 'width: 99%', 'rows': 2}), label=_("Title") + " (EN)", required=False)
+        widget=forms.Textarea(attrs={'style': 'width: 99%', 'rows': 2}),
+        label=_('Title') + ' (EN)',
+        required=False,
+    )
     description = forms.CharField(
         widget=CKEditorWidget,
-        label=_("Description"),
+        label=_('Description'),
         min_length=settings.DESCRIPTION_FIELD_MIN_LENGTH,
         max_length=settings.DESCRIPTION_FIELD_MAX_LENGTH,
         validators=[ContainsLetterValidator()],
     )
     description_en = forms.CharField(
         widget=CKEditorWidget,
-        label=_("Description") + " (EN)",
+        label=_('Description') + ' (EN)',
         required=False,
         min_length=settings.DESCRIPTION_FIELD_MIN_LENGTH,
         max_length=settings.DESCRIPTION_FIELD_MAX_LENGTH,
         validators=[ContainsLetterValidator()],
     )
-
     special_signs = SpecialSignMultipleChoiceField(
-        queryset=SpecialSign.objects.published(), required=False, label=_('Special Signs'),
         widget=FilteredSelectMultiple(_('special signs'), False),
+        label=_('Special Signs'),
+        required=False,
+        queryset=SpecialSign.objects.published(),
     )
-    regions = RegionsMultipleChoiceField(required=False, label=_('Regions'))
+    regions = RegionsMultipleChoiceField(
+        label=_('Regions'),
+        required=False,
+    )
     has_dynamic_data = forms.ChoiceField(
-        required=True,
+        widget=CheckboxSelect(attrs={'class': 'inline'}),
         label=_('dynamic data').capitalize(),
         choices=[(True, _('Yes')), (False, _('No'))],
         help_text=(
             'Wskazanie TAK oznacza, że zasób jest traktowany jako dane dynamiczne.<br><br>Jeżeli chcesz się '
             'więcej dowiedzieć na temat danych dynamicznych <a href="%(url)s" target="_blank">przejdź do strony'
             '</a>') % {'url': f'{settings.BASE_URL}{settings.DYNAMIC_DATA_MANUAL_URL}'},
-        widget=CheckboxSelect(attrs={'class': 'inline'}),
     )
     has_high_value_data = forms.ChoiceField(
-        required=True,
+        widget=CheckboxSelect(attrs={'class': 'inline'}),
         label=_('has high value data').capitalize(),
         choices=[(True, _('Yes')), (False, _('No'))],
         help_text=(
             'Wskazanie TAK oznacza, że zasób jest traktowany jako dane o wysokiej wartości.<br><br>Jeżeli chcesz '
             'się więcej dowiedzieć na temat danych o wysokiej wartości <a href="%(url)s" target="_blank">przejdź '
             'do strony</a>') % {'url': f'{settings.BASE_URL}{settings.HIGH_VALUE_DATA_MANUAL_URL}'},
-        widget=CheckboxSelect(attrs={'class': 'inline'}),
     )
     has_research_data = forms.ChoiceField(
-        required=True,
+        widget=CheckboxSelect(attrs={'class': 'inline'}),
         label=_('has research data').capitalize(),
         choices=[(True, _('Yes')), (False, _('No'))],
         help_text=(
             'Wskazanie TAK oznacza, że zasób jest traktowany jako dane badawcze.<br><br>Jeżeli chcesz '
             'się więcej dowiedzieć na temat danych badawczych <a href="%(url)s" target="_blank">przejdź '
             'do strony</a>') % {'url': f'{settings.BASE_URL}{settings.RESEARCH_DATA_MANUAL_URL}'},
-        widget=CheckboxSelect(attrs={'class': 'inline'}),
     )
 
     def __init__(self, *args, **kwargs):
@@ -220,7 +228,12 @@ class ResourceForm(forms.ModelForm):
         data_date_err = Resource.get_auto_data_date_errors(data)
         if data_date_err:
             self.add_error(data_date_err.field_name, data_date_err.message)
-        if data['status'] == 'published' and dataset and dataset.status == 'draft':
+
+        if is_enabled('S62_fix_admin_resource_data_change_type.be'):
+            s62_data_status = data.get('status')
+        else:
+            s62_data_status = data['status']
+        if s62_data_status == 'published' and dataset and dataset.status == 'draft':
             error_message = _(
                 "You can't set status of this resource to published, because it's dataset is still a draft. "
                 "You should first published that dataset: ")
@@ -234,17 +247,15 @@ class ResourceForm(forms.ModelForm):
 class ChangeResourceForm(ResourceForm):
     tabular_data_schema = JSONField(
         widget=ResourceDataSchemaWidget(),
-        required=False
+        required=False,
     )
-
     data_rules = JSONField(
         widget=ResourceDataRulesWidget(),
-        required=False
+        required=False,
     )
-
     maps_and_plots = MapsJSONField(
         widget=ResourceMapsAndPlotsWidget(),
-        required=False
+        required=False,
     )
 
     def __init__(self, *args, **kwargs):
@@ -275,24 +286,32 @@ class ChangeResourceForm(ResourceForm):
 
     class Meta:
         model = Resource
-        exclude = ["old_resource_type", ]
+        exclude = ['old_resource_type', ]
         labels = {
-            'created': _("Availability date"),
-            'modified': _("Modification date"),
-            'verified': _("Update date"),
+            'created': _('Availability date'),
+            'modified': _('Modification date'),
+            'verified': _('Update date'),
             'is_chart_creation_blocked': _('Do not allow user charts to be created'),
             'main_file': _('File'),
-            'csv_converted_file': _("File as CSV"),
-            'jsonld_converted_file': _("File as JSON-LD"),
+            'csv_converted_file': _('File as CSV'),
+            'jsonld_converted_file': _('File as JSON-LD'),
             'main_file_info': _('File info'),
             'main_file_encoding': _('File encoding')
         }
 
 
 class LinkOrFileUploadForm(forms.ModelForm):
-    switcher = ResourceSwitcherField(label=_('Data source'), widget=ResourceSourceSwitcher)
-    file = forms.FileField(label=_('File'), widget=ResourceFileWidget)
-    link = forms.URLField(widget=ResourceLinkWidget(attrs={'style': 'width: 99%'}))
+    switcher = ResourceSwitcherField(
+        widget=ResourceSourceSwitcher,
+        label=_('Data source'),
+    )
+    file = forms.FileField(
+        widget=ResourceFileWidget,
+        label=_('File'),
+    )
+    link = forms.URLField(
+        widget=ResourceLinkWidget(attrs={'style': 'width: 99%'}),
+    )
 
     def clean_link(self):
         value = self.cleaned_data.get('link')
@@ -316,11 +335,23 @@ class LinkOrFileUploadForm(forms.ModelForm):
 
 
 class AddResourceForm(ResourceForm, LinkOrFileUploadForm):
-    data_date = forms.DateField(initial=today, widget=AdminDateWidget, label=_("Data date"))
-    from_resource = forms.ModelChoiceField(queryset=Resource.objects.all(), widget=forms.HiddenInput(), required=False)
-    link = forms.URLField(widget=ResourceLinkWidget(attrs={'style': 'width: 99%', 'placeholder': 'https://'}))
-
-    regions_ = RegionsMultipleChoiceField(required=False, label=_('Regions'))
+    data_date = forms.DateField(
+        widget=AdminDateWidget,
+        label=_("Data date"),
+        initial=today,
+    )
+    from_resource = forms.ModelChoiceField(
+        widget=forms.HiddenInput(),
+        required=False,
+        queryset=Resource.objects.all(),
+    )
+    link = forms.URLField(
+        widget=ResourceLinkWidget(attrs={'style': 'width: 99%', 'placeholder': 'https://'}),
+    )
+    regions_ = RegionsMultipleChoiceField(
+        required=False,
+        label=_('Regions'),
+    )
 
     def clean_link(self):
         link = super().clean_link()

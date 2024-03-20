@@ -391,7 +391,7 @@ class TestDatasetVerifiedDate:
 
 
 class TestDatasetArchiveFunctionality:
-    def test_dataset_rename(self, dataset_with_resources_with_mocked_path: Dataset):
+    def test_dataset_rename(self, dataset_with_resources: Dataset):
         """
         This method tests the renaming functionality for dataset archives.
         It begins by asserting the existence of the current symlink based on the
@@ -399,7 +399,7 @@ class TestDatasetArchiveFunctionality:
         operation. Upon saving and refreshing the dataset, it asserts the existence
         of the newly renamed symlink based on the updated title.
         """
-        dataset: Dataset = dataset_with_resources_with_mocked_path
+        dataset: Dataset = dataset_with_resources
         title: str = clean_filename(dataset.title)
         abs_media_path: str = dataset.archived_resources_files.storage.location
         archive_field: FileField = dataset.archived_resources_files.field

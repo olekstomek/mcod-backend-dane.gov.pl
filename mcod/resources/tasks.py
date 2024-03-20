@@ -10,14 +10,10 @@ from elasticsearch.helpers.errors import BulkIndexError
 
 from mcod.core.tasks import extended_shared_task
 from mcod.resources.archives import ArchiveReader, UnsupportedArchiveError
-from mcod.resources.file_validation import (
-    PasswordProtectedArchiveError,
-    UnknownFileFormatError,
-)
-from mcod.resources.indexed_data import (
-    FileEncodingValidationError,
-    ResourceDataValidationError,
-)
+from mcod.resources.file_validation import (PasswordProtectedArchiveError,
+                                            UnknownFileFormatError)
+from mcod.resources.indexed_data import (FileEncodingValidationError,
+                                         ResourceDataValidationError)
 from mcod.resources.link_validation import check_link_scheme
 
 logger = logging.getLogger("mcod")
@@ -33,6 +29,15 @@ def process_resource_from_url_task(
     cancel_auto_data_date=False,
     **kwargs,
 ):
+    """
+    Downloads and processes a file for a given resource ID.
+    Note:
+    - If the resource is imported from CKAN, it skips processing
+        and returns an empty dictionary.
+    - If 'update_file' is True, it downloads the file, determines the resource type, and
+      calls 'process_for_separate_file_model' for further processing.
+    """
+    logger.info("Started process_resource_from_url_task task.")
     Resource = apps.get_model("resources", "Resource")
     resource = Resource.raw.get(id=resource_id)
     if resource.is_imported_from_ckan:
@@ -42,6 +47,7 @@ def process_resource_from_url_task(
         return {}
 
     if update_file:
+        logger.debug(f"Downloading file for resource: {resource.id}")
         resource_type, options = resource.download_file()
         if resource_type == "website" and resource.forced_api_type:
             logger.debug("Resource of type 'website' forced into type 'api'!")

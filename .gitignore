@@ -267,3 +267,5 @@ frontend/
 requeststest
 
 .ipynb_checkpoints/
+
+mcod/api_key.txt

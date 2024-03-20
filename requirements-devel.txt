@@ -1,7 +1,0 @@
--r requirements-common.txt
--r requirements-test.txt
-pep8
-autopep8
-pylint
-jedi==0.16.0
-pre-commit

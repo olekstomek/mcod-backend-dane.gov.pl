@@ -2,9 +2,9 @@
 
 ## Instalacja narzędzi docker oraz docker-compose.
 
-Opis instalacji Dockera: https://docs.docker.com/install
+Opis instalacji Docker'a: https://docs.docker.com/install
 
-Opis istalacji docker-compose: https://docs.docker.com/compose/install
+Opis instalacji docker-compose: https://docs.docker.com/compose/install
 
 ## Instalacja systemu kontroli wersji Git.
 
@@ -19,14 +19,25 @@ https://git-scm.com/book/en/v2/Getting-Started-Installing-Git
     $ git clone https://gitlab.dane.gov.pl/mcod/frontend.git
     $ git clone https://gitlab.dane.gov.pl/mcod/test-data.git
 
+## Konfiguracja zmiennych środowiskowych:
+
+Aby projekt działał prawidłowo, należy skopiować zawartość pliku env.sample do nowo utworzonego pliku .env.
+
+## Konfiguracja Django:
+
+Aby projekt działał prawidłowo, należy skopiować zawartość pliku `mcod/settings/local.py.sample` do nowo utworzonego pliku `mcod/settings/local.py`.
+Konfiguracja Django realizowana jest na podstawie ustawień z pliku `mcod/settings/base.py`, które są nadpisywane ustawieniem z pliku `mcod/settings/local.py`.
+
 ## Uruchomienie kontenerów Docker.
 
 Proces budowania środowiska może trwać nawet kilkadziesiąt minut w zależności od hosta.
 
-    $ docker-compose up -d mcod-db
-    $ docker-compose exec mcod-db dropdb mcod --username=mcod
-    $ docker-compose exec mcod-db createdb mcod -O mcod --username=mcod
-    $ docker-compose up -d mcod-db mcod-elasticsearch mcod-nginx mcod-rabbitmq mcod-rdfdb mcod-redis
+    $ docker compose up -d mcod-db
+    $ docker compose exec mcod-db dropdb mcod --username=mcod
+    $ docker compose exec mcod-db createdb mcod -O mcod --username=mcod
+    $ docker compose up -d mcod-db mcod-elasticsearch mcod-nginx mcod-rabbitmq mcod-rdfdb mcod-redis
+
+**Uwaga:** Aby kontenery uruchomiły się poprawnie, należy dodać zmienną środowiskową do pliku .env: PWD określającą ścieżkę absolutną do projektu.
 
 W przypadku korzystania z IDE PyCharm (Professional) możliwe jest dodanie konfiguracji dotyczącej zarządzania kontenerami.
 
@@ -34,21 +45,23 @@ Więcej: https://www.jetbrains.com/help/pycharm/docker-compose.html#working
 
 ## Przygotowanie i uruchomienie wirtualnego środowiska
 
-    $ python3 -m venv venv
-    $ source venv/bin/activate
-    (venv) $ pip install -r requirements-devel.txt
+    $ pip install -I pipenv
+    $ pipenv run pip install setuptools"<58"
+    $ pipenv install --dev
+    $ exit
+    $ pipenv shell
 
 ## Zaaplikowanie migracji i inicjalnych danych
 
-    (venv) $ python manage.py init_mcod_db
+    (backend) $ python manage.py init_mcod_db
 
 ## Utworzenie indeksów w ES
 
-    (venv) $ python manage.py search_index --rebuild -f
+    (backend) $ python manage.py search_index --rebuild -f
 
 ## Rewalidacja zasobów
 
-    (venv) $ python manage.py validate_resources --async
+    (backend) $ python manage.py validate_resources --async
 
 W przypadku użycia flagi `async` należy najpierw uruchomić Celery (instrukcja niżej), gdyż rewalidacja będzie odbywać się w ramach tasków Celery.
 
@@ -56,23 +69,23 @@ W przypadku użycia flagi `async` należy najpierw uruchomić Celery (instrukcja
 
 Aby uruchomić wszystkie usługi w katalogu projektu `backend` wykonaj:
 
-    $ docker-compose up -d
+    $ docker compose up -d
 
 Opcjonalnie można uruchamiać tylko wybrane usługi wyspecyfikowane jako parametr polecenia:
 
-    $ docker-compose up -d mcod-db mcod-elasticsearch
+    $ docker compose up -d mcod-db mcod-elasticsearch
 
 Aby zatrzymać wybraną usługę, w katalogu projektu `backend` wykonaj:
 
-    $ docker-compose stop mcod-elasticsearch
+    $ docker compose stop mcod-elasticsearch
 
-Aby zatrzymać usługę łącznie z usunięciem kontenera, w katalogu `backend` wykonaj:
+Aby zatrzymać usługę łącznie z usunięciem kontenera, w katalogu `backend` wykonaj:
 
-    $ docker-compose down mcod-db
+    $ docker compose down mcod-db
 
-Aby zatrzymać usługę łącznie z usunięciem kontenera oraz powiązanych z nim wolumenów (całkowite usunięcie usługi), w katalogu `backend` wykonaj:
+Aby zatrzymać usługę łącznie z usunięciem kontenera oraz powiązanych z nim wolumenów (całkowite usunięcie usługi), w katalogu `backend` wykonaj:
 
-    $ docker-compose down -v mcod-db
+    $ docker compose down -v mcod-db
 
 ## Ustawienia lokalne - przypisanie nazw maszyn do kontenera mcod-nginx.
 
@@ -80,20 +93,28 @@ Dodaj mapowanie adresu IP:
 
     Adres IP: 172.18.18.100
 
-do nazw maszyn:
+Do nazw maszyn:
 
     mcod.local
     api.mcod.local
     admin.mcod.local
     cms.mcod.local
 
-oraz dodaj mapowanie adresu IP:
+Oraz dodaj mapowanie adresu IP:
 
     Adres IP: 172.18.18.23
 
-do maszyny:
+Do maszyny:
 
     mcod-rdfdb
+
+## Ustawienia certyfikatów mcod-nginx.
+
+Aby biblioteka certifi poprawnie używała certyfikatów nginx, należy dodać odpowiedni wpis do pliku cacert.pem.
+Aby to zrobić, należy uruchomić komendę:
+
+    (backend) $ python manage.py configure_nginx_certs
+
 
 ## Ręcznie uruchamianie usług
 
@@ -104,11 +125,11 @@ Poza specyficznymi dla każdej usługi zmiennymi środowiskowymi, dla wszystkich
     ENVIRONMENT=local;
     NO_REPLY_EMAIL=env@test.local;
     ALLOWED_HOSTS=*;
-    BASE_URL=http://mcod.local;
-    API_URL=http://api.mcod.local;
-    ADMIN_URL=http://admin.mcod.local;
-    CMS_URL=http://cms.mcod.local;
-    API_URL_INTERNAL=http://api.mcod.local;
+    BASE_URL=https://mcod.local;
+    API_URL=https://api.mcod.local;
+    ADMIN_URL=https://admin.mcod.local;
+    CMS_URL=https://cms.mcod.local;
+    API_URL_INTERNAL=https://api.mcod.local;
     DEBUG=yes;
 
 ### Panel administracyjny (admin.mcod.local)
@@ -130,7 +151,7 @@ Poza specyficznymi dla każdej usługi zmiennymi środowiskowymi, dla wszystkich
 
 #### Uruchamianie
 
-    (venv) $ python manage.py runserver 0:8001
+    (backend) $ python manage.py runserver 0:8001
 
 Po uruchomieniu usługi, pod adresem https://admin.mcod.local będzie dostępny panel administracyjny.
 Możliwe jest zalogowanie się na konta 2 użytkowników:
@@ -140,7 +161,7 @@ Możliwe jest zalogowanie się na konta 2 użytkowników:
 
 ### Usługa API (api.mcod.local)
 
-    (venv) $ python -m werkzeug.serving --bind 0:8000 --reload --debug mcod.api:app
+    (backend) $ python -m werkzeug.serving --bind 0:8000 --reload --debug mcod.api:app
 
 ### Usługa CMS (cms.mcod.local)
 
@@ -150,16 +171,14 @@ Możliwe jest zalogowanie się na konta 2 użytkowników:
 
 #### Uruchamianie
 
-    (venv) $ python manage.py runserver 0:8002
+    (backend) $ python manage.py runserver 0:8002
 
-Po uruchomieniu usługi, będzie ona dostępna pod adresem https://cms.mcod.local/admin/
+Po uruchomieniu usługi będzie ona dostępna pod adresem https://cms.mcod.local/admin/
 
 
 ### Aplikacja WWW - frontend (mcod.local)
 
-    $ docker-compose up -d mcod-frontend
-
-Po uruchomieniu usługi, po upływie ok 1 minuty, pod adresem https://www.mcod.local bedzie dostępna aplikacja WWW - portal Otwarte Dane.
+Instrukcja uruchomienia frontend w pliku `frontend/README.md`
 
 Do prawidłowego funkcjonowania niezbędne jest uruchomienie usługi API.
 
@@ -173,40 +192,58 @@ Do prawidłowego funkcjonowania niezbędne jest uruchomienie usługi API.
 
 Uruchomienie usługi jest niezbędne, jeżeli zamierzamy korzystać z zadań asynchronicznych, takich jak wysyłanie maili czy walidacja plików zasobów.
 
-    (venv) $ python -m celery --app=mcod.celeryapp:app worker -l DEBUG -E -Q default,resources,indexing,periodic,newsletter,notifications,search_history,watchers,harvester,indexing_data
+    (backend) $ python -m celery --app=mcod.celeryapp:app worker -l DEBUG -E -Q default,resources,indexing,periodic,newsletter,notifications,search_history,watchers,harvester,indexing_data
+
+### Usługa discourse
+
+#### Pierwsza konfiguracja
+
+    (backend) python manage.py set_up_forum --file /.../backend/data/discourse/settings.json --theme_path /.../backend/data/discourse/discourse-otwarte-dane-theme.zip --password bitnami123 --username user
+
+#### Ustawienie API_KEY
+
+Po wykonaniu powyższej komendy utworzy się plik api_key.txt w folderze mcod/. Zawartość pliku należy przekopiować i wkleić do zmiennej DISCOURSE_API_KEY w pliku .env
+
+#### Kolejna konfiguracja
+
+Pierwsza konfiguracja nie wykonała poprawnie kroku sync_user, bo brakowało utworzonego klucza API_KEY, stąd trzeba wykonać ten krok ponownie.
+
+
+    (backend) python manage.py set_up_forum --step_name sync_users
+
 
 ## Inne przydatne polecenia.
 
 ### Uruchamianie testów jednostkowych
 
-    (venv) $ tox
+    (backend) $ tox
 
-### Reindeksacja wszystkich danych
+### Re-indeksacja wszystkich danych
 
-    (venv) $ python manage.py search_index --rebuild
+    (backend) $ python manage.py search_index --rebuild
 
-### Ponowna walidacja zasobów o danych identyfikatorach <id_1,...,id_N>
+### Ponowna walidacja zasobów o danych identyfikatorach <id_1,..., id_N>
 
-    (venv) $ python manage.py validate_resources --where 'id in (<id_1,...,id_N>)'
+    (backend) $ python manage.py validate_resources --where 'id in (<id_1,...,id_N>)'
 
 ### Ponowna walidacja zasobu o danym identyfikatorze <id>
 
-    (venv) $ python manage.py validate_resources --where id=<id>
+    (backend) $ python manage.py validate_resources --where id=<id>
 
 ### Zaindeksowanie pliku zasobu (wygenerowanie danych tabelarycznych)
 
-    (venv) $ python manage.py index_file --pks <id_1,...,id_N>
+    (backend) $ python manage.py index_file --pks <id_1,...,id_N>
 
 ### Uruchomienie narzędzia pre-commit (lokalnie)
 
-Aby `pre-commit` uruchamiał się przy każdym commicie trzeba go zainstalować:
+Aby `pre-commit` uruchamiał się przy każdym commicie, trzeba go zainstalować:
 
-    pre-commit install
+    (backend) pre-commit install
 
 Dodanie pliku/plików jest niezbędne do sprawdzenia ich poprawności:
 
-    git add <filename>
+    $ git add <filename>
 
 Uruchomienie pre-commit sprawdzającego m.in. poprawność stylu i importów.
 
-    (venv) $ pre-commit run
+    (backend) $ pre-commit run
