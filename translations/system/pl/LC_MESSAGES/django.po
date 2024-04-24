@@ -3299,6 +3299,45 @@ msgstr "Data zakończenia aktualizacji"
 msgid "Endless data date update"
 msgstr "Bez daty zakończenia"
 
+msgid "Contains protected data list"
+msgstr "Zawiera wykaz chronionych danych"
+
+msgid "The resource marked below as a list of protected data can be in xls, xlsx or csv format."
+msgstr "Zasób oznaczony poniżej jako wykaz chronionych danych może mieć format xls, xlsx lub csv."
+
+msgid "The resource marked below as a list of protected data must have a file attached."
+msgstr "Zasób oznaczony poniżej jako wykaz chronionych danych musi posiadać załączony plik."
+
+msgid "There is more than one resource containing protected data"
+msgstr "Istnieje więcej niż jeden zasób zawierający chronione dane"
+
+msgid "Pick a file from disk in xls, xlsx or csv format if you mark the resource below as a list of protected data."
+msgstr "Wybierz plik z dysku w formacie xls, xlsx lub csv, jeśli poniżej oznaczasz zasób jako wykaz chronionych danych."
+
+msgid "The resource has a different type than csv, xls or xlsx format."
+msgstr "Zapisany zasób ma inny typ niż plik w formacie xls, xlsx, csv"
+
+msgid "Cannot find file for resource"
+msgstr "Nie można odnaleźć pliku dla zasobu"
+
+msgid "Cannot read existing file"
+msgstr "Nie można odczytać istniejącego pliku"
+
+msgid "The resource labeled below as a list of protected data can only contain columns named in this order: "
+msgstr "Zasób oznaczony poniżej jako wykaz chronionych danych może zawierać tylko kolumny nazwane w tej kolejności: "
+
+msgid "The saved file has a different structure than that required for the list of protected data."
+msgstr "Zapisany plik ma inną strukturę niż wymagana dla wykazu chronionych danych."
+
+msgid "Select the collection of a government institution or local government if you mark the resource below as a list of protected data."
+msgstr "Wybierz zbiór instytucji rządowej lub samorządowej, jeśli poniżej oznaczasz zasób jako wykaz chronionych danych."
+
+msgid "To select YES here, above select the dataset of a government or local government institution."
+msgstr "Aby tu wybrać TAK, powyżej wybierz zbiór danych instytucji rządowej lub samorządowej."
+
+msgid "To select YES here, select NO in the fields for dynamic, high-value and research data."
+msgstr "Aby tu wybrać TAK, w polach dotyczących danych dynamicznych, o wysokiej wartości i badawczych zaznacz NIE."
+
 msgid "deleted"
 msgstr "usunięty"
 
@@ -4181,6 +4220,97 @@ msgid ""
 "\"%(escaped_object)s\"</b>?"
 msgstr ""
 "Czy na pewno chcesz usunąć (%(object_name)s): <b>\"%(escaped_object)s\"</b>?"
+
+msgid "Are you sure you want this to be an up-to-date list of protected data?"
+msgstr "Czy na pewno chcesz, aby to był aktualny wykaz chronionych danych?"
+
+msgid ""
+"Are you sure you want to uncheck the metadata \"Contains a list of protected "
+"data\"?"
+msgstr ""
+"Czy na pewno chcesz odznaczyć metadaną \"Zawiera wykaz chronionych danych\"?"
+
+msgid ""
+"After saving, the resource will cease to be the current list of protected "
+"data. The data from this resource will be removed from the master list of "
+"protected data."
+msgstr ""
+"Po zapisaniu zasób przestanie być aktualnym wykazem chronionych danych. Dane "
+"z tego zasobu zostaną usunięte z głównego wykazu chronionych danych."
+
+msgid "After saving, the resource will cease to be the current list of protected data."
+msgstr "Po zapisaniu zasób przestanie być aktualnym wykazem chronionych danych."
+
+msgid ""
+"The data from this resource will be removed from the master list of "
+"protected data."
+msgstr ""
+"Dane z tego zasobu zostaną usunięte z głównego wykazu chronionych danych."
+
+msgid ""
+"Are you sure you want to change the status of the resource from \"Published\" "
+"to \"Draft\"?"
+msgstr ""
+"Czy na pewno chcesz zmienić status zasobu z \"Opublikowany\" na \"Szkic\"?"
+
+msgid "Yes, save resource"
+msgstr "Tak, zapisz zasób"
+
+msgid "Yes, uncheck the metadata"
+msgstr "Tak, odznacz metadaną"
+
+msgid "Confirm"
+msgstr "Potwierdź"
+
+msgid "Go back"
+msgstr "Wróć"
+
+msgid ""
+"You are deleting the current list of protected data. Once deleted, the data in "
+"this list will be removed from the main list of protected data."
+msgstr ""
+"Usuwasz aktualny wykaz chronionych danych. Po usunięciu dane z tego wykazu "
+"zostaną usunięte z głównego wykazu chronionych danych."
+
+msgid ""
+"The collection contains the current list of protected data. When the "
+"collection is deleted, the data from this resource will be removed from the "
+"main list of protected data."
+msgstr ""
+"W zbiorze znajduje się aktualny wykaz chronionych danych. Po usunięciu "
+"zbioru dane z tego zasobu zostaną usunięte z głównego wykazu chronionych "
+"danych."
+
+#, python-format
+msgid ""
+"%(resource_title)s is the current list of protected data. If you delete it, "
+"the data from this resource will be removed from the main list of protected "
+"data."
+msgstr ""
+"%(resource_title)s to aktualny wykaz chronionych danych. Jeżeli go usuniesz, "
+"dane z tego zasobu zostaną usunięte z głównego wykazu chronionych danych."
+
+#, python-format
+msgid ""
+"The %(dataset_title)s dataset contains the current list of protected "
+"data. When you delete the collection, the data in this resource will be "
+"removed from the main list of protected data."
+msgstr ""
+"W zbiorze %(dataset_title)s znajduje się aktualny wykaz chronionych danych. "
+"Po usunięciu zbioru dane z tego zasobu zostaną usunięte z głównego wykazu "
+"chronionych danych."
+
+#, python-format
+msgid ""
+"If so, the data from the resource '%(current_dga_resource_title)s' will be "
+"removed from the master list of protected data. Data from resource "
+"'%(title)s' will be added to the master list of protected data. Only one "
+"published resource can have a designation with protected data."
+msgstr ""
+"Jeżeli tak, dane z zasobu '%(current_dga_resource_title)s' zostaną usunięte "
+"z głównego wykazu chronionych danych. Dane z zasobu '%(title)s' zostaną dodane "
+"do głównego wykazu chronionych danych. Tylko jeden opublikowany zasób może "
+"mieć oznaczenie o chronionych danych."
 
 msgid "Removing an object is an irreversible operation."
 msgstr "Usunięcie obiektu jest operacją nieodwracalną."
@@ -5316,3 +5446,6 @@ msgstr "Liczba wyników wzrosła"
 
 msgid "Results decresed"
 msgstr "Liczba wyników zmalała"
+
+msgid "Cannot read the file"
+msgstr "Nie można odczytać pliku"

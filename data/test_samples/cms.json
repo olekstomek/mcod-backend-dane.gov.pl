@@ -153,6 +153,69 @@
     }
   },
   {
+    "model": "cms.DGARootPage",
+    "pk": 1013,
+    "fields": {
+      "path": "000100020005",
+      "depth": 3,
+      "numchild": 2,
+      "title": "DGA",
+      "title_en": "DGA"
+    }
+  },
+  {
+    "model": "cms.DGAInformation",
+    "pk": 1014,
+    "fields": {
+      "path": "0001000200050001",
+      "depth": 4,
+      "numchild": 0,
+      "title": "Informacje",
+      "title_en": "Information",
+      "body": "[{\"type\": \"text\", \"value\": \"<p>Jakiś tekst.</p>\"}]",
+      "body_en": "[{\"type\": \"text\", \"value\": \"<p>Some text.</p>\"}]"
+    }
+  },
+  {
+    "model": "cms.DGAAccessApplication",
+    "pk": 1015,
+    "fields": {
+      "path": "0001000200050002",
+      "depth": 4,
+      "numchild": 0,
+      "title": "Wniosek o dostęp do chronionych danych",
+      "title_en": "Information",
+      "body": "[{\"type\": \"text\", \"value\": \"<p>Treść - wniosek dostęp do chronionych danych.</p>\"}]",
+      "body_en": "[{\"type\": \"text\", \"value\": \"<p>Content - an application to access protected data.</p>\"}]"
+    }
+  },
+  {
+    "model": "cms.DGAProtectedDataList",
+    "pk": 1016,
+    "fields": {
+      "path": "0001000200050003",
+      "depth": 4,
+      "numchild": 0,
+      "title": "Wykaz chronionych danych",
+      "title_en": "Protected data list",
+      "body": "[{\"type\": \"text\", \"value\": \"<p>Jakiś tekst.</p>\"}]",
+      "body_en": "[{\"type\": \"text\", \"value\": \"<p>Some text.</p>\"}]"
+    }
+  },
+  {
+    "model": "cms.DGANewSubPage",
+    "pk": 1017,
+    "fields": {
+      "path": "0001000200050004",
+      "depth": 4,
+      "numchild": 0,
+      "title": "Podstrona 1",
+      "title_en": "Subpage 1",
+      "body": "[{\"type\": \"text\", \"value\": \"<p>Jakiś tekst podstrony 1.</p>\"}]",
+      "body_en": "[{\"type\": \"text\", \"value\": \"<p>Some text of subpage 1.</p>\"}]"
+    }
+  },
+  {
     "model": "wagtailcore.site",
     "pk": 1000,
     "fields": {

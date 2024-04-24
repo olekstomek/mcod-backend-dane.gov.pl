@@ -14,8 +14,7 @@ from io import BytesIO
 import magic
 import pytz
 import unicodecsv
-from celery.signals import (task_failure, task_postrun, task_prerun,
-                            task_success)
+from celery.signals import task_failure, task_postrun, task_prerun, task_success
 from constance import config
 from csvwlib import CSVWConverter
 from dateutil import rrule
@@ -36,27 +35,30 @@ from django.template.loader import render_to_string
 from django.utils.deconstruct import deconstructible
 from django.utils.functional import cached_property
 from django.utils.timezone import now
-from django.utils.translation import gettext_lazy as _
-from django.utils.translation import override
-from django_celery_beat.models import (CrontabSchedule, IntervalSchedule,
-                                       PeriodicTask)
+from django.utils.translation import gettext_lazy as _, override
+from django_celery_beat.models import CrontabSchedule, IntervalSchedule, PeriodicTask
 from django_celery_results.models import TaskResult as TaskResultOrig
 from elasticsearch_dsl.connections import Connections
 from mimeparse import parse_mime_type
 from model_utils import FieldTracker
 from modeltrans.fields import TranslationField
 
-from mcod.core import signals as core_signals
-from mcod.core import storages
+from mcod.core import signals as core_signals, storages
 from mcod.core.api.rdf import signals as rdf_signals
 from mcod.core.api.rdf.tasks import update_graph_task
 from mcod.core.api.search import signals as search_signals
-from mcod.core.api.search.tasks import (bulk_delete_documents_task,
-                                        update_related_task,
-                                        update_with_related_task)
+from mcod.core.api.search.tasks import (
+    bulk_delete_documents_task,
+    update_related_task,
+    update_with_related_task,
+)
 from mcod.core.db.managers import TrashManager
-from mcod.core.db.models import (CustomManagerForeignKey, ExtendedModel,
-                                 TrashModelBase, update_watcher)
+from mcod.core.db.models import (
+    CustomManagerForeignKey,
+    ExtendedModel,
+    TrashModelBase,
+    update_watcher,
+)
 from mcod.counters.models import ResourceDownloadCounter, ResourceViewCounter
 from mcod.datasets.models import BaseSupplement, Dataset
 from mcod.lib.data_rules import painless_body
@@ -64,21 +66,30 @@ from mcod.regions.models import Region, RegionManyToManyField
 from mcod.resources import model_validators
 from mcod.resources.archives import ArchiveReader, is_archive_file
 from mcod.resources.error_mappings import messages, recommendations
-from mcod.resources.file_validation import (analyze_file, check_support,
-                                            get_file_info)
+from mcod.resources.file_validation import analyze_file, check_support, get_file_info
 from mcod.resources.indexed_data import ShpData, TabularData
 from mcod.resources.link_validation import check_link_status, download_file
-from mcod.resources.managers import (ChartManager, ResourceFileManager,
-                                     ResourceManager, ResourceRawManager,
-                                     SupplementManager)
+from mcod.resources.managers import (
+    ChartManager,
+    ResourceFileManager,
+    ResourceManager,
+    ResourceRawManager,
+    SupplementManager,
+)
 from mcod.resources.score_computation import get_score
-from mcod.resources.signals import (cancel_data_date_update,
-                                    revalidate_resource, update_chart_resource,
-                                    update_dataset_file_archive)
-from mcod.resources.tasks import (process_resource_file_data_task,
-                                  process_resource_from_url_task,
-                                  process_resource_res_file_task,
-                                  update_last_day_data_date, validate_link)
+from mcod.resources.signals import (
+    cancel_data_date_update,
+    revalidate_resource,
+    update_chart_resource,
+    update_dataset_file_archive,
+)
+from mcod.resources.tasks import (
+    process_resource_file_data_task,
+    process_resource_from_url_task,
+    process_resource_res_file_task,
+    update_last_day_data_date,
+    validate_link,
+)
 from mcod.watchers.tasks import update_model_watcher_task
 
 User = get_user_model()
@@ -631,6 +642,9 @@ class Resource(ExtendedModel):
     endless_data_date_update = models.BooleanField(
         verbose_name=_("Endless data date update"), default=False
     )
+    contains_protected_data = models.BooleanField(
+        verbose_name=_("Contains protected data list"), default=False
+    )
 
     def __str__(self):
         return self.title
@@ -676,9 +690,11 @@ class Resource(ExtendedModel):
         return bool(self.link and not self.is_link_internal)
 
     @property
-    def is_link_internal(self):
-        api_url_old = settings.API_URL.replace("https:", "http:")
-        return self.link and self.link.startswith((settings.API_URL, api_url_old))
+    def is_link_internal(self) -> bool:
+        api_url_old: str = settings.API_URL.replace("https:", "http:")
+        return bool(
+            self.link and self.link.startswith((settings.API_URL, api_url_old))
+        )
 
     @property
     def is_imported(self):
@@ -1502,6 +1518,16 @@ class Resource(ExtendedModel):
     @property
     def is_published(self):
         return self.status == "published"
+
+    @property
+    def is_dga(self) -> bool:
+        """
+        The DGA (Data Governance Act) in the context of Resource puts
+        restrictions on its editing and deletion. A.k.a. "protected data".
+        For more information, see OTD-138. The DGA mechanism applies only to
+        already published resources.
+        """
+        return self.contains_protected_data and self.is_published
 
     @property
     def needs_es_and_rdf_db_update(self):

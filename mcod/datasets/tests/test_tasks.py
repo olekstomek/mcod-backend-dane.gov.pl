@@ -1,6 +1,7 @@
 from datetime import date
 from pathlib import Path
 
+import pandas as pd
 import pytest
 from dateutil.relativedelta import relativedelta
 from django.core import mail
@@ -196,3 +197,12 @@ class TestMetadataFileCreation:
 
             assert not file.is_file()
             assert file2.is_file()
+
+    def test_contain_protected_data_column_in_csv_report(self, tmp_path: str, mocker: "MockerFixture"):
+        """Check if metadana contains protected data is in report."""
+        with override_settings(METADATA_MEDIA_ROOT=tmp_path):
+            new_today = self.mock_date(year=2023, month=10, day=10, mocker=mocker)
+            create_csv_metadata_files()
+            file = Path(tmp_path) / "pl" / f"katalog_{new_today}.csv"
+            dataframe_report = pd.read_csv(file, sep=";")
+            assert "Zawiera wykaz chronionych danych" in dataframe_report

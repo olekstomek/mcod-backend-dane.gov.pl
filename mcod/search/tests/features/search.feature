@@ -117,6 +117,7 @@ Feature: Global Search API
     And api's response status code is 200
     And api's response body field data/[0]/id is 998
     And api's response body field data/[0]/attributes/is_promoted is True
+    And api's response body field data/[1]/attributes/is_promoted is False
 
   Scenario: Aggregations contains counters for all models event if results are filtered by model
     Given institution with id 999
@@ -145,3 +146,39 @@ Feature: Global Search API
       | resource    | {"id": 999, "language": "pl"} | /search?language=pl&id=999&facet[terms]=by_language            | 1      | meta/aggregations/by_language/[0]/title | polski          |
       | resource    | {"id": 999, "language": "en"} | /resources?language=en&id=999&facet[terms]=by_language&lang=en | 1      | meta/aggregations/by_language/[0]/title | English         |
       | resource    | {"id": 999, "language": "pl"} | /resources?language=pl&id=999&facet[terms]=by_language&lang=en | 1      | meta/aggregations/by_language/[0]/title | Polish          |
+
+  @feat_dga
+  Scenario: Search returns resources filtered by DGA (protected data) flag
+    Given resource with id 999
+    Given resource created with params {"id": 998, "contains_protected_data": true}
+    Given resource created with params {"id": 997, "contains_protected_data": false}
+    And dataset created with params {"id": 999, "title": "test for filtering"}
+    When api request path is /search?contains_protected_data[term]=true&model[terms]=dataset,resource
+    Then send api request and fetch the response
+    And api's response status code is 200
+    And api's response data has length 1
+    And api's response body field data/[0]/attributes/contains_protected_data is True
+
+  @feat_dga
+  Scenario: Search endpoint informs the client about possibility to filter by DGA (protected data) flag
+    Given resource with id 999
+    When api request path is /search?model[terms]=dataset,resource&facet[terms]=by_contains_protected_data
+    Then send api request and fetch the response
+    And api's response status code is 200
+    And api's response body has field meta/aggregations/by_contains_protected_data
+
+  @feat_dga
+  Scenario Outline: Search doesn't filter datasets by DGA flag
+    Given dataset
+    Given resource created with params {"id": 998, "contains_protected_data": true}
+    Given resource created with params {"id": 997, "contains_protected_data": false}
+    When api request path is /search?contains_protected_data[term]=<contains_protected_data_value>&model[terms]=dataset
+    Then send api request and fetch the response
+    And api's response status code is 200
+    And api's response data has length 0
+    And api's response body has no field meta/aggregations/by_contains_protected_data
+  Examples:
+    | contains_protected_data_value |
+    | true                          |
+    | false                         |
+

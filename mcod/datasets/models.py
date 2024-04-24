@@ -3,6 +3,7 @@ import json
 import logging
 import os
 from types import SimpleNamespace
+from typing import List
 from uuid import uuid4
 
 from constance import config
@@ -19,9 +20,7 @@ from django.template.loader import render_to_string
 from django.utils.functional import cached_property
 from django.utils.safestring import mark_safe
 from django.utils.timezone import now
-from django.utils.translation import get_language
-from django.utils.translation import gettext_lazy as _
-from django.utils.translation import override
+from django.utils.translation import get_language, gettext_lazy as _, override
 from model_utils import FieldTracker
 from modeltrans.fields import TranslationField
 
@@ -36,8 +35,7 @@ from mcod.core.storages import get_storage
 from mcod.counters.models import ResourceDownloadCounter, ResourceViewCounter
 from mcod.datasets.managers import DatasetManager, SupplementManager
 from mcod.datasets.signals import remove_related_resources
-from mcod.datasets.tasks import (archive_resources_files,
-                                 change_archive_symlink_name)
+from mcod.datasets.tasks import archive_resources_files, change_archive_symlink_name
 from mcod.regions.models import Region
 from mcod.unleash import is_enabled
 from mcod.watchers.tasks import update_model_watcher_task
@@ -658,6 +656,19 @@ class Dataset(ExtendedModel):
             )["count_sum"]
             or 0
         )
+
+    @property
+    def dga_resources_titles(self) -> List[str]:
+        dga_resources_in_dataset = self.resources.filter(
+            contains_protected_data=True, status="published"
+        ).values_list("title", flat=True)
+        count_dga_resources: int = dga_resources_in_dataset.count()
+        if count_dga_resources > 1:
+            logger.error(
+                f"Found {count_dga_resources} in dataset with pk: {self.pk}"
+            )
+
+        return list(dga_resources_in_dataset)
 
     def to_rdf_graph(self):
         schema = self.get_rdf_serializer_schema()

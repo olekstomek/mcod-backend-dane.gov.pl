@@ -247,3 +247,10 @@ Dodanie pliku/plików jest niezbędne do sprawdzenia ich poprawności:
 Uruchomienie pre-commit sprawdzającego m.in. poprawność stylu i importów.
 
     (backend) $ pre-commit run
+
+### Kompilacja tłumaczeń (lokalnie)
+
+Po zmianie tłumaczeń w pliku `django.po` należy przejść do katalogu projektu,
+w którym znajduje się plik `manage.py`. Następnie należy uruchomić polecenie:
+
+    (venv) $ python manage.py compilemessages

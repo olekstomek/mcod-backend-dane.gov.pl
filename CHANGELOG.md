@@ -14,6 +14,35 @@
 ### Breaks
 
 
+## 2.33.1 - (2024-03-27)
+---
+
+### Fixes
+
+* Naprawa błędu związanego z aktualizacją zasobu utworzonego jako szkic z flagą `Zawiera chronione dane` na zasób opublikowany
+* Poprawa tłumaczenia komunikatu o błędnym formacie pliku
+
+
+## 2.33.0 - (2024-03-21)
+---
+
+### New
+
+* Dodanie w Panelu Administracyjnym pola `Zawiera chronione dane` - US.01 (OTD-159)
+* Dodanie możliwości filtracji zasobów po polu `Zawiera chronione dane` - US.02 (OTD-167)
+* Dodanie migracji DGA - US.03 (OTD-168)
+* Dodanie w CMS podstrony `Informacje` dotyczącej DGA - US.05 (OTD-170)
+* Dodanie w CMS podstrony `Wykaz danych chronionych` dotyczącej DGA - US.06 (OTD-171)
+* Dodanie w CMS podstrony `Wniosek o dostęp do chronionych danych` dotyczącej DGA - US.07 (OTD-172)
+* Dodanie metadanej dotyczącej DGA w raportach - US.08 (OTD-227)
+* Dodanie możliwości tworzenia podstron DGA oraz dostosowanie narzędzi CMS do podstron dot. DGA - US.11 (OTD-314)
+
+
+### Changes
+
+* Aktualizacja `README.md` w zakresie dodania informacji o kompilacji tłumaczeń
+
+
 ## 2.32.0 - (2024-03-12)
 ---
 
@@ -46,6 +75,7 @@
 ### Removed
 
 * Nie wymagane `requirements-devel.txt` oraz `requirements-test.txt` na rzecz Pipenv. (OTD-27)
+
 
 ## 2.31.10 - (2024-01-08)
 ---

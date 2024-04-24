@@ -33,10 +33,12 @@ from mcod.resources.archives import ArchiveReader, UnsupportedArchiveError
 from mcod.resources.documents import ResourceDocument
 from mcod.resources.factories import (
     ChartFactory,
+    DGACompliantResourceFactory,
     ResourceFactory,
     ResourceFileFactory,
     SupplementFactory,
     TaskResultFactory,
+    DGAResourceFactory,
 )
 from mcod.resources.file_validation import (
     PasswordProtectedArchiveError,
@@ -46,6 +48,9 @@ from mcod.resources.file_validation import (
 )
 from mcod.resources.link_validation import DangerousContentError, _get_resource_type, download_file
 from mcod.resources.tasks import update_data_date
+import typing
+if typing.TYPE_CHECKING:
+    from mcod.resources.models import Resource
 
 
 @pytest.fixture
@@ -267,7 +272,7 @@ def remote_file_resource_with_forced_file_type(remote_file_resource):
 
 
 @pytest.fixture
-def local_file_resource(buzzfeed_dataset, buzzfeed_editor):
+def local_file_resource(buzzfeed_dataset, buzzfeed_editor) -> "Resource":
     kwargs = {
         'filename': 'geo.csv',
         'title': 'Local file resource',
@@ -1221,3 +1226,70 @@ def crontab_with_current_month_last_day(res_id):
     task_schedule = PeriodicTask.objects.get(name=res.data_date_task_name).crontab
     assert task_schedule.day_of_month == str(schedule_date.day)
     assert task_schedule.month_of_year == str(schedule_date.month)
+
+
+@given(
+    parsers.parse(
+        "DGA compliant resource with pk {resource_id} in dataset with pk {dataset_id}"
+    )
+)
+def dga_compliant_resource_in_dataset(resource_id, dataset_id):
+    DGACompliantResourceFactory.create(pk=resource_id, dataset_id=dataset_id)
+
+
+@given(
+    parsers.parse(
+        "DGA resource with pk {resource_id} in dataset with pk {dataset_id}"
+    )
+)
+def dga_resource_in_dataset(resource_id, dataset_id):
+    DGAResourceFactory.create(pk=resource_id, dataset_id=dataset_id)
+
+
+@given(
+    parsers.parse(
+        "DGA resource with pk {resource_id} and title {resource_title} in "
+        "dataset with pk {dataset_id}"
+    )
+)
+def named_dga_resource_in_dataset(resource_id, resource_title, dataset_id):
+    DGAResourceFactory.create(
+        pk=resource_id, title=resource_title, dataset_id=dataset_id
+    )
+
+
+@then(
+    parsers.parse("resource with id {res_id} does not contain protected data")
+)
+def resource_does_not_contain_protected_data(res_id: typing.Union[int, str]):
+    from mcod.resources.models import Resource
+    res = Resource.objects.get(pk=res_id)
+    assert res.contains_protected_data is False
+
+
+@then(parsers.parse("resource with id {res_id} is draft"))
+def resource_is_draft(res_id: typing.Union[int, str]):
+    from mcod.resources.models import Resource
+    res = Resource.objects.get(pk=res_id)
+    assert res.status == "draft"
+
+
+@then(parsers.parse("resource with id {res_id} is DGA"))
+def resource_is_dga(res_id: typing.Union[int, str]):
+    from mcod.resources.models import Resource
+    res = Resource.objects.get(pk=res_id)
+    assert res.is_dga
+
+
+@then(parsers.parse("resource with id {res_id} is not DGA"))
+def resource_is_not_dga(res_id: typing.Union[int, str]):
+    from mcod.resources.models import Resource
+    res = Resource.objects.get(pk=res_id)
+    assert not res.is_dga
+
+
+@then(parsers.parse("resource with id {res_id} is removed"))
+def resource_is_removed(res_id: typing.Union[str, int]):
+    from mcod.resources.models import Resource
+    res = Resource.raw.get(pk=res_id)
+    assert res.is_removed

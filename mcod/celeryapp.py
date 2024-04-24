@@ -74,3 +74,9 @@ app.conf.beat_schedule["kronika_sparql_performance"] = {
     "options": {"queue": "periodic"},
     "schedule": crontab(minute=30, hour=11),
 }
+
+app.conf.beat_schedule["dga_temp_dir_clean"] = {
+    "task": "mcod.resources.tasks.clean_dga_temp_directory",
+    "options": {"queue": "periodic"},
+    "schedule": crontab(minute=30, hour=3),
+}

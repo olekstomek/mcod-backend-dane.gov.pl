@@ -782,10 +782,12 @@ a {
 #dataset_form .actions span.action-label{
 	display:none;
 }
-#delete_confirmation {
+#delete_confirmation,
+#save_dga_confirmation{
 	color: black;
 }
-#delete_confirmation ul {
+#delete_confirmation ul,
+#save_dga_confirmation ul {
 	list-style-type: '- ';
 	margin:10px;
 	margin-left:20px;

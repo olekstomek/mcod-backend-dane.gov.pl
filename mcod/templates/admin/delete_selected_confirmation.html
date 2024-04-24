@@ -54,6 +54,14 @@
         <form method="post">{% csrf_token %}
             <div>
                 {% for obj in queryset %}
+                    <!-- when obj is Resource -->
+                    {% if obj.is_dga %}
+                        <p>{% blocktrans with resource_title=obj.title %}{{ resource_title }} is the current list of protected data. If you delete it, the data from this resource will be removed from the main list of protected data.{% endblocktrans %}</p>
+                    {% endif %}
+                    <!-- when obj is Dataset -->
+                    {% for title in obj.dga_resources_titles %}
+                        <p>{% blocktrans with dataset_title=obj.title %}The {{ dataset_title }} dataset contains the current list of protected data. When you delete the collection, the data in this resource will be removed from the main list of protected data.{% endblocktrans %}</p>
+                    {% endfor %}
                 <input type="hidden" name="{{ action_checkbox_name }}" value="{{ obj.pk|unlocalize }}">
                 {% endfor %}
                 <input type="hidden" name="action" value="delete_selected">

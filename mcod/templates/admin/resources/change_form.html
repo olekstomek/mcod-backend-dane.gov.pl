@@ -79,6 +79,10 @@
                   $('input[name="has_research_data"]').prop('checked', false);
                   $(this).prop('checked', true);
                 });
+                $('input[name="contains_protected_data"]').click(function(){
+                  $('input[name="contains_protected_data"]').prop('checked', false);
+                  $(this).prop('checked', true);
+                });
                 var $dataDateField = $("div.field-data_date div .controls span.datetimeshortcuts");
                 var $dataDateInput = $("div.field-data_date div.controls input");
                 var $isAutoDataDateLabel = $("div.field-is_auto_data_date div.control-label label");
@@ -167,6 +171,15 @@
                                   } else if (data.has_research_data == false) {
                                       $('#id_has_research_data_0').prop('checked', false);
                                       $('#id_has_research_data_1').prop('checked', true);
+                                  }
+                              }
+                              if ('contains_protected_data' in data) {
+                                  if (data.contains_protected_data == true){
+                                      $('#id_contains_protected_data_0').prop('checked', true);
+                                      $('#id_contains_protected_data_1').prop('checked', false);
+                                  } else if (data.contains_protected_data == false) {
+                                      $('#contains_protected_data_0').prop('checked', false);
+                                      $('#contains_protected_data_1').prop('checked', true);
                                   }
                               }
                           }

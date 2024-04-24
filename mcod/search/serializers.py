@@ -101,6 +101,7 @@ class CommonObjectApiAttrs(ObjectAttrs, HighlightObjectMixin):
     data_date = fields.Date()
     visualization_types = fields.List(fields.Str())
     language = fields.Str()
+    contains_protected_data = fields.Boolean()
 
     # showcases
     author = fields.Str()
@@ -249,6 +250,11 @@ class CommonObjectApiAggregations(ExtSchema):
     )
     by_language = fields.Nested(
         LanguageAggregation, many=True, attribute='_filter_by_language.by_language.buckets')
+    by_contains_protected_data = fields.Nested(
+        partial(BoolDataAggregation, context={'only_true': True}),
+        many=True,
+        attribute='_filter_by_contains_protected_data.by_contains_protected_data.buckets'
+    )
 
     @pre_dump(pass_many=True)
     def prepare_data(self, data, **kwargs):

@@ -481,7 +481,7 @@ def api_response_body_field_has_no_fields(field, fields, context):
 
 @then(parsers.parse("api's response body has field {field}"))
 def api_response_body_has_field(field, context):
-    assert dpath.util.search(context.response.json, field)
+    assert dpath.util.search(context.response.json, field), context.response.json
 
 
 @then(parsers.parse("api's response body has no field {field}"))

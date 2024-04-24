@@ -11,6 +11,44 @@ Feature: Change resource in admin panel
     And resource has assigned main and additional regions
     And admin's response page form contains Warszawa and Wólka Kosowska
 
+  @feat_dga
+  Scenario: Confirm updating DGA Resource in the presence of an existing DGA Resource
+    Given dataset with pk 998 containing dga resource with pk 999
+    And DGA compliant resource with pk 1000 in dataset with pk 998
+    When admin's request method is POST
+    And admin's request posted resource data is {"contains_protected_data": "True", "title": "test", "description": "more than 20 characters", "dataset": 998, "data_date": "22.05.2020", "status": "published"}
+    And admin's page /resources/resource/1000/change/ is requested
+    Then admin's response status code is 200
+    And admin's response page contains Czy na pewno chcesz, aby to był aktualny wykaz chronionych danych?
+    When admin confirms saving the resource with posted data
+    Then admin's response page contains /change/">test</a>" został pomyślnie zmieniony.
+    And resource with id 999 is not DGA
+    And resource with id 1000 is DGA
+
+  @feat_dga
+  Scenario: Confirmation pops up when the Resource is deselected as DGA and the Resource is updated
+    Given dataset with pk 998 containing dga resource with pk 999
+    When admin's request method is POST
+    And admin's request posted resource data is {"contains_protected_data": "False", "title": "test", "description": "more than 20 characters", "dataset": 998, "data_date": "22.05.2020", "status": "published"}
+    And admin's page /resources/resource/999/change/ is requested
+    Then admin's response status code is 200
+    And admin's response page contains Czy na pewno chcesz odznaczyć metadaną "Zawiera wykaz chronionych danych"?
+    When admin confirms saving the resource with posted data
+    Then admin's response page contains /change/">test</a>" został pomyślnie zmieniony.
+    And resource with id 999 does not contain protected data
+
+  @feat_dga
+  Scenario: Confirmation pops up when marking a DGA Resource as Draft and the Resource is updated
+    Given dataset with pk 998 containing dga resource with pk 999
+    When admin's request method is POST
+    And admin's request posted resource data is {"status": "draft", "contains_protected_data": "True", "title": "test", "description": "more than 20 characters", "dataset": 998, "data_date": "22.05.2020"}
+    And admin's page /resources/resource/999/change/ is requested
+    Then admin's response status code is 200
+    And admin's response page contains Czy na pewno chcesz zmienić status zasobu z "Opublikowany" na "Szkic"?
+    When admin confirms saving the resource with posted data
+    Then admin's response page contains /change/">test</a>" został pomyślnie zmieniony.
+    And resource with id 999 is draft
+
   @periodic_task
   Scenario: Auto data date with end date can be set on resource with type api
     Given dataset with id 990

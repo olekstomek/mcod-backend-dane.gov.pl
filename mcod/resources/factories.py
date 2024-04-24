@@ -9,6 +9,7 @@ import factory
 from mcod.core.registries import factories_registry
 from mcod.datasets.factories import DatasetFactory
 from mcod.resources import models
+from mcod.resources.dga_constants import DGA_COLUMNS
 
 _RESOURCE_TYPES = [i[0] for i in models.RESOURCE_TYPE]
 _TASK_STATUSES = ['SUCCESS', 'NOT AVAILABLE', 'ERROR']
@@ -20,7 +21,7 @@ col1,col2,col3
 -1,7,baz"""
 
 
-def get_csv_file():
+def get_csv_file() -> BytesIO:
     return BytesIO(
         b"\n".join(
             [b"col1,col2,col3",
@@ -32,11 +33,21 @@ def get_csv_file():
     )
 
 
-def get_csv_file2():
+def get_csv_file2() -> tempfile.TemporaryFile:
     fp = tempfile.TemporaryFile()
     fp.write(b'Hello world!')
     fp.close()
     return fp
+
+
+def get_dga_csv_file() -> BytesIO:
+    header = ",".join(DGA_COLUMNS).encode()
+    rows = [
+        b"1,zasob1,csv,10 KB,foo",
+        b"2,zasob2,xls,12 MB,bar",
+        b"3,zasob3,xlsx,1 MB,baz"
+    ]
+    return BytesIO(b"\n".join([header] + rows))
 
 
 class ResourceFileFactory(factory.django.DjangoModelFactory):
@@ -74,6 +85,13 @@ class ResourceFileFactory(factory.django.DjangoModelFactory):
         model = models.ResourceFile
 
 
+class ResourceFileDGACompliantFactory(ResourceFileFactory):
+    file = factory.django.FileField(
+        from_func=get_dga_csv_file,
+        filename='{}.csv'.format(str(uuid.uuid4())),
+    )
+
+
 class ResourceFactory(factory.django.DjangoModelFactory):
     title = factory.Faker('text', max_nb_chars=100, locale='pl_PL')
     description = factory.Faker('paragraph', nb_sentences=3, variable_nb_sentences=True, locale='pl_PL')
@@ -88,6 +106,7 @@ class ResourceFactory(factory.django.DjangoModelFactory):
     forced_api_type = False
     forced_file_type = False
     data_date = factory.Faker('past_date', start_date="-7d")
+    contains_protected_data = False
 
     @factory.post_generation
     def link_tasks(self, create, extracted, **kwargs):
@@ -132,6 +151,17 @@ class ResourceFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = models.Resource
         django_get_or_create = ('title',)
+
+
+class DGACompliantResourceFactory(ResourceFactory):
+    main_file = factory.RelatedFactory(
+        ResourceFileDGACompliantFactory,
+        factory_related_name="resource",
+    )
+
+
+class DGAResourceFactory(DGACompliantResourceFactory):
+    contains_protected_data = True
 
 
 def json_sequence(number):

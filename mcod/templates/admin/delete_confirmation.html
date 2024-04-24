@@ -45,6 +45,13 @@
             {% if not object.trash_class or object.is_trash %}
                 <p class="irreversible-deletion-warning">{% trans "Removing an object is an irreversible operation." %}</p>
             {% endif %}
+            {% if object.is_dga %}
+                <p>{% trans "You are deleting the current list of protected data. Once deleted, the data in this list will be removed from the main list of protected data." %}</p>
+            {% elif object.dga_resources_titles %}
+                {% for title in object.dga_resources_titles %}
+                    <p>{% trans "The collection contains the current list of protected data. When the collection is deleted, the data from this resource will be removed from the main list of protected data." %}</p>
+                {% endfor %}
+            {% endif %}
         <form method="post">{% csrf_token %}
             <div>
                 <input type="hidden" name="post" value="yes">

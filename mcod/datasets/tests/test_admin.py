@@ -8,6 +8,7 @@ scenarios(
     'features/forms.feature',
     'features/admin/autocomplete.feature',
     'features/admin/custom_urls.feature',
+    'features/admin/dataset_delete.feature',
 )
 
 

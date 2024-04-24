@@ -115,6 +115,7 @@ class ResourceDocument(ExtendedDocument):
     regions = regions_field(attr='all_regions')
     files = files_field(attr='all_files')
     language = fields.KeywordField()
+    contains_protected_data = fields.BooleanField()
 
     class Index:
         name = mcs.ELASTICSEARCH_INDEX_NAMES['resources']

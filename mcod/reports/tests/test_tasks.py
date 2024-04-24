@@ -2,21 +2,35 @@ import csv
 import datetime
 import json
 import os
+from pathlib import Path
 from time import sleep
+from unittest import mock
 
+import pandas as pd
+import pytest
 import pytz
 from django.apps import apps
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db.models import Sum
+from django.test import override_settings
 
 from mcod.counters.models import ResourceDownloadCounter, ResourceViewCounter
 from mcod.reports.models import SummaryDailyReport
 from mcod.reports.tasks import create_daily_resources_report, generate_csv
+from mcod.users.models import User as User_model
 
 User = get_user_model()
 Report = apps.get_model("reports", "Report")
 TaskResult = apps.get_model("django_celery_results", "TaskResult")
+
+
+@pytest.fixture
+def admin_with_id_1(admin: User_model) -> User_model:
+    admin.id = 1
+    admin.email = "testadmin@test.example.com"
+    admin.save()
+    return admin
 
 
 class TestTasks:
@@ -105,11 +119,8 @@ class TestTasks:
         assert r.task == result_task
         assert r.task.status == "FAILURE"
 
-    def test_create_daily_resources_report(self, admin, resource):
-        admin.id = 1
-        admin.email = "testadmin@test.xx"
-        admin.save()
-
+    @pytest.mark.usefixtures("resource")
+    def test_create_daily_resources_report(self, admin_with_id_1):
         request_date = datetime.datetime.now().strftime("%Y_%m_%d_%H")
         create_daily_resources_report()
         r = SummaryDailyReport.objects.last()
@@ -119,10 +130,7 @@ class TestTasks:
         assert r.file.endswith(".csv")
         assert request_date in r.file
 
-    def test_counters_in_daily_report(self, admin, resource_with_counters):
-        admin.id = 1
-        admin.email = "testadmin@test.xx"
-        admin.save()
+    def test_counters_in_daily_report(self, admin_with_id_1, resource_with_counters):
         create_daily_resources_report()
         r = SummaryDailyReport.objects.last()
         file_path = f"{settings.TEST_ROOT}/{r.file}"
@@ -136,5 +144,16 @@ class TestTasks:
         downloads_count = ResourceDownloadCounter.objects.filter(
             resource_id=resource_with_counters.pk
         ).aggregate(downloads_sum=Sum("count"))["downloads_sum"]
-        assert int(resource_data[13]) == views_count
-        assert int(resource_data[14]) == downloads_count
+        assert int(resource_data[14]) == views_count
+        assert int(resource_data[15]) == downloads_count
+
+    @pytest.mark.usefixtures("resource")
+    @mock.patch("mcod.reports.tasks.datetime")
+    def test_column_contains_protected_data_is_in_report(self, mock_datetime, tmp_path, admin_with_id_1):
+        """Check if metadana contains protected data is in report."""
+        mock_datetime.datetime.now.return_value.strftime.return_value = '2020_02_05_2310'
+        with override_settings(REPORTS_MEDIA_ROOT=tmp_path):
+            create_daily_resources_report()
+            report_file = Path(tmp_path, 'daily', 'Zbiorczy_raport_dzienny_2020_02_05_2310.csv')
+            dataframe_report = pd.read_csv(report_file, sep=",")
+            assert "Zasob zawiera wykaz chronionych danych" in dataframe_report

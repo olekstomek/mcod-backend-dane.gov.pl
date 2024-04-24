@@ -46,7 +46,7 @@ def hack_pytest_bdd():
 def pytest_configure(config):
     hack_pytest_bdd()
     config.addinivalue_line(
-        "markers", "elasticsearch: mark test to run with new empty set of indicies"
+        "markers", "elasticsearch: mark test to run with new empty set of indices"
     )
 
 

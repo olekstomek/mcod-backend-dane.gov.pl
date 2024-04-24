@@ -57,10 +57,17 @@ class TestResourceModel:
             "status",
             "modified_by_id",
             "created_by_id",
+            "contains_protected_data",
         ]
 
         for f in fields:
             assert f in r_dict
+
+    def test_default_contains_protected_data_value(self, resource):
+        """
+        Check if new instance of `Resource` has default value of `contains_protected_data` as  False.
+        """
+        assert not resource.contains_protected_data
 
     def test_resource_safe_delete(self, resource):
         assert resource.status == "published"

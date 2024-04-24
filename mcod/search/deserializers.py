@@ -132,7 +132,11 @@ class DataAggregations(ExtSchema):
             'by_language': {
                 'field': 'language',
                 'size': 2
-            }
+            },
+            'by_contains_protected_data': {
+                'field': 'contains_protected_data',
+                'size': 100
+            },
         }
     )
 
@@ -322,6 +326,13 @@ class ApiSearchRequest(ListingSchema):
         doc_template='docs/generic/fields/string_term_field.html',
         doc_base_url='/search',
         doc_field_name='language'
+    )
+    contains_protected_data = fields.FilterField(
+        BooleanTermSchema,
+        query_field='contains_protected_data',
+        doc_template='docs/generic/fields/boolean_term_field.html',
+        doc_base_url='/search',
+        doc_field_name='contains_protected_data'
     )
 
     @validates('q')

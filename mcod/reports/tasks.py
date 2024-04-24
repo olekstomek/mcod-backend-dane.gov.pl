@@ -10,6 +10,7 @@ from time import time
 from celery import chord
 from celery.signals import task_failure, task_prerun, task_success
 from django.apps import apps
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import connection
 from django.db.models import Count, F, Q
@@ -17,7 +18,6 @@ from django.utils.timezone import now
 from django.utils.translation import get_language
 from django_celery_results.models import TaskResult
 
-from mcod import settings
 from mcod.celeryapp import app
 from mcod.core.api.rdf.namespaces import NAMESPACES
 from mcod.core.serializers import csv_serializers_registry as csr
@@ -267,6 +267,7 @@ def create_daily_resources_report():
             zasob_posiada_dane_wysokiej_wartosci,
             zasob_posiada_dane_dynamiczne,
             zasob_posiada_dane_badawcze,
+            zasob_zawiera_wykaz_chronionych_danych,
             liczba_wyswietlen,
             liczba_pobran,
             id_zbioru_danych,
@@ -305,14 +306,15 @@ def create_daily_resources_report():
     save_path = Path(settings.REPORTS_MEDIA_ROOT, 'daily', f'Zbiorczy_raport_dzienny_{str_date}.csv')
 
     with open(save_path, 'w') as f:
-        w = csv.DictWriter(f, results[0].keys())
+        results_new_format: list[OrderedDict] = [OrderedDict({k.replace("_", " ").capitalize(): v
+                                                              for k, v in element.items()}) for element in results]
+        w = csv.DictWriter(f, results_new_format[0].keys())
         w.writeheader()
-        w.writerows(results)
+        w.writerows(results_new_format)
 
     SummaryDailyReport.objects.create(
         file=file_path,
         ordered_by_id=1,
-
     )
 
     return {}

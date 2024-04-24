@@ -22,11 +22,14 @@ User = get_user_model()
 
 class Organization(ExtendedModel):
     INSTITUTION_TYPE_PRIVATE = 'private'
+    INSTITUTION_TYPE_LOCAL = 'local'
+    INSTITUTION_TYPE_STATE = 'state'
+    INSTITUTION_TYPE_OTHER = 'other'
     INSTITUTION_TYPE_CHOICES = (
-        ('local', _('Local government')),
-        ('state', _('Public government')),
+        (INSTITUTION_TYPE_LOCAL, _('Local government')),
+        (INSTITUTION_TYPE_STATE, _('Public government')),
         (INSTITUTION_TYPE_PRIVATE, _('Private entities')),
-        ('other', _('Other')),
+        (INSTITUTION_TYPE_OTHER, _('Other')),
     )
     SIGNALS_MAP = {
         'updated': (rdf_signals.update_graph_with_conditional_related,

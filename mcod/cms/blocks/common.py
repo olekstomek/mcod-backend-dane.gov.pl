@@ -13,6 +13,9 @@ from wagtailvideos.blocks import VideoChooserBlock
 
 from mcod.cms.widgets import ColorPickerWidget
 
+CMS_RICH_TEXT_FIELD_MORE_FEATURES = (settings.CMS_RICH_TEXT_FIELD_FEATURES
+                                     + ['embed', 'document-link', 'image', 'br', 'hr'])
+
 
 class ImageChooserBlock(WagtailImageChooserBlock):
     def get_api_representation(self, value, context=None):
@@ -309,3 +312,7 @@ class CarouselBlock(blocks.StreamBlock):
 
     class Meta:
         form_classname = 'struct-block carousel-block'
+
+
+class CarouselBlockWithAdditionalTextTools(CarouselBlock):
+    text = RichTextBlock(label='Tekst sformatowany', required=False, features=CMS_RICH_TEXT_FIELD_MORE_FEATURES)

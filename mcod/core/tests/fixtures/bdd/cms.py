@@ -59,4 +59,6 @@ def every_response_status_code_is(context, status_code):
 
 @then(parsers.parse("CMS live page count is {page_count:d}"))
 def cms_page_count_is(page_count):
-    assert page_count == Page.objects.exclude(live_revision__isnull=True).count()
+    actual_page_count = Page.objects.exclude(live_revision__isnull=True).count()
+    assert page_count == actual_page_count, (f"Actual page count is {actual_page_count} and isn't equal"
+                                             f" to expected page count {page_count}")

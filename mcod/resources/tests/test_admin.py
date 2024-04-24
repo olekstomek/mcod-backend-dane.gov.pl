@@ -22,6 +22,7 @@ scenarios(
     'features/file_validation.feature',
     'features/resource_creation.feature',
     'features/resource_change.feature',
+    'features/resource_delete.feature',
     'features/resource_validation.feature',
     'features/resource_openness.feature',
     'features/resource_details_admin.feature',

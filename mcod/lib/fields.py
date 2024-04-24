@@ -365,7 +365,7 @@ class FilteringFilterField(SearchFieldMixin, DataMixin, TranslatedErrorsMixin, f
 
 
 class NestedFilteringField(FilteringFilterField):
-    def __init__(self, path, field_name=None, lookups=[], **kwargs):
+    def __init__(self, path, field_name=None, lookups=None, **kwargs):
         super().__init__(field_name=field_name, lookups=lookups, **kwargs)
         self.path = path
 

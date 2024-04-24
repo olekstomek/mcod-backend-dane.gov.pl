@@ -1,8 +1,10 @@
 import json
 import logging
+import os
 from copy import deepcopy
 
 import pytz
+import sentry_sdk
 from django.apps import apps
 from django.conf import settings
 from django.utils.timezone import now
@@ -10,10 +12,8 @@ from elasticsearch.helpers.errors import BulkIndexError
 
 from mcod.core.tasks import extended_shared_task
 from mcod.resources.archives import ArchiveReader, UnsupportedArchiveError
-from mcod.resources.file_validation import (PasswordProtectedArchiveError,
-                                            UnknownFileFormatError)
-from mcod.resources.indexed_data import (FileEncodingValidationError,
-                                         ResourceDataValidationError)
+from mcod.resources.file_validation import PasswordProtectedArchiveError, UnknownFileFormatError
+from mcod.resources.indexed_data import FileEncodingValidationError, ResourceDataValidationError
 from mcod.resources.link_validation import check_link_scheme
 
 logger = logging.getLogger("mcod")
@@ -452,3 +452,18 @@ def update_resource_with_archive_format(res_file_id):
             f"ResourceFile[{res_file_id}] has more than 1 file compressed, skipping."
         )
     return results
+
+
+@extended_shared_task
+def clean_dga_temp_directory():
+    logger.info("Cleaning DGA temp directory.")
+    dga_temp_dir = settings.DGA_RESOURCE_CREATION_STAGING_ROOT
+    if os.path.exists(dga_temp_dir):
+        for filename in os.listdir(dga_temp_dir):
+            file_path = os.path.join(dga_temp_dir, filename)
+            try:
+                logger.debug(f"Removing {file_path}")
+                os.remove(file_path)
+            except Exception as e:
+                logger.error(f"Removing {file_path} failed. Reason: {e}")
+                sentry_sdk.api.capture_exception(e)

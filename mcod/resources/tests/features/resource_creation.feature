@@ -222,3 +222,111 @@ Feature: Resource with file creation
     And admin's page /resources/resource/add/ is requested
     Then admin's response status code is 200
     And resource with title test_zipped_xlsx has zipped xlsx converted to csv
+
+  @feat_dga
+  Scenario Outline: DGA Resource creation
+    Given dataset with pk 9000 for state institution
+    When admin's request method is POST
+    And admin's request posted resource data is {"title": "test dga", "description": "more than 20 characters", "switcher": "file", "dataset": 9000, "data_date": "22.05.2020", "status": "published", "contains_protected_data": "True"}
+    And admin's request posted files {"file": <file>}
+    And admin's page /resources/resource/add/ is requested
+    Then admin's response status code is 200
+    And admin's response page contains <added message>
+
+    Examples:
+    | file                                            | added message                                    |
+    | "example_dga_xls_file.xls"                      | /change/">test dga</a>" został pomyślnie dodany. |
+    | "example_dga_xlsx_file.xlsx"                    | /change/">test dga</a>" został pomyślnie dodany. |
+    | "example_dga_comma_separated_csv_file.csv"      | /change/">test dga</a>" został pomyślnie dodany. |
+    | "example_dga_semicolons_separated_csv_file.csv" | /change/">test dga</a>" został pomyślnie dodany. |
+
+  @feat_dga
+  Scenario Outline: Failed DGA Resource creation when invalid flags
+    Given dataset with pk 9000 for state institution
+    When admin's request method is POST
+    And admin's request posted resource data is <req_data>
+    And admin's request posted files {"file": "example_dga_comma_separated_csv_file.csv"}
+    And admin's page /resources/resource/add/ is requested
+    Then admin's response page contains <error_message>
+
+    Examples:
+    | req_data                                                                                                                                                                                                                  | error_message                                                                                              |
+    | {"status": "published", "contains_protected_data": "True", "has_dynamic_data": "True", "title": "test dga", "description": "more than 20 characters", "switcher": "file", "dataset": 9000, "data_date": "22.05.2020"}     | Aby tu wybrać TAK, w polach dotyczących danych dynamicznych, o wysokiej wartości i badawczych zaznacz NIE. |
+    | {"status": "published", "contains_protected_data": "True", "has_high_value_data": "True", "title": "test dga", "description": "more than 20 characters", "switcher": "file", "dataset": 9000, "data_date": "22.05.2020"}  | Aby tu wybrać TAK, w polach dotyczących danych dynamicznych, o wysokiej wartości i badawczych zaznacz NIE. |
+    | {"status": "published", "contains_protected_data": "True", "has_research_data": "True", "title": "test dga", "description": "more than 20 characters", "switcher": "file", "dataset": 9000, "data_date": "22.05.2020"}    | Aby tu wybrać TAK, w polach dotyczących danych dynamicznych, o wysokiej wartości i badawczych zaznacz NIE. |
+    | {"status": "draft", "contains_protected_data": "True", "has_dynamic_data": "True", "title": "test dga", "description": "more than 20 characters", "switcher": "file", "dataset": 9000, "data_date": "22.05.2020"}         | Aby tu wybrać TAK, w polach dotyczących danych dynamicznych, o wysokiej wartości i badawczych zaznacz NIE. |
+    | {"status": "draft", "contains_protected_data": "True", "has_high_value_data": "True", "title": "test dga", "description": "more than 20 characters", "switcher": "file", "dataset": 9000, "data_date": "22.05.2020"}      | Aby tu wybrać TAK, w polach dotyczących danych dynamicznych, o wysokiej wartości i badawczych zaznacz NIE. |
+    | {"status": "draft", "contains_protected_data": "True", "has_research_data": "True", "title": "test dga", "description": "more than 20 characters", "switcher": "file", "dataset": 9000, "data_date": "22.05.2020"}        | Aby tu wybrać TAK, w polach dotyczących danych dynamicznych, o wysokiej wartości i badawczych zaznacz NIE. |
+
+  @feat_dga
+  Scenario Outline: Failed DGA Resource creation when invalid file type
+    Given dataset with pk 9000 for state institution
+    When admin's request method is POST
+    And admin's request posted resource data is {"title": "test dga", "description": "more than 20 characters", "switcher": "file", "dataset": 9000, "data_date": "22.05.2020", "status": "published", "contains_protected_data": "True"}
+    And admin's request posted files {"file": <file>}
+    And admin's page /resources/resource/add/ is requested
+    Then admin's response page contains Wybierz plik z dysku w formacie xls, xlsx lub csv, jeśli poniżej oznaczasz zasób jako wykaz chronionych danych.
+
+    Examples:
+    | file                    |
+    | "example_odt_file.odt"  |
+    | "example_ods_file.ods"  |
+    | "example.txt"           |
+    | "example.pdf"           |
+
+  @feat_dga
+  Scenario Outline: Failed DGA Resource creation for not allowed institution
+    Given dataset with pk 9000 for <institution_type> institution
+    When admin's request method is POST
+    And admin's request posted resource data is {"title": "test dga", "description": "more than 20 characters", "switcher": "file", "dataset": 9000, "data_date": "22.05.2020", "status": "published", "contains_protected_data": "True"}
+    And admin's request posted files {"file": "example_dga_comma_separated_csv_file.csv"}
+    And admin's page /resources/resource/add/ is requested
+    Then admin's response page contains Wybierz zbiór instytucji rządowej lub samorządowej, jeśli poniżej oznaczasz zasób jako wykaz chronionych danych.
+    And admin's response page contains Aby tu wybrać TAK, powyżej wybierz zbiór danych instytucji rządowej lub samorządowej.
+
+    Examples:
+    | institution_type |
+    | private          |
+    | other            |
+
+  @feat_dga
+  Scenario Outline: DGA Resource creation for allowed institution
+    Given dataset with pk 9000 for <institution_type> institution
+    When admin's request method is POST
+    And admin's request posted resource data is {"title": "test dga", "description": "more than 20 characters", "switcher": "file", "dataset": 9000, "data_date": "22.05.2020", "status": "published", "contains_protected_data": "True"}
+    And admin's request posted files {"file": "example_dga_comma_separated_csv_file.csv"}
+    And admin's page /resources/resource/add/ is requested
+    Then admin's response status code is 200
+    And admin's response page contains <added_message>
+
+    Examples:
+    | institution_type | added_message                                    |
+    | local            | /change/">test dga</a>" został pomyślnie dodany. |
+    | state            | /change/">test dga</a>" został pomyślnie dodany. |
+
+  @feat_dga
+  Scenario Outline: Failed DGA Resource creation when invalid file structure
+    Given dataset with pk 9000 for state institution
+    When admin's request method is POST
+    And admin's request posted resource data is {"title": "test dga", "description": "more than 20 characters", "switcher": "file", "dataset": 9000, "data_date": "22.05.2020", "status": "published", "contains_protected_data": "True"}
+    And admin's request posted files {"file": <file>}
+    And admin's page /resources/resource/add/ is requested
+    Then admin's response page contains Zasób oznaczony poniżej jako wykaz chronionych danych może zawierać tylko kolumny nazwane w tej kolejności: Lp., Zasób chronionych danych, Format danych, Rozmiar danych, Warunki ponownego wykorzystywania
+
+    Examples:
+    | file                                                        |
+    | "example_invalid_dga_xls_file_contain_additional_cols.xls"  |
+    | "example_invalid_dga_xls_file_not_contain_req_cols.xls"     |
+    | "example_invalid_dga_xls_file_with_wrong_cols_order.xls"    |
+
+  @feat_dga
+  Scenario: Confirm addition of DGA Resource in the presence of an existing DGA Resource
+    Given dataset with pk 9000 containing dga resource
+    When admin's request method is POST
+    And admin's request posted resource data is {"title": "new dga", "description": "more than 20 characters", "switcher": "file", "dataset": 9000, "data_date": "22.05.2020", "status": "published", "contains_protected_data": "True"}
+    And admin's request posted files {"file": "example_dga_comma_separated_csv_file.csv"}
+    And admin's page /resources/resource/add/ is requested
+    Then admin's response page contains Czy na pewno chcesz, aby to był aktualny wykaz chronionych danych?
+    When admin confirms saving the resource with posted data
+    Then admin's response status code is 200
+    And admin's response page contains /change/">new dga</a>" został pomyślnie dodany.
