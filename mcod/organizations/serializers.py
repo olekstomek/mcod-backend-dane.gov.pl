@@ -73,6 +73,7 @@ class InstitutionApiAttrs(ObjectAttrs, HighlightObjectMixin):
     email = fields.Str()
     epuap = fields.Str()
     fax = fields.Str()
+    electronic_delivery_address = fields.Str()
     flat_number = fields.Str()
     followed = fields.Boolean()
     image_url = fields.Str()
@@ -156,8 +157,11 @@ class InstitutionCSVMetadataSerializer(ExtSchema):
     organization_title = TranslatedStr(attribute='title', data_key=_('Name'))
     organization_abbr_title = TranslatedStr(
         attribute='abbreviation', data_key=_('Abbreviation'), default='')
+    organization_id = fields.Str(attribute='id', data_key=_('Id Institution'))
     organization_regon = fields.Str(data_key=_('REGON'), attribute='regon')
     organization_epuap = fields.Str(attribute='epuap', data_key=_('EPUAP'), default='')
+    organization_electronic_delivery_address = fields.Str(attribute='electronic_delivery_address',
+                                                          data_key=_('Address for electronic delivery'))
     organization_website = fields.Url(attribute='website', data_key=_('Website'))
     organization_created = fields.DateTime(attribute='created',
                                            data_key=_('Organization created'), format='iso8601')

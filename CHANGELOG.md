@@ -14,6 +14,42 @@
 ### Breaks
 
 
+## 2.34.1 - (2024-05-13)
+---
+
+### Fixes
+
+* Poprawiono komunikaty błędów - dodano kropki (OTD-492, OTD-493)
+
+
+## 2.34.0 - (2024-05-08)
+---
+
+### New
+
+* Dodanie pola `electronic_delivery_address` do modelu `Organization` oraz pliku migracji bazodanowej - US.01 (OTD-315)
+* Dodanie pola `electronic_delivery_address` do dokumentu ES `InstitutionDocument` - US.01 (OTD-315)
+* Funkja walidująca ADE pod kątem schematu oraz zgodności z sumą kontrolną - US.01 (OTD-315)
+* Dodanie pola `electronic_delivery_address` do serializera instytucji - US.02 (OTD-316)
+* Dodanie pola `adres do doręczeń elektronicznych` do formularza tworzenia/edycji Instytucji - US.01 (OTD-315)
+* Pole `adres do doręczeń elektronicznych` w zakładce do przeglądania usuniętych Instytucji (OrganizationTrashAdmin) - US.01 (OTD-315)
+* Dodanie pola `Address for electronic delivery` do raportu CSV metadata - US.03 (OTD-317)
+* Dodanie pola `Id Institution` do raportu CSV metadata - US.03 (OTD-317)
+* Dodanie pola `Id Institution` do raportu wywoływanego z PA (raport "Zasoby" sekcji "Raporty") - US.04 (OTD-318)
+* Dodanie pola `Id dataset` do raportu wywoływanego z PA (raport "Zasoby" sekcji "Raporty") - US.04 (OTD-318)
+
+
+### Changes
+
+* Zwiększono szerokość pól epuap, electronic_delivery_address, regon i website do 245 px - US.01 (OTD-315)
+
+
+### Fixes
+
+* Poprawiono komunikaty błędów oraz obsługę przypadku zwrócenia None przez funkcję zwracającą rozszerzenie pliku (OTD-404, OTD-419)
+* Poprawiono help_text dla pola `contains_protected_data` w formie (OTD-471)
+
+
 ## 2.33.1 - (2024-03-27)
 ---
 

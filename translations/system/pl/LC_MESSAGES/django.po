@@ -910,6 +910,9 @@ msgstr "codziennie"
 msgid "dataset"
 msgstr "zbiór danych"
 
+msgid "Id dataset"
+msgstr "Id zbioru"
+
 msgid "article"
 msgstr "artykuł"
 
@@ -2709,8 +2712,20 @@ msgstr "Faks"
 msgid "Institution type"
 msgstr "Rodzaj instytucji"
 
+msgid "Id Institution"
+msgstr "Id Instytucji"
+
 msgid "REGON"
 msgstr "REGON"
+
+msgid "Address for electronic delivery"
+msgstr "Adres do doręczeń elektronicznych"
+
+msgid "Invalid checksum."
+msgstr "Niewłaściwa suma kontrolna."
+
+msgid "Given address does not match electronic delivery address pattern."
+msgstr "Podany adres nie jest zgodny z formatem adresu do doręczeń elektronicznych."
 
 msgid "Phone"
 msgstr "Telefon"
@@ -3308,14 +3323,14 @@ msgstr "Zasób oznaczony poniżej jako wykaz chronionych danych może mieć form
 msgid "The resource marked below as a list of protected data must have a file attached."
 msgstr "Zasób oznaczony poniżej jako wykaz chronionych danych musi posiadać załączony plik."
 
-msgid "There is more than one resource containing protected data"
-msgstr "Istnieje więcej niż jeden zasób zawierający chronione dane"
+msgid "There is more than one resource containing protected data."
+msgstr "Istnieje więcej niż jeden zasób zawierający chronione dane."
 
 msgid "Pick a file from disk in xls, xlsx or csv format if you mark the resource below as a list of protected data."
 msgstr "Wybierz plik z dysku w formacie xls, xlsx lub csv, jeśli poniżej oznaczasz zasób jako wykaz chronionych danych."
 
 msgid "The resource has a different type than csv, xls or xlsx format."
-msgstr "Zapisany zasób ma inny typ niż plik w formacie xls, xlsx, csv"
+msgstr "Zapisany zasób ma inny typ niż plik w formacie xls, xlsx, csv."
 
 msgid "Cannot find file for resource"
 msgstr "Nie można odnaleźć pliku dla zasobu"

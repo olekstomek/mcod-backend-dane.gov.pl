@@ -4,6 +4,7 @@ from django.apps import apps
 from django.contrib.auth import get_user_model
 from django.contrib.postgres.indexes import GinIndex
 from django.db import models
+from django.db.models import CheckConstraint, Q
 from django.dispatch import receiver
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
@@ -15,6 +16,7 @@ from mcod.core.api.rdf import signals as rdf_signals
 from mcod.core.api.search import signals as search_signals
 from mcod.core.db.models import ExtendedModel, TrashModelBase, update_watcher
 from mcod.organizations.managers import OrganizationManager, OrganizationTrashManager
+from mcod.organizations.model_validators import validate_eda
 from mcod.organizations.signals import remove_related_datasets
 
 User = get_user_model()
@@ -64,6 +66,14 @@ class Organization(ExtendedModel):
         choices=INSTITUTION_TYPE_CHOICES,
         default=INSTITUTION_TYPE_CHOICES[1][0],
         verbose_name=_("Institution type")
+    )
+    electronic_delivery_address = models.CharField(
+        max_length=26,
+        null=True,
+        blank=True,
+        unique=True,
+        verbose_name=_("Address for electronic delivery"),
+        validators=[validate_eda],
     )
     regon = models.CharField(max_length=20, null=True, verbose_name=_("REGON"))
     tel = models.CharField(max_length=50, null=True, verbose_name=_("Phone"))
@@ -221,12 +231,24 @@ class Organization(ExtendedModel):
 
     short_description.fget.short_description = _("Description")
 
+    def save(self, *args, **kwargs):
+        # Convert empty string to None for database consistency
+        if self.electronic_delivery_address == "":
+            self.electronic_delivery_address = None
+        return super().save(*args, **kwargs)
+
     class Meta:
         db_table = "organization"
         verbose_name = _("Institution")
         verbose_name_plural = _("Institutions")
         default_manager_name = "objects"
         indexes = [GinIndex(fields=["i18n"]), ]
+        constraints = [
+            CheckConstraint(
+                check=~Q(electronic_delivery_address=""),
+                name="electronic_delivery_address_not_empty_string",
+            )
+        ]
 
 
 @receiver(remove_related_datasets, sender=Organization)

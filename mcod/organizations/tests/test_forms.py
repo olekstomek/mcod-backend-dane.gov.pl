@@ -85,6 +85,7 @@ organization_form_data_requirement = {
     "fax": ["123123123", False],
     "tel": ["123123123", True],
     "epuap": ["123123123", False],
+    "electronic_delivery_address": ["AE:PL-98765-43210-SFVYC-19", False],
     "regon": ["123456785", True],
     "website": ["http://test.pl", False],
     "status": ["draft", True],

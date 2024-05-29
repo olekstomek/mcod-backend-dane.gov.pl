@@ -345,6 +345,7 @@ class OrganizationAdmin(HistoryMixin, ObjectPermissionsModelAdmin):
                     'classes': ('suit-tab', 'suit-tab-general',),
                     'fields': (
                         "epuap",
+                        "electronic_delivery_address",
                         "regon",
                         "website",
                     )
@@ -389,6 +390,7 @@ class OrganizationAdmin(HistoryMixin, ObjectPermissionsModelAdmin):
                 "tel",
                 "fax",
                 "epuap",
+                "electronic_delivery_address",
                 "regon",
                 "website",
             ]
@@ -421,6 +423,7 @@ class OrganizationTrashAdmin(HistoryMixin, TrashMixin):
         "tel",
         "fax",
         "epuap",
+        "electronic_delivery_address",
         "regon",
         "website",
         "is_removed"
@@ -442,6 +445,7 @@ class OrganizationTrashAdmin(HistoryMixin, TrashMixin):
         "tel",
         "fax",
         "epuap",
+        "electronic_delivery_address",
         "regon",
         "website",
     ]

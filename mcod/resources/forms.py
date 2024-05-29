@@ -1,5 +1,7 @@
+import logging
 import os
 from mimetypes import guess_extension
+from typing import Optional
 
 import magic
 from dal import autocomplete, forward
@@ -38,6 +40,9 @@ from mcod.resources.dga_utils import (
 from mcod.resources.models import SUPPORTED_FILE_EXTENSIONS, Resource, ResourceFile, Supplement
 from mcod.special_signs.models import SpecialSign
 from mcod.unleash import is_enabled
+
+
+logger = logging.getLogger("mcod")
 
 
 class ResourceSourceSwitcher(forms.widgets.HiddenInput):
@@ -242,8 +247,8 @@ class ResourceForm(forms.ModelForm):
         choices=[(True, _("Yes")), (False, _("No"))],
         help_text=(
             f"Wskazanie TAK dla opublikowanego zasobu oznacza, że "
-            f"zasób jest traktowany jako aktualny wykaz danych "
-            f"chronionych tej instytucji.<br><br> Jeżeli chcesz się "
+            f"zasób jest traktowany jako aktualny wykaz chronionych "
+            f"danych tej instytucji.<br><br> Jeżeli chcesz się "
             f"więcej dowiedzieć na temat chronionych danych "
             f'<a href="{settings.BASE_URL}{settings.PROTECTED_DATA_MANUAL_URL}" '
             f'target="_blank">przejdź do strony</a>'
@@ -355,7 +360,22 @@ class ResourceForm(forms.ModelForm):
         if file is None:
             return
 
-        extension: str = guess_extension(file.content_type)[1:]
+        extension: Optional[str] = guess_extension(file.content_type)
+        if extension is None:
+            logger.warning(
+                f"Could not find extension for content type: "
+                f"{file.content_type}"
+            )
+            self.add_error(
+                "file",
+                _(
+                    "Pick a file from disk in xls, xlsx or csv format if "
+                    "you mark the resource below as a list of protected "
+                    "data."
+                ),
+            )
+            return
+        extension = extension[1:]
         if extension not in DGA_RESOURCE_EXTENSIONS:
             if creating_resource:
                 self.add_error(
@@ -386,7 +406,7 @@ class ResourceForm(forms.ModelForm):
                         "The resource labeled below as a list of "
                         "protected data can only contain columns named "
                         "in this order: "
-                    ) + ", ".join(DGA_COLUMNS),
+                    ) + ", ".join(DGA_COLUMNS) + ".",
                 )
             # can't add err message to not existing field "file" while updating
             else:
@@ -459,7 +479,7 @@ class ResourceForm(forms.ModelForm):
         else:
             self.add_error(
                 "contains_protected_data",
-                _("Cannot read existing file") + f": {file.name}"
+                _("Cannot read existing file") + f": {file.name}."
             )
 
 

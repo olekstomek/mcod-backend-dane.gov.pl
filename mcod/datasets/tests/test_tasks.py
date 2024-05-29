@@ -198,11 +198,35 @@ class TestMetadataFileCreation:
             assert not file.is_file()
             assert file2.is_file()
 
-    def test_contain_protected_data_column_in_csv_report(self, tmp_path: str, mocker: "MockerFixture"):
-        """Check if metadana contains protected data is in report."""
+    def test_columns_in_csv_metadata_report(
+            self, tmp_path: str, mocker: "MockerFixture"
+    ):
+        """Check if required columns are present in csv metadata report."""
+
+        columns_required = [
+            "URL zbioru", "Tytuł", "Opis", "Słowo kluczowe", "Kategoria", "Częstotliwość aktualizacji",
+            "Data udostępnienia zbioru", "Data aktualizacji zbioru", "Liczba wyświetleń zbioru",
+            "Liczba pobrań zbioru", "Liczba danych", "Warunki wykorzystywania", "Licencja", "źródło",
+            "Zbiór zawiera dane o wysokiej wartości", "Zbiór zawiera dane dynamiczne",
+            "Zbiór zawiera dane badawcze", "Lokalizacje zbiorów danych",
+            "Dokumenty uzupełniające zbioru (nazwa, język, url, rozmiar pliku)", "URL dostawcy",
+            "Rodzaj instytucji", "Nazwa", "Skrót", "Id Instytucji", "REGON", "EPUAP",
+            "Adres do doręczeń elektronicznych", "Strona internetowa", "Data utworzenia dostawcy",
+            "Data aktualizacji dostawcy", "Liczba zbiorów danych", "Liczba zasobów dostawcy",
+            "Kod pocztowy", "Miasto", "Rodzaj ulicy", "Ulica", "Numer ulicy", "Numer mieszkania",
+            "Email", "Telefon", "URL danych", "Tytuł danych", "Opis danych",
+            "Data udostępnienia danych", "Dane na dzień", "Ranking otwartości", "Typ", "Format pliku",
+            "Rozmiar pliku", "Liczba wyświetleń danych", "Liczba pobrań danych", "Tabela", "Mapa",
+            "Wykres", "Zasób zawiera dane o wysokiej wartości", "Zasób zawiera dane dynamiczne",
+            "Zasób zawiera dane badawcze", "Zawiera wykaz chronionych danych", "Lokalizacje danych",
+            "URL pliku (do pobrania)", "znaki umowne",
+            "Dokumenty uzupełniające zasobu (nazwa, język, url, rozmiar pliku)"
+        ]
+
         with override_settings(METADATA_MEDIA_ROOT=tmp_path):
             new_today = self.mock_date(year=2023, month=10, day=10, mocker=mocker)
             create_csv_metadata_files()
             file = Path(tmp_path) / "pl" / f"katalog_{new_today}.csv"
             dataframe_report = pd.read_csv(file, sep=";")
-            assert "Zawiera wykaz chronionych danych" in dataframe_report
+            for column in columns_required:
+                assert column in dataframe_report

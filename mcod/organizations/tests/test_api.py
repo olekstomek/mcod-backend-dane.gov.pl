@@ -53,3 +53,11 @@ def test_routes_id_without_slug_in_link_institution_datasets_list(institution_wi
     resp = client14.simulate_get(f"/institutions/{inst.id}/datasets")
     assert HTTP_OK == resp.status
     assert "dataset" == resp.json['data'][0]['type']
+
+
+@pytest.mark.elasticsearch
+def test_response_electronic_delivery_address_in_institution_detail(institution, client14):
+    inst_id = institution.id
+    resp = client14.simulate_get(f"/institutions/{inst_id}")
+    assert HTTP_OK == resp.status
+    assert "electronic_delivery_address" in resp.json["data"]["attributes"]

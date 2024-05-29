@@ -477,6 +477,13 @@ p.irreversible-deletion-warning {
 	width: 99%;
 }
 
+.od2021 input[name=epuap],
+.od2021 input[name=electronic_delivery_address],
+.od2021 input[name=regon],
+.od2021 input[name=website] {
+	width: 245px;
+}
+
 .od2021 .form-horizontal .control-group .help-block,
 .od2021 .form-horizontal .control-group .help-inline {
 	color: #444;

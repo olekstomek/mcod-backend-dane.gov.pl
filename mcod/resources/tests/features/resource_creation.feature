@@ -311,7 +311,7 @@ Feature: Resource with file creation
     And admin's request posted resource data is {"title": "test dga", "description": "more than 20 characters", "switcher": "file", "dataset": 9000, "data_date": "22.05.2020", "status": "published", "contains_protected_data": "True"}
     And admin's request posted files {"file": <file>}
     And admin's page /resources/resource/add/ is requested
-    Then admin's response page contains Zasób oznaczony poniżej jako wykaz chronionych danych może zawierać tylko kolumny nazwane w tej kolejności: Lp., Zasób chronionych danych, Format danych, Rozmiar danych, Warunki ponownego wykorzystywania
+    Then admin's response page contains Zasób oznaczony poniżej jako wykaz chronionych danych może zawierać tylko kolumny nazwane w tej kolejności: Lp., Zasób chronionych danych, Format danych, Rozmiar danych, Warunki ponownego wykorzystywania.
 
     Examples:
     | file                                                        |

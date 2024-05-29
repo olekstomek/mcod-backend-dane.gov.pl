@@ -28,6 +28,7 @@ class InstitutionDocument(ExtendedDocument):
     epuap = fields.KeywordField()
     fax = fields.KeywordField(attr='fax_display')
     tel = fields.KeywordField(attr='phone_display')
+    electronic_delivery_address = fields.KeywordField()
     regon = fields.KeywordField()
     website = fields.KeywordField()
     institution_type = fields.KeywordField()

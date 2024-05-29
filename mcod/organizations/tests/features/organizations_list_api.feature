@@ -25,6 +25,7 @@ Feature: Organizations API
     Then send api request and fetch the response
     And api's response body has field /data/*/attributes/abbreviation
     And api's response body has field /data/*/attributes/description
+    And api's response body has field /data/*/attributes/electronic_delivery_address
     And api's response body has field /data/*/attributes/notes
     And api's response body has field /data/*/attributes/sources
     And api's response body has field /data/*/relationships/datasets/meta/count

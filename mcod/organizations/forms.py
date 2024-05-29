@@ -63,6 +63,10 @@ class OrganizationForm(forms.ModelForm):
     )
 
     email = forms.EmailField()
+    electronic_delivery_address = forms.CharField(
+        label=_("Address for electronic delivery"),
+        required=False,
+    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -72,6 +76,10 @@ class OrganizationForm(forms.ModelForm):
             self.fields['epuap'].required = False
         if self.instance.pk:
             self.fields['users'].initial = self.instance.users.all()
+
+        self.fields['electronic_delivery_address'].widget = forms.TextInput(
+            attrs={'oninput': 'handleInputToUpperCase(this)'}
+        )
 
     def clean_fax_internal(self):
         if 'fax' not in self.cleaned_data:
@@ -112,5 +120,6 @@ class OrganizationForm(forms.ModelForm):
             'epuap',
             'regon',
             'website',
-            'users'
+            'users',
+            'electronic_delivery_address',
         ]

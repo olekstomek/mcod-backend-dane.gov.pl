@@ -1,11 +1,14 @@
 from datetime import date
+from typing import List
 
 import pytest
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.db import IntegrityError
 
 from mcod.datasets.models import Dataset
+from mcod.organizations.factories import OrganizationFactory
 from mcod.organizations.models import Organization
 
 
@@ -27,6 +30,7 @@ class TestOrganizationModel:
         organization.epuap = "epuap"
         organization.regon = "123123123"
         organization.website = "www.www.www"
+        organization.electronic_delivery_address = "AE:PL-98765-43210-SFVYC-19"
         assert organization.id is None
         organization.save()
         assert organization.id is not None
@@ -121,3 +125,40 @@ class TestOrganizationModel:
         institution.image = SimpleUploadedFile("somefile.jpg", b"""1px""")
         institution.save()
         assert institution.image_absolute_url == f'{settings.BASE_URL}{institution.image.url}'
+
+    def test_default_eda(self, institution):
+        assert institution.electronic_delivery_address is None
+
+    def test_blank_eda_converted_to_none(self, institution):
+        institution.electronic_delivery_address = ""
+        institution.save()
+        assert institution.electronic_delivery_address is None
+
+    def test_blank_eda_violates_check_constraint_when_bulk_create(self):
+        organizations: List[Organization] = OrganizationFactory.build_batch(
+            size=3, electronic_delivery_address=""
+        )
+        with pytest.raises(IntegrityError) as e:
+            Organization.objects.bulk_create(organizations)
+
+        assert (
+            "violates check constraint "
+            "\"electronic_delivery_address_not_empty_string\""
+            in e.value.args[0]
+        )
+
+    def test_blank_eda_violates_check_constraint_when_bulk_update(self):
+        organizations: List[Organization] = OrganizationFactory.create_batch(
+            size=3
+        )
+        organizations[0].electronic_delivery_address = ""
+        with pytest.raises(IntegrityError) as e:
+            Organization.objects.bulk_update(
+                organizations, fields=["electronic_delivery_address", ]
+            )
+
+        assert (
+            "violates check constraint "
+            "\"electronic_delivery_address_not_empty_string\""
+            in e.value.args[0]
+        )

@@ -100,3 +100,15 @@
 {% if 'plugin-holder' in fieldset.classes %}
     <hr class="plugin-holder-separator">
 {% endif %}
+
+{% block admin_change_form_document_ready %}
+    <script>
+        function handleInputToUpperCase(input) {
+          let start = input.selectionStart;
+          let end = input.selectionEnd;
+
+          input.value = input.value.toUpperCase();
+          input.setSelectionRange(start, end);
+        }
+    </script>
+{% endblock %}

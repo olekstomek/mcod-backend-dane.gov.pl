@@ -21,7 +21,9 @@ def institution():
 
 @pytest.fixture
 def institutions():
-    return OrganizationFactory.create_batch(3)
+    organizations = OrganizationFactory.create_batch(3)
+    run_on_commit_events()
+    return organizations
 
 
 @given('institution')
