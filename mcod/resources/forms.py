@@ -100,7 +100,9 @@ class MapsJSONField(JSONField):
         for k, v in ones.items():
             if names.count(k) > 1:
                 raise ValidationError(
-                    f'{_("element")} {v} {_("occured more than once")}. {_("Redefine the map by selecting only once the required element of the map set.")}')  # noqa
+                    f'{_("element")} {v} {_("occured more than once")}. '
+                    f'{_("Redefine the map by selecting only once the required element of the map set.")}'
+                )
 
     def from_different_sets(self, names):
         groups = {

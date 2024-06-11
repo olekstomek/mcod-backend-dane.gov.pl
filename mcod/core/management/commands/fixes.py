@@ -241,7 +241,10 @@ class Command(BaseCommand):
             d.save()
         ds = Dataset.objects.filter(organization__is_permanently_removed=True)
         for d in ds:
-            print(f"Dataset ({d.id}) is set as permanently removed because organization ({d.organization.id}) is permanently removed")  # noqa
+            print(
+                f"Dataset ({d.id}) is set as permanently removed because "
+                f"organization ({d.organization.id}) is permanently removed"
+            )
             d.is_permanently_removed = True
             d.save()
         ds = Dataset.objects.filter(organization__status="draft")

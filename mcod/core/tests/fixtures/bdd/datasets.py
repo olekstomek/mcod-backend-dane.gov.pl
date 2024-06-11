@@ -235,9 +235,7 @@ def dataset_with_id_and_showcases(dataset_id, num):
         id=dataset_id, title="dataset {} with showcases".format(dataset_id)
     )
     for x in range(num):
-        ShowcaseFactory.create(
-            title=f"Ponowne wykorzystanie {x+1}", datasets=[_dataset]
-        )
+        ShowcaseFactory.create(title=f"Ponowne wykorzystanie {x + 1}", datasets=[_dataset])
     return _dataset
 
 

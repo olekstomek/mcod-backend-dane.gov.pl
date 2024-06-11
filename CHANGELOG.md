@@ -14,6 +14,30 @@
 ### Breaks
 
 
+## 2.34.2 - (2024-05-22)
+---
+
+### New
+
+* Dodano nowy job w CI w celu wydzielenia środowiska DEV do wdrażania dowolnych nieautoryzowanych przez biznes zmian na potrzeby testów (OTD-415-444)
+* Dodano wywołanie black w `pre-commit` (OTD-344)
+* Dodano job w CI, lint, który wywołuje `pre-commit` na wszystkich plikach (OTD-344)
+* Dodano plik `.git-blame-ignore-revs` dokumentujący zmiany masowe (OTD-344)
+
+### Fixes
+
+* Aktualizacja Pipfile.lock (OTD-408)
+* Podbicie Python w `docker/app/Dockerfile` do wersji obrazu `python:3.8.16` (OTD-408)
+* Podbicie Node.js w `docker/app/Dockerfile` do wersji 16.x (OTD-408)
+
+
+### Removed
+
+* Usunięcie starych plików budowania zależności `requirements-common.txt` na rzecz `Pipfile.lock` (OTD-408)
+* Usunięcie zakomentowanych linii z `.gitlab-ci.yml` (OTD-408)
+* Usunięcie z `docker/app/Dockerfile` środowiska wirtualnego (OTD-408)
+
+
 ## 2.34.1 - (2024-05-13)
 ---
 

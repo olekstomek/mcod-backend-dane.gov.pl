@@ -45,7 +45,7 @@ Więcej: https://www.jetbrains.com/help/pycharm/docker-compose.html#working
 
 ## Przygotowanie i uruchomienie wirtualnego środowiska
 
-    $ pip install -I pipenv
+    $ pip install -I pipenv==2022.10.12
     $ pipenv run pip install setuptools"<58"
     $ pipenv install --dev
     $ exit
@@ -247,6 +247,11 @@ Dodanie pliku/plików jest niezbędne do sprawdzenia ich poprawności:
 Uruchomienie pre-commit sprawdzającego m.in. poprawność stylu i importów.
 
     (backend) $ pre-commit run
+
+#### Black
+
+Używamy [black](https://black.readthedocs.io/en/stable/index.html) do zachowania stylu kodu.
+Konfiguracja jest obecna tylko w `.pre-commit-config.yaml`, ponieważ nie używamy `pyproject.toml`.
 
 ### Kompilacja tłumaczeń (lokalnie)
 

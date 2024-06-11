@@ -21,7 +21,6 @@ prepare-images:
     - docker build -f docker/elasticsearch/Dockerfile -t $REGISTRY_PATH/elasticsearch:6.8.23-mcod-1 .
     - docker build -f docker/postgres/Dockerfile -t $REGISTRY_PATH/postgresql:13-mcod .
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD registry.dane.gov.pl
-    #- docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN registry.dane.gov.pl
     - docker push $REGISTRY_PATH/elasticsearch:6.8.23-mcod-1
     - docker push $REGISTRY_PATH/postgresql:13-mcod
   except:
@@ -112,9 +111,24 @@ test:
   tags:
     - docker
 
+lint:
+  stage: test
+  image: python:3.8.6
+  script:
+    - pip install pre-commit
+    - pre-commit run --all-files
+  except:
+    - tags
+    - master
+    - schedules
+  tags:
+    - docker
+  allow_failure: true
+
 check-docker-build:
   stage: test
   except:
+    - pre-devel
     - devel
     - tags
     - master
@@ -125,6 +139,18 @@ check-docker-build:
   tags:
     - shell
 
+build-pre-devel:
+  stage: build
+  only:
+    - pre-devel
+  script:
+    - docker build --add-host $CI_LOCAL_GITLAB_ADDRESS -f docker/app/Dockerfile -t $REGISTRY_PATH/backend:pre-devel .
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD registry.dane.gov.pl
+    #- docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN registry.dane.gov.pl
+    - docker push $REGISTRY_PATH/backend:pre-devel
+  tags:
+    - shell
+
 build-devel:
   stage: build
   only:
@@ -132,7 +158,6 @@ build-devel:
   script:
     - docker build --add-host $CI_LOCAL_GITLAB_ADDRESS -f docker/app/Dockerfile -t $REGISTRY_PATH/backend:devel .
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD registry.dane.gov.pl
-    #- docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN registry.dane.gov.pl
     - docker push $REGISTRY_PATH/backend:devel
   tags:
     - shell
@@ -143,7 +168,6 @@ build-master:
     - master
   script:
     - docker build --add-host $CI_LOCAL_GITLAB_ADDRESS -f docker/app/Dockerfile -t $REGISTRY_PATH/backend:master .
-    #- docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN registry.dane.gov.pl
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD registry.dane.gov.pl
     - docker push $REGISTRY_PATH/backend:master
   tags:
@@ -156,13 +180,13 @@ release-prod:
     - cat CHANGELOG.md
   script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD registry.dane.gov.pl
-    #- docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN registry.dane.gov.pl
     - docker pull $REGISTRY_PATH/backend:master
     - docker tag $REGISTRY_PATH/backend:master $REGISTRY_PATH/backend:master-$API_VERSION
     - docker tag $REGISTRY_PATH/backend:master $REGISTRY_PATH/backend:master-prod-latest
     - docker push $REGISTRY_PATH/backend:master-$API_VERSION
     - docker push $REGISTRY_PATH/backend:master-prod-latest
   except:
+    - pre-devel
     - devel
     - schedules
   only:
@@ -190,6 +214,7 @@ publish-code:
     - cd /gluster/mcod/code
     - ln -sf backend_$API_VERSION.zip backend_latest.zip
   except:
+    - pre-devel
     - devel
     - schedules
   only:
