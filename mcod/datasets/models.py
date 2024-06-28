@@ -463,6 +463,10 @@ class Dataset(ExtendedModel):
         return self.is_imported and self.source.is_xml
 
     @property
+    def is_published(self):
+        return self.status == "published"
+
+    @property
     def institution(self):
         return self.organization
 
@@ -659,6 +663,12 @@ class Dataset(ExtendedModel):
 
     @property
     def dga_resources_titles(self) -> List[str]:
+        """
+        Returns a list of all DGA resources titles in Dataset.
+        Logs an error if more than one DGA Resource is found in the Dataset.
+
+        Used in delete confirmation HTML templates.
+        """
         dga_resources_in_dataset = self.resources.filter(
             contains_protected_data=True, status="published"
         ).values_list("title", flat=True)

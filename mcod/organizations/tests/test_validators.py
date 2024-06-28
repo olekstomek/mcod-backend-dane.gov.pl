@@ -10,7 +10,7 @@ class TestElectronicDeliveryAddressValidator:
         with pytest.raises(ValidationError) as e:
             validate_eda(electronic_delivery_address)
 
-        assert "Niewłaściwa suma kontrolna." == e.value.message
+        assert "Podany adres nie jest zgodny z formatem adresu do doręczeń " "elektronicznych." == e.value.message
 
     @pytest.mark.parametrize(
         "invalid_eda_format",
@@ -39,10 +39,7 @@ class TestElectronicDeliveryAddressValidator:
         with pytest.raises(ValidationError) as e:
             validate_eda(invalid_eda_format)
 
-        assert (
-            "Podany adres nie jest zgodny z formatem adresu do doręczeń "
-            "elektronicznych." == e.value.message
-        )
+        assert "Podany adres nie jest zgodny z formatem adresu do doręczeń " "elektronicznych." == e.value.message
 
     @pytest.mark.parametrize(
         "valid_eda",

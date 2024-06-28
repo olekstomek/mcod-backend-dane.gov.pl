@@ -10,6 +10,7 @@ import tempfile
 from calendar import monthrange
 from collections import namedtuple
 from io import BytesIO
+from typing import Optional
 
 import magic
 import pytz
@@ -1527,7 +1528,11 @@ class Resource(ExtendedModel):
         For more information, see OTD-138. The DGA mechanism applies only to
         already published resources.
         """
-        return self.contains_protected_data and self.is_published
+        return (
+            self.contains_protected_data and
+            self.is_published and
+            not self.is_removed
+        )
 
     @property
     def needs_es_and_rdf_db_update(self):
@@ -1759,6 +1764,42 @@ class Resource(ExtendedModel):
             or (self.is_linked and self.type == RESOURCE_TYPE_FILE)
             or self.type == RESOURCE_TYPE_WEBSITE
         )
+
+
+class AggregatedDGAInfo(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    resource = models.ForeignKey(Resource, on_delete=models.SET_NULL, null=True)
+    # Statistics are currently only updated - they can be used in the future.
+    views_count = models.PositiveIntegerField(default=0)
+    downloads_count = models.PositiveIntegerField(default=0)
+
+    def save(self, *args, **kwargs):
+        if not self.id and AggregatedDGAInfo.objects.exists():
+            raise ValidationError("There can be only one AggregatedDGAInfo instance")
+        return super(AggregatedDGAInfo, self).save(*args, **kwargs)
+
+    @property
+    def main_dga_resource(self) -> Optional[Resource]:
+        if (
+            self.resource and
+            self.resource.is_published and
+            not self.resource.is_removed
+        ):
+            return self.resource
+        else:
+            return None
+
+    @property
+    def main_dga_dataset(self) -> Optional[Dataset]:
+        if (
+                self.resource and
+                self.resource.dataset.is_published and
+                not self.resource.dataset.is_removed
+        ):
+            return self.resource.dataset
+
+        return None
 
 
 class Chart(ExtendedModel):

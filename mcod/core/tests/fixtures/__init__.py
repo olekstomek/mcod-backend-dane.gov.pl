@@ -8,6 +8,7 @@ from falcon.util.structures import Context
 from mcod.core.tests.fixtures.bdd import *  # noqa
 from mcod.core.tests.fixtures.categories import *  # noqa
 from mcod.core.tests.fixtures.datasets_fixtures import *  # noqa
+from mcod.core.tests.fixtures.dga import *  # noqa
 from mcod.core.tests.fixtures.harvester import *  # noqa
 from mcod.core.tests.fixtures.legacy import *  # noqa
 from mcod.core.tests.fixtures.licenses import *  # noqa

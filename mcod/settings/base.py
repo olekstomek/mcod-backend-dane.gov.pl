@@ -374,6 +374,7 @@ RESOURCES_FILES_TO_REMOVE_ROOT = str(
 DCAT_VOCABULARIES_MEDIA_ROOT = str(ROOT_DIR.path(MEDIA_ROOT, "dcat", "vocabularies"))
 METADATA_MEDIA_ROOT = str(ROOT_DIR.path(MEDIA_ROOT, "datasets", "catalog"))
 DGA_RESOURCE_CREATION_STAGING_ROOT = str(ROOT_DIR.path(MEDIA_ROOT, "dga_temp"))
+MAIN_DGA_RESOURCE_XLSX_CREATION_ROOT = str(ROOT_DIR.path(MEDIA_ROOT, "main_dga"))
 
 MEDIA_URL = "/media/"
 ACADEMY_URL = "%s%s" % (MEDIA_URL, "academy")
@@ -1599,6 +1600,55 @@ PROTECTED_DATA_MANUAL_URL = env(
 )
 TOURPICKER_URL = f"{BASE_URL}?tourPicker=1"
 API_URL_INTERNAL = env("API_URL_INTERNAL", default="http://mcod-api:8000")
+
+# Main DGA Resource creation task related constants
+MAIN_DGA_RESOURCE_XLSX_CREATION_CACHE_TIMEOUT = 60*60  # 60 minutes
+
+# Set None to prevent release cache before deleting created objects if any
+# exception will occur. Cache will be released when the task is completed
+# in `clean_up_after_main_dga_resource_creation` method.
+MAIN_DGA_RESOURCE_CREATION_CACHE_TIMEOUT = None
+MAIN_DGA_DATASET_OWNER_ORGANIZATION_PK = env(
+    "MAIN_DGA_DATASET_OWNER_ORGANIZATION_PK", default=333
+)
+MAIN_DGA_RESOURCE_DEFAULT_TITLE = "Wykaz chronionych danych"
+MAIN_DGA_RESOURCE_DEFAULT_DESC = (
+    f"Wykaz zasobów chronionych danych Ministerstwa Cyfryzacji raport zbiorczy "
+    f"- Akt o zarządzaniu danymi. Dostęp do chronionych danych wymienionych w "
+    f"wykazie jest możliwy wyłącznie na wniosek. Warunki ponownego "
+    f"wykorzystywania zostaną określone indywidualnie w ofercie "
+    f"(po złożeniu wniosku). Format oraz rozmiar danych wskazane w wykazie "
+    f"mogą ulec zmianie. Więcej na temat dostępu do chronionych danych "
+    f"(w tym jak złożyć wniosek) dowiesz się w Punkcie informacyjnym pod "
+    f'adresem: <a href="{BASE_URL}/pl/dga/information">{BASE_URL}/pl/dga/information</a>'
+)
+MAIN_DGA_DATASET_DEFAULT_TITLE = (
+    "Wykaz zasobów chronionych danych DGA – raport zbiorczy"
+)
+MAIN_DGA_DATASET_DEFAULT_DESC = (
+    f"Wykaz zasobów chronionych danych raport zbiorczy. Dane w tym zasobie "
+    f"odzwierciedlają właściwy wykaz chronionych danych umieszczony w zakładce "
+    f"Punkt informacyjny - Wykaz chronionych danych. Dostęp do chronionych "
+    f"danych wymienionych w wykazie jest możliwy wyłącznie na wniosek. "
+    f"Warunki ponownego wykorzystywania zostaną określone indywidualnie w "
+    f"ofercie (po złożeniu wniosku). Format oraz rozmiar danych wskazane w "
+    f"wykazie mogą ulec zmianie. Więcej na temat dostępu do chronionych "
+    f"danych (w tym jak złożyć wniosek) dowiesz się w Punkcie informacyjnym "
+    f"dostępnym pod adresem: "
+    f'<a href="{BASE_URL}/pl/dga/information">{BASE_URL}/pl/dga/information</a>'
+)
+MAIN_DGA_XLSX_FILE_NAME_PREFIX = (
+    "Wykaz zasobów chronionych DGA – wykaz zbiorczy – Ministerstwo Cyfryzacji"
+)
+MAIN_DGA_XLSX_WORKSHEET_NAME = "Arkusz 1"
+MAIN_DGA_DATASET_UPDATE_NOTIFICATION_EMAIL = "chronionedane@cyfra.gov.pl"
+MAIN_DGA_DATASET_CATEGORIES_TITLES = ["Rząd i sektor publiczny"]
+MAIN_DGA_DATASET_TAGS_NAMES = [
+    "DGA",
+    "wykaz zasobów chronionych danych",
+    "akt o zarządzaniu danymi",
+    "chronione dane",
+]
 
 PASSWORD_RESET_PATH = "/user/reset-password/%s/"
 EMAIL_VALIDATION_PATH = "/user/verify-email/%s/"

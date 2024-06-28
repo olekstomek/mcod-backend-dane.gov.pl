@@ -1,5 +1,7 @@
+from typing import Any, Dict, Optional
+
 import pytest
-from falcon import HTTP_OK
+from falcon import HTTP_NOT_FOUND, HTTP_OK
 from falcon.testing import TestClient
 from openapi_core import create_spec
 from openapi_core.validation.request.validators import RequestValidator
@@ -10,6 +12,7 @@ from mcod.api import app
 from mcod.core.tests.helpers.openapi_wrappers import FalconOpenAPIWrapper
 from mcod.core.tests.helpers.tasks import run_on_commit_events
 from mcod.core.utils import jsonapi_validator
+from mcod.resources.factories import AggregatedDGAInfoFactory, DGAResourceFactory
 from mcod.resources.models import Resource
 from mcod.settings.test import API_URL
 
@@ -356,3 +359,45 @@ def test_response_dga_flag_in_details(
         resp.json["data"]["attributes"]["contains_protected_data"]
         == contains_protected_data
     )
+
+
+@pytest.mark.feat_dga
+@pytest.mark.parametrize(
+    "dga_info_params, status_code",
+    [
+        (dict(views_count=100, downloads_count=50), HTTP_OK),
+        (dict(views_count=100, downloads_count=50, resource=None), HTTP_NOT_FOUND),
+        (None, HTTP_NOT_FOUND),
+    ],
+)
+def test_api_aggregated_dga_info(
+        client: TestClient,
+        dga_info_params: Optional[Dict[str, Any]],
+        status_code: str
+):
+
+    if dga_info_params is not None:
+        AggregatedDGAInfoFactory.create(**dga_info_params)
+
+    resp = client.simulate_get("/dga-aggregated/")
+    assert status_code == resp.status, resp.json
+
+
+@pytest.mark.feat_dga
+@pytest.mark.parametrize(
+    "resource_params, status_code",
+    [
+        (dict(is_removed=True), HTTP_NOT_FOUND),
+        (dict(is_removed=False), HTTP_OK),
+        (dict(status="draft"), HTTP_NOT_FOUND),
+        (dict(status="published"), HTTP_OK),
+    ],
+)
+def test_api_aggregated_dga_info_resource_removed_draft(
+        client: TestClient, resource_params: Dict[str, Any], status_code: str
+):
+    resource: Resource = DGAResourceFactory.create(**resource_params)
+    AggregatedDGAInfoFactory.create(resource=resource)
+
+    resp = client.simulate_get("/dga-aggregated/")
+    assert status_code == resp.status, resp.json

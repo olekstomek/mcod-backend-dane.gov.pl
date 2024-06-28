@@ -2,6 +2,7 @@ from goodtables.error import Error
 from goodtables.registry import check
 
 ZERO_DATA_ROWS = 'zero-data-rows'
+ZERO_DATA_ROWS_MSG = 'Brak wierszy z danymi'
 
 
 @check(ZERO_DATA_ROWS, type='custom', context='body')
@@ -19,7 +20,7 @@ class ZeroDataRows:
                 Error(
                     ZERO_DATA_ROWS,
                     row_number=0,
-                    message='Brak wierszy z danymi',
+                    message=ZERO_DATA_ROWS_MSG,
                 )
             )
         return errors

@@ -194,6 +194,13 @@ Uruchomienie usługi jest niezbędne, jeżeli zamierzamy korzystać z zadań asy
 
     (backend) $ python -m celery --app=mcod.celeryapp:app worker -l DEBUG -E -Q default,resources,indexing,periodic,newsletter,notifications,search_history,watchers,harvester,indexing_data
 
+#### Taski periodyczne
+
+- Tworzenie wykazu głównego: dla zadania realizującego tworzenie wykazu głównego DGA niezbędne jest ustawienie zmiennej środowiskowej określającej id Instytucji będącej jego właścicielem:
+
+
+    MAIN_DGA_DATASET_OWNER_ORGANIZATION_PK=<organization_pk>
+
 ### Usługa discourse
 
 #### Pierwsza konfiguracja

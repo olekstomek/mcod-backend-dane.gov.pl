@@ -2,9 +2,11 @@ import json
 import os
 import tempfile
 import uuid
+from datetime import datetime
 from io import BytesIO
 
 import factory
+from django.conf import settings
 
 from mcod.core.registries import factories_registry
 from mcod.datasets.factories import DatasetFactory
@@ -92,6 +94,16 @@ class ResourceFileDGACompliantFactory(ResourceFileFactory):
     )
 
 
+class MainDGAResourceFileFactory(ResourceFileFactory):
+    file = factory.django.FileField(
+        from_path=f'{os.path.join(settings.TEST_SAMPLES_PATH, "example_main_dga_file.xlsx")}',
+        filename=f'{settings.MAIN_DGA_XLSX_FILE_NAME_PREFIX} {datetime.now().strftime("%Y%m%d")}.xlsx',
+    )
+    format = "xlsx"
+    openness_score = 2
+    mimetype = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+
+
 class ResourceFactory(factory.django.DjangoModelFactory):
     title = factory.Faker('text', max_nb_chars=100, locale='pl_PL')
     description = factory.Faker('paragraph', nb_sentences=3, variable_nb_sentences=True, locale='pl_PL')
@@ -99,7 +111,7 @@ class ResourceFactory(factory.django.DjangoModelFactory):
     downloads_count = factory.Faker('random_int', min=0, max=500)
     main_file = factory.RelatedFactory(ResourceFileFactory, factory_related_name='resource')
     link = factory.LazyAttribute(lambda obj: 'https://test.mcod/media/resources/{}'.format(str(uuid.uuid4())))
-    format = 'CSV'
+    format = 'csv'
     type = factory.Faker('random_element', elements=_RESOURCE_TYPES)
     openness_score = factory.Faker('random_int', min=1, max=5)
     dataset = factory.SubFactory(DatasetFactory)
@@ -158,6 +170,19 @@ class DGACompliantResourceFactory(ResourceFactory):
         ResourceFileDGACompliantFactory,
         factory_related_name="resource",
     )
+
+
+class MainDGAResourceFactory(ResourceFactory):
+    contains_protected_data = True
+    main_file = factory.RelatedFactory(
+        MainDGAResourceFileFactory,
+        factory_related_name="resource",
+    )
+    format = "xlsx"
+    title = factory.Sequence(
+        lambda n: f"{settings.MAIN_DGA_RESOURCE_DEFAULT_TITLE} {n}"
+    )
+    description = settings.MAIN_DGA_RESOURCE_DEFAULT_DESC
 
 
 class DGAResourceFactory(DGACompliantResourceFactory):
@@ -232,6 +257,13 @@ class TaskResultFactory(factory.django.DjangoModelFactory):
         if isinstance(kwargs.get('result'), dict):
             kwargs['result'] = json.dumps(kwargs['result'])
         return kwargs
+
+
+class AggregatedDGAInfoFactory(factory.django.DjangoModelFactory):
+    resource = factory.SubFactory(MainDGAResourceFactory)
+
+    class Meta:
+        model = models.AggregatedDGAInfo
 
 
 factories_registry.register('resource', ResourceFactory)

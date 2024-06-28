@@ -11,11 +11,12 @@ from collections import OrderedDict
 from http.cookies import SimpleCookie
 from io import StringIO, TextIOWrapper
 from pathlib import Path
-from typing import List, Optional, TextIO, Union
+from typing import List, Optional, TextIO, Union, Any
 from xml.dom.minidom import parseString
 
 import json_api_doc
 import jsonschema
+import pandas as pd
 from dicttoxml import dicttoxml
 from falcon import Response
 from marshmallow import class_registry
@@ -472,3 +473,30 @@ def clean_filename(filename, limit=220):
     )
     cleaned_filename = cleaned_filename[:limit]
     return cleaned_filename.strip()
+
+
+def save_df_to_xlsx(
+        df: pd.DataFrame,
+        file_path: str,
+        sheet_name: str = "Arkusz1",
+        adjust_col_width: bool = True,
+) -> None:
+    with pd.ExcelWriter(file_path, engine="xlsxwriter") as writer:
+        df.to_excel(writer, index=False, sheet_name=sheet_name)
+        worksheet: Any = writer.sheets[sheet_name]
+
+        if adjust_col_width:
+            # Find and set max width for each column in worksheet.
+            for i, col in enumerate(df.columns):
+                # NaN (float type) is returned when there are no records.
+                # Set to 0 in such cases.
+                max_record_len: Union[int, float] = df[col].astype(str).map(
+                    len).max()
+                if pd.isna(max_record_len):
+                    max_record_len = 0
+
+                col_header_len: int = len(str(col))
+                column_len: int = max(max_record_len, col_header_len)
+                worksheet.set_column(i, i, column_len + 1)
+
+        writer.save()

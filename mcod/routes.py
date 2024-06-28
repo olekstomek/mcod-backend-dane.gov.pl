@@ -109,6 +109,10 @@ routes = [
     ('/resources/{id:int}/geo', res_views.ResourceGeoView()),
     ('/resources/{id:int},{slug}/geo', res_views.ResourceGeoView()),
     ('/resources/{id:int},{slug}/comments', res_views.ResourceCommentsView()),
+
+    # DGA
+    ('/dga-aggregated', res_views.AggregatedDGAInfoView()),
+
     # Depricated views
     ('/resources/{id:int}/incr_download_count', res_views.ResourceDownloadCounter()),
     ('/resources/{id:int},{slug}/incr_download_count', res_views.ResourceDownloadCounter()),

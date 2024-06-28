@@ -2721,9 +2721,6 @@ msgstr "REGON"
 msgid "Address for electronic delivery"
 msgstr "Adres do doręczeń elektronicznych"
 
-msgid "Invalid checksum."
-msgstr "Niewłaściwa suma kontrolna."
-
 msgid "Given address does not match electronic delivery address pattern."
 msgstr "Podany adres nie jest zgodny z formatem adresu do doręczeń elektronicznych."
 

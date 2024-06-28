@@ -11,7 +11,10 @@ from django.conf import settings as dj_settings
 from django.contrib.admin.widgets import AdminDateWidget, FilteredSelectMultiple
 from django.contrib.postgres.forms.jsonb import JSONField
 from django.core.exceptions import MultipleObjectsReturned, ValidationError
-from django.core.files.uploadedfile import InMemoryUploadedFile
+from django.core.files.uploadedfile import (
+    InMemoryUploadedFile,
+    SimpleUploadedFile,
+)
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 
@@ -36,8 +39,14 @@ from mcod.resources.dga_utils import (
     create_uploaded_file_from_path,
     get_dga_resource_for_institution,
     validate_dga_file_columns,
+    get_main_dga_resource,
 )
-from mcod.resources.models import SUPPORTED_FILE_EXTENSIONS, Resource, ResourceFile, Supplement
+from mcod.resources.models import (
+    SUPPORTED_FILE_EXTENSIONS,
+    Resource,
+    ResourceFile,
+    Supplement,
+)
 from mcod.special_signs.models import SpecialSign
 from mcod.unleash import is_enabled
 
@@ -284,46 +293,89 @@ class ResourceForm(forms.ModelForm):
 
     def clean(self):
         data = super().clean()
-        creating_resource: bool = False if self.instance.pk else True
+
+        instance_pk: Optional[int] = self.instance.pk
+        creating_resource: bool = False if instance_pk else True
         contains_protected_data: bool = data.get(
             "contains_protected_data"
         ) == "True"
 
         if contains_protected_data:
             if creating_resource:
+                # get temporary saved file on resource creation
                 self._replace_file_on_resource_creation()
             else:
+                # use existing file on resource update
                 self._replace_file_on_resource_update()
 
-        dataset = data.get("dataset")
+        self._validate_data_date(data)
+        self._validate_resource_status(data)
+        self._validate_related_resource(data)
+
+        # Check if updating Main DGA Resource
+        is_main_dga_resource: bool = self._is_main_dga_resource_updated(
+            instance_pk
+        )
+
+        if contains_protected_data:
+            self._validate_data_flags_when_contains_protected_data(data)
+
+            # Don't validate DGA file for Main DGA Resource due to specific
+            # file structure.
+            if not is_main_dga_resource:
+                self._validate_dga_file(creating_resource=creating_resource)
+
+            self._validate_institution_when_contains_protected_data(data)
+
+            # Don't remove DGA flag from other Resource when updating main
+            # DGA Resource.
+            if not is_main_dga_resource:
+                self._remove_dga_flag_from_current_dga_resource_if_needed(data)
+        return data
+
+    def _validate_data_date(self, data: dict) -> None:
         data_date_err = Resource.get_auto_data_date_errors(data)
         if data_date_err:
             self.add_error(data_date_err.field_name, data_date_err.message)
+
+    def _validate_resource_status(self, data: dict) -> None:
         if is_enabled("S62_fix_admin_resource_data_change_type.be"):
             s62_data_status = data.get("status")
         else:
             s62_data_status = data["status"]
+
+        dataset = data.get("dataset")
         if s62_data_status == "published" and dataset and dataset.status == "draft":
             error_message = _(
-                "You can't set status of this resource to published, because it's dataset is still a draft. "
+                "You can't set status of this resource to published, because "
+                "it's dataset is still a draft. "
                 "You should first published that dataset: "
             )
-            self.add_error("status", mark_safe(error_message + dataset.title_as_link))
+            self.add_error(
+                "status", mark_safe(error_message + dataset.title_as_link)
+            )
+
+    def _validate_related_resource(self, data: dict) -> None:
         related_resource = data.get("related_resource")
-        if related_resource and related_resource not in Resource.raw.filter(
-            dataset_id=dataset.id
-        ):
+        dataset = data.get("dataset")
+        if all((
+                dataset,
+                related_resource,
+                related_resource not in Resource.raw.filter(
+                    dataset_id=dataset.id
+                )
+        )):
             self.add_error(
                 "related_resource",
                 _("Only resource from related dataset resources is valid!"),
             )
 
-        if contains_protected_data:
-            self._validate_data_flags_when_contains_protected_data(data)
-            self._validate_dga_file(creating_resource=creating_resource)
-            self._validate_institution_when_contains_protected_data(data)
-            self._remove_dga_flag_from_current_dga_resource_if_needed(data)
-        return data
+    @staticmethod
+    def _is_main_dga_resource_updated(pk):
+        if pk is None:
+            return False
+        main_dga_resource: Optional[Resource] = get_main_dga_resource()
+        return pk == main_dga_resource.pk if main_dga_resource else False
 
     def _validate_data_flags_when_contains_protected_data(self, data: dict) -> None:
         has_dynamic_data: bool = data.get("has_dynamic_data") == "True"
@@ -447,6 +499,9 @@ class ResourceForm(forms.ModelForm):
             current_dga_resource.save()
 
     def _replace_file_on_resource_creation(self):
+        """
+        Updates cleaned_data with path to temporarily created file.
+        """
         # link is not allowed for dga resource
         if self.cleaned_data.get("link"):
             self.add_error(
@@ -459,7 +514,7 @@ class ResourceForm(forms.ModelForm):
             )
             return
         # after dga save confirmation we get file_ref instead of file
-        file_ref: str = self.cleaned_data.get("file_ref")
+        file_ref: SimpleUploadedFile = self.cleaned_data.get("file_ref")
         if file_ref:
             self.cleaned_data["file"] = file_ref
 

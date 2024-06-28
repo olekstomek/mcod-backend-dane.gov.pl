@@ -14,6 +14,26 @@
 ### Breaks
 
 
+## 2.35.0 - (2024-06-18)
+---
+
+### New
+
+* Dodano model `AggregatedDGAInfo` przechowujący informacje o zasobie zbiorczym DGA (OTD-438)
+* Dodano endpoint `/dga-aggregated` zwracający informacje o zasobie zbiorczym DGA (OTD-439)
+* Dodano task celery `create_main_dga_resource_task` tworzący zasób zbiorczy DGA (OTD-441) i (OTD-587)
+
+
+### Changes
+
+* zmieniono komunikaty walidacji pola `electronic_delivery_address` dla przypadku błędnej sumy kontrolnej (OTD-555)
+
+
+### Removed
+
+* Usunięto unique z walidacji pola `electronic_delivery_address` (OTD-554)
+
+
 ## 2.34.2 - (2024-05-22)
 ---
 

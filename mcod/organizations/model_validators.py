@@ -1,8 +1,8 @@
 import re
+from typing import List
 
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
-from typing import List
 
 
 def validate_eda(address: str) -> None:
@@ -17,9 +17,7 @@ def validate_eda(address: str) -> None:
 
     # Validate the address
     if not re.match(eda_pattern, address):
-        raise ValidationError(_(
-            "Given address does not match electronic delivery address pattern."
-        ))
+        raise ValidationError(_("Given address does not match electronic delivery address pattern."))
 
     eda_parts: List[str] = address.split("-")
     digits_sum: int = int(eda_parts[1]) + int(eda_parts[2])
@@ -27,8 +25,6 @@ def validate_eda(address: str) -> None:
     checksum: int = int(eda_parts[4])
 
     checksum_calculation_base: int = abs(letters_ascii_sum - digits_sum)
-    checksum_calculation_base_digits_sum: int = sum(
-        int(digit) for digit in str(checksum_calculation_base)
-    )
+    checksum_calculation_base_digits_sum: int = sum(int(digit) for digit in str(checksum_calculation_base))
     if not checksum == checksum_calculation_base_digits_sum:
-        raise ValidationError(_("Invalid checksum."))
+        raise ValidationError(_("Given address does not match electronic delivery address pattern."))

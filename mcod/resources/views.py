@@ -8,37 +8,51 @@ from django.template import loader
 from elasticsearch_dsl import A
 
 from mcod import settings
-from mcod.core.api.handlers import (CreateOneHdlr, RemoveOneHdlr,
-                                    RetrieveManyHdlr, RetrieveOneHdlr,
-                                    SearchHdlr, ShaclMixin,
-                                    SubscriptionSearchHdlr, UpdateOneHdlr)
+from mcod.core.api.handlers import (
+    BaseHdlr,
+    CreateOneHdlr,
+    RemoveOneHdlr,
+    RetrieveManyHdlr,
+    RetrieveOneHdlr,
+    SearchHdlr,
+    ShaclMixin,
+    SubscriptionSearchHdlr,
+    UpdateOneHdlr,
+)
 from mcod.core.api.hooks import login_optional, login_required
 from mcod.core.api.openapi.plugins import TabularDataPlugin
 from mcod.core.api.rdf.vocabs.openness_score import OpennessScoreVocab
 from mcod.core.api.rdf.vocabs.special_sign import SpecialSignVocab
 from mcod.core.api.schemas import ListingSchema
 from mcod.core.api.versions import DOC_VERSIONS
-from mcod.core.api.views import (JsonAPIView, RDFView, VocabEntryRDFView,
-                                 VocabRDFView)
+from mcod.core.api.views import JsonAPIView, RDFView, VocabEntryRDFView, VocabRDFView
 from mcod.core.versioning import versioned
 from mcod.counters.lib import Counter
 from mcod.lib.encoders import DateTimeToISOEncoder
-from mcod.resources.deserializers import (ChartApiRequest,
-                                          CreateCommentRequest,
-                                          GeoApiSearchRequest,
-                                          ResourceApiRequest,
-                                          ResourceApiSearchRequest,
-                                          ResourceRdfApiRequest,
-                                          TableApiRequest,
-                                          TableApiSearchRequest)
+from mcod.resources.deserializers import (
+    ChartApiRequest,
+    CreateCommentRequest,
+    GeoApiSearchRequest,
+    ResourceApiRequest,
+    ResourceApiSearchRequest,
+    ResourceRdfApiRequest,
+    TableApiRequest,
+    TableApiSearchRequest,
+)
 from mcod.resources.documents import ResourceDocument
-from mcod.resources.serializers import (ChartApiResponse, CommentApiResponse,
-                                        GeoApiResponse, GeoFeatureRecord,
-                                        ResourceApiResponse,
-                                        ResourceRDFResponseSchema,
-                                        TableApiResponse,
-                                        VocabEntryRDFResponseSchema,
-                                        VocabRDFResponseSchema)
+from mcod.resources.models import AggregatedDGAInfo
+from mcod.resources.serializers import (
+    AggregatedDGAInfoApiResponse,
+    ChartApiResponse,
+    CommentApiResponse,
+    GeoApiResponse,
+    GeoFeatureRecord,
+    ResourceApiResponse,
+    ResourceRDFResponseSchema,
+    TableApiResponse,
+    VocabEntryRDFResponseSchema,
+    VocabRDFResponseSchema,
+)
 
 Resource = apps.get_model("resources", "Resource")
 
@@ -703,3 +717,41 @@ class ChartsView(JsonAPIView):
         def _get_queryset(self, cleaned, *args, **kwargs):
             resource = self._get_instance(*args, **kwargs)
             return resource.charts_for_user(self.request.user, **cleaned)
+
+
+class AggregatedDGAInfoView(JsonAPIView):
+
+    @falcon.before(login_optional)
+    @versioned
+    def on_get(self, request, response, *args, **kwargs):
+        """
+        ---
+        doc_template: docs/resources/aggregated_dga_info_view.yml
+        """
+        self.handle(request, response, self.GET, *args, **kwargs)
+
+    class GET(BaseHdlr):
+        database_model = apps.get_model("resources", "AggregatedDGAInfo")
+        serializer_schema = AggregatedDGAInfoApiResponse
+
+        def _get_data(self, cleaned, *args, **kwargs) -> AggregatedDGAInfo:
+            data: AggregatedDGAInfo = (self.database_model.objects.select_related("resource", "resource__dataset").only(
+                "resource__id",
+                "resource__slug",
+                "resource__dataset__id",
+                "resource__dataset__slug",
+                "resource__status",
+                "resource__is_removed"
+            ).first())
+
+            if (
+                    not data or data.resource is None
+                    or data.resource.is_removed
+                    or not data.resource.is_published
+            ):
+                raise falcon.HTTPNotFound
+            return data
+
+        def serialize(self, *args, **kwargs):
+            self.prepare_context(*args, **kwargs)
+            return self.serializer.dump(self.response.context.data)

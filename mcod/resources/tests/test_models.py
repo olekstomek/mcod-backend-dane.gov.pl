@@ -5,6 +5,7 @@ from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.utils import timezone
 
 from mcod.core.tests.helpers.tasks import run_on_commit_events
+from mcod.resources.factories import AggregatedDGAInfoFactory
 from mcod.resources.models import Chart, Resource, TaskResult, update_resource
 
 
@@ -233,3 +234,25 @@ class TestResourcesChart:
         assert chart.id
         assert chart.is_default is False
         assert chart.chart == {"x": "col1", "y": "col2"}
+
+
+class TestAggregatedDGAInfo:
+
+    def test_create_aggregated_dga_info_with_statistic(self):
+        dga_info = AggregatedDGAInfoFactory.create(views_count=100, downloads_count=50)
+        assert dga_info.id
+
+    def test_create_aggregated_dga_info_without_statistic(self):
+        dga_info = AggregatedDGAInfoFactory.create()
+        assert dga_info.id
+        assert dga_info.views_count == 0
+        assert dga_info.downloads_count == 0
+
+    def test_create_second_instance_aggregated_dga(self):
+        AggregatedDGAInfoFactory.create()
+
+        with pytest.raises(
+                ValidationError,
+                match="'There can be only one AggregatedDGAInfo instance'"
+        ):
+            AggregatedDGAInfoFactory.create()

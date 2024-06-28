@@ -80,3 +80,9 @@ app.conf.beat_schedule["dga_temp_dir_clean"] = {
     "options": {"queue": "periodic"},
     "schedule": crontab(minute=30, hour=3),
 }
+
+app.conf.beat_schedule["dga_main_resource_creation"] = {
+    "task": "mcod.resources.tasks.create_main_dga_resource_task",
+    "options": {"queue": "periodic"},
+    "schedule": crontab(minute=30, hour=3),
+}
