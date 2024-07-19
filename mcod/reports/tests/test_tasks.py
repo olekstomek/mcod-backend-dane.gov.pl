@@ -53,9 +53,7 @@ class TestTasks:
         assert "date" in result_dict
         assert result_dict["user_email"] == active_user_with_last_login.email
         assert result_dict["csv_file"].startswith("/media/reports/users/")
-        assert result_dict["csv_file"].endswith(
-            request_date.strftime("%Y%m%d%H%M%S.%s") + ".csv"
-        )
+        assert result_dict["csv_file"].endswith(request_date.strftime("%Y%m%d%H%M%S.%s") + ".csv")
 
         r = Report.objects.get(task=result_task)
 
@@ -64,23 +62,15 @@ class TestTasks:
         assert r.file == result_dict["csv_file"]
         assert r.ordered_by == active_user_with_last_login
         assert r.model == "users.User"
-        file_path = os.path.join(
-            settings.TEST_ROOT, result_dict["csv_file"].strip("/")
-        )
+        file_path = os.path.join(settings.TEST_ROOT, result_dict["csv_file"].strip("/"))
         with open(file_path, "r") as f:
             lines = f.readlines()
 
         assert len(lines) == 3
 
         local_tz = pytz.timezone(settings.TIME_ZONE)
-        localized_active_user_last_login = (
-            active_user_with_last_login.last_login.astimezone(local_tz)
-        )
-        expected_active_user_last_login = (
-            localized_active_user_last_login.strftime(
-                "%Y-%m-%dT%H:%M:%S+02:00\n"
-            )
-        )
+        localized_active_user_last_login = active_user_with_last_login.last_login.astimezone(local_tz)
+        expected_active_user_last_login = localized_active_user_last_login.strftime("%Y-%m-%dT%H:%M:%S+02:00\n")
         for line in lines:
             split_line = line.split(";")
             assert len(split_line) == 15
@@ -138,12 +128,12 @@ class TestTasks:
             reader = csv.reader(report_file, delimiter=",")
             next(reader)
             resource_data = next(reader)
-        views_count = ResourceViewCounter.objects.filter(
-            resource_id=resource_with_counters.pk
-        ).aggregate(views_sum=Sum("count"))["views_sum"]
-        downloads_count = ResourceDownloadCounter.objects.filter(
-            resource_id=resource_with_counters.pk
-        ).aggregate(downloads_sum=Sum("count"))["downloads_sum"]
+        views_count = ResourceViewCounter.objects.filter(resource_id=resource_with_counters.pk).aggregate(views_sum=Sum("count"))[
+            "views_sum"
+        ]
+        downloads_count = ResourceDownloadCounter.objects.filter(resource_id=resource_with_counters.pk).aggregate(
+            downloads_sum=Sum("count")
+        )["downloads_sum"]
         assert int(resource_data[14]) == views_count
         assert int(resource_data[15]) == downloads_count
 
@@ -151,9 +141,9 @@ class TestTasks:
     @mock.patch("mcod.reports.tasks.datetime")
     def test_column_contains_protected_data_is_in_report(self, mock_datetime, tmp_path, admin_with_id_1):
         """Check if metadana contains protected data is in report."""
-        mock_datetime.datetime.now.return_value.strftime.return_value = '2020_02_05_2310'
+        mock_datetime.datetime.now.return_value.strftime.return_value = "2020_02_05_2310"
         with override_settings(REPORTS_MEDIA_ROOT=tmp_path):
             create_daily_resources_report()
-            report_file = Path(tmp_path, 'daily', 'Zbiorczy_raport_dzienny_2020_02_05_2310.csv')
+            report_file = Path(tmp_path, "daily", "Zbiorczy_raport_dzienny_2020_02_05_2310.csv")
             dataframe_report = pd.read_csv(report_file, sep=",")
             assert "Zasob zawiera wykaz chronionych danych" in dataframe_report

@@ -175,15 +175,15 @@ def get_spec(version=None):
     """
     version = version or str(max(DOC_VERSIONS))
     if version not in DOC_VERSIONS:
-        raise Exception('Unsupported API version')
+        raise Exception("Unsupported API version")
 
     description = markdown2.markdown(markdown2._dedent(get_spec.__doc__))
     return APISpec(
-        title='DANE.GOV.PL API',
+        title="DANE.GOV.PL API",
         version=version,
         openapi_version="3.0.0",
         plugins=[MCODPlugin(version)],
         info={
-            'description': description,
-        }
+            "description": description,
+        },
     )

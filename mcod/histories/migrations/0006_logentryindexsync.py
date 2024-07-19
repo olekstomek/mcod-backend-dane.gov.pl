@@ -6,15 +6,23 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('histories', '0005_logentry'),
+        ("histories", "0005_logentry"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='LogEntryIndexSync',
+            name="LogEntryIndexSync",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('last_indexed', models.DateTimeField()),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("last_indexed", models.DateTimeField()),
             ],
         ),
     ]

@@ -6,37 +6,37 @@ from mcod import settings as mcs
 from mcod.lib.search.fields import TranslatedKeywordField, TranslatedTextField
 from mcod.search.documents import ExtendedDocument
 
-Showcase = apps.get_model('showcases.Showcase')
-Dataset = apps.get_model('datasets.Dataset')
-Tag = apps.get_model('tags.Tag')
+Showcase = apps.get_model("showcases.Showcase")
+Dataset = apps.get_model("datasets.Dataset")
+Tag = apps.get_model("tags.Tag")
 
 
 DATASET_FIELDS = {
-    'id': fields.IntegerField(),
-    'title': TranslatedTextField('title'),
-    'notes': TranslatedTextField('notes'),
-    'category': fields.KeywordField(attr='category.title'),
-    'modified': fields.DateField(),
-    'slug': TranslatedKeywordField('slug'),
-    'verified': fields.DateField(),
+    "id": fields.IntegerField(),
+    "title": TranslatedTextField("title"),
+    "notes": TranslatedTextField("notes"),
+    "category": fields.KeywordField(attr="category.title"),
+    "modified": fields.DateField(),
+    "slug": TranslatedKeywordField("slug"),
+    "verified": fields.DateField(),
 }
 
 
 @registry.register_document
 class ShowcaseDocument(ExtendedDocument):
-    image_alt = TranslatedTextField('image_alt')
+    image_alt = TranslatedTextField("image_alt")
     has_image_thumb = fields.BooleanField()
     url = fields.KeywordField()
     illustrative_graphics_url = fields.KeywordField()
-    illustrative_graphics_alt = TranslatedTextField('illustrative_graphics_alt')
+    illustrative_graphics_alt = TranslatedTextField("illustrative_graphics_alt")
     image_url = fields.TextField()
     image_thumb_url = fields.KeywordField()
     author = fields.KeywordField()
-    datasets = fields.NestedField(attr='published_datasets', properties=DATASET_FIELDS)
+    datasets = fields.NestedField(attr="published_datasets", properties=DATASET_FIELDS)
     external_datasets = fields.NestedField(
         properties={
-            'title': fields.KeywordField(),
-            'url': fields.KeywordField(),
+            "title": fields.KeywordField(),
+            "url": fields.KeywordField(),
         }
     )
     main_page_position = fields.IntegerField()
@@ -54,7 +54,7 @@ class ShowcaseDocument(ExtendedDocument):
     desktop_windows_url = fields.KeywordField()
 
     class Index:
-        name = mcs.ELASTICSEARCH_INDEX_NAMES['showcases']
+        name = mcs.ELASTICSEARCH_INDEX_NAMES["showcases"]
         settings = mcs.ELASTICSEARCH_DSL_SEARCH_INDEX_SETTINGS
         aliases = mcs.ELASTICSEARCH_DSL_SEARCH_INDEX_ALIAS
 

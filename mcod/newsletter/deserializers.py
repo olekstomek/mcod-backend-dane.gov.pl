@@ -8,12 +8,14 @@ from mcod.core.api.jsonapi.deserializers import ObjectAttrs, TopLevel
 class SubscriptionAttrs(ObjectAttrs):
     email = core_fields.Email(required=True)
     newsletter_subscription_info = core_fields.String(
-        description='Human readable subscription status', example='Your subscription is active', required=False)
-    is_active = core_fields.Boolean(
-        description='Is newsletter subscription active?', example=True, required=False)
+        description="Human readable subscription status",
+        example="Your subscription is active",
+        required=False,
+    )
+    is_active = core_fields.Boolean(description="Is newsletter subscription active?", example=True, required=False)
 
     class Meta:
-        object_type = 'subscription'
+        object_type = "subscription"
         strict = True
         ordered = True
 
@@ -38,19 +40,22 @@ class UnsubscribeApiRequest(TopLevel):
 
 class SubscribeApiRequest(TopLevel):
 
-    email = core_fields.Email(required=True, error_messages={'invalid': _('E-mail address you entered is not valid')})
+    email = core_fields.Email(
+        required=True,
+        error_messages={"invalid": _("E-mail address you entered is not valid")},
+    )
     personal_data_processing = core_fields.Boolean(required=True)
     personal_data_use = core_fields.Boolean(required=True)
 
-    @validates('personal_data_processing')
+    @validates("personal_data_processing")
     def validate_personal_data_processing(self, value):
         if not value:
-            raise ValidationError(_('This field is required'))
+            raise ValidationError(_("This field is required"))
 
-    @validates('personal_data_use')
+    @validates("personal_data_use")
     def validate_personal_data_use(self, value):
         if not value:
-            raise ValidationError(_('This field is required'))
+            raise ValidationError(_("This field is required"))
 
     class Meta:
         attrs_schema = SubscriptionAttrs

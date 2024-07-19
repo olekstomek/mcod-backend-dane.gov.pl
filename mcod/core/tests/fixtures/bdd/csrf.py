@@ -11,10 +11,7 @@ allowed_alphabet = ascii_letters + digits
 
 @pytest.fixture
 def random_string():
-    return ''.join([
-        random.choice(allowed_alphabet)
-        for _ in range(32)
-    ])
+    return "".join([random.choice(allowed_alphabet) for _ in range(32)])
 
 
 @given("a random cipher secret")

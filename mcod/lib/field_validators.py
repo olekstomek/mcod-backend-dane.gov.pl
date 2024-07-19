@@ -8,8 +8,8 @@ from marshmallow.validate import Validator
 
 
 class Base64(Validator):
-    default_base64_error = 'Invalid data format for base64 encoding.'
-    default_length_error = 'Too long data.'
+    default_base64_error = "Invalid data format for base64 encoding."
+    default_length_error = "Too long data."
 
     def __init__(self, max_size=None, base64_error=None, length_error=None):
         self.base64_error = base64_error or self.default_base64_error
@@ -17,7 +17,7 @@ class Base64(Validator):
         self.max_size = max_size
 
     def __call__(self, value):
-        data = value.split(';base64,')[-1].encode('utf-8')
+        data = value.split(";base64,")[-1].encode("utf-8")
         try:
             data = base64.b64decode(data)
         except binascii.Error:
@@ -29,8 +29,8 @@ class Base64(Validator):
 
 
 class ContainsLetterValidator(RegexValidator):
-    regex = r'[^\W\d_]+'
-    message = 'Upewnij się, że ta wartość zawiera przynajmniej jedną literę.'
+    regex = r"[^\W\d_]+"
+    message = "Upewnij się, że ta wartość zawiera przynajmniej jedną literę."
 
     def __call__(self, value):
         return super().__call__(strip_tags(value))

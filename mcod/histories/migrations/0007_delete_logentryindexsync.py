@@ -6,11 +6,11 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('histories', '0006_logentryindexsync'),
+        ("histories", "0006_logentryindexsync"),
     ]
 
     operations = [
         migrations.DeleteModel(
-            name='LogEntryIndexSync',
+            name="LogEntryIndexSync",
         ),
     ]

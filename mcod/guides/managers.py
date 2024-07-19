@@ -4,7 +4,7 @@ from mcod.core.managers import SoftDeletableManager, SoftDeletableQuerySet, Tras
 
 class GuideQuerySetMixin(QuerySetMixin):
     def published(self):
-        return self.filter(status='published')
+        return self.filter(status="published")
 
 
 class GuideQuerySet(GuideQuerySetMixin, SoftDeletableQuerySet):

@@ -6,15 +6,20 @@ import mcod.core.storages
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('organizations', '0003_auto_20180525_1430'),
+        ("organizations", "0003_auto_20180525_1430"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='organization',
-            name='image',
-            field=models.ImageField(blank=True, max_length=254, null=True,
-                                    storage=mcod.core.storages.OrganizationImagesStorage(base_url=None, location=None),
-                                    upload_to='%Y%m%d', verbose_name='Image URL'),
+            model_name="organization",
+            name="image",
+            field=models.ImageField(
+                blank=True,
+                max_length=254,
+                null=True,
+                storage=mcod.core.storages.OrganizationImagesStorage(base_url=None, location=None),
+                upload_to="%Y%m%d",
+                verbose_name="Image URL",
+            ),
         ),
     ]

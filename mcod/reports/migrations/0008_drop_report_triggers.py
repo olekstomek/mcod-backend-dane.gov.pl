@@ -8,14 +8,22 @@ from django.conf import settings
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('reports', '0007_auto_20200810_0912'),
+        ("reports", "0007_auto_20200810_0912"),
     ]
 
     operations = [
         migrations.RunSQL(
             sql=open(
-                os.path.join(settings.DATABASE_DIR, 'ODSOFT-1987-drop-daily-report-refresh-triggers.sql')
+                os.path.join(
+                    settings.DATABASE_DIR,
+                    "ODSOFT-1987-drop-daily-report-refresh-triggers.sql",
+                )
             ).read(),
-            reverse_sql=open(os.path.join(settings.DATABASE_DIR, 'ODSOFT-1987-drop-daily-report-refresh-triggers-backward.sql')).read(),
+            reverse_sql=open(
+                os.path.join(
+                    settings.DATABASE_DIR,
+                    "ODSOFT-1987-drop-daily-report-refresh-triggers-backward.sql",
+                )
+            ).read(),
         )
     ]

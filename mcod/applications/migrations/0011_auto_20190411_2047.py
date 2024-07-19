@@ -6,24 +6,23 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('applications', '0010_auto_20190410_1441'),
+        ("applications", "0010_auto_20190410_1441"),
     ]
 
     operations = [
         migrations.DeleteModel(
-            name='Trash',
+            name="Trash",
         ),
         migrations.CreateModel(
-            name='ApplicationTrash',
-            fields=[
-            ],
+            name="ApplicationTrash",
+            fields=[],
             options={
-                'verbose_name': 'Trash',
-                'verbose_name_plural': 'Trash',
-                'proxy': True,
-                'indexes': [],
-                'constraints': [],
+                "verbose_name": "Trash",
+                "verbose_name_plural": "Trash",
+                "proxy": True,
+                "indexes": [],
+                "constraints": [],
             },
-            bases=('applications.application',),
+            bases=("applications.application",),
         ),
     ]

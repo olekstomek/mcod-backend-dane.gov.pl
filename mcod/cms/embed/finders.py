@@ -11,8 +11,8 @@ class ODEmbedFinder(EmbedFinder):
 
     def __init__(self, **options):
         _urls = []
-        for provider in options['providers']:
-            _urls.extend(provider.get('urls', []))
+        for provider in options["providers"]:
+            _urls.extend(provider.get("urls", []))
         self._urls = _urls
 
     def accept(self, url):
@@ -23,21 +23,21 @@ class ODEmbedFinder(EmbedFinder):
 
     def find_embed(self, url, max_width=None):
         video_model = get_video_model()
-        match = re.search(r'/(\d+)/?', url)
+        match = re.search(r"/(\d+)/?", url)
         video_pk = match.group(1)
         try:
             obj = video_model.objects.get(pk=video_pk)
         except video_model.DoesNotExist:
             raise EmbedNotFoundException
         return {
-            'title': obj.title,
-            'author_name': '',
-            'provider_name': 'dane.gov.pl',
-            'type': 'video',
-            'thumbnail_url': obj.thumbnail_url,
-            'width': None,
-            'height': None,
-            'html': obj.embed_html,
+            "title": obj.title,
+            "author_name": "",
+            "provider_name": "dane.gov.pl",
+            "type": "video",
+            "thumbnail_url": obj.thumbnail_url,
+            "width": None,
+            "height": None,
+            "html": obj.embed_html,
         }
 
 

@@ -7,13 +7,17 @@ import django.utils.timezone
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('datasets', '0013_auto_20190411_2047'),
+        ("datasets", "0013_auto_20190411_2047"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='dataset',
-            name='verified',
-            field=models.DateTimeField(blank=True, default=django.utils.timezone.now, verbose_name='Update date'),
+            model_name="dataset",
+            name="verified",
+            field=models.DateTimeField(
+                blank=True,
+                default=django.utils.timezone.now,
+                verbose_name="Update date",
+            ),
         ),
     ]

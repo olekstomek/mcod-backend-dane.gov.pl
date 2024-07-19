@@ -301,19 +301,19 @@ export class ColorBarView extends AnnotationView {
     _computed_image_dimensions() {
         /*
         Heuristics to determine ColorBar image dimensions if set to "auto"
-    
+
         Note: Returns the height/width values for the ColorBar's scale image, not
         the dimensions of the entire ColorBar.
-    
+
         If the short dimension (the width of a vertical bar or height of a
         horizontal bar) is set to "auto", the resulting dimension will be set to
         25 px.
-    
+
         For a ColorBar in a side panel with the long dimension (the height of a
         vertical bar or width of a horizontal bar) set to "auto", the
         resulting dimension will be as long as the adjacent frame edge, so that the
         bar "fits" to the plot.
-    
+
         For a ColorBar in the plot frame with the long dimension set to "auto", the
         resulting dimension will be the greater of:
           * The length of the color palette * 25px
@@ -364,7 +364,7 @@ export class ColorBarView extends AnnotationView {
         (low to high) to a screen space range equal to the length of the ColorBar's
         scale image. The scale is used to calculate the tick coordinates in screen
         coordinates for plotting purposes.
-    
+
         Note: the type of color_mapper has to match the type of scale (i.e.
         a LinearColorMapper will require a corresponding LinearScale instance).
         */

@@ -6,18 +6,18 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('resources', '0029_auto_20200902_1349'),
+        ("resources", "0029_auto_20200902_1349"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='resource',
-            name='has_map',
-            field=models.BooleanField(default=False, verbose_name='has map?'),
+            model_name="resource",
+            name="has_map",
+            field=models.BooleanField(default=False, verbose_name="has map?"),
         ),
         migrations.AddField(
-            model_name='resource',
-            name='has_table',
-            field=models.BooleanField(default=False, verbose_name='has table?'),
+            model_name="resource",
+            name="has_table",
+            field=models.BooleanField(default=False, verbose_name="has table?"),
         ),
     ]

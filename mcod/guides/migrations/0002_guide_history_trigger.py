@@ -8,14 +8,17 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('guides', '0001_initial'),
+        ("guides", "0001_initial"),
     ]
 
     operations = [
         migrations.RunSQL(
-            sql=open(
-                os.path.join(settings.DATABASE_DIR, 'ODSOFT-1006-guides-guide-history_other.sql')).read(),
+            sql=open(os.path.join(settings.DATABASE_DIR, "ODSOFT-1006-guides-guide-history_other.sql")).read(),
             reverse_sql=open(
-                os.path.join(settings.DATABASE_DIR, 'ODSOFT-1006-guides-guide-history_other_backward.sql')).read(),
+                os.path.join(
+                    settings.DATABASE_DIR,
+                    "ODSOFT-1006-guides-guide-history_other_backward.sql",
+                )
+            ).read(),
         )
     ]

@@ -78,7 +78,7 @@ def versioned(method):
     @functools.wraps(method)
     def wrapper(self, *args, **kwargs):
         latest_version = str(get_latest_version())
-        version = getattr(self, 'api_version', latest_version)
+        version = getattr(self, "api_version", latest_version)
         m = method.get_version(version)
         return m(self, *args, **kwargs)
 

@@ -4,7 +4,7 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('searchhistories', '0002_auto_20180817_1138'),
+        ("searchhistories", "0002_auto_20180817_1138"),
     ]
 
     operations = []

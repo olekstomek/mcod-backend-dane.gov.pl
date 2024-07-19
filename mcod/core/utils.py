@@ -11,7 +11,7 @@ from collections import OrderedDict
 from http.cookies import SimpleCookie
 from io import StringIO, TextIOWrapper
 from pathlib import Path
-from typing import List, Optional, TextIO, Union, Any
+from typing import Any, List, Optional, TextIO, Union
 from xml.dom.minidom import parseString
 
 import json_api_doc
@@ -128,9 +128,7 @@ def route_to_name(route, method="GET"):
 
 
 def order_dict(d):
-    return {
-        k: order_dict(v) if isinstance(v, dict) else v for k, v in sorted(d.items())
-    }
+    return {k: order_dict(v) if isinstance(v, dict) else v for k, v in sorted(d.items())}
 
 
 class frozendict(collections.Mapping):
@@ -226,9 +224,7 @@ class XmlTagIterator:
     def move_forward(self):
         try:
             self.iter = next(self.iterator)
-            self.tag = self.iter.string[
-                self.iter.span()[0] + self.cut: self.iter.span()[1] - 1
-            ]
+            self.tag = self.iter.string[self.iter.span()[0] + self.cut : self.iter.span()[1] - 1]
             self.pos = self.iter.span()[0]
         except StopIteration:
             self.pos = float("inf")
@@ -364,9 +360,7 @@ class CSVWriter(WriterInterface):
         language_catalog_path: Optional[str] = None,
     ):
         """Save data as csv file."""
-        csv_writer = csv.DictWriter(
-            file_object, fieldnames=self.headers, delimiter=self.delimiter
-        )
+        csv_writer = csv.DictWriter(file_object, fieldnames=self.headers, delimiter=self.delimiter)
         csv_writer.writeheader()
         for row in data:
             csv_writer.writerow(row)
@@ -427,10 +421,7 @@ class XMLWriter(WriterInterface):
                 abs_error_file_path = f"{error_path}/data.json"
                 with open(abs_error_file_path, "w") as file:
                     json.dump(data, file)
-                logger.info(
-                    f"Failing dataset has been saved to file: {language_catalog_path} "
-                    f"as a json dump"
-                )
+                logger.info(f"Failing dataset has been saved to file: {language_catalog_path} " f"as a json dump")
             # We want still rise exception to log it in sentry.
             raise ExpatError from exc
 
@@ -453,33 +444,25 @@ def save_as_xml(file, data):
             "supplements": "supplement",
         }.get(parent, "item")
 
-    xml = dicttoxml(
-        data, attr_type=False, item_func=custom_item_func, custom_root="catalog"
-    )
+    xml = dicttoxml(data, attr_type=False, item_func=custom_item_func, custom_root="catalog")
     dom = parseString(xml)
     file.write(dom.toprettyxml())
 
 
 def clean_filename(filename, limit=220):
     forbidden_chars_map = dict((ord(char), None) for char in '<>:"/|?*~#%&+{}-^\\')
-    cleaned_filename = "".join(
-        ch for ch in filename if unicodedata.category(ch)[0] != "C"
-    )
+    cleaned_filename = "".join(ch for ch in filename if unicodedata.category(ch)[0] != "C")
     cleaned_filename = cleaned_filename.translate(forbidden_chars_map)
-    cleaned_filename = (
-        unicodedata.normalize("NFKD", cleaned_filename)
-        .encode("ASCII", "ignore")
-        .decode("ascii")
-    )
+    cleaned_filename = unicodedata.normalize("NFKD", cleaned_filename).encode("ASCII", "ignore").decode("ascii")
     cleaned_filename = cleaned_filename[:limit]
     return cleaned_filename.strip()
 
 
 def save_df_to_xlsx(
-        df: pd.DataFrame,
-        file_path: str,
-        sheet_name: str = "Arkusz1",
-        adjust_col_width: bool = True,
+    df: pd.DataFrame,
+    file_path: str,
+    sheet_name: str = "Arkusz1",
+    adjust_col_width: bool = True,
 ) -> None:
     with pd.ExcelWriter(file_path, engine="xlsxwriter") as writer:
         df.to_excel(writer, index=False, sheet_name=sheet_name)
@@ -490,8 +473,7 @@ def save_df_to_xlsx(
             for i, col in enumerate(df.columns):
                 # NaN (float type) is returned when there are no records.
                 # Set to 0 in such cases.
-                max_record_len: Union[int, float] = df[col].astype(str).map(
-                    len).max()
+                max_record_len: Union[int, float] = df[col].astype(str).map(len).max()
                 if pd.isna(max_record_len):
                     max_record_len = 0
 

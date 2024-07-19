@@ -6,9 +6,9 @@ from pytest_bdd import scenarios
 from mcod.organizations.models import Organization
 
 scenarios(
-    'features/organization_details_admin.feature',
-    'features/organizations_list_admin.feature',
-    'features/admin/autocomplete.feature',
+    "features/organization_details_admin.feature",
+    "features/organizations_list_admin.feature",
+    "features/admin/autocomplete.feature",
 )
 
 
@@ -42,7 +42,10 @@ def test_restore_organization_did_not_restore_his_datasets(db, institution_with_
     assert institution.is_removed
     assert institution.datasets.all().count() == 0
 
-    client.post(f"/organizations/organizationtrash/{institution.id}/change/", data={'is_removed': False})
+    client.post(
+        f"/organizations/organizationtrash/{institution.id}/change/",
+        data={"is_removed": False},
+    )
 
     org = Organization.objects.get(id=institution.id)
 

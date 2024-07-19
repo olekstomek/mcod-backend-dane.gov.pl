@@ -9,11 +9,12 @@ import pytest
 from django.core.management import call_command
 from pytest_mock import MockerFixture
 
-from mcod.datasets.management.commands.redefine_datasets_symlink import \
-    Command as RedefineCommand
 from mcod.datasets.management.commands.redefine_datasets_symlink import (
-    find_symlinks_in_given_path, get_the_latest_zip_file_or_none,
-    remove_symlink)
+    Command as RedefineCommand,
+    find_symlinks_in_given_path,
+    get_the_latest_zip_file_or_none,
+    remove_symlink,
+)
 from mcod.datasets.models import Dataset
 
 
@@ -34,9 +35,7 @@ class TestDatasetsRedefineSymlinksCommand:
     command_class_path = "mcod.datasets.management.commands.redefine_datasets_symlink"
 
     @staticmethod
-    def create_symlink(
-        tmp_path: Path, start_range: int = 1, end_range: int = 3
-    ) -> Path:
+    def create_symlink(tmp_path: Path, start_range: int = 1, end_range: int = 3) -> Path:
         """
         Create files and a symlink to the first one. Choosing target file for
         the symlink is arbitrary.
@@ -152,9 +151,7 @@ class TestDatasetsRedefineSymlinksCommand:
         we have a new symlink path with target to the latest zip file.
         """
 
-        dataset: Dataset = dataset_with_resources_factory(
-            tmp_path=tmp_path, mocker=mocker
-        )
+        dataset: Dataset = dataset_with_resources_factory(tmp_path=tmp_path, mocker=mocker)
         dataset_archive_path: Path = dataset_full_archive_path(dataset, tmp_path)
 
         command_instance = RedefineCommand()
@@ -231,19 +228,13 @@ class TestDatasetsRedefineSymlinksCommand:
         Test the _get_folders_list method of the RedefineCommand class
         with options provided.
         """
-        dataset1: Dataset = dataset_with_resources_factory(
-            tmp_path=tmp_path, mocker=mocker
-        )
-        dataset2: Dataset = dataset_with_resources_factory(
-            tmp_path=tmp_path, mocker=mocker
-        )
+        dataset1: Dataset = dataset_with_resources_factory(tmp_path=tmp_path, mocker=mocker)
+        dataset2: Dataset = dataset_with_resources_factory(tmp_path=tmp_path, mocker=mocker)
 
         self.mock_archive_path(tmp_path, mocker)
 
         command_instance = RedefineCommand()
-        res: Union[Set[Path], Generator] = command_instance._get_folders_list(
-            dataset_ids=[dataset1.pk]
-        )
+        res: Union[Set[Path], Generator] = command_instance._get_folders_list(dataset_ids=[dataset1.pk])
         paths_list = [obj for obj in res]
 
         assert len(paths_list) == 1
@@ -258,9 +249,7 @@ class TestDatasetsRedefineSymlinksCommand:
     ) -> Tuple[Dataset, Path]:
         """Prepare datasets, archive paths, and latest zip files for testing."""
         self.mock_archive_path(mocker=mocker, path=tmp_path)
-        dataset: Dataset = dataset_with_resources_factory(
-            tmp_path=tmp_path, mocker=mocker
-        )
+        dataset: Dataset = dataset_with_resources_factory(tmp_path=tmp_path, mocker=mocker)
         latest = self.latest_zip(tmp_path=dataset_full_archive_path(dataset, tmp_path))
         return dataset, latest
 
@@ -293,17 +282,13 @@ class TestDatasetsRedefineSymlinksCommand:
         call_command(self.command_name)
 
         ds1_archive_folder_symlinks = [
-            entry
-            for entry in dataset_full_archive_path(dataset1, tmp_path).iterdir()
-            if entry.is_symlink()
+            entry for entry in dataset_full_archive_path(dataset1, tmp_path).iterdir() if entry.is_symlink()
         ]
 
         assert ds1_archive_folder_symlinks[0].resolve() == Path(latest1)
 
         ds2_archive_folder_symlinks = [
-            entry
-            for entry in dataset_full_archive_path(dataset2, tmp_path).iterdir()
-            if entry.is_symlink()
+            entry for entry in dataset_full_archive_path(dataset2, tmp_path).iterdir() if entry.is_symlink()
         ]
 
         assert ds2_archive_folder_symlinks[0].resolve() == Path(latest2)
@@ -334,17 +319,13 @@ class TestDatasetsRedefineSymlinksCommand:
         call_command(self.command_name, dataset_ids=dataset1.pk)
 
         ds1_archive_folder_symlinks = [
-            entry
-            for entry in dataset_full_archive_path(dataset1, tmp_path).iterdir()
-            if entry.is_symlink()
+            entry for entry in dataset_full_archive_path(dataset1, tmp_path).iterdir() if entry.is_symlink()
         ]
 
         assert ds1_archive_folder_symlinks[0].resolve() == Path(latest1)
 
         ds2_archive_folder_symlinks = [
-            entry
-            for entry in dataset_full_archive_path(dataset2, tmp_path).iterdir()
-            if entry.is_symlink()
+            entry for entry in dataset_full_archive_path(dataset2, tmp_path).iterdir() if entry.is_symlink()
         ]
 
         assert ds2_archive_folder_symlinks[0].resolve() != Path(latest2)

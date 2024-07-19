@@ -7,14 +7,17 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('resources', '0022_chart'),
+        ("resources", "0022_chart"),
     ]
 
     operations = [
         migrations.RunSQL(
-            sql=open(
-                os.path.join(settings.DATABASE_DIR, 'MCOD-1679-tg-resources-charts-history.sql')).read(),
+            sql=open(os.path.join(settings.DATABASE_DIR, "MCOD-1679-tg-resources-charts-history.sql")).read(),
             reverse_sql=open(
-                os.path.join(settings.DATABASE_DIR, 'MCOD-1679-tg-resources-charts-history_backward.sql')).read(),
+                os.path.join(
+                    settings.DATABASE_DIR,
+                    "MCOD-1679-tg-resources-charts-history_backward.sql",
+                )
+            ).read(),
         )
     ]

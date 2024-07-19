@@ -11,71 +11,97 @@ import uuid
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('licenses', '0001_initial'),
+        ("licenses", "0001_initial"),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='license',
-            options={'default_manager_name': 'objects', 'verbose_name': 'License', 'verbose_name_plural': 'Licenses'},
+            name="license",
+            options={
+                "default_manager_name": "objects",
+                "verbose_name": "License",
+                "verbose_name_plural": "Licenses",
+            },
         ),
         migrations.AddField(
-            model_name='license',
-            name='created',
-            field=model_utils.fields.AutoCreatedField(default=django.utils.timezone.now, editable=False, verbose_name='created'),
+            model_name="license",
+            name="created",
+            field=model_utils.fields.AutoCreatedField(
+                default=django.utils.timezone.now,
+                editable=False,
+                verbose_name="created",
+            ),
         ),
         migrations.AddField(
-            model_name='license',
-            name='i18n',
-            field=modeltrans.fields.TranslationField(fields=('name', 'title', 'slug'), required_languages=(), virtual_fields=True),
+            model_name="license",
+            name="i18n",
+            field=modeltrans.fields.TranslationField(
+                fields=("name", "title", "slug"),
+                required_languages=(),
+                virtual_fields=True,
+            ),
         ),
         migrations.AddField(
-            model_name='license',
-            name='is_removed',
+            model_name="license",
+            name="is_removed",
             field=models.BooleanField(default=False),
         ),
         migrations.AddField(
-            model_name='license',
-            name='modified',
-            field=model_utils.fields.AutoLastModifiedField(default=django.utils.timezone.now, editable=False, verbose_name='modified'),
+            model_name="license",
+            name="modified",
+            field=model_utils.fields.AutoLastModifiedField(
+                default=django.utils.timezone.now,
+                editable=False,
+                verbose_name="modified",
+            ),
         ),
         migrations.AddField(
-            model_name='license',
-            name='published_at',
-            field=model_utils.fields.MonitorField(default=django.utils.timezone.now, monitor='status', when={'published'}),
+            model_name="license",
+            name="published_at",
+            field=model_utils.fields.MonitorField(default=django.utils.timezone.now, monitor="status", when={"published"}),
         ),
         migrations.AddField(
-            model_name='license',
-            name='removed_at',
-            field=model_utils.fields.MonitorField(default=django.utils.timezone.now, monitor='is_removed', when={True}),
+            model_name="license",
+            name="removed_at",
+            field=model_utils.fields.MonitorField(default=django.utils.timezone.now, monitor="is_removed", when={True}),
         ),
         migrations.AddField(
-            model_name='license',
-            name='slug',
+            model_name="license",
+            name="slug",
             field=models.SlugField(blank=True, default=uuid.uuid4, max_length=600),
         ),
         migrations.AddField(
-            model_name='license',
-            name='status',
-            field=model_utils.fields.StatusField(choices=[(0, 'dummy')], default='published', max_length=100, no_check_for_status=True, verbose_name='status'),
+            model_name="license",
+            name="status",
+            field=model_utils.fields.StatusField(
+                choices=[(0, "dummy")],
+                default="published",
+                max_length=100,
+                no_check_for_status=True,
+                verbose_name="status",
+            ),
         ),
         migrations.AddField(
-            model_name='license',
-            name='status_changed',
-            field=model_utils.fields.MonitorField(default=django.utils.timezone.now, monitor='status', verbose_name='status changed'),
+            model_name="license",
+            name="status_changed",
+            field=model_utils.fields.MonitorField(
+                default=django.utils.timezone.now,
+                monitor="status",
+                verbose_name="status changed",
+            ),
         ),
         migrations.AddField(
-            model_name='license',
-            name='uuid',
+            model_name="license",
+            name="uuid",
             field=models.UUIDField(default=uuid.uuid4),
         ),
         migrations.AddField(
-            model_name='license',
-            name='views_count',
+            model_name="license",
+            name="views_count",
             field=models.PositiveIntegerField(default=0),
         ),
         migrations.AddIndex(
-            model_name='license',
-            index=django.contrib.postgres.indexes.GinIndex(fields=['i18n'], name='licenses_li_i18n_1a04de_gin'),
+            model_name="license",
+            index=django.contrib.postgres.indexes.GinIndex(fields=["i18n"], name="licenses_li_i18n_1a04de_gin"),
         ),
     ]

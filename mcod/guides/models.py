@@ -13,36 +13,36 @@ from mcod.guides.managers import GuideManager, GuideTrashManager
 
 
 class Guide(ExtendedModel):
-    title = models.CharField(max_length=300, verbose_name=_('title'))
+    title = models.CharField(max_length=300, verbose_name=_("title"))
     created_by = models.ForeignKey(
-        'users.User',
+        "users.User",
         models.DO_NOTHING,
         editable=False,
-        verbose_name=_('created by'),
-        related_name='guides_created',
+        verbose_name=_("created by"),
+        related_name="guides_created",
     )
     modified_by = models.ForeignKey(
-        'users.User',
+        "users.User",
         models.DO_NOTHING,
         blank=True,
         null=True,
         editable=False,
-        verbose_name=_('modified by'),
-        related_name='guides_modified',
+        verbose_name=_("modified by"),
+        related_name="guides_modified",
     )
 
     objects = GuideManager()
     trash = GuideTrashManager()
-    i18n = TranslationField(fields=('title',))
+    i18n = TranslationField(fields=("title",))
     tracker = FieldTracker()
 
     def __str__(self):
         return self.title
 
     class Meta:
-        default_manager_name = 'objects'
-        verbose_name = _('guide')
-        verbose_name_plural = _('guides')
+        default_manager_name = "objects"
+        verbose_name = _("guide")
+        verbose_name_plural = _("guides")
 
     @property
     def created_local(self):
@@ -60,41 +60,41 @@ class Guide(ExtendedModel):
 class GuideTrash(Guide, metaclass=TrashModelBase):
     class Meta:
         proxy = True
-        verbose_name = _('Trash (Guides)')
-        verbose_name_plural = _('Trash (Guides)')
+        verbose_name = _("Trash (Guides)")
+        verbose_name_plural = _("Trash (Guides)")
 
 
 class GuideItem(ExtendedModel):
     POSITION_CHOICES = (
-        ('top', _('top')),
-        ('bottom', _('bottom')),
-        ('left', _('left')),
-        ('right', _('right')),
+        ("top", _("top")),
+        ("bottom", _("bottom")),
+        ("left", _("left")),
+        ("right", _("right")),
     )
-    guide = models.ForeignKey(Guide, on_delete=models.CASCADE, verbose_name=_('guide'), related_name='items')
-    title = models.CharField(max_length=200, verbose_name=_('title'))
-    content = models.TextField(verbose_name=_('content'))
-    route = models.CharField(max_length=200, verbose_name=_('route'))
-    css_selector = models.CharField(max_length=300, verbose_name=_('css selector'))
-    position = models.CharField(max_length=13, choices=POSITION_CHOICES, verbose_name=_('position'))
-    order = models.PositiveIntegerField(verbose_name=_('order'))
-    is_optional = models.BooleanField(verbose_name=_('optional communique'), default=False)
-    is_clickable = models.BooleanField(verbose_name=_('clicking is required'), default=False)
-    is_expandable = models.BooleanField(verbose_name=_('element is expandable'), default=False)
+    guide = models.ForeignKey(Guide, on_delete=models.CASCADE, verbose_name=_("guide"), related_name="items")
+    title = models.CharField(max_length=200, verbose_name=_("title"))
+    content = models.TextField(verbose_name=_("content"))
+    route = models.CharField(max_length=200, verbose_name=_("route"))
+    css_selector = models.CharField(max_length=300, verbose_name=_("css selector"))
+    position = models.CharField(max_length=13, choices=POSITION_CHOICES, verbose_name=_("position"))
+    order = models.PositiveIntegerField(verbose_name=_("order"))
+    is_optional = models.BooleanField(verbose_name=_("optional communique"), default=False)
+    is_clickable = models.BooleanField(verbose_name=_("clicking is required"), default=False)
+    is_expandable = models.BooleanField(verbose_name=_("element is expandable"), default=False)
 
     objects = SoftDeletableManager()
     trash = TrashManager()
-    i18n = TranslationField(fields=('title', 'content'))
+    i18n = TranslationField(fields=("title", "content"))
     tracker = FieldTracker()
 
     def __str__(self):
         return self.title
 
     class Meta:
-        default_manager_name = 'objects'
-        ordering = ('order', )
-        verbose_name = _('guide item')
-        verbose_name_plural = _('guide items')
+        default_manager_name = "objects"
+        ordering = ("order",)
+        verbose_name = _("guide item")
+        verbose_name_plural = _("guide items")
 
     def delete(self, using=None, soft=True, *args, **kwargs):
         return super().delete(using=using, soft=False, *args, **kwargs)

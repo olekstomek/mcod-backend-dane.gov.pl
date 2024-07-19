@@ -7,13 +7,13 @@ import mcod.lib.widgets
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('articles', '0019_articlecategory_type_set'),
+        ("articles", "0019_articlecategory_type_set"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='article',
-            name='notes',
-            field=mcod.lib.widgets.RichTextUploadingField(null=True, verbose_name='Notes'),
+            model_name="article",
+            name="notes",
+            field=mcod.lib.widgets.RichTextUploadingField(null=True, verbose_name="Notes"),
         ),
     ]

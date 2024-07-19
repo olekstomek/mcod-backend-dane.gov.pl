@@ -44,48 +44,44 @@ from mcod.users.signals import user_changed
 from mcod.watchers.models import MODEL_TO_OBJECT_NAME, Notification
 
 TOKEN_TYPES = (
-    (0, _('Email validation token')),
-    (1, _('Password reset token')),
-    (2, _('Charts preview token'))
+    (0, _("Email validation token")),
+    (1, _("Password reset token")),
+    (2, _("Charts preview token")),
 )
 
 ACADEMY_PERMS_CODENAMES = [
-    'add_course',
-    'change_course',
-    'delete_course',
-    'view_course',
-
-    'add_coursemodule',
-    'change_coursemodule',
-    'delete_coursemodule',
-    'view_coursemodule',
-
-    'add_coursetrash',
-    'change_coursetrash',
-    'delete_coursetrash',
-    'view_coursetrash',
+    "add_course",
+    "change_course",
+    "delete_course",
+    "view_course",
+    "add_coursemodule",
+    "change_coursemodule",
+    "delete_coursemodule",
+    "view_coursemodule",
+    "add_coursetrash",
+    "change_coursetrash",
+    "delete_coursetrash",
+    "view_coursetrash",
 ]
 
 LABS_PERMS_CODENAMES = [
-    'add_labevent',
-    'change_labevent',
-    'delete_labevent',
-    'view_labevent',
-
-    'add_labreport',
-    'change_labreport',
-    'delete_labreport',
-    'view_labreport',
-
-    'add_labeventtrash',
-    'change_labeventtrash',
-    'delete_labeventtrash',
-    'view_labeventtrash',
+    "add_labevent",
+    "change_labevent",
+    "delete_labevent",
+    "view_labevent",
+    "add_labreport",
+    "change_labreport",
+    "delete_labreport",
+    "view_labreport",
+    "add_labeventtrash",
+    "change_labeventtrash",
+    "delete_labeventtrash",
+    "view_labeventtrash",
 ]
 
 session_cache = caches[settings.SESSION_CACHE_ALIAS]
 
-logger = logging.getLogger('mcod')
+logger = logging.getLogger("mcod")
 
 
 class UserQuerySet(SoftDeletableQuerySet):
@@ -93,9 +89,9 @@ class UserQuerySet(SoftDeletableQuerySet):
     def autocomplete(self, user, query=None):
         if not user.is_superuser:
             return self.none()
-        kwargs = {'is_superuser': True}
+        kwargs = {"is_superuser": True}
         if query:
-            kwargs['email__icontains'] = query
+            kwargs["email__icontains"] = query
         return self.filter(**kwargs)
 
 
@@ -110,16 +106,16 @@ class UserManager(BaseUserManager):
         return user
 
     def create_user(self, email, password, **extra_fields):
-        extra_fields.setdefault('is_staff', False)
-        extra_fields.setdefault('is_official', email.endswith('gov.pl'))
-        extra_fields.setdefault('state', 'pending')
+        extra_fields.setdefault("is_staff", False)
+        extra_fields.setdefault("is_official", email.endswith("gov.pl"))
+        extra_fields.setdefault("state", "pending")
         return self._create_user(email, password, **extra_fields)
 
     def create_superuser(self, email, password, **extra_fields):
-        extra_fields.setdefault('is_staff', True)
-        extra_fields.setdefault('is_official', True)
-        extra_fields.setdefault('state', 'active')
-        extra_fields.setdefault('is_superuser', True)
+        extra_fields.setdefault("is_staff", True)
+        extra_fields.setdefault("is_official", True)
+        extra_fields.setdefault("state", "active")
+        extra_fields.setdefault("is_superuser", True)
         return self._create_user(email, password, **extra_fields)
 
     def get_or_none(self, *args, **kwargs):
@@ -129,16 +125,16 @@ class UserManager(BaseUserManager):
             return None
 
     def get_by_natural_key(self, username):
-        return self.get(**{self.model.USERNAME_FIELD + '__iexact': username})
+        return self.get(**{self.model.USERNAME_FIELD + "__iexact": username})
 
     def agents(self):
-        return self.filter(state='active', is_agent=True).order_by('agent_organization_main__title', 'email')
+        return self.filter(state="active", is_agent=True).order_by("agent_organization_main__title", "email")
 
     def autocomplete(self, user, query=None):
         return super().get_queryset().autocomplete(user, query=query)
 
     def extra_agents(self):
-        return self.filter(state='active', extra_agent_of__isnull=False)
+        return self.filter(state="active", extra_agent_of__isnull=False)
 
     def agents_with_extra(self):
         return self.agents() | self.extra_agents()
@@ -153,127 +149,178 @@ class UserManager(BaseUserManager):
 
 
 def agents_choices():
-    return {'is_agent': True}
+    return {"is_agent": True}
 
 
 def fav_charts_default():
-    return {
-        'slot-1': {},
-        'slot-2': {}
-    }
+    return {"slot-1": {}, "slot-2": {}}
 
 
-class User(AdminMixin, ApiMixin, AbstractBaseUser, PermissionsMixin, SoftDeletableModel, TimeStampedModel):
+class User(
+    AdminMixin,
+    ApiMixin,
+    AbstractBaseUser,
+    PermissionsMixin,
+    SoftDeletableModel,
+    TimeStampedModel,
+):
     email = models.EmailField(verbose_name=_("Email"), unique=True)
     password = models.CharField(max_length=130, verbose_name=_("Password"))
     fullname = models.CharField(max_length=100, blank=True, null=True, verbose_name=_("Full name"))
-    phone = models.CharField(max_length=50, blank=True, null=True, verbose_name=_('Phone number'), db_column='tel')
-    phone_internal = models.CharField(max_length=20, blank=True, null=True,
-                                      verbose_name=_('int.'), db_column='tel_internal')
-    is_staff = models.BooleanField(default=False, verbose_name=_('Editor'))  # is_staff ?
-    is_superuser = models.BooleanField(verbose_name=_("Admin status"),
-                                       help_text=_('Designates that this user has all permissions '
-                                                   'without explicitly assigning them.'),
-                                       default=False)
-    is_official = models.BooleanField(default=False, verbose_name=_('Official'))
-    is_agent = models.BooleanField(default=False, verbose_name=_('agent'))
-    state = models.CharField(max_length=20, verbose_name=_("State"), default='pending',
-                             choices=settings.USER_STATE_CHOICES)  # wymagane, określone wartości
+    phone = models.CharField(
+        max_length=50,
+        blank=True,
+        null=True,
+        verbose_name=_("Phone number"),
+        db_column="tel",
+    )
+    phone_internal = models.CharField(
+        max_length=20,
+        blank=True,
+        null=True,
+        verbose_name=_("int."),
+        db_column="tel_internal",
+    )
+    is_staff = models.BooleanField(default=False, verbose_name=_("Editor"))  # is_staff ?
+    is_superuser = models.BooleanField(
+        verbose_name=_("Admin status"),
+        help_text=_("Designates that this user has all permissions " "without explicitly assigning them."),
+        default=False,
+    )
+    is_official = models.BooleanField(default=False, verbose_name=_("Official"))
+    is_agent = models.BooleanField(default=False, verbose_name=_("agent"))
+    state = models.CharField(
+        max_length=20,
+        verbose_name=_("State"),
+        default="pending",
+        choices=settings.USER_STATE_CHOICES,
+    )  # wymagane, określone wartości
     email_confirmed = models.DateTimeField(null=True, blank=True, verbose_name=_("Email confirmation date"))
-    organizations = models.ManyToManyField('organizations.Organization', db_table='user_organization',
-                                           verbose_name=_('Organizations'), blank=True, related_name='users',
-                                           related_query_name="user")
+    organizations = models.ManyToManyField(
+        "organizations.Organization",
+        db_table="user_organization",
+        verbose_name=_("Organizations"),
+        blank=True,
+        related_name="users",
+        related_query_name="user",
+    )
     agent_organizations = models.ManyToManyField(
-        'organizations.Organization', verbose_name=_('Organizations'), blank=True, related_name='agents')
+        "organizations.Organization",
+        verbose_name=_("Organizations"),
+        blank=True,
+        related_name="agents",
+    )
     agent_organization_main = models.ForeignKey(
-        'organizations.Organization', models.SET_NULL, blank=True, null=True,
-        verbose_name=_('main organization of agent'), related_name='agent_organization_main_users',
+        "organizations.Organization",
+        models.SET_NULL,
+        blank=True,
+        null=True,
+        verbose_name=_("main organization of agent"),
+        related_name="agent_organization_main_users",
     )
     extra_agent_of = models.ForeignKey(
-        'self', models.SET_NULL, blank=True, null=True, limit_choices_to=agents_choices,
-        verbose_name=_('extra agent of'), related_name='extra_agent')
-    from_agent = models.ForeignKey('self', models.SET_NULL, blank=True, null=True)
-    followed_datasets = models.ManyToManyField('datasets.Dataset',
-                                               verbose_name=_('Followed datasets'), blank=True,
-                                               through='users.UserFollowingDataset',
-                                               through_fields=('follower', 'dataset'),
-                                               related_name='users_following', related_query_name="user")
-    subscriptions_report_opt_in = models.DateTimeField(null=True, blank=True, verbose_name=_(
-        'Enable daily email report of changes in subscribed objects'))
-    rodo_privacy_policy_opt_in = models.DateTimeField(null=True, blank=True,
-                                                      verbose_name=_('RODO & privacy policy accepted'))
-    lang = models.CharField(max_length=2, verbose_name=_("User language"), default=settings.LANGUAGE_CODE,
-                            choices=settings.LANGUAGES)
+        "self",
+        models.SET_NULL,
+        blank=True,
+        null=True,
+        limit_choices_to=agents_choices,
+        verbose_name=_("extra agent of"),
+        related_name="extra_agent",
+    )
+    from_agent = models.ForeignKey("self", models.SET_NULL, blank=True, null=True)
+    followed_datasets = models.ManyToManyField(
+        "datasets.Dataset",
+        verbose_name=_("Followed datasets"),
+        blank=True,
+        through="users.UserFollowingDataset",
+        through_fields=("follower", "dataset"),
+        related_name="users_following",
+        related_query_name="user",
+    )
+    subscriptions_report_opt_in = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name=_("Enable daily email report of changes in subscribed objects"),
+    )
+    rodo_privacy_policy_opt_in = models.DateTimeField(null=True, blank=True, verbose_name=_("RODO & privacy policy accepted"))
+    lang = models.CharField(
+        max_length=2,
+        verbose_name=_("User language"),
+        default=settings.LANGUAGE_CODE,
+        choices=settings.LANGUAGES,
+    )
     discourse_user_name = models.CharField(max_length=100, blank=True, null=True, editable=False)
     discourse_api_key = models.CharField(max_length=100, blank=True, null=True, editable=False)
 
     is_active = models.BooleanField(
-        _('active'),
+        _("active"),
         default=True,
-        help_text=_(
-            'Designates whether this user should be treated as active. '
-            'Unselect this instead of deleting accounts.'
-        ),
+        help_text=_("Designates whether this user should be treated as active. " "Unselect this instead of deleting accounts."),
     )
-    fav_charts = JSONField(blank=True, null=True, default=fav_charts_default, verbose_name=_('Favorite charts'))
+    fav_charts = JSONField(
+        blank=True,
+        null=True,
+        default=fav_charts_default,
+        verbose_name=_("Favorite charts"),
+    )
 
-    USERNAME_FIELD = 'email'
-    EMAIL_FIELD = 'email'
+    USERNAME_FIELD = "email"
+    EMAIL_FIELD = "email"
 
     objects = UserManager()
 
     class Meta:
         verbose_name = _("User")
         verbose_name_plural = _("Users")
-        db_table = 'user'
-        default_manager_name = 'objects'
+        db_table = "user"
+        default_manager_name = "objects"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._original_from_agent_id = getattr(self.from_agent, 'pk', None)
+        self._original_from_agent_id = getattr(self.from_agent, "pk", None)
 
     def __str__(self):
         return self.email
 
     def check_session_valid(self, auth_header):
         try:
-            user_payload = decode_jwt_token(auth_header)['user']
+            user_payload = decode_jwt_token(auth_header)["user"]
         except Exception:
             return False
 
-        if 'session_key' not in user_payload:
+        if "session_key" not in user_payload:
             return False
-        session_id = user_payload['session_key']
-        session_data = session_cache.get('%s%s' % (KEY_PREFIX, session_id))
+        session_id = user_payload["session_key"]
+        session_data = session_cache.get("%s%s" % (KEY_PREFIX, session_id))
         if not session_data:
             return False
 
-        if not {'_auth_user_hash', '_auth_user_id'} <= set(session_data):
+        if not {"_auth_user_hash", "_auth_user_id"} <= set(session_data):
             return False
 
-        if session_data['_auth_user_id'] != str(self.id):
+        if session_data["_auth_user_id"] != str(self.id):
             return False
 
         session_auth_hash = self.get_session_auth_hash()
 
-        if session_data['_auth_user_hash'] != session_auth_hash:
+        if session_data["_auth_user_hash"] != session_auth_hash:
             return False
 
-        if not constant_time_compare(session_data['_auth_user_hash'], session_auth_hash):
+        if not constant_time_compare(session_data["_auth_user_hash"], session_auth_hash):
             return False
 
         return True
 
     @staticmethod
     def _get_absolute_url(url):
-        return f'{settings.BASE_URL}/{get_language()}{url}'
+        return f"{settings.BASE_URL}/{get_language()}{url}"
 
     def _get_active_token(self, token_type):
-        return Token.objects.filter(
-            user=self,
-            token_type=token_type,
-            expiration_date__gte=timezone.now()
-        ).order_by('-expiration_date').first()
+        return (
+            Token.objects.filter(user=self, token_type=token_type, expiration_date__gte=timezone.now())
+            .order_by("-expiration_date")
+            .first()
+        )
 
     def _get_or_create_token(self, token_type, expiration_delta=None):
         token = self._get_active_token(token_type)
@@ -282,7 +329,7 @@ class User(AdminMixin, ApiMixin, AbstractBaseUser, PermissionsMixin, SoftDeletab
             token = Token.objects.create(
                 user=self,
                 token_type=token_type,
-                expiration_date=timezone.now() + expiration_delta
+                expiration_date=timezone.now() + expiration_delta,
             )
         return token.token
 
@@ -297,7 +344,7 @@ class User(AdminMixin, ApiMixin, AbstractBaseUser, PermissionsMixin, SoftDeletab
     @property
     def institutions_ids_list_as_str(self):
         objs = self.institutions.all() if self.is_staff else self.institutions.none()
-        return ','.join(str(x.id) for x in objs)
+        return ",".join(str(x.id) for x in objs)
 
     @property
     def is_anonymous(self):
@@ -305,7 +352,7 @@ class User(AdminMixin, ApiMixin, AbstractBaseUser, PermissionsMixin, SoftDeletab
 
     @cached_property
     def is_newsletter_receiver(self):
-        if hasattr(self, 'newsletter_subscription'):
+        if hasattr(self, "newsletter_subscription"):
             return self.newsletter_subscription.is_active
         return False
 
@@ -323,9 +370,14 @@ class User(AdminMixin, ApiMixin, AbstractBaseUser, PermissionsMixin, SoftDeletab
 
     @property
     def extra_agents_list(self):
-        return self.mark_safe(', '.join(
-            ['<a href="%s" target="_blank">%s</a>' % (
-                x.admin_change_url, x.email) for x in self.extra_agent.order_by('email')]))
+        return self.mark_safe(
+            ", ".join(
+                [
+                    '<a href="%s" target="_blank">%s</a>' % (x.admin_change_url, x.email)
+                    for x in self.extra_agent.order_by("email")
+                ]
+            )
+        )
 
     @property
     def password_reset_token(self):
@@ -333,7 +385,7 @@ class User(AdminMixin, ApiMixin, AbstractBaseUser, PermissionsMixin, SoftDeletab
 
     @property
     def password_reset_confirm_url(self):
-        return '/auth/password/reset/%s' % self.password_reset_token
+        return "/auth/password/reset/%s" % self.password_reset_token
 
     @property
     def password_reset_url(self):
@@ -351,11 +403,11 @@ class User(AdminMixin, ApiMixin, AbstractBaseUser, PermissionsMixin, SoftDeletab
 
     @cached_property
     def _planned_user_schedule(self):
-        return self.user_schedules.filter(schedule__state='planned').last()
+        return self.user_schedules.filter(schedule__state="planned").last()
 
     @property
     def planned_schedule(self):
-        schedule_model = apps.get_model('schedules.Schedule')
+        schedule_model = apps.get_model("schedules.Schedule")
         return schedule_model.get_current_plan()
 
     @property
@@ -365,14 +417,14 @@ class User(AdminMixin, ApiMixin, AbstractBaseUser, PermissionsMixin, SoftDeletab
     @property
     def planned_user_schedule(self):
         return self._planned_user_schedule or {
-            'email': self.email,
-            'institution': self.agent_organization_main.title if self.agent_organization_main else '',
-            'items_count': 0,
-            'is_ready': False,
-            'is_blocked': False,
-            'recommended_items_count': 0,
-            'implemented_items_count': 0,
-            'state': 'planned',
+            "email": self.email,
+            "institution": (self.agent_organization_main.title if self.agent_organization_main else ""),
+            "items_count": 0,
+            "is_ready": False,
+            "is_blocked": False,
+            "recommended_items_count": 0,
+            "implemented_items_count": 0,
+            "state": "planned",
         }
 
     @cached_property
@@ -382,26 +434,26 @@ class User(AdminMixin, ApiMixin, AbstractBaseUser, PermissionsMixin, SoftDeletab
     @property
     def system_role(self):
         if self.is_superuser:
-            return 'admin'
+            return "admin"
         elif self.is_staff:
-            return 'editor'
+            return "editor"
         elif self.agent:
-            return 'representative'
+            return "representative"
         elif self.is_official:
-            return 'official'
-        return 'user'
+            return "official"
+        return "user"
 
     @property
     def system_roles(self):
         roles = []
         if self.is_superuser:
-            roles.append('admin')
+            roles.append("admin")
         if self.is_staff:
-            roles.append('editor')
+            roles.append("editor")
         if self.is_official:
-            roles.append('official')
+            roles.append("official")
         if self.agent:
-            roles.append('representative')
+            roles.append("representative")
         return roles
 
     @property
@@ -422,8 +474,7 @@ class User(AdminMixin, ApiMixin, AbstractBaseUser, PermissionsMixin, SoftDeletab
 
     @property
     def has_access_to_academy_in_dashboard(self):
-        return (self.is_superuser or self.is_official or self.agent or self.is_staff or
-                self.is_academy_admin)
+        return self.is_superuser or self.is_official or self.agent or self.is_staff or self.is_academy_admin
 
     @property
     def has_access_to_forum(self):
@@ -452,7 +503,7 @@ class User(AdminMixin, ApiMixin, AbstractBaseUser, PermissionsMixin, SoftDeletab
 
     @property
     def is_academy_admin(self):
-        perms = self.user_permissions.values_list('codename', flat=True)
+        perms = self.user_permissions.values_list("codename", flat=True)
         return bool(ACADEMY_PERMS_CODENAMES and all([perm in perms for perm in ACADEMY_PERMS_CODENAMES]))
 
     @property
@@ -461,7 +512,7 @@ class User(AdminMixin, ApiMixin, AbstractBaseUser, PermissionsMixin, SoftDeletab
 
     @property
     def is_labs_admin(self):
-        perms = self.user_permissions.values_list('codename', flat=True)
+        perms = self.user_permissions.values_list("codename", flat=True)
         return bool(LABS_PERMS_CODENAMES and all([perm in perms for perm in LABS_PERMS_CODENAMES]))
 
     @property
@@ -490,13 +541,13 @@ class User(AdminMixin, ApiMixin, AbstractBaseUser, PermissionsMixin, SoftDeletab
             is_main=Case(
                 When(id=self.agent_organization_id, then=True),
                 default=False,
-                output_field=models.BooleanField())
-        ).order_by('-is_main')
+                output_field=models.BooleanField(),
+            )
+        ).order_by("-is_main")
 
     @property
     def has_complete_staff_data(self):
-        return all(field is not None
-                   for field in (self.phone, self.fullname))
+        return all(field is not None for field in (self.phone, self.fullname))
 
     @property
     def discourse_username(self):
@@ -504,7 +555,7 @@ class User(AdminMixin, ApiMixin, AbstractBaseUser, PermissionsMixin, SoftDeletab
 
     @property
     def send_registration_email_admin_url(self):
-        return self._reverse('admin:send-registration-email', args=[self.id])
+        return self._reverse("admin:send-registration-email", args=[self.id])
 
     @classmethod
     def accusative_case(cls):
@@ -514,30 +565,30 @@ class User(AdminMixin, ApiMixin, AbstractBaseUser, PermissionsMixin, SoftDeletab
         return self.is_staff and organization in self.organizations.all()
 
     def set_academy_perms(self, is_academy_admin=False):
-        perms = Permission.objects.filter(content_type__app_label='academy', codename__in=ACADEMY_PERMS_CODENAMES)
-        self.user_permissions.add(*perms) if is_academy_admin else self.user_permissions.remove(*perms)
+        perms = Permission.objects.filter(content_type__app_label="academy", codename__in=ACADEMY_PERMS_CODENAMES)
+        (self.user_permissions.add(*perms) if is_academy_admin else self.user_permissions.remove(*perms))
 
     def set_labs_perms(self, is_labs_admin=False):
-        perms = Permission.objects.filter(content_type__app_label='laboratory', codename__in=LABS_PERMS_CODENAMES)
-        self.user_permissions.add(*perms) if is_labs_admin else self.user_permissions.remove(*perms)
+        perms = Permission.objects.filter(content_type__app_label="laboratory", codename__in=LABS_PERMS_CODENAMES)
+        (self.user_permissions.add(*perms) if is_labs_admin else self.user_permissions.remove(*perms))
 
     def get_dashboard_subscriptions(self):
         return {
-            'datasets': self.subscriptions.filter(
-                watcher__object_name='datasets.Dataset', watcher__is_active=True).count(),
-            'queries': self.subscriptions.filter(
-                watcher__object_name='query', watcher__is_active=True).count(),
+            "datasets": self.subscriptions.filter(watcher__object_name="datasets.Dataset", watcher__is_active=True).count(),
+            "queries": self.subscriptions.filter(watcher__object_name="query", watcher__is_active=True).count(),
         }
 
     def get_unread_notifications(self):
-        result = Notification.objects.filter(subscription__user=self, status='new').values(
-            'subscription__watcher__object_name').annotate(
-            total=Count('subscription__watcher__object_name'))
+        result = (
+            Notification.objects.filter(subscription__user=self, status="new")
+            .values("subscription__watcher__object_name")
+            .annotate(total=Count("subscription__watcher__object_name"))
+        )
         data = {}
         for item in result:
-            _v = MODEL_TO_OBJECT_NAME[item['subscription__watcher__object_name']]
-            key = 'queries' if _v == 'query' else '{}s'.format(_v)
-            data[key] = {'new': item['total']}
+            _v = MODEL_TO_OBJECT_NAME[item["subscription__watcher__object_name"]]
+            key = "queries" if _v == "query" else "{}s".format(_v)
+            data[key] = {"new": item["total"]}
         return data
 
     @property
@@ -547,23 +598,45 @@ class User(AdminMixin, ApiMixin, AbstractBaseUser, PermissionsMixin, SoftDeletab
 
     def can_add_resource_chart(self, resource, is_default, chart=None):
         if self.is_superuser:  # admin dla wszystkich instytucji.
-            if any((is_default, not is_default and not chart, chart and chart.created_by == self)):
+            if any(
+                (
+                    is_default,
+                    not is_default and not chart,
+                    chart and chart.created_by == self,
+                )
+            ):
                 return True
             return False
         elif self.is_staff:
             if resource.dataset.organization in self.organizations.all():  # edytor w swojej instytucji.
-                if any((is_default, not is_default and not chart, chart and chart.created_by == self)):
+                if any(
+                    (
+                        is_default,
+                        not is_default and not chart,
+                        chart and chart.created_by == self,
+                    )
+                ):
                     return True
             else:  # edytor poza swoją instytucją.
                 if resource.is_chart_creation_blocked:
                     return False
-                if any((not is_default and not chart, chart and chart.is_private and chart.created_by == self)):
+                if any(
+                    (
+                        not is_default and not chart,
+                        chart and chart.is_private and chart.created_by == self,
+                    )
+                ):
                     return True
             return False
         else:  # zwykły dla wszystkich instytucji.
             if resource.is_chart_creation_blocked:
                 return False
-            if any((not is_default and not chart, chart and chart.is_private and chart.created_by == self)):
+            if any(
+                (
+                    not is_default and not chart,
+                    chart and chart.is_private and chart.created_by == self,
+                )
+            ):
                 return True
         return False
 
@@ -587,36 +660,36 @@ class User(AdminMixin, ApiMixin, AbstractBaseUser, PermissionsMixin, SoftDeletab
 
     def resend_activation_email(self):
         return self.send_mail(
-            'Reset password',
+            "Reset password",
             self.email_validation_absolute_url,
             config.ACCOUNTS_EMAIL,
             [self.email],
         )
 
     def send_password_reset_email(self):
-        context = {'link': self.password_reset_absolute_url, 'host': settings.BASE_URL}
-        msg_plain = render_to_string('mails/password-reset.txt', context)
-        msg_html = render_to_string('mails/password-reset.html', context)
+        context = {"link": self.password_reset_absolute_url, "host": settings.BASE_URL}
+        msg_plain = render_to_string("mails/password-reset.txt", context)
+        msg_html = render_to_string("mails/password-reset.html", context)
 
         return self.send_mail(
-            'Reset hasła',
+            "Reset hasła",
             msg_plain,
             config.ACCOUNTS_EMAIL,
             [self.email],
-            html_message=msg_html
+            html_message=msg_html,
         )
 
     def send_registration_email(self):
         context = {
-            'link': self.email_validation_absolute_url,
-            'host': settings.BASE_URL,
-            'limit': settings.TOKEN_EXPIRATION_TIME,
+            "link": self.email_validation_absolute_url,
+            "host": settings.BASE_URL,
+            "limit": settings.TOKEN_EXPIRATION_TIME,
         }
-        msg_plain = render_to_string('mails/confirm-registration.txt', context)
-        msg_html = render_to_string('mails/confirm-registration.html', context)
+        msg_plain = render_to_string("mails/confirm-registration.txt", context)
+        msg_html = render_to_string("mails/confirm-registration.html", context)
 
         return self.send_mail(
-            'Aktywacja konta',
+            "Aktywacja konta",
             msg_plain,
             config.ACCOUNTS_EMAIL,
             [self.email],
@@ -626,23 +699,22 @@ class User(AdminMixin, ApiMixin, AbstractBaseUser, PermissionsMixin, SoftDeletab
     def send_subscriptions_report(self, date_from, date_till):
         if self.subscriptions_report_enabled:
             notifications = Notification.objects.filter(
-                subscription__user=self,
-                created__gte=date_from,
-                created__lt=date_till).order_by('created')
+                subscription__user=self, created__gte=date_from, created__lt=date_till
+            ).order_by("created")
 
             if notifications:
                 context = {
-                    'notifications': notifications,
-                    'date_from': date_from,
-                    'base_url': settings.BASE_URL
+                    "notifications": notifications,
+                    "date_from": date_from,
+                    "base_url": settings.BASE_URL,
                 }
                 with override(self.lang):
-                    context['base_url_with_lang'] = f'{settings.BASE_URL}/{self.lang}'
-                    msg_plain = render_to_string('mails/subscriptions-daily.txt', context=context)
-                    msg_html = render_to_string('mails/subscriptions-daily.html', context=context)
+                    context["base_url_with_lang"] = f"{settings.BASE_URL}/{self.lang}"
+                    msg_plain = render_to_string("mails/subscriptions-daily.txt", context=context)
+                    msg_html = render_to_string("mails/subscriptions-daily.html", context=context)
 
                     self.send_mail(
-                        _('Report of activity of observed objects on the dane.gov.pl portal'),
+                        _("Report of activity of observed objects on the dane.gov.pl portal"),
                         msg_plain,
                         config.FOLLOWINGS_EMAIL,
                         [self.email],
@@ -651,7 +723,7 @@ class User(AdminMixin, ApiMixin, AbstractBaseUser, PermissionsMixin, SoftDeletab
 
     @property
     def has_from_agent_changed(self):
-        return self._original_from_agent_id != getattr(self.from_agent, 'pk', None)
+        return self._original_from_agent_id != getattr(self.from_agent, "pk", None)
 
 
 @receiver(pre_save, sender=User)
@@ -669,7 +741,17 @@ def pre_save_handler(sender, instance, *args, **kwargs):
 
 
 @receiver(post_save, sender=User)
-def post_save_handler(sender, instance, signal, created=False, raw=False, update_fields=None, using='default', *args, **kwargs):
+def post_save_handler(
+    sender,
+    instance,
+    signal,
+    created=False,
+    raw=False,
+    update_fields=None,
+    using="default",
+    *args,
+    **kwargs,
+):
     if not instance.is_agent and instance.extra_agent.exists():
         instance.extra_agent.update(extra_agent_of=None)
     if instance.has_from_agent_changed:
@@ -677,7 +759,7 @@ def post_save_handler(sender, instance, signal, created=False, raw=False, update
         if instance.is_agent and obj:
             with transaction.atomic():
                 User.objects.filter(id=instance.id).update(agent_organization_main=obj.agent_organization_main)
-                obj.user_schedules.filter(schedule__state__in=['planned', 'implemented']).update(user=instance)
+                obj.user_schedules.filter(schedule__state__in=["planned", "implemented"]).update(user=instance)
                 obj.extra_agent.update(extra_agent_of=instance)
                 obj.notifications.filter(unread=True).update(recipient=instance)
                 instance.agent_organizations.set(obj.agent_organizations.all())
@@ -692,17 +774,27 @@ def get_token_expiration_date():
 
 
 class Token(TimeStampedModel):
-    user = models.ForeignKey('User', on_delete=models.CASCADE, blank=False, verbose_name=_('User'),
-                             related_name='tokens')
+    user = models.ForeignKey(
+        "User",
+        on_delete=models.CASCADE,
+        blank=False,
+        verbose_name=_("User"),
+        related_name="tokens",
+    )
     token = models.UUIDField(default=uuid4, editable=False, blank=False, verbose_name=_("Token"))
-    token_type = models.IntegerField(default=0, choices=TOKEN_TYPES, blank=False, verbose_name=_('Token type'))
-    expiration_date = models.DateTimeField(default=get_token_expiration_date, null=False, blank=False, editable=False,
-                                           verbose_name=_('Expiration date'))
+    token_type = models.IntegerField(default=0, choices=TOKEN_TYPES, blank=False, verbose_name=_("Token type"))
+    expiration_date = models.DateTimeField(
+        default=get_token_expiration_date,
+        null=False,
+        blank=False,
+        editable=False,
+        verbose_name=_("Expiration date"),
+    )
 
     class Meta:
         verbose_name = _("Token")
         verbose_name_plural = _("Tokens")
-        db_table = 'token'
+        db_table = "token"
 
     @property
     def is_valid(self):
@@ -723,32 +815,32 @@ class FollowingModel(models.Model):
 
     @property
     def object_type(self):
-        return self._meta.db_table[len('user_following_'):]
+        return self._meta.db_table[len("user_following_") :]
 
     class Meta:
         abstract = True
 
 
 class UserFollowingDataset(FollowingModel):
-    dataset = models.ForeignKey('datasets.Dataset', on_delete=models.CASCADE)
+    dataset = models.ForeignKey("datasets.Dataset", on_delete=models.CASCADE)
 
     class Meta:
-        db_table = 'user_following_dataset'
+        db_table = "user_following_dataset"
 
 
 class Meeting(ExtendedModel):
     MEETING_STATES = {
-        'planned': pgettext_lazy('Planned', 'meeting state'),
-        'finished': pgettext_lazy('Finished', 'meeting state'),
+        "planned": pgettext_lazy("Planned", "meeting state"),
+        "finished": pgettext_lazy("Finished", "meeting state"),
     }
-    title = models.CharField(max_length=300, verbose_name=_('title'))
-    venue = models.CharField(max_length=300, verbose_name=_('venue'))
-    description = models.TextField(verbose_name=_('agenda'))
-    start_date = models.DateField(null=True, verbose_name=_('meeting date'))
-    start_time = models.TimeField(null=True, verbose_name=_('start time'))
-    end_time = models.TimeField(null=True, verbose_name=_('end time'))
+    title = models.CharField(max_length=300, verbose_name=_("title"))
+    venue = models.CharField(max_length=300, verbose_name=_("venue"))
+    description = models.TextField(verbose_name=_("agenda"))
+    start_date = models.DateField(null=True, verbose_name=_("meeting date"))
+    start_time = models.TimeField(null=True, verbose_name=_("start time"))
+    end_time = models.TimeField(null=True, verbose_name=_("end time"))
 
-    members = models.ManyToManyField('users.User', related_name='meetings', verbose_name=_('members'))
+    members = models.ManyToManyField("users.User", related_name="meetings", verbose_name=_("members"))
 
     objects = MeetingManager()
     trash = MeetingTrashManager()
@@ -759,36 +851,39 @@ class Meeting(ExtendedModel):
         return self.title
 
     class Meta:
-        default_manager_name = 'objects'
-        verbose_name = _('meeting')
-        verbose_name_plural = _('meetings')
+        default_manager_name = "objects"
+        verbose_name = _("meeting")
+        verbose_name_plural = _("meetings")
 
     @property
     def duration_hours(self):
-        return f'{self.start_time_str}-{self.end_time_str}'
+        return f"{self.start_time_str}-{self.end_time_str}"
 
     @property
     def start_time_str(self):
-        return f'{self.start_time:%H:%M}'
+        return f"{self.start_time:%H:%M}"
 
     @property
     def end_time_str(self):
-        return f'{self.end_time:%H:%M}'
+        return f"{self.end_time:%H:%M}"
 
     @property
     def materials(self):
-        return self.files.order_by('id')
+        return self.files.order_by("id")
 
 
 def meeting_file_path(instance, filename):
-    return f'{instance.uuid}/{filename}'
+    return f"{instance.uuid}/{filename}"
 
 
 class MeetingFile(ExtendedModel):
     file = models.FileField(
-        verbose_name=_('file'), storage=storages.get_storage('meetings'), max_length=2000,
-        upload_to=meeting_file_path)
-    meeting = models.ForeignKey(Meeting, on_delete=models.DO_NOTHING, related_name='files')
+        verbose_name=_("file"),
+        storage=storages.get_storage("meetings"),
+        max_length=2000,
+        upload_to=meeting_file_path,
+    )
+    meeting = models.ForeignKey(Meeting, on_delete=models.DO_NOTHING, related_name="files")
 
     objects = MeetingFileManager()
     trash = MeetingFileTrashManager()
@@ -807,16 +902,16 @@ class MeetingFile(ExtendedModel):
         return self.name
 
     class Meta:
-        verbose_name = _('meeting file')
-        verbose_name_plural = _('meeting files')
+        verbose_name = _("meeting file")
+        verbose_name_plural = _("meeting files")
         default_manager_name = "objects"
 
 
 class MeetingTrash(Meeting, metaclass=TrashModelBase):
     class Meta:
         proxy = True
-        verbose_name = _('Trash (Meeting)')
-        verbose_name_plural = _('Trash (Meetings)')
+        verbose_name = _("Trash (Meeting)")
+        verbose_name_plural = _("Trash (Meetings)")
 
 
 @receiver(post_delete, sender=UserFollowingDataset)

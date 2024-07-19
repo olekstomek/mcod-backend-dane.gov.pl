@@ -6,13 +6,18 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('cms', '0020_auto_20200929_0946'),
+        ("cms", "0020_auto_20200929_0946"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='customimage',
-            name='alt',
-            field=models.TextField(blank=True, help_text='Should be as short and descriptive as possible.', max_length=255, verbose_name='Alternative text'),
+            model_name="customimage",
+            name="alt",
+            field=models.TextField(
+                blank=True,
+                help_text="Should be as short and descriptive as possible.",
+                max_length=255,
+                verbose_name="Alternative text",
+            ),
         ),
     ]

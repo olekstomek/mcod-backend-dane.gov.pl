@@ -19,9 +19,7 @@ _UPDATE_FREQUENCY = [i[0] for i in models.UPDATE_FREQUENCY]
 class DatasetFactory(factory.django.DjangoModelFactory):
     title = factory.Faker("text", max_nb_chars=100, locale="pl_PL")
     slug = factory.Faker("slug")
-    notes = factory.Faker(
-        "paragraph", nb_sentences=3, variable_nb_sentences=True, locale="pl_PL"
-    )
+    notes = factory.Faker("paragraph", nb_sentences=3, variable_nb_sentences=True, locale="pl_PL")
     url = factory.Faker("url")
     views_count = factory.Faker("random_int", min=0, max=500)
     update_frequency = factory.Faker("random_element", elements=_UPDATE_FREQUENCY)
@@ -37,9 +35,7 @@ class DatasetFactory(factory.django.DjangoModelFactory):
         mocker: Optional[MockerFixture] = kwargs.pop("mocker", None)
         if tmp_path and mocker:
             mocker_object = "mcod.core.storages.DatasetsArchivesStorage.location"
-            mocker.patch(
-                mocker_object, return_value=tmp_path, new_callable=mocker.PropertyMock
-            )
+            mocker.patch(mocker_object, return_value=tmp_path, new_callable=mocker.PropertyMock)
         return super().create(**kwargs)
 
     @factory.post_generation

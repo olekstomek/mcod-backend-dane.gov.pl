@@ -187,9 +187,7 @@ class ResourceTableView(JsonAPIView):
             if not cached_resource:
                 model = self.database_model
                 try:
-                    self._cached_resource = model.objects.get(
-                        pk=resource_id, status="published"
-                    )
+                    self._cached_resource = model.objects.get(pk=resource_id, status="published")
 
                 except model.DoesNotExist:
                     raise falcon.HTTPNotFound
@@ -239,9 +237,7 @@ class ResourceTableView(JsonAPIView):
             cleaned = getattr(self.request.context, "cleaned_data") or {}
             debug_enabled = getattr(self.response.context, "debug", False)
             if debug_enabled:
-                self.response.context.query = self._get_debug_query(
-                    cleaned, *args, **kwargs
-                )
+                self.response.context.query = self._get_debug_query(cleaned, *args, **kwargs)
             result = self._get_data(cleaned, *args, **kwargs)
 
             self.response.context.data = result
@@ -298,9 +294,7 @@ class ResourceGeoView(JsonAPIView):
             if not cached_resource:
                 model = self.database_model
                 try:
-                    self._cached_resource = model.objects.get(
-                        pk=resource_id, status="published"
-                    )
+                    self._cached_resource = model.objects.get(pk=resource_id, status="published")
 
                 except model.DoesNotExist:
                     raise falcon.HTTPNotFound
@@ -336,9 +330,7 @@ class ResourceGeoView(JsonAPIView):
                                 agg.buckets.bound.centroid.location.lat,
                             ]
                             tiles.append(tile)
-                    elif agg_name == "bounds" and hasattr(
-                        data.aggregations.bounds, "bounds"
-                    ):
+                    elif agg_name == "bounds" and hasattr(data.aggregations.bounds, "bounds"):
                         data.aggregations.bounds = {
                             "top_left": [
                                 data.aggregations.bounds.bounds.top_left.lon,
@@ -377,9 +369,7 @@ class ResourceGeoView(JsonAPIView):
             cleaned = getattr(self.request.context, "cleaned_data") or {}
             result = self._get_data(cleaned, *args, **kwargs)
             self.response.context.meta = {}
-            if any(
-                bool(getattr(result, attr, False)) for attr in ["hits", "aggregations"]
-            ):
+            if any(bool(getattr(result, attr, False)) for attr in ["hits", "aggregations"]):
                 self.response.context.data = result
                 self.response.context.meta = self._get_meta(result, *args, **kwargs)
                 included = [x for x in self._get_included(result, *args, **kwargs) if x]
@@ -401,9 +391,7 @@ class ResourceCommentsView(JsonAPIView):
             if not instance:
                 model = self.database_model
                 try:
-                    self._cached_resource = self.database_model.objects.get(
-                        pk=id, status="published"
-                    )
+                    self._cached_resource = self.database_model.objects.get(pk=id, status="published")
                 except model.DoesNotExist:
                     raise falcon.HTTPNotFound
             return self._cached_resource
@@ -491,9 +479,7 @@ class ResourceTableSpecView:
         spec.components.schema("Rows", schema_cls=schema_cls, many=True)
         spec.components.schema("Row", schema_cls=schema_cls, many=False)
         spec.path(path="/resources/%s/data" % resource.id, resource=ResourceTableView)
-        spec.path(
-            path="/resources/%s/data/{id}" % resource.id, resource=ResourceTableRowView
-        )
+        spec.path(path="/resources/%s/data/{id}" % resource.id, resource=ResourceTableRowView)
 
         resp.text = json.dumps(spec.to_dict(), cls=DateTimeToISOEncoder)
         resp.status = falcon.HTTP_200
@@ -514,9 +500,7 @@ class ResourceSwaggerView:
             "spec_urls": [
                 {
                     "url": spec_url_mask.format(settings.API_URL, id, str(version)),
-                    "name": "DANE.GOV.PL - {} API v{}".format(
-                        resource.title_truncated, str(version)
-                    ),
+                    "name": "DANE.GOV.PL - {} API v{}".format(resource.title_truncated, str(version)),
                 }
                 for version in versions
             ],
@@ -567,9 +551,7 @@ class CHART_POST(CreateOneHdlr):
     def _get_data(self, cleaned, *args, **kwargs):
         resource = self._get_instance(*args, **kwargs)
         try:
-            self.response.context.data = resource.save_chart(
-                self.request.user, cleaned["data"]["attributes"]
-            )
+            self.response.context.data = resource.save_chart(self.request.user, cleaned["data"]["attributes"])
         except Exception as exc:
             raise falcon.HTTPForbidden(title=exc)
 
@@ -600,9 +582,7 @@ class ChartView(JsonAPIView):
 
         def clean(self, *args, **kwargs):
             try:
-                instance = self.database_model.objects.published().get(
-                    id=kwargs.get("chart_id")
-                )
+                instance = self.database_model.objects.published().get(id=kwargs.get("chart_id"))
             except self.database_model.DoesNotExist:
                 raise falcon.HTTPNotFound
             if not self.request.user.can_delete_resource_chart(instance):
@@ -624,9 +604,7 @@ class ChartView(JsonAPIView):
             instance = getattr(self, "_cached_instance", None)
             if not instance:
                 try:
-                    self._cached_instance = self.chart_model.objects.published().get(
-                        pk=kwargs["chart_id"], resource_id=id
-                    )
+                    self._cached_instance = self.chart_model.objects.published().get(pk=kwargs["chart_id"], resource_id=id)
                 except self.chart_model.DoesNotExist:
                     raise falcon.HTTPNotFound
             if not self._cached_instance.is_visible_for(self.request.user):
@@ -647,9 +625,7 @@ class ChartView(JsonAPIView):
         def clean(self, *args, **kwargs):
             chart = self._get_instance(*args, **kwargs)
             if not chart.can_be_updated_by(self.request.user):
-                raise falcon.HTTPForbidden(
-                    title="You have no permission to update the resource!"
-                )
+                raise falcon.HTTPForbidden(title="You have no permission to update the resource!")
             self.deserializer.context.update(
                 {
                     "chart": chart,
@@ -735,20 +711,20 @@ class AggregatedDGAInfoView(JsonAPIView):
         serializer_schema = AggregatedDGAInfoApiResponse
 
         def _get_data(self, cleaned, *args, **kwargs) -> AggregatedDGAInfo:
-            data: AggregatedDGAInfo = (self.database_model.objects.select_related("resource", "resource__dataset").only(
-                "resource__id",
-                "resource__slug",
-                "resource__dataset__id",
-                "resource__dataset__slug",
-                "resource__status",
-                "resource__is_removed"
-            ).first())
+            data: AggregatedDGAInfo = (
+                self.database_model.objects.select_related("resource", "resource__dataset")
+                .only(
+                    "resource__id",
+                    "resource__slug",
+                    "resource__dataset__id",
+                    "resource__dataset__slug",
+                    "resource__status",
+                    "resource__is_removed",
+                )
+                .first()
+            )
 
-            if (
-                    not data or data.resource is None
-                    or data.resource.is_removed
-                    or not data.resource.is_published
-            ):
+            if not data or data.resource is None or data.resource.is_removed or not data.resource.is_published:
                 raise falcon.HTTPNotFound
             return data
 

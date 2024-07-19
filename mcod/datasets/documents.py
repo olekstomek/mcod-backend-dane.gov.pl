@@ -9,29 +9,32 @@ from mcod.regions.documents import regions_field
 from mcod.search.documents import ExtendedDocument
 from mcod.users.models import UserFollowingDataset
 
-Dataset = apps.get_model('datasets', 'Dataset')
-Organization = apps.get_model('organizations', 'Organization')
-Category = apps.get_model('categories', 'Category')
-Tag = apps.get_model('tags', 'Tag')
-Resource = apps.get_model('resources', 'Resource')
-DataSource = apps.get_model('harvester', 'DataSource')
-Showcase = apps.get_model('showcases', 'Showcase')
+Dataset = apps.get_model("datasets", "Dataset")
+Organization = apps.get_model("organizations", "Organization")
+Category = apps.get_model("categories", "Category")
+Tag = apps.get_model("tags", "Tag")
+Resource = apps.get_model("resources", "Resource")
+DataSource = apps.get_model("harvester", "DataSource")
+Showcase = apps.get_model("showcases", "Showcase")
 
 
 def datasets_field(**kwargs):
-    return fields.NestedField(properties={
-        'id': fields.IntegerField(),
-        'title': TranslatedTextField('title'),
-        'notes': TranslatedTextField('notes'),
-        'category': fields.KeywordField(attr='category.title'),
-        'formats': fields.KeywordField(attr='formats', multi=True),
-        'downloads_count': fields.IntegerField(attr='computed_downloads_count'),
-        'views_count': fields.IntegerField(attr='computed_views_count'),
-        'openness_scores': fields.IntegerField(attr='openness_scores'),
-        'modified': fields.DateField(),
-        'slug': TranslatedKeywordField('slug'),
-        'verified': fields.DateField(),
-    }, **kwargs)
+    return fields.NestedField(
+        properties={
+            "id": fields.IntegerField(),
+            "title": TranslatedTextField("title"),
+            "notes": TranslatedTextField("notes"),
+            "category": fields.KeywordField(attr="category.title"),
+            "formats": fields.KeywordField(attr="formats", multi=True),
+            "downloads_count": fields.IntegerField(attr="computed_downloads_count"),
+            "views_count": fields.IntegerField(attr="computed_views_count"),
+            "openness_scores": fields.IntegerField(attr="openness_scores"),
+            "modified": fields.DateField(),
+            "slug": TranslatedKeywordField("slug"),
+            "verified": fields.DateField(),
+        },
+        **kwargs
+    )
 
 
 @registry.register_document
@@ -45,15 +48,15 @@ class DatasetDocument(ExtendedDocument):
     license_description = fields.TextField()
     license_condition_custom_description = fields.TextField()
     license_condition_default_cc40 = fields.BooleanField()
-    resource_modified = fields.DateField(attr='last_modified_resource')
+    resource_modified = fields.DateField(attr="last_modified_resource")
     url = fields.KeywordField()
     source = fields.NestedField(
         properties={
-            'title': fields.TextField(),
-            'source_type': fields.TextField(),
-            'url': fields.TextField(),
-            'update_frequency': TranslatedTextField('update_frequency'),
-            'last_import_timestamp': fields.DateField(),
+            "title": fields.TextField(),
+            "source_type": fields.TextField(),
+            "url": fields.TextField(),
+            "update_frequency": TranslatedTextField("update_frequency"),
+            "last_import_timestamp": fields.DateField(),
         }
     )
 
@@ -61,65 +64,57 @@ class DatasetDocument(ExtendedDocument):
     types = fields.KeywordField(multi=True)
     openness_scores = fields.IntegerField(multi=True)
     institution = fields.NestedField(
-        attr='organization',
+        attr="organization",
         properties={
-            'id': fields.IntegerField(),
-            'title': TranslatedTextField('title'),
-            'slug': TranslatedTextField('slug'),
-        }
+            "id": fields.IntegerField(),
+            "title": TranslatedTextField("title"),
+            "slug": TranslatedTextField("slug"),
+        },
     )
     category = fields.NestedField(
         properties={
-            'id': fields.IntegerField(attr='id'),
-            'image_url': fields.KeywordField(),
-            'title': TranslatedTextField('title'),
-            'description': TranslatedTextField('description')
+            "id": fields.IntegerField(attr="id"),
+            "image_url": fields.KeywordField(),
+            "title": TranslatedTextField("title"),
+            "description": TranslatedTextField("description"),
         }
     )
     categories = fields.NestedField(
         properties={
-            'id': fields.IntegerField(attr='id'),
-            'image_url': fields.KeywordField(),
-            'code': fields.KeywordField(),
-            'title': TranslatedTextField('title'),
-            'description': TranslatedTextField('description')
+            "id": fields.IntegerField(attr="id"),
+            "image_url": fields.KeywordField(),
+            "code": fields.KeywordField(),
+            "title": TranslatedTextField("title"),
+            "description": TranslatedTextField("description"),
         }
     )
     downloads_count = fields.IntegerField()
     image_url = fields.TextField()
-    image_alt = TranslatedTextField('image_alt')
+    image_alt = TranslatedTextField("image_alt")
 
     version = fields.KeywordField()
     source_title = fields.TextField()
     source_type = fields.TextField()
     source_url = fields.TextField()
 
-    resources = fields.NestedField(
-        properties={
-            'id': fields.IntegerField(),
-            'title': TranslatedTextField('title')
-        }
-    )
+    resources = fields.NestedField(properties={"id": fields.IntegerField(), "title": TranslatedTextField("title")})
     showcases = fields.NestedField(
-        attr='showcases_published',
-        properties={
-            'id': fields.IntegerField(),
-            'title': TranslatedTextField('title')
-        }
+        attr="showcases_published",
+        properties={"id": fields.IntegerField(), "title": TranslatedTextField("title")},
     )
     supplement_docs = fields.NestedField(
         properties={
-            'id': fields.IntegerField(),
-            'name': TranslatedTextField('name'),
-            'api_file_url': fields.TextField(),
-            'file_size': fields.LongField(),
-            'language': fields.KeywordField(),
+            "id": fields.IntegerField(),
+            "name": TranslatedTextField("name"),
+            "api_file_url": fields.TextField(),
+            "file_size": fields.LongField(),
+            "language": fields.KeywordField(),
         }
     )
 
     update_frequency = fields.KeywordField()
-    users_following = fields.KeywordField(attr='users_following_list', multi=True)
-    last_modified_resource = fields.DateField(attr='last_modified_resource')
+    users_following = fields.KeywordField(attr="users_following_list", multi=True)
+    last_modified_resource = fields.DateField(attr="last_modified_resource")
 
     license_code = fields.IntegerField()
     computed_downloads_count = fields.IntegerField()
@@ -131,7 +126,7 @@ class DatasetDocument(ExtendedDocument):
     regions = regions_field()
 
     class Index:
-        name = mcs.ELASTICSEARCH_INDEX_NAMES['datasets']
+        name = mcs.ELASTICSEARCH_INDEX_NAMES["datasets"]
         settings = mcs.ELASTICSEARCH_DSL_SEARCH_INDEX_SETTINGS
         aliases = mcs.ELASTICSEARCH_DSL_SEARCH_INDEX_ALIAS
 
@@ -150,13 +145,13 @@ class DatasetDocument(ExtendedDocument):
         if isinstance(related_instance, Resource):
             return related_instance.dataset
         if isinstance(related_instance, Category):
-            return related_instance.dataset_set.filter(status='published')
+            return related_instance.dataset_set.filter(status="published")
         if isinstance(related_instance, Organization):
-            return related_instance.datasets.filter(status='published')
+            return related_instance.datasets.filter(status="published")
         if isinstance(related_instance, DataSource):
-            return related_instance.datasource_datasets.filter(status='published')
+            return related_instance.datasource_datasets.filter(status="published")
         if isinstance(related_instance, Showcase):
-            return related_instance.datasets.filter(status='published')
+            return related_instance.datasets.filter(status="published")
 
     def prepare_search_date(self, instance):
         return instance.verified

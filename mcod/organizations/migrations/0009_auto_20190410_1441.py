@@ -11,42 +11,46 @@ import uuid
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('organizations', '0008_auto_20190227_1108'),
+        ("organizations", "0008_auto_20190227_1108"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='organization',
-            name='published_at',
-            field=model_utils.fields.MonitorField(default=django.utils.timezone.now, monitor='status', when={'published'}),
+            model_name="organization",
+            name="published_at",
+            field=model_utils.fields.MonitorField(default=django.utils.timezone.now, monitor="status", when={"published"}),
         ),
         migrations.AddField(
-            model_name='organization',
-            name='removed_at',
-            field=model_utils.fields.MonitorField(default=django.utils.timezone.now, monitor='is_removed', when={True}),
+            model_name="organization",
+            name="removed_at",
+            field=model_utils.fields.MonitorField(default=django.utils.timezone.now, monitor="is_removed", when={True}),
         ),
         migrations.AddField(
-            model_name='organization',
-            name='uuid',
+            model_name="organization",
+            name="uuid",
             field=models.UUIDField(default=uuid.uuid4),
         ),
         migrations.AddField(
-            model_name='organization',
-            name='views_count',
+            model_name="organization",
+            name="views_count",
             field=models.PositiveIntegerField(default=0),
         ),
         migrations.AlterField(
-            model_name='organization',
-            name='i18n',
-            field=modeltrans.fields.TranslationField(fields=('title', 'description', 'slug'), required_languages=(), virtual_fields=True),
+            model_name="organization",
+            name="i18n",
+            field=modeltrans.fields.TranslationField(
+                fields=("title", "description", "slug"),
+                required_languages=(),
+                virtual_fields=True,
+            ),
         ),
         migrations.AlterField(
-            model_name='organization',
-            name='slug',
+            model_name="organization",
+            name="slug",
             field=models.SlugField(blank=True, default=uuid.uuid4, max_length=600),
         ),
         migrations.AddIndex(
-            model_name='organization',
-            index=django.contrib.postgres.indexes.GinIndex(fields=['i18n'], name='organizatio_i18n_f57983_gin'),
+            model_name="organization",
+            index=django.contrib.postgres.indexes.GinIndex(fields=["i18n"], name="organizatio_i18n_f57983_gin"),
         ),
     ]

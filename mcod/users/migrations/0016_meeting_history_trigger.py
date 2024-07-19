@@ -8,14 +8,17 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('users', '0015_meeting_meetingfile_meetingtrash'),
+        ("users", "0015_meeting_meetingfile_meetingtrash"),
     ]
 
     operations = [
         migrations.RunSQL(
-            sql=open(
-                os.path.join(settings.DATABASE_DIR, 'ODSOFT-618-users-meeting-history_other.sql')).read(),
+            sql=open(os.path.join(settings.DATABASE_DIR, "ODSOFT-618-users-meeting-history_other.sql")).read(),
             reverse_sql=open(
-                os.path.join(settings.DATABASE_DIR, 'ODSOFT-618-users-meeting-history_other_backward.sql')).read(),
+                os.path.join(
+                    settings.DATABASE_DIR,
+                    "ODSOFT-618-users-meeting-history_other_backward.sql",
+                )
+            ).read(),
         )
     ]

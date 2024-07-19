@@ -14,26 +14,30 @@ from mcod.cms.api.router import CmsApiRouter
 from mcod.cms.api.views import CmsPagesViewSet, ImagesViewSet
 from mcod.cms.views import revisions_view
 
-panel_app_config = apps.get_app_config('mcod.pn_apps')
+panel_app_config = apps.get_app_config("mcod.pn_apps")
 
 urlpatterns = []
 
-api_router = CmsApiRouter('cmsapi')
-api_router.register_endpoint('pages', CmsPagesViewSet)
-api_router.register_endpoint('images', ImagesViewSet)
-api_router.register_endpoint('documents', DocumentsAPIViewSet)
+api_router = CmsApiRouter("cmsapi")
+api_router.register_endpoint("pages", CmsPagesViewSet)
+api_router.register_endpoint("images", ImagesViewSet)
+api_router.register_endpoint("documents", DocumentsAPIViewSet)
 
 urlpatterns += [
-    path('documents/', include(wagtaildocs_urls)),
-    path('api/', api_router.urls),
-    path('hypereditor/', include('hypereditor.urls')),
-    path('admin/pages/<int:page_id>/revisions/<int:revision_id>/view/', revisions_view, name='revisions_view'),
-    path('admin/', include(wagtailadmin_urls)),
+    path("documents/", include(wagtaildocs_urls)),
+    path("api/", api_router.urls),
+    path("hypereditor/", include("hypereditor.urls")),
     path(
-        'robots.txt',
+        "admin/pages/<int:page_id>/revisions/<int:revision_id>/view/",
+        revisions_view,
+        name="revisions_view",
+    ),
+    path("admin/", include(wagtailadmin_urls)),
+    path(
+        "robots.txt",
         TemplateView.as_view(template_name="admin/robots.txt", content_type="text/plain"),
     ),
-    path('', include(cms_urls)),
+    path("", include(cms_urls)),
 ]
 urlpatterns += static(settings.IMAGES_URL, document_root=settings.IMAGES_MEDIA_ROOT)
 urlpatterns += static_extensions()

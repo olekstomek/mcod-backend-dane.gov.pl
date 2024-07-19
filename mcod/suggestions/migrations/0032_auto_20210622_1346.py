@@ -8,18 +8,23 @@ import model_utils.fields
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('suggestions', '0031_auto_20210519_1158'),
+        ("suggestions", "0031_auto_20210519_1158"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='accepteddatasetsubmission',
-            name='publication_finished_at',
-            field=model_utils.fields.MonitorField(default=django.utils.timezone.now, monitor='status', verbose_name='date of completion of publication', when={'publication_finished'}),
+            model_name="accepteddatasetsubmission",
+            name="publication_finished_at",
+            field=model_utils.fields.MonitorField(
+                default=django.utils.timezone.now,
+                monitor="status",
+                verbose_name="date of completion of publication",
+                when={"publication_finished"},
+            ),
         ),
         migrations.AddField(
-            model_name='accepteddatasetsubmission',
-            name='publication_finished_comment',
-            field=models.TextField(blank=True, verbose_name='describe how the case was resolved'),
+            model_name="accepteddatasetsubmission",
+            name="publication_finished_comment",
+            field=models.TextField(blank=True, verbose_name="describe how the case was resolved"),
         ),
     ]

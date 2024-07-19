@@ -5,36 +5,31 @@ from mcod.settings.base import *  # noqa: F403, F405
 ROOT_DIR = environ.Path(__file__) - 3  # noqa: F405
 DEBUG = True
 
-TEMPLATES[0]['OPTIONS']['debug'] = DEBUG  # noqa: F405
+TEMPLATES[0]["OPTIONS"]["debug"] = DEBUG  # noqa: F405
 
-EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
+EMAIL_BACKEND = "django.core.mail.backends.filebased.EmailBackend"
 
-BASE_URL = 'http://test.mcod'
-API_URL = 'http://api.test.mcod'
-ADMIN_URL = 'http://admin.test.mcod'
+BASE_URL = "http://test.mcod"
+API_URL = "http://api.test.mcod"
+ADMIN_URL = "http://admin.test.mcod"
 
-API_URL_INTERNAL = 'http://localhost'
+API_URL_INTERNAL = "http://localhost"
 
-ELASTICSEARCH_INDEX_PREFIX = 'test'
+ELASTICSEARCH_INDEX_PREFIX = "test"
 
-ELASTICSEARCH_DSL_INDEX_SETTINGS = {
-    'number_of_shards': 1,
-    'number_of_replicas': 0
-}
+ELASTICSEARCH_DSL_INDEX_SETTINGS = {"number_of_shards": 1, "number_of_replicas": 0}
 
-ELASTICSEARCH_HISTORIES_IDX_SETTINGS = {
-    'number_of_shards': 1,
-    'number_of_replicas': 0
-}
+ELASTICSEARCH_HISTORIES_IDX_SETTINGS = {"number_of_shards": 1, "number_of_replicas": 0}
 
-LANGUAGE_CODE = 'pl'
+LANGUAGE_CODE = "pl"
 
 
 def get_es_index_names():
     import uuid
+
     index_prefix = str(uuid.uuid4())
-    worker = os.environ.get('PYTEST_XDIST_WORKER', '')
-    index_prefix = f'{index_prefix}-{worker}'
+    worker = os.environ.get("PYTEST_XDIST_WORKER", "")
+    index_prefix = f"{index_prefix}-{worker}"
     return {
         "common": "test-common-{}".format(index_prefix),
         "applications": "test-applications-{}".format(index_prefix),
@@ -60,9 +55,10 @@ ELASTICSEARCH_INDEX_NAMES = get_es_index_names()
 
 def get_es_alias_name():
     import uuid
+
     index_prefix = str(uuid.uuid4())
-    worker = os.environ.get('PYTEST_XDIST_WORKER', '')
-    return f'{index_prefix}-{worker}-test-common-alias'
+    worker = os.environ.get("PYTEST_XDIST_WORKER", "")
+    return f"{index_prefix}-{worker}-test-common-alias"
 
 
 ELASTICSEARCH_COMMON_ALIAS_NAME = get_es_alias_name()
@@ -75,108 +71,108 @@ ELASTICSEARCH_DSL_SEARCH_INDEX_ALIAS = {
 
 def get_email_file_path():
     import uuid
-    return '/tmp/app-messages-%s' % str(uuid.uuid4())
+
+    return "/tmp/app-messages-%s" % str(uuid.uuid4())
 
 
 EMAIL_FILE_PATH = get_email_file_path()
-TEST_SAMPLES_PATH = str(ROOT_DIR('data/test_samples'))
-TEST_CERTS_PATH = str(ROOT_DIR('data/test_certs'))
-TEST_ROOT = str(ROOT_DIR('test'))
+TEST_SAMPLES_PATH = str(ROOT_DIR("data/test_samples"))
+TEST_CERTS_PATH = str(ROOT_DIR("data/test_certs"))
+TEST_ROOT = str(ROOT_DIR("test"))
 
-MEDIA_ROOT = str(os.path.join(TEST_ROOT, 'media'))
-IMAGES_MEDIA_ROOT = str(os.path.join(MEDIA_ROOT, 'images'))
-MEETINGS_MEDIA_ROOT = str(os.path.join(MEDIA_ROOT, 'meetings'))
-NEWSLETTER_MEDIA_ROOT = str(os.path.join(MEDIA_ROOT, 'newsletter'))
-RESOURCES_MEDIA_ROOT = str(os.path.join(MEDIA_ROOT, 'resources'))
+MEDIA_ROOT = str(os.path.join(TEST_ROOT, "media"))
+IMAGES_MEDIA_ROOT = str(os.path.join(MEDIA_ROOT, "images"))
+MEETINGS_MEDIA_ROOT = str(os.path.join(MEDIA_ROOT, "meetings"))
+NEWSLETTER_MEDIA_ROOT = str(os.path.join(MEDIA_ROOT, "newsletter"))
+RESOURCES_MEDIA_ROOT = str(os.path.join(MEDIA_ROOT, "resources"))
 MAIN_DGA_RESOURCE_XLSX_CREATION_ROOT = str(ROOT_DIR.path(MEDIA_ROOT, "main_dga"))
-RESOURCES_FILES_TO_REMOVE_ROOT = str(ROOT_DIR.path(MEDIA_ROOT, 'to_be_removed', 'resources'))
-REPORTS_MEDIA_ROOT = str(os.path.join(MEDIA_ROOT, 'reports'))
-SHOWCASES_MEDIA_ROOT = str(os.path.join(MEDIA_ROOT, 'showcases'))
-DCAT_VOCABULARIES_MEDIA_ROOT = str(ROOT_DIR.path(MEDIA_ROOT, 'resources'))
-METADATA_MEDIA_ROOT = str(ROOT_DIR.path(MEDIA_ROOT, 'datasets', 'catalog'))
+RESOURCES_FILES_TO_REMOVE_ROOT = str(ROOT_DIR.path(MEDIA_ROOT, "to_be_removed", "resources"))
+REPORTS_MEDIA_ROOT = str(os.path.join(MEDIA_ROOT, "reports"))
+SHOWCASES_MEDIA_ROOT = str(os.path.join(MEDIA_ROOT, "showcases"))
+DCAT_VOCABULARIES_MEDIA_ROOT = str(ROOT_DIR.path(MEDIA_ROOT, "resources"))
+METADATA_MEDIA_ROOT = str(ROOT_DIR.path(MEDIA_ROOT, "datasets", "catalog"))
 
 # Do not use cache in tests
 MAIN_DGA_RESOURCE_CREATION_CACHE_TIMEOUT = 0
 MAIN_DGA_RESOURCE_XLSX_CREATION_CACHE_TIMEOUT = 0
 
-CACHES.update({'test': {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'}})
+CACHES.update({"test": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}})
 
 
-MEDIA_URL = '/media/'
-IMAGES_URL = '%s%s' % (MEDIA_URL, 'images')
-MEETINGS_URL = '%s%s' % (MEDIA_URL, 'meetings')
-NEWSLETTER_URL = '%s%s' % (MEDIA_URL, 'newsletter')
-REPORTS_MEDIA = '%s%s' % (MEDIA_URL, 'reports')
-RESOURCES_URL = '%s%s' % (MEDIA_URL, 'resources')
-SHOWCASES_URL = '%s%s' % (MEDIA_URL, 'showcases')
+MEDIA_URL = "/media/"
+IMAGES_URL = "%s%s" % (MEDIA_URL, "images")
+MEETINGS_URL = "%s%s" % (MEDIA_URL, "meetings")
+NEWSLETTER_URL = "%s%s" % (MEDIA_URL, "newsletter")
+REPORTS_MEDIA = "%s%s" % (MEDIA_URL, "reports")
+RESOURCES_URL = "%s%s" % (MEDIA_URL, "resources")
+SHOWCASES_URL = "%s%s" % (MEDIA_URL, "showcases")
 
 CELERY_TASK_ALWAYS_EAGER = True
-CELERY_TASK_DEFAULT_QUEUE = 'mcod'
+CELERY_TASK_DEFAULT_QUEUE = "mcod"
 CELERY_TASK_QUEUES = {
-    Queue('test'),
+    Queue("test"),
 }
 
 CELERY_TASK_ROUTES = {}
 
-SESSION_COOKIE_NAME = 'test_sessionid'
-SESSION_COOKIE_DOMAIN = 'test.mcod'
+SESSION_COOKIE_NAME = "test_sessionid"
+SESSION_COOKIE_DOMAIN = "test.mcod"
 SESSION_COOKIE_SECURE = False
-API_TOKEN_COOKIE_NAME = 'test_apiauthtoken'
+API_TOKEN_COOKIE_NAME = "test_apiauthtoken"
 
 
-LOGGING['loggers']['django.db.backends']['level'] = 'INFO'
-LOGGING['loggers']['django.db.backends']['handlers'] = ['console']
-LOGGING['loggers']['django.request']['level'] = 'INFO'
-LOGGING['loggers']['django.request']['handlers'] = ['console']
-LOGGING['loggers']['django.server']['level'] = 'INFO'
-LOGGING['loggers']['django.server']['handlers'] = ['console']
-LOGGING['loggers']['signals']['level'] = 'INFO'
-LOGGING['loggers']['signals']['handlers'] = ['console']
-LOGGING['loggers']['celery.app.trace']['level'] = 'WARNING'
-LOGGING['loggers']['celery.app.trace']['handlers'] = ['console']
-LOGGING['loggers']['mcod']['handlers'] = ['console']
-LOGGING['loggers']['resource_file_processing']['handlers'] = ['console']
+LOGGING["loggers"]["django.db.backends"]["level"] = "INFO"
+LOGGING["loggers"]["django.db.backends"]["handlers"] = ["console"]
+LOGGING["loggers"]["django.request"]["level"] = "INFO"
+LOGGING["loggers"]["django.request"]["handlers"] = ["console"]
+LOGGING["loggers"]["django.server"]["level"] = "INFO"
+LOGGING["loggers"]["django.server"]["handlers"] = ["console"]
+LOGGING["loggers"]["signals"]["level"] = "INFO"
+LOGGING["loggers"]["signals"]["handlers"] = ["console"]
+LOGGING["loggers"]["celery.app.trace"]["level"] = "WARNING"
+LOGGING["loggers"]["celery.app.trace"]["handlers"] = ["console"]
+LOGGING["loggers"]["mcod"]["handlers"] = ["console"]
+LOGGING["loggers"]["resource_file_processing"]["handlers"] = ["console"]
 
 CONSOLE_LOG_ERRORS = True
 
-SUIT_CONFIG['LIST_PER_PAGE'] = 100
+SUIT_CONFIG["LIST_PER_PAGE"] = 100
 
 # Makes tests faster (https://brobin.me/blog/2016/08/7-ways-to-speed-up-your-django-test-suite/)
 PASSWORD_HASHERS = [
-    'django.contrib.auth.hashers.MD5PasswordHasher',
+    "django.contrib.auth.hashers.MD5PasswordHasher",
 ]
 
-CELERY_BEAT_SCHEDULE['send-newsletter'] = {
-    'task': 'mcod.newsletter.tasks.send_newsletter',
-    'schedule': 120,
+CELERY_BEAT_SCHEDULE["send-newsletter"] = {
+    "task": "mcod.newsletter.tasks.send_newsletter",
+    "schedule": 120,
 }
 
-COMPONENT = env('COMPONENT', default='admin')
-ENVIRONMENT = 'test'
+COMPONENT = env("COMPONENT", default="admin")
+ENVIRONMENT = "test"
 ENABLE_CSRF = False
-API_CSRF_COOKIE_DOMAINS = [
-    'test.local',
-    'localhost',
-    'dane.gov.pl'
-]
+API_CSRF_COOKIE_DOMAINS = ["test.local", "localhost", "dane.gov.pl"]
 
 ES_EN_SYN_FILTER_KWARGS = {
     "type": "synonym",
     "lenient": True,
-    "synonyms": ["foo, bar => baz"]
+    "synonyms": ["foo, bar => baz"],
 }
 
 ES_PL_SYN_FILTER_KWARGS = {
     "type": "synonym",
     "lenient": True,
-    "synonyms": ["sierściuch, kot"]
+    "synonyms": ["sierściuch, kot"],
 }
 FALCON_LIMITER_ENABLED = False
 
 DISCOURSE_FORUM_ENABLED = False
 
 SPARQL_ENDPOINTS = {
-    'kronika': {'endpoint': 'http://kronik.gov.pl', 'headers': {'host': 'public-api.k8s'}}
+    "kronika": {
+        "endpoint": "http://kronik.gov.pl",
+        "headers": {"host": "public-api.k8s"},
+    }
 }
 
 MAIN_DGA_DATASET_OWNER_ORGANIZATION_PK = 99

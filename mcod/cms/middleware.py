@@ -6,7 +6,7 @@ from wagtail.core.models import Site
 
 from mcod.counters.lib import Counter
 
-NewsPage = apps.get_model('cms', 'NewsPage')
+NewsPage = apps.get_model("cms", "NewsPage")
 
 
 class SiteMiddleware(MiddlewareMixin):
@@ -18,7 +18,7 @@ class SiteMiddleware(MiddlewareMixin):
 
 
 class CounterMiddleware(MiddlewareMixin):
-    NEWS_API_URL_PATTERN = re.compile(r'/news/([-a-zA-Z0-9_]+)/')
+    NEWS_API_URL_PATTERN = re.compile(r"/news/([-a-zA-Z0-9_]+)/")
 
     def process_response(self, request, response):
         if response.status_code == 200:

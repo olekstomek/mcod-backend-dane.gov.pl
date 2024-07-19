@@ -6,12 +6,12 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('users', '0018_migrate_is_representative_to_is_agent_values'),
+        ("users", "0018_migrate_is_representative_to_is_agent_values"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='user',
-            name='is_representative',
+            model_name="user",
+            name="is_representative",
         ),
     ]

@@ -11,32 +11,36 @@ import uuid
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('applications', '0009_application_i18n'),
+        ("applications", "0009_application_i18n"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='application',
-            name='published_at',
-            field=model_utils.fields.MonitorField(default=django.utils.timezone.now, monitor='status', when={'published'}),
+            model_name="application",
+            name="published_at",
+            field=model_utils.fields.MonitorField(default=django.utils.timezone.now, monitor="status", when={"published"}),
         ),
         migrations.AddField(
-            model_name='application',
-            name='removed_at',
-            field=model_utils.fields.MonitorField(default=django.utils.timezone.now, monitor='is_removed', when={True}),
+            model_name="application",
+            name="removed_at",
+            field=model_utils.fields.MonitorField(default=django.utils.timezone.now, monitor="is_removed", when={True}),
         ),
         migrations.AlterField(
-            model_name='application',
-            name='i18n',
-            field=modeltrans.fields.TranslationField(fields=('title', 'notes', 'slug'), required_languages=(), virtual_fields=True),
+            model_name="application",
+            name="i18n",
+            field=modeltrans.fields.TranslationField(
+                fields=("title", "notes", "slug"),
+                required_languages=(),
+                virtual_fields=True,
+            ),
         ),
         migrations.AlterField(
-            model_name='application',
-            name='slug',
+            model_name="application",
+            name="slug",
             field=models.SlugField(blank=True, default=uuid.uuid4, max_length=600),
         ),
         migrations.AddIndex(
-            model_name='application',
-            index=django.contrib.postgres.indexes.GinIndex(fields=['i18n'], name='application_i18n_88fe6b_gin'),
+            model_name="application",
+            index=django.contrib.postgres.indexes.GinIndex(fields=["i18n"], name="application_i18n_88fe6b_gin"),
         ),
     ]

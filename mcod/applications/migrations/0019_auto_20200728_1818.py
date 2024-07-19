@@ -8,36 +8,64 @@ import modeltrans.fields
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('applications', '0018_applicationproposal_history_trigger'),
+        ("applications", "0018_applicationproposal_history_trigger"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='application',
-            name='image_on_list',
+            model_name="application",
+            name="image_on_list",
         ),
         migrations.RemoveField(
-            model_name='applicationproposal',
-            name='image_on_list',
+            model_name="applicationproposal",
+            name="image_on_list",
         ),
         migrations.AddField(
-            model_name='application',
-            name='illustrative_graphics',
-            field=models.ImageField(blank=True, max_length=200, null=True, storage=mcod.core.storages.ApplicationImagesStorage(base_url=None, location=None), upload_to='illustrative_graphics/%Y%m%d', verbose_name='illustrative graphics'),
+            model_name="application",
+            name="illustrative_graphics",
+            field=models.ImageField(
+                blank=True,
+                max_length=200,
+                null=True,
+                storage=mcod.core.storages.ApplicationImagesStorage(base_url=None, location=None),
+                upload_to="illustrative_graphics/%Y%m%d",
+                verbose_name="illustrative graphics",
+            ),
         ),
         migrations.AddField(
-            model_name='application',
-            name='illustrative_graphics_alt',
-            field=models.CharField(blank=True, max_length=255, verbose_name='illustrative graphics alternative text'),
+            model_name="application",
+            name="illustrative_graphics_alt",
+            field=models.CharField(
+                blank=True,
+                max_length=255,
+                verbose_name="illustrative graphics alternative text",
+            ),
         ),
         migrations.AddField(
-            model_name='applicationproposal',
-            name='illustrative_graphics',
-            field=models.ImageField(blank=True, max_length=200, null=True, storage=mcod.core.storages.ApplicationImagesStorage(base_url=None, location=None), upload_to='proposals/illustrative_graphics/%Y%m%d', verbose_name='illustrative graphics'),
+            model_name="applicationproposal",
+            name="illustrative_graphics",
+            field=models.ImageField(
+                blank=True,
+                max_length=200,
+                null=True,
+                storage=mcod.core.storages.ApplicationImagesStorage(base_url=None, location=None),
+                upload_to="proposals/illustrative_graphics/%Y%m%d",
+                verbose_name="illustrative graphics",
+            ),
         ),
         migrations.AlterField(
-            model_name='application',
-            name='i18n',
-            field=modeltrans.fields.TranslationField(fields=('title', 'notes', 'image_alt', 'illustrative_graphics_alt', 'slug'), required_languages=(), virtual_fields=True),
+            model_name="application",
+            name="i18n",
+            field=modeltrans.fields.TranslationField(
+                fields=(
+                    "title",
+                    "notes",
+                    "image_alt",
+                    "illustrative_graphics_alt",
+                    "slug",
+                ),
+                required_languages=(),
+                virtual_fields=True,
+            ),
         ),
     ]

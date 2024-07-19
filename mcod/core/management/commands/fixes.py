@@ -20,183 +20,193 @@ from mcod.resources.tasks import (
     update_resource_validation_results_task,
 )
 
-task_list = ['file_tasks', 'data_tasks', 'link_tasks']
+task_list = ["file_tasks", "data_tasks", "link_tasks"]
 
-MEDIA_PATH = '/usr/src/mcod_backend/media/'
+MEDIA_PATH = "/usr/src/mcod_backend/media/"
 
 
 class Command(BaseCommand):
-    help = 'Various fixes'
+    help = "Various fixes"
 
     def add_arguments(self, parser):
         parser.add_argument(
-            '--all',
-            action='store_const',
-            dest='action',
-            const='all',
-            help="Run all fixes"
+            "--all",
+            action="store_const",
+            dest="action",
+            const="all",
+            help="Run all fixes",
         )
         parser.add_argument(
-            '--searchhistories',
-            action='store_const',
-            dest='action',
-            const='searchhistories',
-            help="Run fixes for search history"
+            "--searchhistories",
+            action="store_const",
+            dest="action",
+            const="searchhistories",
+            help="Run fixes for search history",
         )
         parser.add_argument(
-            '--datasets',
-            action='store_const',
-            dest='action',
-            const='datasets',
-            help="Run fixes for datasets"
+            "--datasets",
+            action="store_const",
+            dest="action",
+            const="datasets",
+            help="Run fixes for datasets",
         )
         parser.add_argument(
-            '--resources',
-            action='store_const',
-            dest='action',
-            const='resources',
-            help="Run fixes for resources"
-        )
-
-        parser.add_argument(
-            '--articlecategories',
-            action='store_const',
-            dest='action',
-            const='articlecategories',
-            help='Run fixes for article categories'
+            "--resources",
+            action="store_const",
+            dest="action",
+            const="resources",
+            help="Run fixes for resources",
         )
 
         parser.add_argument(
-            '--resourcedatadate',
-            action='store_const',
-            dest='action',
-            const='resourcedatadate',
-            help='Run fix that set data_date for resources with files'
+            "--articlecategories",
+            action="store_const",
+            dest="action",
+            const="articlecategories",
+            help="Run fixes for article categories",
         )
 
         parser.add_argument(
-            '--migratefollowings',
-            action='store_const',
-            dest='action',
-            const='migratefollowings',
-            help='Copy following to subscriptions'
+            "--resourcedatadate",
+            action="store_const",
+            dest="action",
+            const="resourcedatadate",
+            help="Run fix that set data_date for resources with files",
         )
 
         parser.add_argument(
-            '--setverified',
+            "--migratefollowings",
+            action="store_const",
+            dest="action",
+            const="migratefollowings",
+            help="Copy following to subscriptions",
+        )
+
+        parser.add_argument(
+            "--setverified",
             action="store_const",
             dest="action",
             const="setverified",
-            help="Fix verfied for datasets and resources"
+            help="Fix verfied for datasets and resources",
         )
 
-        parser.add_argument('--pks', type=str, default='')
+        parser.add_argument("--pks", type=str, default="")
 
         parser.add_argument(
-            '--resourcesformats',
+            "--resourcesformats",
             action="store_const",
             dest="action",
             const="resourcesformats",
-            help="Run fixes for resources formats"
+            help="Run fixes for resources formats",
         )
 
         parser.add_argument(
-            '--resources-links',
-            action='store_const',
-            dest='action',
-            const='resources-links',
-            help='Run fixes for resources links',
+            "--resources-links",
+            action="store_const",
+            dest="action",
+            const="resources-links",
+            help="Run fixes for resources links",
         )
 
         parser.add_argument(
-            '--resources-validation-results',
-            action='store_const',
-            dest='action',
-            const='resources-validation-results',
-            help='Updates link_tasks_last_status, file_tasks_last_status, data_tasks_last_status of resources',
+            "--resources-validation-results",
+            action="store_const",
+            dest="action",
+            const="resources-validation-results",
+            help="Updates link_tasks_last_status, file_tasks_last_status, data_tasks_last_status of resources",
         )
 
         parser.add_argument(
-            '--resources-has-table-has-map',
-            action='store_const',
-            dest='action',
-            const='resources-has-table-has-map',
-            help='Updates has_table and has_map attributes of resources',
+            "--resources-has-table-has-map",
+            action="store_const",
+            dest="action",
+            const="resources-has-table-has-map",
+            help="Updates has_table and has_map attributes of resources",
         )
 
         parser.add_argument(
-            '--submissions-to-new-format',
-            action='store_const',
-            dest='action',
-            const='submissions-to-new-format',
-            help='Converts FormDataSubmissions form_data field to new format',
+            "--submissions-to-new-format",
+            action="store_const",
+            dest="action",
+            const="submissions-to-new-format",
+            help="Converts FormDataSubmissions form_data field to new format",
         )
 
         parser.add_argument(
-            '--submissions-to-old-format',
-            action='store_const',
-            dest='action',
-            const='submissions-to-old-format',
-            help='Converts FormDataSubmissions form_data field to old format',
+            "--submissions-to-old-format",
+            action="store_const",
+            dest="action",
+            const="submissions-to-old-format",
+            help="Converts FormDataSubmissions form_data field to old format",
         )
 
         parser.add_argument(
-            '--submissions-formdata-save',
-            action='store_const',
-            dest='action',
-            const='submissions-formdata-save',
-            help='Saves FormDataSubmissions form_data field to file',
+            "--submissions-formdata-save",
+            action="store_const",
+            dest="action",
+            const="submissions-formdata-save",
+            help="Saves FormDataSubmissions form_data field to file",
         )
 
         parser.add_argument(
-            '--submissions-formdata-load',
-            action='store_const',
-            dest='action',
-            const='submissions-formdata-load',
-            help='Loads data from file into FormDataSubmissions form_data field',
+            "--submissions-formdata-load",
+            action="store_const",
+            dest="action",
+            const="submissions-formdata-load",
+            help="Loads data from file into FormDataSubmissions form_data field",
         )
 
         parser.add_argument(
-            '--reports-id-column',
-            action='store_const',
-            dest='action',
-            const='reports-id-column',
-            help='Changes column name in reports from ID to id',
+            "--reports-id-column",
+            action="store_const",
+            dest="action",
+            const="reports-id-column",
+            help="Changes column name in reports from ID to id",
         )
 
         parser.add_argument(
-            '--resources-openness-score',
-            action='store_const',
-            dest='action',
-            const='resources-openness-score',
-            help='Recompute openness score for resources with fifth degree',
+            "--resources-openness-score",
+            action="store_const",
+            dest="action",
+            const="resources-openness-score",
+            help="Recompute openness score for resources with fifth degree",
         )
 
         parser.add_argument(
-            '--resources-links-protocol',
-            action='store_const',
-            dest='action',
-            const='resources-links-protocol',
-            help='Change resources links protocol to https based on protocol report',
+            "--resources-links-protocol",
+            action="store_const",
+            dest="action",
+            const="resources-links-protocol",
+            help="Change resources links protocol to https based on protocol report",
         )
 
         parser.add_argument(
-            '--resource-http-link',
-            action='store_const',
-            dest='action',
-            const='resource-http-link',
-            help='Change resources links protocol to https based on passed --pks parameter',
+            "--resource-http-link",
+            action="store_const",
+            dest="action",
+            const="resource-http-link",
+            help="Change resources links protocol to https based on passed --pks parameter",
         )
 
-        parser.add_argument('-y, --yes', action='store_true', default=None,
-                            help="Continue without asking confirmation.", dest='yes')
-        parser.add_argument('--history-other', action='store_true', default=False,
-                            help="Migrate history from history_other table.", dest='history_other')
         parser.add_argument(
-            '--table-name',
-            dest='table_name',
+            "-y, --yes",
+            action="store_true",
             default=None,
-            help='Migrates history only for specified table_name.'
+            help="Continue without asking confirmation.",
+            dest="yes",
+        )
+        parser.add_argument(
+            "--history-other",
+            action="store_true",
+            default=False,
+            help="Migrate history from history_other table.",
+            dest="history_other",
+        )
+        parser.add_argument(
+            "--table-name",
+            dest="table_name",
+            default=None,
+            help="Migrates history only for specified table_name.",
         )
 
     def fix_resources(self):
@@ -213,22 +223,22 @@ class Command(BaseCommand):
         rs = Resource.objects.filter(dataset__status="draft")
         for r in rs:
             if r.status == "published":
-                print(
-                    f"Status of resource ({r.id}) is change to draft because dataset ({r.dataset.id}) is draft")
+                print(f"Status of resource ({r.id}) is change to draft because dataset ({r.dataset.id}) is draft")
                 r.status = "draft"
                 r.save()
 
     def fix_searchhistories(self):
         from mcod.searchhistories.models import SearchHistory
+
         print("Fixing search history")
 
         searchhistories = SearchHistory.objects.filter(query_sentence="*")
 
         for s in searchhistories:
-            print(f'Removing search history id:{s.id} , url:{s.url}')
+            print(f"Removing search history id:{s.id} , url:{s.url}")
             s.delete()
 
-        print('Done.')
+        print("Done.")
 
     def fix_datasets(self):
         from django.db.models import CharField
@@ -251,13 +261,14 @@ class Command(BaseCommand):
         for d in ds:
             if d.status == "published":
                 print(
-                    f"Status of dataset ({d.id}) is changed to draft because organization ({d.organization.id}) is draft")  # noqa
+                    f"Status of dataset ({d.id}) is changed to draft because organization ({d.organization.id}) is draft"
+                )  # noqa
                 d.status = "draft"
                 d.save()
 
         print("Fixing slugs")
 
-        CharField.register_lookup(Length, 'length')
+        CharField.register_lookup(Length, "length")
         datasets = Dataset.objects.filter(title__length__gt=90)
         for d in datasets:
             Dataset.objects.filter(pk=d.id).update(slug=d.get_unique_slug())
@@ -269,16 +280,16 @@ class Command(BaseCommand):
         print("Przygotowuje się do ustawienia daty danych dla istniejących zasobów ...")
         resources_with_files = Resource.raw.all()
         print(f"Do zaktualizowania: {resources_with_files.count()}")
-        resources_with_files.update(data_date=F('created'))
+        resources_with_files.update(data_date=F("created"))
         print("Operacja zakończona")
 
     def fix_resources_validation_results(self):
-        resources = Resource.raw.order_by('id')
+        resources = Resource.raw.order_by("id")
         for obj in resources:
             update_resource_validation_results_task.s(obj.id).apply_async()
 
     def fix_resources_has_table_has_map(self):
-        resources = Resource.raw.order_by('id')
+        resources = Resource.raw.order_by("id")
         for obj in resources:
             update_resource_has_table_has_map_task.s(obj.id).apply_async()
 
@@ -299,7 +310,7 @@ class Command(BaseCommand):
                     for t in task_list:
                         tasks = getattr(r, t).all()
                         if tasks:
-                            last_task = tasks.latest('date_done')
+                            last_task = tasks.latest("date_done")
                             tasks_dates.append(last_task.date_done)
 
                     if tasks_dates:
@@ -330,7 +341,7 @@ class Command(BaseCommand):
             for t in task_list:
                 tasks = getattr(r, t).all()
                 if tasks:
-                    last_task = tasks.latest('date_done')
+                    last_task = tasks.latest("date_done")
                     tasks_dates.append(last_task.date_done)
 
             if tasks_dates:
@@ -344,7 +355,7 @@ class Command(BaseCommand):
     def verified_for_draft_resources(self):
         # szkice zasobów
         print("Aktualizacja verified dla szkiców zasobów")
-        resources = Resource.objects.filter(status='draft')
+        resources = Resource.objects.filter(status="draft")
         resources_count = resources.count()
         i = 0
         for r in resources:
@@ -354,7 +365,7 @@ class Command(BaseCommand):
             for t in task_list:
                 tasks = getattr(r, t).all()
                 if tasks:
-                    last_task = tasks.latest('date_done')
+                    last_task = tasks.latest("date_done")
                     tasks_dates.append(last_task.date_done)
 
             if tasks_dates:
@@ -403,42 +414,43 @@ class Command(BaseCommand):
     def fix_followings(self):
         from mcod.users.models import UserFollowingDataset
         from mcod.watchers.models import ModelWatcher, Subscription
+
         for following in UserFollowingDataset.objects.all():
             watcher, _ = ModelWatcher.objects.get_or_create_from_instance(following.dataset)
             Subscription.objects.get_or_create(
                 user=following.follower,
                 watcher=watcher,
-                name='dataset-%i' % following.dataset.id
+                name="dataset-%i" % following.dataset.id,
             )
 
     def fix_resources_links(self):
-        self.stdout.write('Fixing of resources broken links - with . (dot) suffix.')
+        self.stdout.write("Fixing of resources broken links - with . (dot) suffix.")
         counter = 0
-        for obj in Resource.objects.filter(link__endswith='.'):
+        for obj in Resource.objects.filter(link__endswith="."):
             if obj.file_url.startswith(settings.API_URL) and obj.format:
                 broken_link = obj.link
-                fixed_link = f'{obj.link}{obj.format}'
+                fixed_link = f"{obj.link}{obj.format}"
                 obj.link = fixed_link
                 obj.save()
                 counter += 1
-                self.stdout.write(f'Resource with id: {obj.id} link changed from {broken_link} to {fixed_link}')
-        self.stdout.write(f'Number of fixes: {counter}')
+                self.stdout.write(f"Resource with id: {obj.id} link changed from {broken_link} to {fixed_link}")
+        self.stdout.write(f"Number of fixes: {counter}")
 
     def fix_resources_formats(self):
         print("Fixing invalid resource formats (with format='True')")
 
-        res_ids = list(Resource.raw.filter(format='True').values_list('pk', flat=True))
+        res_ids = list(Resource.raw.filter(format="True").values_list("pk", flat=True))
         objs = ResourceFile.objects.filter(resource_id__in=res_ids)
         for obj in objs:
-            print(f'Resource with invalid format found: id:{obj.resource_id} , format:{obj.resource.format}')
+            print(f"Resource with invalid format found: id:{obj.resource_id} , format:{obj.resource.format}")
             process_resource_res_file_task.s(obj.id, update_link=False).apply_async_on_commit()
         if objs.count():
-            print('Done.')
+            print("Done.")
         else:
-            print('Resources with format=\'True\' was not found.')
+            print("Resources with format='True' was not found.")
 
     def convert_form_page_submissions_to_new_format(self):
-        print('Converting FormPageSubmissions form_data to NEW format.')
+        print("Converting FormPageSubmissions form_data to NEW format.")
         for submission in FormPageSubmission.objects.all():
             print(f"FormPageSubmission's ({submission.id}) form_data is:\n{submission.form_data}")
             submission_modified = False
@@ -457,7 +469,7 @@ class Command(BaseCommand):
                 print(f"Converted FormPageSubmission's ({submission.id}) form_data to:\n{submission.form_data}")
 
     def convert_form_page_submissions_to_old_format(self):
-        print('Converting FormPageSubmissions form_data to OLD format.')
+        print("Converting FormPageSubmissions form_data to OLD format.")
         for submission in FormPageSubmission.objects.all():
             print(f"FormPageSubmission's ({submission.id}) form_data is:\n{submission.form_data}")
             submission_modified = False
@@ -468,10 +480,7 @@ class Command(BaseCommand):
                 results = submission.form_data.get(question_id)
                 if isinstance(results, dict):
                     new_results = [None] * len(question.fields)
-                    field_id_to_index_map = {
-                        field.id: index
-                        for index, field in enumerate(question.fields)
-                    }
+                    field_id_to_index_map = {field.id: index for index, field in enumerate(question.fields)}
 
                     for field_id, result in results.items():
                         field_index = field_id_to_index_map[field_id]
@@ -486,19 +495,16 @@ class Command(BaseCommand):
 
     def save_form_page_submissions_form_data_to_file(self):
         Path(MEDIA_PATH).mkdir(parents=True, exist_ok=True)
-        filepath = os.path.join(MEDIA_PATH, 'FormPageSubmissions.json')
-        print(f'Saving FormPageSubmissions form_data to file:{filepath}')
-        data = json.dumps({
-            submission.id: submission.form_data
-            for submission in FormPageSubmission.objects.all()
-        })
+        filepath = os.path.join(MEDIA_PATH, "FormPageSubmissions.json")
+        print(f"Saving FormPageSubmissions form_data to file:{filepath}")
+        data = json.dumps({submission.id: submission.form_data for submission in FormPageSubmission.objects.all()})
         print(data)
-        with open(filepath, 'w') as file:
+        with open(filepath, "w") as file:
             file.write(data)
 
     def load_form_page_submissions_form_data_from_file(self):
-        filepath = os.path.join(MEDIA_PATH, 'FormPageSubmissions.json')
-        print(f'Loading FormPageSubmissions form_data from file:{filepath}')
+        filepath = os.path.join(MEDIA_PATH, "FormPageSubmissions.json")
+        print(f"Loading FormPageSubmissions form_data from file:{filepath}")
         with open(filepath) as file:
             data = json.load(file)
 
@@ -515,11 +521,11 @@ class Command(BaseCommand):
                 return file.read(len(text)) == text
 
         def fix_id_column(path):
-            with open(path, 'rb') as file:
+            with open(path, "rb") as file:
                 content = file.read()
-            assert content.startswith(b'ID;')
-            content = b'id' + content[2:]
-            with open(path, 'wb') as file:
+            assert content.startswith(b"ID;")
+            content = b"id" + content[2:]
+            with open(path, "wb") as file:
                 file.write(content)
 
         for report in Report.objects.all():
@@ -528,7 +534,7 @@ class Command(BaseCommand):
                 continue
 
             filepath = report.file
-            if filepath.startswith('/media/'):
+            if filepath.startswith("/media/"):
                 filepath = filepath[1:]
 
             fullpath = os.path.join(settings.ROOT_DIR, filepath)
@@ -536,7 +542,7 @@ class Command(BaseCommand):
                 print(f"file {fullpath} doesn't exist")
                 continue
 
-            if not file_starts_with_text(fullpath, 'ID;'):
+            if not file_starts_with_text(fullpath, "ID;"):
                 continue
 
             print(f"converting report {report.id} with file {report.file}")
@@ -545,88 +551,88 @@ class Command(BaseCommand):
     def fix_resources_openness_score(self):
         res_to_update = []
         resources = Resource.objects.filter(
-            Q(openness_score=5) | (Q(openness_score=3, jsonld_file__isnull=False) & ~Q(jsonld_file=''))
+            Q(openness_score=5) | (Q(openness_score=3, jsonld_file__isnull=False) & ~Q(jsonld_file=""))
         )
-        self.stdout.write('Found {} resources to recompute openness score'.format(resources.count()))
+        self.stdout.write("Found {} resources to recompute openness score".format(resources.count()))
         for resource in resources:
             try:
-                self.stdout.write('Recomputing openness score for res with id {}'.format(resource.pk))
+                self.stdout.write("Recomputing openness score for res with id {}".format(resource.pk))
                 resource.openness_score = resource.get_openness_score()
                 res_to_update.append(resource)
             except Exception as err:
-                self.stdout.write(
-                    'Error while recomputing openness score for res with id {}: {}'.format(resource.pk, err)
-                )
-        self.stdout.write('Updating resources score in db and ES.')
-        Resource.objects.bulk_update(res_to_update, ['openness_score'])
+                self.stdout.write("Error while recomputing openness score for res with id {}: {}".format(resource.pk, err))
+        self.stdout.write("Updating resources score in db and ES.")
+        Resource.objects.bulk_update(res_to_update, ["openness_score"])
         for res in res_to_update:
-            update_with_related_task.s('resources', 'Resource', res.id).apply_async_on_commit()
+            update_with_related_task.s("resources", "Resource", res.id).apply_async_on_commit()
 
     def _get_pks(self, **options):
-        pks_str = options.get('pks')
-        return (int(pk) for pk in pks_str.split(',') if pk) if pks_str else None
+        pks_str = options.get("pks")
+        return (int(pk) for pk in pks_str.split(",") if pk) if pks_str else None
 
     def fix_resource_http_link(self, **options):
         pks = self._get_pks(**options)
         if not pks:
-            raise CommandError('Passing of --pks parameter is required!')
-        resources = Resource.objects.filter(pk__in=pks, link__startswith='http://')
+            raise CommandError("Passing of --pks parameter is required!")
+        resources = Resource.objects.filter(pk__in=pks, link__startswith="http://")
         if resources:
-            self.stdout.write(f'Number of resources to fix: {resources.count()}')
-            answer = options['yes']
+            self.stdout.write(f"Number of resources to fix: {resources.count()}")
+            answer = options["yes"]
             if answer is None:
-                response = input('Are you sure you want to continue? [y/N]: ').lower().strip()
-                answer = response == 'y'
+                response = input("Are you sure you want to continue? [y/N]: ").lower().strip()
+                answer = response == "y"
             if answer:
                 edited_resources = []
                 for obj in resources:
-                    obj.link = obj.link.replace('http://', 'https://')
+                    obj.link = obj.link.replace("http://", "https://")
                     edited_resources.append(obj)
-                self.stdout.write('Attempting to update resources in db and ES.')
-                Resource.objects.bulk_update(edited_resources, ['link'])
+                self.stdout.write("Attempting to update resources in db and ES.")
+                Resource.objects.bulk_update(edited_resources, ["link"])
                 for obj in resources:
-                    update_document_task.s('resources', 'resource', obj.id).apply_async()
-                self.stdout.write(f'Updated {resources.count()} resources.')
+                    update_document_task.s("resources", "resource", obj.id).apply_async()
+                self.stdout.write(f"Updated {resources.count()} resources.")
             else:
-                self.stdout.write('Aborted.')
+                self.stdout.write("Aborted.")
         else:
-            self.stdout.write('No resources found!')
+            self.stdout.write("No resources found!")
 
     def fix_resources_links_protocol(self):
-        self.stdout.write('Reading resource data from https_protocol_report')
+        self.stdout.write("Reading resource data from https_protocol_report")
         latest_report = None
         try:
-            latest_report = Report.objects.filter(file__contains='http_protocol_resources').latest('created')
+            latest_report = Report.objects.filter(file__contains="http_protocol_resources").latest("created")
         except Report.DoesNotExist:
-            self.stdout.write('No http_protocol_resources report,'
-                              ' you need to generate report first with: manage.py create_https_protocol_report.')
+            self.stdout.write(
+                "No http_protocol_resources report,"
+                " you need to generate report first with: manage.py create_https_protocol_report."
+            )
         if latest_report:
             file_path = latest_report.file
-            self.stdout.write(f'Reading data from report: {file_path}')
+            self.stdout.write(f"Reading data from report: {file_path}")
             full_path = str(settings.ROOT_DIR) + file_path
             with open(full_path) as csvfile:
-                report_data = csv.reader(csvfile, delimiter=',')
+                report_data = csv.reader(csvfile, delimiter=",")
                 next(report_data, None)
-                resources_ids = [row[0] for row in report_data if 'Wymagana poprawa' in row[2]]
-            self.stdout.write(f'Found {len(resources_ids)} resources to update link protocol.')
+                resources_ids = [row[0] for row in report_data if "Wymagana poprawa" in row[2]]
+            self.stdout.write(f"Found {len(resources_ids)} resources to update link protocol.")
             edited_resources = []
-            resources = Resource.objects.filter(pk__in=resources_ids, link__contains='http://')
+            resources = Resource.objects.filter(pk__in=resources_ids, link__contains="http://")
             edited_ids = []
             for res in resources:
                 old_link = res.link
-                res.link = old_link.replace('http://', 'https://')
+                res.link = old_link.replace("http://", "https://")
                 edited_resources.append(res)
                 edited_ids.append(res.pk)
-            self.stdout.write('Attempting to update resources in db and ES.')
-            Resource.objects.bulk_update(edited_resources, ['link'])
+            self.stdout.write("Attempting to update resources in db and ES.")
+            Resource.objects.bulk_update(edited_resources, ["link"])
             docs = registry.get_documents((Resource,))
             for doc in docs:
-                self.stdout.write(f'Updating document {doc} in ES')
+                self.stdout.write(f"Updating document {doc} in ES")
                 doc().update(Resource.objects.filter(pk__in=edited_ids))
-            self.stdout.write(f'Updated {resources.count()} resources.')
+            self.stdout.write(f"Updated {resources.count()} resources.")
 
     def handle(self, *args, **options):
-        if not options['action']:
+        if not options["action"]:
             raise CommandError(
                 "No action specified. Must be one of"
                 " '--all','--searchhistories', '--resources', '--datasets', "
@@ -636,33 +642,33 @@ class Command(BaseCommand):
                 "'--submissions-formdata-save', '--submissions-formdata-load', '--reports-id-column',"
                 " '--resources-openness-score', '--resources-links-protocol', '--resource-http-link'."
             )
-        action = options['action']
+        action = options["action"]
 
         actions = {
-            'datasets': self.fix_datasets,
-            'resources-links': self.fix_resources_links,
-            'migratefollowings': self.fix_followings,
-            'resourcedatadate': self.fix_resources_data_date,
-            'resources': self.fix_resources,
-            'resourcesformats': self.fix_resources_formats,
-            'searchhistories': self.fix_searchhistories,
-            'setverified': self.fix_verified,
-            'resources-validation-results': self.fix_resources_validation_results,
-            'resources-has-table-has-map': self.fix_resources_has_table_has_map,
-            'submissions-to-new-format': self.convert_form_page_submissions_to_new_format,
-            'submissions-to-old-format': self.convert_form_page_submissions_to_old_format,
-            'submissions-formdata-save': self.save_form_page_submissions_form_data_to_file,
-            'submissions-formdata-load': self.load_form_page_submissions_form_data_from_file,
-            'reports-id-column': self.fix_reports_id_column,
-            'resources-openness-score': self.fix_resources_openness_score,
-            'resources-links-protocol': self.fix_resources_links_protocol,
-            'resource-http-link': self.fix_resource_http_link,
+            "datasets": self.fix_datasets,
+            "resources-links": self.fix_resources_links,
+            "migratefollowings": self.fix_followings,
+            "resourcedatadate": self.fix_resources_data_date,
+            "resources": self.fix_resources,
+            "resourcesformats": self.fix_resources_formats,
+            "searchhistories": self.fix_searchhistories,
+            "setverified": self.fix_verified,
+            "resources-validation-results": self.fix_resources_validation_results,
+            "resources-has-table-has-map": self.fix_resources_has_table_has_map,
+            "submissions-to-new-format": self.convert_form_page_submissions_to_new_format,
+            "submissions-to-old-format": self.convert_form_page_submissions_to_old_format,
+            "submissions-formdata-save": self.save_form_page_submissions_form_data_to_file,
+            "submissions-formdata-load": self.load_form_page_submissions_form_data_from_file,
+            "reports-id-column": self.fix_reports_id_column,
+            "resources-openness-score": self.fix_resources_openness_score,
+            "resources-links-protocol": self.fix_resources_links_protocol,
+            "resource-http-link": self.fix_resource_http_link,
         }
-        if action == 'all':
+        if action == "all":
             self.fix_searchhistories()
             self.fix_datasets()
             self.fix_resources()
-        elif action == 'resource-http-link':
+        elif action == "resource-http-link":
             self.fix_resource_http_link(**options)
         elif action in actions.keys():
             actions[action]()

@@ -7,18 +7,27 @@ import mcod.resources.model_validators
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('resources', '0065_auto_20220812_1656'),
+        ("resources", "0065_auto_20220812_1656"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='resource',
-            name='description',
-            field=models.TextField(blank=True, null=True, validators=[mcod.resources.model_validators.illegal_character_validator], verbose_name='Description'),
+            model_name="resource",
+            name="description",
+            field=models.TextField(
+                blank=True,
+                null=True,
+                validators=[mcod.resources.model_validators.illegal_character_validator],
+                verbose_name="Description",
+            ),
         ),
         migrations.AlterField(
-            model_name='resource',
-            name='title',
-            field=models.CharField(max_length=500, validators=[mcod.resources.model_validators.illegal_character_validator], verbose_name='title'),
+            model_name="resource",
+            name="title",
+            field=models.CharField(
+                max_length=500,
+                validators=[mcod.resources.model_validators.illegal_character_validator],
+                verbose_name="title",
+            ),
         ),
     ]

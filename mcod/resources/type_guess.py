@@ -7,22 +7,22 @@ import mcod.lib.cast_types as types
 
 def _infer_type_order():
     _INFER_TYPE_ORDER = (
-        'duration',
-        'geojson',
-        'geopoint',
-        'object',
-        'array',
-        'time',
-        'date',
-        'datetime',
-        'integer',
-        'number',
-        'boolean',
-        'string',
-        'any',
+        "duration",
+        "geojson",
+        "geopoint",
+        "object",
+        "array",
+        "time",
+        "date",
+        "datetime",
+        "integer",
+        "number",
+        "boolean",
+        "string",
+        "any",
     )
 
-    _INFER_TYPE_ORDER = ('missing',) + _INFER_TYPE_ORDER
+    _INFER_TYPE_ORDER = ("missing",) + _INFER_TYPE_ORDER
 
     return _INFER_TYPE_ORDER
 
@@ -31,33 +31,38 @@ class TypeGuesser:
     """
     That Guesser change original guesser to better handle date and datetime
     """
+
     missing_values = []
 
     def cast(self, value):
 
         for priority, name in enumerate(_infer_type_order()):
-            cast = getattr(types, 'cast_%s' % name)
+            cast = getattr(types, "cast_%s" % name)
             if value not in self.missing_values:
                 v = str(value)
                 if name in ["integer", "number"] and " " in v:
                     continue
-                elif any((self.check_time_conditions(name, v),
-                          self.check_datetime_conditions(name, v),
-                          self.check_date_conditions(name, v))):
-                    result = cast('any', value)
+                elif any(
+                    (
+                        self.check_time_conditions(name, v),
+                        self.check_datetime_conditions(name, v),
+                        self.check_date_conditions(name, v),
+                    )
+                ):
+                    result = cast("any", value)
                     if result != config.ERROR:
-                        yield (name, 'any', priority)
+                        yield (name, "any", priority)
                 else:
-                    result = cast('default', value)
+                    result = cast("default", value)
                     if result != config.ERROR:
-                        yield (name, 'default', priority)
+                        yield (name, "default", priority)
 
     @staticmethod
     def check_time_conditions(name, value):
         def date_separators_not_in_value(value):
             return all([x not in value for x in "T -/"])
 
-        at_least_one_collon = value.count(':') >= 1
+        at_least_one_collon = value.count(":") >= 1
         if not at_least_one_collon:
             return False
 
@@ -65,9 +70,7 @@ class TypeGuesser:
         if "." in value:
             dot_should_be_after_collon = value.index(".") > value.index(":")
 
-        return (name == "time" and
-                date_separators_not_in_value(value) and
-                dot_should_be_after_collon)
+        return name == "time" and date_separators_not_in_value(value) and dot_should_be_after_collon
 
     @staticmethod
     def check_date_conditions(name, value):
@@ -94,28 +97,26 @@ class TypeGuesser:
             dot_after_colon = True
 
         # Other bad values should raise error durring casting
-        return (name == "datetime" and
-                longer_than_date and dot_after_colon)
+        return name == "datetime" and longer_than_date and dot_after_colon
 
 
 class TypeResolver:
-    """Get the best matching type/format from a list of possible ones.
-    """
+    """Get the best matching type/format from a list of possible ones."""
 
     # Public
 
     def get(self, results, confidence):
-        missing_key = ('missing', 'default', 0)
-        any_key = ('any', 'default', 13)
+        missing_key = ("missing", "default", 0)
+        any_key = ("any", "default", 13)
 
         variants = set(results)
         # only one candidate... that's easy.
         if len(variants) == 1:
-            rv = {'type': results[0][0], 'format': results[0][1]}
+            rv = {"type": results[0][0], "format": results[0][1]}
         elif len(variants) == 2 and missing_key in variants:
             variants.remove(missing_key)
             v = variants.pop()
-            rv = {'type': v[0], 'format': v[1]}
+            rv = {"type": v[0], "format": v[1]}
         else:
             counts = defaultdict(int)
             for result in results:
@@ -128,17 +129,13 @@ class TypeResolver:
                 counts.pop(missing_key)
 
             # tuple representation of `counts` dict sorted by values
-            sorted_counts = sorted(counts.items(),
-                                   key=lambda item: item[1],
-                                   reverse=True)
+            sorted_counts = sorted(counts.items(), key=lambda item: item[1], reverse=True)
             # Allow also counts that are not the max, based on the confidence
             max_count = sorted_counts[0][1]
-            sorted_counts = filter(lambda item: item[1] >= max_count * confidence,
-                                   sorted_counts)
+            sorted_counts = filter(lambda item: item[1] >= max_count * confidence, sorted_counts)
             # Choose the most specific data type
-            sorted_counts = sorted(sorted_counts,
-                                   key=lambda item: item[0][2])
-            rv = {'type': sorted_counts[0][0][0], 'format': sorted_counts[0][0][1]}
+            sorted_counts = sorted(sorted_counts, key=lambda item: item[0][2])
+            rv = {"type": sorted_counts[0][0][0], "format": sorted_counts[0][0][1]}
         return rv
 
 
@@ -148,11 +145,11 @@ class Table(TablePre):
         super().__init__(source, schema=schema, strict=strict, post_cast=post_cast, storage=storage, **options)
 
     def infer(self, **kwargs):
-        if 'missing_values' in kwargs:
-            missing_values = kwargs['missing_values']
-            if '' in missing_values:  # empty string is handled by TypeGuesser.cast_missing().
-                missing_values.remove('')
+        if "missing_values" in kwargs:
+            missing_values = kwargs["missing_values"]
+            if "" in missing_values:  # empty string is handled by TypeGuesser.cast_missing().
+                missing_values.remove("")
             TypeGuesser.missing_values = missing_values
-        kwargs['guesser_cls'] = TypeGuesser
-        kwargs['resolver_cls'] = TypeResolver
+        kwargs["guesser_cls"] = TypeGuesser
+        kwargs["resolver_cls"] = TypeResolver
         return super().infer(**kwargs)

@@ -4,19 +4,19 @@ from django.db import migrations
 
 
 def update_resources_has_chart(apps, schema_editor):
-    chart_model = apps.get_model('resources', 'Chart')
-    resource_model = apps.get_model('resources', 'Resource')
+    chart_model = apps.get_model("resources", "Chart")
+    resource_model = apps.get_model("resources", "Resource")
     charts = chart_model.raw.all()
     resources = resource_model.objects.filter(id__in=[chart.resource_id for chart in charts])
     for resource in resources:
         resource.has_chart = resource.charts.filter(is_removed=False, is_default=True).exists()
-    resource_model.objects.bulk_update(resources, ['has_chart'])
+    resource_model.objects.bulk_update(resources, ["has_chart"])
 
 
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('resources', '0027_auto_20200901_0957'),
+        ("resources", "0027_auto_20200901_0957"),
     ]
 
     operations = [

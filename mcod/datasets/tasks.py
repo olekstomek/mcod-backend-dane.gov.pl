@@ -79,9 +79,7 @@ if is_enabled("S60_fix_for_task_creating_xml_and_csv_metadata_files.be"):  # noq
 
         for language in settings.LANGUAGE_CODES:
             lang_catalog_path = f"{settings.METADATA_MEDIA_ROOT}/{language}"
-            previous_day_file = (
-                f"{lang_catalog_path}/katalog_{previous_day}.{extension}"
-            )
+            previous_day_file = f"{lang_catalog_path}/katalog_{previous_day}.{extension}"
             new_file = f"{lang_catalog_path}/katalog_{today}.{extension}"
             symlink_file = f"{lang_catalog_path}/katalog.{extension}"
 
@@ -108,17 +106,13 @@ if is_enabled("S60_fix_for_task_creating_xml_and_csv_metadata_files.be"):  # noq
 
 else:
 
-    def create_catalog_metadata_file(
-        qs_data, schema, extension, save_serialized_data_func
-    ):
+    def create_catalog_metadata_file(qs_data, schema, extension, save_serialized_data_func):
         today = datetime.today().date()
         previous_day = today - relativedelta(days=1)
 
         for language in settings.LANGUAGE_CODES:
             lang_catalog_path = f"{settings.METADATA_MEDIA_ROOT}/{language}"
-            previous_day_file = (
-                f"{lang_catalog_path}/katalog_{previous_day}.{extension}"
-            )
+            previous_day_file = f"{lang_catalog_path}/katalog_{previous_day}.{extension}"
             new_file = f"{lang_catalog_path}/katalog_{today}.{extension}"
             symlink_file = f"{lang_catalog_path}/katalog.{extension}"
 
@@ -237,16 +231,10 @@ def change_archive_symlink_name(dataset_id: int, old_name: str) -> None:
 
     old_symlink_name = f"{old_title}.zip"
     new_symlink_name = f"{title}.zip"
-    new_symlink_path: str = dataset.archived_resources_files.field.generate_filename(
-        dataset, new_symlink_name
-    )
+    new_symlink_path: str = dataset.archived_resources_files.field.generate_filename(dataset, new_symlink_name)
 
-    old_symlink_absolute_path: str = create_archive_file_path(
-        filename=old_symlink_name, dataset=dataset
-    )
-    new_symlink_name_abs_path: str = create_archive_file_path(
-        filename=new_symlink_name, dataset=dataset
-    )
+    old_symlink_absolute_path: str = create_archive_file_path(filename=old_symlink_name, dataset=dataset)
+    new_symlink_name_abs_path: str = create_archive_file_path(filename=new_symlink_name, dataset=dataset)
     logger.info(f"Symlink abs path: {old_symlink_absolute_path}")
 
     if (symlink := Path(old_symlink_absolute_path)).is_symlink():
@@ -259,9 +247,7 @@ def change_archive_symlink_name(dataset_id: int, old_name: str) -> None:
         dataset.archived_resources_files = new_symlink_path
         dataset.save()
     else:
-        logger.error(
-            f"Unfortunately, symlink {old_symlink_absolute_path} does not exist"
-        )
+        logger.error(f"Unfortunately, symlink {old_symlink_absolute_path} does not exist")
 
 
 #  FIXME: lremkowicz: remove noqa C901 comment after removing
@@ -271,9 +257,7 @@ def archive_resources_files(dataset_id: int):  # noqa: C901
     logger.info("Starting archive_resources_files task.")
     free_space = disk_usage(settings.MEDIA_ROOT).free
     if free_space < settings.ALLOWED_MINIMUM_SPACE:
-        logger.error(
-            "There is not enough free space on disk, archive creation is canceled."
-        )
+        logger.error("There is not enough free space on disk, archive creation is canceled.")
         raise ResourceWarning
     logger.debug(f"Updating dataset resources files archive for dataset {dataset_id}")
     dataset_model = apps.get_model("datasets", "Dataset")
@@ -289,9 +273,7 @@ def archive_resources_files(dataset_id: int):  # noqa: C901
     tmp_filename = f'{dataset_title}_{creation_start.strftime("%Y-%m-%d-%H%M%S%f")}.zip'
     symlink_name = f"{dataset_title}.zip"
     res_storage = storages.get_storage("resources")
-    full_symlink_name = ds.archived_resources_files.field.generate_filename(
-        ds, symlink_name
-    )
+    full_symlink_name = ds.archived_resources_files.field.generate_filename(ds, symlink_name)
     full_file_path = create_full_file_path(tmp_filename)
     full_symlink_path = create_full_file_path(symlink_name)
     full_tmp_symlink_path = create_full_file_path("tmp_resources_files.zip")
@@ -300,9 +282,7 @@ def archive_resources_files(dataset_id: int):  # noqa: C901
     files_details = ds.resources_files_list
     log_msg = f"Updated dataset {dataset_id} archive with {tmp_filename}"
     skipped_files = 0
-    with zipfile.ZipFile(
-        full_file_path, "w", zipfile.ZIP_DEFLATED, compresslevel=1
-    ) as main_zip:
+    with zipfile.ZipFile(full_file_path, "w", zipfile.ZIP_DEFLATED, compresslevel=1) as main_zip:
         res_location = res_storage.location
         for file_details in files_details:
             split_name = file_details[0].split("/")
@@ -315,23 +295,15 @@ def archive_resources_files(dataset_id: int):  # noqa: C901
                 )
             except FileNotFoundError:
                 skipped_files += 1
-                logger.debug(
-                    "Couldn't find file {} for resource with id {}, skipping.".format(
-                        full_path, file_details[1]
-                    )
-                )
+                logger.debug("Couldn't find file {} for resource with id {}, skipping.".format(full_path, file_details[1]))
     no_archived_files = skipped_files == len(files_details)
 
     if no_archived_files:
         os.remove(full_file_path)
-        log_msg = (
-            f"No files archived for dataset with id {dataset_id}, archive not updated."
-        )
+        log_msg = f"No files archived for dataset with id {dataset_id}, archive not updated."
     elif not ds.archived_resources_files and not no_archived_files:
         os.symlink(full_file_path, full_symlink_path)
-        dataset_model.objects.filter(pk=dataset_id).update(
-            archived_resources_files=full_symlink_name
-        )
+        dataset_model.objects.filter(pk=dataset_id).update(archived_resources_files=full_symlink_name)
     elif ds.archived_resources_files and not no_archived_files:
         if not is_enabled("S61_fix_for_dataset_rename_symlink_archive_problem.be"):
             old_file_path = os.path.realpath(full_symlink_path)
@@ -341,9 +313,7 @@ def archive_resources_files(dataset_id: int):  # noqa: C901
             os.remove(old_file_path)
     if ds.archived_resources_files and no_archived_files:
         old_file_path = os.path.realpath(full_symlink_path)
-        dataset_model.objects.filter(pk=dataset_id).update(
-            archived_resources_files=None
-        )
+        dataset_model.objects.filter(pk=dataset_id).update(archived_resources_files=None)
         os.remove(full_symlink_path)
         os.remove(old_file_path)
         log_msg = f"Removed archive {old_file_path} from dataset {dataset_id}"

@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('resources', '0032_auto_20210129_1759'),
+        ("resources", "0032_auto_20210129_1759"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='resource',
-            name='forced_api_type',
-            field=models.BooleanField(default=False, verbose_name='Mark resource as API'),
+            model_name="resource",
+            name="forced_api_type",
+            field=models.BooleanField(default=False, verbose_name="Mark resource as API"),
         ),
     ]

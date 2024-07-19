@@ -31,9 +31,7 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser) -> None:
         """Add command-line arguments for the management command."""
-        parser.add_argument(
-            "--dataset_ids", nargs="*", type=int, default=[], help="Dataset ids"
-        )
+        parser.add_argument("--dataset_ids", nargs="*", type=int, default=[], help="Dataset ids")
 
     def handle(self, *args, **options) -> None:
         """Main method to handle the update of dataset symlinks."""
@@ -42,18 +40,14 @@ class Command(BaseCommand):
 
         dirs: Union[Set[Path], Generator] = self._get_folders_list(**options)
         for target_dir in dirs:
-            dataset_id: Optional[int] = self.get_ds_id_from_path(
-                folder_name=target_dir.name
-            )
+            dataset_id: Optional[int] = self.get_ds_id_from_path(folder_name=target_dir.name)
 
             if not target_dir.exists():
                 logger.error(f"Path {target_dir} doesn't exists")
                 continue
 
             if not dataset_id:
-                logger.error(
-                    f"Folder {target_dir} doesnt match pattern 'dataset_{{id}}"
-                )
+                logger.error(f"Folder {target_dir} doesnt match pattern 'dataset_{{id}}")
                 continue
 
             query = Dataset.objects.filter(pk=dataset_id)
@@ -75,9 +69,7 @@ class Command(BaseCommand):
     @property
     def archive_path(self) -> Path:
         """Returns archives folder location."""
-        archive_storage: DatasetsArchivesStorage = get_storage(
-            storage_name="datasets_archives"
-        )
+        archive_storage: DatasetsArchivesStorage = get_storage(storage_name="datasets_archives")
         return Path(archive_storage.location)
 
     def get_ds_id_from_path(self, folder_name: str) -> Optional[int]:
@@ -101,27 +93,17 @@ class Command(BaseCommand):
         """Creates a new symlink for the latest archive file."""
         target_file: Optional[Path] = get_the_latest_zip_file_or_none(Path(dir_name))
         if not target_file:
-            logger.error(
-                f"Dataset {dataset.id} doesn't have an archive zip file associated with."
-            )
+            logger.error(f"Dataset {dataset.id} doesn't have an archive zip file associated with.")
             return
 
         title: str = clean_filename(dataset.title)
         new_symlink_name = f"{title}.zip"
-        new_symlink_path: str = (
-            dataset.archived_resources_files.field.generate_filename(
-                dataset, new_symlink_name
-            )
-        )
+        new_symlink_path: str = dataset.archived_resources_files.field.generate_filename(dataset, new_symlink_name)
 
-        new_symlink_name_abs_path: str = create_archive_file_path(
-            filename=new_symlink_name, dataset=dataset
-        )
+        new_symlink_name_abs_path: str = create_archive_file_path(filename=new_symlink_name, dataset=dataset)
         new_path = Path(new_symlink_name_abs_path)
         if new_path.exists():
-            raise FileExistsError(
-                f"Please be sure to remove the symlink ({new_path}) before."
-            )
+            raise FileExistsError(f"Please be sure to remove the symlink ({new_path}) before.")
         new_path.symlink_to(target_file)
         dataset.archived_resources_files = new_symlink_path
         dataset.save()
@@ -130,12 +112,7 @@ class Command(BaseCommand):
         """Get a list of dataset folders based on command-line options."""
         if ds_ids := options.get("dataset_ids"):
             if isinstance(ds_ids, list):
-                dirs = set(
-                    [
-                        Path(f"{self.archive_path}/{self.folder_start_name}{ds_id}")
-                        for ds_id in ds_ids
-                    ]
-                )
+                dirs = set([Path(f"{self.archive_path}/{self.folder_start_name}{ds_id}") for ds_id in ds_ids])
             else:
                 dirs = {Path(f"{self.archive_path}/{self.folder_start_name}{ds_ids}")}
             return dirs
@@ -157,9 +134,5 @@ def get_the_latest_zip_file_or_none(dir_path: Path) -> Optional[Path]:
     Get the latest zip file in a given folder.
     If file not found, returns max() function default parameter.
     """
-    files = [
-        entry
-        for entry in dir_path.iterdir()
-        if entry.is_file() and str(entry).endswith(".zip")
-    ]
+    files = [entry for entry in dir_path.iterdir() if entry.is_file() and str(entry).endswith(".zip")]
     return max(files, key=lambda f: f.stat().st_mtime, default=None)

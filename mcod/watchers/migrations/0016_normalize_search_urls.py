@@ -4,8 +4,9 @@ from django.db import migrations
 
 
 def normalize_search_urls(apps, schema_editor):
-    model = apps.get_model('watchers', 'SearchQueryWatcher')
+    model = apps.get_model("watchers", "SearchQueryWatcher")
     from mcod.watchers.models import SearchQueryWatcherManager
+
     for x in model.objects.all():
         x.object_ident = SearchQueryWatcherManager._normalize_url(x.object_ident)
         x.save()
@@ -19,7 +20,7 @@ def reverse_normalize_search_urls(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('watchers', '0015_search_subscriptions'),
+        ("watchers", "0015_search_subscriptions"),
     ]
 
     operations = [

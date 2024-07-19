@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('organizations', '0015_auto_20210326_1420'),
+        ("organizations", "0015_auto_20210326_1420"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='organization',
-            name='is_permanently_removed',
+            model_name="organization",
+            name="is_permanently_removed",
             field=models.BooleanField(default=False),
         ),
     ]

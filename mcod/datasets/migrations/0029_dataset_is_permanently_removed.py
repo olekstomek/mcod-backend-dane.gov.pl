@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('datasets', '0028_dataset_license_chosen'),
+        ("datasets", "0028_dataset_license_chosen"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='dataset',
-            name='is_permanently_removed',
+            model_name="dataset",
+            name="is_permanently_removed",
             field=models.BooleanField(default=False),
         ),
     ]

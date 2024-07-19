@@ -7,13 +7,20 @@ import mcod.core.storages
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('resources', '0039_merge_20210507_1157'),
+        ("resources", "0039_merge_20210507_1157"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='resource',
-            name='jsonld_file',
-            field=models.FileField(blank=True, max_length=2000, null=True, storage=mcod.core.storages.ResourcesStorage(base_url=None, location=None), upload_to='%Y%m%d', verbose_name='File as JSON-LD'),
+            model_name="resource",
+            name="jsonld_file",
+            field=models.FileField(
+                blank=True,
+                max_length=2000,
+                null=True,
+                storage=mcod.core.storages.ResourcesStorage(base_url=None, location=None),
+                upload_to="%Y%m%d",
+                verbose_name="File as JSON-LD",
+            ),
         ),
     ]

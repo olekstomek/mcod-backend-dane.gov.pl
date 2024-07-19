@@ -4,9 +4,9 @@ from decimal import Decimal
 
 class Version:
     def __init__(self, version, release_date, doc_enabled=True):
-        self.version_tuple = version.split('.')
+        self.version_tuple = version.split(".")
         if len(self.version_tuple) != 2:
-            raise ValueError('Invalid version format')
+            raise ValueError("Invalid version format")
         self.release_date = release_date
         self.doc_enabled = doc_enabled
         self._version = self.as_string
@@ -16,7 +16,7 @@ class Version:
 
     @property
     def as_string(self):
-        return '{}.{}'.format(*self.version_tuple)
+        return "{}.{}".format(*self.version_tuple)
 
     @property
     def as_number(self):
@@ -25,18 +25,18 @@ class Version:
     @staticmethod
     def __tuple_2_decimal(version_tuple):
         if len(version_tuple) != 2:
-            raise ValueError('Version tuple must have exactly two items')
+            raise ValueError("Version tuple must have exactly two items")
         return Decimal("{}.{:>05}".format(*version_tuple))
 
     def __to_decimal(self, value):
         if isinstance(value, str):
-            value = self.__tuple_2_decimal(value.split('.'))
+            value = self.__tuple_2_decimal(value.split("."))
         elif isinstance(value, (tuple, list)):
             value = self.__tuple_2_decimal(value)
         elif isinstance(self, self.__class__):
             value = value.as_number
         else:
-            raise ValueError('Unsupported value type {}, {}'.format(value, type(value)))
+            raise ValueError("Unsupported value type {}, {}".format(value, type(value)))
         return value
 
     def __gt__(self, other):
@@ -56,8 +56,8 @@ class Version:
 
 
 VERSIONS = [
-    Version('1.0', date(2018, 9, 14), doc_enabled=False),
-    Version('1.4', date(2019, 2, 2), doc_enabled=True),
+    Version("1.0", date(2018, 9, 14), doc_enabled=False),
+    Version("1.4", date(2019, 2, 2), doc_enabled=True),
 ]
 
 DOC_VERSIONS = [v for v in VERSIONS if v.doc_enabled]

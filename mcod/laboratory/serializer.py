@@ -17,15 +17,12 @@ class LaboratoryApiAttrs(ObjectAttrs):
     notes = TranslatedStr()
     event_type = fields.String()
     execution_date = fields.Date()
-    reports = fields.Nested(
-        ReportSchema,
-        many=True
-    )
+    reports = fields.Nested(ReportSchema, many=True)
 
     class Meta:
-        object_type = 'Laboratory'
-        url_template = '{api_url}/laboratories/{ident}'
-        model = 'laboratory.LabEvent'
+        object_type = "Laboratory"
+        url_template = "{api_url}/laboratories/{ident}"
+        model = "laboratory.LabEvent"
 
 
 class LaboratoriesApiResponse(TopLevel):

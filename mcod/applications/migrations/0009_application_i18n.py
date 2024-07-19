@@ -7,13 +7,17 @@ import modeltrans.fields
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('applications', '0008_application_image_thumb'),
+        ("applications", "0008_application_image_thumb"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='application',
-            name='i18n',
-            field=modeltrans.fields.TranslationField(fields=('slug', 'title', 'notes'), required_languages=(), virtual_fields=True),
+            model_name="application",
+            name="i18n",
+            field=modeltrans.fields.TranslationField(
+                fields=("slug", "title", "notes"),
+                required_languages=(),
+                virtual_fields=True,
+            ),
         ),
     ]

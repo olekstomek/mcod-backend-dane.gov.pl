@@ -7,13 +7,17 @@ import modeltrans.fields
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('organizations', '0009_auto_20190410_1441'),
+        ("organizations", "0009_auto_20190410_1441"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='organization',
-            name='i18n',
-            field=modeltrans.fields.TranslationField(fields=('title', 'description', 'city', 'slug'), required_languages=(), virtual_fields=True),
+            model_name="organization",
+            name="i18n",
+            field=modeltrans.fields.TranslationField(
+                fields=("title", "description", "city", "slug"),
+                required_languages=(),
+                virtual_fields=True,
+            ),
         ),
     ]

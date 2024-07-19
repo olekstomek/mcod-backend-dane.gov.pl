@@ -5,9 +5,9 @@ from mcod.special_signs.models import SpecialSign
 
 
 class SpecialSignFactory(factory.django.DjangoModelFactory):
-    symbol = factory.Faker('random_element', elements=('@', '#', '%', '.', '*'))
-    name = factory.Faker('text', max_nb_chars=15, locale='pl_PL')
-    description = factory.Faker('paragraph', nb_sentences=5)
+    symbol = factory.Faker("random_element", elements=("@", "#", "%", ".", "*"))
+    name = factory.Faker("text", max_nb_chars=15, locale="pl_PL")
+    description = factory.Faker("paragraph", nb_sentences=5)
 
     class Meta:
         model = SpecialSign
@@ -22,4 +22,4 @@ class SpecialSignFactory(factory.django.DjangoModelFactory):
                 self.special_signs_resources.add(resource)
 
 
-factories_registry.register('specialsign', SpecialSign)
+factories_registry.register("specialsign", SpecialSign)

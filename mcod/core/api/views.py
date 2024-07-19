@@ -57,13 +57,13 @@ class TabularView(BaseView):
     def handle(self, request, response, handler, *args, **kwargs):
         super().handle(request, response, handler, *args, **kwargs)
         # https://falcon.readthedocs.io/en/latest/user/recipes/output-csv.html
-        response.downloadable_as = 'harmonogram-{}.{}'.format(
-            datetime.today().strftime('%Y-%m-%d'),
-            kwargs.get('export_format', 'csv'),
+        response.downloadable_as = "harmonogram-{}.{}".format(
+            datetime.today().strftime("%Y-%m-%d"),
+            kwargs.get("export_format", "csv"),
         )
 
     def set_content_type(self, resp, **kwargs):
-        return settings.EXPORT_FORMAT_TO_MIMETYPE.get(kwargs.get('export_format', 'csv'), resp.content_type)
+        return settings.EXPORT_FORMAT_TO_MIMETYPE.get(kwargs.get("export_format", "csv"), resp.content_type)
 
 
 class RDFView(BaseView):
@@ -72,7 +72,7 @@ class RDFView(BaseView):
             return settings.RDF_FORMAT_TO_MIMETYPE.get(rdf_format, None)
 
         if resp.content_type not in settings.RDF_MIMETYPES:
-            return 'application/ld+json'
+            return "application/ld+json"
 
         return resp.content_type
 
@@ -82,7 +82,7 @@ class XMLRDFView(RDFView):
         self.handle(request, response, self.GET, *args, **kwargs)
 
     def set_content_type(self, resp, **kwargs):
-        return super().set_content_type(resp, rdf_format='xml', **kwargs)
+        return super().set_content_type(resp, rdf_format="xml", **kwargs)
 
 
 class VocabRDFView(XMLRDFView):
@@ -96,7 +96,7 @@ class VocabRDFView(XMLRDFView):
 
 class VocabEntryRDFView(VocabRDFView):
     def on_get(self, request, response, *args, **kwargs):
-        entry_name = kwargs.get('entry_name')
+        entry_name = kwargs.get("entry_name")
 
         if entry_name in self.vocab_class().entries:
             self.handle(request, response, self.GET, *args, **kwargs)
@@ -106,5 +106,5 @@ class VocabEntryRDFView(VocabRDFView):
 
     class GET(VocabRDFView.GET):
         def _get_data(self, cleaned, *args, **kwargs):
-            entry_name = kwargs.get('entry_name')
+            entry_name = kwargs.get("entry_name")
             return self.vocab_class().entries[entry_name]

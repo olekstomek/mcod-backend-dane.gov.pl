@@ -47,37 +47,36 @@ class SubscriptionsView(JsonAPIView):
     class POST(CreateOneHdlr):
         deserializer_schema = SubscriptionCreateApiRequest
         serializer_schema = partial(SubscriptionApiResponse, many=False)
-        database_model = apps.get_model('watchers', 'Subscription')
+        database_model = apps.get_model("watchers", "Subscription")
 
         def _get_data(self, cleaned, *args, **kwargs):
-            data = cleaned['data']['attributes']
+            data = cleaned["data"]["attributes"]
             try:
                 _inst = self.database_model.objects.get_from_data(self.request.user, data, headers=self.request.headers)
-                raise falcon.HTTPForbidden('Subscription for this object already exist')
+                raise falcon.HTTPForbidden("Subscription for this object already exist")
             except SubscribedObjectDoesNotExist:
-                raise falcon.HTTPForbidden('Subscribed object does not exist')
+                raise falcon.HTTPForbidden("Subscribed object does not exist")
             except self.database_model.DoesNotExist:
                 try:
-                    _inst = self.database_model.objects.create_from_data(self.request.user, data,
-                                                                         headers=self.request.headers)
+                    _inst = self.database_model.objects.create_from_data(self.request.user, data, headers=self.request.headers)
                 except DuplicateSubscriptionName:
-                    raise falcon.HTTPForbidden('Subscription with given name already exist')
+                    raise falcon.HTTPForbidden("Subscription with given name already exist")
 
             return _inst
 
         def _get_included(self, result, *args, **kwargs):
-            return [result.to_jsonapi(api_version=getattr(self.request, 'api_version', None))]
+            return [result.to_jsonapi(api_version=getattr(self.request, "api_version", None))]
 
     class GET(RetrieveManyHdlr):
         deserializer_schema = SubscriptionListApiRequest
         serializer_schema = partial(SubscriptionApiResponse, many=True)
-        database_model = apps.get_model('watchers', 'Subscription')
+        database_model = apps.get_model("watchers", "Subscription")
 
         def _get_queryset(self, *args, **kwargs):
             return self.request.user.subscriptions.get_paginated_results(self.request.context.cleaned_data)
 
         def _get_included(self, result, *args, **kwargs):
-            api_version = getattr(self.request, 'api_version', None)
+            api_version = getattr(self.request, "api_version", None)
             return [_o.to_jsonapi(api_version=api_version) for _o in result.object_list]
 
 
@@ -97,23 +96,23 @@ class SubscriptionView(JsonAPIView):
     class PATCH(UpdateOneHdlr):
         deserializer_schema = partial(SubscriptionUpdateApiRequest)
         serializer_schema = partial(SubscriptionApiResponse, many=False)
-        database_model = apps.get_model('watchers', 'Subscription')
+        database_model = apps.get_model("watchers", "Subscription")
 
         def _get_data(self, cleaned, id, *args, **kwargs):
-            data = cleaned['data']['attributes']
+            data = cleaned["data"]["attributes"]
             model = self.database_model
             try:
                 return model.objects.update_from_data(id, self.request.user, data)
             except model.DoesNotExist:
                 raise falcon.HTTPNotFound
             except DuplicateSubscriptionName:
-                raise falcon.HTTPForbidden('Subscription with given name already exist')
+                raise falcon.HTTPForbidden("Subscription with given name already exist")
 
         def _get_included(self, result, *args, **kwargs):
-            return [result.to_jsonapi(api_version=getattr(self.request, 'api_version', None))]
+            return [result.to_jsonapi(api_version=getattr(self.request, "api_version", None))]
 
     class DELETE(RemoveOneHdlr):
-        database_model = apps.get_model('watchers', 'Subscription')
+        database_model = apps.get_model("watchers", "Subscription")
 
         def clean(self, id, *args, **kwargs):
             model = self.database_model
@@ -125,10 +124,10 @@ class SubscriptionView(JsonAPIView):
     class GET(RetrieveOneHdlr):
         deserializer_schema = partial(SubscriptionApiRequest)
         serializer_schema = partial(SubscriptionApiResponse, many=False)
-        database_model = apps.get_model('watchers', 'Subscription')
+        database_model = apps.get_model("watchers", "Subscription")
 
         def _get_instance(self, id, *args, **kwargs):
-            instance = getattr(self, '_cached_instance', None)
+            instance = getattr(self, "_cached_instance", None)
             if not instance:
                 model = self.database_model
                 try:
@@ -138,7 +137,7 @@ class SubscriptionView(JsonAPIView):
             return self._cached_instance
 
         def _get_included(self, result, *args, **kwargs):
-            return [result.to_jsonapi(api_version=getattr(self.request, 'api_version', None))]
+            return [result.to_jsonapi(api_version=getattr(self.request, "api_version", None))]
 
 
 class SubscriptionNotificationsView(JsonAPIView):
@@ -149,10 +148,10 @@ class SubscriptionNotificationsView(JsonAPIView):
     class GET(RetrieveManyHdlr):
         deserializer_schema = partial(NotificationApiListRequest)
         serializer_schema = partial(NotificationApiResponse, many=True)
-        database_model = apps.get_model('watchers', 'Notification')
+        database_model = apps.get_model("watchers", "Notification")
 
         def clean(self, id, *args, validators=None, locations=None, **kwargs):
-            model = apps.get_model('watchers', 'Subscription')
+            model = apps.get_model("watchers", "Subscription")
 
             try:
                 model.objects.get(pk=id, user=self.request.user, watcher__is_active=True)
@@ -173,7 +172,7 @@ class SubscriptionNotificationsView(JsonAPIView):
                 watcher = _o.subscription.watcher
                 if watcher.id in ids:
                     continue
-                incl.append(_o.subscription.to_jsonapi(api_version=getattr(self.request, 'api_version', None)))
+                incl.append(_o.subscription.to_jsonapi(api_version=getattr(self.request, "api_version", None)))
                 ids.append(watcher.id)
             return incl
 
@@ -194,7 +193,7 @@ class NotificationsView(JsonAPIView):
     class GET(RetrieveManyHdlr):
         deserializer_schema = NotificationApiListRequest
         serializer_schema = partial(NotificationApiResponse, many=True)
-        database_model = apps.get_model('watchers', 'Notification')
+        database_model = apps.get_model("watchers", "Notification")
 
         def _get_queryset(self, *args, **kwargs):
             return self.database_model.objects.get_paginated_results(
@@ -204,14 +203,13 @@ class NotificationsView(JsonAPIView):
 
         def _get_included(self, result, *args, **kwargs):
             incl, ids = [], []
-            api_version = getattr(self.request, 'api_version', None)
+            api_version = getattr(self.request, "api_version", None)
             for _o in result.object_list:
                 watcher = _o.subscription.watcher
                 if watcher.id in ids:
                     continue
-                if watcher.object_name == 'query':
-                    incl.append(SubscriptionQuerySchema(
-                        many=False, context={'api_version': api_version}).dump(_o.subscription))
+                if watcher.object_name == "query":
+                    incl.append(SubscriptionQuerySchema(many=False, context={"api_version": api_version}).dump(_o.subscription))
                 else:
                     incl.append(_o.subscription.to_jsonapi(api_version=api_version))
                 ids.append(watcher.id)
@@ -219,17 +217,17 @@ class NotificationsView(JsonAPIView):
 
     class PATCH(UpdateManyHdlr):
         deserializer_schema = partial(ChangeNotificationsStatus)
-        database_model = apps.get_model('watchers', 'Notification')
+        database_model = apps.get_model("watchers", "Notification")
 
         def _async_run(self, cleaned, *args, **kwargs):
-            update_notifications_task.s(self.request.user.id, cleaned['data']).apply_async()
+            update_notifications_task.s(self.request.user.id, cleaned["data"]).apply_async()
 
     class DELETE(RemoveManyHdlr):
-        database_model = apps.get_model('watchers', 'Notification')
+        database_model = apps.get_model("watchers", "Notification")
         deserializer_schema = partial(DeleteNotifications)
 
         def _async_run(self, cleaned, *args, **kwargs):
-            remove_user_notifications_task.s(self.request.user.id, cleaned['data']).apply_async()
+            remove_user_notifications_task.s(self.request.user.id, cleaned["data"]).apply_async()
 
 
 class NotificationsStatusView(JsonAPIView):
@@ -242,16 +240,16 @@ class NotificationsStatusView(JsonAPIView):
         self.handle_bulk_patch(request, response, self.PATCH, *args, **kwargs)
 
     class DELETE(RemoveManyHdlr):
-        database_model = apps.get_model('watchers', 'Notification')
+        database_model = apps.get_model("watchers", "Notification")
 
         def _async_run(self, cleaned, *args, **kwargs):
-            update_notifications_status_task.s(self.request.user.id, status='read').apply_async()
+            update_notifications_status_task.s(self.request.user.id, status="read").apply_async()
 
     class PATCH(UpdateManyHdlr):
-        database_model = apps.get_model('watchers', 'Notification')
+        database_model = apps.get_model("watchers", "Notification")
 
         def _async_run(self, cleaned, *args, **kwargs):
-            update_notifications_status_task.s(self.request.user.id, status='new').apply_async()
+            update_notifications_status_task.s(self.request.user.id, status="new").apply_async()
 
 
 class NotificationView(JsonAPIView):
@@ -270,10 +268,10 @@ class NotificationView(JsonAPIView):
     class GET(RetrieveOneHdlr):
         deserializer_schema = partial(NotificationApiRequest)
         serializer_schema = partial(NotificationApiResponse, many=False)
-        database_model = apps.get_model('watchers', 'Notification')
+        database_model = apps.get_model("watchers", "Notification")
 
         def _get_instance(self, id, *args, **kwargs):
-            instance = getattr(self, '_cached_instance', None)
+            instance = getattr(self, "_cached_instance", None)
             if not instance:
                 model = self.database_model
                 try:
@@ -283,15 +281,15 @@ class NotificationView(JsonAPIView):
             return self._cached_instance
 
         def _get_included(self, result, *args, **kwargs):
-            return [result.subscription.to_jsonapi(api_version=getattr(self.request, 'api_version', None))]
+            return [result.subscription.to_jsonapi(api_version=getattr(self.request, "api_version", None))]
 
     class PATCH(UpdateOneHdlr):
         deserializer_schema = partial(ChangeNotificationStatus)
         serializer_schema = partial(NotificationApiResponse, many=False)
-        database_model = apps.get_model('watchers', 'Notification')
+        database_model = apps.get_model("watchers", "Notification")
 
         def _get_instance(self, id, *args, **kwargs):
-            instance = getattr(self, '_cached_instance', None)
+            instance = getattr(self, "_cached_instance", None)
             if not instance:
                 model = self.database_model
                 try:
@@ -301,7 +299,7 @@ class NotificationView(JsonAPIView):
             return self._cached_instance
 
         def _get_data(self, cleaned, id, *args, **kwargs):
-            data = cleaned['data']['attributes']
+            data = cleaned["data"]["attributes"]
             instance = self._get_instance(id, *args, **kwargs)
             model = self.database_model
             model.objects.filter(pk=id, subscription__user=self.request.user).update(**data)
@@ -309,7 +307,7 @@ class NotificationView(JsonAPIView):
             return instance
 
     class DELETE(RemoveOneHdlr):
-        database_model = apps.get_model('watchers', 'Notification')
+        database_model = apps.get_model("watchers", "Notification")
 
         def clean(self, id, *args, **kwargs):
             model = self.database_model

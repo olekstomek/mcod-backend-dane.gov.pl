@@ -6,13 +6,19 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('resources', '0020_resource_from_resource'),
+        ("resources", "0020_resource_from_resource"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='resource',
-            name='ext_ident',
-            field=models.CharField(blank=True, editable=False, help_text='external identifier of resource taken during import process (optional)', max_length=36, verbose_name='external identifier'),
+            model_name="resource",
+            name="ext_ident",
+            field=models.CharField(
+                blank=True,
+                editable=False,
+                help_text="external identifier of resource taken during import process (optional)",
+                max_length=36,
+                verbose_name="external identifier",
+            ),
         ),
     ]

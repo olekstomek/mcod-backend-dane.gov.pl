@@ -1,4 +1,5 @@
 from logging import getLogger
+
 from mcod.core.api.rdf.registry import registry
 from mcod.core.tasks import extended_shared_task
 
@@ -24,9 +25,7 @@ def create_graph_task(app_label, object_name, instance_id):
 
 @extended_shared_task
 def create_graph_with_related_update_task(app_label, object_name, instance_id):
-    registry.process_graph(
-        "create_with_related_update", app_label, object_name, instance_id
-    )
+    registry.process_graph("create_with_related_update", app_label, object_name, instance_id)
 
 
 @extended_shared_task
@@ -36,9 +35,7 @@ def update_graph_with_related_task(app_label, object_name, instance_id):
 
 @extended_shared_task
 def update_graph_with_conditional_related_task(app_label, object_name, instance_id):
-    registry.process_graph(
-        "update_with_conditional_related", app_label, object_name, instance_id
-    )
+    registry.process_graph("update_with_conditional_related", app_label, object_name, instance_id)
 
 
 @extended_shared_task
@@ -58,9 +55,7 @@ def delete_graph_task(app_label, object_name, instance_id):
     max_retries=5,
     retry_on_lambda=is_connection_refused,
 )
-def delete_graph_with_related_update_task(
-    app_label, object_name, instance_id, related_models
-):
+def delete_graph_with_related_update_task(app_label, object_name, instance_id, related_models):
     registry.process_graph(
         "delete_with_related_update",
         app_label,

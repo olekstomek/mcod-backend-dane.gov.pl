@@ -155,9 +155,7 @@ class TestDatasetModel:
         with pytest.raises(ObjectDoesNotExist):
             Resource.objects.get(id=r_id)
 
-    def test_restore_dataset_is_not_restoring_its_resources(
-        self, dataset_with_resources
-    ):
+    def test_restore_dataset_is_not_restoring_its_resources(self, dataset_with_resources):
         dataset = dataset_with_resources
         resource = dataset_with_resources.resources.first()
         assert resource in dataset.resources.all()
@@ -171,9 +169,7 @@ class TestDatasetModel:
         assert resource not in Resource.objects.all()
         assert resource in Resource.trash.all()
 
-    def test_set_draft_for_dataset_also_change_his_resources_to_draft(
-        self, dataset_with_resources
-    ):
+    def test_set_draft_for_dataset_also_change_his_resources_to_draft(self, dataset_with_resources):
         dataset = dataset_with_resources
         resource = dataset_with_resources.resources.first()
         assert resource in dataset.resources.all()
@@ -186,9 +182,7 @@ class TestDatasetModel:
         assert dataset.status == "draft"
         assert dataset.resources.all().first().status == "draft"
 
-    def test_dataset_has_unique_regions_from_resources(
-        self, dataset_with_resources, additional_regions
-    ):
+    def test_dataset_has_unique_regions_from_resources(self, dataset_with_resources, additional_regions):
         for res in dataset_with_resources.resources.all():
             res.regions.set(additional_regions)
         assert dataset_with_resources.regions.count() == 4
@@ -223,9 +217,7 @@ class TestDatasetsUserRoles:
         response = client.get("/datasets/")
         assert response.status_code == 200
 
-    def test_editor_should_see_only_datasets_from_his_organization_admin_see_all(
-        self, admin
-    ):
+    def test_editor_should_see_only_datasets_from_his_organization_admin_see_all(self, admin):
         # create organization 1 and 2
         org_1 = create_organization("organization 1")
         org_2 = create_organization("organization 2")
@@ -300,9 +292,7 @@ class TestDatasetVerifiedDate:
     def test_new_dataset_has_verified_same_as_created(self, dataset):
         assert dataset.verified == dataset.created
 
-    def test_dataset_with_resource_has_verified_same_as_resourve_verified(
-        self, dataset_with_resources
-    ):
+    def test_dataset_with_resource_has_verified_same_as_resourve_verified(self, dataset_with_resources):
         dataset = dataset_with_resources
         resource = dataset.resources.last()
         rs = Resource.objects.get(pk=resource.id)
@@ -310,9 +300,7 @@ class TestDatasetVerifiedDate:
         assert rs in ds.resources.all()
         assert ds.verified == rs.created
 
-    def test_dataset_verified_is_created_after_delete_all_resources(
-        self, dataset_with_resource
-    ):
+    def test_dataset_verified_is_created_after_delete_all_resources(self, dataset_with_resource):
         dataset = dataset_with_resource
         resource = dataset.resources.first()
 
@@ -326,9 +314,7 @@ class TestDatasetVerifiedDate:
         ds = Dataset.objects.get(pk=dataset.id)
         assert ds.verified == dataset.created
 
-    def test_dataset_verified_is_same_as_created_when_all_his_resources_are_draft(
-        self, dataset_with_resource
-    ):
+    def test_dataset_verified_is_same_as_created_when_all_his_resources_are_draft(self, dataset_with_resource):
         dataset = dataset_with_resource
         resource = dataset.resources.first()
 
@@ -341,9 +327,7 @@ class TestDatasetVerifiedDate:
         ds = Dataset.objects.get(pk=dataset.id)
         assert ds.verified == dataset.created
 
-    def test_dataset_verified_change_after_resource_revalidate(
-        self, dataset_with_resource
-    ):
+    def test_dataset_verified_change_after_resource_revalidate(self, dataset_with_resource):
         dataset = dataset_with_resource
         assert dataset.resources.count() == 1
 
@@ -361,9 +345,7 @@ class TestDatasetVerifiedDate:
         assert rs.created == old
         assert ds.verified == old
 
-    def test_reval_of_resource_when_dataset_is_in_draft_state_should_not_change_verified(
-        self, dataset_with_resources
-    ):
+    def test_reval_of_resource_when_dataset_is_in_draft_state_should_not_change_verified(self, dataset_with_resources):
         dataset = dataset_with_resources
         resource = dataset.resources.last()
         rs = Resource.objects.get(pk=resource.id)
@@ -404,9 +386,7 @@ class TestDatasetArchiveFunctionality:
         abs_media_path: str = dataset.archived_resources_files.storage.location
         archive_field: FileField = dataset.archived_resources_files.field
 
-        actual_symlink_name: str = archive_field.generate_filename(
-            dataset, f"{title}.zip"
-        )
+        actual_symlink_name: str = archive_field.generate_filename(dataset, f"{title}.zip")
         abs_actual_symlink_path = Path(abs_media_path) / actual_symlink_name
         assert abs_actual_symlink_path.exists()
 
@@ -417,9 +397,7 @@ class TestDatasetArchiveFunctionality:
         dataset.refresh_from_db()
 
         new_title: str = clean_filename(dataset.title)
-        new_symlink_name: str = archive_field.generate_filename(
-            dataset, f"{new_title}.zip"
-        )
+        new_symlink_name: str = archive_field.generate_filename(dataset, f"{new_title}.zip")
         new_abs_actual_symlink_path = Path(abs_media_path) / new_symlink_name
 
         assert new_abs_actual_symlink_path.exists()

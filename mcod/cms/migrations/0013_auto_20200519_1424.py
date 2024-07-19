@@ -7,28 +7,28 @@ import hypereditor.fields
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('cms', '0012_auto_20200519_0814'),
+        ("cms", "0012_auto_20200519_0814"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='kbcategorypage',
-            name='body',
+            model_name="kbcategorypage",
+            name="body",
             field=hypereditor.fields.HyperField(blank=True, default=None, null=True),
         ),
         migrations.AddField(
-            model_name='kbcategorypage',
-            name='body_en',
+            model_name="kbcategorypage",
+            name="body_en",
             field=hypereditor.fields.HyperField(blank=True, default=None, null=True),
         ),
         migrations.AddField(
-            model_name='kbrootpage',
-            name='body',
+            model_name="kbrootpage",
+            name="body",
             field=hypereditor.fields.HyperField(blank=True, default=None, null=True),
         ),
         migrations.AddField(
-            model_name='kbrootpage',
-            name='body_en',
+            model_name="kbrootpage",
+            name="body_en",
             field=hypereditor.fields.HyperField(blank=True, default=None, null=True),
         ),
     ]

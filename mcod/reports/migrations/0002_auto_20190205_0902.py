@@ -6,65 +6,61 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('reports', '0001_initial'),
+        ("reports", "0001_initial"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='DatasetReport',
-            fields=[
-            ],
+            name="DatasetReport",
+            fields=[],
             options={
-                'verbose_name': 'Dataset report',
-                'verbose_name_plural': 'Dataset reports',
-                'proxy': True,
-                'indexes': [],
+                "verbose_name": "Dataset report",
+                "verbose_name_plural": "Dataset reports",
+                "proxy": True,
+                "indexes": [],
             },
-            bases=('reports.report',),
+            bases=("reports.report",),
         ),
         migrations.CreateModel(
-            name='OrganizationReport',
-            fields=[
-            ],
+            name="OrganizationReport",
+            fields=[],
             options={
-                'verbose_name': 'Institution report',
-                'verbose_name_plural': 'Institution reports',
-                'proxy': True,
-                'indexes': [],
+                "verbose_name": "Institution report",
+                "verbose_name_plural": "Institution reports",
+                "proxy": True,
+                "indexes": [],
             },
-            bases=('reports.report',),
+            bases=("reports.report",),
         ),
         migrations.CreateModel(
-            name='ResourceReport',
-            fields=[
-            ],
+            name="ResourceReport",
+            fields=[],
             options={
-                'verbose_name': 'Reource report',
-                'verbose_name_plural': 'Resource reports',
-                'proxy': True,
-                'indexes': [],
+                "verbose_name": "Reource report",
+                "verbose_name_plural": "Resource reports",
+                "proxy": True,
+                "indexes": [],
             },
-            bases=('reports.report',),
+            bases=("reports.report",),
         ),
         migrations.CreateModel(
-            name='UserReport',
-            fields=[
-            ],
+            name="UserReport",
+            fields=[],
             options={
-                'verbose_name': 'User report',
-                'verbose_name_plural': 'User reports',
-                'proxy': True,
-                'indexes': [],
+                "verbose_name": "User report",
+                "verbose_name_plural": "User reports",
+                "proxy": True,
+                "indexes": [],
             },
-            bases=('reports.report',),
+            bases=("reports.report",),
         ),
         migrations.AlterModelOptions(
-            name='report',
-            options={'verbose_name': 'Report', 'verbose_name_plural': 'Reports'},
+            name="report",
+            options={"verbose_name": "Report", "verbose_name_plural": "Reports"},
         ),
         migrations.AlterField(
-            model_name='report',
-            name='file',
-            field=models.CharField(max_length=512, null=True, verbose_name='File path'),
+            model_name="report",
+            name="file",
+            field=models.CharField(max_length=512, null=True, verbose_name="File path"),
         ),
     ]

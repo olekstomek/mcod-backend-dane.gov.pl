@@ -6,13 +6,12 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('suggestions', '0030_auto_20210517_1732'),
+        ("suggestions", "0030_auto_20210517_1732"),
     ]
 
     operations = [
         migrations.AlterModelManagers(
-            name='submissionfeedback',
-            managers=[
-            ],
+            name="submissionfeedback",
+            managers=[],
         ),
     ]

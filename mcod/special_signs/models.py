@@ -8,28 +8,38 @@ from mcod.special_signs.managers import SpecialSignManager, SpecialSignTrashMana
 
 
 class SpecialSign(ExtendedModel):
-    symbol = models.CharField(max_length=30, verbose_name=_('symbol'))
-    name = models.CharField(max_length=100, verbose_name=_('name'))
-    description = models.TextField(verbose_name=_('description'))
+    symbol = models.CharField(max_length=30, verbose_name=_("symbol"))
+    name = models.CharField(max_length=100, verbose_name=_("name"))
+    description = models.TextField(verbose_name=_("description"))
     created_by = models.ForeignKey(
-        'users.User', models.DO_NOTHING, null=True, blank=True, editable=False, verbose_name=_('created by'),
-        related_name='special_signs_created',
+        "users.User",
+        models.DO_NOTHING,
+        null=True,
+        blank=True,
+        editable=False,
+        verbose_name=_("created by"),
+        related_name="special_signs_created",
     )
     modified_by = models.ForeignKey(
-        'users.User', models.DO_NOTHING, null=True, blank=True, editable=False, verbose_name=_('modified by'),
-        related_name='special_signs_modified',
+        "users.User",
+        models.DO_NOTHING,
+        null=True,
+        blank=True,
+        editable=False,
+        verbose_name=_("modified by"),
+        related_name="special_signs_modified",
     )
 
     objects = SpecialSignManager()
     trash = SpecialSignTrashManager()
-    i18n = TranslationField(fields=('name', 'description'), required_languages=('pl',))
+    i18n = TranslationField(fields=("name", "description"), required_languages=("pl",))
     tracker = FieldTracker()
-    slugify_field = 'name'
+    slugify_field = "name"
 
     def __str__(self):
         return self.name
 
     class Meta:
-        default_manager_name = 'objects'
-        verbose_name = _('special sign')
-        verbose_name_plural = _('special signs')
+        default_manager_name = "objects"
+        verbose_name = _("special sign")
+        verbose_name_plural = _("special signs")

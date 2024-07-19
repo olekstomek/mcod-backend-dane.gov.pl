@@ -6,25 +6,27 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('categories', '0002_initial'),
+        ("categories", "0002_initial"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='CategoryTrash',
-            fields=[
-            ],
+            name="CategoryTrash",
+            fields=[],
             options={
-                'verbose_name': 'Trash',
-                'verbose_name_plural': 'Trash',
-                'proxy': True,
-                'indexes': [],
+                "verbose_name": "Trash",
+                "verbose_name_plural": "Trash",
+                "proxy": True,
+                "indexes": [],
             },
-            bases=('categories.category',),
+            bases=("categories.category",),
         ),
         migrations.AlterModelOptions(
-            name='category',
-            options={'default_manager_name': 'objects', 'verbose_name': 'Category',
-                     'verbose_name_plural': 'Categories'},
+            name="category",
+            options={
+                "default_manager_name": "objects",
+                "verbose_name": "Category",
+                "verbose_name_plural": "Categories",
+            },
         ),
     ]

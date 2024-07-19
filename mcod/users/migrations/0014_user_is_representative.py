@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('users', '0013_user_is_official'),
+        ("users", "0013_user_is_official"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='user',
-            name='is_representative',
-            field=models.BooleanField(default=False, verbose_name='representative'),
+            model_name="user",
+            name="is_representative",
+            field=models.BooleanField(default=False, verbose_name="representative"),
         ),
     ]

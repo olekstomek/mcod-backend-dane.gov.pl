@@ -7,24 +7,24 @@ _INSTITUTION_TYPES = [i[0] for i in Organization.INSTITUTION_TYPE_CHOICES]
 
 
 class OrganizationFactory(factory.django.DjangoModelFactory):
-    title = factory.Faker('company', locale='pl_PL')
-    description = factory.Faker('paragraph', nb_sentences=5)
-    email = factory.Faker('company_email')
-    slug = factory.Faker('slug')
-    abbreviation = 'ABC'
-    image = factory.django.ImageField(color='blue')
-    institution_type = factory.Faker('random_element', elements=_INSTITUTION_TYPES)
-    postal_code = factory.Faker('postcode', locale='pl_PL')
-    city = factory.Faker('city', locale='pl_PL')
-    street_type = factory.Faker('street_prefix_short', locale='pl_PL')
-    street = factory.Faker('street_name', locale='pl_PL')
-    street_number = factory.Faker('building_number', locale='pl_PL')
-    email = factory.Faker('email', locale='pl_PL')
-    epuap = factory.Faker('uri', locale='pl_PL')
-    fax = factory.Faker('phone_number', locale='pl_PL')
-    tel = factory.Faker('phone_number', locale='pl_PL')
-    regon = factory.Faker('regon', locale='pl_PL')
-    website = factory.Faker('url', locale='pl_PL')
+    title = factory.Faker("company", locale="pl_PL")
+    description = factory.Faker("paragraph", nb_sentences=5)
+    email = factory.Faker("company_email")
+    slug = factory.Faker("slug")
+    abbreviation = "ABC"
+    image = factory.django.ImageField(color="blue")
+    institution_type = factory.Faker("random_element", elements=_INSTITUTION_TYPES)
+    postal_code = factory.Faker("postcode", locale="pl_PL")
+    city = factory.Faker("city", locale="pl_PL")
+    street_type = factory.Faker("street_prefix_short", locale="pl_PL")
+    street = factory.Faker("street_name", locale="pl_PL")
+    street_number = factory.Faker("building_number", locale="pl_PL")
+    email = factory.Faker("email", locale="pl_PL")
+    epuap = factory.Faker("uri", locale="pl_PL")
+    fax = factory.Faker("phone_number", locale="pl_PL")
+    tel = factory.Faker("phone_number", locale="pl_PL")
+    regon = factory.Faker("regon", locale="pl_PL")
+    website = factory.Faker("url", locale="pl_PL")
 
     @factory.post_generation
     def users(self, create, extracted, **kwargs):
@@ -37,7 +37,7 @@ class OrganizationFactory(factory.django.DjangoModelFactory):
 
     class Meta:
         model = Organization
-        django_get_or_create = ('title',)
+        django_get_or_create = ("title",)
 
 
-factories_registry.register('institution', OrganizationFactory)
+factories_registry.register("institution", OrganizationFactory)

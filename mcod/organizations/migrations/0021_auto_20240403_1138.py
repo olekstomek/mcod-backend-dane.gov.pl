@@ -6,12 +6,15 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('organizations', '0020_auto_20240325_1922'),
+        ("organizations", "0020_auto_20240325_1922"),
     ]
 
     operations = [
         migrations.AddConstraint(
-            model_name='organization',
-            constraint=models.CheckConstraint(check=models.Q(_negated=True, electronic_delivery_address=''), name='electronic_delivery_address_not_empty_string'),
+            model_name="organization",
+            constraint=models.CheckConstraint(
+                check=models.Q(_negated=True, electronic_delivery_address=""),
+                name="electronic_delivery_address_not_empty_string",
+            ),
         ),
     ]

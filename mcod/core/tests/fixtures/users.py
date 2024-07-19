@@ -12,9 +12,7 @@ from mcod.users.factories import AdminFactory, EditorFactory, UserFactory
 
 @pytest.fixture
 def active_user():
-    return UserFactory.create(
-        email="active_user@dane.gov.pl", password="12345.Abcde", state="active"
-    )
+    return UserFactory.create(email="active_user@dane.gov.pl", password="12345.Abcde", state="active")
 
 
 @pytest.fixture
@@ -23,9 +21,7 @@ def active_user_with_last_login():
         email="active_user@dane.gov.pl",
         password="12345.Abcde",
         state="active",
-        last_login=datetime.datetime(
-            2024, 7, 1, 12, 0, 0, tzinfo=datetime.timezone.utc
-        ),
+        last_login=datetime.datetime(2024, 7, 1, 12, 0, 0, tzinfo=datetime.timezone.utc),
     )
 
 
@@ -49,9 +45,7 @@ def blocked_user():
 
 @pytest.fixture
 def removed_user():
-    return UserFactory.create(
-        email="active_user@dane.gov.pl", password="12345.Abcde", is_removed=True
-    )
+    return UserFactory.create(email="active_user@dane.gov.pl", password="12345.Abcde", is_removed=True)
 
 
 @pytest.fixture
@@ -79,9 +73,7 @@ def active_editor_without_org():
 
 @pytest.fixture
 def admin():
-    usr = AdminFactory.create(
-        email="admin@dane.gov.pl", password="12345.Abcde", phone="0048123456789"
-    )
+    usr = AdminFactory.create(email="admin@dane.gov.pl", password="12345.Abcde", phone="0048123456789")
     return usr
 
 

@@ -35,20 +35,20 @@ class ResourceSparqlGraph(SparqlGraph, ResourceRDFResponseSchema, SparqlGraphCat
 
     def get_related_from_instance(self, related_instance):
         if isinstance(related_instance, Dataset):
-            return related_instance.resources.filter(status='published')
+            return related_instance.resources.filter(status="published")
         if isinstance(related_instance, License):
-            return Resource.objects.filter(dataset__license__pk=related_instance.pk, status='published')
+            return Resource.objects.filter(dataset__license__pk=related_instance.pk, status="published")
 
     def create(self, instance):
         create_q, ns = super().create(instance)
         catalog_modified_q, modified_ns = self.update_catalog_modified(instance)
         ns.update(**modified_ns)
-        full_query = f'{create_q}; {catalog_modified_q}'
+        full_query = f"{create_q}; {catalog_modified_q}"
         return full_query, ns
 
     def delete(self, instance):
         delete_q, ns = super().delete(instance)
         catalog_modified_q, modified_ns = self.update_catalog_modified(instance)
         ns.update(**modified_ns)
-        full_query = f'{delete_q}; {catalog_modified_q}'
+        full_query = f"{delete_q}; {catalog_modified_q}"
         return full_query, ns

@@ -33,16 +33,14 @@ def model_instance_diff(old, new):  # noqa: C901
         model_fields = None
 
     # Check if fields must be filtered
-    if model_fields and (model_fields['include_fields'] or model_fields['exclude_fields']) and fields:
+    if model_fields and (model_fields["include_fields"] or model_fields["exclude_fields"]) and fields:
         filtered_fields = []
-        if model_fields['include_fields']:
-            filtered_fields = [field for field in fields
-                               if field.name in model_fields['include_fields']]
+        if model_fields["include_fields"]:
+            filtered_fields = [field for field in fields if field.name in model_fields["include_fields"]]
         else:
             filtered_fields = fields
-        if model_fields['exclude_fields']:
-            filtered_fields = [field for field in filtered_fields
-                               if field.name not in model_fields['exclude_fields']]
+        if model_fields["exclude_fields"]:
+            filtered_fields = [field for field in filtered_fields if field.name not in model_fields["exclude_fields"]]
         fields = filtered_fields
 
     for field in fields:
@@ -76,7 +74,7 @@ def log_update(sender, instance, **kwargs):
     """
     if instance.pk is not None:
         try:
-            old = sender.raw.get(pk=instance.pk) if hasattr(sender, 'raw') else sender.objects.get(pk=instance.id)
+            old = sender.raw.get(pk=instance.pk) if hasattr(sender, "raw") else sender.objects.get(pk=instance.id)
         except sender.DoesNotExist:
             pass
         else:

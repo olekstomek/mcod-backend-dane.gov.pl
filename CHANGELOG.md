@@ -14,6 +14,19 @@
 ### Breaks
 
 
+## 2.35.1 - (2024-07-01)
+---
+
+### New
+
+* Dostosowanie kodu do stylu: plik `.git-blame-ignore-revs` dokumentujący zmiany masowe (OTD-672)
+
+### Changes
+
+* Harvester: walidacja URL wysyła żądanie pobrania pliku z nagłówkiem `User-Agent` popularnych przeglądarek zamiast `python-requests` (OTD-560)
+* Dostosowanie kodu do stylu: formatowanie we wszystkich plikach na zgodne z ustawieniami `pre-commit` (black, end-of-lines) (OTD-672)
+* Dostosowanie kodu do stylu: testy formatowania muszą przejść w CI (`allow_failure: false`) (OTD-672)
+
 ## 2.35.0 - (2024-06-18)
 ---
 

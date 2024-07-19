@@ -7,18 +7,18 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('laboratory', '0001_initial'),
+        ("laboratory", "0001_initial"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='labevent',
-            name='execution_date',
+            model_name="labevent",
+            name="execution_date",
             field=models.DateField(blank=True, null=True),
         ),
         migrations.AlterField(
-            model_name='labevent',
-            name='notes',
-            field=ckeditor_uploader.fields.RichTextUploadingField(blank=True, null=True, verbose_name='Notes'),
+            model_name="labevent",
+            name="notes",
+            field=ckeditor_uploader.fields.RichTextUploadingField(blank=True, null=True, verbose_name="Notes"),
         ),
     ]

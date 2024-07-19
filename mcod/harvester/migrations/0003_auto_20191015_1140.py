@@ -9,18 +9,30 @@ class Migration(migrations.Migration):
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('harvester', '0002_auto_20191011_1215'),
+        ("harvester", "0002_auto_20191011_1215"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='datasource',
-            name='modified_by',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.DO_NOTHING, related_name='modified_datasources', to=settings.AUTH_USER_MODEL, verbose_name='modified by'),
+            model_name="datasource",
+            name="modified_by",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.DO_NOTHING,
+                related_name="modified_datasources",
+                to=settings.AUTH_USER_MODEL,
+                verbose_name="modified by",
+            ),
         ),
         migrations.AlterField(
-            model_name='datasource',
-            name='created_by',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.DO_NOTHING, related_name='created_datasources', to=settings.AUTH_USER_MODEL, verbose_name='created by'),
+            model_name="datasource",
+            name="created_by",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.DO_NOTHING,
+                related_name="created_datasources",
+                to=settings.AUTH_USER_MODEL,
+                verbose_name="created by",
+            ),
         ),
     ]

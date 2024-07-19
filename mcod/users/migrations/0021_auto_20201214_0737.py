@@ -8,18 +8,31 @@ import mcod.users.models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('users', '0020_user_agent_organizations_history_trigger'),
+        ("users", "0020_user_agent_organizations_history_trigger"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='user',
-            name='fav_charts',
-            field=django.contrib.postgres.fields.jsonb.JSONField(blank=True, default=mcod.users.models.fav_charts_default, null=True, verbose_name='Favorite charts'),
+            model_name="user",
+            name="fav_charts",
+            field=django.contrib.postgres.fields.jsonb.JSONField(
+                blank=True,
+                default=mcod.users.models.fav_charts_default,
+                null=True,
+                verbose_name="Favorite charts",
+            ),
         ),
         migrations.AlterField(
-            model_name='token',
-            name='token_type',
-            field=models.IntegerField(choices=[(0, 'Email validation token'), (1, 'Password reset token'), (2, 'Charts preview token')], default=0, verbose_name='Token type'),
+            model_name="token",
+            name="token_type",
+            field=models.IntegerField(
+                choices=[
+                    (0, "Email validation token"),
+                    (1, "Password reset token"),
+                    (2, "Charts preview token"),
+                ],
+                default=0,
+                verbose_name="Token type",
+            ),
         ),
     ]

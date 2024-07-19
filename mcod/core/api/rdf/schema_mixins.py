@@ -10,22 +10,22 @@ from .profiles import dcat_ap, dcat_ap_pl, schemaorg
 
 
 class ProfilesMixin:
-    DEFAULT_PROFILE = 'dcat_ap'
-    DCAT_AP = 'dcat_ap'
-    DCAT_AP_PL = 'dcat_ap_pl'
-    SCHEMA_ORG = 'schemaorg'
+    DEFAULT_PROFILE = "dcat_ap"
+    DCAT_AP = "dcat_ap"
+    DCAT_AP_PL = "dcat_ap_pl"
+    SCHEMA_ORG = "schemaorg"
     SUPPORTED_PROFILES = (DCAT_AP, DCAT_AP_PL, SCHEMA_ORG)
 
     BINDS = {
         DCAT_AP: ns.NAMESPACES,
         DCAT_AP_PL: ns.DCAT_AP_PL_NAMESPACES,
-        SCHEMA_ORG: {'schema': ns.NAMESPACES['schema']},
+        SCHEMA_ORG: {"schema": ns.NAMESPACES["schema"]},
     }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        if 'request' in self.context:
-            self.profile = self.context['request'].params.get('profile', self.DEFAULT_PROFILE)
+        if "request" in self.context:
+            self.profile = self.context["request"].params.get("profile", self.DEFAULT_PROFILE)
         else:
             self.profile = self.DEFAULT_PROFILE
         if self.profile not in self.SUPPORTED_PROFILES:
@@ -65,4 +65,4 @@ class ProfilesMixin:
             graph.bind(prefix, namespace)
 
     def add_pagination_bindings(self, graph):
-        graph.bind('hydra', ns.HYDRA)
+        graph.bind("hydra", ns.HYDRA)

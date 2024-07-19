@@ -6,13 +6,18 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('users', '0010_auto_20190911_1637'),
+        ("users", "0010_auto_20190911_1637"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='user',
-            name='lang',
-            field=models.CharField(choices=[('pl', 'Polish'), ('en', 'English')], default='pl', max_length=2, verbose_name='User language'),
+            model_name="user",
+            name="lang",
+            field=models.CharField(
+                choices=[("pl", "Polish"), ("en", "English")],
+                default="pl",
+                max_length=2,
+                verbose_name="User language",
+            ),
         ),
     ]

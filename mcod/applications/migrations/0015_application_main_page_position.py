@@ -6,13 +6,19 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('applications', '0014_auto_20191110_2255'),
+        ("applications", "0014_auto_20191110_2255"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='application',
-            name='main_page_position',
-            field=models.PositiveSmallIntegerField(blank=True, choices=[(1, 'First'), (2, 'Second'), (3, 'Third'), (4, 'Forth')], null=True, unique=True, verbose_name='Positioning on the main page'),
+            model_name="application",
+            name="main_page_position",
+            field=models.PositiveSmallIntegerField(
+                blank=True,
+                choices=[(1, "First"), (2, "Second"), (3, "Third"), (4, "Forth")],
+                null=True,
+                unique=True,
+                verbose_name="Positioning on the main page",
+            ),
         ),
     ]

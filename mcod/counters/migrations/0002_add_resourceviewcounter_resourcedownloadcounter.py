@@ -8,32 +8,60 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('counters', '0001_initial'),
+        ("counters", "0001_initial"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='ResourceViewCounter',
+            name="ResourceViewCounter",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('timestamp', models.DateField(default=datetime.date.today)),
-                ('count', models.IntegerField(default=0)),
-                ('resource', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='resources.Resource')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("timestamp", models.DateField(default=datetime.date.today)),
+                ("count", models.IntegerField(default=0)),
+                (
+                    "resource",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="resources.Resource",
+                    ),
+                ),
             ],
             options={
-                'abstract': False,
+                "abstract": False,
             },
         ),
         migrations.CreateModel(
-            name='ResourceDownloadCounter',
+            name="ResourceDownloadCounter",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('timestamp', models.DateField(default=datetime.date.today)),
-                ('count', models.IntegerField(default=0)),
-                ('resource', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='resources.Resource')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("timestamp", models.DateField(default=datetime.date.today)),
+                ("count", models.IntegerField(default=0)),
+                (
+                    "resource",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="resources.Resource",
+                    ),
+                ),
             ],
             options={
-                'abstract': False,
+                "abstract": False,
             },
         ),
     ]

@@ -1,14 +1,13 @@
 import csv
+import datetime
 import logging
 import os
+import uuid
+from mimetypes import guess_type
+from typing import List, Optional, Set, Tuple, Union
 
 import pandas as pd
 import sentry_sdk
-import uuid
-import datetime
-from mimetypes import guess_type
-from typing import List, Optional, Tuple, Union, Set
-
 from cache_memoize import cache_memoize
 from celery import states
 from chardet import detect as detect_encoding
@@ -16,32 +15,28 @@ from django.apps import apps
 from django.conf import settings
 from django.core.cache import caches
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
-from django.core.files.uploadedfile import (
-    InMemoryUploadedFile,
-    SimpleUploadedFile,
-)
+from django.core.files.uploadedfile import InMemoryUploadedFile, SimpleUploadedFile
 from django.db import transaction
 from django.db.models import QuerySet
 
 from mcod.core.utils import save_df_to_xlsx
 from mcod.resources.dga_constants import DGA_COLUMNS
-from mcod.resources.exceptions import (
-    PendingValidationException,
-    FailedValidationException,
-)
+from mcod.resources.exceptions import FailedValidationException, PendingValidationException
 from mcod.resources.goodtables_checks import ZERO_DATA_ROWS_MSG
 
-logger = logging.getLogger('mcod')
+logger = logging.getLogger("mcod")
 
 
 def get_main_dga_resource() -> Optional["Resource"]:  # noqa: F821
     from mcod.resources.models import AggregatedDGAInfo
+
     dga_info: Optional[AggregatedDGAInfo] = AggregatedDGAInfo.objects.last()
     return dga_info.main_dga_resource if dga_info else None
 
 
 def get_main_dga_dataset() -> Optional["Dataset"]:  # noqa: F821
     from mcod.resources.models import AggregatedDGAInfo
+
     dga_info: Optional[AggregatedDGAInfo] = AggregatedDGAInfo.objects.last()
     return dga_info.main_dga_dataset if dga_info else None
 
@@ -54,7 +49,7 @@ def validate_dga_file_columns(file: InMemoryUploadedFile, extension: str) -> boo
             raw_data = file.read()
             file.seek(0)
             result = detect_encoding(raw_data)
-            encoding = result['encoding']
+            encoding = result["encoding"]
             if encoding is None:
                 logger.error("Could not detect dga file encoding")
                 return False
@@ -72,8 +67,8 @@ def validate_dga_file_columns(file: InMemoryUploadedFile, extension: str) -> boo
 
 
 def get_dga_resource_for_institution(
-        organization_id: Union[int, str],
-        exclude_resource_id: Optional[Union[int, str]] = None,
+    organization_id: Union[int, str],
+    exclude_resource_id: Optional[Union[int, str]] = None,
 ) -> Optional["Resource"]:  # noqa: F821
     """
     Returns DGA Resource object for given Organization. Main DGA Resource
@@ -94,26 +89,21 @@ def get_dga_resource_for_institution(
     query = Resource.objects.filter(
         dataset__organization=organization_id,
         contains_protected_data=True,
-        status="published"
+        status="published",
     ).exclude(id__in=exclude_objects_ids)
 
     count_dga_resources: int = query.count()
     if count_dga_resources > 1:
-        error_message = (
-            f"Found {count_dga_resources} DGA Resources for organization: "
-            f"{organization_id}"
-        )
+        error_message = f"Found {count_dga_resources} DGA Resources for organization: " f"{organization_id}"
         logger.error(error_message)
         raise MultipleObjectsReturned(error_message)
 
     return query.first()
 
 
-def create_uploaded_file_from_path(path: str) -> Union[
-    SimpleUploadedFile, None
-]:
+def create_uploaded_file_from_path(path: str) -> Union[SimpleUploadedFile, None]:
     try:
-        with open(path, 'rb') as tmp_file:
+        with open(path, "rb") as tmp_file:
             file_content = tmp_file.read()
 
         file_name = os.path.basename(path)
@@ -127,9 +117,7 @@ def create_uploaded_file_from_path(path: str) -> Union[
         logger.error(f"Cannot find a file at {path}")
         return None
     except Exception as e:
-        logger.error(
-            f"Exception while uploading from path {path} occurred: {e}"
-        )
+        logger.error(f"Exception while uploading from path {path} occurred: {e}")
         return None
     return file
 
@@ -144,7 +132,7 @@ def save_temp_dga_file(file: InMemoryUploadedFile) -> str:
         os.makedirs(directory)
     file_path = os.path.join(directory, temp_file_name)
 
-    with open(file_path, 'wb+') as destination:
+    with open(file_path, "wb+") as destination:
         for chunk in file.chunks():
             destination.write(chunk)
 
@@ -173,9 +161,11 @@ def get_all_dga_resources() -> QuerySet:
     main_dga_resource: Optional[Resource] = get_main_dga_resource()
     main_dga_id = main_dga_resource.pk if main_dga_resource else None
 
-    dga_resources = Resource.objects.filter(
-        contains_protected_data=True, status="published"
-    ).exclude(id=main_dga_id).select_related("dataset__organization")
+    dga_resources = (
+        Resource.objects.filter(contains_protected_data=True, status="published")
+        .exclude(id=main_dga_id)
+        .select_related("dataset__organization")
+    )
     return dga_resources
 
 
@@ -194,17 +184,13 @@ def create_main_dga_df(resources: QuerySet) -> pd.DataFrame:
         try:
             data = resource.tabular_data.table.read(keyed=True)
         except Exception as e:
-            logger.error(
-                f"Cannot read tabular data for for resource {resource.pk}: {e}"
-            )
+            logger.error(f"Cannot read tabular data for for resource {resource.pk}: {e}")
             continue
 
         try:
             df: pd.DataFrame = pd.DataFrame(data, columns=main_df.columns)
         except Exception as e:
-            logger.error(
-                f"Cannot create DataFrame for resource {resource.pk}: {e}"
-            )
+            logger.error(f"Cannot create DataFrame for resource {resource.pk}: {e}")
             sentry_sdk.api.capture_exception(e)
             continue
 
@@ -214,10 +200,7 @@ def create_main_dga_df(resources: QuerySet) -> pd.DataFrame:
         main_df = pd.concat([main_df, df], ignore_index=True)
         successful_resource_reads += 1
 
-    logger.info(
-        f"Successful DGA Resources read: "
-        f"{successful_resource_reads}/{count_dga_resources}."
-    )
+    logger.info(f"Successful DGA Resources read: " f"{successful_resource_reads}/{count_dga_resources}.")
 
     if main_df.empty:
         logger.warning("Empty main DGA file.")
@@ -236,9 +219,7 @@ def create_main_dga_df(resources: QuerySet) -> pd.DataFrame:
 
 @cache_memoize(
     timeout=settings.MAIN_DGA_RESOURCE_XLSX_CREATION_CACHE_TIMEOUT,
-    hit_callable=lambda *args, **kwargs: logger.info(
-        "Using cache for main DGA file path."
-    ),
+    hit_callable=lambda *args, **kwargs: logger.info("Using cache for main DGA file path."),
     key_generator_callable=key_generator_for_create_main_xlsx_file,
 )
 def create_main_dga_file() -> str:
@@ -299,8 +280,7 @@ def check_all_resource_validations_status(resource: "Resource") -> None:  # noqa
         return
 
     # Raise FailedValidation when file or link validation failed
-    if any(status == states.FAILURE for status in
-           [statuses["file"], statuses["link"]]):
+    if any(status == states.FAILURE for status in [statuses["file"], statuses["link"]]):
         logger.error(
             f"Validation(s) for resource {resource.pk} failed: "
             f"data: {statuses['data']}; "
@@ -313,16 +293,12 @@ def check_all_resource_validations_status(resource: "Resource") -> None:  # noqa
     # is an empty file
     if statuses["data"] == states.FAILURE:
         from mcod.resources.models import TaskResult
+
         data_task: Optional[TaskResult] = resource.data_tasks.last()
-        data_failure_msg: Optional[
-            List[str]] = data_task.message if data_task else None
+        data_failure_msg: Optional[List[str]] = data_task.message if data_task else None
 
         if data_failure_msg == [ZERO_DATA_ROWS_MSG]:
-            if all(
-                status == states.SUCCESS for status in [
-                    statuses["file"], statuses["link"]
-                ]
-            ):
+            if all(status == states.SUCCESS for status in [statuses["file"], statuses["link"]]):
                 return
         else:
             logger.error(f"Data validation for resource {resource.pk} failed.")
@@ -347,12 +323,8 @@ def get_default_main_dga_dataset_categories() -> List["Category"]:  # noqa: F821
     Category = apps.get_model("categories", "Category")
     categories_titles: List[str] = settings.MAIN_DGA_DATASET_CATEGORIES_TITLES
 
-    found_categories: QuerySet = Category.objects.filter(
-        title__in=categories_titles
-    )
-    found_titles: Set[str] = set(
-        category.title for category in found_categories
-    )
+    found_categories: QuerySet = Category.objects.filter(title__in=categories_titles)
+    found_titles: Set[str] = set(category.title for category in found_categories)
 
     missing_titles: Set[str] = set(categories_titles) - found_titles
     for missing_title in missing_titles:
@@ -372,9 +344,7 @@ def get_or_create_default_main_dga_dataset_tags() -> List["Tag"]:  # noqa: F821
 
     tags = []
     for tag_name in tags_names:
-        tag, created = Tag.objects.get_or_create(
-            name=tag_name, language=pl_lang
-        )
+        tag, created = Tag.objects.get_or_create(name=tag_name, language=pl_lang)
         if created:
             logger.info(f"Created Tag with name {tag_name}.")
         tags.append(tag)
@@ -401,14 +371,9 @@ def create_main_dga_dataset() -> int:
     # main DGA Dataset
     organization_pk: int = settings.MAIN_DGA_DATASET_OWNER_ORGANIZATION_PK
     try:
-        institution: Organization = Organization.objects.get(
-            pk=organization_pk
-        )
+        institution: Organization = Organization.objects.get(pk=organization_pk)
     except Organization.DoesNotExist:
-        logger.error(
-            f"Can't create main DGA dataset. "
-            f"Institution with pk {organization_pk} not found."
-        )
+        logger.error(f"Can't create main DGA dataset. " f"Institution with pk {organization_pk} not found.")
         raise ObjectDoesNotExist("Main DGA Owner Institution not found.")
 
     dataset_params = {
@@ -443,14 +408,10 @@ def key_generator_for_create_main_dga_resource(*args, **kwargs) -> str:
 
 @cache_memoize(
     timeout=settings.MAIN_DGA_RESOURCE_CREATION_CACHE_TIMEOUT,
-    hit_callable=lambda *args, **kwargs: logger.info(
-        "DGA objects get from cache."
-    ),
+    hit_callable=lambda *args, **kwargs: logger.info("DGA objects get from cache."),
     key_generator_callable=key_generator_for_create_main_dga_resource,
 )
-def create_main_dga_resource_with_dataset(
-        file_path: str
-) -> Tuple[int, Optional[int]]:
+def create_main_dga_resource_with_dataset(file_path: str) -> Tuple[int, Optional[int]]:
     """
     Creates the main DGA Resource, including related ResourceFile objects and
     the main DGA Dataset for the `Ministerstwo Cyfryzacji` institution if it
@@ -479,9 +440,7 @@ def create_main_dga_resource_with_dataset(
         if main_dga_dataset is None:
             main_dga_dataset_pk: int = create_main_dga_dataset()
             new_main_dga_dataset_created = True
-            main_dga_dataset: Dataset = Dataset.objects.get(
-                pk=main_dga_dataset_pk
-            )
+            main_dga_dataset: Dataset = Dataset.objects.get(pk=main_dga_dataset_pk)
 
         # Get metadata from existing resource or assign new one
         if old_main_dga_resource:
@@ -506,16 +465,12 @@ def create_main_dga_resource_with_dataset(
         with open(file_path, "rb") as file:
             mimetype = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             file_name = os.path.basename(file.name)
-            django_file = SimpleUploadedFile(
-                name=file_name, content=file.read(), content_type=mimetype
-            )
+            django_file = SimpleUploadedFile(name=file_name, content=file.read(), content_type=mimetype)
             resource = Resource.objects.create(**resource_params)
             logger.debug(f"Created Main DGA resource {resource.pk}")
 
             # this will run post_save signal which runs all validation tasks
-            resource_file = ResourceFile.objects.create(
-                resource=resource, is_main=True, file=django_file
-            )
+            resource_file = ResourceFile.objects.create(resource=resource, is_main=True, file=django_file)
             logger.debug(f"Created Main DGA resource file {resource_file.pk}")
 
     return (
@@ -525,7 +480,7 @@ def create_main_dga_resource_with_dataset(
 
 
 def update_or_create_aggr_dga_info_and_delete_old_main_dga(
-        new_main_dga_resource: "Resource"  # noqa: F821
+    new_main_dga_resource: "Resource",  # noqa: F821
 ) -> None:
     """
     Updates or creates an entry in the AggregatedDGAInfo table with the new
@@ -539,8 +494,7 @@ def update_or_create_aggr_dga_info_and_delete_old_main_dga(
     Resource = apps.get_model("resources", "Resource")
     AggregatedDGAInfo = apps.get_model("resources", "AggregatedDGAInfo")
     dga_info: Optional[AggregatedDGAInfo] = AggregatedDGAInfo.objects.last()
-    old_main_dga_resource: Optional[
-        Resource] = dga_info.main_dga_resource if dga_info else None
+    old_main_dga_resource: Optional[Resource] = dga_info.main_dga_resource if dga_info else None
 
     with transaction.atomic():
         if dga_info:
@@ -548,31 +502,18 @@ def update_or_create_aggr_dga_info_and_delete_old_main_dga(
             dga_info.views_count = new_main_dga_resource.dataset.computed_views_count
             dga_info.downloads_count = new_main_dga_resource.dataset.computed_downloads_count
             dga_info.save()
-            logger.info(
-                f"Updated AggregatedDGAInfo: {dga_info.pk} with resource: "
-                f"{new_main_dga_resource.pk}."
-            )
+            logger.info(f"Updated AggregatedDGAInfo: {dga_info.pk} with resource: " f"{new_main_dga_resource.pk}.")
 
         else:
-            dga_info: AggregatedDGAInfo = AggregatedDGAInfo.objects.create(
-                resource=new_main_dga_resource
-            )
-            logger.info(
-                f"Created AggregatedDGAInfo: {dga_info.pk} with resource: "
-                f"{new_main_dga_resource.pk}."
-            )
+            dga_info: AggregatedDGAInfo = AggregatedDGAInfo.objects.create(resource=new_main_dga_resource)
+            logger.info(f"Created AggregatedDGAInfo: {dga_info.pk} with resource: " f"{new_main_dga_resource.pk}.")
 
         if old_main_dga_resource:
             old_main_dga_resource.delete()
-            logger.info(
-                f"Previous Main DGA Resource "
-                f"{old_main_dga_resource.pk} deleted."
-            )
+            logger.info(f"Previous Main DGA Resource " f"{old_main_dga_resource.pk} deleted.")
 
 
-def clean_up_after_main_dga_resource_creation(
-        exception_occurred: bool
-) -> None:
+def clean_up_after_main_dga_resource_creation(exception_occurred: bool) -> None:
     """
     Cleans up objects created by the main_dga_resource_task only when it fails.
     This function will remove the Resource, ResourceFile and Dataset objects
@@ -588,9 +529,7 @@ def clean_up_after_main_dga_resource_creation(
 
     resource_created: Optional[int]
     dataset_created: Optional[int]
-    resource_created, dataset_created = cache.get(
-        clean_objects_key, (None, None)
-    )
+    resource_created, dataset_created = cache.get(clean_objects_key, (None, None))
     file_path: Optional[str] = cache.get(clean_file_path_key, None)
 
     # delete created objects and release cache
@@ -617,8 +556,6 @@ def clean_up_after_main_dga_resource_creation(
             cache.delete(clean_file_path_key)
 
     except Exception as e:
-        logger.error(
-            f"An error occurred while deleting the file {file_path}: {e}"
-        )
+        logger.error(f"An error occurred while deleting the file {file_path}: {e}")
 
     logger.info("Clean up completed.")

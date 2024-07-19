@@ -13,35 +13,35 @@ from mcod.reports.models import (
 
 
 class ReportFactory(factory.django.DjangoModelFactory):
-    file = factory.Faker('text', max_nb_chars=100, locale='pl_PL')
+    file = factory.Faker("text", max_nb_chars=100, locale="pl_PL")
 
     class Meta:
         model = Report
 
 
 class OrganizationReportFactory(ReportFactory):
-    model = 'organizations.Organization'
+    model = "organizations.Organization"
 
     class Meta:
         model = OrganizationReport
 
 
 class UserReportFactory(ReportFactory):
-    model = 'users.User'
+    model = "users.User"
 
     class Meta:
         model = UserReport
 
 
 class ResourceReportFactory(ReportFactory):
-    model = 'resources.Resource'
+    model = "resources.Resource"
 
     class Meta:
         model = ResourceReport
 
 
 class DatasetReportFactory(ReportFactory):
-    model = 'datasets.Dataset'
+    model = "datasets.Dataset"
 
     class Meta:
         model = DatasetReport
@@ -53,15 +53,15 @@ class SummaryDailyReportFactory(ReportFactory):
 
 
 class MonitoringReportFactory(ReportFactory):
-    model = 'applications.ApplicationProposal'
+    model = "applications.ApplicationProposal"
 
     class Meta:
         model = MonitoringReport
 
 
-factories_registry.register('organizationreport', OrganizationReportFactory)
-factories_registry.register('userreport', UserReportFactory)
-factories_registry.register('resourcereport', ResourceReportFactory)
-factories_registry.register('datasetreport', DatasetReportFactory)
-factories_registry.register('summarydailyreport', SummaryDailyReportFactory)
-factories_registry.register('monitoringreport', MonitoringReportFactory)
+factories_registry.register("organizationreport", OrganizationReportFactory)
+factories_registry.register("userreport", UserReportFactory)
+factories_registry.register("resourcereport", ResourceReportFactory)
+factories_registry.register("datasetreport", DatasetReportFactory)
+factories_registry.register("summarydailyreport", SummaryDailyReportFactory)
+factories_registry.register("monitoringreport", MonitoringReportFactory)

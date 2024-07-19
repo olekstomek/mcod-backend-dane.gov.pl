@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('resources', '0035_resource_is_chart_creation_blocked'),
+        ("resources", "0035_resource_is_chart_creation_blocked"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='chart',
-            name='name',
-            field=models.CharField(blank=True, max_length=200, verbose_name='name'),
+            model_name="chart",
+            name="name",
+            field=models.CharField(blank=True, max_length=200, verbose_name="name"),
         ),
     ]

@@ -22,15 +22,15 @@ class JsonStatMalformedJson(JsonStatException):
 def validate_v1(json_data):  # noqa: C901
     """Parse a JSON-stat version 1."""
     for dataset_name, dataset_json in json_data.items():
-        if 'value' not in dataset_json:
+        if "value" not in dataset_json:
             msg = "dataset '{}': missing 'value' key".format(dataset_name)
             raise JsonStatMalformedJson(msg)
-        _value = dataset_json['value']
+        _value = dataset_json["value"]
         if len(_value) == 0:
             msg = "dataset '{}': field 'value' is empty".format(dataset_name)
             raise JsonStatMalformedJson(msg)
-        if 'status' in dataset_json:
-            _status = dataset_json['status']
+        if "status" in dataset_json:
+            _status = dataset_json["status"]
             if isinstance(_status, list):
                 if len(_status) != 1 and len(_status) != len(_value):
                     msg = "dataset '{}': incorrect size of status fields"
@@ -45,22 +45,22 @@ def validate_v1(json_data):  # noqa: C901
                     except ValueError:
                         pass
                 _status = nd
-        if 'dimension' not in dataset_json:
+        if "dimension" not in dataset_json:
             msg = "dataset '{}': missing 'dimension' key".format(dataset_name)
             raise JsonStatMalformedJson(msg)
 
-        dimension = dataset_json['dimension']
-        if 'id' not in dimension:
+        dimension = dataset_json["dimension"]
+        if "id" not in dimension:
             msg = "dataset '{}': missing 'dimension.id' key".format(dataset_name)
             raise JsonStatMalformedJson(msg)
 
-        if 'size' not in dimension:
+        if "size" not in dimension:
             msg = "dataset '{}': missing 'dimension.size' key".format(dataset_name)
             raise JsonStatMalformedJson(msg)
 
-        pos2iid = dimension['id']
+        pos2iid = dimension["id"]
 
-        _pos2size = dimension['size']
+        _pos2size = dimension["size"]
         for i, e in enumerate(_pos2size):
             _pos2size[i] = int(e)
 
@@ -78,17 +78,17 @@ def validate(spec):
     try:
         import strict_rfc3339  # noqa: F401 validate date-time format in jsonschema
     except ImportError:
-        JsonStatException('To validate install jsonschema and strict_rfc3339')
+        JsonStatException("To validate install jsonschema and strict_rfc3339")
 
     if not isinstance(spec, dict):
         json_data = json.loads(spec, object_pairs_hook=OrderedDict)
     else:
         json_data = spec
 
-    if 'version' not in json_data:
+    if "version" not in json_data:
         # if version is not present assuming version 1.x of JSON-stat format.
         if not settings.JSONSTAT_V1_ALLOWED:
-            raise JsonStatException('Cannot validate JSON-stat version < 2.0')
+            raise JsonStatException("Cannot validate JSON-stat version < 2.0")
         return validate_v1(json_data)
 
     with open(settings.JSONSTAT_SCHEMA_PATH) as schema_file:

@@ -8,14 +8,22 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('special_signs', '0001_initial'),
+        ("special_signs", "0001_initial"),
     ]
 
     operations = [
         migrations.RunSQL(
             sql=open(
-                os.path.join(settings.DATABASE_DIR, 'ODSOFT-1176-special_signs-specialsign-history_other.sql')).read(),
+                os.path.join(
+                    settings.DATABASE_DIR,
+                    "ODSOFT-1176-special_signs-specialsign-history_other.sql",
+                )
+            ).read(),
             reverse_sql=open(
-                os.path.join(settings.DATABASE_DIR, 'ODSOFT-1176-special_signs-specialsign-history_other_backward.sql')).read(),
+                os.path.join(
+                    settings.DATABASE_DIR,
+                    "ODSOFT-1176-special_signs-specialsign-history_other_backward.sql",
+                )
+            ).read(),
         )
     ]

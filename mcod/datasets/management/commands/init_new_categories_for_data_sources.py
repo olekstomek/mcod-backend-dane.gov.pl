@@ -6,7 +6,7 @@ from mcod.harvester.models import OLD_CATEGORY_TITLE_2_DCAT_CATEGORY_CODE, DataS
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
-        query = DataSource.raw.select_related('category').all()
+        query = DataSource.raw.select_related("category").all()
 
         for data_source in query:
             data_source.categories.clear()

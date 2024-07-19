@@ -15,11 +15,11 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         found_duplicates = []
-        self.stdout.write('Started analyzing resources filename in order to find possible duplicates.')
+        self.stdout.write("Started analyzing resources filename in order to find possible duplicates.")
         possible_duplicates = self.find_possible_duplicates()
-        self.stdout.write(f'Found {len(possible_duplicates)} possible duplicates, analyzing content.')
+        self.stdout.write(f"Found {len(possible_duplicates)} possible duplicates, analyzing content.")
         for filename, duplicates in possible_duplicates.items():
-            duplicated_formats = {d['format'] for d in duplicates}
+            duplicated_formats = {d["format"] for d in duplicates}
             if len(duplicated_formats) == 1:
                 duplicates = self.check_for_content_duplicates(duplicates)
             if duplicates:
@@ -27,25 +27,32 @@ class Command(BaseCommand):
                 full_names = []
                 res_titles = []
                 for duplicate in duplicates:
-                    ids.append(str(duplicate['pk']))
-                    full_names.append(duplicate['file'])
-                    res_titles.append(duplicate['title'])
-                found_duplicates.append({
-                    'Id zdublowanych zasobów': '; '.join(ids),
-                    'Instytucja': duplicates[0]['dataset__organization__title'],
-                    'Nazwy zasobów': '; '.join(res_titles),
-                    'Pełne nazwy plików': '; '.join(full_names)
-                })
-        found_duplicates = sorted(found_duplicates, key=lambda x: x['Instytucja'])
-        self.stdout.write('Creating report of found duplicates.')
+                    ids.append(str(duplicate["pk"]))
+                    full_names.append(duplicate["file"])
+                    res_titles.append(duplicate["title"])
+                found_duplicates.append(
+                    {
+                        "Id zdublowanych zasobów": "; ".join(ids),
+                        "Instytucja": duplicates[0]["dataset__organization__title"],
+                        "Nazwy zasobów": "; ".join(res_titles),
+                        "Pełne nazwy plików": "; ".join(full_names),
+                    }
+                )
+        found_duplicates = sorted(found_duplicates, key=lambda x: x["Instytucja"])
+        self.stdout.write("Creating report of found duplicates.")
         create_resources_report_task.s(
             data=found_duplicates,
-            headers=['Id zdublowanych zasobów', 'Nazwy zasobów', 'Instytucja', 'Pełne nazwy plików'],
-            report_name='resources_duplicates'
+            headers=[
+                "Id zdublowanych zasobów",
+                "Nazwy zasobów",
+                "Instytucja",
+                "Pełne nazwy plików",
+            ],
+            report_name="resources_duplicates",
         ).apply_async()
 
     def chunk_reader(self, fobj, chunk_size=1024):
-        """ Generator that reads a file in chunks of bytes """
+        """Generator that reads a file in chunks of bytes"""
         while True:
             chunk = fobj.read(chunk_size)
             if not chunk:
@@ -63,14 +70,16 @@ class Command(BaseCommand):
         return hashobj.digest()
 
     def find_possible_duplicates(self):
-        res_details = Resource.objects.published().by_formats(['xlsx', 'csv', 'xls']).values(
-            'file', 'pk', 'format', 'dataset__organization__title', 'title'
+        res_details = (
+            Resource.objects.published()
+            .by_formats(["xlsx", "csv", "xls"])
+            .values("file", "pk", "format", "dataset__organization__title", "title")
         )
         names_dict = {}
         for res in res_details:
-            filename = res['file'].rsplit('.', 1)[0]
-            split_name = filename.rsplit('_', 1)
-            suffix = split_name[-1] if len(split_name) > 1 else ''
+            filename = res["file"].rsplit(".", 1)[0]
+            split_name = filename.rsplit("_", 1)
+            suffix = split_name[-1] if len(split_name) > 1 else ""
             no_punctuation = all([p not in suffix for p in punctuation])
             # If we find a suffix which is long enough and contains only mixed letters and digits its probably
             # a suffix assigned by file storage in order to give unique filename
@@ -90,7 +99,7 @@ class Command(BaseCommand):
 
             for res in resources:
                 try:
-                    small_hash = self.get_hash(res['full_path'], first_chunk_only=True)
+                    small_hash = self.get_hash(res["full_path"], first_chunk_only=True)
                 except OSError:
                     # the file access might've changed till the exec point got here
                     continue
@@ -104,9 +113,9 @@ class Command(BaseCommand):
         def get_files_by_size():
             _files_by_size = defaultdict(list)
             for res in resources:
-                res['full_path'] = os.path.join(settings.RESOURCES_MEDIA_ROOT, res['file'])
+                res["full_path"] = os.path.join(settings.RESOURCES_MEDIA_ROOT, res["file"])
                 try:
-                    file_size = os.path.getsize(res['full_path'])
+                    file_size = os.path.getsize(res["full_path"])
                     _files_by_size[file_size].append(res)
                 except OSError:
                     continue
@@ -125,7 +134,7 @@ class Command(BaseCommand):
         duplicates_lst = flatten_duplicates_dct(files_by_small_hash)
         for res in duplicates_lst:
             try:
-                full_hash = self.get_hash(res['full_path'], first_chunk_only=False)
+                full_hash = self.get_hash(res["full_path"], first_chunk_only=False)
             except OSError:
                 # the file access might've changed till the exec point got here
                 continue

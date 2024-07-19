@@ -6,16 +6,26 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('suggestions', '0023_accepteddatasetsubmission_is_active'),
+        ("suggestions", "0023_accepteddatasetsubmission_is_active"),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='accepteddatasetsubmission',
-            options={'default_manager_name': 'objects', 'ordering': ('-submission_date',), 'verbose_name': 'Accepted dataset submission', 'verbose_name_plural': 'Accepted dataset submissions'},
+            name="accepteddatasetsubmission",
+            options={
+                "default_manager_name": "objects",
+                "ordering": ("-submission_date",),
+                "verbose_name": "Accepted dataset submission",
+                "verbose_name_plural": "Accepted dataset submissions",
+            },
         ),
         migrations.AlterModelOptions(
-            name='datasetsubmissiontrash',
-            options={'default_manager_name': 'objects', 'ordering': ('-submission_date',), 'verbose_name': 'Dataset submission - Trash', 'verbose_name_plural': 'Dataset submissions - Trash'},
+            name="datasetsubmissiontrash",
+            options={
+                "default_manager_name": "objects",
+                "ordering": ("-submission_date",),
+                "verbose_name": "Dataset submission - Trash",
+                "verbose_name_plural": "Dataset submissions - Trash",
+            },
         ),
     ]

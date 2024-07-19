@@ -4,7 +4,7 @@ from mcod.core.managers import SoftDeletableManager, SoftDeletableQuerySet, Tras
 
 class MeetingQuerySetMixin:
     def published(self):
-        return self.filter(status='published')
+        return self.filter(status="published")
 
 
 class MeetingQuerySet(MeetingQuerySetMixin, SoftDeletableQuerySet):

@@ -7,13 +7,17 @@ import modeltrans.fields
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('resources', '0012_resource_tabular_data_schema'),
+        ("resources", "0012_resource_tabular_data_schema"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='resource',
-            name='i18n',
-            field=modeltrans.fields.TranslationField(fields=('title', 'description'), required_languages=(), virtual_fields=True),
+            model_name="resource",
+            name="i18n",
+            field=modeltrans.fields.TranslationField(
+                fields=("title", "description"),
+                required_languages=(),
+                virtual_fields=True,
+            ),
         ),
     ]

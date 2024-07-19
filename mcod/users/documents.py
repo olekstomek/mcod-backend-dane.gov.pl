@@ -13,23 +13,25 @@ class MeetingDoc(Document):
     description = fields.TextField()
     venue = fields.StringField()
     start_date = fields.DateField()
-    start_time = fields.KeywordField(attr='start_time_str')
-    end_time = fields.KeywordField(attr='end_time_str')
+    start_time = fields.KeywordField(attr="start_time_str")
+    end_time = fields.KeywordField(attr="end_time_str")
     materials = fields.NestedField(
         properties={
-            'id': fields.IntegerField(),
-            'download_url': fields.KeywordField(),
-            'name': fields.KeywordField(),
+            "id": fields.IntegerField(),
+            "download_url": fields.KeywordField(),
+            "name": fields.KeywordField(),
         }
     )
 
     class Index:
-        name = mcs.ELASTICSEARCH_INDEX_NAMES['meetings']
+        name = mcs.ELASTICSEARCH_INDEX_NAMES["meetings"]
         settings = mcs.ELASTICSEARCH_DSL_INDEX_SETTINGS
 
     class Django:
         model = Meeting
-        related_models = [MeetingFile, ]
+        related_models = [
+            MeetingFile,
+        ]
 
     def get_instances_from_related(self, related_instance):
         if isinstance(related_instance, MeetingFile):

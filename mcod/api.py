@@ -34,40 +34,41 @@ from mcod.lib.errors import (
 
 logger = logging.getLogger("elasticapm.errors.client")
 
-jsonapi_handler = JSONHandler(
-    dumps=partial(json.dumps, cls=APIEncoder)
-)
+jsonapi_handler = JSONHandler(dumps=partial(json.dumps, cls=APIEncoder))
 
 extra_handlers = {
     # JSON:API
-    'application/vnd.api+json': jsonapi_handler,
-    'application/vnd.api+json; ext=bulk': jsonapi_handler,
+    "application/vnd.api+json": jsonapi_handler,
+    "application/vnd.api+json; ext=bulk": jsonapi_handler,
     # XML
-    'application/xml': XMLHandler(),
+    "application/xml": XMLHandler(),
     # other
-    'text/csv': ExportHandler(),
-    'text/tsv': ExportHandler(),
-    'text/tab-separated-values': ExportHandler(),
-    'application/vnd.ms-excel': ExportHandler(),
-    'application/sparql-results+json': SparqlHandler(),
-    'application/sparql-results+xml': SparqlHandler(),
-    'application/zip': ZipHandler()
+    "text/csv": ExportHandler(),
+    "text/tsv": ExportHandler(),
+    "text/tab-separated-values": ExportHandler(),
+    "application/vnd.ms-excel": ExportHandler(),
+    "application/sparql-results+json": SparqlHandler(),
+    "application/sparql-results+xml": SparqlHandler(),
+    "application/zip": ZipHandler(),
 }
 
 
-extra_handlers.update(
-    {mt: RDFHandler() for mt in set(settings.RDF_FORMAT_TO_MIMETYPE.values())}
-)
+extra_handlers.update({mt: RDFHandler() for mt in set(settings.RDF_FORMAT_TO_MIMETYPE.values())})
 
 
 class ApiApp(falcon.App):
-    def __init__(self, media_type=DEFAULT_MEDIA_TYPE,
-                 request_type=Request, response_type=Response,
-                 middleware=None, router=None,
-                 independent_middleware=False):
+    def __init__(
+        self,
+        media_type=DEFAULT_MEDIA_TYPE,
+        request_type=Request,
+        response_type=Response,
+        middleware=None,
+        router=None,
+        independent_middleware=False,
+    ):
         self.apm_client = get_client()
         if self.apm_client:
-            logging_level = getattr(settings, 'API_LOG_LEVEL', 'DEBUG')
+            logging_level = getattr(settings, "API_LOG_LEVEL", "DEBUG")
             setup_logging(LoggingHandler(self.apm_client, level=logging_level))
 
             if self.apm_client.config.instrument:
@@ -80,7 +81,7 @@ class ApiApp(falcon.App):
             response_type=response_type,
             middleware=middleware,
             router=router,
-            independent_middleware=independent_middleware
+            independent_middleware=independent_middleware,
         )
 
     def add_routes(self, routes):
@@ -106,33 +107,36 @@ class ApiApp(falcon.App):
                         capture_body=self.apm_client.config.capture_body in ("errors", "all"),
                         capture_headers=self.apm_client.config.capture_headers,
                     )
-                }
+                },
             )
         return super()._handle_exception(req, resp, exc, params)
 
 
 class Cache(BaseCache):
     """Cache which uses custom version of middleware."""
+
     @property
     def middleware(self):
         return middlewares.FalconCacheMiddleware(self.cache, self.config)
 
 
-app_cache = Cache(config={
-    'CACHE_TYPE': 'redis',
-    'CACHE_EVICTION_STRATEGY': 'time-based',
-    'CACHE_KEY_PREFIX': 'falcon-cache',
-    'CACHE_REDIS_URL': settings.REDIS_URL,
-})  # https://falcon-caching.readthedocs.io/en/stable/
+app_cache = Cache(
+    config={
+        "CACHE_TYPE": "redis",
+        "CACHE_EVICTION_STRATEGY": "time-based",
+        "CACHE_KEY_PREFIX": "falcon-cache",
+        "CACHE_REDIS_URL": settings.REDIS_URL,
+    }
+)  # https://falcon-caching.readthedocs.io/en/stable/
 
 
 limiter = Limiter(
     key_func=get_limiter_key,
     default_limits=settings.FALCON_LIMITER_DEFAULT_LIMITS,
     config={
-        'RATELIMIT_KEY_PREFIX': 'falcon-limiter',
-        'RATELIMIT_STORAGE_URL': settings.REDIS_URL,
-    }
+        "RATELIMIT_KEY_PREFIX": "falcon-limiter",
+        "RATELIMIT_STORAGE_URL": settings.REDIS_URL,
+    },
 )
 
 
@@ -141,7 +145,7 @@ def get_api_app():
 
     os.environ.setdefault("COMPONENT", "api")
     if settings.ENABLE_SENTRY:
-        sentry_sdk.init(**settings.SENTRY_SDK_KWARGS['api'])
+        sentry_sdk.init(**settings.SENTRY_SDK_KWARGS["api"])
 
     _middlewares = [
         middlewares.ContentTypeMiddleware(),
@@ -161,8 +165,8 @@ def get_api_app():
 
     app = ApiApp(middleware=_middlewares)
 
-    app.router_options.converters['export_format'] = ExportFormatConverter
-    app.router_options.converters['rdf_format'] = RDFFormatConverter
+    app.router_options.converters["export_format"] = ExportFormatConverter
+    app.router_options.converters["rdf_format"] = RDFFormatConverter
     app.add_error_handler(Exception, error_500_handler)
     app.add_error_handler(falcon.HTTPError, error_handler)
     app.add_error_handler(falcon.HTTPNotFound, error_404_handler)
@@ -171,7 +175,7 @@ def get_api_app():
     app.add_error_handler(falcon.HTTPUnprocessableEntity, error_422_handler)
     app.set_error_serializer(error_serializer)
     app.add_routes(routes)
-    app.add_sink(lambda req, resp: setattr(resp, 'media', {'data': None}), '/ping')
+    app.add_sink(lambda req, resp: setattr(resp, "media", {"data": None}), "/ping")
     app.add_static_route(settings.STATIC_URL, settings.STATIC_ROOT)
     app.add_static_route(settings.MEDIA_URL, settings.MEDIA_ROOT)
     app.req_options.strip_url_path_trailing_slash = True
@@ -183,7 +187,7 @@ def get_api_app():
 django.setup()
 app = get_api_app()
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     from werkzeug.serving import run_simple
 
-    run_simple('0.0.0.0', 8000, app, use_reloader=True)
+    run_simple("0.0.0.0", 8000, app, use_reloader=True)

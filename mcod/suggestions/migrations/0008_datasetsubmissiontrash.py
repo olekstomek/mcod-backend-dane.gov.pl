@@ -7,25 +7,24 @@ import django.db.models.manager
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('suggestions', '0007_auto_20200721_0744'),
+        ("suggestions", "0007_auto_20200721_0744"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='DatasetSubmissionTrash',
-            fields=[
-            ],
+            name="DatasetSubmissionTrash",
+            fields=[],
             options={
-                'verbose_name': 'Trash',
-                'verbose_name_plural': 'Trash',
-                'ordering': ('-submission_date',),
-                'proxy': True,
-                'indexes': [],
-                'constraints': [],
+                "verbose_name": "Trash",
+                "verbose_name_plural": "Trash",
+                "ordering": ("-submission_date",),
+                "proxy": True,
+                "indexes": [],
+                "constraints": [],
             },
-            bases=('suggestions.datasetsubmission',),
+            bases=("suggestions.datasetsubmission",),
             managers=[
-                ('raw', django.db.models.manager.Manager()),
+                ("raw", django.db.models.manager.Manager()),
             ],
         ),
     ]

@@ -7,7 +7,7 @@ from mcod.core.api.rdf.registry import registry as rdf_registry
 
 @pytest.fixture
 def sparql_store():
-    return SPARQLStore(endpoint=getattr(settings, 'SPARQL_QUERY_ENDPOINT'))
+    return SPARQLStore(endpoint=getattr(settings, "SPARQL_QUERY_ENDPOINT"))
 
 
 @pytest.fixture

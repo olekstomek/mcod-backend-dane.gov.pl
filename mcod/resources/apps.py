@@ -5,13 +5,14 @@ from mcod.core.apps import ExtendedAppMixin
 
 
 class ResourcesConfig(ExtendedAppMixin, AppConfig):
-    name = 'mcod.resources'
-    verbose_name = _('Resources')
+    name = "mcod.resources"
+    verbose_name = _("Resources")
 
     def ready(self):
         from mcod.core.registries import rdf_serializers_registry as rsr
         from mcod.resources.models import Chart, Resource, ResourceFile, ResourceTrash, Supplement
         from mcod.resources.serializers import ResourceRDFResponseSchema
+
         self.connect_core_signals(Resource)
         self.connect_core_signals(ResourceFile)
         self.connect_core_signals(ResourceTrash)

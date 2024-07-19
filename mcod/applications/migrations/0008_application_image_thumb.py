@@ -7,13 +7,18 @@ import mcod.core.storages
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('applications', '0007_auto_20181031_1627'),
+        ("applications", "0007_auto_20181031_1627"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='application',
-            name='image_thumb',
-            field=models.ImageField(blank=True, null=True, storage=mcod.core.storages.ApplicationImagesStorage(base_url=None, location=None), upload_to='%Y%m%d'),
+            model_name="application",
+            name="image_thumb",
+            field=models.ImageField(
+                blank=True,
+                null=True,
+                storage=mcod.core.storages.ApplicationImagesStorage(base_url=None, location=None),
+                upload_to="%Y%m%d",
+            ),
         ),
     ]

@@ -10,16 +10,18 @@ from mcod.core.db.models import ExtendedModel, TrashModelBase
 from mcod.core.managers import SoftDeletableManager
 from mcod.lib.widgets import RichTextUploadingField
 
-EVENT_TYPES = [
-    ('analysis', _('Analysis')),
-    ('research', _('Research'))
-]
+EVENT_TYPES = [("analysis", _("Analysis")), ("research", _("Research"))]
 
 
 class LabEvent(ExtendedModel):
     title = models.CharField(max_length=300, verbose_name=_("Title"))
-    event_type = models.CharField(max_length=10, choices=EVENT_TYPES, default='analysis', editable=True,
-                                  verbose_name=_("Event type"))
+    event_type = models.CharField(
+        max_length=10,
+        choices=EVENT_TYPES,
+        default="analysis",
+        editable=True,
+        verbose_name=_("Event type"),
+    )
     notes = RichTextUploadingField(verbose_name=_("Notes"))
     execution_date = models.DateField(verbose_name=_("Execution date"))
 
@@ -38,9 +40,11 @@ class LabEvent(ExtendedModel):
     class Meta:
         verbose_name = _("Event")
         verbose_name_plural = _("Events")
-        db_table = 'lab_event'
+        db_table = "lab_event"
         default_manager_name = "objects"
-        indexes = [GinIndex(fields=["i18n"]), ]
+        indexes = [
+            GinIndex(fields=["i18n"]),
+        ]
 
 
 class LabEventTrash(LabEvent, metaclass=TrashModelBase):
@@ -51,12 +55,13 @@ class LabEventTrash(LabEvent, metaclass=TrashModelBase):
 
 
 class LabReport(ExtendedModel):
-    link = models.URLField(verbose_name=_('Report Link'), max_length=2000, blank=True, null=True)
+    link = models.URLField(verbose_name=_("Report Link"), max_length=2000, blank=True, null=True)
     file = models.FileField(
         verbose_name=_("File"),
-        storage=storages.get_storage('lab_reports'),
+        storage=storages.get_storage("lab_reports"),
         max_length=2000,
-        blank=True, null=True
+        blank=True,
+        null=True,
     )
     lab_event = models.ForeignKey(to=LabEvent, on_delete=models.DO_NOTHING, related_name="reports")
 
@@ -67,7 +72,7 @@ class LabReport(ExtendedModel):
 
     @property
     def report_type(self):
-        return 'link' if self.link else 'file'
+        return "link" if self.link else "file"
 
     @property
     def download_url(self):
@@ -85,6 +90,8 @@ class LabReport(ExtendedModel):
     class Meta:
         verbose_name = _("Report")
         verbose_name_plural = _("Reports")
-        db_table = 'lab_report'
+        db_table = "lab_report"
         default_manager_name = "objects"
-        indexes = [GinIndex(fields=["i18n"]), ]
+        indexes = [
+            GinIndex(fields=["i18n"]),
+        ]

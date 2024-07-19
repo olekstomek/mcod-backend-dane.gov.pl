@@ -11,6 +11,7 @@ class Command(BaseCommand):
     Custom Django management command to retrieve a nginx certificate
     and add it to the certifi library.
     """
+
     help = "Gets nginx certificate and imports it to certifi library."
     nginx_cert_path = "configs/nginx/certs/mcod.local.pem"
 

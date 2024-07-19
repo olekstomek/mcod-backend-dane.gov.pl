@@ -11,32 +11,36 @@ import uuid
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('datasets', '0011_dataset_i18n'),
+        ("datasets", "0011_dataset_i18n"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='dataset',
-            name='published_at',
-            field=model_utils.fields.MonitorField(default=django.utils.timezone.now, monitor='status', when={'published'}),
+            model_name="dataset",
+            name="published_at",
+            field=model_utils.fields.MonitorField(default=django.utils.timezone.now, monitor="status", when={"published"}),
         ),
         migrations.AddField(
-            model_name='dataset',
-            name='removed_at',
-            field=model_utils.fields.MonitorField(default=django.utils.timezone.now, monitor='is_removed', when={True}),
+            model_name="dataset",
+            name="removed_at",
+            field=model_utils.fields.MonitorField(default=django.utils.timezone.now, monitor="is_removed", when={True}),
         ),
         migrations.AlterField(
-            model_name='dataset',
-            name='i18n',
-            field=modeltrans.fields.TranslationField(fields=('title', 'notes', 'slug'), required_languages=(), virtual_fields=True),
+            model_name="dataset",
+            name="i18n",
+            field=modeltrans.fields.TranslationField(
+                fields=("title", "notes", "slug"),
+                required_languages=(),
+                virtual_fields=True,
+            ),
         ),
         migrations.AlterField(
-            model_name='dataset',
-            name='slug',
+            model_name="dataset",
+            name="slug",
             field=models.SlugField(blank=True, default=uuid.uuid4, max_length=600),
         ),
         migrations.AddIndex(
-            model_name='dataset',
-            index=django.contrib.postgres.indexes.GinIndex(fields=['i18n'], name='dataset_i18n_16a80f_gin'),
+            model_name="dataset",
+            index=django.contrib.postgres.indexes.GinIndex(fields=["i18n"], name="dataset_i18n_16a80f_gin"),
         ),
     ]

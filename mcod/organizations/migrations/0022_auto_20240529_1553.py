@@ -13,6 +13,11 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name="organization",
             name="electronic_delivery_address",
-            field=models.CharField(blank=True, max_length=26, null=True, verbose_name="Address for electronic delivery"),
+            field=models.CharField(
+                blank=True,
+                max_length=26,
+                null=True,
+                verbose_name="Address for electronic delivery",
+            ),
         ),
     ]

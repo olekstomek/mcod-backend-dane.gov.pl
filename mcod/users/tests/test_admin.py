@@ -5,9 +5,9 @@ from pytest_bdd import scenarios
 
 from mcod.datasets.models import User
 
-scenarios('features/admin.feature')
-scenarios('features/admin_forms.feature')
-scenarios('features/meetings.feature')
+scenarios("features/admin.feature")
+scenarios("features/admin_forms.feature")
+scenarios("features/meetings.feature")
 
 
 class TestUserAdmin:
@@ -15,29 +15,29 @@ class TestUserAdmin:
         client = Client()
         client.force_login(admin)
         response = client.get(reverse("admin:users_user_changelist"))
-        assert response.content.count(b'field-email') == 1
+        assert response.content.count(b"field-email") == 1
 
     def test_editor_with_organization_get_queryset(self, admin, active_editor):
         client = Client()
         client.force_login(active_editor)
         response = client.get(reverse("admin:users_user_changelist"))
-        assert response.content.count(b'field-email') == 1
+        assert response.content.count(b"field-email") == 1
 
     def test_editor_without_organization_get_queryset(self, admin, active_editor):
         client = Client()
         client.force_login(active_editor)
         response = client.get(reverse("admin:users_user_changelist"))
-        assert response.content.count(b'field-email') == 1
+        assert response.content.count(b"field-email") == 1
 
     def test_editor_cant_see_is_staff_is_superuser_state_fields_in_form(self, active_editor):
         client = Client()
         client.force_login(active_editor)
         response = client.get(active_editor.admin_change_url)
         assert 200 == response.status_code
-        assert 'id_email' in smart_str(response.content)
+        assert "id_email" in smart_str(response.content)
         assert '"id_is_staff"' not in smart_str(response.content)
-        assert 'id_is_superuser' not in smart_str(response.content)
-        assert 'id_state' not in smart_str(response.content)
+        assert "id_is_superuser" not in smart_str(response.content)
+        assert "id_state" not in smart_str(response.content)
 
     def test_editor_cant_change_himself_to_be_a_superuser_with_post_method(self, active_editor):
         client = Client()
@@ -45,24 +45,21 @@ class TestUserAdmin:
         response = client.post(
             active_editor.admin_change_url,
             data={
-                'email': active_editor.email,
-                'fullname': active_editor.fullname,
-                'phone': active_editor.phone,
-                "is_superuser": True
+                "email": active_editor.email,
+                "fullname": active_editor.fullname,
+                "phone": active_editor.phone,
+                "is_superuser": True,
             },
-            follow=True
+            follow=True,
         )
         assert 200 == response.status_code
-        assert 'To pole jest wymagane.' not in smart_str(response.content)
+        assert "To pole jest wymagane." not in smart_str(response.content)
         u = User.objects.get(id=active_editor.id)
         assert not u.is_superuser
 
     def test_login_email_is_case_insensitive(self, active_editor):
         client = Client()
-        payloads = {
-            'email': active_editor.email.upper(),
-            'password': "12345.Abcde"
-        }
+        payloads = {"email": active_editor.email.upper(), "password": "12345.Abcde"}
         client.login(**payloads)
         response = client.get(reverse("admin:users_user_changelist"))
         assert 200 == response.status_code
@@ -75,13 +72,13 @@ class TestUserAdmin:
         response = client.post(
             active_editor.admin_change_url,
             data={
-                'email': active_editor.email,
+                "email": active_editor.email,
                 "is_superuser": False,
-                'state': 'active',
-                'is_academy_admin': True,
-                'is_labs_admin': True,
+                "state": "active",
+                "is_academy_admin": True,
+                "is_labs_admin": True,
             },
-            follow=True
+            follow=True,
         )
         assert 200 == response.status_code
         u = User.objects.get(id=active_editor.id)
@@ -94,11 +91,11 @@ class TestUserAdmin:
         response = client.post(
             active_editor.admin_change_url,
             data={
-                'email': 'new_mail@test.com',
-                'fullname': active_editor.fullname,
-                'phone': '111111111',
+                "email": "new_mail@test.com",
+                "fullname": active_editor.fullname,
+                "phone": "111111111",
             },
-            follow=True
+            follow=True,
         )
         u = User.objects.get(id=active_editor.id)
         assert 200 == response.status_code

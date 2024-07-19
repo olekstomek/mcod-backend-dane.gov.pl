@@ -7,13 +7,13 @@ import mcod.lib.widgets
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('laboratory', '0007_auto_20200630_1018'),
+        ("laboratory", "0007_auto_20200630_1018"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='labevent',
-            name='notes',
-            field=mcod.lib.widgets.RichTextUploadingField(verbose_name='Notes'),
+            model_name="labevent",
+            name="notes",
+            field=mcod.lib.widgets.RichTextUploadingField(verbose_name="Notes"),
         ),
     ]

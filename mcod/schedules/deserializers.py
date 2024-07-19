@@ -9,7 +9,7 @@ from mcod.resources.models import supported_formats
 from mcod.schedules.models import Schedule, UserScheduleItem
 
 SCHEDULE_STATES = [x[0] for x in Schedule.SCHEDULE_STATES]
-SCHEDULE_STATES_STR = ', '.join([str(x) for x in SCHEDULE_STATES])
+SCHEDULE_STATES_STR = ", ".join([str(x) for x in SCHEDULE_STATES])
 SUPPORTED_FORMATS = supported_formats()
 USER_SCHEDULE_ITEM_STATES = [x[0] for x in UserScheduleItem.RECOMMENDATION_STATES]
 
@@ -17,8 +17,8 @@ USER_SCHEDULE_ITEM_STATES = [x[0] for x in UserScheduleItem.RECOMMENDATION_STATE
 class CommentsApiRequest(ListingSchema):
     sort = search_fields.SortField(
         sort_fields={
-            'id': 'id',
-            'created': 'created',
+            "id": "id",
+            "created": "created",
         },
     )
 
@@ -31,7 +31,7 @@ class CreateCommentAttrs(ObjectAttrs):
     text = fields.Str(required=True, validate=validate.Length(min=1))
 
     class Meta:
-        object_type = 'comment'
+        object_type = "comment"
         strict = True
         ordered = True
 
@@ -50,45 +50,52 @@ class ScheduleAttrs(ObjectAttrs):
     is_blocked = fields.Bool()
 
     class Meta:
-        object_type = 'schedule'
+        object_type = "schedule"
         strict = True
         ordered = True
 
-    @validates('link')
+    @validates("link")
     def validate_link(self, value):
         if value:
             validate.URL()(value)
 
     @validates_schema
     def validate_data(self, data, **kwargs):
-        obj = self.context.get('obj')
-        if obj and not obj.end_date and 'new_end_date' in data:
+        obj = self.context.get("obj")
+        if obj and not obj.end_date and "new_end_date" in data:
             raise ValidationError(
-                _('You cannot set new_end_date if end_date is not set yet!'), field_name='new_end_date')
+                _("You cannot set new_end_date if end_date is not set yet!"),
+                field_name="new_end_date",
+            )
 
 
 class ImplementedScheduleAttrs(ScheduleAttrs):
     state = fields.Str(
         validate=validate.OneOf(
-            choices=['archived'],
-            error=_('Invalid value! Possible values: %(values)s') % {'values': 'archived'})
+            choices=["archived"],
+            error=_("Invalid value! Possible values: %(values)s") % {"values": "archived"},
+        )
     )
 
     class Meta(ScheduleAttrs.Meta):
-        fields = ('link', 'state', )
+        fields = (
+            "link",
+            "state",
+        )
 
 
 class ArchivedScheduleAttrs(ImplementedScheduleAttrs):
     state = fields.Str(
         validate=validate.OneOf(
-            choices=['implemented'],
-            error=_('Invalid value! Possible values: %(values)s') % {'values': 'implemented'})
+            choices=["implemented"],
+            error=_("Invalid value! Possible values: %(values)s") % {"values": "implemented"},
+        )
     )
 
 
 class CreateUserScheduleItemAttrs(ObjectAttrs):
-    institution = fields.Str(attribute='organization_name', required=True, validate=validate.Length(min=1))
-    institution_unit = fields.Str(attribute='organization_unit')
+    institution = fields.Str(attribute="organization_name", required=True, validate=validate.Length(min=1))
+    institution_unit = fields.Str(attribute="organization_unit")
     dataset_title = fields.Str(required=True, validate=validate.Length(min=1))
     format = fields.Str(required=True, validate=validate.Length(min=1))
     is_new = fields.Bool(required=True)
@@ -97,23 +104,24 @@ class CreateUserScheduleItemAttrs(ObjectAttrs):
     description = fields.Str()
 
     class Meta:
-        object_type = 'user_schedule_item'
+        object_type = "user_schedule_item"
         strict = True
         ordered = True
 
     @validates_schema
     def validate_data(self, data, **kwargs):
-        is_new = data.get('is_new')
-        is_openness_score_increased = data.get('is_openness_score_increased')
-        is_quality_improved = data.get('is_quality_improved')
+        is_new = data.get("is_new")
+        is_openness_score_increased = data.get("is_openness_score_increased")
+        is_quality_improved = data.get("is_quality_improved")
         if is_new:
-            if 'is_openness_score_increased' in data:
-                del data['is_openness_score_increased']
-            if 'is_quality_improved' in data:
-                del data['is_quality_improved']
+            if "is_openness_score_increased" in data:
+                del data["is_openness_score_increased"]
+            if "is_quality_improved" in data:
+                del data["is_quality_improved"]
         if is_new is False and is_openness_score_increased is None and is_quality_improved is None:  # False is ok.
             raise ValidationError(
-                _('is_openness_score_increased or is_quality_improved is required if value of is_new is False!'))
+                _("is_openness_score_increased or is_quality_improved is required if value of is_new is False!")
+            )
 
 
 class PlannedScheduleApiRequest(TopLevel):
@@ -142,8 +150,8 @@ class AdminCreateUserScheduleItemAttrs(CreateUserScheduleItemAttrs):
     recommendation_state = fields.Str(
         validate=validate.OneOf(
             choices=USER_SCHEDULE_ITEM_STATES,
-            error=_('Unsupported recommendation state. Supported are: %(states)s') % {
-                'states': USER_SCHEDULE_ITEM_STATES})
+            error=_("Unsupported recommendation state. Supported are: %(states)s") % {"states": USER_SCHEDULE_ITEM_STATES},
+        )
     )
     recommendation_notes = fields.Str(allow_none=True)
     is_accepted = fields.Bool()
@@ -152,46 +160,46 @@ class AdminCreateUserScheduleItemAttrs(CreateUserScheduleItemAttrs):
     resource_link = fields.Str(allow_none=True)
 
     class Meta:
-        object_type = 'user_schedule_item'
+        object_type = "user_schedule_item"
         strict = True
         ordered = True
 
-    @validates('resource_link')
+    @validates("resource_link")
     def validate_resource_link(self, value):
         if value:
             validate.URL()(value)
 
     @post_load
     def prepare_data(self, data, **kwargs):
-        obj = self.context.get('obj')
+        obj = self.context.get("obj")
         if not obj:
-            if data.get('recommendation_notes') is None:
-                data['recommendation_notes'] = ''
-            if data.get('resource_link') is None:
-                data['resource_link'] = ''
-            if data.get('is_resource_added_notes') is None:
-                data['is_resource_added_notes'] = ''
-        is_accepted = data.pop('is_accepted', None)
+            if data.get("recommendation_notes") is None:
+                data["recommendation_notes"] = ""
+            if data.get("resource_link") is None:
+                data["resource_link"] = ""
+            if data.get("is_resource_added_notes") is None:
+                data["is_resource_added_notes"] = ""
+        is_accepted = data.pop("is_accepted", None)
         if is_accepted is True:
-            data['recommendation_state'] = 'recommended'
+            data["recommendation_state"] = "recommended"
         elif is_accepted is False:
-            data['recommendation_state'] = 'not_recommended'
+            data["recommendation_state"] = "not_recommended"
         return data
 
     @validates_schema
     def validate_data(self, data, **kwargs):
-        is_accepted = data.get('is_accepted')
-        recommendation_notes = data.get('recommendation_notes')
-        recommendation_state = data.get('recommendation_state')
-        if (recommendation_state == 'not_recommended' or is_accepted is False) and not recommendation_notes:
-            raise ValidationError('This field is required!', field_name='recommendation_notes')
+        is_accepted = data.get("is_accepted")
+        recommendation_notes = data.get("recommendation_notes")
+        recommendation_state = data.get("recommendation_state")
+        if (recommendation_state == "not_recommended" or is_accepted is False) and not recommendation_notes:
+            raise ValidationError("This field is required!", field_name="recommendation_notes")
 
 
 class AdminUserScheduleItemAttrs(AdminCreateUserScheduleItemAttrs):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        for name in ['dataset_title', 'format', 'institution', 'is_new']:
+        for name in ["dataset_title", "format", "institution", "is_new"]:
             if name in self._fields:
                 self._fields[name].required = False
 
@@ -202,31 +210,31 @@ class AgentImplementedUserScheduleItemAttrs(ObjectAttrs):
     resource_link = fields.Str()
 
     class Meta:
-        object_type = 'user_schedule_item'
+        object_type = "user_schedule_item"
         strict = True
         ordered = True
 
-    @validates('resource_link')
+    @validates("resource_link")
     def validate_resource_link(self, value):
         if value:
             validate.URL()(value)
 
     @validates_schema
     def validate_data(self, data, **kwargs):
-        is_resource_added = data.get('is_resource_added')
-        is_resource_added_notes = data.get('is_resource_added_notes')
-        resource_link = data.get('resource_link')
-        obj = self.context.get('obj')
+        is_resource_added = data.get("is_resource_added")
+        is_resource_added_notes = data.get("is_resource_added_notes")
+        resource_link = data.get("resource_link")
+        obj = self.context.get("obj")
         if obj:
             if obj.is_accepted:
                 if is_resource_added and not resource_link:
-                    raise ValidationError('This field is required!', field_name='resource_link')
+                    raise ValidationError("This field is required!", field_name="resource_link")
                 if not is_resource_added and not is_resource_added_notes:
-                    raise ValidationError('This field is required!', field_name='is_resource_added_notes')
+                    raise ValidationError("This field is required!", field_name="is_resource_added_notes")
             else:
-                data.pop('is_resource_added', None)
-                data.pop('is_resource_added_notes', None)
-                data.pop('resource_link', None)
+                data.pop("is_resource_added", None)
+                data.pop("is_resource_added_notes", None)
+                data.pop("resource_link", None)
 
 
 class AdminUserScheduleItemRequest(CreateUserScheduleItemRequest):
@@ -248,13 +256,15 @@ class AgentImplementedUserScheduleItemRequest(TopLevel):
 class CreateNotificationsAttrs(ObjectAttrs):
     message = fields.Str(required=True, validate=validate.Length(min=1, max=60))
     notification_type = fields.Str(
-        required=True, validate=validate.OneOf(
-            choices=['all', 'late'],
-            error=_('Unsupported notification type. Supported are: %(types)s') % {'types': 'all, late'})
+        required=True,
+        validate=validate.OneOf(
+            choices=["all", "late"],
+            error=_("Unsupported notification type. Supported are: %(types)s") % {"types": "all, late"},
+        ),
     )
 
     class Meta:
-        object_type = 'notification'
+        object_type = "notification"
         strict = True
         ordered = True
 
@@ -269,7 +279,7 @@ class NotificationAttrs(ObjectAttrs):
     unread = fields.Bool(required=True)
 
     class Meta:
-        object_type = 'notification'
+        object_type = "notification"
         strict = True
         ordered = True
 
@@ -283,10 +293,10 @@ class UpdateNotificationApiRequest(TopLevel):
 class NotificationsApiRequest(ListingSchema):
     sort = search_fields.SortField(
         sort_fields={
-            'id': 'id',
-            'timestamp': 'timestamp',
+            "id": "id",
+            "timestamp": "timestamp",
         },
-        doc_base_url='/auth/schedule_notifications',
+        doc_base_url="/auth/schedule_notifications",
     )
     unread = search_fields.NoDataField()
 
@@ -299,15 +309,18 @@ class UserScheduleAttrs(ObjectAttrs):
     is_ready = fields.Bool(required=True)
 
     class Meta:
-        object_type = 'user_schedule'
+        object_type = "user_schedule"
         strict = True
         ordered = True
 
     @validates_schema
     def validate_data(self, data, **kwargs):
-        obj = self.context.get('obj')
+        obj = self.context.get("obj")
         if obj and obj.is_blocked:
-            raise ValidationError(_('User schedule\'s readiness state cannot be changed!'), field_name='is_ready')
+            raise ValidationError(
+                _("User schedule's readiness state cannot be changed!"),
+                field_name="is_ready",
+            )
 
 
 class UpdateUserScheduleRequest(TopLevel):
@@ -318,7 +331,7 @@ class UpdateUserScheduleRequest(TopLevel):
 
 class ScheduleApiRequest(CommonSchema):
     include = search_fields.StringField(
-        description='Allow the client to customize which related resources should be returned in included section.',
+        description="Allow the client to customize which related resources should be returned in included section.",
         allowEmptyValue=True,
     )
     full = search_fields.NoDataField()
@@ -350,20 +363,24 @@ class UserScheduleItemInstitutionApiRequest(ListingSchema):
 
 class ListingRequest(ListingSchema):
     state = search_fields.StringField(
-        description='State of schedule', example='planned', required=False,
+        description="State of schedule",
+        example="planned",
+        required=False,
         validate=validate.OneOf(
             choices=SCHEDULE_STATES,
-            error=_('Invalid value! Possible values: %(values)s') % {'values': SCHEDULE_STATES_STR}))
+            error=_("Invalid value! Possible values: %(values)s") % {"values": SCHEDULE_STATES_STR},
+        ),
+    )
     full = search_fields.NoDataField()
 
 
 class SchedulesApiRequest(ListingRequest):
     sort = search_fields.SortField(
         sort_fields={
-            'id': 'id',
-            'created': 'created',
-            'end_date': 'end_date',
-            'new_end_date': 'new_end_date',
+            "id": "id",
+            "created": "created",
+            "end_date": "end_date",
+            "new_end_date": "new_end_date",
         },
     )
 
@@ -371,9 +388,9 @@ class SchedulesApiRequest(ListingRequest):
 class UserScheduleItemsApiRequest(SchedulesApiRequest):
     sort = search_fields.SortField(
         sort_fields={
-            'id': 'id',
-            'created': 'created',
-            'institution': 'institution',
+            "id": "id",
+            "created": "created",
+            "institution": "institution",
         },
     )
     q = fields.Str(validate=validate.Length(min=2))
@@ -383,19 +400,19 @@ class UserScheduleItemsApiRequest(SchedulesApiRequest):
 class UserSchedulesApiRequest(ListingRequest):
     sort = search_fields.SortField(
         sort_fields={
-            'id': 'id',
-            'created': 'created',
-            'email': 'email',
-            'institution': 'institution',
+            "id": "id",
+            "created": "created",
+            "email": "email",
+            "institution": "institution",
         },
     )
     is_ready = search_fields.NoDataField()
 
 
 def get_schedule_deserializer_schema(instance):
-    if instance.state == 'implemented':
+    if instance.state == "implemented":
         return ImplementedScheduleApiRequest
-    elif instance.state == 'archived':
+    elif instance.state == "archived":
         return ArchivedScheduleApiRequest
     return PlannedScheduleApiRequest
 
@@ -403,6 +420,6 @@ def get_schedule_deserializer_schema(instance):
 def get_user_schedule_item_deserializer_schema(instance, user):
     if user.is_superuser:
         return AdminUserScheduleItemRequest
-    if instance.state == 'implemented':
+    if instance.state == "implemented":
         return AgentImplementedUserScheduleItemRequest
     return CreateUserScheduleItemRequest

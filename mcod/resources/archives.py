@@ -61,27 +61,18 @@ def get_memory_file_info(file):
 def is_password_protected_archive_file(file):
     family, content_type, options = get_memory_file_info(file)
     content_type_2_func = {
-        **{
-            ct: is_password_protected_rar
-            for ct in settings.ARCHIVE_RAR_CONTENT_TYPES
-        },
-        **{
-            ct: is_password_protected_7z
-            for ct in settings.ARCHIVE_7Z_CONTENT_TYPES
-        },
-        **{
-            ct: is_password_protected_zip
-            for ct in settings.ARCHIVE_ZIP_CONTENT_TYPES
-        },
+        **{ct: is_password_protected_rar for ct in settings.ARCHIVE_RAR_CONTENT_TYPES},
+        **{ct: is_password_protected_7z for ct in settings.ARCHIVE_7Z_CONTENT_TYPES},
+        **{ct: is_password_protected_zip for ct in settings.ARCHIVE_ZIP_CONTENT_TYPES},
     }
     if content_type not in content_type_2_func:
         return False
 
-    return content_type_2_func[content_type](getattr(file, 'file', file))
+    return content_type_2_func[content_type](getattr(file, "file", file))
 
 
 def has_archive_extension(path):
-    ext = path.rsplit('.', 1)[-1]
+    ext = path.rsplit(".", 1)[-1]
     return ext in settings.ARCHIVE_EXTENSIONS
 
 
@@ -111,7 +102,7 @@ class ArchiveReader:
                             os.makedirs(os.path.join(root_dir, path), exist_ok=True)
                         resource_path = os.path.join(root_dir, path, extr_file)
 
-                        with open(resource_path, 'wb') as f:
+                        with open(resource_path, "wb") as f:
                             for block in entry.get_blocks():
                                 f.write(block)
                         files.append(resource_path)
@@ -125,7 +116,7 @@ class ArchiveReader:
         try:
             entry_path = entry.path.decode()
         except UnicodeDecodeError:
-            entry_path = entry.path.decode('iso8859_2')
+            entry_path = entry.path.decode("iso8859_2")
         return entry_path
 
     @property

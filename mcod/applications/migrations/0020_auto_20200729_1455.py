@@ -6,13 +6,21 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('applications', '0019_auto_20200728_1818'),
+        ("applications", "0019_auto_20200728_1818"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='applicationproposal',
-            name='decision',
-            field=models.CharField(blank=True, choices=[('accepted', 'Proposal accepted'), ('rejected', 'Proposal rejected')], max_length=8, verbose_name='decision'),
+            model_name="applicationproposal",
+            name="decision",
+            field=models.CharField(
+                blank=True,
+                choices=[
+                    ("accepted", "Proposal accepted"),
+                    ("rejected", "Proposal rejected"),
+                ],
+                max_length=8,
+                verbose_name="decision",
+            ),
         ),
     ]

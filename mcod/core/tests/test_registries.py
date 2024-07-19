@@ -54,7 +54,5 @@ class TestSerializersRegistry:
         assert registry_serializers_count == expected_serializers_count
 
     def test_user_localtime_csv_serializer_is_not_registered(self):
-        registered_serializers = [
-            serializer for _, serializer in csv_serializers_registry.items()
-        ]
+        registered_serializers = [serializer for _, serializer in csv_serializers_registry.items()]
         assert UserLocalTimeCSVSerializer not in registered_serializers

@@ -10,63 +10,81 @@ import uuid
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('suggestions', '0025_submissionfeedback'),
+        ("suggestions", "0025_submissionfeedback"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='submissionfeedback',
-            name='created',
-            field=model_utils.fields.AutoCreatedField(default=django.utils.timezone.now, editable=False, verbose_name='created'),
+            model_name="submissionfeedback",
+            name="created",
+            field=model_utils.fields.AutoCreatedField(
+                default=django.utils.timezone.now,
+                editable=False,
+                verbose_name="created",
+            ),
         ),
         migrations.AddField(
-            model_name='submissionfeedback',
-            name='i18n',
-            field=modeltrans.fields.TranslationField(fields=('slug',), required_languages=(), virtual_fields=True),
+            model_name="submissionfeedback",
+            name="i18n",
+            field=modeltrans.fields.TranslationField(fields=("slug",), required_languages=(), virtual_fields=True),
         ),
         migrations.AddField(
-            model_name='submissionfeedback',
-            name='is_removed',
+            model_name="submissionfeedback",
+            name="is_removed",
             field=models.BooleanField(default=False),
         ),
         migrations.AddField(
-            model_name='submissionfeedback',
-            name='modified',
-            field=model_utils.fields.AutoLastModifiedField(default=django.utils.timezone.now, editable=False, verbose_name='modified'),
+            model_name="submissionfeedback",
+            name="modified",
+            field=model_utils.fields.AutoLastModifiedField(
+                default=django.utils.timezone.now,
+                editable=False,
+                verbose_name="modified",
+            ),
         ),
         migrations.AddField(
-            model_name='submissionfeedback',
-            name='published_at',
-            field=model_utils.fields.MonitorField(default=django.utils.timezone.now, monitor='status', when={'published'}),
+            model_name="submissionfeedback",
+            name="published_at",
+            field=model_utils.fields.MonitorField(default=django.utils.timezone.now, monitor="status", when={"published"}),
         ),
         migrations.AddField(
-            model_name='submissionfeedback',
-            name='removed_at',
-            field=model_utils.fields.MonitorField(default=django.utils.timezone.now, monitor='is_removed', when={True}),
+            model_name="submissionfeedback",
+            name="removed_at",
+            field=model_utils.fields.MonitorField(default=django.utils.timezone.now, monitor="is_removed", when={True}),
         ),
         migrations.AddField(
-            model_name='submissionfeedback',
-            name='slug',
+            model_name="submissionfeedback",
+            name="slug",
             field=models.SlugField(blank=True, max_length=600),
         ),
         migrations.AddField(
-            model_name='submissionfeedback',
-            name='status',
-            field=model_utils.fields.StatusField(choices=[(0, 'dummy')], default='published', max_length=100, no_check_for_status=True, verbose_name='status'),
+            model_name="submissionfeedback",
+            name="status",
+            field=model_utils.fields.StatusField(
+                choices=[(0, "dummy")],
+                default="published",
+                max_length=100,
+                no_check_for_status=True,
+                verbose_name="status",
+            ),
         ),
         migrations.AddField(
-            model_name='submissionfeedback',
-            name='status_changed',
-            field=model_utils.fields.MonitorField(default=django.utils.timezone.now, monitor='status', verbose_name='status changed'),
+            model_name="submissionfeedback",
+            name="status_changed",
+            field=model_utils.fields.MonitorField(
+                default=django.utils.timezone.now,
+                monitor="status",
+                verbose_name="status changed",
+            ),
         ),
         migrations.AddField(
-            model_name='submissionfeedback',
-            name='uuid',
+            model_name="submissionfeedback",
+            name="uuid",
             field=models.UUIDField(default=uuid.uuid4),
         ),
         migrations.AddField(
-            model_name='submissionfeedback',
-            name='views_count',
+            model_name="submissionfeedback",
+            name="views_count",
             field=models.PositiveIntegerField(default=0),
         ),
     ]

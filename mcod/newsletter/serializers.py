@@ -11,17 +11,17 @@ class NewsletterRulesApiAttrs(ObjectAttrs):
     personal_data_use_rules = fields.Str()
 
     class Meta:
-        object_type = 'newsletter_rules'
-        url_template = '{api_url}/auth/newsletter/subscribe/'
+        object_type = "newsletter_rules"
+        url_template = "{api_url}/auth/newsletter/subscribe/"
 
 
 class SubscriptionApiAttrs(ObjectAttrs):
-    newsletter_subscription_info = fields.Str(attribute='info')
+    newsletter_subscription_info = fields.Str(attribute="info")
 
     class Meta:
-        object_type = 'subscription'
-        url_template = '{api_url}/auth/subscriptions/{ident}'
-        fields = ['email', 'is_active', 'newsletter_subscription_info']
+        object_type = "subscription"
+        url_template = "{api_url}/auth/subscriptions/{ident}"
+        fields = ["email", "is_active", "newsletter_subscription_info"]
 
 
 class NewsletterRulesApiResponse(TopLevel):
@@ -38,13 +38,13 @@ class UnsubscribeApiAttrs(ObjectAttrs):
     newsletter_subscription_info = fields.Str()
 
     class Meta:
-        object_type = 'unsubscribe_result'
-        url_template = '{api_url}/auth/subscriptions/{ident}'
-        fields = ['email', 'newsletter_subscription_info']
+        object_type = "unsubscribe_result"
+        url_template = "{api_url}/auth/subscriptions/{ident}"
+        fields = ["email", "newsletter_subscription_info"]
 
     @pre_dump
     def prepare_data(self, data, **kwargs):
-        data.newsletter_subscription_info = _('Your email address was removed from our mailing list')
+        data.newsletter_subscription_info = _("Your email address was removed from our mailing list")
         return data
 
 

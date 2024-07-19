@@ -11,32 +11,36 @@ import uuid
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('resources', '0015_auto_20190327_0937'),
+        ("resources", "0015_auto_20190327_0937"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='resource',
-            name='published_at',
-            field=model_utils.fields.MonitorField(default=django.utils.timezone.now, monitor='status', when={'published'}),
+            model_name="resource",
+            name="published_at",
+            field=model_utils.fields.MonitorField(default=django.utils.timezone.now, monitor="status", when={"published"}),
         ),
         migrations.AddField(
-            model_name='resource',
-            name='removed_at',
-            field=model_utils.fields.MonitorField(default=django.utils.timezone.now, monitor='is_removed', when={True}),
+            model_name="resource",
+            name="removed_at",
+            field=model_utils.fields.MonitorField(default=django.utils.timezone.now, monitor="is_removed", when={True}),
         ),
         migrations.AddField(
-            model_name='resource',
-            name='slug',
+            model_name="resource",
+            name="slug",
             field=models.SlugField(blank=True, default=uuid.uuid4, max_length=600),
         ),
         migrations.AlterField(
-            model_name='resource',
-            name='i18n',
-            field=modeltrans.fields.TranslationField(fields=('title', 'description', 'slug'), required_languages=(), virtual_fields=True),
+            model_name="resource",
+            name="i18n",
+            field=modeltrans.fields.TranslationField(
+                fields=("title", "description", "slug"),
+                required_languages=(),
+                virtual_fields=True,
+            ),
         ),
         migrations.AddIndex(
-            model_name='resource',
-            index=django.contrib.postgres.indexes.GinIndex(fields=['i18n'], name='resource_i18n_435fbf_gin'),
+            model_name="resource",
+            index=django.contrib.postgres.indexes.GinIndex(fields=["i18n"], name="resource_i18n_435fbf_gin"),
         ),
     ]

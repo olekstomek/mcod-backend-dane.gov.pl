@@ -6,24 +6,27 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('datasets', '0002_initial'),
+        ("datasets", "0002_initial"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='DatasetTrash',
-            fields=[
-            ],
+            name="DatasetTrash",
+            fields=[],
             options={
-                'verbose_name': 'Trash',
-                'verbose_name_plural': 'Trash',
-                'proxy': True,
-                'indexes': [],
+                "verbose_name": "Trash",
+                "verbose_name_plural": "Trash",
+                "proxy": True,
+                "indexes": [],
             },
-            bases=('datasets.dataset',),
+            bases=("datasets.dataset",),
         ),
         migrations.AlterModelOptions(
-            name='dataset',
-            options={'default_manager_name': 'objects', 'verbose_name': 'Dataset', 'verbose_name_plural': 'Datasets'},
+            name="dataset",
+            options={
+                "default_manager_name": "objects",
+                "verbose_name": "Dataset",
+                "verbose_name_plural": "Datasets",
+            },
         ),
     ]

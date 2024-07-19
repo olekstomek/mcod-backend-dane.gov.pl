@@ -6,18 +6,18 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('resources', '0037_auto_20210416_2153'),
+        ("resources", "0037_auto_20210416_2153"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='chart',
-            name='is_permanently_removed',
+            model_name="chart",
+            name="is_permanently_removed",
             field=models.BooleanField(default=False),
         ),
         migrations.AddField(
-            model_name='resource',
-            name='is_permanently_removed',
+            model_name="resource",
+            name="is_permanently_removed",
             field=models.BooleanField(default=False),
         ),
     ]

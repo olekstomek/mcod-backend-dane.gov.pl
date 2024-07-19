@@ -5,22 +5,22 @@ from django.conf import settings
 
 
 def create_default_region(apps, schema_editor):
-    region = apps.get_model('regions', 'Region')
+    region = apps.get_model("regions", "Region")
     region.objects.create(
         region_id=settings.DEFAULT_REGION_ID,
-        name='Polska',
-        i18n={'name_en': 'Poland'},
-        region_type='country',
+        name="Polska",
+        i18n={"name_en": "Poland"},
+        region_type="country",
         bbox=["14.122885", "49.002047", "24.145783", "54.836417"],
-        lat=Decimal('51.99605'),
-        lng=Decimal('19.488789')
+        lat=Decimal("51.99605"),
+        lng=Decimal("19.488789"),
     )
 
 
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('regions', '0002_auto_20211104_1350'),
+        ("regions", "0002_auto_20211104_1350"),
     ]
 
     operations = [

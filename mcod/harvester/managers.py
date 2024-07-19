@@ -4,10 +4,10 @@ from mcod.core.managers import SoftDeletableManager, SoftDeletableQuerySet
 class DataSourceQuerySet(SoftDeletableQuerySet):
 
     def active(self):
-        return self.filter(status='active')
+        return self.filter(status="active")
 
     def inactive(self):
-        return self.filter(status='inactive')
+        return self.filter(status="inactive")
 
 
 class DataSourceManager(SoftDeletableManager):

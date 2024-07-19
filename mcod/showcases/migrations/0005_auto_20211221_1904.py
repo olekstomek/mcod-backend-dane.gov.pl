@@ -7,13 +7,19 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('showcases', '0004_auto_20211217_1110'),
+        ("showcases", "0004_auto_20211217_1110"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='showcaseproposal',
-            name='showcase',
-            field=models.OneToOneField(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to='showcases.Showcase', verbose_name='showcase'),
+            model_name="showcaseproposal",
+            name="showcase",
+            field=models.OneToOneField(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                to="showcases.Showcase",
+                verbose_name="showcase",
+            ),
         ),
     ]

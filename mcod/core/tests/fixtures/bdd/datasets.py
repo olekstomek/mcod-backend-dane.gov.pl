@@ -75,9 +75,7 @@ def dataset_with_dga_resource() -> Dataset:
 
 
 @pytest.fixture
-def dataset_with_resources_with_mocked_path(
-    mocker: MockerFixture, tmp_path: str
-) -> Dataset:
+def dataset_with_resources_with_mocked_path(mocker: MockerFixture, tmp_path: str) -> Dataset:
     """
     Fixture for generating a dataset with a resources. Overriding a media location
     property for dataset archives, ensuring it returns a temporary path provided by the
@@ -97,24 +95,16 @@ def create_dataset_with_resources(dataset_with_resources):
     return dataset_with_resources
 
 
-@given(
-    parsers.parse("dataset with id {dataset_id:d} and institution {organization_id:d}")
-)
+@given(parsers.parse("dataset with id {dataset_id:d} and institution {organization_id:d}"))
 def dataset_with_organization(dataset_id, organization_id):
     organization = create_object("institution", organization_id)
     return create_object("dataset", dataset_id, organization=organization)
 
 
-@given(
-    parsers.parse(
-        "dataset with id {dataset_id:d} and title {dataset_title} and institution {organization_id:d}"
-    )
-)
+@given(parsers.parse("dataset with id {dataset_id:d} and title {dataset_title} and institution {organization_id:d}"))
 def dataset_with_title_and_organization(dataset_id, dataset_title, organization_id):
     organization = create_object("institution", organization_id)
-    return create_object(
-        "dataset", dataset_id, title=dataset_title, organization=organization
-    )
+    return create_object("dataset", dataset_id, title=dataset_title, organization=organization)
 
 
 @given("dataset with chart as visualization type")
@@ -134,30 +124,18 @@ def dataset_with_map_as_visualization_type(geo_tabular_data_resource):
     return geo_tabular_data_resource.dataset
 
 
-@given(
-    parsers.parse(
-        "dataset for data {dataset_data} imported from {source_type} named {name} with url {portal_url}"
-    )
-)
+@given(parsers.parse("dataset for data {dataset_data} imported from {source_type} named {name} with url {portal_url}"))
 def imported_dataset(dataset_data, source_type, name, portal_url):
     dataset_data = json.loads(dataset_data)
-    _source = DataSourceFactory.create(
-        source_type=source_type, name=name, portal_url=portal_url
-    )
+    _source = DataSourceFactory.create(source_type=source_type, name=name, portal_url=portal_url)
     _dataset = DatasetFactory.create(source=_source, **dataset_data)
     ResourceFactory.create(dataset=_dataset)
     return _dataset
 
 
-@given(
-    parsers.parse(
-        "resource with id {resource_id} imported from {source_type} named {name} with url {portal_url}"
-    )
-)
+@given(parsers.parse("resource with id {resource_id} imported from {source_type} named {name} with url {portal_url}"))
 def imported_resource(resource_id, source_type, name, portal_url):
-    _source = DataSourceFactory.create(
-        source_type=source_type, name=name, portal_url=portal_url
-    )
+    _source = DataSourceFactory.create(source_type=source_type, name=name, portal_url=portal_url)
     _dataset = DatasetFactory.create(source=_source)
     _resource = ResourceFactory.create(id=resource_id, dataset=_dataset)
     return _resource
@@ -165,14 +143,11 @@ def imported_resource(resource_id, source_type, name, portal_url):
 
 @given(
     parsers.parse(
-        "resource with id {resource_id} imported from {source_type} named {name} with url {portal_url}"
-        " and type {res_type}"
+        "resource with id {resource_id} imported from {source_type} named {name} with url {portal_url}" " and type {res_type}"
     )
 )
 def imported_resource_of_type(resource_id, source_type, name, portal_url, res_type):
-    _source = DataSourceFactory.create(
-        source_type=source_type, name=name, portal_url=portal_url
-    )
+    _source = DataSourceFactory.create(source_type=source_type, name=name, portal_url=portal_url)
     _dataset = DatasetFactory.create(source=_source)
     _resource = ResourceFactory.create(id=resource_id, dataset=_dataset, type=res_type)
     return _resource
@@ -222,18 +197,14 @@ def dataset_with_supplements_plus_resource_with_supplements():
 
 @given(parsers.parse("dataset with id {dataset_id:d} and {num:d} resources"))
 def dataset_with_id_and_datasets(dataset_id, num):
-    _dataset = DatasetFactory.create(
-        id=dataset_id, title="dataset {} with resources".format(dataset_id)
-    )
+    _dataset = DatasetFactory.create(id=dataset_id, title="dataset {} with resources".format(dataset_id))
     ResourceFactory.create_batch(num, dataset=_dataset)
     return _dataset
 
 
 @given(parsers.parse("dataset with id {dataset_id:d} and {num:d} showcases"))
 def dataset_with_id_and_showcases(dataset_id, num):
-    _dataset = DatasetFactory.create(
-        id=dataset_id, title="dataset {} with showcases".format(dataset_id)
-    )
+    _dataset = DatasetFactory.create(id=dataset_id, title="dataset {} with showcases".format(dataset_id))
     for x in range(num):
         ShowcaseFactory.create(title=f"Ponowne wykorzystanie {x + 1}", datasets=[_dataset])
     return _dataset
@@ -699,23 +670,15 @@ def dataset_with_id_and_resources(dataset_id, slug):
 
 @then(parsers.parse("api response is csv file with {record_count:d} records"))
 def api_response_is_csv_file_with_records(context, record_count):
-    csv_reader = csv.reader(
-        io.StringIO(context.response.content.decode("utf-8")), delimiter=";"
-    )
+    csv_reader = csv.reader(io.StringIO(context.response.content.decode("utf-8")), delimiter=";")
     csv_record_count = -1
     for row in csv_reader:
         csv_record_count += 1
     assert record_count == csv_record_count
 
 
-@then(
-    parsers.parse(
-        "api response is xml file with {datasets_count:d} datasets and {resources_count:d} resources"
-    )
-)
-def api_response_is_xml_file_with_datasets_and_resources(
-    context, datasets_count, resources_count
-):
+@then(parsers.parse("api response is xml file with {datasets_count:d} datasets and {resources_count:d} resources"))
+def api_response_is_xml_file_with_datasets_and_resources(context, datasets_count, resources_count):
     root = ET.fromstring(context.response.content.decode("utf-8"))
     assert root.tag == "catalog"
     assert len(root.findall("dataset")) == datasets_count
@@ -742,22 +705,14 @@ def create_catalog_csv_file():
 @given("created catalog xml file")
 def create_catalog_xml_file():
     for lang_code in ("pl", "en"):
-        src = str(
-            os.path.join(
-                settings.TEST_SAMPLES_PATH, "datasets", lang_code, "katalog.xml"
-            )
-        )
+        src = str(os.path.join(settings.TEST_SAMPLES_PATH, "datasets", lang_code, "katalog.xml"))
         dest = str(os.path.join(settings.METADATA_MEDIA_ROOT, lang_code, "katalog.xml"))
         if not os.path.exists(os.path.dirname(dest)):
             os.makedirs(os.path.dirname(dest))
         copyfile(src, dest)
 
 
-@then(
-    parsers.parse(
-        "Dataset with id {dataset_id} has archive containing {files_count:d} files"
-    )
-)
+@then(parsers.parse("Dataset with id {dataset_id} has archive containing {files_count:d} files"))
 def archive_contains_files(dataset_id, files_count):
     model = apps.get_model("datasets", "dataset")
     inst = model.objects.get(pk=dataset_id)
@@ -766,11 +721,7 @@ def archive_contains_files(dataset_id, files_count):
         assert len(zip_f.namelist()) == files_count
 
 
-@then(
-    parsers.parse(
-        "Dataset with id {dataset_id} has zip with trimmed file names and no special characters"
-    )
-)
+@then(parsers.parse("Dataset with id {dataset_id} has zip with trimmed file names and no special characters"))
 def archive_files_trimmed_filename_and_no_special_chars(dataset_id):
     model = apps.get_model("datasets", "dataset")
     special_chars = '<>:"/\\|?*~#%&+{}-^ęóąśćłńźżĘÓĄŚŁŻŹĆŃ'
@@ -810,9 +761,7 @@ def dataset_has_categories_with_ids(categories_ids):
         " dataset with id {another_param_value} resource's data_date delay equals {second_delay:d}"
     )
 )
-def dataset_resources_has_set_data_date(
-    param_value, another_param_value, first_delay, second_delay, admin
-):
+def dataset_resources_has_set_data_date(param_value, another_param_value, first_delay, second_delay, admin):
     freq_updates_with_delays = {
         "yearly": {"default_delay": 7, "relative_delta": relativedelta(years=1)},
         "everyHalfYear": {
@@ -832,20 +781,12 @@ def dataset_resources_has_set_data_date(
     second_ds.save()
     first_resource = first_ds.resources.latest("created")
     second_resource = second_ds.resources.latest("created")
-    first_reldelta = freq_updates_with_delays[first_ds.update_frequency][
-        "relative_delta"
-    ]
-    second_reldelta = freq_updates_with_delays[second_ds.update_frequency][
-        "relative_delta"
-    ]
-    first_data_date = (
-        date.today() + relativedelta(days=int(second_delay)) - first_reldelta
-    )
+    first_reldelta = freq_updates_with_delays[first_ds.update_frequency]["relative_delta"]
+    second_reldelta = freq_updates_with_delays[second_ds.update_frequency]["relative_delta"]
+    first_data_date = date.today() + relativedelta(days=int(second_delay)) - first_reldelta
     first_resource.data_date = first_data_date
     first_resource.update_notification_frequency = first_delay
-    second_data_date = (
-        date.today() + relativedelta(days=int(second_delay)) - second_reldelta
-    )
+    second_data_date = date.today() + relativedelta(days=int(second_delay)) - second_reldelta
     second_resource.data_date = second_data_date
     second_resource.type = "file"
     first_resource.type = "file"

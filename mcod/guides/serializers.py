@@ -13,8 +13,8 @@ class GuideApiRelationships(Relationships):
     items = fields.Nested(
         DataRelationship,
         many=False,
-        _type='item',
-        path='items',
+        _type="item",
+        path="items",
         show_data=True,
         required=True,
         default=[],
@@ -25,24 +25,24 @@ class GuideItemApiRelationships(Relationships):
     guide = fields.Nested(
         Relationship,
         required=True,
-        _type='guide',
-        url_template='{api_url}/guides/{ident}',
+        _type="guide",
+        url_template="{api_url}/guides/{ident}",
     )
 
 
 class GuideApiAttrs(ObjectAttrs):
-    title = TranslatedStr(data_key='name')
+    title = TranslatedStr(data_key="name")
 
     class Meta:
         relationships_schema = GuideApiRelationships
-        object_type = 'guide'
-        url_template = '{api_url}/guides/{ident}'
+        object_type = "guide"
+        url_template = "{api_url}/guides/{ident}"
         ordered = True
-        model = 'guides.Guide'
+        model = "guides.Guide"
 
 
 class GuideItemApiAttrs(ObjectAttrs):
-    title = TranslatedStr(data_key='name')
+    title = TranslatedStr(data_key="name")
     content = TranslatedStr()
     route = fields.Str()
     css_selector = fields.Str()
@@ -54,10 +54,10 @@ class GuideItemApiAttrs(ObjectAttrs):
 
     class Meta:
         relationships_schema = GuideItemApiRelationships
-        object_type = 'item'
-        url_template = '{api_url}/guides/{ident}'
+        object_type = "item"
+        url_template = "{api_url}/guides/{ident}"
         ordered = True
-        model = 'guides.GuideItem'
+        model = "guides.GuideItem"
 
 
 class GuideApiResponse(TopLevel):

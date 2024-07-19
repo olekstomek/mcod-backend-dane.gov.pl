@@ -13,7 +13,7 @@ def get_forms_for_user(user):
     editable_forms = editable_forms.filter(content_type=ct)
 
     # Apply hooks
-    for fn in hooks.get_hooks('filter_form_submissions_for_user'):
+    for fn in hooks.get_hooks("filter_form_submissions_for_user"):
         editable_forms = fn(user, editable_forms)
 
     return editable_forms
@@ -21,7 +21,7 @@ def get_forms_for_user(user):
 
 def to_i18n_url(url, lang_code):
     scheme, netloc, path, query, fragment = urlsplit(url)
-    return urlunsplit((scheme, netloc, f'/{lang_code}{path}', query, fragment))
+    return urlunsplit((scheme, netloc, f"/{lang_code}{path}", query, fragment))
 
 
 def filter_page_type(queryset, page_models):

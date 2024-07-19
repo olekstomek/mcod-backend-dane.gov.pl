@@ -21,19 +21,19 @@ from mcod.histories.managers import HistoryManager, LogEntryManager
 
 
 class History(models.Model):
-    table_name = models.CharField(max_length=255, verbose_name=_('table name'))
-    row_id = models.IntegerField(verbose_name=_('row id'))
-    action = models.CharField(max_length=50, verbose_name=_('action'))
-    old_value = JSONField(verbose_name=_('old value'), null=True)
-    new_value = JSONField(verbose_name=_('new value'), null=True)
-    change_user_id = models.IntegerField(verbose_name=_('User'))
-    change_timestamp = models.DateTimeField(verbose_name=_('Change timestamp'), default=datetime.now)
-    message = models.TextField(verbose_name=_('message'), null=True)
+    table_name = models.CharField(max_length=255, verbose_name=_("table name"))
+    row_id = models.IntegerField(verbose_name=_("row id"))
+    action = models.CharField(max_length=50, verbose_name=_("action"))
+    old_value = JSONField(verbose_name=_("old value"), null=True)
+    new_value = JSONField(verbose_name=_("new value"), null=True)
+    change_user_id = models.IntegerField(verbose_name=_("User"))
+    change_timestamp = models.DateTimeField(verbose_name=_("Change timestamp"), default=datetime.now)
+    message = models.TextField(verbose_name=_("message"), null=True)
 
     objects = HistoryManager()
 
     class Meta:
-        db_table = 'history'
+        db_table = "history"
         verbose_name = _("History")
         verbose_name_plural = _("Histories")
 
@@ -43,7 +43,7 @@ class History(models.Model):
 
     @property
     def difference(self):
-        if self.action == 'UPDATE':
+        if self.action == "UPDATE":
             ddiff = DeepDiff(
                 self.old_value,
                 self.new_value,
@@ -52,14 +52,14 @@ class History(models.Model):
                 exclude_paths={"root['modified']", "root['metadata_modified']"},
             )
 
-            if 'type_changes' in ddiff:
-                del ddiff['type_changes']
-            if 'dictionary_item_added' in ddiff:
-                del ddiff['dictionary_item_added']
-            if 'values_changed' in ddiff:
-                for el in ddiff['values_changed']:
-                    if 'diff' in ddiff['values_changed'][el]:
-                        del ddiff['values_changed'][el]['diff']
+            if "type_changes" in ddiff:
+                del ddiff["type_changes"]
+            if "dictionary_item_added" in ddiff:
+                del ddiff["dictionary_item_added"]
+            if "values_changed" in ddiff:
+                for el in ddiff["values_changed"]:
+                    if "diff" in ddiff["values_changed"][el]:
+                        del ddiff["values_changed"][el]["diff"]
             ddiff = ddiff.json
         else:
             ddiff = json.dumps(self.new_value, ensure_ascii=False)
@@ -67,16 +67,16 @@ class History(models.Model):
 
     @property
     def logentry_action(self):
-        if self.action == 'INSERT':
+        if self.action == "INSERT":
             return LogEntry.Action.CREATE
-        elif self.action == 'UPDATE':
+        elif self.action == "UPDATE":
             return LogEntry.Action.UPDATE
-        elif self.action == 'DELETE':
+        elif self.action == "DELETE":
             return LogEntry.Action.DELETE
 
     @property
     def logentry_changes(self):
-        return json.dumps(self.new_value, ensure_ascii=False) if self.new_value else ''
+        return json.dumps(self.new_value, ensure_ascii=False) if self.new_value else ""
 
     @property
     def user(self):
@@ -89,9 +89,9 @@ class History(models.Model):
 
     def diff_prettified(self):
         response = json.loads(self.difference)
-        response = json.dumps(response, sort_keys=True, indent=1, ensure_ascii=False).replace('&oacute;', "ó")
+        response = json.dumps(response, sort_keys=True, indent=1, ensure_ascii=False).replace("&oacute;", "ó")
         response = response[:10000]
-        formatter = HtmlFormatter(style='colorful', lineseparator="<br>")
+        formatter = HtmlFormatter(style="colorful", lineseparator="<br>")
         response = highlight(response, JsonLexer(), formatter)
         style = "<style>" + formatter.get_style_defs() + "</style>"
         return mark_safe(style + response)
@@ -117,7 +117,7 @@ class History(models.Model):
             action=self.action,
             change_user_id=self.change_user_id,
             change_timestamp=self.change_timestamp,
-            message=self.message
+            message=self.message,
         )
         obj.save()
         return obj.to_dict(include_meta=True)
@@ -128,10 +128,10 @@ class LogEntry(BaseLogEntry):
     objects = LogEntryManager()
 
     class Meta:
-        get_latest_by = 'timestamp'
-        ordering = ['-timestamp']
-        verbose_name = _('History')
-        verbose_name_plural = _('Histories')
+        get_latest_by = "timestamp"
+        ordering = ["-timestamp"]
+        verbose_name = _("History")
+        verbose_name_plural = _("Histories")
         proxy = True
 
     def __str__(self):
@@ -144,7 +144,7 @@ class LogEntry(BaseLogEntry):
     @property
     def action_name(self):
         _name = self.action_display
-        return 'INSERT' if _name == 'CREATE' else _name
+        return "INSERT" if _name == "CREATE" else _name
 
     @property
     def change_timestamp(self):
@@ -161,9 +161,9 @@ class LogEntry(BaseLogEntry):
     @property
     def diff_prettified(self):
         response = json.loads(self.changes)
-        response = json.dumps(response, sort_keys=True, indent=1, ensure_ascii=False).replace('&oacute;', "ó")
+        response = json.dumps(response, sort_keys=True, indent=1, ensure_ascii=False).replace("&oacute;", "ó")
         response = response[:10000]
-        formatter = HtmlFormatter(style='colorful', lineseparator="<br>")
+        formatter = HtmlFormatter(style="colorful", lineseparator="<br>")
         response = highlight(response, JsonLexer(), formatter)
         style = "<style>" + formatter.get_style_defs() + "</style>"
         return mark_safe(style + response)
@@ -191,8 +191,8 @@ class LogEntry(BaseLogEntry):
             val = default_value
         elif isinstance(field_value, list):
             val = field_value[1]
-            if field_name == 'is_removed':
-                val = val == 'True'
+            if field_name == "is_removed":
+                val = val == "True"
         else:
             val = field_value
         return val
@@ -224,22 +224,18 @@ class LogEntry(BaseLogEntry):
             timestamp = item.timestamp
             item.save()
             item.timestamp = timestamp  # https://stackoverflow.com/q/7499767/1845230
-            item.save(update_fields=['timestamp'])
+            item.save(update_fields=["timestamp"])
 
 
 @receiver(post_save, sender=LogEntry)
 @receiver(post_save, sender=BaseLogEntry)
 def update_log_entry_handler(sender, instance, *args, **kwargs):
-    update_document_task.s(
-        LogEntry._meta.app_label,
-        LogEntry._meta.object_name,
-        instance.id).apply_async_on_commit(queue='history')
+    update_document_task.s(LogEntry._meta.app_label, LogEntry._meta.object_name, instance.id).apply_async_on_commit(
+        queue="history"
+    )
 
 
 @receiver(post_delete, sender=LogEntry)
 @receiver(post_delete, sender=BaseLogEntry)
 def delete_log_entry_handler(sender, instance, *args, **kwargs):
-    delete_document_task.s(
-        LogEntry._meta.app_label,
-        LogEntry._meta.object_name,
-        instance.id).apply_async(queue='history')
+    delete_document_task.s(LogEntry._meta.app_label, LogEntry._meta.object_name, instance.id).apply_async(queue="history")

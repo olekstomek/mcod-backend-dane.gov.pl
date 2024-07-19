@@ -71,7 +71,7 @@
         .removeClass('active')
         .find('> .dropdown-menu > .active')
         .removeClass('active')
-     
+
 
       trigger.addClass('active');
       element.addClass('active');

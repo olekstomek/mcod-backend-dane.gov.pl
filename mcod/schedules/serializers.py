@@ -18,8 +18,8 @@ class CommentApiRelationships(Relationships):
     user_schedule_item = fields.Nested(
         Relationship,
         many=False,
-        _type='user_schedule_item',
-        url_template='{api_url}/auth/user_schedule_items/{ident}',
+        _type="user_schedule_item",
+        url_template="{api_url}/auth/user_schedule_items/{ident}",
     )
 
 
@@ -29,46 +29,45 @@ class ScheduleApiRelationships(Relationships):
         required=True,
         many=False,
         default=[],
-        _type='user_schedule',
-        url_template='{object_url}/user_schedules',
+        _type="user_schedule",
+        url_template="{object_url}/user_schedules",
     )
     user_schedule_items_included = fields.Nested(
         Relationship,
         required=True,
-        data_key='user_schedule_items',
+        data_key="user_schedule_items",
         many=False,
         default=[],
-        _type='user_schedule_item',
-        url_template='{object_url}/user_schedule_items',
+        _type="user_schedule_item",
+        url_template="{object_url}/user_schedule_items",
     )
     agents = fields.Nested(
         Relationship,
         required=True,
-        attribute='total_agents',
+        attribute="total_agents",
         many=False,
         default=[],
-        _type='agent',
-        url_template='{api_url}/auth/schedule_agents',
+        _type="agent",
+        url_template="{api_url}/auth/schedule_agents",
     )
 
     def __init__(self, *args, **kwargs):
         try:
-            is_superuser = kwargs['context']['request'].user.is_superuser
+            is_superuser = kwargs["context"]["request"].user.is_superuser
         except (KeyError, AttributeError):
             is_superuser = False
         if not is_superuser:
-            kwargs['exclude'] = kwargs.get('exclude', tuple()) + ('agents', )
+            kwargs["exclude"] = kwargs.get("exclude", tuple()) + ("agents",)
         super().__init__(*args, **kwargs)
 
     def filter_data(self, data, **kwargs):
-        user = self.context['request'].user if 'request' in self.context else None
+        user = self.context["request"].user if "request" in self.context else None
         if user and not user.is_superuser:
             user = user.extra_agent_of or user
-            if 'user_schedule_items_included' in data:
-                data['user_schedule_items_included'] = data['user_schedule_items_included'].filter(
-                    user_schedule__user=user)
-            if 'user_schedules' in data:
-                data['user_schedules'] = data['user_schedules'].filter(user=user)
+            if "user_schedule_items_included" in data:
+                data["user_schedule_items_included"] = data["user_schedule_items_included"].filter(user_schedule__user=user)
+            if "user_schedules" in data:
+                data["user_schedules"] = data["user_schedules"].filter(user=user)
         return data
 
 
@@ -76,20 +75,20 @@ class UserScheduleApiRelationships(Relationships):
     schedule = fields.Nested(
         Relationship,
         many=False,
-        _type='schedule',
-        url_template='{api_url}/auth/schedules/{ident}',
+        _type="schedule",
+        url_template="{api_url}/auth/schedules/{ident}",
     )
     user = fields.Nested(
         Relationship,
         many=False,
-        _type='user',
+        _type="user",
     )
     user_schedule_items = fields.Nested(
         Relationship,
         many=False,
         default=[],
-        _type='user_schedule_item',
-        url_template='{object_url}/items',
+        _type="user_schedule_item",
+        url_template="{object_url}/items",
     )
 
 
@@ -97,27 +96,27 @@ class UserScheduleItemApiRelationships(Relationships):
     schedule = fields.Nested(
         Relationship,
         many=False,
-        _type='schedule',
-        url_template='{api_url}/auth/schedules/{ident}',
+        _type="schedule",
+        url_template="{api_url}/auth/schedules/{ident}",
     )
     user = fields.Nested(
         Relationship,
         many=False,
-        _type='user',
+        _type="user",
     )
     user_schedule = fields.Nested(
         Relationship,
         many=False,
-        _type='user_schedule',
-        url_template='{api_url}/auth/user_schedules/{ident}',
+        _type="user_schedule",
+        url_template="{api_url}/auth/user_schedules/{ident}",
     )
     comments = fields.Nested(
         Relationship,
-        attribute='user_schedule_item_comments',
+        attribute="user_schedule_item_comments",
         many=False,
         default=[],
-        _type='comment',
-        url_template='{object_url}/comments',
+        _type="comment",
+        url_template="{object_url}/comments",
     )
 
 
@@ -134,14 +133,14 @@ class ScheduleApiAttrs(ObjectAttrs):
 
     class Meta:
         relationships_schema = ScheduleApiRelationships
-        object_type = 'schedule'
-        url_template = '{api_url}/auth/schedules/{ident}'
+        object_type = "schedule"
+        url_template = "{api_url}/auth/schedules/{ident}"
         ordered = True
-        model = 'schedules.Schedule'
+        model = "schedules.Schedule"
 
 
 class UserScheduleApiAttrs(ObjectAttrs):
-    email = fields.Email(attribute='user.email')
+    email = fields.Email(attribute="user.email")
     institution = fields.Str()
     items_count = fields.Int()
     is_ready = fields.Bool()
@@ -152,16 +151,16 @@ class UserScheduleApiAttrs(ObjectAttrs):
 
     class Meta:
         relationships_schema = UserScheduleApiRelationships
-        object_type = 'user_schedule'
-        url_template = '{api_url}/auth/user_schedules/{ident}'
+        object_type = "user_schedule"
+        url_template = "{api_url}/auth/user_schedules/{ident}"
         ordered = True
-        model = 'schedules.UserSchedule'
+        model = "schedules.UserSchedule"
 
 
 class UserScheduleItemApiAttrs(ObjectAttrs):
     email = fields.Email()
-    institution = fields.Str(attribute='organization_name')
-    institution_unit = fields.Str(attribute='organization_unit')
+    institution = fields.Str(attribute="organization_name")
+    institution_unit = fields.Str(attribute="organization_unit")
     dataset_title = fields.Str()
     created = fields.Date()
     format = fields.Str()
@@ -182,18 +181,18 @@ class UserScheduleItemApiAttrs(ObjectAttrs):
 
     class Meta:
         relationships_schema = UserScheduleItemApiRelationships
-        object_type = 'user_schedule_item'
-        url_template = '{api_url}/auth/user_schedule_items/{ident}'
+        object_type = "user_schedule_item"
+        url_template = "{api_url}/auth/user_schedule_items/{ident}"
         ordered = True
-        model = 'schedules.UserScheduleItem'
+        model = "schedules.UserScheduleItem"
 
     @post_dump
     def prepare_data(self, data, **kwargs):
-        request = self.context.get('request')
-        user = getattr(request, 'user', None) if request else None
+        request = self.context.get("request")
+        user = getattr(request, "user", None) if request else None
         if not user or not user.is_superuser:
-            del data['recommendation_state']
-            del data['recommendation_notes']
+            del data["recommendation_state"]
+            del data["recommendation_notes"]
         return data
 
 
@@ -222,9 +221,9 @@ class CommentApiAttrs(ObjectAttrs):
 
     class Meta:
         relationships_schema = CommentApiRelationships
-        object_type = 'comment'
+        object_type = "comment"
         ordered = True
-        model = 'schedules.Comment'
+        model = "schedules.Comment"
 
     @staticmethod
     def self_api_url(data):
@@ -241,7 +240,7 @@ class CreateNotificationsApiAttrs(ObjectAttrs):
     success = fields.Bool()
 
     class Meta:
-        object_type = 'result'
+        object_type = "result"
         ordered = True
 
 
@@ -253,8 +252,8 @@ class CreateNotificationsApiResponse(TopLevel):
 class NotificationApiAttrs(NotificationSerializer, ObjectAttrs):
 
     class Meta:
-        object_type = 'notification'
-        url_template = '{api_url}/auth/schedule_notifications/{ident}'
+        object_type = "notification"
+        url_template = "{api_url}/auth/schedule_notifications/{ident}"
         ordered = True
 
 
@@ -279,7 +278,7 @@ class UserScheduleItemFormatApiAttrs(ObjectAttrs):
     name = fields.Str()
 
     class Meta:
-        object_type = 'format'
+        object_type = "format"
         ordered = True
 
     @staticmethod
@@ -291,8 +290,8 @@ class UserScheduleItemInstitutionApiAttrs(ObjectAttrs):
     title = fields.Str()
 
     class Meta:
-        object_type = 'institution'
-        url_template = '{api_url}/institutions/{ident}'
+        object_type = "institution"
+        url_template = "{api_url}/institutions/{ident}"
 
 
 class UserScheduleItemFormatApiResponse(TopLevel):
@@ -309,7 +308,7 @@ class ExportUrlApiAttrs(ObjectAttrs):
     url = fields.URL()
 
     class Meta:
-        object_type = 'export'
+        object_type = "export"
         ordered = True
 
     @staticmethod
@@ -323,30 +322,34 @@ class ExportUrlApiResponse(TopLevel):
 
 
 class UserScheduleItemCSVSerializer(CSVSerializer, metaclass=CSVSchemaRegistrator):
-    row_no = fields.Int(data_key='L.p.', required=True, example=1, allow_none=True)
-    organization_name = fields.Str(data_key='Ministerstwo (instytucja)', example='Ministerstwo Cyfryzacji')
-    organization_unit = fields.Str(data_key='Jednostka podległa/nadzorowana')
-    dataset_title = fields.Str(data_key='Zasoby danych', example='Imiona nadawane dzieciom w Polsce')
-    format = fields.Str(data_key='Format danych', example='xlsx')
-    is_new_yes_no = fields.Str(data_key='Nowy zasób (tak/nie)', example='Tak')
+    row_no = fields.Int(data_key="L.p.", required=True, example=1, allow_none=True)
+    organization_name = fields.Str(data_key="Ministerstwo (instytucja)", example="Ministerstwo Cyfryzacji")
+    organization_unit = fields.Str(data_key="Jednostka podległa/nadzorowana")
+    dataset_title = fields.Str(data_key="Zasoby danych", example="Imiona nadawane dzieciom w Polsce")
+    format = fields.Str(data_key="Format danych", example="xlsx")
+    is_new_yes_no = fields.Str(data_key="Nowy zasób (tak/nie)", example="Tak")
     is_openness_score_increased_yes_no = fields.Str(
-        data_key='Wyższy poziom otwartości (tak/nie) - wypełnić w przypadku aktualizacji zbioru', example='Tak')
+        data_key="Wyższy poziom otwartości (tak/nie) - wypełnić w przypadku aktualizacji zbioru",
+        example="Tak",
+    )
     is_quality_improved_yes_no = fields.Str(
-        data_key='Poprawiona jakość np. dezagregacja danych adresowych, poprawiona struktura danych (tak/nie) - '
-                 'wypełnić w przypadku aktualizacji zbioru', example='Tak')
-    description = fields.Str(data_key='Uwagi', example='treść uwag...')
-    recommendation_state_name = fields.Str(data_key='Rekomendacja', example='awaits')
-    recommendation_notes = fields.Str(data_key='Komentarz do rekomendacji', example='treść komentarza...')
-    is_resource_added_yes_no = fields.Str(data_key='Realizacja', example='Tak')
-    resource_link = fields.Str(data_key='Link do zasobu', example='http://example.com')
-    is_resource_added_notes = fields.Str(data_key='Komentarz do realizacji', example='treść komentarza...')
+        data_key="Poprawiona jakość np. dezagregacja danych adresowych, poprawiona struktura danych (tak/nie) - "
+        "wypełnić w przypadku aktualizacji zbioru",
+        example="Tak",
+    )
+    description = fields.Str(data_key="Uwagi", example="treść uwag...")
+    recommendation_state_name = fields.Str(data_key="Rekomendacja", example="awaits")
+    recommendation_notes = fields.Str(data_key="Komentarz do rekomendacji", example="treść komentarza...")
+    is_resource_added_yes_no = fields.Str(data_key="Realizacja", example="Tak")
+    resource_link = fields.Str(data_key="Link do zasobu", example="http://example.com")
+    is_resource_added_notes = fields.Str(data_key="Komentarz do realizacji", example="treść komentarza...")
 
     class Meta:
         ordered = True
-        model = 'schedules.UserScheduleItem'
+        model = "schedules.UserScheduleItem"
 
     @pre_dump(pass_many=True)
     def prepare_row_no(self, data, many, **kwargs):
         for idx, item in enumerate(data, start=1):
-            setattr(item, 'row_no', idx)
+            setattr(item, "row_no", idx)
         return data

@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('guides', '0003_guideitem_history_trigger'),
+        ("guides", "0003_guideitem_history_trigger"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='guideitem',
-            name='css_selector',
-            field=models.CharField(max_length=300, verbose_name='css selector'),
+            model_name="guideitem",
+            name="css_selector",
+            field=models.CharField(max_length=300, verbose_name="css selector"),
         ),
     ]

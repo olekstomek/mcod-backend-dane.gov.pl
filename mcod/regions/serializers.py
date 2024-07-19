@@ -29,22 +29,22 @@ class RegionSchema(RegionBaseSchema):
 
 class RDFRegionSchema(DefaultRegionMixin, ExtSchema):
     geonames_url = fields.URL()
-    centroid = fields.Str(attribute='wkt_centroid')
+    centroid = fields.Str(attribute="wkt_centroid")
 
 
 class RegionAggregationSerializer(ExtAggregation):
-    id = fields.String(attribute='region_id')
+    id = fields.String(attribute="region_id")
     bbox = fields.List(fields.List(fields.Float()))
 
     def _get_item_data(self, item, data, id_field, field_name, additional_attributes):
         item_data = super()._get_item_data(item, data, id_field, field_name, additional_attributes)
-        bbox = item_data['bbox']
-        item_data['bbox'] = [[bbox[0], bbox[3]], [bbox[2], bbox[1]]]
+        bbox = item_data["bbox"]
+        item_data["bbox"] = [[bbox[0], bbox[3]], [bbox[2], bbox[1]]]
         return item_data
 
     class Meta:
-        model = 'regions.Region'
-        title_field = 'hierarchy_label_i18n'
-        filter_field = 'region_id'
-        id_field = 'region_id'
-        additional_attributes = ['bbox']
+        model = "regions.Region"
+        title_field = "hierarchy_label_i18n"
+        filter_field = "region_id"
+        id_field = "region_id"
+        additional_attributes = ["bbox"]

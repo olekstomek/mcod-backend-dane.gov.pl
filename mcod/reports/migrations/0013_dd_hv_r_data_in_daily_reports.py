@@ -7,23 +7,32 @@ from django.conf import settings
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('reports', '0012_dashboard'),
-        ('resources', '0054_resource_has_research_data')
+        ("reports", "0012_dashboard"),
+        ("resources", "0054_resource_has_research_data"),
     ]
 
     operations = [
         migrations.RunSQL(
-            sql=open(
-                os.path.join(settings.DATABASE_DIR, 'ODSOFT-3173-dynamic-and-high-value-data.sql')
+            sql=open(os.path.join(settings.DATABASE_DIR, "ODSOFT-3173-dynamic-and-high-value-data.sql")).read(),
+            reverse_sql=open(
+                os.path.join(
+                    settings.DATABASE_DIR,
+                    "ODSOFT-3173-dynamic-and-high-value-data-backward.sql",
+                )
             ).read(),
-            reverse_sql=open(os.path.join(settings.DATABASE_DIR,
-                                          'ODSOFT-3173-dynamic-and-high-value-data-backward.sql')).read(),
         ),
         migrations.RunSQL(
             sql=open(
-                os.path.join(settings.DATABASE_DIR, 'ODSOFT-3173-dynamic-high-value-and-research-data.sql')
+                os.path.join(
+                    settings.DATABASE_DIR,
+                    "ODSOFT-3173-dynamic-high-value-and-research-data.sql",
+                )
             ).read(),
-            reverse_sql=open(os.path.join(settings.DATABASE_DIR,
-                                          'ODSOFT-3173-dynamic-high-value-and-research-data-backward.sql')).read(),
-        )
+            reverse_sql=open(
+                os.path.join(
+                    settings.DATABASE_DIR,
+                    "ODSOFT-3173-dynamic-high-value-and-research-data-backward.sql",
+                )
+            ).read(),
+        ),
     ]

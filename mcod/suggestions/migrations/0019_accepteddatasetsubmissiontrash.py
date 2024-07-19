@@ -6,24 +6,23 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('suggestions', '0018_accepteddatasetsubmission_history_trigger'),
+        ("suggestions", "0018_accepteddatasetsubmission_history_trigger"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='AcceptedDatasetSubmissionTrash',
-            fields=[
-            ],
+            name="AcceptedDatasetSubmissionTrash",
+            fields=[],
             options={
-                'verbose_name': 'Accepted dataset submission - Trash',
-                'verbose_name_plural': 'Accepted dataset submissions - Trash',
-                'ordering': ('-submission_date',),
-                'abstract': False,
-                'proxy': True,
-                'default_manager_name': 'objects',
-                'indexes': [],
-                'constraints': [],
+                "verbose_name": "Accepted dataset submission - Trash",
+                "verbose_name_plural": "Accepted dataset submissions - Trash",
+                "ordering": ("-submission_date",),
+                "abstract": False,
+                "proxy": True,
+                "default_manager_name": "objects",
+                "indexes": [],
+                "constraints": [],
             },
-            bases=('suggestions.accepteddatasetsubmission',),
+            bases=("suggestions.accepteddatasetsubmission",),
         ),
     ]

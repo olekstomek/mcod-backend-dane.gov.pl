@@ -6,9 +6,8 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('resources', '0041_auto_20210514_1137'),
-        ('resources', '0040_resource_jsonld_file'),
+        ("resources", "0041_auto_20210514_1137"),
+        ("resources", "0040_resource_jsonld_file"),
     ]
 
-    operations = [
-    ]
+    operations = []

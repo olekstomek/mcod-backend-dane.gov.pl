@@ -16,8 +16,9 @@ def ten_licenses():
 @pytest.fixture
 def cc_4_license():
     from mcod.licenses.models import License
+
     return License.objects.create(
-        name='CC-BY-NC-4.0',
-        title='Creative Commons Attribution-NonCommercial 4.0',
-        url='https://creativecommons.org/licenses/by-nc/4.0/'
+        name="CC-BY-NC-4.0",
+        title="Creative Commons Attribution-NonCommercial 4.0",
+        url="https://creativecommons.org/licenses/by-nc/4.0/",
     )

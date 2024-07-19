@@ -6,18 +6,18 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('datasets', '0038_supplement'),
+        ("datasets", "0038_supplement"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='dataset',
-            name='license_condition_custom_description',
-            field=models.TextField(blank=True, null=True, verbose_name='Custom CC BY 40 conditions'),
+            model_name="dataset",
+            name="license_condition_custom_description",
+            field=models.TextField(blank=True, null=True, verbose_name="Custom CC BY 40 conditions"),
         ),
         migrations.AddField(
-            model_name='dataset',
-            name='license_condition_default_cc40',
-            field=models.NullBooleanField(default=None, verbose_name=''),
+            model_name="dataset",
+            name="license_condition_default_cc40",
+            field=models.NullBooleanField(default=None, verbose_name=""),
         ),
     ]

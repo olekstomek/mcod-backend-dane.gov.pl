@@ -6,18 +6,18 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('academy', '0005_auto_20200701_1234'),
+        ("academy", "0005_auto_20200701_1234"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='course',
-            name='is_permanently_removed',
+            model_name="course",
+            name="is_permanently_removed",
             field=models.BooleanField(default=False),
         ),
         migrations.AddField(
-            model_name='coursemodule',
-            name='is_permanently_removed',
+            model_name="coursemodule",
+            name="is_permanently_removed",
             field=models.BooleanField(default=False),
         ),
     ]

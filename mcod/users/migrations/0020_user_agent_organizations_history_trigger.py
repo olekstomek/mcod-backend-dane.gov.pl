@@ -8,16 +8,22 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('users', '0019_remove_user_is_representative'),
+        ("users", "0019_remove_user_is_representative"),
     ]
 
     operations = [
         migrations.RunSQL(
             sql=open(
                 os.path.join(
-                    settings.DATABASE_DIR, 'ODSOFT-928-user-agent-organizations-history.sql')).read(),
+                    settings.DATABASE_DIR,
+                    "ODSOFT-928-user-agent-organizations-history.sql",
+                )
+            ).read(),
             reverse_sql=open(
                 os.path.join(
-                    settings.DATABASE_DIR, 'ODSOFT-928-user-agent-organizations-history_backward.sql')).read(),
+                    settings.DATABASE_DIR,
+                    "ODSOFT-928-user-agent-organizations-history_backward.sql",
+                )
+            ).read(),
         )
     ]

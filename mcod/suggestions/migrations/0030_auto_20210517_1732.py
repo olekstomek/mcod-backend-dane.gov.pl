@@ -7,14 +7,14 @@ import django.db.models.manager
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('suggestions', '0029_auto_20210423_1750'),
+        ("suggestions", "0029_auto_20210423_1750"),
     ]
 
     operations = [
         migrations.AlterModelManagers(
-            name='submissionfeedback',
+            name="submissionfeedback",
             managers=[
-                ('raw', django.db.models.manager.Manager()),
+                ("raw", django.db.models.manager.Manager()),
             ],
         ),
     ]

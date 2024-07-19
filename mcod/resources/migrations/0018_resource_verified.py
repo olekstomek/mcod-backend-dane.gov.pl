@@ -7,13 +7,17 @@ import django.utils.timezone
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('resources', '0017_auto_20190411_2047'),
+        ("resources", "0017_auto_20190411_2047"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='resource',
-            name='verified',
-            field=models.DateTimeField(blank=True, default=django.utils.timezone.now, verbose_name='Update date'),
+            model_name="resource",
+            name="verified",
+            field=models.DateTimeField(
+                blank=True,
+                default=django.utils.timezone.now,
+                verbose_name="Update date",
+            ),
         ),
     ]

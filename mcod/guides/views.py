@@ -31,10 +31,10 @@ class GuidesView(JsonAPIView):
         deserializer_schema = GuidesApiRequest
         serializer_schema = partial(GuideApiResponse, many=True)
         _includes = {
-            'item': 'guides.GuideItem',
+            "item": "guides.GuideItem",
         }
         _include_map = {
-            'item': 'items_included',
+            "item": "items_included",
         }
 
         def _get_queryset(self, cleaned, *args, **kwargs):
@@ -55,10 +55,10 @@ class GuideView(JsonAPIView):
         serializer_schema = GuideApiResponse
         database_model = Guide
         _includes = {
-            'item': 'guides.GuideItem',
+            "item": "guides.GuideItem",
         }
         _include_map = {
-            'item': 'items_included',
+            "item": "items_included",
         }
 
         def clean(self, *args, **kwargs):
@@ -69,10 +69,10 @@ class GuideView(JsonAPIView):
             return self._get_instance(*args, **kwargs)
 
         def _get_instance(self, *args, **kwargs):
-            instance = getattr(self, '_cached_instance', None)
+            instance = getattr(self, "_cached_instance", None)
             if not instance:
                 try:
-                    self._cached_instance = self.database_model.objects.published().get(id=kwargs['id'])
+                    self._cached_instance = self.database_model.objects.published().get(id=kwargs["id"])
                 except self.database_model.DoesNotExist:
                     raise falcon.HTTPNotFound
             return self._cached_instance

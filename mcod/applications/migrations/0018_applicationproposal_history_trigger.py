@@ -8,14 +8,22 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('applications', '0017_auto_20200721_1150'),
+        ("applications", "0017_auto_20200721_1150"),
     ]
 
     operations = [
         migrations.RunSQL(
             sql=open(
-                os.path.join(settings.DATABASE_DIR, 'ODSOFT-380-applications-applicationproposal-history_other.sql')).read(),
+                os.path.join(
+                    settings.DATABASE_DIR,
+                    "ODSOFT-380-applications-applicationproposal-history_other.sql",
+                )
+            ).read(),
             reverse_sql=open(
-                os.path.join(settings.DATABASE_DIR, 'ODSOFT-380-applications-applicationproposal-history_other_backward.sql')).read(),
+                os.path.join(
+                    settings.DATABASE_DIR,
+                    "ODSOFT-380-applications-applicationproposal-history_other_backward.sql",
+                )
+            ).read(),
         )
     ]

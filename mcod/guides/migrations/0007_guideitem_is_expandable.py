@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('guides', '0006_auto_20210127_1738'),
+        ("guides", "0006_auto_20210127_1738"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='guideitem',
-            name='is_expandable',
-            field=models.BooleanField(default=False, verbose_name='element is expandable'),
+            model_name="guideitem",
+            name="is_expandable",
+            field=models.BooleanField(default=False, verbose_name="element is expandable"),
         ),
     ]

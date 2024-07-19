@@ -30,7 +30,7 @@ from mcod.suggestions.tasks import create_dataset_suggestion, send_accepted_subm
 
 
 class AcceptedSubmissionListView(JsonAPIView):
-    @falcon.before(login_required, roles=['editor', 'admin', 'agent'])
+    @falcon.before(login_required, roles=["editor", "admin", "agent"])
     @versioned
     def on_get(self, request, response, *args, **kwargs):
         self.handle(request, response, self.GET, *args, **kwargs)
@@ -47,11 +47,11 @@ class AcceptedSubmissionListView(JsonAPIView):
         serializer_schema = partial(PublicSubmissionApiResponse, many=True)
 
         def _queryset_extra(self, queryset, *args, **kwargs):
-            return queryset.filter('term', is_published_for_all=True)
+            return queryset.filter("term", is_published_for_all=True)
 
 
 class AcceptedSubmissionDetailView(JsonAPIView):
-    @falcon.before(login_required, roles=['editor', 'admin', 'agent'])
+    @falcon.before(login_required, roles=["editor", "admin", "agent"])
     @versioned
     def on_get(self, request, response, *args, **kwargs):
         self.handle(request, response, self.GET, *args, **kwargs)
@@ -63,7 +63,7 @@ class AcceptedSubmissionDetailView(JsonAPIView):
 
     class GET(AcceptedSubmissionRetrieveOneHdlr):
         def _get_instance(self, id, *args, **kwargs):
-            instance = getattr(self, '_cached_instance', None)
+            instance = getattr(self, "_cached_instance", None)
             if not instance:
                 model = self.database_model
                 try:
@@ -76,12 +76,11 @@ class AcceptedSubmissionDetailView(JsonAPIView):
         serializer_schema = partial(PublicSubmissionApiResponse, many=False)
 
         def _get_instance(self, id, *args, **kwargs):
-            instance = getattr(self, '_cached_instance', None)
+            instance = getattr(self, "_cached_instance", None)
             if not instance:
                 model = self.database_model
                 try:
-                    self._cached_instance = model.objects.get(
-                        pk=id, status=model.STATUS.published, is_published_for_all=True)
+                    self._cached_instance = model.objects.get(pk=id, status=model.STATUS.published, is_published_for_all=True)
                 except model.DoesNotExist:
                     raise falcon.HTTPNotFound
             return self._cached_instance
@@ -95,52 +94,51 @@ class SubmissionView(JsonAPIView):
 
     class POST(CreateOneHdlr):
         deserializer_schema = CreateDatasetSubmissionRequest
-        database_model = apps.get_model('suggestions', 'DatasetSubmission')
+        database_model = apps.get_model("suggestions", "DatasetSubmission")
         serializer_schema = partial(SubmissionApiResponse, many=False)
 
         def _get_data(self, cleaned, *args, **kwargs):
-            _data = cleaned['data']['attributes']
-            _data['submission_date'] = date.today().strftime("%Y-%m-%d")
+            _data = cleaned["data"]["attributes"]
+            _data["submission_date"] = date.today().strftime("%Y-%m-%d")
             if self.request.user and self.request.user.is_authenticated:
-                _data['submitted_by'] = self.request.user.id
+                _data["submitted_by"] = self.request.user.id
             create_dataset_suggestion.s(_data).apply_async_on_commit()
-            fields, values = ['id'], [str(uuid4())]
-            result = namedtuple('Submission', fields)(*values)
+            fields, values = ["id"], [str(uuid4())]
+            result = namedtuple("Submission", fields)(*values)
             return result
 
 
 class FeedbackDatasetSubmission(JsonAPIView):
-    @falcon.before(login_required, roles=['editor', 'admin', 'agent'])
+    @falcon.before(login_required, roles=["editor", "admin", "agent"])
     @versioned
     def on_post(self, request, response, *args, **kwargs):
         return self.handle_post(request, response, self.POST, *args, **kwargs)
 
     class POST(CreateOneHdlr):
-        database_model = apps.get_model('suggestions', 'SubmissionFeedback')
-        submission_model = apps.get_model('suggestions', 'AcceptedDatasetSubmission')
+        database_model = apps.get_model("suggestions", "SubmissionFeedback")
+        submission_model = apps.get_model("suggestions", "AcceptedDatasetSubmission")
         deserializer_schema = CreateFeedbackRequest
         serializer_schema = partial(AcceptedSubmissionApiResponse, many=False)
 
         def clean(self, *args, **kwargs):
             cleaned = super().clean(*args, **kwargs)
-            if cleaned['data']['attributes']['opinion'] not in ('plus', 'minus'):
+            if cleaned["data"]["attributes"]["opinion"] not in ("plus", "minus"):
                 raise falcon.HTTPBadRequest(description=_("Valid values are 'plus' and 'minus'"))
             return cleaned
 
         def _get_data(self, cleaned, id, *args, **kwargs):
-            data = cleaned['data']['attributes']
+            data = cleaned["data"]["attributes"]
             submission = self.submission_model.objects.get(pk=id)
-            obj = self.database_model.objects.update_or_create(
-                user=self.request.user, submission=submission, defaults=data)[0]
+            obj = self.database_model.objects.update_or_create(user=self.request.user, submission=submission, defaults=data)[0]
             self.response.context.data = obj
 
-    @falcon.before(login_required, roles=['editor', 'admin', 'agent'])
+    @falcon.before(login_required, roles=["editor", "admin", "agent"])
     @versioned
     def on_delete(self, request, response, *args, **kwargs):
         return self.handle_delete(request, response, self.DELETE, *args, **kwargs)
 
     class DELETE(RemoveOneHdlr):
-        database_model = apps.get_model('suggestions', 'SubmissionFeedback')
+        database_model = apps.get_model("suggestions", "SubmissionFeedback")
 
         def clean(self, id, *args, **kwargs):
             try:
@@ -157,17 +155,16 @@ class AcceptedDatasetSubmissionCommentView(JsonAPIView):
         return self.handle_post(request, response, self.POST, *args, **kwargs)
 
     class POST(CreateOneHdlr):
-        database_model = apps.get_model('suggestions', 'AcceptedDatasetSubmission')
+        database_model = apps.get_model("suggestions", "AcceptedDatasetSubmission")
         deserializer_schema = partial(AcceptedSubmissionCommentApiRequest, many=False)
         serializer_schema = partial(AcceptedSubmissionCommentApiResponse, many=False)
 
         def _get_instance(self, id, *args, **kwargs):
-            instance = getattr(self, '_cached_instance', None)
+            instance = getattr(self, "_cached_instance", None)
             if not instance:
                 model = self.database_model
                 try:
-                    self._cached_instance = model.objects.get(
-                        pk=id, status=model.STATUS.published, is_published_for_all=True)
+                    self._cached_instance = model.objects.get(pk=id, status=model.STATUS.published, is_published_for_all=True)
                 except model.DoesNotExist:
                     raise falcon.HTTPNotFound
             return self._cached_instance
@@ -181,7 +178,7 @@ class AcceptedDatasetSubmissionCommentView(JsonAPIView):
             instance = self._get_instance(id, *args, **kwargs)
             send_accepted_submission_comment.s(
                 instance.id,
-                cleaned['data']['attributes']['comment'],
+                cleaned["data"]["attributes"]["comment"],
             ).apply_async()
-            setattr(instance, 'is_comment_email_sent', True)
+            setattr(instance, "is_comment_email_sent", True)
             return instance

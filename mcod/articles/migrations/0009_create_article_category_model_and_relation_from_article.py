@@ -11,30 +11,84 @@ class Migration(migrations.Migration):
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('articles', '0008_auto_20181031_1627'),
+        ("articles", "0008_auto_20181031_1627"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='ArticleCategory',
+            name="ArticleCategory",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created', model_utils.fields.AutoCreatedField(default=django.utils.timezone.now, editable=False, verbose_name='created')),
-                ('modified', model_utils.fields.AutoLastModifiedField(default=django.utils.timezone.now, editable=False, verbose_name='modified')),
-                ('name', models.CharField(max_length=100, unique=True, verbose_name='name')),
-                ('description', models.CharField(blank=True, max_length=500, verbose_name='Description')),
-                ('created_by', models.ForeignKey(editable=False, null=True, on_delete=django.db.models.deletion.DO_NOTHING, related_name='article_categories_created', to=settings.AUTH_USER_MODEL, verbose_name='Created by')),
-                ('modified_by', models.ForeignKey(editable=False, null=True, on_delete=django.db.models.deletion.DO_NOTHING, related_name='article_categories_modified', to=settings.AUTH_USER_MODEL, verbose_name='Modified by')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "created",
+                    model_utils.fields.AutoCreatedField(
+                        default=django.utils.timezone.now,
+                        editable=False,
+                        verbose_name="created",
+                    ),
+                ),
+                (
+                    "modified",
+                    model_utils.fields.AutoLastModifiedField(
+                        default=django.utils.timezone.now,
+                        editable=False,
+                        verbose_name="modified",
+                    ),
+                ),
+                (
+                    "name",
+                    models.CharField(max_length=100, unique=True, verbose_name="name"),
+                ),
+                (
+                    "description",
+                    models.CharField(blank=True, max_length=500, verbose_name="Description"),
+                ),
+                (
+                    "created_by",
+                    models.ForeignKey(
+                        editable=False,
+                        null=True,
+                        on_delete=django.db.models.deletion.DO_NOTHING,
+                        related_name="article_categories_created",
+                        to=settings.AUTH_USER_MODEL,
+                        verbose_name="Created by",
+                    ),
+                ),
+                (
+                    "modified_by",
+                    models.ForeignKey(
+                        editable=False,
+                        null=True,
+                        on_delete=django.db.models.deletion.DO_NOTHING,
+                        related_name="article_categories_modified",
+                        to=settings.AUTH_USER_MODEL,
+                        verbose_name="Modified by",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Article Category',
-                'verbose_name_plural': 'Article Categories',
-                'db_table': 'article_category',
+                "verbose_name": "Article Category",
+                "verbose_name_plural": "Article Categories",
+                "db_table": "article_category",
             },
         ),
         migrations.AddField(
-            model_name='article',
-            name='category',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.DO_NOTHING, to='articles.ArticleCategory', verbose_name='Category'),
+            model_name="article",
+            name="category",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.DO_NOTHING,
+                to="articles.ArticleCategory",
+                verbose_name="Category",
+            ),
         ),
     ]

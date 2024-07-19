@@ -7,13 +7,23 @@ import modeltrans.fields
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('suggestions', '0027_accepteddatasetsubmission_is_published_for_all'),
+        ("suggestions", "0027_accepteddatasetsubmission_is_published_for_all"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='accepteddatasetsubmission',
-            name='i18n',
-            field=modeltrans.fields.TranslationField(fields=('title', 'notes', 'organization_name', 'potential_possibilities', 'slug'), required_languages=(), virtual_fields=True),
+            model_name="accepteddatasetsubmission",
+            name="i18n",
+            field=modeltrans.fields.TranslationField(
+                fields=(
+                    "title",
+                    "notes",
+                    "organization_name",
+                    "potential_possibilities",
+                    "slug",
+                ),
+                required_languages=(),
+                virtual_fields=True,
+            ),
         ),
     ]

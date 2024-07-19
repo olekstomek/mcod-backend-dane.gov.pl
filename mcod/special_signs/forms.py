@@ -7,4 +7,4 @@ class SpecialSignAdminForm(forms.ModelForm):
 
     class Meta:
         model = SpecialSign
-        fields = ('symbol', 'name', 'description', 'status')
+        fields = ("symbol", "name", "description", "status")

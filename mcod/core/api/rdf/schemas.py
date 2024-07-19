@@ -15,7 +15,7 @@ class ResponseSchema(Schema):
 
     @property
     def _fields(self):
-        return getattr(self, 'fields', getattr(self, '_declared_fields', None))
+        return getattr(self, "fields", getattr(self, "_declared_fields", None))
 
     def dump(self, obj: typing.Any, *, many: typing.Optional[bool] = None):
         """Serialize an object to native Python data types according to this
@@ -39,24 +39,20 @@ class ResponseSchema(Schema):
         # This method is overridden because we don't want to flatten original object into simple list,
         # we might need other attributes if obj is a more complex structure, for example with aggregation data from ES
         if self._has_processors(PRE_DUMP):
-            processed_obj = self._invoke_dump_processors(
-                PRE_DUMP, obj, many=many, original_data=obj
-            )
+            processed_obj = self._invoke_dump_processors(PRE_DUMP, obj, many=many, original_data=obj)
         else:
             processed_obj = obj
 
         result = self._serialize(processed_obj, many=many)
 
         if self._has_processors(POST_DUMP):
-            result = self._invoke_dump_processors(
-                POST_DUMP, result, many=many, original_data=obj
-            )
+            result = self._invoke_dump_processors(POST_DUMP, result, many=many, original_data=obj)
 
         return result
 
     @post_dump(pass_many=True)
     def validate_shape(self, data, many, **kwargs):
-        shape = self.context['request'].params.get('shacl', False) if 'request' in self.context else False
+        shape = self.context["request"].params.get("shacl", False) if "request" in self.context else False
         if not shape:
             return data
 
@@ -65,7 +61,7 @@ class ResponseSchema(Schema):
             data_graph=data,
             shacl_graph=shape_path,
             ont_graph=None,
-            inference='rdfs',
+            inference="rdfs",
             abort_on_error=False,
             meta_shacl=False,
             advanced=False,

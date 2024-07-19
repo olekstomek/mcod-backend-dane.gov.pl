@@ -6,14 +6,20 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('categories', '0009_auto_20190604_2022'),
-        ('datasets', '0025_dataset_dcat_vocabularies'),
+        ("categories", "0009_auto_20190604_2022"),
+        ("datasets", "0025_dataset_dcat_vocabularies"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='dataset',
-            name='categories',
-            field=models.ManyToManyField(db_table='dataset_category', related_name='datasets', related_query_name='dataset', to='categories.Category', verbose_name='Categories'),
+            model_name="dataset",
+            name="categories",
+            field=models.ManyToManyField(
+                db_table="dataset_category",
+                related_name="datasets",
+                related_query_name="dataset",
+                to="categories.Category",
+                verbose_name="Categories",
+            ),
         ),
     ]

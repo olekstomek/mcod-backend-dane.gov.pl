@@ -16,6 +16,6 @@ class LazyEncoder(DjangoJSONEncoder):
 class DateTimeToISOEncoder(json.JSONEncoder):
     def default(self, data):
         if isinstance(data, (datetime, time)):
-            return data.isoformat('T')
+            return data.isoformat("T")
         if isinstance(data, date):
             return data.isoformat()

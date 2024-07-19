@@ -6,24 +6,23 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('auditlog', '0007_object_pk_type'),
-        ('histories', '0004_apply_patches'),
+        ("auditlog", "0007_object_pk_type"),
+        ("histories", "0004_apply_patches"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='LogEntry',
-            fields=[
-            ],
+            name="LogEntry",
+            fields=[],
             options={
-                'verbose_name': 'History',
-                'verbose_name_plural': 'Histories',
-                'ordering': ['-timestamp'],
-                'get_latest_by': 'timestamp',
-                'proxy': True,
-                'indexes': [],
-                'constraints': [],
+                "verbose_name": "History",
+                "verbose_name_plural": "Histories",
+                "ordering": ["-timestamp"],
+                "get_latest_by": "timestamp",
+                "proxy": True,
+                "indexes": [],
+                "constraints": [],
             },
-            bases=('auditlog.logentry',),
+            bases=("auditlog.logentry",),
         ),
     ]

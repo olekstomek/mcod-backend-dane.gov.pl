@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('licenses', '0003_auto_20190604_2022'),
+        ("licenses", "0003_auto_20190604_2022"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='license',
-            name='is_permanently_removed',
+            model_name="license",
+            name="is_permanently_removed",
             field=models.BooleanField(default=False),
         ),
     ]

@@ -7,20 +7,16 @@ from mcod.newsletter.models import Newsletter
 
 class PlannedSendingDateWidget(AdminDateWidget):
     class Media(AdminDateWidget.Media):
-        css = {
-            'screen': (
-                'admin/css/admin_date_widget_without_today_btn.css',
-            )
-        }
+        css = {"screen": ("admin/css/admin_date_widget_without_today_btn.css",)}
 
 
 class NewsletterAdminForm(forms.ModelForm):
     class Meta:
         model = Newsletter
-        fields = '__all__'
+        fields = "__all__"
         labels = {
-            'title': _('Title of newsletter'),
+            "title": _("Title of newsletter"),
         }
         widgets = {
-            'planned_sending_date': PlannedSendingDateWidget,
+            "planned_sending_date": PlannedSendingDateWidget,
         }

@@ -8,20 +8,26 @@ from mcod.core.registries import factories_registry
 from mcod.users import models
 from mcod.users.models import Meeting, MeetingFile
 
-fake = Faker('pl_PL')
+fake = Faker("pl_PL")
 
 
 class UserFactory(factory.django.DjangoModelFactory):
-    fullname = factory.Faker('name')
-    phone = factory.Faker('msisdn')
-    email = factory.LazyAttribute(
-        lambda o: slugify(o.fullname) + "@" + fake.free_email_domain())
-    password = factory.Faker('password', length=16, special_chars=True, digits=True, upper_case=True, lower_case=True)
+    fullname = factory.Faker("name")
+    phone = factory.Faker("msisdn")
+    email = factory.LazyAttribute(lambda o: slugify(o.fullname) + "@" + fake.free_email_domain())
+    password = factory.Faker(
+        "password",
+        length=16,
+        special_chars=True,
+        digits=True,
+        upper_case=True,
+        lower_case=True,
+    )
 
     is_staff = False
     is_superuser = False
     is_official = False
-    state = 'active'
+    state = "active"
 
     @classmethod
     def _create(cls, model_class, *args, **kwargs):
@@ -48,7 +54,7 @@ class UserFactory(factory.django.DjangoModelFactory):
 
     class Meta:
         model = models.User
-        django_get_or_create = ('email',)
+        django_get_or_create = ("email",)
 
 
 class AdminFactory(UserFactory):
@@ -90,7 +96,7 @@ class AgentFactory(UserFactory):
 
 
 class PendingUserFactory(UserFactory):
-    state = 'pending'
+    state = "pending"
 
 
 class InactiveUserFactory(UserFactory):
@@ -98,47 +104,47 @@ class InactiveUserFactory(UserFactory):
 
 
 class BlockedUserFactory(UserFactory):
-    state = 'blocked'
+    state = "blocked"
 
 
 class UnconfirmedUserFactory(UserFactory):
-    state = 'active'
+    state = "active"
     is_active = False
 
 
 class MeetingFactory(factory.django.DjangoModelFactory):
-    title = factory.Faker('text', max_nb_chars=30, locale='pl_PL')
-    description = factory.Faker('paragraph', nb_sentences=5)
-    start_date = factory.Faker('future_date', end_date="+60d")
-    start_time = factory.Faker('time')
-    end_time = factory.Faker('time')
+    title = factory.Faker("text", max_nb_chars=30, locale="pl_PL")
+    description = factory.Faker("paragraph", nb_sentences=5)
+    start_date = factory.Faker("future_date", end_date="+60d")
+    start_time = factory.Faker("time")
+    end_time = factory.Faker("time")
 
     class Meta:
         model = Meeting
 
 
 def get_meeting_file():
-    return BytesIO(b'Hello world!')
+    return BytesIO(b"Hello world!")
 
 
 class MeetingFileFactory(factory.django.DjangoModelFactory):
     meeting = factory.SubFactory(MeetingFactory)
-    file = factory.django.FileField(from_func=get_meeting_file, filename='meeting_file.txt')
+    file = factory.django.FileField(from_func=get_meeting_file, filename="meeting_file.txt")
 
     class Meta:
         model = MeetingFile
 
 
-factories_registry.register('active user', UserFactory)
-factories_registry.register('pending user', PendingUserFactory)
-factories_registry.register('inactive user', InactiveUserFactory)
-factories_registry.register('unconfirmed user', UnconfirmedUserFactory)
-factories_registry.register('blocked user', BlockedUserFactory)
-factories_registry.register('admin user', AdminFactory)
-factories_registry.register('editor user', EditorFactory)
-factories_registry.register('official user', OfficialUserFactory)
-factories_registry.register('agent user', AgentFactory)
-factories_registry.register('academy admin', AcademyAdminFactory)
-factories_registry.register('laboratory admin', LaboratoryAdminFactory)
-factories_registry.register('meeting', MeetingFactory)
-factories_registry.register('meeting file', MeetingFileFactory)
+factories_registry.register("active user", UserFactory)
+factories_registry.register("pending user", PendingUserFactory)
+factories_registry.register("inactive user", InactiveUserFactory)
+factories_registry.register("unconfirmed user", UnconfirmedUserFactory)
+factories_registry.register("blocked user", BlockedUserFactory)
+factories_registry.register("admin user", AdminFactory)
+factories_registry.register("editor user", EditorFactory)
+factories_registry.register("official user", OfficialUserFactory)
+factories_registry.register("agent user", AgentFactory)
+factories_registry.register("academy admin", AcademyAdminFactory)
+factories_registry.register("laboratory admin", LaboratoryAdminFactory)
+factories_registry.register("meeting", MeetingFactory)
+factories_registry.register("meeting file", MeetingFileFactory)

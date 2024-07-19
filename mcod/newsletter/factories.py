@@ -6,8 +6,8 @@ from mcod.users.factories import AdminFactory
 
 
 class NewsletterFactory(factory.django.DjangoModelFactory):
-    title = factory.Faker('company', locale='pl_PL')
-    planned_sending_date = factory.Faker('future_date', end_date="+30d")
+    title = factory.Faker("company", locale="pl_PL")
+    planned_sending_date = factory.Faker("future_date", end_date="+30d")
     created_by = factory.SubFactory(AdminFactory)
 
     class Meta:
@@ -16,7 +16,7 @@ class NewsletterFactory(factory.django.DjangoModelFactory):
 
 class SubscriptionFactory(factory.django.DjangoModelFactory):
     user = factory.SubFactory(AdminFactory)
-    email = factory.Faker('email', locale='pl_PL')
+    email = factory.Faker("email", locale="pl_PL")
 
     class Meta:
         model = Subscription
@@ -25,12 +25,12 @@ class SubscriptionFactory(factory.django.DjangoModelFactory):
 class SubmissionFactory(factory.django.DjangoModelFactory):
     newsletter = factory.SubFactory(NewsletterFactory)
     subscription = factory.SubFactory(SubscriptionFactory)
-    message = factory.Faker('paragraph', nb_sentences=5)
+    message = factory.Faker("paragraph", nb_sentences=5)
 
     class Meta:
         model = Submission
 
 
-factories_registry.register('newsletter', NewsletterFactory)
-factories_registry.register('subscription', SubscriptionFactory)
-factories_registry.register('submission', SubmissionFactory)
+factories_registry.register("newsletter", NewsletterFactory)
+factories_registry.register("subscription", SubscriptionFactory)
+factories_registry.register("submission", SubmissionFactory)

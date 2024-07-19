@@ -9,9 +9,9 @@ from mcod.resources.factories import ResourceFactory
 
 class ResourceViewCounterFactory(factory.django.DjangoModelFactory):
     resource = factory.SubFactory(ResourceFactory)
-    count = factory.Faker('random_int', min=0, max=500)
+    count = factory.Faker("random_int", min=0, max=500)
     timestamp = factory.Faker(
-        'date',
+        "date",
         end_datetime=datetime.date.today(),
     )
 
@@ -21,9 +21,9 @@ class ResourceViewCounterFactory(factory.django.DjangoModelFactory):
 
 class ResourceDownloadCounterFactory(factory.django.DjangoModelFactory):
     resource = factory.SubFactory(ResourceFactory)
-    count = factory.Faker('random_int', min=0, max=500)
+    count = factory.Faker("random_int", min=0, max=500)
     timestamp = factory.Faker(
-        'date',
+        "date",
         end_datetime=datetime.date.today(),
     )
 
@@ -31,5 +31,5 @@ class ResourceDownloadCounterFactory(factory.django.DjangoModelFactory):
         model = ResourceDownloadCounter
 
 
-factories_registry.register('resource_view_counter', ResourceViewCounterFactory)
-factories_registry.register('resource_download_counter', ResourceDownloadCounterFactory)
+factories_registry.register("resource_view_counter", ResourceViewCounterFactory)
+factories_registry.register("resource_download_counter", ResourceDownloadCounterFactory)

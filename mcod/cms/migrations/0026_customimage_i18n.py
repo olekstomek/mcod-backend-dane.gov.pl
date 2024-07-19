@@ -7,13 +7,13 @@ import modeltrans.fields
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('cms', '0025_auto_20201214_0737'),
+        ("cms", "0025_auto_20201214_0737"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='customimage',
-            name='i18n',
-            field=modeltrans.fields.TranslationField(fields=('alt',), required_languages=(), virtual_fields=True),
+            model_name="customimage",
+            name="i18n",
+            field=modeltrans.fields.TranslationField(fields=("alt",), required_languages=(), virtual_fields=True),
         ),
     ]

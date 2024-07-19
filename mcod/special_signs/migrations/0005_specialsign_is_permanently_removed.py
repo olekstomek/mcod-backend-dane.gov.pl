@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('special_signs', '0004_delete_specialsigntrash'),
+        ("special_signs", "0004_delete_specialsigntrash"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='specialsign',
-            name='is_permanently_removed',
+            model_name="specialsign",
+            name="is_permanently_removed",
             field=models.BooleanField(default=False),
         ),
     ]

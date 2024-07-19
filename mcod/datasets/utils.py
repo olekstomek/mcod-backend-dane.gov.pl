@@ -32,7 +32,5 @@ def create_archive_file_path(filename: str, dataset: "Dataset") -> str:
     archived resources files and the filename to construct the full path.
     """
     storage_location = dataset.archived_resources_files.storage.location
-    full_file_name = dataset.archived_resources_files.field.generate_filename(
-        dataset, filename
-    )
+    full_file_name = dataset.archived_resources_files.field.generate_filename(dataset, filename)
     return str(os.path.join(storage_location, full_file_name))

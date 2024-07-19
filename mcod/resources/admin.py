@@ -30,10 +30,7 @@ from mcod.lib.admin_mixins import HistoryMixin, ModelAdmin, SortableStackedInlin
 from mcod.lib.helpers import get_paremeters_from_post
 from mcod.organizations.models import Organization
 from mcod.resources.dga_constants import SAVE_CONFIRMATION_FIELD
-from mcod.resources.dga_utils import (
-    get_dga_resource_for_institution,
-    save_temp_dga_file,
-)
+from mcod.resources.dga_utils import get_dga_resource_for_institution, save_temp_dga_file
 from mcod.resources.forms import (
     AddResourceForm,
     ChangeResourceForm,
@@ -126,9 +123,7 @@ class TypeFilter(admin.SimpleListFilter):
             return queryset.filter(type=RESOURCE_TYPE_API, forced_api_type=True)
         elif value == RESOURCE_TYPE_FILE_CHANGE:
             return queryset.filter(type=RESOURCE_TYPE_FILE, forced_file_type=True)
-        return queryset.filter(type=value).exclude(
-            Q(forced_api_type=True) | Q(forced_file_type=True)
-        )
+        return queryset.filter(type=value).exclude(Q(forced_api_type=True) | Q(forced_file_type=True))
 
 
 class LinkStatusFilter(TaskStatus):
@@ -228,14 +223,14 @@ def process_verification_results(col, results, table_schema, rules):
             )
         else:
             msg_class = messages.SUCCESS
-            text = _(
-                'During the verification of column "{colname}" with the "{rule}" rule no errors detected'
-            ).format(colname=colname, rule=translated_rule_name)
+            text = _('During the verification of column "{colname}" with the "{rule}" rule no errors detected').format(
+                colname=colname, rule=translated_rule_name
+            )
             output = f"""<span>{text}</span>"""
     else:
-        text = _(
-            'Verification of column "{colname}" by the rule "{rule}" failed'
-        ).format(colname=colname, rule=translated_rule_name)
+        text = _('Verification of column "{colname}" by the rule "{rule}" failed').format(
+            colname=colname, rule=translated_rule_name
+        )
 
         output = f"""<span>{text}</span>"""
 
@@ -269,12 +264,7 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):
                 tabs.append(("types", _("Change of type")))
             resource_validation_tab = ("rules", _("Quality verification"), "disabled")
 
-            if (
-                settings.RESOURCE_VALIDATION_TOOL_ENABLED
-                and obj.tabular_data_schema
-                and obj.format != "shp"
-                and obj.has_data
-            ):
+            if settings.RESOURCE_VALIDATION_TOOL_ENABLED and obj.tabular_data_schema and obj.format != "shp" and obj.has_data:
                 resource_validation_tab = ("rules", _("Quality verification"))
             tabs.append(resource_validation_tab)
 
@@ -327,16 +317,12 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == "dataset":
-            kwargs["queryset"] = db_field.remote_field.model._default_manager.filter(
-                source__isnull=True
-            )
+            kwargs["queryset"] = db_field.remote_field.model._default_manager.filter(source__isnull=True)
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
     def has_change_permission(self, request, obj=None):
         if obj and obj.is_imported:
-            return (
-                True  # required to display content in "data validation tabs" properly.
-            )
+            return True  # required to display content in "data validation tabs" properly.
         return super().has_change_permission(request, obj=obj)
 
     def get_fieldsets(self, request, obj=None):
@@ -344,47 +330,24 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):
             jsonld_file = ["jsonld_converted_file"] if obj.jsonld_converted_file else []
             file = ["main_file"]
             csv_file = ["csv_converted_file"] if obj.csv_converted_file else []
-            special_signs = (
-                ["special_signs"] if not obj.is_imported else ["special_signs_symbols"]
-            )
+            special_signs = ["special_signs"] if not obj.is_imported else ["special_signs_symbols"]
             file_info = ["main_file_info"]
             file_encoding = ["main_file_encoding"]
             regions = ["regions"] if not obj.is_imported else []
-            has_dynamic_data = (
-                ["has_dynamic_data"]
-                if not obj.is_imported
-                else ["has_dynamic_data_info"]
-            )
-            has_high_value_data = (
-                ["has_high_value_data"]
-                if not obj.is_imported
-                else ["has_high_value_data_info"]
-            )
-            has_research_data = (
-                ["has_research_data"]
-                if not obj.is_imported
-                else ["has_research_data_info"]
-            )
-            contains_protected_data = (
-                ["contains_protected_data"]
-                if not obj.is_imported
-                else ["contains_protected_data_info"]
-            )
+            has_dynamic_data = ["has_dynamic_data"] if not obj.is_imported else ["has_dynamic_data_info"]
+            has_high_value_data = ["has_high_value_data"] if not obj.is_imported else ["has_high_value_data_info"]
+            has_research_data = ["has_research_data"] if not obj.is_imported else ["has_research_data_info"]
+            contains_protected_data = ["contains_protected_data"] if not obj.is_imported else ["contains_protected_data_info"]
             extra_fields = []
             if obj.type == RESOURCE_TYPE_WEBSITE or obj.forced_api_type:
                 extra_fields = ["forced_api_type"]
             elif not obj.forced_api_type and (
                 obj.type == RESOURCE_TYPE_API
                 or obj.forced_file_type
-                or (
-                    obj.type == RESOURCE_TYPE_FILE
-                    and obj.tracker.has_changed("forced_file_type")
-                )
+                or (obj.type == RESOURCE_TYPE_FILE and obj.tracker.has_changed("forced_file_type"))
             ):
                 extra_fields = ["forced_file_type"]
-            show_dd_update_fields = (
-                obj.is_auto_data_date_allowed and not obj.is_imported
-            )
+            show_dd_update_fields = obj.is_auto_data_date_allowed and not obj.is_imported
             dd_update_fields = (
                 [
                     "is_auto_data_date",
@@ -590,12 +553,14 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):
         Return the factory with the modified ChangeResourceForm due to the fact
         that some fields aren't editable for imported resources.
         """
+
         def factory(*args, **kwargs):
             form = modelform_factory(*args, **kwargs)
-            form.fields['has_dynamic_data'].required = False
-            form.fields['has_high_value_data'].required = False
-            form.fields['has_research_data'].required = False
+            form.fields["has_dynamic_data"].required = False
+            form.fields["has_high_value_data"].required = False
+            form.fields["has_research_data"].required = False
             return form
+
         return factory
 
     def get_history(self, obj):
@@ -635,10 +600,7 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):
             "csv_file": "csv_converted_file",
             "jsonld_file": "jsonld_converted_file",
         }
-        readonly_fields = [
-            field if field not in new_fields_mapping else new_fields_mapping[field]
-            for field in readonly_fields
-        ]
+        readonly_fields = [field if field not in new_fields_mapping else new_fields_mapping[field] for field in readonly_fields]
         if obj and not obj.data_is_valid:
             readonly_fields = (*readonly_fields, "show_tabular_view")
         if obj and obj.is_imported:
@@ -681,9 +643,7 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):
     lang.short_description = _("data language")
     lang.admin_order_field = "language"
 
-    def render_change_form(
-        self, request, context, add=False, change=False, form_url="", obj=None
-    ):
+    def render_change_form(self, request, context, add=False, change=False, form_url="", obj=None):
         extra = {
             "suit_form_tabs": self.get_suit_form_tabs(obj=obj),
         }
@@ -694,65 +654,53 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):
         if media and self.is_inlines_js_upgraded:
             _new_js_lists = []
             for js_list in media._js_lists:
-                new_js_list = [
-                    x
-                    for x in js_list
-                    if x not in ["admin/js/inlines.min.js", "admin/js/inlines.js"]
-                ]
+                new_js_list = [x for x in js_list if x not in ["admin/js/inlines.min.js", "admin/js/inlines.js"]]
                 if len(new_js_list) < len(js_list):
                     new_js_list.append("admin/js/inlines_django_3_1.js")
                 _new_js_lists.append(new_js_list)
             media._js_lists = _new_js_lists
             context["media"] = media
         context.update(extra)
-        return super().render_change_form(
-            request, context, add=add, change=change, form_url=form_url, obj=obj
-        )
+        return super().render_change_form(request, context, add=add, change=change, form_url=form_url, obj=obj)
 
     def render_save_confirmation_page(
-            self,
-            request: HttpRequest,
-            extra_context: Optional[Dict[str, Any]],
-            instance: Optional[Resource] = None,
+        self,
+        request: HttpRequest,
+        extra_context: Optional[Dict[str, Any]],
+        instance: Optional[Resource] = None,
     ) -> TemplateResponse:
         context = self._prepare_context(request, extra_context, instance)
-        return TemplateResponse(
-            request, "admin/save_confirmation.html", context
-        )
+        return TemplateResponse(request, "admin/save_confirmation.html", context)
 
     def render_deselect_dga_confirmation_page(
-            self,
-            request: HttpRequest,
-            extra_context: Optional[Dict[str, Any]],
-            instance: Optional[Resource] = None,
+        self,
+        request: HttpRequest,
+        extra_context: Optional[Dict[str, Any]],
+        instance: Optional[Resource] = None,
     ) -> TemplateResponse:
         context = self._prepare_context(request, extra_context, instance)
-        return TemplateResponse(
-            request, "admin/deselect_dga_confirmation.html", context
-        )
+        return TemplateResponse(request, "admin/deselect_dga_confirmation.html", context)
 
     def render_dga_to_draft_confirmation_page(
-            self,
-            request: HttpRequest,
-            extra_context: Optional[Dict[str, Any]],
-            instance: Optional[Resource] = None,
+        self,
+        request: HttpRequest,
+        extra_context: Optional[Dict[str, Any]],
+        instance: Optional[Resource] = None,
     ) -> TemplateResponse:
         context = self._prepare_context(request, extra_context, instance)
-        return TemplateResponse(
-            request, "admin/dga_to_draft_confirmation.html", context
-        )
+        return TemplateResponse(request, "admin/dga_to_draft_confirmation.html", context)
 
     def _prepare_context(
-            self,
-            request: HttpRequest,
-            extra_context: Optional[Dict[str, Any]],
-            instance: Optional[Resource] = None,
+        self,
+        request: HttpRequest,
+        extra_context: Optional[Dict[str, Any]],
+        instance: Optional[Resource] = None,
     ) -> Dict[str, Any]:
         context = self.admin_site.each_context(request)
         if extra_context:
             context.update(extra_context)
         # to allow access to model metadata in the confirmation page template
-        context['opts'] = self.model._meta
+        context["opts"] = self.model._meta
 
         # Provide context to the confirmation template, whether it's adding a
         # new object or changing an existing one
@@ -764,26 +712,17 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):
         return context
 
     @staticmethod
-    def _get_current_dga_if_new_requested(
-            request, exclude_object_id: Union[int, str, None] = None
-    ) -> Union[Resource, None]:
-        contains_protected_data: bool = request.POST.get(
-            "contains_protected_data") == "True"
+    def _get_current_dga_if_new_requested(request, exclude_object_id: Union[int, str, None] = None) -> Union[Resource, None]:
+        contains_protected_data: bool = request.POST.get("contains_protected_data") == "True"
         is_publish_requested: bool = request.POST.get("status") == "published"
         dataset_id: Union[str, None] = request.POST.get("dataset")
-        if not all(
-            (contains_protected_data, is_publish_requested, dataset_id)
-        ):
+        if not all((contains_protected_data, is_publish_requested, dataset_id)):
             return None
 
-        organization_id: Union[int, None] = Dataset.objects.values_list(
-            "organization", flat=True
-        ).get(pk=request.POST["dataset"])
+        organization_id: Union[int, None] = Dataset.objects.values_list("organization", flat=True).get(pk=request.POST["dataset"])
 
         try:
-            current_dga_resource: Resource = get_dga_resource_for_institution(
-                organization_id, exclude_object_id
-            )
+            current_dga_resource: Resource = get_dga_resource_for_institution(organization_id, exclude_object_id)
         except MultipleObjectsReturned:
             # This error will be handled in ResourceForm clean method by
             # adding the error message to the appropriate field on the form
@@ -801,15 +740,13 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):
         return validated_file
 
     def add_view(
-            self,
-            request: HttpRequest,
-            form_url: str = "",
-            extra_context: Optional[Dict[str, Any]] = None,
+        self,
+        request: HttpRequest,
+        form_url: str = "",
+        extra_context: Optional[Dict[str, Any]] = None,
     ) -> Union[TemplateResponse, HttpResponseRedirect]:
         if (request.method == "POST") and (SAVE_CONFIRMATION_FIELD not in request.POST):
-            dga_resource_to_replace: Resource = self._get_current_dga_if_new_requested(
-                request
-            )
+            dga_resource_to_replace: Resource = self._get_current_dga_if_new_requested(request)
             if not dga_resource_to_replace:
                 return super().add_view(request, form_url, extra_context)
 
@@ -828,71 +765,45 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):
                     "current_dga_resource_title": dga_resource_to_replace.title,
                 }
             )
-            confirmation_response = self.render_save_confirmation_page(
-                request, extra_context=extra_context
-            )
+            confirmation_response = self.render_save_confirmation_page(request, extra_context=extra_context)
             return confirmation_response
 
         return super().add_view(request, form_url, extra_context)
 
-    def change_view(
-            self, request, object_id, form_url="", extra_context=None
-    ) -> Union[TemplateResponse, HttpResponseRedirect]:
+    def change_view(self, request, object_id, form_url="", extra_context=None) -> Union[TemplateResponse, HttpResponseRedirect]:
         is_http_post = request.method == "POST"
         if not is_http_post:
             # short circuit getting the form
-            return super().change_view(
-                request, object_id, form_url, extra_context
-            )
+            return super().change_view(request, object_id, form_url, extra_context)
         user_has_confirmed: bool = SAVE_CONFIRMATION_FIELD in request.POST
-        user_deselects_dga_designation: bool = (
-            request.POST.get("contains_protected_data") == "False"
-        )
+        user_deselects_dga_designation: bool = request.POST.get("contains_protected_data") == "False"
         user_marks_as_draft: bool = request.POST.get("status") == "draft"
 
         if user_has_confirmed:
             # short circuit when no more user interaction is required
-            return super().change_view(
-                request, object_id, form_url, extra_context
-            )
+            return super().change_view(request, object_id, form_url, extra_context)
 
         instance = self.model.objects.get(pk=object_id)
         extra_context = extra_context or {}
-        extra_context["post_data"] = (
-            request.POST
-        )  # see mcod/templates/admin/save_confirmation.html
+        extra_context["post_data"] = request.POST  # see mcod/templates/admin/save_confirmation.html
         is_current_dga_resource = instance.is_dga
-        dga_resource_to_replace: Optional[Resource] = (
-            self._get_current_dga_if_new_requested(
-                request, exclude_object_id=object_id
-            )
-        )
+        dga_resource_to_replace: Optional[Resource] = self._get_current_dga_if_new_requested(request, exclude_object_id=object_id)
         user_replaces_dga_resource = dga_resource_to_replace is not None
         if is_current_dga_resource and user_deselects_dga_designation:
-            return self.render_deselect_dga_confirmation_page(
-                request, instance=instance, extra_context=extra_context
-            )
+            return self.render_deselect_dga_confirmation_page(request, instance=instance, extra_context=extra_context)
 
         elif is_current_dga_resource and user_marks_as_draft:
-            return self.render_dga_to_draft_confirmation_page(
-                request, instance=instance, extra_context=extra_context
-            )
+            return self.render_dga_to_draft_confirmation_page(request, instance=instance, extra_context=extra_context)
         elif not is_current_dga_resource and user_replaces_dga_resource:
-            extra_context.update(
-                {"current_dga_resource_title": dga_resource_to_replace.title}
-            )
-            return self.render_save_confirmation_page(
-                request, instance=instance, extra_context=extra_context
-            )
+            extra_context.update({"current_dga_resource_title": dga_resource_to_replace.title})
+            return self.render_save_confirmation_page(request, instance=instance, extra_context=extra_context)
         # fallback
         return super().change_view(request, object_id, form_url, extra_context)
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         if request.user.is_staff and not request.user.is_superuser:
-            qs = qs.filter(
-                dataset__organization__in=request.user.organizations.iterator()
-            )
+            qs = qs.filter(dataset__organization__in=request.user.organizations.iterator())
         return qs
 
     def link_status(self, obj):
@@ -947,16 +858,10 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):
     tabular_view.admin_order_field = "data_tasks_last_status"
 
     tabular_view.short_description = format_html(
-        '<i class="fas fa-table" title="{}"></i>'.format(
-            _("Tabular data validation status")
-        )
+        '<i class="fas fa-table" title="{}"></i>'.format(_("Tabular data validation status"))
     )
-    file_status.short_description = format_html(
-        '<i class="fas fa-file" title="{}"></i>'.format(_("File validation status"))
-    )
-    link_status.short_description = format_html(
-        '<i class="fas fa-link" title="{}"></i>'.format(_("Link validation status"))
-    )
+    file_status.short_description = format_html('<i class="fas fa-file" title="{}"></i>'.format(_("File validation status")))
+    link_status.short_description = format_html('<i class="fas fa-link" title="{}"></i>'.format(_("Link validation status")))
 
     def save_formset(self, request, form, formset, change):
         instances = formset.save(commit=False)
@@ -976,9 +881,9 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):
 
         revalidate = False
         if change and obj.status == obj.STATUS.published:
-            if obj.tracker.has_changed("tabular_data_schema") or set(
-                obj.special_signs.values_list("id")
-            ) != set(form.cleaned_data["special_signs"].values_list("id")):
+            if obj.tracker.has_changed("tabular_data_schema") or set(obj.special_signs.values_list("id")) != set(
+                form.cleaned_data["special_signs"].values_list("id")
+            ):
                 revalidate = True
 
             if obj.is_link_updated or obj.state_restored:
@@ -988,9 +893,7 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):
         obj.save()
 
         if form.cleaned_data.get("file"):
-            ResourceFile.objects.update_or_create(
-                resource=obj, is_main=True, defaults={"file": form.cleaned_data["file"]}
-            )
+            ResourceFile.objects.update_or_create(resource=obj, is_main=True, defaults={"file": form.cleaned_data["file"]})
 
         if revalidate:
             obj.revalidate()
@@ -1007,9 +910,7 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):
                 origin = Resource.objects.get(pk=obj_id)
             except Resource.DoesNotExist:
                 origin = None
-            if (
-                origin and not origin.is_imported
-            ):  # making a copy of resource is disabled for imported resources.
+            if origin and not origin.is_imported:  # making a copy of resource is disabled for imported resources.
                 data = model_to_dict(origin)
                 initial["title"] = data.get("title")
                 initial["description"] = data.get("description")
@@ -1042,15 +943,11 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):
         try:
             resource = self.model.objects.get(pk=resource_id)
         except self.model.DoesNotExist:
-            messages.add_message(
-                request, messages.WARNING, _("Resource with this id does not exists")
-            )
+            messages.add_message(request, messages.WARNING, _("Resource with this id does not exists"))
             return HttpResponseRedirect(self.model.admin_list_url())
 
         resource.revalidate()
-        messages.add_message(
-            request, messages.SUCCESS, _("Task for resource revalidation queued")
-        )
+        messages.add_message(request, messages.SUCCESS, _("Task for resource revalidation queued"))
         return HttpResponseRedirect(resource.admin_change_url)
 
     def response_change(self, request, obj):
@@ -1058,9 +955,7 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):
             rules = get_paremeters_from_post(request.POST)
             results = obj.verify_rules(rules)
             for col, res in results.items():
-                res, msg_class = process_verification_results(
-                    col, res, obj.tabular_data_schema, rules
-                )
+                res, msg_class = process_verification_results(col, res, obj.tabular_data_schema, rules)
                 self.message_user(request, res, msg_class)
             return HttpResponseRedirect(".")
         elif "_change_type" in request.POST:
@@ -1084,9 +979,7 @@ class TrashAdmin(HistoryMixin, TrashMixin):
     form = TrashResourceForm
     is_history_with_unknown_user_rows = True
     related_objects_query = "dataset"
-    cant_restore_msg = _(
-        "Couldn't restore following resources, because their related datasets are still removed: {}"
-    )
+    cant_restore_msg = _("Couldn't restore following resources, because their related datasets are still removed: {}")
 
     def title_short(self, obj):
         return truncatewords(obj.title, 18)
@@ -1096,9 +989,7 @@ class TrashAdmin(HistoryMixin, TrashMixin):
 
     def get_fields(self, request, obj=None):
         csv_file = ["csv_converted_file"] if obj and obj.csv_converted_file else []
-        jsonld_file = (
-            ["jsonld_converted_file"] if obj and obj.jsonld_converted_file else []
-        )
+        jsonld_file = ["jsonld_converted_file"] if obj and obj.jsonld_converted_file else []
         file = ["main_file"] if obj and obj.main_file else []
         return [
             *file,
@@ -1119,11 +1010,7 @@ class TrashAdmin(HistoryMixin, TrashMixin):
         ]
 
     def get_readonly_fields(self, request, obj=None):
-        return [
-            field
-            for field in self.get_fields(request, obj=obj)
-            if field != "is_removed"
-        ]
+        return [field for field in self.get_fields(request, obj=obj) if field != "is_removed"]
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)

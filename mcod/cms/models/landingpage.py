@@ -7,12 +7,12 @@ from mcod.cms.models.base import BasePage
 
 
 class LandingPageIndex(BasePage):
-    parent_page_types = ['cms.RootPage']
-    subpage_types = ['cms.LandingPage']
+    parent_page_types = ["cms.RootPage"]
+    subpage_types = ["cms.LandingPage"]
 
     max_count = 1
-    fixed_slug = 'promotion'
-    fixed_url_path = 'promotion/'
+    fixed_slug = "promotion"
+    fixed_url_path = "promotion/"
 
     class Meta:
         verbose_name = "Lista stron startowych"
@@ -24,31 +24,30 @@ class LandingPage(BasePage):
     body_en = LocalizedHyperField(default=None, blank=True, null=True)
 
     parent_page_types = [
-        'cms.LandingPageIndex',
+        "cms.LandingPageIndex",
     ]
 
     subpage_types = []
 
-    i18n_fields = BasePage.i18n_fields + ['body', ]
-
-    api_fields = BasePage.api_fields + [
-        APIField('body', serializer=HyperEditorJSONField(source='body_i18n'))
+    i18n_fields = BasePage.i18n_fields + [
+        "body",
     ]
 
-    content_panels_pl = BasePage.content_panels + [
-        HyperFieldPanel('body')
-    ]
+    api_fields = BasePage.api_fields + [APIField("body", serializer=HyperEditorJSONField(source="body_i18n"))]
 
-    content_panels_en = BasePage.content_panels_en + [
-        HyperFieldPanel('body_en')
-    ]
+    content_panels_pl = BasePage.content_panels + [HyperFieldPanel("body")]
+
+    content_panels_en = BasePage.content_panels_en + [HyperFieldPanel("body_en")]
 
     settings_panels = [
         PublishingPanel(),
-        MultiFieldPanel([
-            FieldPanel('slug'),
-            FieldPanel('show_in_menus'),
-        ], 'Ustawienia strony'),
+        MultiFieldPanel(
+            [
+                FieldPanel("slug"),
+                FieldPanel("show_in_menus"),
+            ],
+            "Ustawienia strony",
+        ),
     ]
 
     class Meta:
@@ -56,4 +55,4 @@ class LandingPage(BasePage):
         verbose_name_plural = "Strony startowe"
 
     def get_copyable_fields(self):
-        return super().get_copyable_fields() + ['body']
+        return super().get_copyable_fields() + ["body"]

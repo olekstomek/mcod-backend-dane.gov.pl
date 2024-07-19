@@ -21,18 +21,16 @@ class ReportMixin:
     @property
     def file_url_path(self):
         if self.file:
-            return self.file if self.file.startswith('/') else f'/{self.file}'
+            return self.file if self.file.startswith("/") else f"/{self.file}"
 
     @property
     def file_size(self):
         if self.file:
             try:
-                return sizeof_fmt(os.path.getsize(os.path.join(
-                    settings.ROOT_DIR, self.file.strip('/'))
-                ))
+                return sizeof_fmt(os.path.getsize(os.path.join(settings.ROOT_DIR, self.file.strip("/"))))
             except FileNotFoundError:
                 return None
-        return '-'
+        return "-"
 
 
 class Report(ReportMixin, TimeStampedModel):
@@ -43,7 +41,7 @@ class Report(ReportMixin, TimeStampedModel):
         editable=False,
         null=True,
         verbose_name=_("Ordered by"),
-        related_name='reports_ordered'
+        related_name="reports_ordered",
     )
     task = models.ForeignKey(
         TaskResult,
@@ -52,10 +50,10 @@ class Report(ReportMixin, TimeStampedModel):
         editable=False,
         null=True,
         verbose_name=_("Task"),
-        related_name='report'
+        related_name="report",
     )
     model = models.CharField(null=True, max_length=80)
-    file = models.CharField(null=True, max_length=512, verbose_name=_('File path'))
+    file = models.CharField(null=True, max_length=512, verbose_name=_("File path"))
 
     class Meta:
         verbose_name = _("Report")
@@ -63,7 +61,7 @@ class Report(ReportMixin, TimeStampedModel):
 
     @property
     def status(self):
-        return self.task.status if self.task else 'PENDING'
+        return self.task.status if self.task else "PENDING"
 
 
 class MonitoringReport(Report):
@@ -74,8 +72,8 @@ class MonitoringReport(Report):
 
     class Meta:
         proxy = True
-        verbose_name = _('Monitoring')
-        verbose_name_plural = _('Monitoring')
+        verbose_name = _("Monitoring")
+        verbose_name_plural = _("Monitoring")
 
 
 class UserReport(Report):
@@ -127,7 +125,7 @@ class OrganizationReport(Report):
 
 
 class SummaryDailyReport(ReportMixin, TimeStampedModel):
-    file = models.CharField(null=True, max_length=512, verbose_name=_('File path'))
+    file = models.CharField(null=True, max_length=512, verbose_name=_("File path"))
     ordered_by = models.ForeignKey(
         User,
         models.SET_NULL,
@@ -135,7 +133,7 @@ class SummaryDailyReport(ReportMixin, TimeStampedModel):
         editable=False,
         null=True,
         verbose_name=_("Ordered by"),
-        related_name='reports_ordered_by'
+        related_name="reports_ordered_by",
     )
 
     status = models.CharField(max_length=20, default="SUCCESS")
@@ -152,5 +150,5 @@ class SummaryDailyReport(ReportMixin, TimeStampedModel):
 class Dashboard(Report):
     class Meta:
         proxy = True
-        verbose_name = pgettext_lazy('Metabase Dashboard', 'Dashboard')
-        verbose_name_plural = pgettext_lazy('Metabase Dashboards', 'Dashboards')
+        verbose_name = pgettext_lazy("Metabase Dashboard", "Dashboard")
+        verbose_name_plural = pgettext_lazy("Metabase Dashboards", "Dashboards")

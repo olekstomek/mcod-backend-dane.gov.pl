@@ -6,9 +6,8 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('resources', '0013_resource_data_date'),
-        ('resources', '0013_resource_i18n'),
+        ("resources", "0013_resource_data_date"),
+        ("resources", "0013_resource_i18n"),
     ]
 
-    operations = [
-    ]
+    operations = []

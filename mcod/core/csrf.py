@@ -4,6 +4,7 @@ Cross Site Request Forgery Middleware.
 This module provides a middleware that implements protection
 against request forgeries from other sites.
 """
+
 import re
 import secrets
 
@@ -11,10 +12,7 @@ from mcod import settings
 
 
 def get_new_csrf_string():
-    return ''.join([
-        secrets.choice(settings.CSRF_ALLOWED_CHARS)
-        for _ in range(settings.CSRF_SECRET_LENGTH)
-    ])
+    return "".join([secrets.choice(settings.CSRF_ALLOWED_CHARS) for _ in range(settings.CSRF_SECRET_LENGTH)])
 
 
 def salt_cipher_secret(secret: str):
@@ -28,7 +26,7 @@ def salt_cipher_secret(secret: str):
     salt = get_new_csrf_string()
     chars = settings.CSRF_ALLOWED_CHARS
     pairs = zip((chars.index(x) for x in secret), (chars.index(x) for x in salt))
-    cipher = ''.join(chars[(x + y) % len(chars)] for x, y in pairs)
+    cipher = "".join(chars[(x + y) % len(chars)] for x, y in pairs)
     return salt + cipher
 
 
@@ -38,11 +36,11 @@ def unsalt_cipher_token(token: str):
     CSRF_TOKEN_LENGTH, and that its first half is a salt), use it to decrypt
     the second half to produce the original secret.
     """
-    salt = token[:settings.CSRF_SECRET_LENGTH]
-    token = token[settings.CSRF_SECRET_LENGTH:]
+    salt = token[: settings.CSRF_SECRET_LENGTH]
+    token = token[settings.CSRF_SECRET_LENGTH :]
     chars = settings.CSRF_ALLOWED_CHARS
     pairs = zip((chars.index(x) for x in token), (chars.index(x) for x in salt))
-    secret = ''.join(chars[x - y] for x, y in pairs)  # Note negative values are ok
+    secret = "".join(chars[x - y] for x, y in pairs)  # Note negative values are ok
     return secret
 
 
@@ -56,7 +54,7 @@ def _sanitize_token(token):
     If passed invalid value of token (not alphanumeric), will generate new token.
     """
     # Allow only ASCII alphanumerics
-    if re.search('[^a-zA-Z0-9]', token):
+    if re.search("[^a-zA-Z0-9]", token):
         return generate_csrf_token()
     elif len(token) == settings.CSRF_TOKEN_LENGTH:
         return token

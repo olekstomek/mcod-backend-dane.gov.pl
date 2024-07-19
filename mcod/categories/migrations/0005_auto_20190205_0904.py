@@ -7,12 +7,12 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('categories', '0004_category_i18n'),
+        ("categories", "0004_category_i18n"),
     ]
 
     operations = [
         migrations.AddIndex(
-            model_name='category',
-            index=django.contrib.postgres.indexes.GinIndex(fields=['i18n'], name='category_i18n_fff46e_gin'),
+            model_name="category",
+            index=django.contrib.postgres.indexes.GinIndex(fields=["i18n"], name="category_i18n_fff46e_gin"),
         ),
     ]

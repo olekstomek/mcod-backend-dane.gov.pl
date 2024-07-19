@@ -11,17 +11,17 @@ class SearchHistoriesDoc(Document):
     id = fields.IntegerField()
     url = fields.TextField()
     query_sentence = fields.TextField()
-    query_sentence_keyword = fields.KeywordField(attr='query_sentence')
+    query_sentence_keyword = fields.KeywordField(attr="query_sentence")
     user = fields.NestedField(
-        attr='user',
+        attr="user",
         properties={
-            'id': fields.IntegerField(),
-        }
+            "id": fields.IntegerField(),
+        },
     )
     modified = fields.DateField()
 
     class Index:
-        name = mcs.ELASTICSEARCH_INDEX_NAMES['searchhistories']
+        name = mcs.ELASTICSEARCH_INDEX_NAMES["searchhistories"]
         settings = mcs.ELASTICSEARCH_DSL_INDEX_SETTINGS
 
     class Django:

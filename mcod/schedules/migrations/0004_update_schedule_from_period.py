@@ -4,12 +4,14 @@ from django.db import migrations
 
 
 def update_schedule_from_period(apps, schema_editor):
-    schedule_model = apps.get_model('schedules', 'Schedule')
+    schedule_model = apps.get_model("schedules", "Schedule")
     for obj in schedule_model.objects.all():
         start_date = obj.period.start_date
         obj.start_date = start_date
-        obj.period_name = '%(part)s półrocze %(year)s' % {
-            'part': 'I' if start_date.month in range(1, 7) else 'II', 'year': start_date.year}
+        obj.period_name = "%(part)s półrocze %(year)s" % {
+            "part": "I" if start_date.month in range(1, 7) else "II",
+            "year": start_date.year,
+        }
         obj.save()
 
 
@@ -20,7 +22,7 @@ def reverse_update_schedule_from_period(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('schedules', '0003_auto_20201130_1044'),
+        ("schedules", "0003_auto_20201130_1044"),
     ]
 
     operations = [

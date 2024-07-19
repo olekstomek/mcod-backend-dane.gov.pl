@@ -9,4 +9,3 @@ if [ $? -eq 1 ]; then
 else
   docker rm -f $CONTAINER
 fi
-

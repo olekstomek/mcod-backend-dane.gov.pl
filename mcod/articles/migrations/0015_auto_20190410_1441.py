@@ -11,81 +11,103 @@ import uuid
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('articles', '0014_article_i18n'),
+        ("articles", "0014_article_i18n"),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='articlecategory',
-            options={'default_manager_name': 'objects', 'verbose_name': 'Article Category', 'verbose_name_plural': 'Article Categories'},
+            name="articlecategory",
+            options={
+                "default_manager_name": "objects",
+                "verbose_name": "Article Category",
+                "verbose_name_plural": "Article Categories",
+            },
         ),
         migrations.AddField(
-            model_name='article',
-            name='published_at',
-            field=model_utils.fields.MonitorField(default=django.utils.timezone.now, monitor='status', when={'published'}),
+            model_name="article",
+            name="published_at",
+            field=model_utils.fields.MonitorField(default=django.utils.timezone.now, monitor="status", when={"published"}),
         ),
         migrations.AddField(
-            model_name='article',
-            name='removed_at',
-            field=model_utils.fields.MonitorField(default=django.utils.timezone.now, monitor='is_removed', when={True}),
+            model_name="article",
+            name="removed_at",
+            field=model_utils.fields.MonitorField(default=django.utils.timezone.now, monitor="is_removed", when={True}),
         ),
         migrations.AddField(
-            model_name='articlecategory',
-            name='is_removed',
+            model_name="articlecategory",
+            name="is_removed",
             field=models.BooleanField(default=False),
         ),
         migrations.AddField(
-            model_name='articlecategory',
-            name='published_at',
-            field=model_utils.fields.MonitorField(default=django.utils.timezone.now, monitor='status', when={'published'}),
+            model_name="articlecategory",
+            name="published_at",
+            field=model_utils.fields.MonitorField(default=django.utils.timezone.now, monitor="status", when={"published"}),
         ),
         migrations.AddField(
-            model_name='articlecategory',
-            name='removed_at',
-            field=model_utils.fields.MonitorField(default=django.utils.timezone.now, monitor='is_removed', when={True}),
+            model_name="articlecategory",
+            name="removed_at",
+            field=model_utils.fields.MonitorField(default=django.utils.timezone.now, monitor="is_removed", when={True}),
         ),
         migrations.AddField(
-            model_name='articlecategory',
-            name='slug',
+            model_name="articlecategory",
+            name="slug",
             field=models.SlugField(blank=True, default=uuid.uuid4, max_length=600),
         ),
         migrations.AddField(
-            model_name='articlecategory',
-            name='status',
-            field=model_utils.fields.StatusField(choices=[(0, 'dummy')], default='published', max_length=100, no_check_for_status=True, verbose_name='status'),
+            model_name="articlecategory",
+            name="status",
+            field=model_utils.fields.StatusField(
+                choices=[(0, "dummy")],
+                default="published",
+                max_length=100,
+                no_check_for_status=True,
+                verbose_name="status",
+            ),
         ),
         migrations.AddField(
-            model_name='articlecategory',
-            name='status_changed',
-            field=model_utils.fields.MonitorField(default=django.utils.timezone.now, monitor='status', verbose_name='status changed'),
+            model_name="articlecategory",
+            name="status_changed",
+            field=model_utils.fields.MonitorField(
+                default=django.utils.timezone.now,
+                monitor="status",
+                verbose_name="status changed",
+            ),
         ),
         migrations.AddField(
-            model_name='articlecategory',
-            name='uuid',
+            model_name="articlecategory",
+            name="uuid",
             field=models.UUIDField(default=uuid.uuid4),
         ),
         migrations.AddField(
-            model_name='articlecategory',
-            name='views_count',
+            model_name="articlecategory",
+            name="views_count",
             field=models.PositiveIntegerField(default=0),
         ),
         migrations.AlterField(
-            model_name='article',
-            name='i18n',
-            field=modeltrans.fields.TranslationField(fields=('title', 'notes', 'slug'), required_languages=(), virtual_fields=True),
+            model_name="article",
+            name="i18n",
+            field=modeltrans.fields.TranslationField(
+                fields=("title", "notes", "slug"),
+                required_languages=(),
+                virtual_fields=True,
+            ),
         ),
         migrations.AlterField(
-            model_name='article',
-            name='slug',
+            model_name="article",
+            name="slug",
             field=models.SlugField(blank=True, default=uuid.uuid4, max_length=600),
         ),
         migrations.AlterField(
-            model_name='articlecategory',
-            name='i18n',
-            field=modeltrans.fields.TranslationField(fields=('name', 'description', 'slug'), required_languages=(), virtual_fields=True),
+            model_name="articlecategory",
+            name="i18n",
+            field=modeltrans.fields.TranslationField(
+                fields=("name", "description", "slug"),
+                required_languages=(),
+                virtual_fields=True,
+            ),
         ),
         migrations.AddIndex(
-            model_name='article',
-            index=django.contrib.postgres.indexes.GinIndex(fields=['i18n'], name='article_i18n_31a391_gin'),
+            model_name="article",
+            index=django.contrib.postgres.indexes.GinIndex(fields=["i18n"], name="article_i18n_31a391_gin"),
         ),
     ]

@@ -6,13 +6,17 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('datasets', '0020_dataset_license_condition_personal_data'),
+        ("datasets", "0020_dataset_license_condition_personal_data"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='dataset',
-            name='license_condition_db_or_copyrighted',
-            field=models.TextField(blank=True, null=True, verbose_name='Conditions for using public information that meets the characteristics of the work or constitute a database (Article 13 paragraph 2 of the Act on the re-use of public sector information)'),
+            model_name="dataset",
+            name="license_condition_db_or_copyrighted",
+            field=models.TextField(
+                blank=True,
+                null=True,
+                verbose_name="Conditions for using public information that meets the characteristics of the work or constitute a database (Article 13 paragraph 2 of the Act on the re-use of public sector information)",
+            ),
         ),
     ]

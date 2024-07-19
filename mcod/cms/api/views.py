@@ -108,15 +108,12 @@ class CmsPagesViewSet(PagesAPIViewSet):
         assert lookup_url_kwarg in self.kwargs, (
             "Expected view %s to be called with a URL keyword argument "
             'named "%s". Fix your URL conf, or set the `.lookup_field` '
-            "attribute on the view correctly."
-            % (self.__class__.__name__, lookup_url_kwarg)
+            "attribute on the view correctly." % (self.__class__.__name__, lookup_url_kwarg)
         )
         if self.is_superuser_rev_request():
             rev_id = self.request.query_params.get("rev")
             query_filter = {
-                "revisions__content_json__icontains": '"{}": "{}"'.format(
-                    self.lookup_field, self.kwargs[lookup_url_kwarg]
-                )
+                "revisions__content_json__icontains": '"{}": "{}"'.format(self.lookup_field, self.kwargs[lookup_url_kwarg])
             }
             obj = queryset.filter(**query_filter).order_by("revisions__id").first()
             if not obj:
@@ -165,9 +162,7 @@ class CmsPagesViewSet(PagesAPIViewSet):
         request = self.request
 
         try:
-            models = page_models_from_string(
-                request.GET.get("type", "wagtailcore.Page")
-            )
+            models = page_models_from_string(request.GET.get("type", "wagtailcore.Page"))
         except (LookupError, ValueError):
             raise BadRequestError("type doesn't exist")
 
@@ -191,9 +186,7 @@ class CmsPagesViewSet(PagesAPIViewSet):
     def get_urlpatterns(cls):
         return [
             url(r"^$", cls.as_view({"get": "page_view"}), name="detail"),
-            url(
-                r"^(?P<url_path>.*)/$", cls.as_view({"get": "page_view"}), name="detail"
-            ),
+            url(r"^(?P<url_path>.*)/$", cls.as_view({"get": "page_view"}), name="detail"),
         ]
 
     @classmethod

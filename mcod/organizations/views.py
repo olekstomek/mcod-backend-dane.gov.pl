@@ -36,7 +36,7 @@ class InstitutionSearchView(JsonAPIView):
         self.handle(request, response, self.GET, *args, **kwargs)
 
     @falcon.before(login_optional)
-    @on_get.version('1.0')
+    @on_get.version("1.0")
     def on_get(self, request, response, *args, **kwargs):
         self.handle(request, response, self.GET, *args, **kwargs)
 
@@ -57,15 +57,15 @@ class InstitutionApiView(JsonAPIView):
         self.handle(request, response, self.GET, *args, **kwargs)
 
     @falcon.before(login_optional)
-    @on_get.version('1.0')
+    @on_get.version("1.0")
     def on_get(self, request, response, *args, **kwargs):
         self.handle(request, response, self.GET, *args, **kwargs)
 
     class GET(RetrieveOneHdlr):
         deserializer_schema = partial(InstitutionApiRequest, many=False)
-        database_model = apps.get_model('organizations', 'Organization')
+        database_model = apps.get_model("organizations", "Organization")
         serializer_schema = partial(InstitutionApiResponse, many=False)
-        include_default = ['dataset']
+        include_default = ["dataset"]
 
 
 class InstitutionDatasetSearchApiView(JsonAPIView):
@@ -79,7 +79,7 @@ class InstitutionDatasetSearchApiView(JsonAPIView):
         self.handle(request, response, self.GET, *args, **kwargs)
 
     @falcon.before(login_optional)
-    @on_get.version('1.0')
+    @on_get.version("1.0")
     def on_get(self, request, response, *args, **kwargs):
         self.handle(request, response, self.GET, *args, **kwargs)
 
@@ -90,37 +90,40 @@ class InstitutionDatasetSearchApiView(JsonAPIView):
 
         def _queryset_extra(self, queryset, id=None, **kwargs):
             if id:
-                queryset = queryset.query("nested", path="institution",
-                                          query=Q("term", **{'institution.id': id}))
-            return queryset.filter('term', status='published')
+                queryset = queryset.query(
+                    "nested",
+                    path="institution",
+                    query=Q("term", **{"institution.id": id}),
+                )
+            return queryset.filter("term", status="published")
 
 
 class InstitutionTypeAdminView(PermissionRequiredMixin, View):
-    http_method_names = ['get']
+    http_method_names = ["get"]
 
     def has_permission(self):
         return self.request.user.is_staff or self.request.user.is_superuser
 
     def get(self, request, *args, **kwargs):
-        organization_id = request.GET.get('organization_id')
+        organization_id = request.GET.get("organization_id")
         organization = get_object_or_404(Organization.raw, id=organization_id)
-        return JsonResponse({'institution_type': organization.institution_type})
+        return JsonResponse({"institution_type": organization.institution_type})
 
 
 class OrganizationAutocompleteJsonView(AutocompleteJsonView):
-    DATASET_CHANGE_PATTERN = re.compile(r'/datasets/dataset/(?P<dataset_id>\d+)/change')
+    DATASET_CHANGE_PATTERN = re.compile(r"/datasets/dataset/(?P<dataset_id>\d+)/change")
 
     def get_queryset(self):
-        referer = urlparse(self.request.headers.get('Referer'))
+        referer = urlparse(self.request.headers.get("Referer"))
         request_url = urlparse(self.request.build_absolute_uri())
 
         q = models.Q()
-        if referer.netloc == request_url.netloc and referer.path.startswith('/datasets/dataset/'):
-            q = models.Q(status='published')
+        if referer.netloc == request_url.netloc and referer.path.startswith("/datasets/dataset/"):
+            q = models.Q(status="published")
             match = self.DATASET_CHANGE_PATTERN.search(referer.path)
             if match:
-                dataset_id = match.group('dataset_id')
-                dataset = apps.get_model('datasets', 'Dataset').objects.get(id=dataset_id)
+                dataset_id = match.group("dataset_id")
+                dataset = apps.get_model("datasets", "Dataset").objects.get(id=dataset_id)
                 if dataset.organization_id:
                     q |= models.Q(id=dataset.organization_id)
 

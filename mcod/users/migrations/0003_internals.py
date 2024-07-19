@@ -5,11 +5,12 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('users', '0002_history'),
+        ("users", "0002_history"),
     ]
 
     operations = [
-        migrations.RunSQL("""
+        migrations.RunSQL(
+            """
 BEGIN;
 
 /* 1. NOWY SCHEMAT INTERNALS */
@@ -51,7 +52,8 @@ ALTER TABLE internals.functions_execute_log
 SELECT *
 FROM internals.functions_execute_log;
 */
-COMMIT;        
-        
-        """)
+COMMIT;
+
+        """
+        )
     ]

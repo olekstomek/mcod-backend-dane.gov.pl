@@ -20,30 +20,38 @@ from mcod.resources.models import Resource
 @pytest.fixture
 def dga_resource(resource: Resource) -> Resource:
     dga_resource = resource
-    dga_resource.title = 'Sample resource of chronionych danych abc'
+    dga_resource.title = "Sample resource of chronionych danych abc"
     dga_resource.format = "xlsx"
     dga_resource.has_table = True
     dga_resource.has_dynamic_data = False
     dga_resource.has_high_value_data = False
     dga_resource.has_research_data = False
-    dga_resource.tabular_data_schema =\
-        {"fields": [{"name": "Lp.", "type": "integer", "format": "default"},
-                    {"name": "Zasób chronionych danych", "type": "string", "format": "default"},
-                    {"name": "Format danych", "type": "string", "format": "default"},
-                    {"name": "Rozmiar danych", "type": "string", "format": "default"},
-                    {"name": "Warunki ponownego wykorzystywania", "type": "string", "format": "default"}
-                    ],
-         "missingValues": []
-         }
+    dga_resource.tabular_data_schema = {
+        "fields": [
+            {"name": "Lp.", "type": "integer", "format": "default"},
+            {"name": "Zasób chronionych danych", "type": "string", "format": "default"},
+            {"name": "Format danych", "type": "string", "format": "default"},
+            {"name": "Rozmiar danych", "type": "string", "format": "default"},
+            {
+                "name": "Warunki ponownego wykorzystywania",
+                "type": "string",
+                "format": "default",
+            },
+        ],
+        "missingValues": [],
+    }
 
     return dga_resource
 
 
-@pytest.mark.parametrize("example_string, list_of_strings, result",
-                         [("aaa_abc_bbb", ["abc", "def"], True),
-                          ("abc_def", ["aaa", "abc"], True),
-                          ("aaa_xyz_bbb", ["ddd", "ccc", "fff"], False)],
-                         )
+@pytest.mark.parametrize(
+    "example_string, list_of_strings, result",
+    [
+        ("aaa_abc_bbb", ["abc", "def"], True),
+        ("abc_def", ["aaa", "abc"], True),
+        ("aaa_xyz_bbb", ["ddd", "ccc", "fff"], False),
+    ],
+)
 def test_string_contains_element_from_list(example_string, list_of_strings, result):
     assert result == string_contains_element_from_list(checked_string=example_string, list_elements=list_of_strings)
 
@@ -57,8 +65,7 @@ def test_dga_resource_validation_result_positions():
 
 
 def test_dga_resource_validator(dga_resource: Resource):
-    dga_resource_validator = DgaResourceValidator(correct_extensions=DGA_RESOURCE_EXTENSIONS,
-                                                  correct_data_columns=DGA_COLUMNS)
+    dga_resource_validator = DgaResourceValidator(correct_extensions=DGA_RESOURCE_EXTENSIONS, correct_data_columns=DGA_COLUMNS)
     assert dga_resource_validator.validate(dga_resource) == DgaResourceValidationResult.CORRECT_VALIDATION
 
     dga_resource.format = "doc"
@@ -105,7 +112,11 @@ def test_add_row_to_dga_report_and_save_report(tmp_path):
     example_column_names = ["abc", "def", "ghi"]
     dga_report = DgaReport(columns=example_column_names)
 
-    incorrect_data_row = {"bad_column_name": "value_1", "def": "value_2", "ghi": "value_3"}
+    incorrect_data_row = {
+        "bad_column_name": "value_1",
+        "def": "value_2",
+        "ghi": "value_3",
+    }
     with pytest.raises(CommandError) as command_error:
         dga_report.add_row_to_report(row=incorrect_data_row)
     assert str(command_error.value) == "Building report error - logged information inconsistent with report pattern"
@@ -119,10 +130,13 @@ def test_add_row_to_dga_report_and_save_report(tmp_path):
     assert file.exists()
 
 
-@pytest.mark.parametrize("institution_type, public_count, not_public_count",
-                         [("local", 1, 0), ("state", 1, 0), ("private", 0, 1), ("other", 0, 1)])
-def test_dga_migrator_get_public_and_not_public_organizations(institution: Organization, institution_type,
-                                                              public_count, not_public_count):
+@pytest.mark.parametrize(
+    "institution_type, public_count, not_public_count",
+    [("local", 1, 0), ("state", 1, 0), ("private", 0, 1), ("other", 0, 1)],
+)
+def test_dga_migrator_get_public_and_not_public_organizations(
+    institution: Organization, institution_type, public_count, not_public_count
+):
     test_institution = institution
     test_institution.institution_type = institution_type
     test_institution.save()
@@ -164,8 +178,9 @@ def test_public_institution_migration_correct(tmpdir, institution: Organization,
     assert dga_resource.contains_protected_data is True
 
 
-def test_public_institution_migration_resource_validation_fail(tmpdir, capsys, institution: Organization,
-                                                               dataset: Dataset, dga_resource: Resource):
+def test_public_institution_migration_resource_validation_fail(
+    tmpdir, capsys, institution: Organization, dataset: Dataset, dga_resource: Resource
+):
     institution.institution_type = "state"
     institution.save()
     dataset.organization = institution
@@ -181,8 +196,7 @@ def test_public_institution_migration_resource_validation_fail(tmpdir, capsys, i
     assert expected_message in out
 
 
-def test_public_institution_has_dga_datasource_and_no_dga_resource(tmpdir, capsys, institution: Organization,
-                                                                   dataset: Dataset):
+def test_public_institution_has_dga_datasource_and_no_dga_resource(tmpdir, capsys, institution: Organization, dataset: Dataset):
     institution.institution_type = "state"
     institution.save()
     dataset.organization = institution

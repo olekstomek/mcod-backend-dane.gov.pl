@@ -7,28 +7,46 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='History',
+            name="History",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('table_name', models.CharField(max_length=255, verbose_name='table name')),
-                ('row_id', models.IntegerField(verbose_name='row id')),
-                ('action', models.CharField(max_length=50, verbose_name='action')),
-                ('old_value', django.contrib.postgres.fields.jsonb.JSONField(null=True, verbose_name='old value')),
-                ('new_value', django.contrib.postgres.fields.jsonb.JSONField(null=True, verbose_name='new value')),
-                ('change_user_id', models.IntegerField(verbose_name='User')),
-                ('change_timestamp',
-                 models.DateTimeField(verbose_name='Change timestamp', default=datetime.datetime.now)),
-                ('message', models.TextField(null=True, verbose_name='message')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "table_name",
+                    models.CharField(max_length=255, verbose_name="table name"),
+                ),
+                ("row_id", models.IntegerField(verbose_name="row id")),
+                ("action", models.CharField(max_length=50, verbose_name="action")),
+                (
+                    "old_value",
+                    django.contrib.postgres.fields.jsonb.JSONField(null=True, verbose_name="old value"),
+                ),
+                (
+                    "new_value",
+                    django.contrib.postgres.fields.jsonb.JSONField(null=True, verbose_name="new value"),
+                ),
+                ("change_user_id", models.IntegerField(verbose_name="User")),
+                (
+                    "change_timestamp",
+                    models.DateTimeField(verbose_name="Change timestamp", default=datetime.datetime.now),
+                ),
+                ("message", models.TextField(null=True, verbose_name="message")),
             ],
             options={
-                'verbose_name': 'History',
-                'verbose_name_plural': 'Histories',
-                'db_table': 'history',
+                "verbose_name": "History",
+                "verbose_name_plural": "Histories",
+                "db_table": "history",
             },
         ),
     ]

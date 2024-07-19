@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('datasets', '0014_dataset_verified'),
+        ("datasets", "0014_dataset_verified"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='dataset',
-            name='slug',
+            model_name="dataset",
+            name="slug",
             field=models.SlugField(blank=True, max_length=600),
         ),
     ]

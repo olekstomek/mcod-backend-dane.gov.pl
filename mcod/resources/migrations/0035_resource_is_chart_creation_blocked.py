@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('resources', '0034_resource_file_mimetype'),
+        ("resources", "0034_resource_file_mimetype"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='resource',
-            name='is_chart_creation_blocked',
-            field=models.BooleanField(default=False, verbose_name='is chart creation blocked?'),
+            model_name="resource",
+            name="is_chart_creation_blocked",
+            field=models.BooleanField(default=False, verbose_name="is chart creation blocked?"),
         ),
     ]

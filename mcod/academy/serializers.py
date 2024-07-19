@@ -34,9 +34,9 @@ class CourseApiAttrs(ObjectAttrs, HighlightObjectMixin):
     state_name = fields.Str()
 
     class Meta:
-        object_type = 'course'
-        url_template = '{api_url}/courses/{ident}'
-        model = 'academy.Course'
+        object_type = "course"
+        url_template = "{api_url}/courses/{ident}"
+        model = "academy.Course"
 
     @pre_dump
     def prepare_data(self, data, **kwargs):
@@ -46,14 +46,14 @@ class CourseApiAttrs(ObjectAttrs, HighlightObjectMixin):
             end_date = data.end.date()
             _state = None
             if start_date <= today <= end_date:
-                _state = 'current'
+                _state = "current"
             elif end_date < today:
-                _state = 'finished'
+                _state = "finished"
             elif today < start_date:
-                _state = 'planned'
+                _state = "planned"
             if _state:
-                setattr(data, 'state', _state)
-                setattr(data, 'state_name', Course.COURSE_STATES.get(_state))
+                setattr(data, "state", _state)
+                setattr(data, "state_name", Course.COURSE_STATES.get(_state))
         return data
 
 

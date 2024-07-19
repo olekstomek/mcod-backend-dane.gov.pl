@@ -7,13 +7,13 @@ import modeltrans.fields
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('tags', '0002_initial'),
+        ("tags", "0002_initial"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='tag',
-            name='i18n',
-            field=modeltrans.fields.TranslationField(fields=('name',), required_languages=('pl',), virtual_fields=True),
+            model_name="tag",
+            name="i18n",
+            field=modeltrans.fields.TranslationField(fields=("name",), required_languages=("pl",), virtual_fields=True),
         ),
     ]

@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('datasets', '0021_auto_20200108_1541'),
+        ("datasets", "0021_auto_20200108_1541"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='dataset',
-            name='downloads_count',
-            field=models.PositiveIntegerField(default=0, verbose_name='download counter'),
+            model_name="dataset",
+            name="downloads_count",
+            field=models.PositiveIntegerField(default=0, verbose_name="download counter"),
         ),
     ]

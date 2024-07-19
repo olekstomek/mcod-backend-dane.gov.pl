@@ -8,22 +8,42 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('wagtailcore', '0045_assign_unlock_grouppagepermission'),
-        ('cms', '0016_auto_20200528_1234'),
+        ("wagtailcore", "0045_assign_unlock_grouppagepermission"),
+        ("cms", "0016_auto_20200528_1234"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='FormPageSubmission',
+            name="FormPageSubmission",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('form_data', django.contrib.postgres.fields.jsonb.JSONField(blank=True, null=True, verbose_name='Form data')),
-                ('submit_time', models.DateTimeField(auto_now_add=True, verbose_name='Submit time')),
-                ('page', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='wagtailcore.Page')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "form_data",
+                    django.contrib.postgres.fields.jsonb.JSONField(blank=True, null=True, verbose_name="Form data"),
+                ),
+                (
+                    "submit_time",
+                    models.DateTimeField(auto_now_add=True, verbose_name="Submit time"),
+                ),
+                (
+                    "page",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="wagtailcore.Page",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'form submission',
-                'verbose_name_plural': 'form submissions',
+                "verbose_name": "form submission",
+                "verbose_name_plural": "form submissions",
             },
         ),
     ]

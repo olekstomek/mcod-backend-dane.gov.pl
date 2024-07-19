@@ -5,25 +5,27 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('applications', '0002_initial'),
+        ("applications", "0002_initial"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Trash',
-            fields=[
-            ],
+            name="Trash",
+            fields=[],
             options={
-                'verbose_name': 'Trash',
-                'verbose_name_plural': 'Trash',
-                'proxy': True,
-                'indexes': [],
+                "verbose_name": "Trash",
+                "verbose_name_plural": "Trash",
+                "proxy": True,
+                "indexes": [],
             },
-            bases=('applications.application',),
+            bases=("applications.application",),
         ),
         migrations.AlterModelOptions(
-            name='application',
-            options={'default_manager_name': 'objects', 'verbose_name': 'Application',
-                     'verbose_name_plural': 'Applications'},
+            name="application",
+            options={
+                "default_manager_name": "objects",
+                "verbose_name": "Application",
+                "verbose_name_plural": "Applications",
+            },
         ),
     ]

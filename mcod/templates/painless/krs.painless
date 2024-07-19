@@ -20,4 +20,3 @@ if ({{col}}.toString().length() == 10) {
 }
 {% endif %}
 {% endblock %}
-

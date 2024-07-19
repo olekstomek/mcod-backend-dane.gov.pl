@@ -7,13 +7,20 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('resources', '0063_auto_20220804_1632'),
+        ("resources", "0063_auto_20220804_1632"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='resourcefile',
-            name='openness_score',
-            field=models.IntegerField(default=1, validators=[django.core.validators.MinValueValidator(1), django.core.validators.MaxValueValidator(5)], verbose_name='Openness score'),
+            model_name="resourcefile",
+            name="openness_score",
+            field=models.IntegerField(
+                default=1,
+                validators=[
+                    django.core.validators.MinValueValidator(1),
+                    django.core.validators.MaxValueValidator(5),
+                ],
+                verbose_name="Openness score",
+            ),
         ),
     ]

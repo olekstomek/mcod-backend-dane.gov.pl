@@ -10,8 +10,8 @@ from mcod.lib.utils import is_django_ver_lt
 
 class PnAppsConfig(AppConfig):
     if is_django_ver_lt(3, 2):
-        label = 'mcod.pn_apps'
-    name = 'mcod.pn_apps'
+        label = "mcod.pn_apps"
+    name = "mcod.pn_apps"
     verbose_name = "Panel Apps"
 
     _routes: Optional[RoutingConfiguration] = None

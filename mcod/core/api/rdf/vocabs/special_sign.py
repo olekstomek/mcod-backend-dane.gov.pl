@@ -16,8 +16,9 @@ class SpecialSignVocab:
 
     def __init__(self):
         from mcod.core.api.rdf.profiles.dcat_ap_pl import VOCABULARIES
-        self.url = VOCABULARIES['special-sign']
-        qs = SpecialSign.objects.filter(status='published')
+
+        self.url = VOCABULARIES["special-sign"]
+        qs = SpecialSign.objects.filter(status="published")
         vocab_modified = qs.aggregate(Max("modified"))["modified__max"]
         self.version = f"{vocab_modified:%Y.%m.%d}" if vocab_modified else "2022.05.01"
         self.entries = {}

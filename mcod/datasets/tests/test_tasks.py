@@ -30,9 +30,7 @@ class TestDatasetUpdateReminder:
             ("yearly", 7, relativedelta(years=1)),
         ],
     )
-    def test_update_reminder_is_sent(
-        self, update_freq, date_delay, reldelta, dataset_with_resource, admin
-    ):
+    def test_update_reminder_is_sent(self, update_freq, date_delay, reldelta, dataset_with_resource, admin):
         ds = dataset_with_resource
         ds.title = "Test wysyłki notyfikacji dot. aktualizacji zbioru"
         ds.update_frequency = update_freq
@@ -44,10 +42,7 @@ class TestDatasetUpdateReminder:
         first_res.save()
         send_dataset_update_reminder()
         assert len(mail.outbox) == 1
-        assert (
-            mail.outbox[0].subject
-            == "Test wysyłki notyfikacji dot. aktualizacji zbioru"
-        )
+        assert mail.outbox[0].subject == "Test wysyłki notyfikacji dot. aktualizacji zbioru"
         assert "Przypomnienie o aktualizacji Zbioru danych" in mail.outbox[0].body
         assert mail.outbox[0].to == [admin.email]
 
@@ -85,9 +80,7 @@ class TestDatasetUpdateReminder:
         assert len(mail.outbox) == 0
 
     @override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
-    def test_update_reminder_sent_to_notification_recipient_if_set(
-        self, dataset_with_resource, admin
-    ):
+    def test_update_reminder_sent_to_notification_recipient_if_set(self, dataset_with_resource, admin):
         ds = dataset_with_resource
         ds.title = "Test wysyłki notyfikacji dot. aktualizacji zbioru"
         ds.update_frequency = "weekly"
@@ -95,17 +88,12 @@ class TestDatasetUpdateReminder:
         ds.update_notification_recipient_email = "test-recipient@test.com"
         ds.save()
         first_res = ds.resources.all()[0]
-        first_res.data_date = (
-            date.today() + relativedelta(days=1) - relativedelta(days=7)
-        )
+        first_res.data_date = date.today() + relativedelta(days=1) - relativedelta(days=7)
         first_res.type = "file"
         first_res.save()
         send_dataset_update_reminder()
         assert len(mail.outbox) == 1
-        assert (
-            mail.outbox[0].subject
-            == "Test wysyłki notyfikacji dot. aktualizacji zbioru"
-        )
+        assert mail.outbox[0].subject == "Test wysyłki notyfikacji dot. aktualizacji zbioru"
         assert mail.outbox[0].to == ["test-recipient@test.com"]
         assert mail.outbox[0].to != [admin.email]
 
@@ -130,9 +118,7 @@ class TestMetadataFileCreation:
         ],
     )
     @pytest.mark.usefixtures("tmp_path", "mocker")
-    def test_create_metadata_files(
-        self, tmp_path: str, mocker: "MockerFixture", extension, task
-    ):
+    def test_create_metadata_files(self, tmp_path: str, mocker: "MockerFixture", extension, task):
         """
         Tests the creation of XML metadata files.
 
@@ -176,9 +162,7 @@ class TestMetadataFileCreation:
         ],
     )
     @pytest.mark.usefixtures("tmp_path", "mocker")
-    def test_create_metadata_files_with_deletion_previous(
-        self, tmp_path, mocker, task, extension
-    ):
+    def test_create_metadata_files_with_deletion_previous(self, tmp_path, mocker, task, extension):
         """
         Tests metadata file creation with previous file deletion.
 
@@ -198,29 +182,72 @@ class TestMetadataFileCreation:
             assert not file.is_file()
             assert file2.is_file()
 
-    def test_columns_in_csv_metadata_report(
-            self, tmp_path: str, mocker: "MockerFixture"
-    ):
+    def test_columns_in_csv_metadata_report(self, tmp_path: str, mocker: "MockerFixture"):
         """Check if required columns are present in csv metadata report."""
 
         columns_required = [
-            "URL zbioru", "Tytuł", "Opis", "Słowo kluczowe", "Kategoria", "Częstotliwość aktualizacji",
-            "Data udostępnienia zbioru", "Data aktualizacji zbioru", "Liczba wyświetleń zbioru",
-            "Liczba pobrań zbioru", "Liczba danych", "Warunki wykorzystywania", "Licencja", "źródło",
-            "Zbiór zawiera dane o wysokiej wartości", "Zbiór zawiera dane dynamiczne",
-            "Zbiór zawiera dane badawcze", "Lokalizacje zbiorów danych",
-            "Dokumenty uzupełniające zbioru (nazwa, język, url, rozmiar pliku)", "URL dostawcy",
-            "Rodzaj instytucji", "Nazwa", "Skrót", "Id Instytucji", "REGON", "EPUAP",
-            "Adres do doręczeń elektronicznych", "Strona internetowa", "Data utworzenia dostawcy",
-            "Data aktualizacji dostawcy", "Liczba zbiorów danych", "Liczba zasobów dostawcy",
-            "Kod pocztowy", "Miasto", "Rodzaj ulicy", "Ulica", "Numer ulicy", "Numer mieszkania",
-            "Email", "Telefon", "URL danych", "Tytuł danych", "Opis danych",
-            "Data udostępnienia danych", "Dane na dzień", "Ranking otwartości", "Typ", "Format pliku",
-            "Rozmiar pliku", "Liczba wyświetleń danych", "Liczba pobrań danych", "Tabela", "Mapa",
-            "Wykres", "Zasób zawiera dane o wysokiej wartości", "Zasób zawiera dane dynamiczne",
-            "Zasób zawiera dane badawcze", "Zawiera wykaz chronionych danych", "Lokalizacje danych",
-            "URL pliku (do pobrania)", "znaki umowne",
-            "Dokumenty uzupełniające zasobu (nazwa, język, url, rozmiar pliku)"
+            "URL zbioru",
+            "Tytuł",
+            "Opis",
+            "Słowo kluczowe",
+            "Kategoria",
+            "Częstotliwość aktualizacji",
+            "Data udostępnienia zbioru",
+            "Data aktualizacji zbioru",
+            "Liczba wyświetleń zbioru",
+            "Liczba pobrań zbioru",
+            "Liczba danych",
+            "Warunki wykorzystywania",
+            "Licencja",
+            "źródło",
+            "Zbiór zawiera dane o wysokiej wartości",
+            "Zbiór zawiera dane dynamiczne",
+            "Zbiór zawiera dane badawcze",
+            "Lokalizacje zbiorów danych",
+            "Dokumenty uzupełniające zbioru (nazwa, język, url, rozmiar pliku)",
+            "URL dostawcy",
+            "Rodzaj instytucji",
+            "Nazwa",
+            "Skrót",
+            "Id Instytucji",
+            "REGON",
+            "EPUAP",
+            "Adres do doręczeń elektronicznych",
+            "Strona internetowa",
+            "Data utworzenia dostawcy",
+            "Data aktualizacji dostawcy",
+            "Liczba zbiorów danych",
+            "Liczba zasobów dostawcy",
+            "Kod pocztowy",
+            "Miasto",
+            "Rodzaj ulicy",
+            "Ulica",
+            "Numer ulicy",
+            "Numer mieszkania",
+            "Email",
+            "Telefon",
+            "URL danych",
+            "Tytuł danych",
+            "Opis danych",
+            "Data udostępnienia danych",
+            "Dane na dzień",
+            "Ranking otwartości",
+            "Typ",
+            "Format pliku",
+            "Rozmiar pliku",
+            "Liczba wyświetleń danych",
+            "Liczba pobrań danych",
+            "Tabela",
+            "Mapa",
+            "Wykres",
+            "Zasób zawiera dane o wysokiej wartości",
+            "Zasób zawiera dane dynamiczne",
+            "Zasób zawiera dane badawcze",
+            "Zawiera wykaz chronionych danych",
+            "Lokalizacje danych",
+            "URL pliku (do pobrania)",
+            "znaki umowne",
+            "Dokumenty uzupełniające zasobu (nazwa, język, url, rozmiar pliku)",
         ]
 
         with override_settings(METADATA_MEDIA_ROOT=tmp_path):

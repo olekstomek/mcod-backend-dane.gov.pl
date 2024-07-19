@@ -339,13 +339,10 @@ FROM organizations o
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('reports', '0013_dd_hv_r_data_in_daily_reports'),
-        ('resources', '0067_resource_contains_protected_data')
+        ("reports", "0013_dd_hv_r_data_in_daily_reports"),
+        ("resources", "0067_resource_contains_protected_data"),
     ]
 
     operations = [
-        migrations.RunSQL(
-            sql=sql_migration,
-            reverse_sql=sql_revert_migration
-        ),
+        migrations.RunSQL(sql=sql_migration, reverse_sql=sql_revert_migration),
     ]

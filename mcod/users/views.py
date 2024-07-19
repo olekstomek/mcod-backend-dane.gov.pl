@@ -16,7 +16,11 @@ from django.utils.translation import gettext_lazy as _
 
 from mcod.academy.models import Course
 from mcod.core.api.handlers import CreateOneHdlr, RetrieveOneHdlr, SearchHdlr, UpdateOneHdlr
-from mcod.core.api.hooks import login_required, get_expired_token_description, get_user_pending_description
+from mcod.core.api.hooks import (
+    get_expired_token_description,
+    get_user_pending_description,
+    login_required,
+)
 from mcod.core.api.views import JsonAPIView
 from mcod.core.versioning import versioned
 from mcod.laboratory.models import LabEvent
@@ -52,7 +56,6 @@ from mcod.users.serializers import (
     VerifyEmailApiResponse,
 )
 
-
 User = get_user_model()
 
 
@@ -67,49 +70,53 @@ class LoginView(JsonAPIView):
         serializer_schema = partial(LoginApiResponse, many=False)
 
         def _get_data(self, cleaned, *args, **kwargs):
-            cleaned = cleaned['data']['attributes']
-            cleaned['email'] = cleaned['email'].lower()
+            cleaned = cleaned["data"]["attributes"]
+            cleaned["email"] = cleaned["email"].lower()
             try:
-                user = User.objects.get(email=cleaned['email'], is_removed=False, is_permanently_removed=False)
+                user = User.objects.get(
+                    email=cleaned["email"],
+                    is_removed=False,
+                    is_permanently_removed=False,
+                )
             except User.DoesNotExist:
                 raise falcon.HTTPUnauthorized(
-                    title='401 Unauthorized',
-                    description=_('Invalid email or password'),
-                    code='account_not_exist'
+                    title="401 Unauthorized",
+                    description=_("Invalid email or password"),
+                    code="account_not_exist",
                 )
 
-            if user.state != 'active':
-                if user.state not in settings.USER_STATE_LIST or user.state == 'deleted':
+            if user.state != "active":
+                if user.state not in settings.USER_STATE_LIST or user.state == "deleted":
                     raise falcon.HTTPUnauthorized(
-                        title='401 Unauthorized',
-                        description=_('Account is not available'),
-                        code='account_unavailable'
+                        title="401 Unauthorized",
+                        description=_("Account is not available"),
+                        code="account_unavailable",
                     )
 
-                if user.state in ('draft', 'blocked'):
+                if user.state in ("draft", "blocked"):
                     raise falcon.HTTPUnauthorized(
-                        title='401 Unauthorized',
-                        description=_('Account is blocked'),
-                        code='account_unavailable'
+                        title="401 Unauthorized",
+                        description=_("Account is blocked"),
+                        code="account_unavailable",
                     )
 
-                if user.state == 'pending':
+                if user.state == "pending":
                     raise falcon.HTTPForbidden(
-                        title='403 Forbidden',
+                        title="403 Forbidden",
                         description=get_user_pending_description(),
-                        code='account_inactive'
+                        code="account_inactive",
                     )
 
             user = authenticate(request=self.request, **cleaned)
 
             if user is None:
                 raise falcon.HTTPUnauthorized(
-                    title='401 Unauthorized',
-                    description=_('Invalid email or password'),
-                    code='authorization_error'
+                    title="401 Unauthorized",
+                    description=_("Invalid email or password"),
+                    code="authorization_error",
                 )
 
-            if not hasattr(self.request, 'session'):
+            if not hasattr(self.request, "session"):
                 self.request.session = session_store()
 
                 self.request.META = {}
@@ -130,22 +137,19 @@ class RegistrationView(JsonAPIView):
         serializer_schema = RegistrationApiResponse
 
         def _get_data(self, cleaned, *args, **kwargs):
-            data = cleaned['data']['attributes']
-            if User.objects.filter(email__iexact=data['email']):
+            data = cleaned["data"]["attributes"]
+            if User.objects.filter(email__iexact=data["email"]):
                 raise falcon.HTTPForbidden(
-                    title='403 Forbidden',
-                    description=_('This e-mail is already used'),
-                    code='email_already_used'
+                    title="403 Forbidden",
+                    description=_("This e-mail is already used"),
+                    code="email_already_used",
                 )
-            data['email'] = data['email'].lower()
+            data["email"] = data["email"].lower()
             user = User.objects.create_user(**data)
             try:
                 user.send_registration_email()
             except SMTPException:
-                raise falcon.HTTPInternalServerError(
-                    description=_('Email cannot be sent'),
-                    code='email_send_error'
-                )
+                raise falcon.HTTPInternalServerError(description=_("Email cannot be sent"), code="email_send_error")
             return user
 
 
@@ -162,15 +166,15 @@ class AccountView(JsonAPIView):
 
     class GET(RetrieveOneHdlr):
         serializer_schema = partial(UserApiResponse, many=False)
-        include_default = ['institution']
+        include_default = ["institution"]
         _includes = {
-            'institution': 'organizations.Organization',
-            'agent_institution': 'organizations.Organization',
-            'agent_institution_main': 'organizations.Organization',
+            "institution": "organizations.Organization",
+            "agent_institution": "organizations.Organization",
+            "agent_institution_main": "organizations.Organization",
         }
         _include_map = {
-            'agent_institution': 'agent_institutions_included',
-            'agent_institution_main': 'agent_organization',
+            "agent_institution": "agent_institutions_included",
+            "agent_institution_main": "agent_organization",
         }
 
         def clean(self, *args, **kwargs):
@@ -181,7 +185,7 @@ class AccountView(JsonAPIView):
             return self._get_instance(*args, **kwargs)
 
         def _get_instance(self, *args, **kwargs):
-            instance = getattr(self, '_cached_instance', None)
+            instance = getattr(self, "_cached_instance", None)
             if not instance:
                 self._cached_instance = self.request.user
             return self._cached_instance
@@ -195,7 +199,7 @@ class AccountView(JsonAPIView):
             return super().clean(self.request.user.id, validators=None, *args, **kwargs)
 
         def _get_data(self, cleaned, *args, **kwargs):
-            data = cleaned['data']['attributes']
+            data = cleaned["data"]["attributes"]
 
             user = self.request.user
             for attr, val in data.items():
@@ -220,57 +224,51 @@ class DashboardView(JsonAPIView):
             data = {
                 "aggregations": self._get_aggregations(request.user),
             }
-            if 'schedules' in data['aggregations']:
+            if "schedules" in data["aggregations"]:
                 notifications = request.user.schedule_dashboard_notifications
-                data['aggregations']['schedules'].update({
-                    'notifications': notifications,
-                    'notifications_count': notifications.count(),
-                })
+                data["aggregations"]["schedules"].update(
+                    {
+                        "notifications": notifications,
+                        "notifications_count": notifications.count(),
+                    }
+                )
             return data
 
         def _get_aggregations(self, user):
             result = {
-                'subscriptions': user.get_dashboard_subscriptions(),
+                "subscriptions": user.get_dashboard_subscriptions(),
             }
             if user.has_access_to_academy_in_dashboard:
-                result.update({
-                    'academy': self._get_academy_aggregations()
-                })
+                result.update({"academy": self._get_academy_aggregations()})
 
             if user.has_access_to_laboratory_in_dashboard:
-                result.update({
-                    'lab': self._get_laboratory_aggregations()
-                })
+                result.update({"lab": self._get_laboratory_aggregations()})
             if user.has_access_to_suggestions_in_dashboard:
-                result.update({
-                    'suggestions': self._get_suggestions_aggregations()
-                })
+                result.update({"suggestions": self._get_suggestions_aggregations()})
             if user.has_access_to_meetings_in_dashboard:
-                result.update({
-                    'meetings': self._get_meetings_aggregations()
-                })
+                result.update({"meetings": self._get_meetings_aggregations()})
             schedules_aggregations = Schedule.get_dashboard_aggregations_for(user)
             if schedules_aggregations:
-                result.update({'schedules': schedules_aggregations})
+                result.update({"schedules": schedules_aggregations})
 
-            result.update({
-                'fav_charts': self._get_fav_charts_aggregations(user)
-            })
+            result.update({"fav_charts": self._get_fav_charts_aggregations(user)})
             if user.is_superuser:
-                result.update({
-                    'analytical_tools': self._get_analytical_tools(),
-                    'cms_url': settings.CMS_URL
-                })
+                result.update(
+                    {
+                        "analytical_tools": self._get_analytical_tools(),
+                        "cms_url": settings.CMS_URL,
+                    }
+                )
             return result
 
         @staticmethod
         def _get_laboratory_aggregations():
             return {
-                'analyses': LabEvent.objects.filter(
-                    event_type='analysis',
+                "analyses": LabEvent.objects.filter(
+                    event_type="analysis",
                 ).count(),
-                'researches': LabEvent.objects.filter(
-                    event_type='research',
+                "researches": LabEvent.objects.filter(
+                    event_type="research",
                 ).count(),
             }
 
@@ -279,45 +277,40 @@ class DashboardView(JsonAPIView):
             today = timezone.now().date()
             objs = Meeting.objects.published()
             return {
-                'planned': objs.filter(start_date__gte=today).count(),
-                'finished': objs.filter(start_date__lt=today).count(),
+                "planned": objs.filter(start_date__gte=today).count(),
+                "finished": objs.filter(start_date__lt=today).count(),
             }
 
         @staticmethod
         def _get_academy_aggregations():
             courses = Course.objects.with_schedule()
-            return {
-                state: courses.filter(
-                    _course_state=state
-                ).count()
-                for state in Course.COURSE_STATES
-            }
+            return {state: courses.filter(_course_state=state).count() for state in Course.COURSE_STATES}
 
         @staticmethod
         def _get_suggestions_aggregations():
             objs = AcceptedDatasetSubmission.objects.filter(status__in=AcceptedDatasetSubmission.PUBLISHED_STATUSES)
             return {
-                'active': objs.filter(is_active=True).count(),
-                'inactive': objs.filter(is_active=False).count(),
+                "active": objs.filter(is_active=True).count(),
+                "inactive": objs.filter(is_active=False).count(),
             }
 
         @staticmethod
         def _get_fav_charts_aggregations(user: User):
-            _default = {
-                'slot-1': {},
-                'slot-2': {}
-            }
+            _default = {"slot-1": {}, "slot-2": {}}
             fav_charts = user.fav_charts or {}
             _default.update(fav_charts)
             for key, item in _default.items():
                 if item:
-                    _default[key]['thumb_url'] = f'{settings.BASE_URL}/pn-apps/charts/{key}.png'
+                    _default[key]["thumb_url"] = f"{settings.BASE_URL}/pn-apps/charts/{key}.png"
 
             return _default
 
         @staticmethod
         def _get_analytical_tools():
-            return [{'name': 'Kibana', 'url': settings.KIBANA_URL}, {'name': 'Metabase', 'url': settings.METABASE_URL}]
+            return [
+                {"name": "Kibana", "url": settings.KIBANA_URL},
+                {"name": "Metabase", "url": settings.METABASE_URL},
+            ]
 
 
 class LogoutView(JsonAPIView):
@@ -333,7 +326,7 @@ class LogoutView(JsonAPIView):
         def _get_data(self, cleaned, *args, **kwargs):
             _user_id = self.request.user.id
             logout(self.request)
-            return namedtuple('User', ['id', 'is_logged_out'])(_user_id, True)
+            return namedtuple("User", ["id", "is_logged_out"])(_user_id, True)
 
 
 class ResetPasswordView(JsonAPIView):
@@ -348,21 +341,15 @@ class ResetPasswordView(JsonAPIView):
         database_model = get_user_model()
 
         def _get_data(self, cleaned, *args, **kwargs):
-            data = cleaned['data']['attributes']
+            data = cleaned["data"]["attributes"]
             try:
-                user = self.database_model.objects.get(email=data['email'])
+                user = self.database_model.objects.get(email=data["email"])
             except self.database_model.DoesNotExist:
-                raise falcon.HTTPNotFound(
-                    description=_('Account not found'),
-                    code='account_not_found'
-                )
+                raise falcon.HTTPNotFound(description=_("Account not found"), code="account_not_found")
             try:
                 msgs_count = user.send_password_reset_email()
             except SMTPException:
-                raise falcon.HTTPInternalServerError(
-                    description=_('Email cannot be sent'),
-                    code='email_send_error'
-                )
+                raise falcon.HTTPInternalServerError(description=_("Email cannot be sent"), code="email_send_error")
             user.is_password_reset_email_sent = bool(msgs_count)
             return user
 
@@ -378,18 +365,15 @@ class ConfirmResetPasswordView(JsonAPIView):
         serializer_schema = ConfirmResetPasswordApiResponse
 
         def _get_data(self, cleaned, *args, **kwargs):
-            data = cleaned['data']['attributes']
-            token = kwargs.get('token')
+            data = cleaned["data"]["attributes"]
+            token = kwargs.get("token")
             try:
                 token = Token.objects.get(token=token, token_type=1)
             except Token.DoesNotExist:
                 raise falcon.HTTPNotFound()
             if not token.is_valid:
-                raise falcon.HTTPBadRequest(
-                    description=_('Expired token'),
-                    code='expired_token'
-                )
-            token.user.set_password(data['new_password1'])
+                raise falcon.HTTPBadRequest(description=_("Expired token"), code="expired_token")
+            token.user.set_password(data["new_password1"])
             token.user.save()
             token.invalidate()
             token.user.is_confirmed = True
@@ -409,23 +393,23 @@ class ChangePasswordView(JsonAPIView):
 
         def _get_data(self, cleaned, *args, **kwargs):
             user = self.request.user
-            data = cleaned['data']['attributes']
-            is_valid = user.check_password(data['old_password'])
+            data = cleaned["data"]["attributes"]
+            is_valid = user.check_password(data["old_password"])
             if not is_valid:
                 raise falcon.HTTPUnprocessableEntity(
-                    description=_('Wrong password'),
+                    description=_("Wrong password"),
                 )
             try:
-                dj_validate_password(data['new_password1'])
+                dj_validate_password(data["new_password1"])
             except DjangoValidationError as e:
                 raise falcon.HTTPUnprocessableEntity(
                     description=e.error_list[0].message,
                 )
-            if data['new_password1'] != data['new_password2']:
+            if data["new_password1"] != data["new_password2"]:
                 raise falcon.HTTPUnprocessableEntity(
-                    description=_('Passwords not match'),
+                    description=_("Passwords not match"),
                 )
-            user.set_password(data['new_password1'])
+            user.set_password(data["new_password1"])
             user.save()
             user.is_password_changed = True
             return user
@@ -447,12 +431,9 @@ class VerifyEmailView(JsonAPIView):
                 raise falcon.HTTPNotFound()
 
             if not token.is_valid:
-                raise falcon.HTTPBadRequest(
-                    description=get_expired_token_description(),
-                    code='expired_token'
-                )
+                raise falcon.HTTPBadRequest(description=get_expired_token_description(), code="expired_token")
 
-            token.user.state = 'active' if token.user.state == 'pending' else token.user.state
+            token.user.state = "active" if token.user.state == "pending" else token.user.state
             token.user.email_confirmed = timezone.now()
             token.user.save()
             token.invalidate()
@@ -460,7 +441,7 @@ class VerifyEmailView(JsonAPIView):
             return {}
 
         def _get_data(self, cleaned, token, *args, **kwargs):
-            return namedtuple('Token', ['id', 'is_verified'])(token, True)
+            return namedtuple("Token", ["id", "is_verified"])(token, True)
 
 
 class ResendActivationEmailView(JsonAPIView):
@@ -474,40 +455,34 @@ class ResendActivationEmailView(JsonAPIView):
         serializer_schema = ResendActivationEmailApiResponse
 
         def _get_data(self, cleaned, *args, **kwargs):
-            data = cleaned['data']['attributes']
+            data = cleaned["data"]["attributes"]
             try:
-                user = self.database_model.objects.get(email=data['email'])
+                user = self.database_model.objects.get(email=data["email"])
             except self.database_model.DoesNotExist:
-                raise falcon.HTTPNotFound(
-                    description=_('Account not found'),
-                    code='account_not_found'
-                )
+                raise falcon.HTTPNotFound(description=_("Account not found"), code="account_not_found")
             try:
                 msgs_count = user.resend_activation_email()
                 user.is_activation_email_sent = bool(msgs_count)
                 self.response.context.data = user
             except SMTPException:
-                raise falcon.HTTPInternalServerError(
-                    description=_('Email cannot be sent'),
-                    code='email_send_error'
-                )
+                raise falcon.HTTPInternalServerError(description=_("Email cannot be sent"), code="email_send_error")
 
 
 class CustomAdminLoginView(DjangoLoginView):
     form_class = AdminLoginForm
-    template_name = 'admin/login.html'
+    template_name = "admin/login.html"
 
     def get(self, request, *args, **kwargs):
         if request.user.is_active and request.user.is_staff:
             # Already logged-in, redirect to admin index
-            index_path = reverse('admin:index', current_app=settings.COMPONENT)
+            index_path = reverse("admin:index", current_app=settings.COMPONENT)
             return HttpResponseRedirect(index_path)
         return super().get(request, *args, **kwargs)
 
 
 class MeetingsView(JsonAPIView):
 
-    @falcon.before(login_required, roles=['admin', 'agent'])
+    @falcon.before(login_required, roles=["admin", "agent"])
     @versioned
     def on_get(self, request, response, *args, **kwargs):
         self.handle(request, response, self.GET, *args, **kwargs)

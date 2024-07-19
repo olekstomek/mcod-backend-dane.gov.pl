@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('suggestions', '0026_auto_20200812_0957'),
+        ("suggestions", "0026_auto_20200812_0957"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='accepteddatasetsubmission',
-            name='is_published_for_all',
-            field=models.BooleanField(default=False, verbose_name='publish for all users'),
+            model_name="accepteddatasetsubmission",
+            name="is_published_for_all",
+            field=models.BooleanField(default=False, verbose_name="publish for all users"),
         ),
     ]

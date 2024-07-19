@@ -29,8 +29,8 @@ class MCODPlugin(BasePlugin):
         else:
             return {}
         split_lines = split_lines[cut_from:]
-        if len(split_lines) > 1 and split_lines[cut_from + 1].startswith('doc_template'):
-            _, template_file = split_lines[cut_from + 1].split(':')
+        if len(split_lines) > 1 and split_lines[cut_from + 1].startswith("doc_template"):
+            _, template_file = split_lines[cut_from + 1].split(":")
             template_file = template_file.strip()
             template = loader.get_template(template_file)
             yaml_string = template.render({})
@@ -48,25 +48,26 @@ class MCODPlugin(BasePlugin):
 
     def operation_helper(self, path=None, operations=None, **kwargs):
         for operation, data in operations.items():
-            if 'parameters' in data:
-                schema_cls = resolve_schema_cls(data['parameters']['schema'])
+            if "parameters" in data:
+                schema_cls = resolve_schema_cls(data["parameters"]["schema"])
                 params = []
                 for field_name, field_obj in schema_cls()._fields.items():
                     params.append(field_obj.make_doc_param(field_obj._name))
-                data['parameters'] = params
+                data["parameters"] = params
 
     @staticmethod
     def _generate_resource_uri_mapping():
         from mcod.api import app
+
         routes_to_check = copy.copy(app._router._roots)
 
         mapping = {}
         for route in routes_to_check:
             uri = route.uri_template
             if uri:
-                params = re.findall(r'{(.[^}]*)', uri)
+                params = re.findall(r"{(.[^}]*)", uri)
                 for param in params:
-                    _p = param.split(':')[0]
+                    _p = param.split(":")[0]
                     uri = uri.replace(param, _p)
             resource = route.resource
             if resource.__class__ not in mapping:  # prevents overriding by uri with /{api_version}/ prefix.

@@ -7,18 +7,22 @@ import modeltrans.fields
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('applications', '0013_applicationindexpage_applicationpage'),
+        ("applications", "0013_applicationindexpage_applicationpage"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='application',
-            name='image_alt',
-            field=models.CharField(blank=True, max_length=255, null=True, verbose_name='Alternative text'),
+            model_name="application",
+            name="image_alt",
+            field=models.CharField(blank=True, max_length=255, null=True, verbose_name="Alternative text"),
         ),
         migrations.AlterField(
-            model_name='application',
-            name='i18n',
-            field=modeltrans.fields.TranslationField(fields=('title', 'notes', 'image_alt', 'slug'), required_languages=(), virtual_fields=True),
+            model_name="application",
+            name="i18n",
+            field=modeltrans.fields.TranslationField(
+                fields=("title", "notes", "image_alt", "slug"),
+                required_languages=(),
+                virtual_fields=True,
+            ),
         ),
     ]

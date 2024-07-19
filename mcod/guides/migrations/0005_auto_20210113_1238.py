@@ -6,18 +6,18 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('guides', '0004_auto_20201218_1443'),
+        ("guides", "0004_auto_20201218_1443"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='guideitem',
-            name='is_clickable',
-            field=models.BooleanField(default=False, verbose_name='clicking is required'),
+            model_name="guideitem",
+            name="is_clickable",
+            field=models.BooleanField(default=False, verbose_name="clicking is required"),
         ),
         migrations.AddField(
-            model_name='guideitem',
-            name='is_optional',
-            field=models.BooleanField(default=False, verbose_name='optional communique'),
+            model_name="guideitem",
+            name="is_optional",
+            field=models.BooleanField(default=False, verbose_name="optional communique"),
         ),
     ]

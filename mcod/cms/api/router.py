@@ -22,7 +22,7 @@ class CmsApiRouter:
 
         if endpoint:
             endpoint_name, endpoint_class = endpoint[0], endpoint[1]
-            url_namespace = self.url_namespace + ':' + endpoint_name
+            url_namespace = self.url_namespace + ":" + endpoint_name
             return endpoint_class.get_model_listing_urlpath(model, namespace=url_namespace)
 
     def get_object_detail_urlpath(self, model, url_path):
@@ -30,7 +30,7 @@ class CmsApiRouter:
 
         if endpoint:
             endpoint_name, endpoint_class = endpoint[0], endpoint[1]
-            url_namespace = self.url_namespace + ':' + endpoint_name
+            url_namespace = self.url_namespace + ":" + endpoint_name
             return endpoint_class.get_object_detail_urlpath(model, url_path, namespace=url_namespace)
 
     def wrap_view(self, func):
@@ -46,8 +46,8 @@ class CmsApiRouter:
 
         for name, class_ in self._endpoints.items():
             pattern = url(
-                r'^{}/'.format(name),
-                include((class_.get_urlpatterns(), name), namespace=name)
+                r"^{}/".format(name),
+                include((class_.get_urlpatterns(), name), namespace=name),
             )
             urlpatterns.append(pattern)
 

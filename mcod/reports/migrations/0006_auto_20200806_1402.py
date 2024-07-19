@@ -6,24 +6,23 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('reports', '0005_applicationproposalreport'),
+        ("reports", "0005_applicationproposalreport"),
     ]
 
     operations = [
         migrations.DeleteModel(
-            name='ApplicationProposalReport',
+            name="ApplicationProposalReport",
         ),
         migrations.CreateModel(
-            name='MonitoringReport',
-            fields=[
-            ],
+            name="MonitoringReport",
+            fields=[],
             options={
-                'verbose_name': 'Monitoring report',
-                'verbose_name_plural': 'Monitoring reports',
-                'proxy': True,
-                'indexes': [],
-                'constraints': [],
+                "verbose_name": "Monitoring report",
+                "verbose_name_plural": "Monitoring reports",
+                "proxy": True,
+                "indexes": [],
+                "constraints": [],
             },
-            bases=('reports.report',),
+            bases=("reports.report",),
         ),
     ]

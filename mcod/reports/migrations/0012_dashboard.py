@@ -6,21 +6,20 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('reports', '0011_separate_files_table'),
+        ("reports", "0011_separate_files_table"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Dashboard',
-            fields=[
-            ],
+            name="Dashboard",
+            fields=[],
             options={
-                'verbose_name': 'Dashboard',
-                'verbose_name_plural': 'Dashboards',
-                'proxy': True,
-                'indexes': [],
-                'constraints': [],
+                "verbose_name": "Dashboard",
+                "verbose_name_plural": "Dashboards",
+                "proxy": True,
+                "indexes": [],
+                "constraints": [],
             },
-            bases=('reports.report',),
+            bases=("reports.report",),
         ),
     ]

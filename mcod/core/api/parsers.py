@@ -7,16 +7,16 @@ from webargs.falconparser import FalconParser
 
 class Parser(FalconParser):
     def parse(
-            self,
-            argmap,
-            req=None,
-            locations=None,
-            validate=None,
-            error_status_code=None,
-            error_headers=None
+        self,
+        argmap,
+        req=None,
+        locations=None,
+        validate=None,
+        error_status_code=None,
+        error_headers=None,
     ):
 
-        qs = '&'.join(part for part in req.query_string.split('&') if ('=' in part and part[-1] != '='))
+        qs = "&".join(part for part in req.query_string.split("&") if ("=" in part and part[-1] != "="))
         req._params = qs_parser.parse(qs)
         return super().parse(
             argmap,
@@ -24,11 +24,11 @@ class Parser(FalconParser):
             locations=locations,
             validate=validate,
             error_status_code=error_status_code,
-            error_headers=error_headers
+            error_headers=error_headers,
         )
 
     def parse_querystring(self, req, name, field):
-        data = field.prepare_data(name, req.params) if hasattr(field, 'prepare_data') else req.params
+        data = field.prepare_data(name, req.params) if hasattr(field, "prepare_data") else req.params
         return core.get_value(data, name, field)
 
     def parse_json(self, req, name, field):

@@ -6,13 +6,19 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('tags', '0010_auto_20210208_1805'),
+        ("tags", "0010_auto_20210208_1805"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='tag',
-            name='language',
-            field=models.CharField(choices=[('pl', 'Polish'), ('en', 'English')], db_index=True, default='', max_length=2, verbose_name='language'),
+            model_name="tag",
+            name="language",
+            field=models.CharField(
+                choices=[("pl", "Polish"), ("en", "English")],
+                db_index=True,
+                default="",
+                max_length=2,
+                verbose_name="language",
+            ),
         ),
     ]

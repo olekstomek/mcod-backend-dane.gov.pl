@@ -9,7 +9,11 @@ from mcod.alerts.models import Alert
 def get_active_alerts(language_code):
     now = timezone.now()
     with translation.override(language_code):
-        alerts = Alert.objects.filter(status='published', start_date__lt=now, finish_date__gt=now)
+        alerts = Alert.objects.filter(status="published", start_date__lt=now, finish_date__gt=now)
         return [
-            {'title': alert.title_i18n, 'description': format_html(alert.description_i18n)} for alert in alerts
+            {
+                "title": alert.title_i18n,
+                "description": format_html(alert.description_i18n),
+            }
+            for alert in alerts
         ]

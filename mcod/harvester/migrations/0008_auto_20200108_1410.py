@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('harvester', '0007_auto_20191120_1338'),
+        ("harvester", "0007_auto_20191120_1338"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='datasource',
-            name='license_condition_db_or_copyrighted',
-            field=models.TextField(blank=True, verbose_name='data use rules'),
+            model_name="datasource",
+            name="license_condition_db_or_copyrighted",
+            field=models.TextField(blank=True, verbose_name="data use rules"),
         ),
     ]

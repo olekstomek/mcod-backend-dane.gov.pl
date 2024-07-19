@@ -6,14 +6,19 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('special_signs', '0003_auto_20201218_1640'),
-        ('resources', '0030_auto_20200910_1117'),
+        ("special_signs", "0003_auto_20201218_1640"),
+        ("resources", "0030_auto_20200910_1117"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='resource',
-            name='special_signs',
-            field=models.ManyToManyField(blank=True, related_name='special_signs_resources', to='special_signs.SpecialSign', verbose_name='special signs'),
+            model_name="resource",
+            name="special_signs",
+            field=models.ManyToManyField(
+                blank=True,
+                related_name="special_signs_resources",
+                to="special_signs.SpecialSign",
+                verbose_name="special signs",
+            ),
         ),
     ]

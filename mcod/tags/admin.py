@@ -9,18 +9,19 @@ from mcod.tags.models import Tag
 
 @admin.register(Tag)
 class TagAdmin(TagAutocompleteMixin, HistoryMixin, ModelAdmin):
-    search_fields = ['name']
+    search_fields = ["name"]
 
-    fields = ('name', 'language')
+    fields = ("name", "language")
     lang_fields = True
-    list_display = ('name', 'language')
+    list_display = ("name", "language")
 
     form = TagForm
-    readonly_fields = ['language_readonly']
+    readonly_fields = ["language_readonly"]
 
     def language_readonly(self, instance):
         return dict(settings.LANGUAGES)[self._lang_code]
-    language_readonly.short_description = _('language')
+
+    language_readonly.short_description = _("language")
 
     def get_form(self, request, obj=None, change=False, **kwargs):
         self._request = request
@@ -30,16 +31,14 @@ class TagAdmin(TagAutocompleteMixin, HistoryMixin, ModelAdmin):
         return form
 
     def get_fieldsets(self, request, obj=None):
-        language_field = 'language'
+        language_field = "language"
         if obj is None and self._lang_code is not None:
-            language_field = 'language_readonly'
+            language_field = "language_readonly"
 
-        return [
-            (None, {'fields': ('name', language_field)})
-        ]
+        return [(None, {"fields": ("name", language_field)})]
 
     def lang_code(self):
-        lang = self._request.GET.get('lang')
+        lang = self._request.GET.get("lang")
         if lang not in settings.LANGUAGE_CODES:
             lang = None
         return lang

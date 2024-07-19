@@ -6,13 +6,22 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('suggestions', '0008_datasetsubmissiontrash'),
+        ("suggestions", "0008_datasetsubmissiontrash"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='datasetsubmission',
-            name='decision',
-            field=models.CharField(choices=[('examined', '--------'), ('accepted', 'Accepted'), ('rejected', 'Rejected')], default='examined', max_length=10, verbose_name='Decision'),
+            model_name="datasetsubmission",
+            name="decision",
+            field=models.CharField(
+                choices=[
+                    ("examined", "--------"),
+                    ("accepted", "Accepted"),
+                    ("rejected", "Rejected"),
+                ],
+                default="examined",
+                max_length=10,
+                verbose_name="Decision",
+            ),
         ),
     ]

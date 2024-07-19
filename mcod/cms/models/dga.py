@@ -14,7 +14,12 @@ from mcod.cms.models.base import BasePage
 
 class DGARootPage(BasePage):
     parent_page_types = ["cms.RootPage"]
-    subpage_types = ["cms.DGAInformation", "cms.DGAProtectedDataList", "cms.DGAAccessApplication", "cms.DGANewSubPage"]
+    subpage_types = [
+        "cms.DGAInformation",
+        "cms.DGAProtectedDataList",
+        "cms.DGAAccessApplication",
+        "cms.DGANewSubPage",
+    ]
 
     max_count = 1
     fixed_slug = "dga"
@@ -27,28 +32,40 @@ class DGARootPage(BasePage):
 
 class DGAAbstractSubpage(BasePage):
 
-    body = StreamField(CarouselBlockWithAdditionalTextTools(required=False), default=None, blank=True,
-                       verbose_name='Tekst', help_text='Treść strony.')
+    body = StreamField(
+        CarouselBlockWithAdditionalTextTools(required=False),
+        default=None,
+        blank=True,
+        verbose_name="Tekst",
+        help_text="Treść strony.",
+    )
 
-    body_en = StreamField(CarouselBlockWithAdditionalTextTools(required=False), default=None, blank=True,
-                          verbose_name='Tekst', help_text='Treść strony.')
+    body_en = StreamField(
+        CarouselBlockWithAdditionalTextTools(required=False),
+        default=None,
+        blank=True,
+        verbose_name="Tekst",
+        help_text="Treść strony.",
+    )
 
     api_fields = BasePage.api_fields + [
-        APIField('body', serializer=StreamFieldSerializer(source='body_i18n')),
+        APIField("body", serializer=StreamFieldSerializer(source="body_i18n")),
     ]
 
     content_panels_pl = BasePage.content_panels_pl + [
-        StreamFieldPanel('body'),
+        StreamFieldPanel("body"),
     ]
 
     content_panels_en = BasePage.content_panels_en + [
-        StreamFieldPanel('body_en'),
+        StreamFieldPanel("body_en"),
     ]
 
-    i18n_fields = BasePage.i18n_fields + ['body', ]
+    i18n_fields = BasePage.i18n_fields + [
+        "body",
+    ]
 
     parent_page_types = [
-        'cms.DGARootPage',
+        "cms.DGARootPage",
     ]
 
     subpage_types = []
@@ -57,23 +74,26 @@ class DGAAbstractSubpage(BasePage):
 
     settings_panels = [
         PublishingPanel(),
-        MultiFieldPanel([
-            FieldPanel('slug'),
-            FieldPanel('show_in_menus'),
-        ], 'Ustawienia strony'),
+        MultiFieldPanel(
+            [
+                FieldPanel("slug"),
+                FieldPanel("show_in_menus"),
+            ],
+            "Ustawienia strony",
+        ),
     ]
 
     class Meta:
         abstract = True
 
     def get_copyable_fields(self):
-        return super().get_copyable_fields() + ['body']
+        return super().get_copyable_fields() + ["body"]
 
 
 class DGAInformation(DGAAbstractSubpage):
     max_count = 1
-    fixed_slug = 'information'
-    fixed_url_path = 'information/'
+    fixed_slug = "information"
+    fixed_url_path = "information/"
 
     class Meta:
         verbose_name = "Informacje o DGA"
@@ -82,8 +102,8 @@ class DGAInformation(DGAAbstractSubpage):
 
 class DGAProtectedDataList(DGAAbstractSubpage):
     max_count = 1
-    fixed_slug = 'list-protected-data'
-    fixed_url_path = 'list-protected-data/'
+    fixed_slug = "list-protected-data"
+    fixed_url_path = "list-protected-data/"
 
     class Meta:
         verbose_name = "Wykaz chronionych danych"
@@ -92,8 +112,8 @@ class DGAProtectedDataList(DGAAbstractSubpage):
 
 class DGAAccessApplication(DGAAbstractSubpage):
     max_count = 1
-    fixed_slug = 'access-application'
-    fixed_url_path = 'access-application/'
+    fixed_slug = "access-application"
+    fixed_url_path = "access-application/"
 
     class Meta:
         verbose_name = "Wniosek o dostęp do chronionych danych"

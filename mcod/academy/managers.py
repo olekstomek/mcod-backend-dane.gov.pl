@@ -7,22 +7,22 @@ from mcod.core.managers import SoftDeletableManager, SoftDeletableQuerySet, Tras
 
 class CourseQuerySetMixin:
     def published(self):
-        return self.filter(status='published')
+        return self.filter(status="published")
 
     def with_schedule(self):
         today = timezone.now().date()
         q_modules_not_removed = Q(modules__is_removed=False, modules__is_permanently_removed=False)
         return self.annotate(
-            _start=Min('modules__start', filter=q_modules_not_removed),
-            _end=Max('modules__end', filter=q_modules_not_removed),
-            _modules_count=Count('modules', filter=q_modules_not_removed),
+            _start=Min("modules__start", filter=q_modules_not_removed),
+            _end=Max("modules__end", filter=q_modules_not_removed),
+            _modules_count=Count("modules", filter=q_modules_not_removed),
             _course_state=Case(
-                When(_start__lte=today, _end__gte=today, then=Value('current')),
-                When(_start__gt=today, then=Value('planned')),
-                When(_end__lt=today, then=Value('finished')),
-                default=Value(''),
+                When(_start__lte=today, _end__gte=today, then=Value("current")),
+                When(_start__gt=today, then=Value("planned")),
+                When(_end__lt=today, then=Value("finished")),
+                default=Value(""),
                 output_field=CharField(),
-            )
+            ),
         )
 
 

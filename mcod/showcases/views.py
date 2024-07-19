@@ -31,8 +31,8 @@ class ShowcasesSearchHdlr(SearchHdlr):
 
     def _queryset_extra(self, queryset, id=None, **kwargs):
         if id:
-            queryset = queryset.query('nested', path='datasets', query=Q('term', **{'datasets.id': id}))
-        return queryset.filter('term', status=Showcase.STATUS.published)
+            queryset = queryset.query("nested", path="datasets", query=Q("term", **{"datasets.id": id}))
+        return queryset.filter("term", status=Showcase.STATUS.published)
 
 
 class ShowcasesApiView(JsonAPIView):
@@ -75,18 +75,18 @@ class ShowcaseApiView(JsonAPIView):
 
     class GET(RetrieveOneHdlr):
         deserializer_schema = ShowcaseApiRequest
-        database_model = apps.get_model('showcases.Showcase')
+        database_model = apps.get_model("showcases.Showcase")
         serializer_schema = ShowcaseApiResponse
 
         def _get_instance(self, id, *args, **kwargs):
-            instance = getattr(self, '_cached_instance', None)
+            instance = getattr(self, "_cached_instance", None)
             if not instance:
                 model = self.database_model
                 try:
-                    user = getattr(self.request, 'user', None)
-                    data = {'id': id, 'status': 'published'}
+                    user = getattr(self.request, "user", None)
+                    data = {"id": id, "status": "published"}
                     if user and user.is_superuser:
-                        data = {'id': id, 'status__in': ['draft', 'published']}
+                        data = {"id": id, "status__in": ["draft", "published"]}
                     self._cached_instance = model.objects.get(**data)
                 except model.DoesNotExist:
                     raise falcon.HTTPNotFound
@@ -107,12 +107,11 @@ class ShowcaseDatasetsView(JsonAPIView):
         deserializer_schema = DatasetApiSearchRequest
         serializer_schema = partial(DatasetApiResponse, many=True)
         search_document = DatasetDocument()
-        include_default = ['institution']
+        include_default = ["institution"]
 
         def _queryset_extra(self, queryset, id=None, **kwargs):
-            queryset = queryset.query(
-                'nested', path='showcases', query=Q('term', **{'showcases.id': id})) if id else queryset
-            return queryset.filter('term', status='published')
+            queryset = queryset.query("nested", path="showcases", query=Q("term", **{"showcases.id": id})) if id else queryset
+            return queryset.filter("term", status="published")
 
 
 class ShowcaseProposalView(JsonAPIView):
@@ -121,20 +120,20 @@ class ShowcaseProposalView(JsonAPIView):
         self.handle_post(request, response, self.POST, *args, **kwargs)
 
     class POST(CreateOneHdlr):
-        database_model = apps.get_model('showcases.ShowcaseProposal')
+        database_model = apps.get_model("showcases.ShowcaseProposal")
         deserializer_schema = CreateShowcaseProposalRequest
         serializer_schema = ShowcaseProposalApiResponse
 
         def _get_data(self, cleaned, *args, **kwargs):
-            _data = cleaned['data']['attributes']
-            _data.pop('is_personal_data_processing_accepted', None)
-            _data.pop('is_terms_of_service_accepted', None)
+            _data = cleaned["data"]["attributes"]
+            _data.pop("is_personal_data_processing_accepted", None)
+            _data.pop("is_terms_of_service_accepted", None)
             create_showcase_proposal_task.s(_data).apply_async()
             fields, values = [], []
             for field, val in _data.items():
                 fields.append(field)
                 values.append(val)
-            fields.append('id')
+            fields.append("id")
             values.append(str(uuid4()))
-            result = namedtuple('Submission', fields)(*values)
+            result = namedtuple("Submission", fields)(*values)
             return result

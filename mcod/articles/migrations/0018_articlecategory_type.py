@@ -6,13 +6,22 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('articles', '0017_auto_20200217_0944'),
+        ("articles", "0017_auto_20200217_0944"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='articlecategory',
-            name='type',
-            field=models.CharField(choices=[('article', 'Article'), ('knowledge_base', 'Knowledge base'), ('unlisted', 'Not listed')], default='unlisted', max_length=20, verbose_name='type'),
+            model_name="articlecategory",
+            name="type",
+            field=models.CharField(
+                choices=[
+                    ("article", "Article"),
+                    ("knowledge_base", "Knowledge base"),
+                    ("unlisted", "Not listed"),
+                ],
+                default="unlisted",
+                max_length=20,
+                verbose_name="type",
+            ),
         ),
     ]

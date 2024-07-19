@@ -28,10 +28,10 @@ class DecisionSortableManagerMixin:
 
 class DecisionQuerySetMixin:
     def with_decision(self):
-        return self.exclude(decision='')
+        return self.exclude(decision="")
 
     def without_decision(self):
-        return self.filter(decision='')
+        return self.filter(decision="")
 
 
 class DecisionSortableSoftDeletableQuerySet(DecisionQuerySetMixin, SoftDeletableQuerySet):

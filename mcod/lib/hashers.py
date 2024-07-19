@@ -38,6 +38,7 @@ class PBKDF2SHA512PasswordHasher(PBKDF2PasswordHasher):
     will cause problems if it leads to a password string longer than 128 characters, but
     let's worry about that when it happens.
     """
+
     iterations = 19000
     algorithm = "pbkdf2-sha512"
     digest = hashlib.sha512
@@ -47,11 +48,11 @@ class PBKDF2SHA512PasswordHasher(PBKDF2PasswordHasher):
 
     def encode(self, password, salt, iterations=None):
         assert password is not None
-        assert salt and '$' not in salt
+        assert salt and "$" not in salt
         if not iterations:
             iterations = self.iterations
         hash = pbkdf2(password, salt, iterations, digest=self.digest)
-        hash = base64.b64encode(hash).decode('ascii').strip()
+        hash = base64.b64encode(hash).decode("ascii").strip()
         return "%s$%d$%s$%s" % (self.algorithm, iterations, salt, hash)
 
     def verify(self, password, encoded):
@@ -59,21 +60,23 @@ class PBKDF2SHA512PasswordHasher(PBKDF2PasswordHasher):
         return pbkdf2_sha512.verify(password, x)
 
     def safe_summary(self, encoded):
-        algorithm, iterations, salt, hash = encoded.split('$', 3)
+        algorithm, iterations, salt, hash = encoded.split("$", 3)
         assert algorithm == self.algorithm
-        return OrderedDict([
-            (_('algorithm'), algorithm),
-            (_('iterations'), iterations),
-            (_('salt'), mask_hash(salt)),
-            (_('hash'), mask_hash(hash)),
-        ])
+        return OrderedDict(
+            [
+                (_("algorithm"), algorithm),
+                (_("iterations"), iterations),
+                (_("salt"), mask_hash(salt)),
+                (_("hash"), mask_hash(hash)),
+            ]
+        )
 
     def must_update(self, encoded):
-        algorithm, iterations, salt, hash = encoded.split('$', 3)
+        algorithm, iterations, salt, hash = encoded.split("$", 3)
         return int(iterations) != self.iterations
 
     def harden_runtime(self, password, encoded):
-        algorithm, iterations, salt, hash = encoded.split('$', 3)
+        algorithm, iterations, salt, hash = encoded.split("$", 3)
         extra_iterations = self.iterations - int(iterations)
         if extra_iterations > 0:
             self.encode(password, salt, extra_iterations)

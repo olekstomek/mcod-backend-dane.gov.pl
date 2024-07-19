@@ -6,18 +6,18 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('applications', '0023_auto_20210415_1639'),
+        ("applications", "0023_auto_20210415_1639"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='application',
-            name='is_permanently_removed',
+            model_name="application",
+            name="is_permanently_removed",
             field=models.BooleanField(default=False),
         ),
         migrations.AddField(
-            model_name='applicationproposal',
-            name='is_permanently_removed',
+            model_name="applicationproposal",
+            name="is_permanently_removed",
             field=models.BooleanField(default=False),
         ),
     ]

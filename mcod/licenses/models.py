@@ -16,14 +16,14 @@ from mcod.licenses.signals import null_in_related_datasets, update_related_datas
 
 class License(ExtendedModel):
     SIGNALS_MAP = {
-        'updated': (update_related_datasets, rdf_signals.update_related_graph),
-        'published': (update_related_datasets, rdf_signals.update_related_graph),
-        'restored': (update_related_datasets, rdf_signals.update_related_graph),
-        'removed': (null_in_related_datasets, rdf_signals.update_related_graph),
+        "updated": (update_related_datasets, rdf_signals.update_related_graph),
+        "published": (update_related_datasets, rdf_signals.update_related_graph),
+        "restored": (update_related_datasets, rdf_signals.update_related_graph),
+        "removed": (null_in_related_datasets, rdf_signals.update_related_graph),
     }
-    name = models.CharField(max_length=200, verbose_name=_('Name'))
-    title = models.CharField(max_length=250, verbose_name=_('Title'))
-    url = models.URLField(blank=True, null=True, verbose_name=_('URL'))
+    name = models.CharField(max_length=200, verbose_name=_("Name"))
+    title = models.CharField(max_length=250, verbose_name=_("Title"))
+    url = models.URLField(blank=True, null=True, verbose_name=_("URL"))
 
     def __str__(self):
         return self.title
@@ -32,27 +32,33 @@ class License(ExtendedModel):
     objects = SoftDeletableManager()
     trash = TrashManager()
     tracker = FieldTracker()
-    slugify_field = 'name'
+    slugify_field = "name"
 
     @classmethod
     def accusative_case(cls):
         return _("acc: License")
 
     class Meta:
-        verbose_name = _('License')
-        verbose_name_plural = _('Licenses')
+        verbose_name = _("License")
+        verbose_name_plural = _("Licenses")
         default_manager_name = "objects"
-        indexes = [GinIndex(fields=["i18n"]), ]
+        indexes = [
+            GinIndex(fields=["i18n"]),
+        ]
 
 
 @receiver(null_in_related_datasets, sender=License)
 def null_license_in_datasets(sender, instance, *args, **kwargs):
-    sender.log_debug(instance, 'Setting license to null in related datasets', 'null_in_related_datasets')
+    sender.log_debug(
+        instance,
+        "Setting license to null in related datasets",
+        "null_in_related_datasets",
+    )
     null_field_in_related_task.apply_async_on_commit(args=(instance._meta.app_label, instance._meta.object_name, instance.id))
 
 
 @receiver(update_related_datasets, sender=License)
 def update_license_in_datasets(sender, instance, *args, **kwargs):
-    sender.log_debug(instance, 'Updating related datasets', 'update_related_datasets')
+    sender.log_debug(instance, "Updating related datasets", "update_related_datasets")
     for dataset in instance.dataset_set.all():
         search_signals.update_document.send(dataset._meta.model, dataset)

@@ -7,13 +7,20 @@ import mcod.core.storages
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('resources', '0025_resource_availability'),
+        ("resources", "0025_resource_availability"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='resource',
-            name='csv_file',
-            field=models.FileField(blank=True, max_length=2000, null=True, storage=mcod.core.storages.ResourcesStorage(base_url=None, location=None), upload_to='%Y%m%d', verbose_name='File as CSV'),
+            model_name="resource",
+            name="csv_file",
+            field=models.FileField(
+                blank=True,
+                max_length=2000,
+                null=True,
+                storage=mcod.core.storages.ResourcesStorage(base_url=None, location=None),
+                upload_to="%Y%m%d",
+                verbose_name="File as CSV",
+            ),
         ),
     ]

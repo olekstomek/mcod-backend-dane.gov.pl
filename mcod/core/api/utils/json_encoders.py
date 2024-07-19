@@ -8,7 +8,7 @@ class APIEncoder(json.JSONEncoder):
     def default(self, data):
         # DateTime to ISO
         if isinstance(data, (datetime, time)):
-            return data.isoformat('T')
+            return data.isoformat("T")
         if isinstance(data, date):
             return data.isoformat()
 

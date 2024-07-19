@@ -87,12 +87,10 @@ LICENSE_CONDITION_LABELS = {
             " obtaining private data from the entity providing the data (supplier)"
         ),
         "modification": _(
-            "The user should inform about the processing of the used private data"
-            " (if he modifies it in any way)"
+            "The user should inform about the processing of the used private data" " (if he modifies it in any way)"
         ),
         "responsibilities": _(
-            "The scope of the responsibility of the entity providing private data (suppliers) for the"
-            " provided data"
+            "The scope of the responsibility of the entity providing private data (suppliers) for the" " provided data"
         ),
         "db_or_copyrighted": _(
             "Conditions for the use of private data with the features of a work or subject of"
@@ -120,12 +118,10 @@ LICENSE_CONDITION_LABELS = {
             " information from the obliged entity (supplier)"
         ),
         "modification": _(
-            "The user should inform about the processing of public sector"
-            " information to re-use (when modifying it in any way)"
+            "The user should inform about the processing of public sector" " information to re-use (when modifying it in any way)"
         ),
         "responsibilities": _(
-            "The scope of the responsibility of the obliged entity (supplier) for shared"
-            " public sector information"
+            "The scope of the responsibility of the obliged entity (supplier) for shared" " public sector information"
         ),
         "db_or_copyrighted": _(
             "Conditions for the re-use of public sector information with the features of a work"
@@ -226,26 +222,16 @@ class Dataset(ExtendedModel):
         blank=True,
         editable=False,
         verbose_name=_("external identifier"),
-        help_text=_(
-            "external identifier of dataset taken during import process (optional)"
-        ),
+        help_text=_("external identifier of dataset taken during import process (optional)"),
     )
     title = models.CharField(max_length=300, null=True, verbose_name=_("Title"))
-    version = models.CharField(
-        max_length=100, blank=True, null=True, verbose_name=_("Version")
-    )
-    url = models.CharField(
-        max_length=1000, blank=True, null=True, verbose_name=_("Url")
-    )
+    version = models.CharField(max_length=100, blank=True, null=True, verbose_name=_("Version"))
+    url = models.CharField(max_length=1000, blank=True, null=True, verbose_name=_("Url"))
     notes = models.TextField(verbose_name=_("Notes"), null=True, blank=False)
 
-    license_chosen = models.PositiveSmallIntegerField(
-        blank=True, null=True, default=None, verbose_name="", choices=LICENSES
-    )
+    license_chosen = models.PositiveSmallIntegerField(blank=True, null=True, default=None, verbose_name="", choices=LICENSES)
 
-    license_old_id = models.CharField(
-        max_length=20, blank=True, null=True, verbose_name=_("License ID")
-    )
+    license_old_id = models.CharField(max_length=20, blank=True, null=True, verbose_name=_("License ID"))
     license = models.ForeignKey(
         "licenses.License",
         on_delete=models.DO_NOTHING,
@@ -257,9 +243,7 @@ class Dataset(ExtendedModel):
     license_condition_db_or_copyrighted = models.TextField(
         blank=True,
         null=True,
-        verbose_name=_(
-            "Condition for data with features of work with copy rights or database"
-        ),
+        verbose_name=_("Condition for data with features of work with copy rights or database"),
     )
     license_condition_personal_data = models.CharField(
         max_length=300,
@@ -273,17 +257,13 @@ class Dataset(ExtendedModel):
         default=None,
         verbose_name=_("Condition for possible processing of data"),
     )
-    license_condition_original = models.NullBooleanField(
-        null=True, blank=True, default=None
-    )
+    license_condition_original = models.NullBooleanField(null=True, blank=True, default=None)
     license_condition_responsibilities = models.TextField(
         blank=True,
         null=True,
         verbose_name=_("Condition for scope of responsibilities for data"),
     )
-    license_condition_cc40_responsibilities = models.NullBooleanField(
-        null=True, blank=True, default=None, verbose_name=""
-    )
+    license_condition_cc40_responsibilities = models.NullBooleanField(null=True, blank=True, default=None, verbose_name="")
     license_condition_source = models.NullBooleanField(
         null=True,
         blank=True,
@@ -298,12 +278,8 @@ class Dataset(ExtendedModel):
         verbose_name=_("Institution"),
     )
     customfields = JSONField(blank=True, null=True, verbose_name=_("Customfields"))
-    update_frequency = models.CharField(
-        max_length=50, blank=True, null=True, verbose_name=_("Update frequency")
-    )
-    is_update_notification_enabled = models.BooleanField(
-        default=True, verbose_name=_("turn on notification")
-    )
+    update_frequency = models.CharField(max_length=50, blank=True, null=True, verbose_name=_("Update frequency"))
+    is_update_notification_enabled = models.BooleanField(default=True, verbose_name=_("turn on notification"))
     has_dynamic_data = models.NullBooleanField(verbose_name=_("dynamic data"))
     has_high_value_data = models.NullBooleanField(verbose_name=_("has high value data"))
     has_research_data = models.NullBooleanField(verbose_name=_("has research data"))
@@ -367,12 +343,8 @@ class Dataset(ExtendedModel):
         verbose_name=_("source"),
         related_name="datasource_datasets",
     )
-    verified = models.DateTimeField(
-        blank=True, default=now, verbose_name=_("Update date")
-    )
-    downloads_count = models.PositiveIntegerField(
-        verbose_name=_("download counter"), default=0
-    )
+    verified = models.DateTimeField(blank=True, default=now, verbose_name=_("Update date"))
+    downloads_count = models.PositiveIntegerField(verbose_name=_("download counter"), default=0)
     image = models.ImageField(
         max_length=200,
         storage=get_storage("datasets"),
@@ -381,12 +353,8 @@ class Dataset(ExtendedModel):
         null=True,
         verbose_name=_("Image URL"),
     )
-    image_alt = models.CharField(
-        max_length=255, blank=True, verbose_name=_("Alternative text")
-    )
-    dcat_vocabularies = JSONField(
-        blank=True, null=True, verbose_name=_("Controlled Vocabularies")
-    )
+    image_alt = models.CharField(max_length=255, blank=True, verbose_name=_("Alternative text"))
+    dcat_vocabularies = JSONField(blank=True, null=True, verbose_name=_("Controlled Vocabularies"))
     archived_resources_files = models.FileField(
         storage=get_storage("datasets_archives"),
         blank=True,
@@ -395,15 +363,9 @@ class Dataset(ExtendedModel):
         max_length=2000,
         verbose_name=_("Archived resources files"),
     )
-    license_condition_default_cc40 = models.NullBooleanField(
-        null=True, blank=True, default=None, verbose_name=""
-    )
-    license_condition_custom_description = models.TextField(
-        blank=True, null=True, verbose_name=_("Custom CC BY 40 conditions")
-    )
-    is_promoted = models.BooleanField(
-        verbose_name=_("promoting the dataset"), default=False
-    )
+    license_condition_default_cc40 = models.NullBooleanField(null=True, blank=True, default=None, verbose_name="")
+    license_condition_custom_description = models.TextField(blank=True, null=True, verbose_name=_("Custom CC BY 40 conditions"))
+    is_promoted = models.BooleanField(verbose_name=_("promoting the dataset"), default=False)
 
     def __str__(self):
         return self.title
@@ -493,9 +455,7 @@ class Dataset(ExtendedModel):
 
     @property
     def types(self):
-        return list(
-            self.resources.published().values_list("type", flat=True).distinct()
-        )
+        return list(self.resources.published().values_list("type", flat=True).distinct())
 
     @property
     def frontend_url(self):
@@ -522,18 +482,12 @@ class Dataset(ExtendedModel):
         return ", ".join(sorted([str(tag) for tag in self.tags.all()], key=str.lower))
 
     def tags_as_str(self, lang):
-        return ", ".join(
-            sorted([tag.name for tag in self.tags.filter(language=lang)], key=str.lower)
-        )
+        return ", ".join(sorted([tag.name for tag in self.tags.filter(language=lang)], key=str.lower))
 
     @property
     def categories_list_as_html(self):
         categories = self.categories.all()
-        return (
-            self.mark_safe("<br>".join(category.title for category in categories))
-            if categories
-            else "-"
-        )
+        return self.mark_safe("<br>".join(category.title for category in categories)) if categories else "-"
 
     @property
     def categories_list_str(self):
@@ -601,13 +555,7 @@ class Dataset(ExtendedModel):
 
     @property
     def visualization_types(self):
-        return list(
-            set(
-                itertools.chain(
-                    *[r.visualization_types for r in self.resources.published()]
-                )
-            )
-        )
+        return list(set(itertools.chain(*[r.visualization_types for r in self.resources.published()])))
 
     @property
     def model_name(self):
@@ -623,11 +571,7 @@ class Dataset(ExtendedModel):
 
     @property
     def image_absolute_url(self):
-        return (
-            self._get_absolute_url(self.image_url, use_lang=False)
-            if self.image_url
-            else ""
-        )
+        return self._get_absolute_url(self.image_url, use_lang=False) if self.image_url else ""
 
     @property
     def dataset_logo(self):
@@ -646,19 +590,14 @@ class Dataset(ExtendedModel):
     @property
     def computed_downloads_count(self):
         return (
-            ResourceDownloadCounter.objects.filter(
-                resource__dataset_id=self.pk
-            ).aggregate(count_sum=Sum("count"))["count_sum"]
+            ResourceDownloadCounter.objects.filter(resource__dataset_id=self.pk).aggregate(count_sum=Sum("count"))["count_sum"]
             or 0
         )
 
     @property
     def computed_views_count(self):
         return (
-            ResourceViewCounter.objects.filter(resource__dataset_id=self.pk).aggregate(
-                count_sum=Sum("count")
-            )["count_sum"]
-            or 0
+            ResourceViewCounter.objects.filter(resource__dataset_id=self.pk).aggregate(count_sum=Sum("count"))["count_sum"] or 0
         )
 
     @property
@@ -669,14 +608,12 @@ class Dataset(ExtendedModel):
 
         Used in delete confirmation HTML templates.
         """
-        dga_resources_in_dataset = self.resources.filter(
-            contains_protected_data=True, status="published"
-        ).values_list("title", flat=True)
+        dga_resources_in_dataset = self.resources.filter(contains_protected_data=True, status="published").values_list(
+            "title", flat=True
+        )
         count_dga_resources: int = dga_resources_in_dataset.count()
         if count_dga_resources > 1:
-            logger.error(
-                f"Found {count_dga_resources} in dataset with pk: {self.pk}"
-            )
+            logger.error(f"Found {count_dga_resources} in dataset with pk: {self.pk}")
 
         return list(dga_resources_in_dataset)
 
@@ -686,12 +623,7 @@ class Dataset(ExtendedModel):
 
     def as_sparql_create_query(self):
         g = self.to_rdf_graph()
-        data = "".join(
-            [
-                f"{s.n3()} {p.n3()} {o.n3()} . "
-                for s, p, o in g.triples((None, None, None))
-            ]
-        )
+        data = "".join([f"{s.n3()} {p.n3()} {o.n3()} . " for s, p, o in g.triples((None, None, None))])
         namespaces_dict = {prefix: ns for prefix, ns in g.namespaces()}
         return "INSERT DATA { %(data)s }" % {"data": data}, namespaces_dict
 
@@ -700,8 +632,7 @@ class Dataset(ExtendedModel):
         if (
             _range
             and self.update_notification_frequency
-            and self.update_notification_frequency
-            not in range(_range[0], _range[1] + 1)
+            and self.update_notification_frequency not in range(_range[0], _range[1] + 1)
         ):
             msg = _("The value must be between %(min)s and %(max)s") % {
                 "min": _range[0],
@@ -712,14 +643,8 @@ class Dataset(ExtendedModel):
     def send_dataset_comment_mail(self, comment):
         with override("pl"):
             title = self.title.replace("\n", " ").replace("\r", "")
-            version = (
-                _(" (version %(version)s)") % {"version": self.version}
-                if self.version
-                else ""
-            )
-            msg_template = _(
-                "On the data set %(title)s%(version)s [%(url)s] was posted a comment:"
-            )
+            version = _(" (version %(version)s)") % {"version": self.version} if self.version else ""
+            msg_template = _("On the data set %(title)s%(version)s [%(url)s] was posted a comment:")
             msg = msg_template % {
                 "title": title,
                 "version": version,
@@ -752,9 +677,7 @@ class Dataset(ExtendedModel):
                 subject,
                 msg_plain,
                 config.SUGGESTIONS_EMAIL,
-                [config.TESTER_EMAIL]
-                if settings.DEBUG and config.TESTER_EMAIL
-                else self.comment_mail_recipients,
+                ([config.TESTER_EMAIL] if settings.DEBUG and config.TESTER_EMAIL else self.comment_mail_recipients),
                 html_message=msg_html,
             )
 
@@ -768,20 +691,12 @@ class Dataset(ExtendedModel):
 
     @property
     def regions(self):
-        has_no_region_resources = (
-            self.resources.published()
-            .filter(is_removed=False, regions__isnull=True)
-            .exists()
-        )
-        return Region.objects.for_dataset_with_id(
-            self.pk, has_no_region_resources=has_no_region_resources
-        )
+        has_no_region_resources = self.resources.published().filter(is_removed=False, regions__isnull=True).exists()
+        return Region.objects.for_dataset_with_id(self.pk, has_no_region_resources=has_no_region_resources)
 
     @property
     def regions_str(self):
-        return "; ".join(
-            list(self.regions.values_list("hierarchy_label_i18n", flat=True))
-        )
+        return "; ".join(list(self.regions.values_list("hierarchy_label_i18n", flat=True)))
 
     @cached_property
     def showcases_published(self):
@@ -796,9 +711,7 @@ class Dataset(ExtendedModel):
         return ";".join([x.name_csv for x in self.supplement_docs])
 
     def archive_files(self):
-        archive_resources_files.s(dataset_id=self.pk).apply_async(
-            countdown=settings.DATASET_ARCHIVE_FILES_TASK_DELAY
-        )
+        archive_resources_files.s(dataset_id=self.pk).apply_async(countdown=settings.DATASET_ARCHIVE_FILES_TASK_DELAY)
 
     @classmethod
     def get_license_data(cls, name, lang=None):
@@ -833,12 +746,8 @@ class Dataset(ExtendedModel):
                 "host": settings.BASE_URL,
             }
             subject = ds.title.replace("\n", "").replace("\r", "")
-            msg_plain = render_to_string(
-                "mails/dataset-update-reminder.txt", context=context
-            )
-            msg_html = render_to_string(
-                "mails/dataset-update-reminder.html", context=context
-            )
+            msg_plain = render_to_string("mails/dataset-update-reminder.txt", context=context)
+            msg_html = render_to_string("mails/dataset-update-reminder.html", context=context)
             data.append(
                 {
                     "subject": subject,
@@ -853,9 +762,7 @@ class Dataset(ExtendedModel):
     @property
     def archived_resources_files_url(self):
         return (
-            "{}/datasets/{}/resources/files/download".format(
-                settings.API_URL, self.ident
-            )
+            "{}/datasets/{}/resources/files/download".format(settings.API_URL, self.ident)
             if self.archived_resources_files
             else None
         )
@@ -875,18 +782,12 @@ class Dataset(ExtendedModel):
                 url=os.path.basename(real_path),
                 use_lang=False,
             )
-            return self.mark_safe(
-                "<a href='%s'>%s</a>" % (full_url, self.archived_resources_files.name)
-            )
+            return self.mark_safe("<a href='%s'>%s</a>" % (full_url, self.archived_resources_files.name))
         return ""
 
     @property
     def institution_type(self):
-        return (
-            self.organization.institution_type
-            if self.organization.institution_type in LICENSE_CONDITION_LABELS
-            else "public"
-        )
+        return self.organization.institution_type if self.organization.institution_type in LICENSE_CONDITION_LABELS else "public"
 
     @property
     def license_condition_labels(self):
@@ -894,9 +795,7 @@ class Dataset(ExtendedModel):
 
     @property
     def current_condition_descriptions(self):
-        labels = {
-            "custom_description": self.license_condition_labels["responsibilities"]
-        }
+        labels = {"custom_description": self.license_condition_labels["responsibilities"]}
         descriptions = {}
         for key, val in labels.items():
             condition_field = f"license_condition_{key}"
@@ -951,9 +850,7 @@ class Dataset(ExtendedModel):
                 # if the title is modified,trigger an asynchronous task to update the
                 # archive symlink name associated with the dataset.
                 change_archive_symlink_name.apply_async_on_commit(
-                    kwargs=dict(
-                        dataset_id=self.pk, old_name=self.tracker.previous("title")
-                    )
+                    kwargs=dict(dataset_id=self.pk, old_name=self.tracker.previous("title"))
                 )
         return super().save(*args, **kwargs)
 
@@ -1035,9 +932,7 @@ class BaseSupplement(ExtendedModel):
 
 
 class Supplement(BaseSupplement):
-    dataset = models.ForeignKey(
-        Dataset, on_delete=models.CASCADE, related_name="supplements"
-    )
+    dataset = models.ForeignKey(Dataset, on_delete=models.CASCADE, related_name="supplements")
     file = models.FileField(
         verbose_name=_("file"),
         storage=get_storage("datasets"),
@@ -1064,9 +959,7 @@ def handle_dataset_without_resources(sender, instance, *args, **kwargs):
         organization_id = instance.tracker.previous("organization_id")
         if organization_id:
             # update ES document for previously set organization, if any.
-            update_document_task.s(
-                "organizations", "Organization", organization_id
-            ).apply_async_on_commit()
+            update_document_task.s("organizations", "Organization", organization_id).apply_async_on_commit()
 
 
 @receiver(remove_related_resources, sender=Dataset)

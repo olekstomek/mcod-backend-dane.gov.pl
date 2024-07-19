@@ -21,18 +21,22 @@ User = get_user_model()
 
 class Category(ExtendedModel):
     SIGNALS_MAP = {
-        'updated': (update_related_datasets,),
-        'published': (update_related_datasets,),
-        'restored': (update_related_datasets,),
-        'removed': (null_in_related_datasets, rdf_signals.update_related_graph),
+        "updated": (update_related_datasets,),
+        "published": (update_related_datasets,),
+        "restored": (update_related_datasets,),
+        "removed": (null_in_related_datasets, rdf_signals.update_related_graph),
     }
     code = models.CharField(max_length=100, verbose_name=_("Code"))
     title = models.CharField(max_length=100, verbose_name=_("Title"))
     description = models.TextField(null=True, verbose_name=_("Description"))
     color = models.CharField(max_length=20, default="#000000", null=True, verbose_name=_("Color"))
     image = models.ImageField(
-        max_length=200, storage=storages.get_storage('common'),
-        upload_to='', blank=True, null=True, verbose_name=_("Image URL")
+        max_length=200,
+        storage=storages.get_storage("common"),
+        upload_to="",
+        blank=True,
+        null=True,
+        verbose_name=_("Image URL"),
     )
     created_by = models.ForeignKey(
         User,
@@ -41,7 +45,7 @@ class Category(ExtendedModel):
         editable=False,
         null=True,
         verbose_name=_("Created by"),
-        related_name='categories_created'
+        related_name="categories_created",
     )
     modified_by = models.ForeignKey(
         User,
@@ -50,7 +54,7 @@ class Category(ExtendedModel):
         editable=False,
         null=True,
         verbose_name=_("Modified by"),
-        related_name='categories_modified'
+        related_name="categories_modified",
     )
 
     @classmethod
@@ -64,7 +68,7 @@ class Category(ExtendedModel):
     def image_url(self):
         if not self.image or not self.image.url:
             return None
-        return '{}{}'.format(settings.BASE_URL, self.image.url)
+        return "{}{}".format(settings.BASE_URL, self.image.url)
 
     i18n = TranslationField(fields=("title", "description"))
 
@@ -72,25 +76,27 @@ class Category(ExtendedModel):
     trash = TrashManager()
 
     tracker = FieldTracker()
-    slugify_field = 'title'
+    slugify_field = "title"
 
     class Meta:
         db_table = "category"
         verbose_name = _("Category")
         verbose_name_plural = _("Categories")
         default_manager_name = "objects"
-        indexes = [GinIndex(fields=["i18n"]), ]
+        indexes = [
+            GinIndex(fields=["i18n"]),
+        ]
 
 
 @receiver(null_in_related_datasets, sender=Category)
 def null_category_in_datasets(sender, instance, *args, **kwargs):
-    sender.log_debug(instance, 'Setting null in datasets', 'null_in_related_datasets')
+    sender.log_debug(instance, "Setting null in datasets", "null_in_related_datasets")
     null_field_in_related_task.apply_async_on_commit(args=(instance._meta.app_label, instance._meta.object_name, instance.id))
 
 
 @receiver(update_related_datasets, sender=Category)
 def update_category_in_datasets(sender, instance, *args, **kwargs):
-    sender.log_debug(instance, 'Updating related datasets', 'update_related_datasets')
+    sender.log_debug(instance, "Updating related datasets", "update_related_datasets")
     for dataset in instance.dataset_set.all():
         search_signals.update_document.send(dataset._meta.model, dataset)
         rdf_signals.update_graph.send(dataset._meta.model, dataset)

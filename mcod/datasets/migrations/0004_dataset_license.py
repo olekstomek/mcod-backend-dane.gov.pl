@@ -7,15 +7,20 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('licenses', '0001_initial'),
-        ('datasets', '0003_auto_20180525_1430'),
+        ("licenses", "0001_initial"),
+        ("datasets", "0003_auto_20180525_1430"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='dataset',
-            name='license',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.DO_NOTHING,
-                                    to='licenses.License', verbose_name='License ID'),
+            model_name="dataset",
+            name="license",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.DO_NOTHING,
+                to="licenses.License",
+                verbose_name="License ID",
+            ),
         ),
     ]

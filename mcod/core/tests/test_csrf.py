@@ -18,14 +18,12 @@ from mcod.core.csrf import (
 )
 
 
-@scenario('features/csrf.feature',
-          'Test cipher salting identity.')
+@scenario("features/csrf.feature", "Test cipher salting identity.")
 def test_cipher_salting_identity():
     pass
 
 
-@scenario("features/csrf.feature",
-          "Unsalting a token returns secret.")
+@scenario("features/csrf.feature", "Unsalting a token returns secret.")
 def test_unsalting():
     pass
 
@@ -37,8 +35,8 @@ def test_unsalting():
         "6XYwZ7sqhgU6f7TRmCb7WvKmtXEUoL21N72jrQ4iMT5iBBaXxbwGT8n9Tplx9zJv",
         "abc",
         "",
-        pytest.param(None, marks=pytest.mark.xfail)
-    ]
+        pytest.param(None, marks=pytest.mark.xfail),
+    ],
 )
 def test_sanitized_token_length(input_):
     assert len(_sanitize_token(input_)) == 64
@@ -48,14 +46,11 @@ def test_generates_different_but_equivalent_tokens():
     secret = get_new_csrf_string()
     n = 10
     tokens = {generate_csrf_token(secret) for _ in range(n)}
-    assert len(tokens) == n and len({
-        unsalt_cipher_token(token)
-        for token in tokens
-    }) == 1
+    assert len(tokens) == n and len({unsalt_cipher_token(token) for token in tokens}) == 1
 
 
-@mock.patch('mcod.settings.ENABLE_CSRF', True)
-@mock.patch('mcod.settings.DEBUG', False)
+@mock.patch("mcod.settings.ENABLE_CSRF", True)
+@mock.patch("mcod.settings.DEBUG", False)
 @pytest.mark.parametrize(
     "cookie_value,header_value,should_return_error",
     [
@@ -95,33 +90,31 @@ def test_generates_different_but_equivalent_tokens():
             "",
             True,
         ),
-    ]
+    ],
 )
 def test_csrf_middleware(cookie_value, header_value, should_return_error):
     default_session_secret = "Default0secretN6KnTyVlxyy9RudhRy"
     good_status = falcon.HTTP_200
-    good_body = json.dumps({
-        "data": [
-            {
-                "type": "message",
-                "id": 1,
-                "attributes": {
-                    "title": "Hello, World!"
-                }
-            },
-        ]
-    })
+    good_body = json.dumps(
+        {
+            "data": [
+                {"type": "message", "id": 1, "attributes": {"title": "Hello, World!"}},
+            ]
+        }
+    )
     bad_status = falcon.HTTP_403
-    bad_body = json.dumps({
-        "errors": [
-            {
-                "title": "CSRF error",
-                "detail": _("CSRF token missing or incorrect."),
-                "status": "Forbidden",
-                "code": falcon.HTTP_403,
-            },
-        ],
-    })
+    bad_body = json.dumps(
+        {
+            "errors": [
+                {
+                    "title": "CSRF error",
+                    "detail": _("CSRF token missing or incorrect."),
+                    "status": "Forbidden",
+                    "code": falcon.HTTP_403,
+                },
+            ],
+        }
+    )
 
     req, resp, resource, params = Mock(), Mock(), Mock(), Mock()
     req.cookies = {
@@ -142,7 +135,10 @@ def test_csrf_middleware(cookie_value, header_value, should_return_error):
     middleware.default_secret = default_session_secret
     middleware.process_resource(req, resp, resource, params)
     if should_return_error:
-        assert resp.status == bad_status, "response status should be %s, is %s" % (bad_status, resp.status)
+        assert resp.status == bad_status, "response status should be %s, is %s" % (
+            bad_status,
+            resp.status,
+        )
         assert resp.text == bad_body, "response body should be a proper error message"
         assert resp.complete, "response should be complete in case of error"
     else:
@@ -158,15 +154,14 @@ def test_csrf_middleware(cookie_value, header_value, should_return_error):
         assert call_args[0] == "Set-Cookie"
 
         cookies = http_cookies.SimpleCookie(call_args[1])
-        assert cookies.get('mcod_csrf_token', None) is not None
+        assert cookies.get("mcod_csrf_token", None) is not None
 
-        cookie = cookies['mcod_csrf_token']
+        cookie = cookies["mcod_csrf_token"]
         new_cookie_value = cookie.value
         assert new_cookie_value != cookie_value, "server should assign a new CSRF token for every response"
-        assert cookie["path"] == '/'
-        assert (
-            (not settings.SESSION_COOKIE_SECURE and not cookie["secure"]) or
-            (settings.SESSION_COOKIE_SECURE and cookie["secure"])
+        assert cookie["path"] == "/"
+        assert (not settings.SESSION_COOKIE_SECURE and not cookie["secure"]) or (
+            settings.SESSION_COOKIE_SECURE and cookie["secure"]
         )
         cookie_domain = cookie["domain"]
         assert cookie_domain in settings.API_CSRF_COOKIE_DOMAINS

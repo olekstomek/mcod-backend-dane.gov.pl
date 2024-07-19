@@ -37,17 +37,17 @@ class SparqlSignalProcessor(SignalLoggerMixin):
     @staticmethod
     def get_task_kwargs(instance):
         return {
-            'app_label': instance._meta.app_label,
-            'object_name': instance._meta.concrete_model._meta.object_name,
-            'instance_id': instance.id
+            "app_label": instance._meta.app_label,
+            "object_name": instance._meta.concrete_model._meta.object_name,
+            "instance_id": instance.id,
         }
 
     def update_graph(self, sender, instance, *args, **kwargs):
-        self.debug('Updating graph in rdf db', sender, instance, 'update_graph')
+        self.debug("Updating graph in rdf db", sender, instance, "update_graph")
         update_graph_task.s(**self.get_task_kwargs(instance)).apply_async_on_commit()
 
     def update_related_graph(self, sender, instance, *args, **kwargs):
-        self.debug('Updating related graph in rdf db', sender, instance, 'update_related_graph')
+        self.debug("Updating related graph in rdf db", sender, instance, "update_related_graph")
         update_related_graph_task.s(**self.get_task_kwargs(instance)).apply_async_on_commit()
 
     def update_graph_with_conditional_related_update(self, sender, instance, *args, **kwargs):
@@ -57,19 +57,29 @@ class SparqlSignalProcessor(SignalLoggerMixin):
             self.update_graph(sender, instance, *args, **kwargs)
 
     def update_graph_with_related(self, sender, instance, *args, **kwargs):
-        self.debug('Updating graph with related in rdf db', sender, instance, 'update_graph_with_related')
+        self.debug(
+            "Updating graph with related in rdf db",
+            sender,
+            instance,
+            "update_graph_with_related",
+        )
         update_graph_with_related_task.s(**self.get_task_kwargs(instance)).apply_async_on_commit()
 
     def create_graph(self, sender, instance, *args, **kwargs):
-        self.debug('Creating graph in rdf db', sender, instance, 'create_graph')
+        self.debug("Creating graph in rdf db", sender, instance, "create_graph")
         create_graph_task.s(**self.get_task_kwargs(instance)).apply_async_on_commit()
 
     def create_graph_with_related_update(self, sender, instance, *args, **kwargs):
-        self.debug('Creating graph with related update in rdf db', sender, instance, 'create_graph_with_related_update')
+        self.debug(
+            "Creating graph with related update in rdf db",
+            sender,
+            instance,
+            "create_graph_with_related_update",
+        )
         create_graph_with_related_update_task.s(**self.get_task_kwargs(instance)).apply_async_on_commit()
 
     def delete_graph(self, sender, instance, *args, **kwargs):
-        self.debug('Deleting graph in rdf db', sender, instance, 'delete_graph')
+        self.debug("Deleting graph in rdf db", sender, instance, "delete_graph")
         graphs_set = registry.get_graph(instance)
         parents_to_remove = [graph(named_graph=registry.graph_name).is_parent_removed(instance) for graph in graphs_set]
         task_kwargs = self.get_task_kwargs(instance)
@@ -79,11 +89,16 @@ class SparqlSignalProcessor(SignalLoggerMixin):
             delete_graph_task.s(**task_kwargs).apply_async_on_commit()
 
     def delete_graph_with_related_update(self, sender, instance, *args, **kwargs):
-        self.debug('Deleting graph with related update in rdf db', sender, instance, 'delete_graph_with_related_update')
+        self.debug(
+            "Deleting graph with related update in rdf db",
+            sender,
+            instance,
+            "delete_graph_with_related_update",
+        )
         graphs_set = registry.get_graph(instance)
         parents_to_remove = [graph(named_graph=registry.graph_name).is_parent_removed(instance) for graph in graphs_set]
         if not any(parents_to_remove):
             related_models = registry.get_related_models(instance)
             task_kwargs = self.get_task_kwargs(instance)
-            task_kwargs['related_models'] = related_models
+            task_kwargs["related_models"] = related_models
             delete_graph_with_related_update_task.s(**task_kwargs).apply_async_on_commit()

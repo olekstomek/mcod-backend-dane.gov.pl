@@ -5,11 +5,12 @@ from mcod.core.apps import ExtendedAppMixin
 
 
 class ShowcasesConfig(ExtendedAppMixin, AppConfig):
-    name = 'mcod.showcases'
-    verbose_name = _('PoCoTo')
+    name = "mcod.showcases"
+    verbose_name = _("PoCoTo")
 
     def ready(self):
         from mcod.showcases.models import Showcase, ShowcaseProposal, ShowcaseTrash
+
         self.connect_core_signals(Showcase)
         self.connect_core_signals(ShowcaseTrash)
         self.connect_m2m_signal(Showcase.datasets.through)

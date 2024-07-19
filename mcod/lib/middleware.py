@@ -29,7 +29,7 @@ class APIAuthTokenMiddleware:
                 response.delete_cookie(
                     apiauthcookie,
                     domain=settings.SESSION_COOKIE_DOMAIN,
-                    path=settings.SESSION_COOKIE_PATH
+                    path=settings.SESSION_COOKIE_PATH,
                 )
         else:
             if request.user.is_authenticated:
@@ -42,7 +42,7 @@ class APIAuthTokenMiddleware:
                     samesite=settings.SESSION_COOKIE_SAMESITE,
                     secure=settings.SESSION_COOKIE_SECURE,
                     path=settings.SESSION_COOKIE_PATH,
-                    max_age=settings.JWT_EXPIRATION_DELTA
+                    max_age=settings.JWT_EXPIRATION_DELTA,
                 )
 
         return response
@@ -53,17 +53,20 @@ class ComplementUserDataMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
-        if settings.COMPONENT == 'admin' and request.user and not request.user.is_anonymous:
+        if settings.COMPONENT == "admin" and request.user and not request.user.is_anonymous:
             if request.user.is_normal_staff and not request.user.has_complete_staff_data:
                 allowed_paths = {
                     request.user.admin_change_url,
-                    '/logout/',
-                    '/pn-apps/stats/',
-                    r'/pn-apps/charts/slot-\d+.png',
+                    "/logout/",
+                    "/pn-apps/stats/",
+                    r"/pn-apps/charts/slot-\d+.png",
                 }
-                allowed_paths_pattern = '|'.join(allowed_paths)
+                allowed_paths_pattern = "|".join(allowed_paths)
                 if not re.match(allowed_paths_pattern, request.path):
-                    messages.add_message(request, messages.ERROR,
-                                         _('Your account data is incomplete. Full name and phone number must be given'))
+                    messages.add_message(
+                        request,
+                        messages.ERROR,
+                        _("Your account data is incomplete. Full name and phone number must be given"),
+                    )
                     return redirect(request.user.admin_change_url)
         return self.get_response(request)

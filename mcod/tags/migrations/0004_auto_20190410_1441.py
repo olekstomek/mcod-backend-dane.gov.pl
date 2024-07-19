@@ -11,46 +11,50 @@ import uuid
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('tags', '0003_tag_i18n'),
+        ("tags", "0003_tag_i18n"),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='tag',
-            options={'default_manager_name': 'objects', 'verbose_name': 'Tag', 'verbose_name_plural': 'Tags'},
+            name="tag",
+            options={
+                "default_manager_name": "objects",
+                "verbose_name": "Tag",
+                "verbose_name_plural": "Tags",
+            },
         ),
         migrations.AddField(
-            model_name='tag',
-            name='published_at',
-            field=model_utils.fields.MonitorField(default=django.utils.timezone.now, monitor='status', when={'published'}),
+            model_name="tag",
+            name="published_at",
+            field=model_utils.fields.MonitorField(default=django.utils.timezone.now, monitor="status", when={"published"}),
         ),
         migrations.AddField(
-            model_name='tag',
-            name='removed_at',
-            field=model_utils.fields.MonitorField(default=django.utils.timezone.now, monitor='is_removed', when={True}),
+            model_name="tag",
+            name="removed_at",
+            field=model_utils.fields.MonitorField(default=django.utils.timezone.now, monitor="is_removed", when={True}),
         ),
         migrations.AddField(
-            model_name='tag',
-            name='slug',
+            model_name="tag",
+            name="slug",
             field=models.SlugField(blank=True, default=uuid.uuid4, max_length=600),
         ),
         migrations.AddField(
-            model_name='tag',
-            name='uuid',
+            model_name="tag",
+            name="uuid",
             field=models.UUIDField(default=uuid.uuid4),
         ),
         migrations.AddField(
-            model_name='tag',
-            name='views_count',
+            model_name="tag",
+            name="views_count",
             field=models.PositiveIntegerField(default=0),
         ),
         migrations.AlterField(
-            model_name='tag',
-            name='i18n',
-            field=modeltrans.fields.TranslationField(fields=('name', 'slug'), required_languages=('pl',), virtual_fields=True),
+            model_name="tag",
+            name="i18n",
+            field=modeltrans.fields.TranslationField(fields=("name", "slug"), required_languages=("pl",), virtual_fields=True),
         ),
         migrations.AddIndex(
-            model_name='tag',
-            index=django.contrib.postgres.indexes.GinIndex(fields=['i18n'], name='tag_i18n_691eeb_gin'),
+            model_name="tag",
+            index=django.contrib.postgres.indexes.GinIndex(fields=["i18n"], name="tag_i18n_691eeb_gin"),
         ),
     ]

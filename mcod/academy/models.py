@@ -18,27 +18,29 @@ from mcod.core.managers import SoftDeletableManager
 
 class Course(ExtendedModel):
     COURSE_STATES = {
-        'planned': 'Planowane',
-        'current': 'W trakcie',
-        'finished': 'Zakończone',
+        "planned": "Planowane",
+        "current": "W trakcie",
+        "finished": "Zakończone",
     }
-    title = models.CharField(max_length=300, verbose_name=_('title'))
-    notes = models.TextField(verbose_name=_('description'))
-    venue = models.CharField(max_length=300, verbose_name=_('venue'))
-    participants_number = models.PositiveIntegerField(verbose_name=_('number of participants'))
+    title = models.CharField(max_length=300, verbose_name=_("title"))
+    notes = models.TextField(verbose_name=_("description"))
+    venue = models.CharField(max_length=300, verbose_name=_("venue"))
+    participants_number = models.PositiveIntegerField(verbose_name=_("number of participants"))
     file = models.FileField(
-        verbose_name=_('schedule file'),
-        storage=storages.get_storage('courses'),
-        upload_to='%Y%m%d',
+        verbose_name=_("schedule file"),
+        storage=storages.get_storage("courses"),
+        upload_to="%Y%m%d",
         max_length=2000,
-        null=True, blank=True,
+        null=True,
+        blank=True,
     )
     materials_file = models.FileField(
-        verbose_name=_('materials file'),
-        storage=storages.get_storage('courses_materials'),
-        upload_to='%Y%m%d',
+        verbose_name=_("materials file"),
+        storage=storages.get_storage("courses_materials"),
+        upload_to="%Y%m%d",
         max_length=2000,
-        null=True, blank=True,
+        null=True,
+        blank=True,
     )
 
     objects = CourseManager()
@@ -50,20 +52,20 @@ class Course(ExtendedModel):
         return self.title
 
     class Meta:
-        default_manager_name = 'objects'
-        verbose_name = _('course')
-        verbose_name_plural = _('courses')
+        default_manager_name = "objects"
+        verbose_name = _("course")
+        verbose_name_plural = _("courses")
 
     def sessions(self):
-        return self.modules.order_by('start')
+        return self.modules.order_by("start")
 
     @property
     def start(self):
-        return self.modules.earliest('start').start
+        return self.modules.earliest("start").start
 
     @property
     def end(self):
-        return self.modules.latest('end').end
+        return self.modules.latest("end").end
 
     @property
     def file_type(self):
@@ -83,33 +85,38 @@ class Course(ExtendedModel):
 
     @property
     def materials_file_url(self):
-        return self._get_absolute_url(
-            self.materials_file.url, use_lang=False
-        ) if self.materials_file else None
+        return self._get_absolute_url(self.materials_file.url, use_lang=False) if self.materials_file else None
 
 
 class CourseTrash(Course, metaclass=TrashModelBase):
     class Meta:
         proxy = True
-        verbose_name = _('Trash (Courses)')
-        verbose_name_plural = _('Trash (Courses)')
+        verbose_name = _("Trash (Courses)")
+        verbose_name_plural = _("Trash (Courses)")
 
 
 class CourseModule(ExtendedModel):
     COURSE_MODULE_TYPES = (
-        ('general', pgettext_lazy('General', 'academy course module type')),
-        ('technical', _('Technical')),
-        ('law', _('Law')),
-        ('law_technical', _('Law/Technical')),
-        ('extra', _('Extra')),
-        ('exam', _('Exam')),
+        ("general", pgettext_lazy("General", "academy course module type")),
+        ("technical", _("Technical")),
+        ("law", _("Law")),
+        ("law_technical", _("Law/Technical")),
+        ("extra", _("Extra")),
+        ("exam", _("Exam")),
     )
-    type = models.CharField(max_length=13, choices=COURSE_MODULE_TYPES, verbose_name=_('module type'))
-    course = models.ForeignKey(Course, on_delete=models.CASCADE, verbose_name=_('course'), related_name='modules')
-    start = models.DateField(verbose_name=_('start date'))
-    end = models.DateField(verbose_name=_('end date'))
+    type = models.CharField(max_length=13, choices=COURSE_MODULE_TYPES, verbose_name=_("module type"))
+    course = models.ForeignKey(
+        Course,
+        on_delete=models.CASCADE,
+        verbose_name=_("course"),
+        related_name="modules",
+    )
+    start = models.DateField(verbose_name=_("start date"))
+    end = models.DateField(verbose_name=_("end date"))
     number_of_days = models.PositiveIntegerField(
-        verbose_name=_('number of days'), validators=[MinValueValidator(1), MaxValueValidator(2)])
+        verbose_name=_("number of days"),
+        validators=[MinValueValidator(1), MaxValueValidator(2)],
+    )
 
     objects = SoftDeletableManager()
     trash = TrashManager()
@@ -117,16 +124,16 @@ class CourseModule(ExtendedModel):
     tracker = FieldTracker()
 
     def __str__(self):
-        return f'{self.course.title} - {self.get_type_display()}'
+        return f"{self.course.title} - {self.get_type_display()}"
 
     class Meta:
-        default_manager_name = 'objects'
-        verbose_name = _('course module')
-        verbose_name_plural = _('course modules')
+        default_manager_name = "objects"
+        verbose_name = _("course module")
+        verbose_name_plural = _("course modules")
 
     @property
     def type_name(self):
-        with override('pl'):
+        with override("pl"):
             return self.get_type_display()
 
 

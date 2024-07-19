@@ -12,7 +12,10 @@ from mcod.core.versioning import versioned
 
 
 class CoursesSearchApiView(JsonAPIView):
-    @falcon.before(login_required, roles=['official', 'agent', 'admin', 'editor', 'lod_admin', 'aod_admin'])
+    @falcon.before(
+        login_required,
+        roles=["official", "agent", "admin", "editor", "lod_admin", "aod_admin"],
+    )
     @versioned
     def on_get(self, request, response, *args, **kwargs):
         self.handle(request, response, self.GET, *args, **kwargs)

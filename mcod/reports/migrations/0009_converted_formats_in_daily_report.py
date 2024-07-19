@@ -8,16 +8,23 @@ from django.conf import settings
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('reports', '0008_drop_report_triggers'),
-        ('resources', '0043_auto_20210611_1529')
+        ("reports", "0008_drop_report_triggers"),
+        ("resources", "0043_auto_20210611_1529"),
     ]
 
     operations = [
         migrations.RunSQL(
             sql=open(
-                os.path.join(settings.DATABASE_DIR, 'ODSOFT-2126-converted-formats-in-daily-report.sql')
+                os.path.join(
+                    settings.DATABASE_DIR,
+                    "ODSOFT-2126-converted-formats-in-daily-report.sql",
+                )
             ).read(),
-            reverse_sql=open(os.path.join(settings.DATABASE_DIR,
-                                          'ODSOFT-2126-converted-formats-in-daily-report-backward.sql')).read(),
+            reverse_sql=open(
+                os.path.join(
+                    settings.DATABASE_DIR,
+                    "ODSOFT-2126-converted-formats-in-daily-report-backward.sql",
+                )
+            ).read(),
         )
     ]

@@ -6,23 +6,27 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('datasets', '0029_dataset_is_permanently_removed'),
+        ("datasets", "0029_dataset_is_permanently_removed"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='dataset',
-            name='is_update_notification_enabled',
-            field=models.BooleanField(default=True, verbose_name='turn on notification'),
+            model_name="dataset",
+            name="is_update_notification_enabled",
+            field=models.BooleanField(default=True, verbose_name="turn on notification"),
         ),
         migrations.AddField(
-            model_name='dataset',
-            name='update_notification_frequency',
-            field=models.PositiveSmallIntegerField(blank=True, null=True, verbose_name='set notifications frequency'),
+            model_name="dataset",
+            name="update_notification_frequency",
+            field=models.PositiveSmallIntegerField(blank=True, null=True, verbose_name="set notifications frequency"),
         ),
         migrations.AddField(
-            model_name='dataset',
-            name='update_notification_recipient_email',
-            field=models.EmailField(blank=True, max_length=254, verbose_name='the person who is the notifications recipient'),
+            model_name="dataset",
+            name="update_notification_recipient_email",
+            field=models.EmailField(
+                blank=True,
+                max_length=254,
+                verbose_name="the person who is the notifications recipient",
+            ),
         ),
     ]

@@ -6,6 +6,7 @@ class ExtendedGraph(rdflib.ConjunctiveGraph):
     ConjunctiveGraph must be used as a BaseClass (instead of Graph)
     to serialize graph into some .rdf formats like trix or n-quads.
     """
+
     def __init__(self, *args, ordered=False, **kwargs):
         super().__init__(*args, **kwargs)
         self.ordered = ordered

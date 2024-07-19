@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('resources', '0050_auto_20211220_1907'),
+        ("resources", "0050_auto_20211220_1907"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='resource',
-            name='has_high_value_data',
-            field=models.NullBooleanField(verbose_name='has high value data'),
+            model_name="resource",
+            name="has_high_value_data",
+            field=models.NullBooleanField(verbose_name="has high value data"),
         ),
     ]

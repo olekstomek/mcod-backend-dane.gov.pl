@@ -11,7 +11,7 @@ from mcod.organizations.models import Organization
 class OrganizationSparqlGraph(SparqlGraph, OrganizationRDFMixin, RDFResponseSchema):
     model = Organization
     include_nested_triples = True
-    related_condition_attr = 'slug'
+    related_condition_attr = "slug"
 
     @ma.pre_dump(pass_many=True)
     def prepare_data(self, data, many, **kwargs):
@@ -20,7 +20,7 @@ class OrganizationSparqlGraph(SparqlGraph, OrganizationRDFMixin, RDFResponseSche
 
     @ma.post_dump(pass_many=False)
     def prepare_graph_triples(self, data, **kwargs):
-        distribution = self.get_rdf_class_for_model(model=Organization)(subject=URIRef(data['access_url']))
+        distribution = self.get_rdf_class_for_model(model=Organization)(subject=URIRef(data["access_url"]))
         return distribution.to_triples(data, self.include_nested_triples)
 
     @ma.post_dump(pass_many=True)

@@ -6,18 +6,28 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('showcases', '0003_auto_20211215_1641'),
+        ("showcases", "0003_auto_20211215_1641"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='showcase',
-            name='license_type',
-            field=models.CharField(blank=True, choices=[('free', 'Free App'), ('commercial', 'Commercial App')], max_length=10, verbose_name='license type'),
+            model_name="showcase",
+            name="license_type",
+            field=models.CharField(
+                blank=True,
+                choices=[("free", "Free App"), ("commercial", "Commercial App")],
+                max_length=10,
+                verbose_name="license type",
+            ),
         ),
         migrations.AlterField(
-            model_name='showcaseproposal',
-            name='license_type',
-            field=models.CharField(blank=True, choices=[('free', 'Free App'), ('commercial', 'Commercial App')], max_length=10, verbose_name='license type'),
+            model_name="showcaseproposal",
+            name="license_type",
+            field=models.CharField(
+                blank=True,
+                choices=[("free", "Free App"), ("commercial", "Commercial App")],
+                max_length=10,
+                verbose_name="license type",
+            ),
         ),
     ]

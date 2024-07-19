@@ -21,76 +21,80 @@ from mcod.organizations.views import InstitutionTypeAdminView
 from mcod.regions.views import RegionsAutocomplete
 from mcod.users.views import CustomAdminLoginView
 
-panel_app_config = apps.get_app_config('mcod.pn_apps')
+panel_app_config = apps.get_app_config("mcod.pn_apps")
 
 urlpatterns = []
 
-if settings.COMPONENT == 'cms':
-    api_router = CmsApiRouter('cmsapi')
-    api_router.register_endpoint('pages', CmsPagesViewSet)
-    api_router.register_endpoint('images', ImagesViewSet)
-    api_router.register_endpoint('documents', DocumentsAPIViewSet)
+if settings.COMPONENT == "cms":
+    api_router = CmsApiRouter("cmsapi")
+    api_router.register_endpoint("pages", CmsPagesViewSet)
+    api_router.register_endpoint("images", ImagesViewSet)
+    api_router.register_endpoint("documents", DocumentsAPIViewSet)
 
     urlpatterns += [
-        re_path(r'^documents/', include(wagtaildocs_urls)),
-        re_path(r'^api/', api_router.urls),
-        re_path(r'^hypereditor/', include('hypereditor.urls')),
-        re_path(r'^admin/pages/(\d+)/revisions/(\d+)/view/$', revisions_view, name='revisions_view'),
-        re_path(r'^admin/', include(wagtailadmin_urls)),
+        re_path(r"^documents/", include(wagtaildocs_urls)),
+        re_path(r"^api/", api_router.urls),
+        re_path(r"^hypereditor/", include("hypereditor.urls")),
         re_path(
-            r'^robots.txt',
+            r"^admin/pages/(\d+)/revisions/(\d+)/view/$",
+            revisions_view,
+            name="revisions_view",
+        ),
+        re_path(r"^admin/", include(wagtailadmin_urls)),
+        re_path(
+            r"^robots.txt",
             TemplateView.as_view(template_name="admin/robots.txt", content_type="text/plain"),
         ),
-        re_path(r'', include(cms_urls)),
+        re_path(r"", include(cms_urls)),
     ]
     urlpatterns += static(settings.IMAGES_URL, document_root=settings.IMAGES_MEDIA_ROOT)
 else:
     urlpatterns += [
-        path('nested_admin/', include('nested_admin.urls')),
-        path('ckeditor/', include('ckeditor_uploader.urls')),
+        path("nested_admin/", include("nested_admin.urls")),
+        path("ckeditor/", include("ckeditor_uploader.urls")),
         path(
-            'organization-type/',
+            "organization-type/",
             InstitutionTypeAdminView.as_view(),
-            name='organization-type',
+            name="organization-type",
         ),
         path(
-            'organization-autocomplete/',
-            AdminAutocomplete.as_view(model='organizations.Organization'),
-            name='organization-autocomplete',
+            "organization-autocomplete/",
+            AdminAutocomplete.as_view(model="organizations.Organization"),
+            name="organization-autocomplete",
         ),
         path(
-            'dataset-autocomplete/',
-            AdminAutocomplete.as_view(model='datasets.Dataset'),
-            name='dataset-autocomplete',
+            "dataset-autocomplete/",
+            AdminAutocomplete.as_view(model="datasets.Dataset"),
+            name="dataset-autocomplete",
         ),
         path(
-            'admin-autocomplete/',
+            "admin-autocomplete/",
             AdminAutocomplete.as_view(),
-            name='admin-autocomplete',
+            name="admin-autocomplete",
         ),
         path(
-            'dataset-license-labels/',
+            "dataset-license-labels/",
             ConditionLabelsAdminView.as_view(),
-            name='dataset-license-labels',
+            name="dataset-license-labels",
         ),
         path(
-            'regions-autocomplete/',
+            "regions-autocomplete/",
             RegionsAutocomplete.as_view(),
-            name='regions-autocomplete',
+            name="regions-autocomplete",
         ),
         path(
-            'resource-autocomplete/',
+            "resource-autocomplete/",
             ResourceAutocomplete.as_view(),
-            name='resource-autocomplete',
+            name="resource-autocomplete",
         ),
-        path('i18n/', include('django.conf.urls.i18n')),
-        path('login/', CustomAdminLoginView.as_view(), name='login'),
-        path('', admin.site.urls, name='admin'),
+        path("i18n/", include("django.conf.urls.i18n")),
+        path("login/", CustomAdminLoginView.as_view(), name="login"),
+        path("", admin.site.urls, name="admin"),
         # Non-admin urls
-        path('pn-apps/', include('mcod.pn_apps.urls')),
-        path('discourse/', include('mcod.discourse.urls')),
+        path("pn-apps/", include("mcod.pn_apps.urls")),
+        path("discourse/", include("mcod.discourse.urls")),
         path(
-            'robots.txt',
+            "robots.txt",
             TemplateView.as_view(template_name="admin/robots.txt", content_type="text/plain"),
         ),
     ]

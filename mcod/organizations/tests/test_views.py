@@ -8,7 +8,7 @@ def test_organization_autocomplete_view(institutions, admin):
 
     response = client.get(reverse("admin:organizations_organization_autocomplete"))
 
-    assert len(response.json()['results']) == 3
+    assert len(response.json()["results"]) == 3
 
 
 def test_organization_autocomplete_view_editor_without_organization(institution, active_editor_without_org):
@@ -17,7 +17,7 @@ def test_organization_autocomplete_view_editor_without_organization(institution,
 
     response = client.get(reverse("admin:organizations_organization_autocomplete"))
 
-    assert response.json() == {'error': '403 Forbidden'}
+    assert response.json() == {"error": "403 Forbidden"}
 
 
 def test_organization_autocomplete_view_editor_with_organization(institutions, active_editor):
@@ -26,4 +26,4 @@ def test_organization_autocomplete_view_editor_with_organization(institutions, a
 
     response = client.get(reverse("admin:organizations_organization_autocomplete"))
 
-    assert len(response.json()['results']) == 1
+    assert len(response.json()["results"]) == 1

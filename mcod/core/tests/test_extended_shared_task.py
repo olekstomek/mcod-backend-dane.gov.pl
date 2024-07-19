@@ -6,7 +6,7 @@ from uuid import uuid4
 import pytest
 from taggit.models import Tag
 
-from mcod.core.tasks import extended_shared_task, SharedTask
+from mcod.core.tasks import SharedTask, extended_shared_task
 from mcod.core.tests.helpers.tasks import run_on_commit_events
 
 
@@ -50,9 +50,7 @@ class TestRetry:
         resource_using_fn.s(tag_name).apply_async()
         # Then
         assert Tag.objects.filter(name=tag_name).exists()
-        assert (
-            unreliable_resource.call_count == 4
-        ), "Function should retry until unreliable_resource doesn't raise."
+        assert unreliable_resource.call_count == 4, "Function should retry until unreliable_resource doesn't raise."
 
     def test_celery_obeys_max_retries(self, unreliable_resource):
         # Given
@@ -73,9 +71,7 @@ class TestRetry:
         resource_using_fn.s(tag_name).apply_async()
         # Then
         assert not Tag.objects.filter(name=tag_name).exists()
-        assert (
-            unreliable_resource.call_count == max_retries + 1
-        ), f"Function should run once plus {max_retries} retries"
+        assert unreliable_resource.call_count == max_retries + 1, f"Function should run once plus {max_retries} retries"
 
     def test_retry_using_lambda(self, unreliable_resource):
         max_retries = 3
@@ -97,9 +93,7 @@ class TestRetry:
         # When
         resource_using_fn.apply_async()
         # Then
-        assert (
-            unreliable_resource.call_count == 1 + 1
-        ), "Retries should stop after first unmatched error"
+        assert unreliable_resource.call_count == 1 + 1, "Retries should stop after first unmatched error"
 
     def test_retry_using_lambda_and_exception_list(self):
         # Given
@@ -134,9 +128,7 @@ class TestRetry:
         resource_using_fn_local.s(tag_name).apply_async()
         # Then
         assert Tag.objects.filter(name=tag_name).exists()
-        assert (
-            unreliable_resource.call_count == 4
-        ), "Function should run until success, all 3 exceptions should match"
+        assert unreliable_resource.call_count == 4, "Function should run until success, all 3 exceptions should match"
 
 
 class TestAtomic:
@@ -232,17 +224,13 @@ class TestDeveloperInterface:
             match="implies atomic",
         ):
             SharedTask(commit_on_errors=(Exception,))._validate_args(with_side_effect)
-        with pytest.warns(
-            UserWarning, match="retry_on_errors has precedence over retry_on_lambda"
-        ):
+        with pytest.warns(UserWarning, match="retry_on_errors has precedence over retry_on_lambda"):
             SharedTask(
                 max_retries=1,
                 retry_on_errors=(Exception,),
                 retry_on_lambda=lambda x: True,
             )._validate_args(with_side_effect)
-        with pytest.raises(
-            ValueError, match="retry_on_lambda didn't return boolean when checked"
-        ):
+        with pytest.raises(ValueError, match="retry_on_lambda didn't return boolean when checked"):
             SharedTask(
                 max_retries=1,
                 retry_on_lambda=lambda x: 42,  # noqa
@@ -265,13 +253,10 @@ class TestDeveloperInterface:
             "bind=False,"
             "celery_kwargs={},)"
         )
-        assert (
-            "retry_on_errors=(<class 'ZeroDivisionError'>,),retry_on_lambda=<lambda>,"
-            in str(
-                SharedTask(
-                    retry_on_errors=(ZeroDivisionError,),
-                    retry_on_lambda=lambda x: False,
-                )
+        assert "retry_on_errors=(<class 'ZeroDivisionError'>,),retry_on_lambda=<lambda>," in str(
+            SharedTask(
+                retry_on_errors=(ZeroDivisionError,),
+                retry_on_lambda=lambda x: False,
             )
         )
         assert "celery_kwargs={'ignore_results': True}" in (
@@ -287,6 +272,4 @@ class TestDeveloperInterface:
         def named_exception_handler(e: Exception) -> bool:
             return False
 
-        assert "retry_on_lambda=named_exception_handler" in str(
-            SharedTask(retry_on_lambda=named_exception_handler)
-        )
+        assert "retry_on_lambda=named_exception_handler" in str(SharedTask(retry_on_lambda=named_exception_handler))

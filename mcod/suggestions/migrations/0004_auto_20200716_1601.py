@@ -6,28 +6,28 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('suggestions', '0003_auto_20200716_1502'),
+        ("suggestions", "0003_auto_20200716_1502"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='datasetsubmission',
-            name='notes',
-            field=models.TextField(verbose_name='Data description'),
+            model_name="datasetsubmission",
+            name="notes",
+            field=models.TextField(verbose_name="Data description"),
         ),
         migrations.AlterField(
-            model_name='datasetsubmission',
-            name='organization_name',
-            field=models.CharField(blank=True, max_length=100, verbose_name='Institution name'),
+            model_name="datasetsubmission",
+            name="organization_name",
+            field=models.CharField(blank=True, max_length=100, verbose_name="Institution name"),
         ),
         migrations.AlterField(
-            model_name='datasetsubmission',
-            name='potential_possibilities',
-            field=models.TextField(blank=True, verbose_name='Indicate potential possibilities'),
+            model_name="datasetsubmission",
+            name="potential_possibilities",
+            field=models.TextField(blank=True, verbose_name="Indicate potential possibilities"),
         ),
         migrations.AlterField(
-            model_name='datasetsubmission',
-            name='title',
-            field=models.CharField(max_length=300, verbose_name='Title, type, domain od propossed data'),
+            model_name="datasetsubmission",
+            name="title",
+            field=models.CharField(max_length=300, verbose_name="Title, type, domain od propossed data"),
         ),
     ]

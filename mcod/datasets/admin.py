@@ -79,16 +79,12 @@ class PaginationInline(TabularInline):
                     page_num = int(default_first_page)
 
                 try:
-                    _paginator_page = (
-                        page_num + 1 if is_django_ver_lt(3, 2) else page_num
-                    )
+                    _paginator_page = page_num + 1 if is_django_ver_lt(3, 2) else page_num
                     page = paginator.page(_paginator_page)
                 except (EmptyPage, InvalidPage):
                     page = paginator.page(paginator.num_pages)
 
-                self.cl = InlineChangeList(
-                    request, page_num, paginator, page, page_param=self.page_param
-                )
+                self.cl = InlineChangeList(request, page_num, paginator, page, page_param=self.page_param)
                 self.paginator = paginator
 
                 self._queryset = queryset if self.cl.show_all else page.object_list
@@ -134,9 +130,7 @@ class ChangeResourceStacked(PaginationInline):
     link_status.admin_order_field = "_link_status"
 
     def modified_by_label(self, obj):
-        return self._format_user_display(
-            obj.modified_by.email if obj.modified_by else ""
-        )
+        return self._format_user_display(obj.modified_by.email if obj.modified_by else "")
 
     modified_by_label.admin_order_field = "modified_by"
     modified_by_label.short_description = _("Modified by")
@@ -152,38 +146,20 @@ class ChangeResourceStacked(PaginationInline):
     data_status.admin_order_field = "_data_status"
 
     data_status.short_description = format_html(
-        '<i class="fas fa-table" title="{}"></i>'.format(
-            _("Tabular data validation status")
-        )
+        '<i class="fas fa-table" title="{}"></i>'.format(_("Tabular data validation status"))
     )
-    file_status.short_description = format_html(
-        '<i class="fas fa-file" title="{}"></i>'.format(_("File validation status"))
-    )
-    link_status.short_description = format_html(
-        '<i class="fas fa-link" title="{}"></i>'.format(_("Link validation status"))
-    )
+    file_status.short_description = format_html('<i class="fas fa-file" title="{}"></i>'.format(_("File validation status")))
+    link_status.short_description = format_html('<i class="fas fa-link" title="{}"></i>'.format(_("Link validation status")))
 
     def get_queryset(self, request):
         queryset = super().get_queryset(request).order_by("-modified")
         if request.user.is_staff and not request.user.is_superuser:
-            queryset = queryset.filter(
-                dataset__organization__in=request.user.organizations.iterator()
-            )
-        link_tasks = TaskResult.objects.filter(
-            link_task_resources=OuterRef("pk")
-        ).order_by("-date_done")
-        queryset = queryset.annotate(
-            _link_status=Subquery(link_tasks.values("status")[:1])
-        )
-        file_tasks = TaskResult.objects.filter(
-            file_task_resources=OuterRef("pk")
-        ).order_by("-date_done")
-        queryset = queryset.annotate(
-            _file_status=Subquery(file_tasks.values("status")[:1])
-        )
-        data_tasks = TaskResult.objects.filter(
-            data_task_resources=OuterRef("pk")
-        ).order_by("-date_done")
+            queryset = queryset.filter(dataset__organization__in=request.user.organizations.iterator())
+        link_tasks = TaskResult.objects.filter(link_task_resources=OuterRef("pk")).order_by("-date_done")
+        queryset = queryset.annotate(_link_status=Subquery(link_tasks.values("status")[:1]))
+        file_tasks = TaskResult.objects.filter(file_task_resources=OuterRef("pk")).order_by("-date_done")
+        queryset = queryset.annotate(_file_status=Subquery(file_tasks.values("status")[:1]))
+        data_tasks = TaskResult.objects.filter(data_task_resources=OuterRef("pk")).order_by("-date_done")
         return queryset.annotate(_data_status=Subquery(data_tasks.values("status")[:1]))
 
     def has_add_permission(self, request, obj=None):
@@ -357,9 +333,7 @@ class IsPromotedListFilter(admin.SimpleListFilter):
         for lookup, title in self.lookup_choices:
             yield {
                 "selected": self.value() == str(lookup),
-                "query_string": changelist.get_query_string(
-                    {self.parameter_name: lookup}
-                ),
+                "query_string": changelist.get_query_string({self.parameter_name: lookup}),
                 "display": title,
             }
 
@@ -406,9 +380,7 @@ class DatasetAdminMixin(HistoryMixin):
         "title",
     ]
     soft_delete = True
-    suit_form_includes = (
-        ("admin/datasets/licenses/custom_include.html", "top", "licenses"),
-    )
+    suit_form_includes = (("admin/datasets/licenses/custom_include.html", "top", "licenses"),)
 
     @property
     def suit_form_tabs(self):
@@ -422,9 +394,7 @@ class DatasetAdminMixin(HistoryMixin):
         )
 
     def suit_row_attributes(self, obj, request):
-        return (
-            {"class": "info"} if request.user.is_superuser and obj.is_promoted else {}
-        )
+        return {"class": "info"} if request.user.is_superuser and obj.is_promoted else {}
 
     def get_history(self, obj):
         history = super().get_history(obj)
@@ -463,16 +433,8 @@ class DatasetAdminMixin(HistoryMixin):
     update_frequency_display.short_description = _("Update frequency")
 
     def get_fieldsets(self, request, obj=None):
-        tags_tab_fields = (
-            ("tags_list_pl", "tags_list_en")
-            if obj and obj.is_imported
-            else ("tags_pl", "tags_en")
-        )
-        update_frequency_field = (
-            "update_frequency_display"
-            if obj and obj.is_imported
-            else "update_frequency"
-        )
+        tags_tab_fields = ("tags_list_pl", "tags_list_en") if obj and obj.is_imported else ("tags_pl", "tags_en")
+        update_frequency_field = "update_frequency_display" if obj and obj.is_imported else "update_frequency"
         category_field = "categories_list" if obj and obj.is_imported else "categories"
         frequency_fields = []
         if not (obj and obj.is_imported):
@@ -481,21 +443,9 @@ class DatasetAdminMixin(HistoryMixin):
                 "update_notification_frequency",
                 "update_notification_recipient_email",
             ]
-        has_dynamic_data = (
-            ["has_dynamic_data_info"]
-            if obj and obj.is_imported
-            else ["has_dynamic_data"]
-        )
-        has_high_value_data = (
-            ["has_high_value_data_info"]
-            if obj and obj.is_imported
-            else ["has_high_value_data"]
-        )
-        has_research_data = (
-            ["has_research_data_info"]
-            if obj and obj.is_imported
-            else ["has_research_data"]
-        )
+        has_dynamic_data = ["has_dynamic_data_info"] if obj and obj.is_imported else ["has_dynamic_data"]
+        has_high_value_data = ["has_high_value_data_info"] if obj and obj.is_imported else ["has_high_value_data"]
+        has_research_data = ["has_research_data_info"] if obj and obj.is_imported else ["has_research_data"]
         show_is_promoted = all(
             [
                 request.user.is_superuser,
@@ -625,11 +575,7 @@ class DatasetAdminMixin(HistoryMixin):
         if media and self.is_inlines_js_upgraded:
             _new_js_lists = []
             for js_list in media._js_lists:
-                new_js_list = [
-                    x
-                    for x in js_list
-                    if x not in ["admin/js/inlines.min.js", "admin/js/inlines.js"]
-                ]
+                new_js_list = [x for x in js_list if x not in ["admin/js/inlines.min.js", "admin/js/inlines.js"]]
                 if len(new_js_list) < len(js_list):
                     new_js_list.append("admin/js/inlines_django_3_1.js")
                 _new_js_lists.append(new_js_list)
@@ -654,11 +600,7 @@ class DatasetAdminMixin(HistoryMixin):
         if not request.user.is_superuser:
             obj.update_notification_recipient_email = request.user.email
             if obj.tracker.has_changed("update_frequency"):
-                obj.update_notification_frequency = (
-                    UPDATE_NOTIFICATION_FREQUENCY_DEFAULT_VALUES.get(
-                        obj.update_frequency
-                    )
-                )
+                obj.update_notification_frequency = UPDATE_NOTIFICATION_FREQUENCY_DEFAULT_VALUES.get(obj.update_frequency)
 
         super().save_model(request, obj, form, change)
 
@@ -673,9 +615,7 @@ class DatasetAdminMixin(HistoryMixin):
     def get_form(self, request, obj=None, **kwargs):
         self._request = request
         form = super().get_form(request, obj, **kwargs)
-        form.recreate_tags_widgets(
-            request=request, db_field=Dataset.tags.field, admin_site=self.admin_site
-        )
+        form.recreate_tags_widgets(request=request, db_field=Dataset.tags.field, admin_site=self.admin_site)
         return form
 
     def get_queryset(self, request):
@@ -685,9 +625,7 @@ class DatasetAdminMixin(HistoryMixin):
         return queryset.filter(organization_id__in=request.user.organizations.all())
 
     def has_history_permission(self, request, obj):
-        return request.user.is_superuser or request.user.is_editor_of_organization(
-            obj.organization
-        )
+        return request.user.is_superuser or request.user.is_editor_of_organization(obj.organization)
 
     def dataset_logo(self, obj):
         return obj.dataset_logo or "-"
@@ -700,14 +638,11 @@ class DatasetAdminMixin(HistoryMixin):
     def formfield_for_dbfield(self, db_field, request, **kwargs):
         if db_field.name == "is_update_notification_enabled":
             label = (
-                "Do dostawcy zostanie wysłany komunikat przypominający "
-                "o aktualizacji danych"
+                "Do dostawcy zostanie wysłany komunikat przypominający " "o aktualizacji danych"
                 if request.user.is_superuser
                 else ""
             )
-            kwargs["widget"] = CheckboxInputWithLabel(
-                label=label, style="padding-left:10px;font-size:14px;"
-            )
+            kwargs["widget"] = CheckboxInputWithLabel(label=label, style="padding-left:10px;font-size:14px;")
         elif db_field.name == "update_notification_frequency":
             label = (
                 "Liczba dni, według których powiadomienie zostanie wysłane do dostawcy przed planowaną datą aktu"
@@ -727,9 +662,7 @@ class DatasetAdminMixin(HistoryMixin):
                 "data-to-box-label": _("Selected categories"),
             }
             formfield.widget = admin.widgets.RelatedFieldWidgetWrapper(
-                FilteredSelectMultipleCustom(
-                    formfield.label.lower(), False, attrs=attrs
-                ),
+                FilteredSelectMultipleCustom(formfield.label.lower(), False, attrs=attrs),
                 db_field.remote_field,
                 self.admin_site,
                 can_add_related=False,
@@ -787,9 +720,7 @@ class DatasetTrashAdmin(HistoryMixin, TrashMixin):
     search_fields = ["title", "organization__title"]
     list_display = ["title", "organization"]
     related_objects_query = "organization"
-    cant_restore_msg = _(
-        "Couldn't restore following datasets, because their related organizations are still removed: {}"
-    )
+    cant_restore_msg = _("Couldn't restore following datasets, because their related organizations are still removed: {}")
     fields = [
         "title",
         "slug",

@@ -12,6 +12,3 @@ if ({{col}} instanceof String) {
     return true
 }
 {% endblock %}
-
-
-

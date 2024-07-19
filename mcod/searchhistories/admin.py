@@ -6,4 +6,4 @@ from mcod.searchhistories.models import SearchHistory
 
 @admin.register(SearchHistory)
 class SearchHistoryAdmin(ModelAdmin):
-    list_display = ['id', 'user_id', 'query_sentence', "url"]
+    list_display = ["id", "user_id", "query_sentence", "url"]

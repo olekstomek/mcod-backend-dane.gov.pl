@@ -6,18 +6,18 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('guides', '0007_guideitem_is_expandable'),
+        ("guides", "0007_guideitem_is_expandable"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='guide',
-            name='is_permanently_removed',
+            model_name="guide",
+            name="is_permanently_removed",
             field=models.BooleanField(default=False),
         ),
         migrations.AddField(
-            model_name='guideitem',
-            name='is_permanently_removed',
+            model_name="guideitem",
+            name="is_permanently_removed",
             field=models.BooleanField(default=False),
         ),
     ]

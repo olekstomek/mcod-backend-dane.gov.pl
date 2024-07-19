@@ -4,7 +4,7 @@ from mcod.core.api.search import fields as search_fields
 
 class GuideApiRequest(CommonSchema):
     include = search_fields.StringField(
-        description='Allow the client to customize which related resources should be returned in included section.',
+        description="Allow the client to customize which related resources should be returned in included section.",
         allowEmptyValue=True,
     )
 

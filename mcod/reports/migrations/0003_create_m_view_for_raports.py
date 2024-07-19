@@ -8,15 +8,18 @@ from django.db import migrations
 class Migration(migrations.Migration):
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('reports', '0002_auto_20190205_0902'),
-        ('resources', '0012_resource_tabular_data_schema'),
+        ("reports", "0002_auto_20190205_0902"),
+        ("resources", "0012_resource_tabular_data_schema"),
     ]
 
     operations = [
         migrations.RunSQL(
             sql=open(
-                os.path.join(settings.DATABASE_DIR, 'MCOD-1308-mv-resource-dataset-organization-report.sql')
+                os.path.join(
+                    settings.DATABASE_DIR,
+                    "MCOD-1308-mv-resource-dataset-organization-report.sql",
+                )
             ).read(),
-            reverse_sql=open(os.path.join(settings.DATABASE_DIR, 'MCOD-1308-back.sql')).read(),
+            reverse_sql=open(os.path.join(settings.DATABASE_DIR, "MCOD-1308-back.sql")).read(),
         )
     ]

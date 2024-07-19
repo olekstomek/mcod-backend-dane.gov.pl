@@ -26,4 +26,8 @@ class SearchHistoriesView(JsonAPIView):
 
         def _queryset_extra(self, queryset, *args, **kwargs):
             qs = super()._queryset_extra(queryset, *args, **kwargs)
-            return qs.filter('nested', path='user', query=Q('match', **{'user.id': self.request.user.id}))
+            return qs.filter(
+                "nested",
+                path="user",
+                query=Q("match", **{"user.id": self.request.user.id}),
+            )

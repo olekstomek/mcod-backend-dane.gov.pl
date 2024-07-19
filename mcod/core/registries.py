@@ -20,7 +20,10 @@ class HistoryRegistry:
         self._table_names = defaultdict(OrderedDict)
 
     def register(self, model):
-        self._table_names[model._meta.db_table] = (model._meta.app_label, model._meta.model_name)
+        self._table_names[model._meta.db_table] = (
+            model._meta.app_label,
+            model._meta.model_name,
+        )
 
     def get_params(self, table_name):
         return self._table_names.get(table_name)
@@ -36,7 +39,7 @@ class SerializerRegistry:
     def register(self, serializer_cls):
         _name = serializer_cls.opts.model_name
         if _name:
-            _app, _model = _name.split('.')
+            _app, _model = _name.split(".")
             model = apps.get_model(_app, _model)
             self._serializers[model] = serializer_cls
 

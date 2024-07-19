@@ -9,28 +9,31 @@ from mcod.regions.models import Region
 
 
 def regions_field(**kwargs):
-    return fields.NestedField(properties={
-        'region_id': fields.KeywordField(),
-        'name': TranslatedTextField('name'),
-        'hierarchy_label': TranslatedTextField('hierarchy_label'),
-        'bbox': fields.GeoShapeField('wkt_bbox'),
-        'coords': fields.GeoPointField(),
-        'hierarchy_level': fields.IntegerField()
-    }, **kwargs)
+    return fields.NestedField(
+        properties={
+            "region_id": fields.KeywordField(),
+            "name": TranslatedTextField("name"),
+            "hierarchy_label": TranslatedTextField("hierarchy_label"),
+            "bbox": fields.GeoShapeField("wkt_bbox"),
+            "coords": fields.GeoPointField(),
+            "hierarchy_level": fields.IntegerField(),
+        },
+        **kwargs
+    )
 
 
 @registry.register_document
 class RegionDocument(Document):
     region_id = fields.KeywordField()
-    title = TranslatedTextField('name')
-    hierarchy_label = TranslatedTextField('hierarchy_label', analyzers=autocomplete_analyzers)
+    title = TranslatedTextField("name")
+    hierarchy_label = TranslatedTextField("hierarchy_label", analyzers=autocomplete_analyzers)
     model = fields.KeywordField()
     created = fields.DateField()
-    bbox = fields.GeoShapeField('envelope')
+    bbox = fields.GeoShapeField("envelope")
     hierarchy_level = fields.IntegerField()
 
     class Index:
-        name = mcs.ELASTICSEARCH_INDEX_NAMES['regions']
+        name = mcs.ELASTICSEARCH_INDEX_NAMES["regions"]
         settings = mcs.ELASTICSEARCH_DSL_SEARCH_INDEX_SETTINGS
         aliases = mcs.ELASTICSEARCH_DSL_SEARCH_INDEX_ALIAS
 

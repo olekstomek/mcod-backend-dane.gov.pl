@@ -18,90 +18,204 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='Notification',
+            name="Notification",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created', model_utils.fields.AutoCreatedField(default=django.utils.timezone.now, editable=False, verbose_name='created')),
-                ('modified', model_utils.fields.AutoLastModifiedField(default=django.utils.timezone.now, editable=False, verbose_name='modified')),
-                ('notification_type', models.CharField(choices=[('object_restored', 'Object republished'), ('object_removed', 'Object withdrawaled'), ('object_updated', 'Object updated'), ('related_object_publicated', 'Related object publicated'), ('related_object_updated', 'Related object updated'), ('related_object_restored', 'Related object republished'), ('related_object_removed', 'Related object withdrawaled'), ('result_count_incresed', 'Results incresed'), ('result_count_decresed', 'Results decresed')], max_length=30)),
-                ('status', models.CharField(choices=[('new', 'New'), ('read', 'Read')], max_length=20)),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "created",
+                    model_utils.fields.AutoCreatedField(
+                        default=django.utils.timezone.now,
+                        editable=False,
+                        verbose_name="created",
+                    ),
+                ),
+                (
+                    "modified",
+                    model_utils.fields.AutoLastModifiedField(
+                        default=django.utils.timezone.now,
+                        editable=False,
+                        verbose_name="modified",
+                    ),
+                ),
+                (
+                    "notification_type",
+                    models.CharField(
+                        choices=[
+                            ("object_restored", "Object republished"),
+                            ("object_removed", "Object withdrawaled"),
+                            ("object_updated", "Object updated"),
+                            ("related_object_publicated", "Related object publicated"),
+                            ("related_object_updated", "Related object updated"),
+                            ("related_object_restored", "Related object republished"),
+                            ("related_object_removed", "Related object withdrawaled"),
+                            ("result_count_incresed", "Results incresed"),
+                            ("result_count_decresed", "Results decresed"),
+                        ],
+                        max_length=30,
+                    ),
+                ),
+                (
+                    "status",
+                    models.CharField(choices=[("new", "New"), ("read", "Read")], max_length=20),
+                ),
             ],
             options={
-                'abstract': False,
+                "abstract": False,
             },
         ),
         migrations.CreateModel(
-            name='Subscription',
+            name="Subscription",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created', model_utils.fields.AutoCreatedField(default=django.utils.timezone.now, editable=False, verbose_name='created')),
-                ('modified', model_utils.fields.AutoLastModifiedField(default=django.utils.timezone.now, editable=False, verbose_name='modified')),
-                ('name', models.CharField(max_length=100)),
-                ('include_in_report', models.BooleanField(default=True)),
-                ('customfields', django.contrib.postgres.fields.jsonb.JSONField(null=True)),
-                ('reported_till', models.DateTimeField(null=True)),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "created",
+                    model_utils.fields.AutoCreatedField(
+                        default=django.utils.timezone.now,
+                        editable=False,
+                        verbose_name="created",
+                    ),
+                ),
+                (
+                    "modified",
+                    model_utils.fields.AutoLastModifiedField(
+                        default=django.utils.timezone.now,
+                        editable=False,
+                        verbose_name="modified",
+                    ),
+                ),
+                ("name", models.CharField(max_length=100)),
+                ("include_in_report", models.BooleanField(default=True)),
+                (
+                    "customfields",
+                    django.contrib.postgres.fields.jsonb.JSONField(null=True),
+                ),
+                ("reported_till", models.DateTimeField(null=True)),
             ],
             options={
-                'abstract': False,
+                "abstract": False,
             },
         ),
         migrations.CreateModel(
-            name='Watcher',
+            name="Watcher",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created', model_utils.fields.AutoCreatedField(default=django.utils.timezone.now, editable=False, verbose_name='created')),
-                ('modified', model_utils.fields.AutoLastModifiedField(default=django.utils.timezone.now, editable=False, verbose_name='modified')),
-                ('watcher_type', models.CharField(choices=[('model', 'Model'), ('search_query', 'Search query')], default='model', max_length=15)),
-                ('object_name', models.CharField(max_length=128)),
-                ('object_ident', models.CharField(max_length=256)),
-                ('ref_field', models.CharField(default='last_modified', max_length=64)),
-                ('ref_value', models.TextField()),
-                ('last_ref_change', models.DateTimeField(null=True)),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "created",
+                    model_utils.fields.AutoCreatedField(
+                        default=django.utils.timezone.now,
+                        editable=False,
+                        verbose_name="created",
+                    ),
+                ),
+                (
+                    "modified",
+                    model_utils.fields.AutoLastModifiedField(
+                        default=django.utils.timezone.now,
+                        editable=False,
+                        verbose_name="modified",
+                    ),
+                ),
+                (
+                    "watcher_type",
+                    models.CharField(
+                        choices=[("model", "Model"), ("search_query", "Search query")],
+                        default="model",
+                        max_length=15,
+                    ),
+                ),
+                ("object_name", models.CharField(max_length=128)),
+                ("object_ident", models.CharField(max_length=256)),
+                ("ref_field", models.CharField(default="last_modified", max_length=64)),
+                ("ref_value", models.TextField()),
+                ("last_ref_change", models.DateTimeField(null=True)),
             ],
         ),
         migrations.AddIndex(
-            model_name='watcher',
-            index=models.Index(fields=['watcher_type', 'object_name', 'object_ident'], name='watchers_wa_watcher_cac58f_idx'),
+            model_name="watcher",
+            index=models.Index(
+                fields=["watcher_type", "object_name", "object_ident"],
+                name="watchers_wa_watcher_cac58f_idx",
+            ),
         ),
         migrations.AddConstraint(
-            model_name='watcher',
-            constraint=models.UniqueConstraint(fields=('watcher_type', 'object_name', 'object_ident'), name='unique_model_watcher'),
+            model_name="watcher",
+            constraint=models.UniqueConstraint(
+                fields=("watcher_type", "object_name", "object_ident"),
+                name="unique_model_watcher",
+            ),
         ),
         migrations.AddField(
-            model_name='subscription',
-            name='user',
-            field=models.ForeignKey(editable=False, on_delete=django.db.models.deletion.CASCADE, related_name='subscriptions', to=settings.AUTH_USER_MODEL),
+            model_name="subscription",
+            name="user",
+            field=models.ForeignKey(
+                editable=False,
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="subscriptions",
+                to=settings.AUTH_USER_MODEL,
+            ),
         ),
         migrations.AddField(
-            model_name='subscription',
-            name='watcher',
-            field=models.ForeignKey(editable=False, on_delete=django.db.models.deletion.CASCADE, related_name='subscriptions', to='watchers.Watcher'),
+            model_name="subscription",
+            name="watcher",
+            field=models.ForeignKey(
+                editable=False,
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="subscriptions",
+                to="watchers.Watcher",
+            ),
         ),
         migrations.AddField(
-            model_name='notification',
-            name='subscription',
-            field=models.ForeignKey(editable=False, on_delete=django.db.models.deletion.CASCADE, related_name='notifications', to='watchers.Subscription'),
+            model_name="notification",
+            name="subscription",
+            field=models.ForeignKey(
+                editable=False,
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="notifications",
+                to="watchers.Subscription",
+            ),
         ),
         migrations.CreateModel(
-            name='ModelWatcher',
-            fields=[
-            ],
+            name="ModelWatcher",
+            fields=[],
             options={
-                'proxy': True,
-                'indexes': [],
-                'constraints': [],
+                "proxy": True,
+                "indexes": [],
+                "constraints": [],
             },
-            bases=('watchers.watcher',),
+            bases=("watchers.watcher",),
         ),
         migrations.CreateModel(
-            name='SearchQueryWatcher',
-            fields=[
-            ],
+            name="SearchQueryWatcher",
+            fields=[],
             options={
-                'proxy': True,
-                'indexes': [],
-                'constraints': [],
+                "proxy": True,
+                "indexes": [],
+                "constraints": [],
             },
-            bases=('watchers.watcher',),
+            bases=("watchers.watcher",),
         ),
     ]

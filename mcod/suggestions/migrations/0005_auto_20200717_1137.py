@@ -5,27 +5,29 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('suggestions', '0004_auto_20200716_1601'),
+        ("suggestions", "0004_auto_20200716_1601"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='AcceptedDatasetSubmission',
-            fields=[
-            ],
+            name="AcceptedDatasetSubmission",
+            fields=[],
             options={
-                'verbose_name': 'Accepted dataset submission',
-                'verbose_name_plural': 'Accepted dataset submissions',
-                'ordering': ('-submission_date',),
-                'proxy': True,
-                'indexes': [],
-                'constraints': [],
+                "verbose_name": "Accepted dataset submission",
+                "verbose_name_plural": "Accepted dataset submissions",
+                "ordering": ("-submission_date",),
+                "proxy": True,
+                "indexes": [],
+                "constraints": [],
             },
-            bases=('suggestions.datasetsubmission',),
+            bases=("suggestions.datasetsubmission",),
         ),
         migrations.AlterModelOptions(
-            name='datasetsubmission',
-            options={'ordering': ('-submission_date',), 'verbose_name': 'Dataset submission',
-                     'verbose_name_plural': 'Dataset submissions'},
+            name="datasetsubmission",
+            options={
+                "ordering": ("-submission_date",),
+                "verbose_name": "Dataset submission",
+                "verbose_name_plural": "Dataset submissions",
+            },
         ),
     ]

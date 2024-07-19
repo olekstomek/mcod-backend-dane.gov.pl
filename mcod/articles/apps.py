@@ -5,5 +5,5 @@ from mcod.core.apps import ExtendedAppMixin
 
 
 class ArticlesConfig(ExtendedAppMixin, AppConfig):
-    name = 'mcod.articles'
-    verbose_name = _('Articles')
+    name = "mcod.articles"
+    verbose_name = _("Articles")

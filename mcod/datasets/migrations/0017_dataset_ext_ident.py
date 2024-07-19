@@ -6,13 +6,19 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('datasets', '0016_dataset_source'),
+        ("datasets", "0016_dataset_source"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='dataset',
-            name='ext_ident',
-            field=models.CharField(blank=True, editable=False, help_text='external identifier of dataset taken during import process (optional)', max_length=36, verbose_name='external identifier'),
+            model_name="dataset",
+            name="ext_ident",
+            field=models.CharField(
+                blank=True,
+                editable=False,
+                help_text="external identifier of dataset taken during import process (optional)",
+                max_length=36,
+                verbose_name="external identifier",
+            ),
         ),
     ]

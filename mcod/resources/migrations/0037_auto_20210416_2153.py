@@ -6,17 +6,16 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('resources', '0036_chart_name'),
+        ("resources", "0036_chart_name"),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='chart',
-            options={'base_manager_name': 'objects', 'default_manager_name': 'objects'},
+            name="chart",
+            options={"base_manager_name": "objects", "default_manager_name": "objects"},
         ),
         migrations.AlterModelManagers(
-            name='chart',
-            managers=[
-            ],
+            name="chart",
+            managers=[],
         ),
     ]

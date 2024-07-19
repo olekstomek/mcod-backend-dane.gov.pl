@@ -26,7 +26,7 @@ class SparqlGraph:
         ns, instance_nodes = self._prepare_query_data(instance)
         delete_q = self._get_delete_query(instance_nodes)
         insert_q = self._get_create_query(instance_nodes)
-        update_query = f'{delete_q}; {insert_q}'
+        update_query = f"{delete_q}; {insert_q}"
         return update_query, ns
 
     def delete(self, instance):
@@ -35,40 +35,46 @@ class SparqlGraph:
 
     def _get_delete_query(self, graph_nodes):
         if self._named_graph:
-            q = 'DELETE {{ GRAPH {graph_name} {{?s  ?p   ?o . ?o  ?p1  ?o1 .}} }}' \
-                ' WHERE {{ GRAPH {graph_name} {{ ?s  ?p  ?o . FILTER (?s IN ({nodes})) .' \
-                ' OPTIONAL {{?o  ?p1  ?o1  . FILTER (isBlank(?o)) }} }} }}'.format(graph_name=f'{self._named_graph} ',
-                                                                                   nodes=', '.join(graph_nodes.keys()))
+            q = (
+                "DELETE {{ GRAPH {graph_name} {{?s  ?p   ?o . ?o  ?p1  ?o1 .}} }}"
+                " WHERE {{ GRAPH {graph_name} {{ ?s  ?p  ?o . FILTER (?s IN ({nodes})) ."
+                " OPTIONAL {{?o  ?p1  ?o1  . FILTER (isBlank(?o)) }} }} }}".format(
+                    graph_name=f"{self._named_graph} ",
+                    nodes=", ".join(graph_nodes.keys()),
+                )
+            )
         else:
-            q = 'DELETE {{?s  ?p   ?o . ?o  ?p1  ?o1 .}} WHERE {{ ?s  ?p  ?o . FILTER (?s IN ({})) .' \
-                ' OPTIONAL {{?o  ?p1  ?o1  . FILTER (isBlank(?o)) }} }}'.format(', '.join(graph_nodes.keys()))
+            q = (
+                "DELETE {{?s  ?p   ?o . ?o  ?p1  ?o1 .}} WHERE {{ ?s  ?p  ?o . FILTER (?s IN ({})) ."
+                " OPTIONAL {{?o  ?p1  ?o1  . FILTER (isBlank(?o)) }} }}".format(", ".join(graph_nodes.keys()))
+            )
         return q
 
     def _get_create_query(self, graph_nodes):
         if self._named_graph:
-            q = 'INSERT DATA {{ GRAPH {} {{ {} }} }}'.format(
-                f'{self._named_graph} ', ' '.join(list(graph_nodes.values())))
+            q = "INSERT DATA {{ GRAPH {} {{ {} }} }}".format(f"{self._named_graph} ", " ".join(list(graph_nodes.values())))
         else:
-            q = 'INSERT DATA {{ {} }}'.format(' '.join(list(graph_nodes.values())))
+            q = "INSERT DATA {{ {} }}".format(" ".join(list(graph_nodes.values())))
         return q
 
     def _get_delete_triple_query(self, graph_nodes):
         if self._named_graph:
-            q = 'DELETE DATA {{ GRAPH {} {{ {} }} }}'.format(
-                f'{self._named_graph} ', ' '.join(list(graph_nodes.values())))
+            q = "DELETE DATA {{ GRAPH {} {{ {} }} }}".format(f"{self._named_graph} ", " ".join(list(graph_nodes.values())))
         else:
-            q = 'DELETE DATA {{ {} }}'.format(' '.join(list(graph_nodes.values())))
+            q = "DELETE DATA {{ {} }}".format(" ".join(list(graph_nodes.values())))
         return q
 
     def _get_delete_triple_filter_query(self, sub, pred):
         if self._named_graph:
-            q = 'DELETE {{ GRAPH {graph_name} {{?s  ?p   ?o }} }}' \
-                ' WHERE {{ GRAPH {graph_name} {{ ?s  ?p  ?o . FILTER' \
-                ' (?s = {sub} && ?p = {pred}) }} }}'.format(graph_name=f'{self._named_graph} ', sub=sub.n3(),
-                                                            pred=pred.n3())
+            q = (
+                "DELETE {{ GRAPH {graph_name} {{?s  ?p   ?o }} }}"
+                " WHERE {{ GRAPH {graph_name} {{ ?s  ?p  ?o . FILTER"
+                " (?s = {sub} && ?p = {pred}) }} }}".format(graph_name=f"{self._named_graph} ", sub=sub.n3(), pred=pred.n3())
+            )
         else:
-            q = 'DELETE {{?s  ?p   ?o }} WHERE {{ ?s  ?p  ?o . FILTER (?s = {sub} && ?p = {pred}) }}'.format(
-                sub=sub.n3(), pred=pred.n3())
+            q = "DELETE {{?s  ?p   ?o }} WHERE {{ ?s  ?p  ?o . FILTER (?s = {sub} && ?p = {pred}) }}".format(
+                sub=sub.n3(), pred=pred.n3()
+            )
         return q
 
     def create(self, instance):
@@ -83,8 +89,8 @@ class SparqlGraph:
         b_nodes = {}
         for s, p, o in serialized_data.triples((None, None, None)):
             _s = s.n3()
-            triple_str = all_nodes.get(_s, '')
-            triple_str += f'{_s} {serialized_data.qname(p)} {o.n3()} . '
+            triple_str = all_nodes.get(_s, "")
+            triple_str += f"{_s} {serialized_data.qname(p)} {o.n3()} . "
             all_nodes[_s] = triple_str
             if isinstance(o, BNode):
                 b_nodes[o.n3()] = _s

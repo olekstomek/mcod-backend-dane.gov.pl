@@ -7,13 +7,22 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('datasets', '0009_dataset_draft_status_and_is_removed_according_to_organization'),
+        (
+            "datasets",
+            "0009_dataset_draft_status_and_is_removed_according_to_organization",
+        ),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='dataset',
-            name='category',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to='categories.Category', verbose_name='Category'),
+            model_name="dataset",
+            name="category",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                to="categories.Category",
+                verbose_name="Category",
+            ),
         ),
     ]

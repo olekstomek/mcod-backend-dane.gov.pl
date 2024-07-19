@@ -1,9 +1,9 @@
 import functools
 import logging
 import warnings
-from typing import Type, Tuple, Callable, Union
+from typing import Callable, Tuple, Type, Union
 
-from celery import shared_task, Task
+from celery import Task, shared_task
 from celery.canvas import Signature
 from celery.local import Proxy
 from django.db import transaction
@@ -95,24 +95,16 @@ class SharedTask:
     def _validate_args(self, func: Callable):
         prefix = f"{func.__name__}: "
         if self.commit_on_errors and not self.atomic:
-            warnings.warn(
-                f"{prefix} commit_on_errors implies atomic. Consider adding atomic=True for clarity"
-            )
+            warnings.warn(f"{prefix} commit_on_errors implies atomic. Consider adding atomic=True for clarity")
         if self.max_retries:
             _has_roe = bool(self.retry_on_errors)
             _has_rol = self.retry_on_lambda is not _never_retry
             if not (_has_roe or _has_rol):
-                raise ValueError(
-                    f"{prefix} Either retry_on_errors or retry_on_lambda has to be set"
-                )
+                raise ValueError(f"{prefix} Either retry_on_errors or retry_on_lambda has to be set")
             if _has_roe and _has_rol:
-                warnings.warn(
-                    f"{prefix} retry_on_errors has precedence over retry_on_lambda"
-                )
+                warnings.warn(f"{prefix} retry_on_errors has precedence over retry_on_lambda")
         if self.retry_on_lambda(Exception()) not in (True, False):
-            raise ValueError(
-                f"{prefix} retry_on_lambda didn't return boolean when checked"
-            )
+            raise ValueError(f"{prefix} retry_on_lambda didn't return boolean when checked")
 
     def __call__(self, func: Callable) -> CeleryTask:
         return self.decorate(func)
@@ -159,12 +151,8 @@ class SharedTask:
             def run_on_commit():
                 return task.apply_async(*proxy_args, task_id=task_id, **proxy_kwargs)
 
-            run_on_commit.__name__ = (
-                f"{func.__name__}.apply_async_on_commit.run_on_commit"
-            )
-            run_on_commit.__qualname__ = (
-                f"{func.__qualname__}.apply_async_on_commit.run_on_commit"
-            )
+            run_on_commit.__name__ = f"{func.__name__}.apply_async_on_commit.run_on_commit"
+            run_on_commit.__qualname__ = f"{func.__qualname__}.apply_async_on_commit.run_on_commit"
             transaction.on_commit(run_on_commit)
             return task_id
 
@@ -191,9 +179,7 @@ class SharedTask:
                     _logger.warning(f"{func.__name__} raised {e} - transaction commits")
                     exception = e
                 except Exception as e:
-                    _logger.warning(
-                        f"{func.__name__} raised {e} - transaction rollbacks"
-                    )
+                    _logger.warning(f"{func.__name__} raised {e} - transaction rollbacks")
                     raise
             # reraise outside of transaction
             raise exception
@@ -213,20 +199,14 @@ class SharedTask:
                     _logger.warning("No more retries - success")
                 return result
             except self.retry_on_errors as retryable_exc:
-                _logger.warning(
-                    f"Retry {task.request.retries}/{task.max_retries} due to {repr(retryable_exc)}"
-                )
+                _logger.warning(f"Retry {task.request.retries}/{task.max_retries} due to {repr(retryable_exc)}")
                 raise task.retry(countdown=self.retry_countdown, exc=retryable_exc)
             except Exception as exc:
                 if self.retry_on_lambda(exc):
-                    _logger.warning(
-                        f"Retry {task.request.retries}/{task.max_retries} due to {repr(exc)}"
-                    )
+                    _logger.warning(f"Retry {task.request.retries}/{task.max_retries} due to {repr(exc)}")
                     raise task.retry(countdown=self.retry_countdown, exc=exc)
                 else:
-                    _logger.error(
-                        f"{task.name}: Won't retry ({task.request.retries}/{task.max_retries}) due to {repr(exc)}"
-                    )
+                    _logger.error(f"{task.name}: Won't retry ({task.request.retries}/{task.max_retries}) due to {repr(exc)}")
                     raise exc
 
         return inner
@@ -234,9 +214,7 @@ class SharedTask:
     def _check_is_not_shared_task(self, func: Union[Callable, CeleryTask]) -> None:
         _is_shared_task = isinstance(func, Proxy)
         if _is_shared_task:
-            raise TypeError(
-                f"Can't re-decorate a celery task {func.__name__} with {self}"
-            )
+            raise TypeError(f"Can't re-decorate a celery task {func.__name__} with {self}")
 
     def __str__(self):
         if self.retry_on_lambda is _never_retry:

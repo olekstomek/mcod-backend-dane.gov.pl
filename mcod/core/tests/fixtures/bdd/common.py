@@ -88,16 +88,8 @@ def restore_object_with_id(object_type, object_id):
     instance.save()
 
 
-@given(
-    parsers.parse(
-        "set {attr_name} to {attr_value} on {object_type} with id {object_id:d}"
-    )
-)
-@then(
-    parsers.parse(
-        "set {attr_name} to {attr_value} on {object_type} with id {object_id:d}"
-    )
-)
+@given(parsers.parse("set {attr_name} to {attr_value} on {object_type} with id {object_id:d}"))
+@then(parsers.parse("set {attr_name} to {attr_value} on {object_type} with id {object_id:d}"))
 def attr_to_object_with_id(attr_name, attr_value, object_type, object_id):
     _factory = factories_registry.get_factory(object_type)
     instance = _factory._meta.model.objects.get(pk=object_id)
@@ -198,30 +190,14 @@ def translated_objects():
         translated_object_type(object_type)
 
 
-@given(
-    parsers.parse(
-        "{object_type} with id {object_id:d} and {field_name1} is {value1} and {field_name2} is {value2}"
-    )
-)
-def object_with_id_and_2_params(
-    object_type, object_id, field_name1, value1, field_name2, value2
-):
-    return create_object(
-        object_type, object_id, **{field_name1: value1, field_name2: value2}
-    )
+@given(parsers.parse("{object_type} with id {object_id:d} and {field_name1} is {value1} and {field_name2} is {value2}"))
+def object_with_id_and_2_params(object_type, object_id, field_name1, value1, field_name2, value2):
+    return create_object(object_type, object_id, **{field_name1: value1, field_name2: value2})
 
 
-@given(
-    parsers.parse(
-        "{param_object_type} with id {param_object_id} and {param_field_name} is {param_value}"
-    )
-)
-def object_with_id_and_param(
-    param_object_type, param_object_id, param_field_name, param_value
-):
-    return create_object(
-        param_object_type, param_object_id, **{param_field_name: param_value}
-    )
+@given(parsers.parse("{param_object_type} with id {param_object_id} and {param_field_name} is {param_value}"))
+def object_with_id_and_param(param_object_type, param_object_id, param_field_name, param_value):
+    return create_object(param_object_type, param_object_id, **{param_field_name: param_value})
 
 
 @given(parsers.parse("{objects_count:d} random instances of {object_type}"))
@@ -314,9 +290,7 @@ def form_data_is(
 
 
 @given(parsers.parse("form instance is {form_instance}"))
-def form_instance_is(
-    admin_context, geo_tabular_data_resource, tabular_resource, form_instance
-):
+def form_instance_is(admin_context, geo_tabular_data_resource, tabular_resource, form_instance):
     if form_instance == "geo_tabular_data_resource":
         admin_context.form_instance = geo_tabular_data_resource
     elif form_instance == "tabular_resource":
@@ -334,11 +308,7 @@ def admin_request_logged_user_is(admin_context, user_type):
     )
 
 
-@given(
-    parsers.parse(
-        "admin's request logged {user_type} created with params {user_params}"
-    )
-)
+@given(parsers.parse("admin's request logged {user_type} created with params {user_params}"))
 def admin_request_logged_user_with_id(admin_context, user_type, user_params):
     _factory = factories_registry.get_factory(user_type)
     assert _factory is not None
@@ -617,9 +587,7 @@ def api_request_post_data(admin_context, data_type, req_post_data):
             "slug": "showcase-title",
             "notes": "opis",
             "url": "https://test.pl",
-            "external_datasets": [
-                {"title": "example.com", "url": "https://example.com"}
-            ],
+            "external_datasets": [{"title": "example.com", "url": "https://example.com"}],
             "keywords": ["test"],
         },
         "user": {
@@ -670,13 +638,9 @@ def api_request_post_files(admin_context, req_post_files):
             extension: str = file_name.split(".")[-1].lower()
             content_type: str = content_type_for_extension.get(extension)
             if content_type:
-                simple_uploaded_file_params.update(
-                    {"content_type": content_type}
-                )
+                simple_uploaded_file_params.update({"content_type": content_type})
 
-            posted_files[field_name] = SimpleUploadedFile(
-                **simple_uploaded_file_params
-            )
+            posted_files[field_name] = SimpleUploadedFile(**simple_uploaded_file_params)
     admin_context.obj.update(posted_files)
 
 
@@ -753,9 +717,7 @@ def form_field_error_is(admin_context, field_name, error_msg):
 
 @then(parsers.parse("admin's response status code is {status_code:d}"))
 def admin_response_status_code(admin_context, status_code):
-    assert (
-        status_code == admin_context.response.status_code
-    ), 'Response status should be "%s", is "%s"' % (
+    assert status_code == admin_context.response.status_code, 'Response status should be "%s", is "%s"' % (
         status_code,
         admin_context.response.status_code,
     )
@@ -765,18 +727,9 @@ def admin_response_status_code(admin_context, status_code):
 def admin_response_page_not_editable(admin_context):
     assert admin_context.response.status_code == 200
     cnt = admin_context.response.content.decode()
-    assert (
-        '<button type="submit" class="btn btn-high  btn-info" name="_save" >Zapisz</button>'
-        not in cnt
-    )
-    assert (
-        '<button type="submit" name="_continue" class="btn btn-high">Zapisz i kontynuuj edycję</button>'
-        not in cnt
-    )
-    assert (
-        '<button type="submit" name="_addanother" class="btn">Zapisz i dodaj kolejny</button>'
-        not in cnt
-    )
+    assert '<button type="submit" class="btn btn-high  btn-info" name="_save" >Zapisz</button>' not in cnt
+    assert '<button type="submit" name="_continue" class="btn btn-high">Zapisz i kontynuuj edycję</button>' not in cnt
+    assert '<button type="submit" name="_addanother" class="btn">Zapisz i dodaj kolejny</button>' not in cnt
     assert 'id="duplicate_button"' not in cnt
     assert 'id="revalidate_button"' not in cnt
 
@@ -784,27 +737,17 @@ def admin_response_page_not_editable(admin_context):
 @then(parsers.parse("admin's response page contains {contained_value}"))
 def admin_response_page_contains(admin_context, contained_value):
     content = admin_context.response.content.decode()
-    assert (
-        contained_value in content
-    ), f'Page content should contain phrase: "{contained_value}"'
+    assert contained_value in content, f'Page content should contain phrase: "{contained_value}"'
 
 
 @then(parsers.parse("admin's response body field {field} is {value}"))
 def admin_response_body_field(admin_context, field, value):
     data = admin_context.response.json()
     values = [str(value) for value in dpath.util.values(data, field)]
-    assert set(values) == {
-        value
-    }, "value should be {}, but is {}. Full response: {}".format(
-        {value}, set(values), data
-    )
+    assert set(values) == {value}, "value should be {}, but is {}. Full response: {}".format({value}, set(values), data)
 
 
-@then(
-    parsers.parse(
-        "admin's response page form contains {contained_value} and {another_value}"
-    )
-)
+@then(parsers.parse("admin's response page form contains {contained_value} and {another_value}"))
 def admin_response_page_contains_values(admin_context, contained_value, another_value):
     content = admin_context.response.content.decode()
     assert (
@@ -853,9 +796,7 @@ def admin_page_is_requested(admin_context, page_url):
     admin_context.response = get_response(admin_context)
 
 
-def create_dataset_for_given_institution_type(
-        institution_type: str, obj_id: int, title: Optional[str] = None
-) -> Dataset:
+def create_dataset_for_given_institution_type(institution_type: str, obj_id: int, title: Optional[str] = None) -> Dataset:
     organization = OrganizationFactory.create(
         institution_type=institution_type,
     )
@@ -869,17 +810,13 @@ def create_dataset_for_given_institution_type(
 
 
 def create_dataset_with_dga_resource(
-        dataset_id: int,
-        resource_id: Optional[int] = None,
-        resource_title: Optional[str] = None,
-        dataset_title: Optional[str] = None,
+    dataset_id: int,
+    resource_id: Optional[int] = None,
+    resource_title: Optional[str] = None,
+    dataset_title: Optional[str] = None,
 ) -> Dataset:
-    _dataset = create_dataset_for_given_institution_type(
-        institution_type="state", obj_id=dataset_id, title=dataset_title
-    )
-    resource_create_params = {
-        "dataset": _dataset
-    }
+    _dataset = create_dataset_for_given_institution_type(institution_type="state", obj_id=dataset_id, title=dataset_title)
+    resource_create_params = {"dataset": _dataset}
     if resource_id:
         resource_create_params.update({"pk": resource_id})
     if resource_title:
@@ -911,20 +848,18 @@ def named_dataset_with_dga_resource(dataset_id, dataset_title):
 
 @given(parsers.parse("dataset with pk {dataset_id:d} containing dga resource with pk {resource_id:d} and title {resource_title}"))
 def dataset_with_named_dga_resource_with_given_id(dataset_id, resource_id, resource_title):
-    create_dataset_with_dga_resource(
-        dataset_id, resource_id=resource_id, resource_title=resource_title
-    )
+    create_dataset_with_dga_resource(dataset_id, resource_id=resource_id, resource_title=resource_title)
 
 
 def extract_hidden_fields_from_response(
-        response_content: str
+    response_content: str,
 ) -> Dict[str, Union[str, List[str]]]:
-    soup = BeautifulSoup(response_content, 'html.parser')
+    soup = BeautifulSoup(response_content, "html.parser")
     hidden_fields = soup.find_all("input", type="hidden")
     extracted_data = {}
     for field in hidden_fields:
-        name = field.get('name')
-        value = field.get('value')
+        name = field.get("name")
+        value = field.get("value")
         if name:
             if name in extracted_data:
                 if not isinstance(extracted_data[name], list):
@@ -942,9 +877,7 @@ def extract_hidden_fields_from_response(
 @when("admin confirms deleting dataset")
 @when("admin confirms deleting resource")
 def admin_confirms_resource_creation(admin_context):
-    posted_data = extract_hidden_fields_from_response(
-        admin_context.response.content
-    )
+    posted_data = extract_hidden_fields_from_response(admin_context.response.content)
     admin_context.obj = posted_data
     admin_context.response = get_response(admin_context)
 
@@ -975,12 +908,8 @@ def creation_page_is_requested(admin_context, admin_class_path):
         admin_context.response = get_response(admin_context)
 
 
-@when(
-    parsers.parse("'{admin_class_path}' edition page is requested for created object")
-)
-@then(
-    parsers.parse("'{admin_class_path}' edition page is requested for created object")
-)
+@when(parsers.parse("'{admin_class_path}' edition page is requested for created object"))
+@then(parsers.parse("'{admin_class_path}' edition page is requested for created object"))
 def edition_page_is_requested(admin_context, admin_class_path):
     admin_class_path_to_model = {
         f"{admin_class.__class__.__module__}.{admin_class.__class__.__name__}": (
@@ -990,9 +919,7 @@ def edition_page_is_requested(admin_context, admin_class_path):
         for model, admin_class in admin.site._registry.items()
     }
     model, admin_class_instance = admin_class_path_to_model[admin_class_path]
-    admin_context.admin.path = getattr(model, "get_admin_change_url")(
-        admin_context.object_id
-    )
+    admin_context.admin.path = getattr(model, "get_admin_change_url")(admin_context.object_id)
     admin_context.response = get_response(admin_context)
 
 
@@ -1016,20 +943,14 @@ def check_if_queryset_values_match(admin_context, params):
     language = getattr(admin_context, "language", settings.LANGUAGE_CODE)
     params = json.loads(params)
     with translation.override(language):
-        values = (
-            admin_context.object_model.objects.filter(id=admin_context.object_id)
-            .values(*params)
-            .first()
-        )
+        values = admin_context.object_model.objects.filter(id=admin_context.object_id).values(*params).first()
     for key, value in params.items():
         assert values[key] == value
 
 
 @when(parsers.parse("admin's page with mocked geo api {page_url} is requested"))
 @then(parsers.parse("admin's page with mocked geo api {page_url} is requested"))
-def admin_page_with_mocked_geo_api_is_requested(
-    admin_context, page_url, mocked_geocoder_responses
-):
+def admin_page_with_mocked_geo_api_is_requested(admin_context, page_url, mocked_geocoder_responses):
     client = Client()
     client.force_login(admin_context.admin.user)
     translation.activate("pl")
@@ -1037,40 +958,23 @@ def admin_page_with_mocked_geo_api_is_requested(
         with requests_mock.Mocker(real_http=True) as mock_request:
             for resp in mocked_geocoder_responses:
                 mock_request.get(resp[0], json=resp[1])
-            response = client.post(
-                page_url, data=getattr(admin_context, "obj", None), follow=True
-            )
+            response = client.post(page_url, data=getattr(admin_context, "obj", None), follow=True)
     else:
         response = client.get(page_url, follow=True)
     admin_context.response = response
 
 
-@when(
-    parsers.parse(
-        "admin's page with geocoder mocked api for tabular data {page_url} is requested"
-    )
-)
-@then(
-    parsers.parse(
-        "admin's page with geocoder mocked api for tabular data {page_url} is requested"
-    )
-)
-def admin_page_with_geo_mocked_api_for_tabular_data_is_requested(
-    admin_context, page_url, geo_tabular_data_response
-):
+@when(parsers.parse("admin's page with geocoder mocked api for tabular data {page_url} is requested"))
+@then(parsers.parse("admin's page with geocoder mocked api for tabular data {page_url} is requested"))
+def admin_page_with_geo_mocked_api_for_tabular_data_is_requested(admin_context, page_url, geo_tabular_data_response):
     client = Client()
-    api_expr = re.compile(
-        settings.GEOCODER_URL
-        + r"/v1/search/structured\?postalcode=\d{2}-\d{3}&locality=\w+"
-    )
+    api_expr = re.compile(settings.GEOCODER_URL + r"/v1/search/structured\?postalcode=\d{2}-\d{3}&locality=\w+")
     client.force_login(admin_context.admin.user)
     translation.activate("pl")
     if admin_context.admin.method == "POST":
         with requests_mock.Mocker(real_http=True) as mock_request:
             mock_request.get(api_expr, json=geo_tabular_data_response)
-            response = client.post(
-                page_url, data=getattr(admin_context, "obj", None), follow=True
-            )
+            response = client.post(page_url, data=getattr(admin_context, "obj", None), follow=True)
             run_on_commit_events()
     else:
         response = client.get(page_url, follow=True)
@@ -1081,9 +985,7 @@ def admin_page_with_geo_mocked_api_for_tabular_data_is_requested(
 def api_response_data_has_length(context, number):
     data = context.response.json["data"]
     v_len = len(data) if data else 0
-    assert v_len == int(number), "data length should be {}, but is {}".format(
-        number, v_len
-    )
+    assert v_len == int(number), "data length should be {}, but is {}".format(number, v_len)
 
 
 @when("send_mail will raise SMTPException")
@@ -1130,13 +1032,9 @@ def latest_object_attribute_is(obj_type, attr, value):
     attr_val = getattr(obj, attr)
     attr_val = str(attr_val) if not isinstance(attr_val, str) else attr_val
     if value == "not None":
-        assert (
-            attr_val is not None
-        ), f"{obj} attribute {attr} should not be None, but is {attr_val}"
+        assert attr_val is not None, f"{obj} attribute {attr} should not be None, but is {attr_val}"
     else:
-        assert (
-            attr_val == value
-        ), f"{obj} attribute {attr} should be {value}, but is {attr_val}"
+        assert attr_val == value, f"{obj} attribute {attr} should be {value}, but is {attr_val}"
 
 
 @given(parsers.parse('removed {object_type} objects with ids "{object_ids}"'))
@@ -1177,27 +1075,19 @@ def obj_with_title_attribute_is(object_type, title, data_str):
         obj_attr = getattr(obj, attr_name)
         if isinstance(obj_attr, datetime.date):
             obj_attr = str(obj_attr)
-        assert (
-            obj_attr == attr_value
-        ), f"{object_type} attribute {attr_name} should be {attr_value}, but is {obj_attr}"
+        assert obj_attr == attr_value, f"{object_type} attribute {attr_name} should be {attr_value}, but is {obj_attr}"
 
 
 @then(parsers.parse("{object_type} with id {obj_id} contains data {data_str}"))
 def obj_with_id_attribute_is(object_type, obj_id, data_str):
     model = apps.get_model(object_type)
-    obj = (
-        model.raw.get(id=obj_id)
-        if hasattr(model, "raw")
-        else model.objects.get(id=obj_id)
-    )
+    obj = model.raw.get(id=obj_id) if hasattr(model, "raw") else model.objects.get(id=obj_id)
     data = json.loads(data_str)
     for attr_name, attr_value in data.items():
         obj_attr = getattr(obj, attr_name)
         if isinstance(obj_attr, datetime.date):
             obj_attr = str(obj_attr)
-        assert (
-            obj_attr == attr_value
-        ), f"{object_type} attribute {attr_name} should be {attr_value}, but is {obj_attr}"
+        assert obj_attr == attr_value, f"{object_type} attribute {attr_name} should be {attr_value}, but is {obj_attr}"
 
 
 @then(parsers.parse("api's response data has zipped {files_count:d} files"))

@@ -7,12 +7,9 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('watchers', '0004_watcher_is_active'),
+        ("watchers", "0004_watcher_is_active"),
     ]
 
     operations = [
-        migrations.RunSQL(
-            open(
-                os.path.join(settings.DATABASE_DIR, 'MCOD-1242-watchers_history_other.sql')).read()
-        ),
+        migrations.RunSQL(open(os.path.join(settings.DATABASE_DIR, "MCOD-1242-watchers_history_other.sql")).read()),
     ]

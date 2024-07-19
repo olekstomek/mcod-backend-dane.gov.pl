@@ -7,14 +7,14 @@ import django.db.models.manager
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('resources', '0002_initial'),
+        ("resources", "0002_initial"),
     ]
 
     operations = [
         migrations.AlterModelManagers(
-            name='resource',
+            name="resource",
             managers=[
-                ('all_resources', django.db.models.manager.Manager()),
+                ("all_resources", django.db.models.manager.Manager()),
             ],
         ),
     ]

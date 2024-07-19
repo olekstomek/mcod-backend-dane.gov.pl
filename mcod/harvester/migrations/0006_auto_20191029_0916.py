@@ -6,17 +6,20 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('harvester', '0005_harvester_history_trigger'),
+        ("harvester", "0005_harvester_history_trigger"),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='datasourcetrash',
-            options={'verbose_name': 'Trash (Data Sources)', 'verbose_name_plural': 'Trash (Data Sources)'},
+            name="datasourcetrash",
+            options={
+                "verbose_name": "Trash (Data Sources)",
+                "verbose_name_plural": "Trash (Data Sources)",
+            },
         ),
         migrations.RenameField(
-            model_name='datasource',
-            old_name='frequency',
-            new_name='frequency_in_days',
+            model_name="datasource",
+            old_name="frequency",
+            new_name="frequency_in_days",
         ),
     ]

@@ -8,13 +8,17 @@ import model_utils.fields
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('applications', '0003_auto_20180525_1430'),
+        ("applications", "0003_auto_20180525_1430"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='application',
-            name='modified',
-            field=model_utils.fields.AutoLastModifiedField(default=django.utils.timezone.now, editable=False, verbose_name='modified'),
+            model_name="application",
+            name="modified",
+            field=model_utils.fields.AutoLastModifiedField(
+                default=django.utils.timezone.now,
+                editable=False,
+                verbose_name="modified",
+            ),
         ),
     ]

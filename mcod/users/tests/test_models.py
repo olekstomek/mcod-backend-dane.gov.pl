@@ -16,7 +16,7 @@ def test_user_create(inactive_user):
     usr = User.objects.get(email=inactive_user.email)
     assert usr.id == inactive_user.id
     assert usr.last_login is None
-    assert usr.state == 'pending'
+    assert usr.state == "pending"
 
 
 def test_last_login(inactive_user):
@@ -28,66 +28,102 @@ def test_last_login(inactive_user):
 
 def test_email_unique():
     with pytest.raises(django.core.exceptions.ValidationError) as e:
-        User.objects.create_user('aaa@example.com', '12345.Abcde')
-        User.objects.create_user('aaa@example.com', '12345.Abcde')
-    assert 'email' in e.value.message_dict
+        User.objects.create_user("aaa@example.com", "12345.Abcde")
+        User.objects.create_user("aaa@example.com", "12345.Abcde")
+    assert "email" in e.value.message_dict
 
 
 def test_is_active(active_user):
-    assert active_user.state == 'active'
+    assert active_user.state == "active"
     assert active_user.is_active is True
 
 
 def test_admin_panel_access_flag(active_user):
-    assert active_user.system_role == 'user'
+    assert active_user.system_role == "user"
 
     active_user.is_superuser = True
-    assert active_user.system_role == 'admin'
+    assert active_user.system_role == "admin"
 
     active_user.is_superuser = False
     active_user.is_staff = True
-    assert active_user.system_role == 'editor'
+    assert active_user.system_role == "editor"
 
 
 def test_check_session_valid(mocker):
-    usr = User.objects.create_user('aaa@example.com', '12345.Abcde')
+    usr = User.objects.create_user("aaa@example.com", "12345.Abcde")
     assert usr.check_session_valid(None) is False
-    assert usr.check_session_valid('aaa') is False
+    assert usr.check_session_valid("aaa") is False
 
-    mocker.patch('mcod.users.models.decode_jwt_token', return_value={'user': {}})
-    assert usr.check_session_valid('aaa') is False
+    mocker.patch("mcod.users.models.decode_jwt_token", return_value={"user": {}})
+    assert usr.check_session_valid("aaa") is False
 
-    mocker.patch('mcod.users.models.decode_jwt_token', return_value={'user': {'session_key': 1234}})
-    assert usr.check_session_valid('aaa') is False
+    mocker.patch(
+        "mcod.users.models.decode_jwt_token",
+        return_value={"user": {"session_key": 1234}},
+    )
+    assert usr.check_session_valid("aaa") is False
 
-    mocker.patch('mcod.users.models.decode_jwt_token', return_value={'user': {'session_key': 1234}})
-    mocker.patch('mcod.users.models.session_cache.get', return_value={})
-    assert usr.check_session_valid('aaa') is False
+    mocker.patch(
+        "mcod.users.models.decode_jwt_token",
+        return_value={"user": {"session_key": 1234}},
+    )
+    mocker.patch("mcod.users.models.session_cache.get", return_value={})
+    assert usr.check_session_valid("aaa") is False
 
-    mocker.patch('mcod.users.models.decode_jwt_token', return_value={'user': {'session_key': 1234}})
-    mocker.patch('mcod.users.models.session_cache.get', return_value={'_auth_user_hash': 'aaaaa'})
-    assert usr.check_session_valid('aaa') is False
+    mocker.patch(
+        "mcod.users.models.decode_jwt_token",
+        return_value={"user": {"session_key": 1234}},
+    )
+    mocker.patch("mcod.users.models.session_cache.get", return_value={"_auth_user_hash": "aaaaa"})
+    assert usr.check_session_valid("aaa") is False
 
-    mocker.patch('mcod.users.models.decode_jwt_token', return_value={'user': {'session_key': 1234}})
-    mocker.patch('mcod.users.models.session_cache.get', return_value={'_auth_user_hash': 'aaaaa', '_auth_user_id': '0'})
-    assert usr.check_session_valid('aaa') is False
+    mocker.patch(
+        "mcod.users.models.decode_jwt_token",
+        return_value={"user": {"session_key": 1234}},
+    )
+    mocker.patch(
+        "mcod.users.models.session_cache.get",
+        return_value={"_auth_user_hash": "aaaaa", "_auth_user_id": "0"},
+    )
+    assert usr.check_session_valid("aaa") is False
 
-    mocker.patch('mcod.users.models.decode_jwt_token', return_value={'user': {'session_key': 1234}})
-    mocker.patch('mcod.users.models.session_cache.get',
-                 return_value={'_auth_user_hash': 'aaaaaa', '_auth_user_id': str(usr.id)})
-    assert usr.check_session_valid('aaa') is False
+    mocker.patch(
+        "mcod.users.models.decode_jwt_token",
+        return_value={"user": {"session_key": 1234}},
+    )
+    mocker.patch(
+        "mcod.users.models.session_cache.get",
+        return_value={"_auth_user_hash": "aaaaaa", "_auth_user_id": str(usr.id)},
+    )
+    assert usr.check_session_valid("aaa") is False
 
-    mocker.patch('mcod.users.models.decode_jwt_token', return_value={'user': {'session_key': 1234}})
-    mocker.patch('mcod.users.models.session_cache.get',
-                 return_value={'_auth_user_hash': usr.get_session_auth_hash(), '_auth_user_id': str(usr.id)})
-    mocker.patch('mcod.users.models.constant_time_compare', return_value=False)
-    assert usr.check_session_valid('aaa') is False
+    mocker.patch(
+        "mcod.users.models.decode_jwt_token",
+        return_value={"user": {"session_key": 1234}},
+    )
+    mocker.patch(
+        "mcod.users.models.session_cache.get",
+        return_value={
+            "_auth_user_hash": usr.get_session_auth_hash(),
+            "_auth_user_id": str(usr.id),
+        },
+    )
+    mocker.patch("mcod.users.models.constant_time_compare", return_value=False)
+    assert usr.check_session_valid("aaa") is False
 
-    mocker.patch('mcod.users.models.decode_jwt_token', return_value={'user': {'session_key': 1234}})
-    mocker.patch('mcod.users.models.session_cache.get',
-                 return_value={'_auth_user_hash': usr.get_session_auth_hash(), '_auth_user_id': str(usr.id)})
-    mocker.patch('mcod.users.models.constant_time_compare', return_value=True)
-    assert usr.check_session_valid('aaa') is True
+    mocker.patch(
+        "mcod.users.models.decode_jwt_token",
+        return_value={"user": {"session_key": 1234}},
+    )
+    mocker.patch(
+        "mcod.users.models.session_cache.get",
+        return_value={
+            "_auth_user_hash": usr.get_session_auth_hash(),
+            "_auth_user_id": str(usr.id),
+        },
+    )
+    mocker.patch("mcod.users.models.constant_time_compare", return_value=True)
+    assert usr.check_session_valid("aaa") is True
 
 
 def test_tokens(active_user):
@@ -132,7 +168,7 @@ class TestLogin:
         client = Client()
         response = client.get("/")
         assert response.status_code == 302
-        assert response.url == '/login/?next=/'
+        assert response.url == "/login/?next=/"
         client.login(email=admin.email, password="12345.Abcde")
         response = client.get("/")
         assert response.status_code == 200
@@ -141,7 +177,7 @@ class TestLogin:
         client = Client()
         response = client.get("/")
         assert response.status_code == 302
-        assert response.url == '/login/?next=/'
+        assert response.url == "/login/?next=/"
         client.login(email=active_editor.email, password="12345.Abcde")
         response = client.get("/")
         assert response.status_code == 200
@@ -150,7 +186,7 @@ class TestLogin:
         client = Client()
         response = client.get("/")
         assert response.status_code == 302
-        assert response.url == '/login/?next=/'
+        assert response.url == "/login/?next=/"
         client.login(email=active_user.email, password="12345.Abcde")
         response = client.get("/")
         assert response.status_code == 302
@@ -161,7 +197,7 @@ def test_user_manager_create_superuser():
     assert superuser.email == "superadmin@test.pl"
     assert superuser.is_staff
     assert superuser.is_superuser
-    assert superuser.state == 'active'
+    assert superuser.state == "active"
     assert str(superuser) == "superadmin@test.pl"
 
 
@@ -180,6 +216,6 @@ def test_user_unsafe_delete(active_user):
 
 
 def test__get_absolute_url_with_lang(active_user):
-    test_url = '/test/path'
-    with translation.override('pl'):
-        assert active_user._get_absolute_url(test_url) == f'{settings.BASE_URL}/pl/test/path'
+    test_url = "/test/path"
+    with translation.override("pl"):
+        assert active_user._get_absolute_url(test_url) == f"{settings.BASE_URL}/pl/test/path"

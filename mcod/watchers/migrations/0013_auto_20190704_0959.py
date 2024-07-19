@@ -7,13 +7,13 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('watchers', '0012_watcher_customfields'),
+        ("watchers", "0012_watcher_customfields"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='watcher',
-            name='customfields',
+            model_name="watcher",
+            name="customfields",
             field=django.contrib.postgres.fields.jsonb.JSONField(default=dict),
         ),
     ]

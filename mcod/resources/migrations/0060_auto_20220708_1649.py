@@ -6,17 +6,17 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('resources', '0059_auto_20220520_1551'),
+        ("resources", "0059_auto_20220520_1551"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='resource',
-            name='is_manual_data_date',
+            model_name="resource",
+            name="is_manual_data_date",
         ),
         migrations.AddField(
-            model_name='resource',
-            name='is_auto_data_date',
-            field=models.BooleanField(default=False, verbose_name='Automatic update'),
+            model_name="resource",
+            name="is_auto_data_date",
+            field=models.BooleanField(default=False, verbose_name="Automatic update"),
         ),
     ]

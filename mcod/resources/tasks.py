@@ -13,24 +13,15 @@ from elasticsearch.helpers.errors import BulkIndexError
 from mcod.core.tasks import extended_shared_task
 from mcod.resources.archives import ArchiveReader, UnsupportedArchiveError
 from mcod.resources.dga_utils import (
+    check_all_resource_validations_status,
+    clean_up_after_main_dga_resource_creation,
     create_main_dga_file,
     create_main_dga_resource_with_dataset,
-    check_all_resource_validations_status,
     update_or_create_aggr_dga_info_and_delete_old_main_dga,
-    clean_up_after_main_dga_resource_creation,
 )
-from mcod.resources.exceptions import (
-    PendingValidationException,
-    FailedValidationException,
-)
-from mcod.resources.file_validation import (
-    PasswordProtectedArchiveError,
-    UnknownFileFormatError,
-)
-from mcod.resources.indexed_data import (
-    FileEncodingValidationError,
-    ResourceDataValidationError,
-)
+from mcod.resources.exceptions import FailedValidationException, PendingValidationException
+from mcod.resources.file_validation import PasswordProtectedArchiveError, UnknownFileFormatError
+from mcod.resources.indexed_data import FileEncodingValidationError, ResourceDataValidationError
 from mcod.resources.link_validation import check_link_scheme
 
 logger = logging.getLogger("mcod")
@@ -58,9 +49,7 @@ def process_resource_from_url_task(
     Resource = apps.get_model("resources", "Resource")
     resource = Resource.raw.get(id=resource_id)
     if resource.is_imported_from_ckan:
-        logger.debug(
-            f"External resource imported from {resource.dataset.source} cannot be processed!"
-        )
+        logger.debug(f"External resource imported from {resource.dataset.source} cannot be processed!")
         return {}
 
     if update_file:
@@ -131,9 +120,7 @@ def process_for_separate_file_model(
             is_main=True,
         )
         if "filename" in options:
-            ResourceFile.objects.filter(pk=res_file.pk).update(
-                file=res_file.save_file(options["content"], options["filename"])
-            )
+            ResourceFile.objects.filter(pk=res_file.pk).update(file=res_file.save_file(options["content"], options["filename"]))
             qs.update(format=options["format"], openness_score=openness_score)
         process_auto_data_date = False
         process_resource_res_file_task.s(
@@ -148,9 +135,7 @@ def process_for_separate_file_model(
         ResourceFile.objects.filter(resource_id=resource_id).delete()
         if forced_file_changed:
             resource.dataset.archive_files()
-        qs.update(
-            type=resource_type, format=options["format"], openness_score=openness_score
-        )
+        qs.update(type=resource_type, format=options["format"], openness_score=openness_score)
     resource.refresh_from_db()
     if schedule_auto_data_date and process_auto_data_date:
         resource.schedule_data_date_update()
@@ -328,9 +313,7 @@ def process_resource_res_file_task(
     ) = resource_file.analyze()
     if not resource_file.extension and format:
         ResourceFile.objects.filter(pk=resource_file_id).update(
-            file=resource_file.save_file(
-                resource_file.file, f"{resource_file.file_basename}.{format}"
-            )
+            file=resource_file.save_file(resource_file.file, f"{resource_file.file_basename}.{format}")
         )
     ResourceFile.objects.filter(pk=resource_file_id).update(
         format=format,
@@ -372,9 +355,7 @@ def process_resource_res_file_task(
 
     process_resource_file_data_task.s(resource_id, **kwargs).apply_async_on_commit()
     if update_link:
-        process_resource_from_url_task.s(
-            resource_id, update_file=False, **kwargs
-        ).apply_async_on_commit()
+        process_resource_from_url_task.s(resource_id, update_file=False, **kwargs).apply_async_on_commit()
     if update_file_archive:
         resource.dataset.archive_files()
     if schedule_auto_data_date:
@@ -402,15 +383,11 @@ def update_data_date(resource_id):
         warsaw_tz = pytz.timezone(settings.TIME_ZONE)
         current_dt = now().astimezone(warsaw_tz).date()
         res_q.update(data_date=current_dt)
-        logger.debug(
-            f"Updated data date for resource with id {resource_id} with date {current_dt}"
-        )
+        logger.debug(f"Updated data date for resource with id {resource_id} with date {current_dt}")
         if res.type in ["api", "website"]:
             res.update_es_and_rdf_db()
         elif res.is_linked:
-            process_resource_from_url_task.s(
-                res.id, update_file_archive=True
-            ).apply_async()
+            process_resource_from_url_task.s(res.id, update_file_archive=True).apply_async()
         return {"current_date": current_dt}
     return {"current_date": None}
 
@@ -434,9 +411,7 @@ def update_resource_with_archive_format(res_file_id):
     if extracted:
         extracted.cleanup()
     if extracted_files == 1:
-        logger.debug(
-            f"Updating file details of ResourceFile[{res_file_id}] for Resource with id {rf.resource_id}"
-        )
+        logger.debug(f"Updating file details of ResourceFile[{res_file_id}] for Resource with id {rf.resource_id}")
         (
             format,
             file_info,
@@ -465,9 +440,7 @@ def update_resource_with_archive_format(res_file_id):
         results["old_format"] = old_format
         results["new_format"] = format
     else:
-        logger.debug(
-            f"ResourceFile[{res_file_id}] has more than 1 file compressed, skipping."
-        )
+        logger.debug(f"ResourceFile[{res_file_id}] has more than 1 file compressed, skipping.")
     return results
 
 
@@ -536,24 +509,16 @@ def create_main_dga_resource_task(self) -> None:
         # (also creates ResourceFile and Dataset if needed).
         logger.info("Step 2/4: Creating Main DGA resource with files.")
         new_main_dga_resource_pk: int
-        new_main_dga_resource_pk, _ = create_main_dga_resource_with_dataset(
-            file_path=file_path
-        )
-        new_main_dga_resource: Resource = Resource.objects.get(
-            pk=new_main_dga_resource_pk
-        )
+        new_main_dga_resource_pk, _ = create_main_dga_resource_with_dataset(file_path=file_path)
+        new_main_dga_resource: Resource = Resource.objects.get(pk=new_main_dga_resource_pk)
 
         # Step 3: Check resource validations
         logger.info("Step 3/4: Checking resource validations.")
         check_all_resource_validations_status(new_main_dga_resource)
 
         # Step 4: Update Aggregated DGA Info and delete old main DGA Resource
-        logger.info(
-            "Step 4/4: Updating AggregatedDGAInfo and deleting old Resource."
-        )
-        update_or_create_aggr_dga_info_and_delete_old_main_dga(
-            new_main_dga_resource
-        )
+        logger.info("Step 4/4: Updating AggregatedDGAInfo and deleting old Resource.")
+        update_or_create_aggr_dga_info_and_delete_old_main_dga(new_main_dga_resource)
 
         logger.info("Main DGA Resource successfully created.")
 
@@ -566,10 +531,7 @@ def create_main_dga_resource_task(self) -> None:
         max_retries: int = self.max_retries
         retry: int = self.request.retries
         if retry == max_retries:
-            logger.info(
-                "Cleaning after main DGA resource creation task due to "
-                "still pending resource validation(s)."
-            )
+            logger.info("Cleaning after main DGA resource creation task due to " "still pending resource validation(s).")
             clean_up_after_main_dga_resource_creation(exception_occurred=True)
         raise
 
@@ -578,9 +540,6 @@ def create_main_dga_resource_task(self) -> None:
         raise
 
     except Exception as exc:
-        logger.error(
-            f"Cleaning after main DGA resource creation task due to "
-            f"unexpected error: {exc}"
-        )
+        logger.error(f"Cleaning after main DGA resource creation task due to " f"unexpected error: {exc}")
         clean_up_after_main_dga_resource_creation(exception_occurred=True)
         raise

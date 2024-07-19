@@ -6,13 +6,22 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('regions', '0001_initial'),
+        ("regions", "0001_initial"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='region',
-            name='region_type',
-            field=models.CharField(choices=[('locality', 'locality'), ('localadmin', 'localadmin'), ('county', 'county'), ('region', 'region'), ('country', 'country')], max_length=15),
+            model_name="region",
+            name="region_type",
+            field=models.CharField(
+                choices=[
+                    ("locality", "locality"),
+                    ("localadmin", "localadmin"),
+                    ("county", "county"),
+                    ("region", "region"),
+                    ("country", "country"),
+                ],
+                max_length=15,
+            ),
         ),
     ]

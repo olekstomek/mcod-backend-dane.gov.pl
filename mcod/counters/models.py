@@ -6,7 +6,7 @@ from modeltrans.manager import MultilingualManager
 
 class ResourceCounter(models.Model):
 
-    resource = models.ForeignKey('resources.Resource', on_delete=models.CASCADE)
+    resource = models.ForeignKey("resources.Resource", on_delete=models.CASCADE)
     timestamp = models.DateField(default=date.today)
     count = models.IntegerField(default=0)
 

@@ -4,25 +4,25 @@ from django.db import migrations
 
 
 def update_downloads_count(apps, schema_editor):
-    Dataset = apps.get_model('datasets', 'Dataset')
+    Dataset = apps.get_model("datasets", "Dataset")
     objs = Dataset.objects.all()
     for obj in objs:
         obj.downloads_count = sum(res.downloads_count for res in obj.resources.all())
-    Dataset.objects.bulk_update(objs, ['downloads_count'])
+    Dataset.objects.bulk_update(objs, ["downloads_count"])
 
 
 def reset_downloads_count(apps, schema_editor):
-    Dataset = apps.get_model('datasets', 'Dataset')
+    Dataset = apps.get_model("datasets", "Dataset")
     objs = Dataset.objects.all()
     for obj in objs:
         obj.downloads_count = 0
-    Dataset.objects.bulk_update(objs, ['downloads_count'])
+    Dataset.objects.bulk_update(objs, ["downloads_count"])
 
 
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('datasets', '0022_dataset_downloads_count'),
+        ("datasets", "0022_dataset_downloads_count"),
     ]
 
     operations = [

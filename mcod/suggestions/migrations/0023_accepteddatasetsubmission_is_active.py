@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('suggestions', '0022_resourcecomment_history_trigger'),
+        ("suggestions", "0022_resourcecomment_history_trigger"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='accepteddatasetsubmission',
-            name='is_active',
-            field=models.BooleanField(default=False, verbose_name='proposal active'),
+            model_name="accepteddatasetsubmission",
+            name="is_active",
+            field=models.BooleanField(default=False, verbose_name="proposal active"),
         ),
     ]

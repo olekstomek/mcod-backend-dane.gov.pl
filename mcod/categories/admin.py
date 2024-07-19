@@ -13,30 +13,48 @@ class CategoryAdmin(HistoryMixin, ModelAdmin):
     is_history_with_unknown_user_rows = True
     actions_on_top = True
     lang_fields = True
-    list_display = ['title_i18n', 'code', 'obj_history']
+    list_display = ["title_i18n", "code", "obj_history"]
 
     fieldsets = [
-        (None, {
-            'classes': ('suit-tab', 'suit-tab-general',),
-            'fields': [
-                'code',
-                'title',
-                'slug',
-                'description',
-            ],
-        }),
-        (None, {
-            'classes': ('suit-tab', 'suit-tab-general',),
-            'fields': [
-                'image',
-            ]
-        }),
-        (None, {
-            'classes': ('suit-tab', 'suit-tab-general',),
-            'fields': [
-                'status',
-            ]
-        }),
+        (
+            None,
+            {
+                "classes": (
+                    "suit-tab",
+                    "suit-tab-general",
+                ),
+                "fields": [
+                    "code",
+                    "title",
+                    "slug",
+                    "description",
+                ],
+            },
+        ),
+        (
+            None,
+            {
+                "classes": (
+                    "suit-tab",
+                    "suit-tab-general",
+                ),
+                "fields": [
+                    "image",
+                ],
+            },
+        ),
+        (
+            None,
+            {
+                "classes": (
+                    "suit-tab",
+                    "suit-tab-general",
+                ),
+                "fields": [
+                    "status",
+                ],
+            },
+        ),
     ]
 
     def get_fieldsets(self, request, obj=None):
@@ -44,20 +62,17 @@ class CategoryAdmin(HistoryMixin, ModelAdmin):
 
     @property
     def suit_form_tabs(self):
-        return (
-            ('general', _('General')),
-            *self.get_translations_tabs()
-        )
+        return (("general", _("General")), *self.get_translations_tabs())
 
 
 @admin.register(CategoryTrash)
 class CategoryTrashAdmin(HistoryMixin, TrashMixin):
     is_history_with_unknown_user_rows = True
     readonly_fields = (
-        'code',
-        'title',
-        'description',
-        'image',
-        'status',
+        "code",
+        "title",
+        "description",
+        "image",
+        "status",
     )
-    fields = [field for field in readonly_fields] + ['is_removed']
+    fields = [field for field in readonly_fields] + ["is_removed"]

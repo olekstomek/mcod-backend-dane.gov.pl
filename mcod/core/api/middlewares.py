@@ -35,11 +35,10 @@ from mcod.lib.encoders import DateTimeToISOEncoder
 logger = logging.getLogger(__name__)
 
 
-_DECORABLE_METHOD_NAME = re.compile(r'^on_({})(_\w+)?$'.format(
-    '|'.join(method.lower() for method in falcon.COMBINED_METHODS)))
+_DECORABLE_METHOD_NAME = re.compile(r"^on_({})(_\w+)?$".format("|".join(method.lower() for method in falcon.COMBINED_METHODS)))
 
 
-SAFE_METHODS = ('GET', 'HEAD', 'OPTIONS', 'TRACE')
+SAFE_METHODS = ("GET", "HEAD", "OPTIONS", "TRACE")
 REASON_NO_REFERER = _("Referer checking failed - no Referer.")
 REASON_BAD_REFERER = _("Referer checking failed - %s does not match any trusted origins.")
 REASON_MALFORMED_REFERER = _("Referer checking failed - Referer is malformed.")
@@ -48,8 +47,7 @@ REASON_INSECURE_REFERER = _("Referer checking failed - Referer is insecure while
 
 class SearchHistoryMiddleware:
     def process_response(self, req, resp, resource, req_succeeded):
-        if hasattr(req, 'user') and req.user.is_authenticated and\
-                req.path.endswith(settings.SEARCH_PATH) and req.params.get('q'):
+        if hasattr(req, "user") and req.user.is_authenticated and req.path.endswith(settings.SEARCH_PATH) and req.params.get("q"):
             con = get_redis_connection()
             key = f"search_history_user_{req.user.id}"
             con.lpush(key, req.url)
@@ -58,44 +56,48 @@ class SearchHistoryMiddleware:
 class ApiVersionMiddleware:
     def process_request(self, req, resp):
         current_version = max(VERSIONS)
-        version = req.headers.get('X-API-VERSION', str(current_version))
+        version = req.headers.get("X-API-VERSION", str(current_version))
         try:
             if version not in VERSIONS:
                 raise ValueError
         except ValueError:
-            raise falcon.HTTPBadRequest('Unsupported version',
-                                        'Version provided in X-API-VERSION header is invalid.')
+            raise falcon.HTTPBadRequest(
+                "Unsupported version",
+                "Version provided in X-API-VERSION header is invalid.",
+            )
 
         req.api_version = version
 
     def process_resource(self, req, resp, resource, params):
         # Version from path should override previous value
-        version = params.get('api_version') or None
+        version = params.get("api_version") or None
         if version:
             try:
                 if version not in VERSIONS:
                     raise ValueError
             except ValueError:
-                raise falcon.HTTPBadRequest('Unsupported version',
-                                            'Version provided in path is invalid.')
+                raise falcon.HTTPBadRequest("Unsupported version", "Version provided in path is invalid.")
 
             req.api_version = version
 
     def process_response(self, req, resp, resource, req_succeeded):
-        version = getattr(req, 'api_version', max(VERSIONS))
-        resp.append_header('x-api-version', version)
+        version = getattr(req, "api_version", max(VERSIONS))
+        resp.append_header("x-api-version", version)
 
 
 class FalconCacheMiddleware(BaseFalconCacheMiddleware):
 
     def process_resource(self, req, resp, resource, params):
         """Body of the method is almost all moved from parent class."""
-        if self.cache_config['CACHE_EVICTION_STRATEGY'] in [CacheEvictionStrategy.rest_based,
-                                                            CacheEvictionStrategy.rest_and_time_based] \
-            and req.method.upper() in [HttpMethods.POST,
-                                       HttpMethods.PATCH,
-                                       HttpMethods.PUT,
-                                       HttpMethods.DELETE]:
+        if self.cache_config["CACHE_EVICTION_STRATEGY"] in [
+            CacheEvictionStrategy.rest_based,
+            CacheEvictionStrategy.rest_and_time_based,
+        ] and req.method.upper() in [
+            HttpMethods.POST,
+            HttpMethods.PATCH,
+            HttpMethods.PUT,
+            HttpMethods.DELETE,
+        ]:
             return
 
         responder = None
@@ -105,13 +107,13 @@ class FalconCacheMiddleware(BaseFalconCacheMiddleware):
                 break
 
         if responder:
-            responder_wrapper_name = getattr(getattr(resource, responder), '__name__')
-            if responder_wrapper_name == 'cache_wrap':
+            responder_wrapper_name = getattr(getattr(resource, responder), "__name__")
+            if responder_wrapper_name == "cache_wrap":
                 logger.debug(" This endpoint is decorated by 'cache' being the topmost decorator.")
             else:
-                if hasattr(getattr(resource, responder), '_decorators') and \
-                        'cache' in [d._decorator_name for d in getattr(resource, responder)._decorators
-                                    if hasattr(d, '_decorator_name')]:
+                if hasattr(getattr(resource, responder), "_decorators") and "cache" in [
+                    d._decorator_name for d in getattr(resource, responder)._decorators if hasattr(d, "_decorator_name")
+                ]:
                     logger.debug(" This endpoint is decorated by 'cache', but it is NOT the topmost decorator.")
                 else:
                     logger.debug(" No 'cache' was requested for this endpoint.")
@@ -136,7 +138,7 @@ class FalconCacheMiddleware(BaseFalconCacheMiddleware):
 class LocaleMiddleware:
     def get_language_from_header(self, header):
         for accept_lang, unused in parse_accept_lang_header(header):
-            if accept_lang == '*':
+            if accept_lang == "*":
                 break
 
             if not language_code_re.search(accept_lang):
@@ -153,23 +155,23 @@ class LocaleMiddleware:
             return settings.LANGUAGE_CODE
 
     def process_request(self, req, resp):
-        lang = req.params.get('lang', None)
+        lang = req.params.get("lang", None)
         if not lang:
-            accept_header = req.headers.get('ACCEPT-LANGUAGE', '')
+            accept_header = req.headers.get("ACCEPT-LANGUAGE", "")
             lang = self.get_language_from_header(accept_header)
         req.language = lang.lower()
         activate(req.language)
 
     def process_response(self, req, resp, resource, params):
-        resp.append_header('Content-Language', req.language)
+        resp.append_header("Content-Language", req.language)
 
 
 class CounterMiddleware:
 
     def process_response(self, req, resp, resource, req_succeeded):
         try:
-            view, ident = req.relative_uri.split('?')[0].split('/')[-2:]
-            obj_id = int(str(ident).split(',', 1)[0])
+            view, ident = req.relative_uri.split("?")[0].split("/")[-2:]
+            obj_id = int(str(ident).split(",", 1)[0])
         except (ValueError, IndexError):
             view, obj_id = None, None
 
@@ -186,7 +188,7 @@ class CounterMiddleware:
 class DebugMiddleware:
     def process_request(self, request, response):
 
-        response.context.debug = True if request.params.get('debug') == 'yes' else False
+        response.context.debug = True if request.params.get("debug") == "yes" else False
         if response.context.debug:
             request.context.start_time = datetime.now()
 
@@ -194,30 +196,30 @@ class DebugMiddleware:
         if response.context.debug:
             duration = (datetime.now() - request.context.start_time).microseconds
             response_body = response.media
-            valid, validated, errors = 'n/a', None, None
+            valid, validated, errors = "n/a", None, None
             if response.status == falcon.HTTP_200:
                 valid, validated, errors = jsonapi_validator(response_body)
 
             body = {
-                'status': response.status,
-                'valid': 'ok' if valid else 'error',
-                'duration': '{} ms'.format(duration / 1000),
-                'query': getattr(response.context, 'query', {}),
-                'errors': errors or [],
-                'body': response_body,
-                'data': validated
+                "status": response.status,
+                "valid": "ok" if valid else "error",
+                "duration": "{} ms".format(duration / 1000),
+                "query": getattr(response.context, "query", {}),
+                "errors": errors or [],
+                "body": response_body,
+                "data": validated,
             }
 
             response.text = json.dumps(body, cls=DateTimeToISOEncoder)
             response.status = falcon.HTTP_200
-            response.content_type = 'application/json'
+            response.content_type = "application/json"
 
 
 class ContentTypeMiddleware:
     def process_request(self, req, resp):
         allowed_mime_types = [
-            'application/vnd.api+json',
-            'application/vnd.api+json; ext=bulk'
+            "application/vnd.api+json",
+            "application/vnd.api+json; ext=bulk",
         ] + list(set(settings.RDF_FORMAT_TO_MIMETYPE.values()))
         resp.content_type = get_best_match(req.accept, allowed_mime_types)
 
@@ -227,7 +229,7 @@ class TraceMiddleware:
         self.client = apm_client
 
     def process_request(self, req, resp):
-        if self.client and req.user_agent not in ('mcod-heartbeat', 'mcod-internal'):
+        if self.client and req.user_agent not in ("mcod-heartbeat", "mcod-internal"):
             if constants.TRACEPARENT_HEADER_NAME in req.headers:
                 trace_parent = TraceParent.from_string(req.headers[constants.TRACEPARENT_HEADER_NAME])
             else:
@@ -236,7 +238,7 @@ class TraceMiddleware:
             self.client.begin_transaction("request", trace_parent=trace_parent)
 
     def process_response(self, req, resp, resource, req_succeeded=None):
-        if self.client and req.user_agent != 'mcod-heartbeat':
+        if self.client and req.user_agent != "mcod-heartbeat":
             rule = route_to_name(req.uri_template, method=req.method)
             elasticapm.set_context(
                 lambda: get_data_from_request(
@@ -247,12 +249,13 @@ class TraceMiddleware:
                 "request",
             )
             elasticapm.set_context(
-                lambda: get_data_from_response(resp, capture_headers=self.client.config.capture_headers), "response"
+                lambda: get_data_from_response(resp, capture_headers=self.client.config.capture_headers),
+                "response",
             )
 
             result = resp.status
             elasticapm.set_transaction_name(rule, override=False)
-            if hasattr(req, 'user') and req.user.is_authenticated:
+            if hasattr(req, "user") and req.user.is_authenticated:
                 elasticapm.set_user_context(email=req.user.email, user_id=req.user.id)
 
             elasticapm.set_transaction_result(result, override=False)
@@ -268,7 +271,7 @@ class CsrfMiddleware:
     """
 
     def process_resource(self, request, response, resource, params):
-        if request.method not in SAFE_METHODS and not getattr(resource, 'csrf_exempt', False):
+        if request.method not in SAFE_METHODS and not getattr(resource, "csrf_exempt", False):
             self.check_token(request, response)
 
     def process_response(self, request: Request, response: Response, resource, req_succeeded):
@@ -308,13 +311,13 @@ class CsrfMiddleware:
                 domain=cookie_domain,
             )
         # Set the Vary header since content varies with the CSRF cookie.
-        vary_val = response.headers.get('Vary')
+        vary_val = response.headers.get("Vary")
         if not vary_val:
-            vary_val = 'Cookie'
-        elif 'Cookie' not in vary_val:
+            vary_val = "Cookie"
+        elif "Cookie" not in vary_val:
             vary_val = f"{vary_val}, Cookie"
 
-        response.set_header('Vary', vary_val)
+        response.set_header("Vary", vary_val)
 
     @staticmethod
     def get_token_from_header(request: Request) -> str:
@@ -337,16 +340,18 @@ class CsrfMiddleware:
         Complete request handling pipeline with an appropriate error.
         """
         http_status = falcon.HTTP_403
-        response.text = json.dumps({
-            'errors': [
-                {
-                    "title": "CSRF error",
-                    "detail": str(reason),
-                    'status': "Forbidden",
-                    'code': http_status,
-                },
-            ],
-        })
+        response.text = json.dumps(
+            {
+                "errors": [
+                    {
+                        "title": "CSRF error",
+                        "detail": str(reason),
+                        "status": "Forbidden",
+                        "code": http_status,
+                    },
+                ],
+            }
+        )
         response.status = http_status
         response.complete = True
 
@@ -372,21 +377,21 @@ class CsrfMiddleware:
         we can use strict Referer checking.
         """
 
-        if request.scheme != 'https':
+        if request.scheme != "https":
             return
 
-        referer = request.headers.get('Referrer')
+        referer = request.headers.get("Referrer")
         if referer is None:
             return REASON_NO_REFERER
 
         referer = urlparse(referer)
 
         # Make sure we have a valid URL for Referer.
-        if '' in (referer.scheme, referer.netloc):
+        if "" in (referer.scheme, referer.netloc):
             return REASON_MALFORMED_REFERER
 
         # Ensure that our Referer is also secure. (if we ourselves use HTTPS)
-        if referer.scheme != 'https' and request.scheme == 'https':
+        if referer.scheme != "https" and request.scheme == "https":
             return REASON_INSECURE_REFERER
 
         # If there isn't a CSRF_COOKIE_DOMAIN, require an exact match
@@ -395,8 +400,8 @@ class CsrfMiddleware:
         good_referer = settings.SESSION_COOKIE_DOMAIN  # using django's var because it suits us
         if good_referer is not None:
             server_port = request.port
-            if server_port not in ('443', '80'):
-                good_referer = '%s:%s' % (good_referer, server_port)
+            if server_port not in ("443", "80"):
+                good_referer = "%s:%s" % (good_referer, server_port)
         else:
             good_referer = request.host
 

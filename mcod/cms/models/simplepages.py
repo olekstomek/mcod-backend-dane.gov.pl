@@ -8,12 +8,12 @@ from mcod.cms.models.base import BasePage
 
 
 class SimplePageIndex(BasePage):
-    parent_page_types = ['cms.RootPage']
-    subpage_types = ['cms.SimplePage', 'cms.ExtraSimplePage']
+    parent_page_types = ["cms.RootPage"]
+    subpage_types = ["cms.SimplePage", "cms.ExtraSimplePage"]
 
     max_count = 1
-    fixed_slug = 'page'
-    fixed_url_path = 'page/'
+    fixed_slug = "page"
+    fixed_url_path = "page/"
 
     class Meta:
         verbose_name = "Lista prostych stron WWW"
@@ -23,31 +23,34 @@ class SimplePageIndex(BasePage):
 class SimplePageMixin(BasePage):
 
     parent_page_types = [
-        'cms.SimplePageIndex',
+        "cms.SimplePageIndex",
     ]
 
     subpage_types = []
 
-    i18n_fields = BasePage.i18n_fields + ['body', ]
-
-    api_fields = BasePage.api_fields + [
-        APIField('body', serializer=fields.RichTextField(source='body_i18n'))
+    i18n_fields = BasePage.i18n_fields + [
+        "body",
     ]
 
+    api_fields = BasePage.api_fields + [APIField("body", serializer=fields.RichTextField(source="body_i18n"))]
+
     content_panels_pl = BasePage.content_panels + [
-        FieldPanel('body', classname="full", heading="Treść strony"),
+        FieldPanel("body", classname="full", heading="Treść strony"),
     ]
 
     content_panels_en = BasePage.content_panels_en + [
-        FieldPanel('body_en', classname="full", heading="Treść strony"),
+        FieldPanel("body_en", classname="full", heading="Treść strony"),
     ]
 
     settings_panels = [
         PublishingPanel(),
-        MultiFieldPanel([
-            FieldPanel('slug'),
-            FieldPanel('show_in_menus'),
-        ], 'Ustawienia strony'),
+        MultiFieldPanel(
+            [
+                FieldPanel("slug"),
+                FieldPanel("show_in_menus"),
+            ],
+            "Ustawienia strony",
+        ),
     ]
 
     class Meta(BasePage.Meta):
@@ -56,7 +59,7 @@ class SimplePageMixin(BasePage):
         abstract = True
 
     def get_copyable_fields(self):
-        return super().get_copyable_fields() + ['body']
+        return super().get_copyable_fields() + ["body"]
 
 
 class SimplePage(SimplePageMixin):

@@ -1,21 +1,21 @@
 /*!
  * Copyright (c) 2012 - 2020, Anaconda, Inc., and Bokeh Contributors
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  * Redistributions of source code must retain the above copyright notice,
  * this list of conditions and the following disclaimer.
- * 
+ *
  * Redistributions in binary form must reproduce the above copyright notice,
  * this list of conditions and the following disclaimer in the documentation
  * and/or other materials provided with the distribution.
- * 
+ *
  * Neither the name of Anaconda nor the names of any contributors
  * may be used to endorse or promote products derived from this software
  * without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -1014,12 +1014,12 @@
         Licensed under the Apache License, Version 2.0 (the "License"); you may not use
         this file except in compliance with the License. You may obtain a copy of the
         License at http://www.apache.org/licenses/LICENSE-2.0
-    
+
         THIS CODE IS PROVIDED ON AN *AS IS* BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
         KIND, EITHER EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION ANY IMPLIED
         WARRANTIES OR CONDITIONS OF TITLE, FITNESS FOR A PARTICULAR PURPOSE,
         MERCHANTABLITY OR NON-INFRINGEMENT.
-    
+
         See the Apache Version 2.0 License for specific language governing permissions
         and limitations under the License.
         ***************************************************************************** */
@@ -1611,10 +1611,10 @@
                     self.selectedDates.length > 0 || self.config.noCalendar;
                 var isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
                 /* TODO: investigate this further
-            
+
                   Currently, there is weird positioning behavior in safari causing pages
                   to scroll up. https://github.com/chmln/flatpickr/issues/563
-            
+
                   However, most browsers are not Safari and positioning is expensive when used
                   in scale. https://github.com/chmln/flatpickr/issues/1096
                 */
@@ -5919,7 +5919,7 @@ span.flatpickr-day.selected {
                 - The provided value for the option;
                 - A reference to the options object;
                 - The name for the option;
-    
+
             The testing function returns false when an error is detected,
             or true when everything is OK. It can also modify the option
             object, to make sure all values can be correctly looped elsewhere. */
@@ -7156,17 +7156,17 @@ span.flatpickr-day.selected {
                         scope_Events[targetEvent].forEach(function (callback) {
                             callback.call(
                             // Use the slider public API as the scope ('this')
-                            scope_Self, 
+                            scope_Self,
                             // Return values as array, so arg_1[arg_2] is always valid.
-                            scope_Values.map(options.format.to), 
+                            scope_Values.map(options.format.to),
                             // Handle index, 0 or 1
-                            handleNumber, 
+                            handleNumber,
                             // Un-formatted slider values
-                            scope_Values.slice(), 
+                            scope_Values.slice(),
                             // Event is fired by tap, true or false
-                            tap || false, 
+                            tap || false,
                             // Left offset of the handle, in relation to the slider
-                            scope_Locations.slice(), 
+                            scope_Locations.slice(),
                             // add the slider public API to an accessible parameter when this is unavailable
                             scope_Self);
                         });
@@ -8596,7 +8596,7 @@ span.flatpickr-day.selected {
                     /******/ i: moduleId,
                     /******/ l: false,
                     /******/ exports: {}
-                    /******/ 
+                    /******/
                 };
                 /******/
                 /******/ // Execute the module function
@@ -8607,7 +8607,7 @@ span.flatpickr-day.selected {
                 /******/
                 /******/ // Return the exports of the module
                 /******/ return module.exports;
-                /******/ 
+                /******/
             }
             /******/
             /******/
@@ -8622,7 +8622,7 @@ span.flatpickr-day.selected {
                 /******/ if (!__webpack_require__.o(exports, name)) {
                     /******/ Object.defineProperty(exports, name, { enumerable: true, get: getter });
                     /******/ }
-                /******/ 
+                /******/
             };
             /******/
             /******/ // define __esModule on exports
@@ -8631,7 +8631,7 @@ span.flatpickr-day.selected {
                     /******/ Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
                     /******/ }
                 /******/ Object.defineProperty(exports, '__esModule', { value: true });
-                /******/ 
+                /******/
             };
             /******/
             /******/ // create a fake namespace object
@@ -8653,7 +8653,7 @@ span.flatpickr-day.selected {
                     for (var key in value)
                         __webpack_require__.d(ns, key, function (key) { return value[key]; }.bind(null, key));
                 /******/ return ns;
-                /******/ 
+                /******/
             };
             /******/
             /******/ // getDefaultExport function for compatibility with non-harmony modules
@@ -8663,7 +8663,7 @@ span.flatpickr-day.selected {
                     /******/ function getModuleExports() { return module; };
                 /******/ __webpack_require__.d(getter, 'a', getter);
                 /******/ return getter;
-                /******/ 
+                /******/
             };
             /******/
             /******/ // Object.prototype.hasOwnProperty.call
@@ -8675,7 +8675,7 @@ span.flatpickr-day.selected {
             /******/
             /******/ // Load entry module and return exports
             /******/ return __webpack_require__(__webpack_require__.s = 4);
-            /******/ 
+            /******/
         })([
             /* 0 */
             /***/ (function (module, exports, __webpack_require__) {
@@ -8792,7 +8792,7 @@ span.flatpickr-day.selected {
                 };
                 var deepmerge_1 = deepmerge;
                 module.exports = deepmerge_1;
-                /***/ 
+                /***/
             }),
             /* 1 */
             /***/ (function (module, __webpack_exports__, __webpack_require__) {
@@ -8816,9 +8816,9 @@ span.flatpickr-day.selected {
                     else { }
                     var result = Object(_ponyfill_js__WEBPACK_IMPORTED_MODULE_0__[ /* default */"a"])(root);
                     /* harmony default export */ __webpack_exports__["a"] = (result);
-                    /* WEBPACK VAR INJECTION */ 
+                    /* WEBPACK VAR INJECTION */
                 }.call(this, __webpack_require__(5), __webpack_require__(6)(module)));
-                /***/ 
+                /***/
             }),
             /* 2 */
             /***/ (function (module, exports, __webpack_require__) {
@@ -8971,7 +8971,7 @@ span.flatpickr-day.selected {
                     }
                     else
                         o.push(t); return o; }(e, t, []); }; }]); });
-                /***/ 
+                /***/
             }),
             /* 3 */
             /***/ (function (module, __webpack_exports__, __webpack_require__) {
@@ -8995,12 +8995,12 @@ span.flatpickr-day.selected {
                     return result;
                 }
                 ;
-                /***/ 
+                /***/
             }),
             /* 4 */
             /***/ (function (module, exports, __webpack_require__) {
                 module.exports = __webpack_require__(7);
-                /***/ 
+                /***/
             }),
             /* 5 */
             /***/ (function (module, exports) {
@@ -9022,7 +9022,7 @@ span.flatpickr-day.selected {
                 // We return undefined, instead of nothing here, so it's
                 // easier to handle this case. if(!global) { ...}
                 module.exports = g;
-                /***/ 
+                /***/
             }),
             /* 6 */
             /***/ (function (module, exports) {
@@ -9051,7 +9051,7 @@ span.flatpickr-day.selected {
                     }
                     return module;
                 };
-                /***/ 
+                /***/
             }),
             /* 7 */
             /***/ (function (module, __webpack_exports__, __webpack_require__) {
@@ -10070,7 +10070,7 @@ span.flatpickr-day.selected {
                  * @typedef {import('../../../types/index').Choices.Group} Group
                  * @typedef {import('../../../types/index').Choices.Item} Item
                  */
-                var store_Store = 
+                var store_Store =
                 /*#__PURE__*/
                 function () {
                     function Store() {
@@ -10238,7 +10238,7 @@ span.flatpickr-day.selected {
                  * @typedef {import('../../../types/index').Choices.passedElement} passedElement
                  * @typedef {import('../../../types/index').Choices.ClassNames} ClassNames
                  */
-                var Dropdown = 
+                var Dropdown =
                 /*#__PURE__*/
                 function () {
                     /**
@@ -10417,7 +10417,7 @@ span.flatpickr-day.selected {
                  * @typedef {import('../../../types/index').Choices.passedElement} passedElement
                  * @typedef {import('../../../types/index').Choices.ClassNames} ClassNames
                  */
-                var container_Container = 
+                var container_Container =
                 /*#__PURE__*/
                 function () {
                     /**
@@ -10559,7 +10559,7 @@ span.flatpickr-day.selected {
                  * @typedef {import('../../../types/index').Choices.passedElement} passedElement
                  * @typedef {import('../../../types/index').Choices.ClassNames} ClassNames
                  */
-                var input_Input = 
+                var input_Input =
                 /*#__PURE__*/
                 function () {
                     /**
@@ -10696,7 +10696,7 @@ span.flatpickr-day.selected {
                 /**
                  * @typedef {import('../../../types/index').Choices.Choice} Choice
                  */
-                var list_List = 
+                var list_List =
                 /*#__PURE__*/
                 function () {
                     /**
@@ -10789,7 +10789,7 @@ span.flatpickr-day.selected {
                  * @typedef {import('../../../types/index').Choices.passedElement} passedElement
                  * @typedef {import('../../../types/index').Choices.ClassNames} ClassNames
                  */
-                var wrapped_element_WrappedElement = 
+                var wrapped_element_WrappedElement =
                 /*#__PURE__*/
                 function () {
                     /**
@@ -10888,7 +10888,7 @@ span.flatpickr-day.selected {
                  * @typedef {import('../../../types/index').Choices.ClassNames} ClassNames
                  * @typedef {import('../../../types/index').Choices.Item} Item
                  */
-                var WrappedInput = 
+                var WrappedInput =
                 /*#__PURE__*/
                 function (_WrappedElement) {
                     _inheritsLoose(WrappedInput, _WrappedElement);
@@ -10951,7 +10951,7 @@ span.flatpickr-day.selected {
                  * @typedef {import('../../../types/index').Choices.Item} Item
                  * @typedef {import('../../../types/index').Choices.Choice} Choice
                  */
-                var WrappedSelect = 
+                var WrappedSelect =
                 /*#__PURE__*/
                 function (_WrappedElement) {
                     wrapped_select_inheritsLoose(WrappedSelect, _WrappedElement);
@@ -11035,7 +11035,7 @@ span.flatpickr-day.selected {
                  * @typedef {import('../../types/index').Choices.Choice} Choice
                  * @typedef {import('../../types/index').Choices.Group} Group
                  */
-                var TEMPLATES = 
+                var TEMPLATES =
                 /** @type {Templates} */
                 {
                     /**
@@ -11465,7 +11465,7 @@ span.flatpickr-day.selected {
                  * Choices
                  * @author Josh Johnson<josh@joshuajohnson.co.uk>
                  */
-                var choices_Choices = 
+                var choices_Choices =
                 /*#__PURE__*/
                 function () {
                     choices_createClass(Choices, null, [{
@@ -12567,7 +12567,7 @@ span.flatpickr-day.selected {
                         } // If we have our mouse down on the scrollbar and are on IE11...
                         if (IS_IE11 && this.choiceList.element.contains(target)) {
                             // check if click was on a scrollbar area
-                            var firstChoice = 
+                            var firstChoice =
                             /** @type {HTMLElement} */
                             this.choiceList.element.firstElementChild;
                             var isOnScrollbar = this._direction === 'ltr' ? event.offsetX >= firstChoice.offsetWidth : event.offsetX < firstChoice.offsetLeft;
@@ -13139,9 +13139,9 @@ span.flatpickr-day.selected {
                     return Choices;
                 }();
                 /* harmony default export */ var scripts_choices = __webpack_exports__["default"] = (choices_Choices);
-                /***/ 
+                /***/
             })
-            /******/ 
+            /******/
         ])["default"];
     });
 },

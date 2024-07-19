@@ -7,13 +7,13 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('watchers', '0011_notification_ref_value'),
+        ("watchers", "0011_notification_ref_value"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='watcher',
-            name='customfields',
+            model_name="watcher",
+            name="customfields",
             field=django.contrib.postgres.fields.jsonb.JSONField(null=True),
         ),
     ]

@@ -71,4 +71,4 @@ class DashboardSerializer(BasicSerializer, ma.Schema):
 
     class Meta:
         strict = True
-        type_ = 'dashboard'
+        type_ = "dashboard"

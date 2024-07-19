@@ -11,9 +11,9 @@ from sentry_sdk.integrations.wsgi import SentryWsgiMiddleware
 from sentry_sdk.utils import capture_internal_exceptions, event_from_exception
 
 if MYPY:
-    from typing import Any, Dict    # noqa: F401
+    from typing import Any, Dict  # noqa: F401
 
-    from sentry_sdk._types import EventProcessor    # noqa: F401
+    from sentry_sdk._types import EventProcessor  # noqa: F401
 
 try:
     import falcon  # type: ignore
@@ -50,8 +50,7 @@ class FalconIntegration(Integration):
         # type: (str) -> None
         if transaction_style not in TRANSACTION_STYLE_VALUES:
             raise ValueError(
-                "Invalid value for transaction_style: %s (must be in %s)"
-                % (transaction_style, TRANSACTION_STYLE_VALUES)
+                "Invalid value for transaction_style: %s (must be in %s)" % (transaction_style, TRANSACTION_STYLE_VALUES)
             )
         self.transaction_style = transaction_style
 
@@ -82,9 +81,7 @@ def _patch_wsgi_app():
         if integration is None:
             return original_wsgi_app(self, env, start_response)
 
-        sentry_wrapped = SentryWsgiMiddleware(
-            lambda envi, start_resp: original_wsgi_app(self, envi, start_resp)
-        )
+        sentry_wrapped = SentryWsgiMiddleware(lambda envi, start_resp: original_wsgi_app(self, envi, start_resp))
 
         return sentry_wrapped(env, start_response)
 
@@ -130,9 +127,7 @@ def _patch_prepare_middleware():
     # type: () -> None
     original_prepare_middleware = falcon.app_helpers.prepare_middleware
 
-    def sentry_patched_prepare_middleware(
-        middleware=None, independent_middleware=False
-    ):
+    def sentry_patched_prepare_middleware(middleware=None, independent_middleware=False):
         # type: (Any, Any) -> Any
         hub = Hub.current
         integration = hub.get_integration(FalconIntegration)
@@ -145,12 +140,8 @@ def _patch_prepare_middleware():
 
 def _exception_leads_to_http_5xx(ex):
     # type: (Exception) -> bool
-    is_server_error = isinstance(ex, falcon.HTTPError) and (ex.status or "").startswith(
-        "5"
-    )
-    is_unhandled_error = not isinstance(
-        ex, (falcon.HTTPError, falcon.http_status.HTTPStatus)
-    )
+    is_server_error = isinstance(ex, falcon.HTTPError) and (ex.status or "").startswith("5")
+    is_unhandled_error = not isinstance(ex, (falcon.HTTPError, falcon.http_status.HTTPStatus))
     return is_server_error or is_unhandled_error
 
 

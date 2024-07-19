@@ -6,37 +6,37 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('schedules', '0001_initial'),
+        ("schedules", "0001_initial"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='userscheduleitem',
-            name='organization',
+            model_name="userscheduleitem",
+            name="organization",
         ),
         migrations.AddField(
-            model_name='userscheduleitem',
-            name='is_resource_added',
-            field=models.BooleanField(default=False, verbose_name='is resource added?'),
+            model_name="userscheduleitem",
+            name="is_resource_added",
+            field=models.BooleanField(default=False, verbose_name="is resource added?"),
         ),
         migrations.AddField(
-            model_name='userscheduleitem',
-            name='is_resource_added_notes',
-            field=models.TextField(blank=True, verbose_name='is resource added notes'),
+            model_name="userscheduleitem",
+            name="is_resource_added_notes",
+            field=models.TextField(blank=True, verbose_name="is resource added notes"),
         ),
         migrations.AddField(
-            model_name='userscheduleitem',
-            name='organization_name',
-            field=models.CharField(blank=True, max_length=150, verbose_name='institution'),
+            model_name="userscheduleitem",
+            name="organization_name",
+            field=models.CharField(blank=True, max_length=150, verbose_name="institution"),
         ),
         migrations.AddField(
-            model_name='userscheduleitem',
-            name='resource_link',
-            field=models.URLField(blank=True, verbose_name='resource link'),
+            model_name="userscheduleitem",
+            name="resource_link",
+            field=models.URLField(blank=True, verbose_name="resource link"),
         ),
         migrations.AlterField(
-            model_name='userscheduleitem',
-            name='format',
-            field=models.CharField(max_length=150, verbose_name='format'),
+            model_name="userscheduleitem",
+            name="format",
+            field=models.CharField(max_length=150, verbose_name="format"),
         ),
     ]

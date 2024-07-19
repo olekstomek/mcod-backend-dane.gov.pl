@@ -9,37 +9,58 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('articles', '0001_initial'),
-        ('tags', '0001_initial'),
+        ("articles", "0001_initial"),
+        ("tags", "0001_initial"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('datasets', '0001_initial'),
+        ("datasets", "0001_initial"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='article',
-            name='created_by',
-            field=models.ForeignKey(editable=False, null=True, on_delete=django.db.models.deletion.DO_NOTHING,
-                                    related_name='articles_created', to=settings.AUTH_USER_MODEL,
-                                    verbose_name='Created by'),
+            model_name="article",
+            name="created_by",
+            field=models.ForeignKey(
+                editable=False,
+                null=True,
+                on_delete=django.db.models.deletion.DO_NOTHING,
+                related_name="articles_created",
+                to=settings.AUTH_USER_MODEL,
+                verbose_name="Created by",
+            ),
         ),
         migrations.AddField(
-            model_name='article',
-            name='datasets',
-            field=models.ManyToManyField(db_table='article_dataset', related_name='articles',
-                                         related_query_name='article', to='datasets.Dataset', verbose_name='Datasets'),
+            model_name="article",
+            name="datasets",
+            field=models.ManyToManyField(
+                db_table="article_dataset",
+                related_name="articles",
+                related_query_name="article",
+                to="datasets.Dataset",
+                verbose_name="Datasets",
+            ),
         ),
         migrations.AddField(
-            model_name='article',
-            name='modified_by',
-            field=models.ForeignKey(editable=False, null=True, on_delete=django.db.models.deletion.DO_NOTHING,
-                                    related_name='articles_modified', to=settings.AUTH_USER_MODEL,
-                                    verbose_name='Modified by'),
+            model_name="article",
+            name="modified_by",
+            field=models.ForeignKey(
+                editable=False,
+                null=True,
+                on_delete=django.db.models.deletion.DO_NOTHING,
+                related_name="articles_modified",
+                to=settings.AUTH_USER_MODEL,
+                verbose_name="Modified by",
+            ),
         ),
         migrations.AddField(
-            model_name='article',
-            name='tags',
-            field=models.ManyToManyField(blank=True, db_table='article_tag', related_name='articles',
-                                         related_query_name='article', to='tags.Tag', verbose_name='Tags'),
+            model_name="article",
+            name="tags",
+            field=models.ManyToManyField(
+                blank=True,
+                db_table="article_tag",
+                related_name="articles",
+                related_query_name="article",
+                to="tags.Tag",
+                verbose_name="Tags",
+            ),
         ),
     ]

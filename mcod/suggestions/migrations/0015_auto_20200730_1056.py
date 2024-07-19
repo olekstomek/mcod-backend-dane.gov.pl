@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('suggestions', '0014_datasetsubmission_history_trigger'),
+        ("suggestions", "0014_datasetsubmission_history_trigger"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='datasetsubmission',
-            name='potential_possibilities',
-            field=models.TextField(blank=True, verbose_name='provide potential data use'),
+            model_name="datasetsubmission",
+            name="potential_possibilities",
+            field=models.TextField(blank=True, verbose_name="provide potential data use"),
         ),
     ]

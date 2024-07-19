@@ -6,23 +6,23 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('suggestions', '0002_datasetsubmission'),
+        ("suggestions", "0002_datasetsubmission"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='datasetsubmission',
-            name='comment',
-            field=models.TextField(blank=True, null=True, verbose_name='Comment'),
+            model_name="datasetsubmission",
+            name="comment",
+            field=models.TextField(blank=True, null=True, verbose_name="Comment"),
         ),
         migrations.AlterField(
-            model_name='datasetsubmission',
-            name='organization_name',
-            field=models.CharField(blank=True, max_length=100, null=True, verbose_name='Institution name'),
+            model_name="datasetsubmission",
+            name="organization_name",
+            field=models.CharField(blank=True, max_length=100, null=True, verbose_name="Institution name"),
         ),
         migrations.AlterField(
-            model_name='datasetsubmission',
-            name='potential_possibilities',
-            field=models.TextField(blank=True, null=True, verbose_name='Indicate potential possibilities'),
+            model_name="datasetsubmission",
+            name="potential_possibilities",
+            field=models.TextField(blank=True, null=True, verbose_name="Indicate potential possibilities"),
         ),
     ]

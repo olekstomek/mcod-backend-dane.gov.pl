@@ -6,18 +6,18 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('schedules', '0006_delete_period'),
+        ("schedules", "0006_delete_period"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='userscheduleitem',
-            name='is_openness_score_increased',
-            field=models.NullBooleanField(verbose_name='is openness score increased?'),
+            model_name="userscheduleitem",
+            name="is_openness_score_increased",
+            field=models.NullBooleanField(verbose_name="is openness score increased?"),
         ),
         migrations.AlterField(
-            model_name='userscheduleitem',
-            name='is_quality_improved',
-            field=models.NullBooleanField(verbose_name='is quality improved?'),
+            model_name="userscheduleitem",
+            name="is_quality_improved",
+            field=models.NullBooleanField(verbose_name="is quality improved?"),
         ),
     ]

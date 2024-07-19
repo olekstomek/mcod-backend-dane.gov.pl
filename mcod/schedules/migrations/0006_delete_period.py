@@ -6,11 +6,11 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('schedules', '0005_remove_schedule_period'),
+        ("schedules", "0005_remove_schedule_period"),
     ]
 
     operations = [
         migrations.DeleteModel(
-            name='Period',
+            name="Period",
         ),
     ]

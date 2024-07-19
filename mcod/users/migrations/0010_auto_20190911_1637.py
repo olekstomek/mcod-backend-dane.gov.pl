@@ -6,18 +6,22 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('users', '0009_auto_20190116_1150'),
+        ("users", "0009_auto_20190116_1150"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='user',
-            name='rodo_privacy_policy_opt_in',
-            field=models.DateTimeField(blank=True, null=True, verbose_name='RODO & privacy policy accepted'),
+            model_name="user",
+            name="rodo_privacy_policy_opt_in",
+            field=models.DateTimeField(blank=True, null=True, verbose_name="RODO & privacy policy accepted"),
         ),
         migrations.AddField(
-            model_name='user',
-            name='subscriptions_report_opt_in',
-            field=models.DateTimeField(blank=True, null=True, verbose_name='Enable daily email report of changes in subscribed objects'),
+            model_name="user",
+            name="subscriptions_report_opt_in",
+            field=models.DateTimeField(
+                blank=True,
+                null=True,
+                verbose_name="Enable daily email report of changes in subscribed objects",
+            ),
         ),
     ]

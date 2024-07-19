@@ -7,13 +7,20 @@ import mcod.core.storages
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('laboratory', '0002_auto_20200609_1448'),
+        ("laboratory", "0002_auto_20200609_1448"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='report',
-            name='file',
-            field=models.FileField(blank=True, max_length=2000, null=True, storage=mcod.core.storages.BaseFileSystemStorage(base_url=None, location=None), upload_to='', verbose_name='File'),
+            model_name="report",
+            name="file",
+            field=models.FileField(
+                blank=True,
+                max_length=2000,
+                null=True,
+                storage=mcod.core.storages.BaseFileSystemStorage(base_url=None, location=None),
+                upload_to="",
+                verbose_name="File",
+            ),
         ),
     ]

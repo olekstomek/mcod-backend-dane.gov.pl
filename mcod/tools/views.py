@@ -31,50 +31,63 @@ class StatsView(JsonAPIView):
 
         def _data(self, request, cleaned, *args, explain=None, **kwargs):
             m_search = MultiSearch()
-            search = Search(using=connection, index=settings.ELASTICSEARCH_COMMON_ALIAS_NAME, extra={'size': 0})
-            search.aggs.bucket(
-                'documents_by_type',
-                TermsFacet(field='model').get_aggregation()
-            ).bucket(
-                'by_month',
-                DateHistogramFacet(
-                    field='created',
-                    interval='month',
-                    min_doc_count=0
-                ).get_aggregation()
+            search = Search(
+                using=connection,
+                index=settings.ELASTICSEARCH_COMMON_ALIAS_NAME,
+                extra={"size": 0},
             )
-            d_search = DatasetDocument().search().extra(size=0).filter('match', status='published')
-            r_search = ResourceDocument().search().extra(size=0).filter('match', status='published')
+            search.aggs.bucket("documents_by_type", TermsFacet(field="model").get_aggregation()).bucket(
+                "by_month",
+                DateHistogramFacet(field="created", interval="month", min_doc_count=0).get_aggregation(),
+            )
+            d_search = DatasetDocument().search().extra(size=0).filter("match", status="published")
+            r_search = ResourceDocument().search().extra(size=0).filter("match", status="published")
 
-            d_search.aggs.bucket('datasets_by_institution',
-                                 NestedFacet('institution',
-                                             TermsFacet(field='institution.id')).get_aggregation())
+            d_search.aggs.bucket(
+                "datasets_by_institution",
+                NestedFacet("institution", TermsFacet(field="institution.id")).get_aggregation(),
+            )
 
-            d_search.aggs.bucket('datasets_by_categories',
-                                 NestedFacet('categories',
-                                             TermsFacet(field='categories.id',
-                                                        min_doc_count=1, size=50)).get_aggregation())
-            d_search.aggs.bucket('datasets_by_category',
-                                 NestedFacet('category',
-                                             TermsFacet(field='category.id',
-                                                        min_doc_count=1, size=50)).get_aggregation())
+            d_search.aggs.bucket(
+                "datasets_by_categories",
+                NestedFacet(
+                    "categories",
+                    TermsFacet(field="categories.id", min_doc_count=1, size=50),
+                ).get_aggregation(),
+            )
+            d_search.aggs.bucket(
+                "datasets_by_category",
+                NestedFacet(
+                    "category",
+                    TermsFacet(field="category.id", min_doc_count=1, size=50),
+                ).get_aggregation(),
+            )
 
-            d_search.aggs.bucket('datasets_by_tag', TermsFacet(field='tags').get_aggregation())
+            d_search.aggs.bucket("datasets_by_tag", TermsFacet(field="tags").get_aggregation())
 
-            d_search.aggs.bucket('datasets_by_keyword', Nested(aggs={
-                'inner': Filter(
-                    aggs={'inner': Terms(field='keywords.name')},
-                    term={'keywords.language': get_language()},
-                )
-            }, path='keywords'))
+            d_search.aggs.bucket(
+                "datasets_by_keyword",
+                Nested(
+                    aggs={
+                        "inner": Filter(
+                            aggs={"inner": Terms(field="keywords.name")},
+                            term={"keywords.language": get_language()},
+                        )
+                    },
+                    path="keywords",
+                ),
+            )
 
-            d_search.aggs.bucket('datasets_by_formats', TermsFacet(field='formats').get_aggregation())
-            d_search.aggs.bucket('datasets_by_openness_scores', TermsFacet(field='openness_scores').get_aggregation())
-            r_search.aggs.bucket('resources_by_type', TermsFacet(field='type').get_aggregation())
+            d_search.aggs.bucket("datasets_by_formats", TermsFacet(field="formats").get_aggregation())
+            d_search.aggs.bucket(
+                "datasets_by_openness_scores",
+                TermsFacet(field="openness_scores").get_aggregation(),
+            )
+            r_search.aggs.bucket("resources_by_type", TermsFacet(field="type").get_aggregation())
             m_search = m_search.add(search)
             m_search = m_search.add(d_search)
             m_search = m_search.add(r_search)
-            if explain == '1':
+            if explain == "1":
                 return m_search.to_dict()
             try:
                 resp1, resp2, resp3 = m_search.execute()
@@ -90,13 +103,13 @@ class StatsView(JsonAPIView):
                 return resp1
             except TransportError as err:
                 try:
-                    description = err.info['error']['reason']
+                    description = err.info["error"]["reason"]
                 except KeyError:
                     description = err.error
                 raise falcon.HTTPBadRequest(description=description)
 
         def _metadata(self, request, data, *args, **kwargs):
             meta = super()._metadata(request, data, *args, **kwargs)
-            meta['alerts'] = get_active_alerts(request.language)
+            meta["alerts"] = get_active_alerts(request.language)
 
             return meta

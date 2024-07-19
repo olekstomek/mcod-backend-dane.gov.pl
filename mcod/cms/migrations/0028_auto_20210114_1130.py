@@ -7,38 +7,38 @@ import mcod.cms.api.fields
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('cms', '0027_merge_20210104_0925'),
+        ("cms", "0027_merge_20210104_0925"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='kbcategorypage',
-            name='body',
+            model_name="kbcategorypage",
+            name="body",
             field=mcod.cms.api.fields.LocalizedHyperField(blank=True, default=None, null=True),
         ),
         migrations.AlterField(
-            model_name='kbcategorypage',
-            name='body_en',
+            model_name="kbcategorypage",
+            name="body_en",
             field=mcod.cms.api.fields.LocalizedHyperField(blank=True, default=None, null=True),
         ),
         migrations.AlterField(
-            model_name='kbrootpage',
-            name='body',
+            model_name="kbrootpage",
+            name="body",
             field=mcod.cms.api.fields.LocalizedHyperField(blank=True, default=None, null=True),
         ),
         migrations.AlterField(
-            model_name='kbrootpage',
-            name='body_en',
+            model_name="kbrootpage",
+            name="body_en",
             field=mcod.cms.api.fields.LocalizedHyperField(blank=True, default=None, null=True),
         ),
         migrations.AlterField(
-            model_name='landingpage',
-            name='body',
+            model_name="landingpage",
+            name="body",
             field=mcod.cms.api.fields.LocalizedHyperField(default=None),
         ),
         migrations.AlterField(
-            model_name='landingpage',
-            name='body_en',
+            model_name="landingpage",
+            name="body_en",
             field=mcod.cms.api.fields.LocalizedHyperField(blank=True, default=None, null=True),
         ),
     ]

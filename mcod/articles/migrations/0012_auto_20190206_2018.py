@@ -7,13 +7,17 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('articles', '0011_auto_20190205_1415'),
+        ("articles", "0011_auto_20190205_1415"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='article',
-            name='category',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to='articles.ArticleCategory', verbose_name='Category'),
+            model_name="article",
+            name="category",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.PROTECT,
+                to="articles.ArticleCategory",
+                verbose_name="Category",
+            ),
         ),
     ]

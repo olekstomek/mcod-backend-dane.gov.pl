@@ -5,7 +5,7 @@ from django.conf import settings
 
 
 def update_default_region(apps, schema_editor):
-    region = apps.get_model('regions', 'Region')
+    region = apps.get_model("regions", "Region")
     default_reg = region.objects.get(region_id=settings.DEFAULT_REGION_ID)
     default_reg.geonames_id = 798544
     default_reg.save()
@@ -14,7 +14,7 @@ def update_default_region(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('regions', '0004_region_geonames_id'),
+        ("regions", "0004_region_geonames_id"),
     ]
 
     operations = [

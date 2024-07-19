@@ -6,13 +6,23 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('organizations', '0014_auto_20200417_0907'),
+        ("organizations", "0014_auto_20200417_0907"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='organization',
-            name='institution_type',
-            field=models.CharField(choices=[('local', 'Local government'), ('state', 'Public government'), ('private', 'Private entities'), ('other', 'Other')], default='state', max_length=50, verbose_name='Institution type'),
+            model_name="organization",
+            name="institution_type",
+            field=models.CharField(
+                choices=[
+                    ("local", "Local government"),
+                    ("state", "Public government"),
+                    ("private", "Private entities"),
+                    ("other", "Other"),
+                ],
+                default="state",
+                max_length=50,
+                verbose_name="Institution type",
+            ),
         ),
     ]

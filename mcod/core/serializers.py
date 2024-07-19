@@ -7,7 +7,7 @@ from mcod.core.registries import csv_serializers_registry
 class ModelSchemaOpts(SchemaOpts):
     def __init__(self, meta, **kwargs):
         SchemaOpts.__init__(self, meta, **kwargs)
-        self.model_name = getattr(meta, 'model', None)
+        self.model_name = getattr(meta, "model", None)
 
 
 class CSVSchemaRegistrator(SchemaMeta):
@@ -37,6 +37,6 @@ class RDFSchema(BaseSchema, metaclass=SchemaMeta):
 class ListWithoutNoneStrElement(fields.List):
     @fields.after_serialize
     def remove_none(self, value=None):
-        if isinstance(value, list) and 'none' in value:
+        if isinstance(value, list) and "none" in value:
             return []
         return value

@@ -7,18 +7,22 @@ import modeltrans.fields
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('guides', '0005_auto_20210113_1238'),
+        ("guides", "0005_auto_20210113_1238"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='guide',
-            name='i18n',
-            field=modeltrans.fields.TranslationField(fields=('title', 'slug'), required_languages=(), virtual_fields=True),
+            model_name="guide",
+            name="i18n",
+            field=modeltrans.fields.TranslationField(fields=("title", "slug"), required_languages=(), virtual_fields=True),
         ),
         migrations.AlterField(
-            model_name='guideitem',
-            name='i18n',
-            field=modeltrans.fields.TranslationField(fields=('title', 'content', 'slug'), required_languages=(), virtual_fields=True),
+            model_name="guideitem",
+            name="i18n",
+            field=modeltrans.fields.TranslationField(
+                fields=("title", "content", "slug"),
+                required_languages=(),
+                virtual_fields=True,
+            ),
         ),
     ]

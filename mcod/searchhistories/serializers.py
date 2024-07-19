@@ -15,9 +15,9 @@ class SearchHistoryApiAttrs(ObjectAttrs, HighlightObjectMixin):
     modified = fields.Str()
 
     class Meta:
-        object_type = 'searchhistory'
-        url_template = '{api_url}/searchhistories/{ident}'
-        model = 'searchhistories.SearchHistory'
+        object_type = "searchhistory"
+        url_template = "{api_url}/searchhistories/{ident}"
+        model = "searchhistories.SearchHistory"
 
 
 class SearchHistoryApiResponse(SubscriptionMixin, TopLevel):

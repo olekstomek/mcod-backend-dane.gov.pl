@@ -17,4 +17,4 @@ def test_createsuperuser_with_custom_user_model():
         assert "That Email is already taken" in str(extinfo.value)
     assert superusers_count == 1
     assert superuser.is_superuser
-    assert superuser.state == 'active'
+    assert superuser.state == "active"

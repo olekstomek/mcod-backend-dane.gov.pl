@@ -7,11 +7,11 @@ from mcod.core.managers import SoftDeletableManager, SoftDeletableQuerySet, Tras
 class OrganizationQuerySetMixin:
     def get_filtered_results(self, **kwargs):
         query = {}
-        if 'agents__isnull' in kwargs:
-            query['agents__isnull'] = kwargs['agents__isnull']
-        if 'agents__id' in kwargs:
-            query['agents__id'] = kwargs['agents__id']
-        return self.filter(**query).order_by('title')
+        if "agents__isnull" in kwargs:
+            query["agents__isnull"] = kwargs["agents__isnull"]
+        if "agents__id" in kwargs:
+            query["agents__id"] = kwargs["agents__id"]
+        return self.filter(**query).order_by("title")
 
     def _get_page(self, queryset, page=1, per_page=20, **kwargs):
         paginator = Paginator(queryset, per_page)
@@ -38,9 +38,9 @@ class OrganizationQuerySet(OrganizationQuerySetMixin, SoftDeletableQuerySet):
             return self.none()
         kwargs = {}
         if not user.is_superuser:
-            kwargs['id__in'] = user.organizations.all()
+            kwargs["id__in"] = user.organizations.all()
         if query:
-            kwargs['title__icontains'] = query
+            kwargs["title__icontains"] = query
         return self.filter(**kwargs)
 
 

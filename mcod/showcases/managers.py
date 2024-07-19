@@ -4,10 +4,10 @@ from mcod.core.managers import SoftDeletableManager, SoftDeletableQuerySet, Tras
 
 class ShowcaseProposalQuerySetMixin:
     def with_decision(self):
-        return self.exclude(decision='')
+        return self.exclude(decision="")
 
     def without_decision(self):
-        return self.filter(decision='')
+        return self.filter(decision="")
 
 
 class ShowcaseProposalQuerySet(ShowcaseProposalQuerySetMixin, SoftDeletableQuerySet):

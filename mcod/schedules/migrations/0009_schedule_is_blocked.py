@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('schedules', '0008_add_trigram_extension'),
+        ("schedules", "0008_add_trigram_extension"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='schedule',
-            name='is_blocked',
-            field=models.BooleanField(default=False, verbose_name='is blocked?'),
+            model_name="schedule",
+            name="is_blocked",
+            field=models.BooleanField(default=False, verbose_name="is blocked?"),
         ),
     ]

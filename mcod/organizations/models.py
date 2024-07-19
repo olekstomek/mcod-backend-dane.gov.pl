@@ -38,8 +38,16 @@ class Organization(ExtendedModel):
             search_signals.update_document_with_related,
             core_signals.notify_updated,
         ),
-        "published": (rdf_signals.create_graph, search_signals.update_document_with_related, core_signals.notify_published),
-        "restored": (rdf_signals.create_graph, search_signals.update_document_with_related, core_signals.notify_restored),
+        "published": (
+            rdf_signals.create_graph,
+            search_signals.update_document_with_related,
+            core_signals.notify_published,
+        ),
+        "restored": (
+            rdf_signals.create_graph,
+            search_signals.update_document_with_related,
+            core_signals.notify_restored,
+        ),
         "removed": (
             rdf_signals.delete_graph,
             remove_related_datasets,

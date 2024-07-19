@@ -6,18 +6,22 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('harvester', '0011_auto_20210307_2319'),
+        ("harvester", "0011_auto_20210307_2319"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='datasource',
-            name='sparql_query',
-            field=models.TextField(blank=True, null=True, verbose_name='Sparql query'),
+            model_name="datasource",
+            name="sparql_query",
+            field=models.TextField(blank=True, null=True, verbose_name="Sparql query"),
         ),
         migrations.AlterField(
-            model_name='datasource',
-            name='source_type',
-            field=models.CharField(choices=[('ckan', 'CKAN'), ('xml', 'XML'), ('dcat', 'DCAT-AP')], max_length=10, verbose_name='source type'),
+            model_name="datasource",
+            name="source_type",
+            field=models.CharField(
+                choices=[("ckan", "CKAN"), ("xml", "XML"), ("dcat", "DCAT-AP")],
+                max_length=10,
+                verbose_name="source type",
+            ),
         ),
     ]

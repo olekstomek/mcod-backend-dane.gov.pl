@@ -1,3 +1,2 @@
-
 class MalformedTerytCodeError(Exception):
     pass

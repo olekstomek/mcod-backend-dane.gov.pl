@@ -7,13 +7,13 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('resources', '0011_auto_20190205_0902'),
+        ("resources", "0011_auto_20190205_0902"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='resource',
-            name='tabular_data_schema',
+            model_name="resource",
+            name="tabular_data_schema",
             field=django.contrib.postgres.fields.jsonb.JSONField(blank=True, null=True),
         ),
     ]

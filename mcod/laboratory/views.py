@@ -22,6 +22,6 @@ class LaboratorySearchApiView(JsonAPIView):
 
         def clean(self, *args, **kwargs):
             cleaned = super().clean(*args, **kwargs)
-            if 'sort' not in cleaned:
-                cleaned['sort'] = '-execution_date'
+            if "sort" not in cleaned:
+                cleaned["sort"] = "-execution_date"
             return cleaned

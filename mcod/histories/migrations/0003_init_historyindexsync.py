@@ -11,7 +11,7 @@ def init_histories_index_sync(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('histories', '0002_historyindexsync'),
+        ("histories", "0002_historyindexsync"),
     ]
 
     operations = [

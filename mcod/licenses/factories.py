@@ -5,9 +5,9 @@ from mcod.licenses import models
 
 
 class LicenseFactory(factory.django.DjangoModelFactory):
-    name = factory.Faker('word', locale='pl_PL')
-    title = factory.Faker('text', max_nb_chars=50, locale='pl_PL')
-    url = factory.Faker('url')
+    name = factory.Faker("word", locale="pl_PL")
+    title = factory.Faker("text", max_nb_chars=50, locale="pl_PL")
+    url = factory.Faker("url")
 
     @factory.post_generation
     def article_set(self, create, extracted, **kwargs):
@@ -29,7 +29,7 @@ class LicenseFactory(factory.django.DjangoModelFactory):
 
     class Meta:
         model = models.License
-        django_get_or_create = ('name',)
+        django_get_or_create = ("name",)
 
 
-factories_registry.register('license', LicenseFactory)
+factories_registry.register("license", LicenseFactory)

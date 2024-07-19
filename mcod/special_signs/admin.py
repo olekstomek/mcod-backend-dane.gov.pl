@@ -8,12 +8,13 @@ from mcod.special_signs.models import SpecialSign
 
 class SpecialSignAdminMixin:
     is_history_other = True
-    list_display = ('symbol', 'name', '_description', 'obj_history')
+    list_display = ("symbol", "name", "_description", "obj_history")
 
     def _description(self, obj):
         return obj.description
-    _description.short_description = _('description')
-    _description.admin_order_field = 'description'
+
+    _description.short_description = _("description")
+    _description.admin_order_field = "description"
 
     def save_model(self, request, obj, form, change):
         if not obj.created_by:
@@ -25,7 +26,7 @@ class SpecialSignAdminMixin:
 class SpecialSignAdmin(SpecialSignAdminMixin, HistoryMixin, ModelAdmin):
 
     actions_on_top = True
-    delete_selected_msg = _('Delete selected special signs')
+    delete_selected_msg = _("Delete selected special signs")
     form = SpecialSignAdminForm
     lang_fields = True
     soft_delete = True
@@ -33,7 +34,7 @@ class SpecialSignAdmin(SpecialSignAdminMixin, HistoryMixin, ModelAdmin):
     @property
     def suit_form_tabs(self):
         return (
-            ('general', _('General')),
+            ("general", _("General")),
             *self.get_translations_tabs(),
         )
 
@@ -46,34 +47,40 @@ class SpecialSignAdmin(SpecialSignAdminMixin, HistoryMixin, ModelAdmin):
     def get_fieldsets(self, request, obj=None):
         fieldsets = [
             (
-                None, {
-                    'classes': ('suit-tab', 'suit-tab-general',),
-                    'fields': (
-                        'symbol',
-                        'name',
-                        'description',
-                    )
+                None,
+                {
+                    "classes": (
+                        "suit-tab",
+                        "suit-tab-general",
+                    ),
+                    "fields": (
+                        "symbol",
+                        "name",
+                        "description",
+                    ),
                 },
             ),
             (
-                None, {
-                    'classes': ('suit-tab', 'suit-tab-general',),
-                    'fields': (
-                        'status',
-                    )
+                None,
+                {
+                    "classes": (
+                        "suit-tab",
+                        "suit-tab-general",
+                    ),
+                    "fields": ("status",),
                 },
             ),
         ]
         translations_fieldsets = self.get_translations_fieldsets()
         for title, fieldset in translations_fieldsets:
-            fieldset['fields'] = [x for x in fieldset.get('fields', []) if x != 'slug_en']
+            fieldset["fields"] = [x for x in fieldset.get("fields", []) if x != "slug_en"]
         fieldsets += translations_fieldsets
         return fieldsets
 
     def get_readonly_fields(self, request, obj=None):
         readonly_fields = super().get_readonly_fields(request, obj=obj)
         if obj:
-            readonly_fields += ('symbol', )
+            readonly_fields += ("symbol",)
         return readonly_fields
 
 

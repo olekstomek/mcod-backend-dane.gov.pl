@@ -18,17 +18,14 @@ class LogEntryDoc(Document):
     message = fields.TextField()
 
     class Index:
-        name = mcs.ELASTICSEARCH_INDEX_NAMES['logentries']
-        settings = {
-            'number_of_shards': 3,
-            'number_of_replicas': 1
-        }
+        name = mcs.ELASTICSEARCH_INDEX_NAMES["logentries"]
+        settings = {"number_of_shards": 3, "number_of_replicas": 1}
 
     class Django:
         model = LogEntry
 
     def get_queryset(self):
-        return LogEntry.objects.for_admin_panel(exclude_models=['user'])
+        return LogEntry.objects.for_admin_panel(exclude_models=["user"])
 
     def get_queryset_count(self):
-        return LogEntry.objects.for_admin_panel(exclude_models=['user']).count()
+        return LogEntry.objects.for_admin_panel(exclude_models=["user"]).count()

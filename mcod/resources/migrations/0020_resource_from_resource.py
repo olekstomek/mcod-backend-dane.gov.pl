@@ -7,13 +7,18 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('resources', '0019_auto_20190604_2022'),
+        ("resources", "0019_auto_20190604_2022"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='resource',
-            name='from_resource',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.DO_NOTHING, to='resources.Resource'),
+            model_name="resource",
+            name="from_resource",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.DO_NOTHING,
+                to="resources.Resource",
+            ),
         ),
     ]

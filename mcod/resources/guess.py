@@ -20,7 +20,7 @@ GUESS_FROM_BUFFER = (
     "application/octet-stream",
     "octet-stream",
     "octetstream",
-    "application octet-stream"
+    "application octet-stream",
 )
 
 
@@ -29,15 +29,15 @@ def is_octetstream(content_type):
 
 
 def file_encoding(path):
-    iso_unique = (b'\xb1', b'\xac', b'\xbc', b'\xa1', b'\xb6', b'\xa6')
-    cp_unique = (b'\xb9', b'\xa5', b'\x9f', b'\x8f', b'\x8c', b'\x9c')
+    iso_unique = (b"\xb1", b"\xac", b"\xbc", b"\xa1", b"\xb6", b"\xa6")
+    cp_unique = (b"\xb9", b"\xa5", b"\x9f", b"\x8f", b"\x8c", b"\x9c")
 
     iso_counter = 0
     cp_counter = 0
 
     _detector = cchardet.UniversalDetector()
 
-    with open(path, 'rb') as f:
+    with open(path, "rb") as f:
         for line in f:
             for c in iso_unique:
                 iso_counter += line.count(c)
@@ -49,27 +49,33 @@ def file_encoding(path):
                 break
     _detector.close()
 
-    backup_encoding = 'utf-8'
-    encoding = _detector.result.get('encoding')
-    confidence = _detector.result.get('confidence') or 0.0
+    backup_encoding = "utf-8"
+    encoding = _detector.result.get("encoding")
+    confidence = _detector.result.get("confidence") or 0.0
     if confidence < 0.95 and (cp_counter or iso_counter):
-        backup_encoding = 'Windows-1250' if cp_counter > iso_counter else 'iso-8859-2'
+        backup_encoding = "Windows-1250" if cp_counter > iso_counter else "iso-8859-2"
     return encoding, backup_encoding
 
 
 def spreadsheet_file_format(path, encoding):  # noqa: C901
-    encoding = encoding or 'utf-8'
+    encoding = encoding or "utf-8"
     _s = Stream(path, encoding=encoding)
     _s.open()
     _s.close()
-    return _s.format if _s.format != 'inline' else None
+    return _s.format if _s.format != "inline" else None
 
 
 def _csv(path, encoding):
     path = os.path.realpath(path.name) if isinstance(path, io.IOBase) else path
     try:
         return spreadsheet_file_format(path, encoding)
-    except (FormatError, UnicodeDecodeError, FileNotFoundError, BadZipFile, EncodingError):
+    except (
+        FormatError,
+        UnicodeDecodeError,
+        FileNotFoundError,
+        BadZipFile,
+        EncodingError,
+    ):
         return None
 
 
@@ -82,17 +88,17 @@ def _json(source, encoding):
             data = io.BytesIO(source)
             data.seek(0)
             json.load(data, encoding=encoding)
-        _format = 'json'
+        _format = "json"
         # check if valid json is also json-ld.
         try:
             graph = rdflib.Graph()
-            graph.parse(source, format='json-ld')
+            graph.parse(source, format="json-ld")
             if len(graph):
-                _format = 'jsonld'
+                _format = "jsonld"
         except Exception:
             pass
-        if _format == 'json' and is_json_stat(source):
-            _format = 'jsonstat'
+        if _format == "json" and is_json_stat(source):
+            _format = "jsonstat"
         return _format
     except (json.decoder.JSONDecodeError, UnicodeDecodeError):
         return None
@@ -104,7 +110,7 @@ def _xml(source, encoding):
             source = io.BytesIO(source)
             source.seek(0)
         etree.parse(source, etree.XMLParser())
-        return 'xml'
+        return "xml"
     except etree.XMLSyntaxError:
         return None
 
@@ -112,38 +118,57 @@ def _xml(source, encoding):
 def _html(source, encoding):
     try:
         if isinstance(source, str):
-            source = open(os.path.realpath(source), 'rb')
+            source = open(os.path.realpath(source), "rb")
         elif isinstance(source, bytes):
             source = io.BytesIO(source)
             source.seek(0)
         file_source = BeautifulSoup(source.read(), "html.parser")
         # there are resources with links to web pages containing only iframes loading some content
-        is_html = bool(file_source.find('html') or file_source.find('iframe'))
-        return 'html' if is_html else None
+        is_html = bool(file_source.find("html") or file_source.find("iframe"))
+        return "html" if is_html else None
     except Exception:
         return None
 
 
-def _rdf(source, encoding, extensions=('rdf', 'n3', 'nt', 'nq', 'trig', 'trix', 'rdfa', 'xml', 'ttl', 'jsonld')):
+def _rdf(
+    source,
+    encoding,
+    extensions=(
+        "rdf",
+        "n3",
+        "nt",
+        "nq",
+        "trig",
+        "trix",
+        "rdfa",
+        "xml",
+        "ttl",
+        "jsonld",
+    ),
+):
     ext = None
     if isinstance(source, str):
-        ext = source.split('.')[-1]
+        ext = source.split(".")[-1]
     else:
         source.seek(0)
-    _format = settings.RDF_FORMAT_TO_MIMETYPE.get(ext) if ext in extensions else 'xml'
+    _format = settings.RDF_FORMAT_TO_MIMETYPE.get(ext) if ext in extensions else "xml"
     try:
         graph = rdflib.ConjunctiveGraph()
         graph.parse(source, format=_format)
         if len(graph):
-            if ext in ('nt', 'nq', 'n3', 'trig', 'trix', 'ttl', 'jsonld'):
+            if ext in ("nt", "nq", "n3", "trig", "trix", "ttl", "jsonld"):
                 return ext
-            elif ext == 'nquads':
-                return 'nq'
-            elif ext == 'turtle':
-                return 'ttl'
-            return 'rdf'
+            elif ext == "nquads":
+                return "nq"
+            elif ext == "turtle":
+                return "ttl"
+            return "rdf"
         return None
-    except (TypeError, rdflib.exceptions.ParserError, xml.sax._exceptions.SAXParseException):
+    except (
+        TypeError,
+        rdflib.exceptions.ParserError,
+        xml.sax._exceptions.SAXParseException,
+    ):
         return None
 
 
@@ -158,7 +183,7 @@ def _jsonapi(source, encoding, content_type=None):
                 schema = json.load(schemafile)
             source.seek(0)
             jsonschema.validate(json.load(source), schema)
-            return 'jsonapi'
+            return "jsonapi"
         except jsonschema.ValidationError:
             pass
     return None
@@ -171,7 +196,7 @@ def _openapi(path, encoding, content_type=None):
 
 def api_format(source):
     for func in (_jsonapi, _openapi, _json, _xml):
-        res = func(source, 'utf-8')
+        res = func(source, "utf-8")
         if res:
             return res
     return None
@@ -182,7 +207,7 @@ def web_format(source):
 
 
 def text_file_format(path, encoding):  # noqa: C901
-    encoding = encoding or 'utf-8'
+    encoding = encoding or "utf-8"
     for func in (_rdf, _json, _html, _xml, _csv):
         res = func(path, encoding)
         if res:

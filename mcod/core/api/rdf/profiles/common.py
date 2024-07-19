@@ -8,11 +8,18 @@ from mcod.lib.rdf.rdf_field import RDFField
 
 RDF_CLASSES = {}
 
-CATALOG_URL = f'{settings.BASE_URL}/dataset'
+CATALOG_URL = f"{settings.BASE_URL}/dataset"
 
 
 class RDFNestedField:
-    def __init__(self, class_name, predicate=None, many=False, required=True, nested_non_bnode=True):
+    def __init__(
+        self,
+        class_name,
+        predicate=None,
+        many=False,
+        required=True,
+        nested_non_bnode=True,
+    ):
         self.class_name = class_name
         self.predicate = predicate
         self.many = many
@@ -64,12 +71,12 @@ class RDFClass(metaclass=RDFMeta):
         object = object or field.object
 
         if not field.allow_null and object is None and object_value is None:
-            object_value = ''
+            object_value = ""
 
         kwargs = {}
         if field.base_uri:
             try:
-                kwargs['base'] = self.VOCABULARIES[field.base_uri]
+                kwargs["base"] = self.VOCABULARIES[field.base_uri]
             except KeyError:
                 pass
 
@@ -109,14 +116,26 @@ class RDFClass(metaclass=RDFMeta):
                 try:
                     if field.many:
                         for element in object_value:
-                            triples.append(self.make_triple(subject=subject, object_value=element, field_name=name))
+                            triples.append(
+                                self.make_triple(
+                                    subject=subject,
+                                    object_value=element,
+                                    field_name=name,
+                                )
+                            )
                     else:
-                        triples.append(self.make_triple(subject=subject, object_value=object_value, field_name=name))
+                        triples.append(
+                            self.make_triple(
+                                subject=subject,
+                                object_value=object_value,
+                                field_name=name,
+                            )
+                        )
                 except Exception:
                     raise
             elif isinstance(field, RDFNestedField):
-                get_subject = getattr(self, f'get_{name}_subject', None)
-                inner_data_func = getattr(self, f'get_{name}_data', None)
+                get_subject = getattr(self, f"get_{name}_subject", None)
+                inner_data_func = getattr(self, f"get_{name}_data", None)
                 if inner_data_func:
                     inner_data = inner_data_func(data)
                 else:
@@ -136,7 +155,7 @@ class RDFClass(metaclass=RDFMeta):
                     else:
                         if row is None and not field.required:
                             continue
-                        inner_subject = row['subject']
+                        inner_subject = row["subject"]
 
                     if inner_subject is None:
                         continue
@@ -150,7 +169,7 @@ class RDFClass(metaclass=RDFMeta):
 
     def from_triples(self, triple_store):
         _fields = self.fields.copy()
-        rdf_type = _fields.pop('rdf_type')
+        rdf_type = _fields.pop("rdf_type")
         store_data = []
         for subject in triple_store.subjects(predicate=rdf_type.predicate, object=rdf_type.object):
             store_data.append(self.get_subject_data(subject, _fields, triple_store))
@@ -164,7 +183,7 @@ class RDFClass(metaclass=RDFMeta):
                 nested_values = rdf_instance.from_triples(triple_store)
                 subject_data[field_name] = nested_values
             else:
-                get_object_func = getattr(self, f'get_{field_name}_object', None)
+                get_object_func = getattr(self, f"get_{field_name}_object", None)
                 if get_object_func:
                     object_values = get_object_func(triple_store, subject, field)
                 else:
@@ -191,4 +210,4 @@ class HYDRAPagedCollection(RDFClass):
     first_page = RDFField(predicate=ns.HYDRA.firstPage, required=False)
 
     def get_subject(self, data):
-        return BNode('PagedCollection')
+        return BNode("PagedCollection")

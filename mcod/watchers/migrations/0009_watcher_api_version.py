@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('watchers', '0008_auto_20190627_0841'),
+        ("watchers", "0008_auto_20190627_0841"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='watcher',
-            name='api_version',
-            field=models.CharField(default='1.4', max_length=10),
+            model_name="watcher",
+            name="api_version",
+            field=models.CharField(default="1.4", max_length=10),
         ),
     ]

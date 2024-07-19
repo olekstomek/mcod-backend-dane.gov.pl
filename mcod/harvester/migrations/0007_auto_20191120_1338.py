@@ -6,17 +6,17 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('harvester', '0006_auto_20191029_0916'),
+        ("harvester", "0006_auto_20191029_0916"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='datasource',
-            name='data_use_rules',
+            model_name="datasource",
+            name="data_use_rules",
         ),
         migrations.AddField(
-            model_name='datasource',
-            name='license_condition_db_or_copyrighted',
-            field=models.CharField(blank=True, max_length=300, verbose_name='data use rules'),
+            model_name="datasource",
+            name="license_condition_db_or_copyrighted",
+            field=models.CharField(blank=True, max_length=300, verbose_name="data use rules"),
         ),
     ]

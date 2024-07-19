@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('resources', '0008_additional_fields'),
+        ("resources", "0008_additional_fields"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='resource',
-            name='show_tabular_view',
-            field=models.BooleanField(default=True, verbose_name='Tabular view'),
+            model_name="resource",
+            name="show_tabular_view",
+            field=models.BooleanField(default=True, verbose_name="Tabular view"),
         ),
     ]

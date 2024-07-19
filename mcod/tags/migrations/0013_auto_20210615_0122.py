@@ -6,13 +6,19 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('tags', '0012_remove_tags_without_language'),
+        ("tags", "0012_remove_tags_without_language"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='tag',
-            name='language',
-            field=models.CharField(choices=[('pl', 'Polish'), ('en', 'English')], db_index=True, default='pl', max_length=2, verbose_name='language'),
+            model_name="tag",
+            name="language",
+            field=models.CharField(
+                choices=[("pl", "Polish"), ("en", "English")],
+                db_index=True,
+                default="pl",
+                max_length=2,
+                verbose_name="language",
+            ),
         ),
     ]

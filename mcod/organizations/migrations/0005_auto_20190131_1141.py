@@ -6,18 +6,18 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('organizations', '0004_auto_20180625_1109'),
+        ("organizations", "0004_auto_20180625_1109"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='organization',
-            name='fax_internal',
-            field=models.CharField(max_length=20, null=True, blank=True, verbose_name='int.'),
+            model_name="organization",
+            name="fax_internal",
+            field=models.CharField(max_length=20, null=True, blank=True, verbose_name="int."),
         ),
         migrations.AddField(
-            model_name='organization',
-            name='tel_internal',
-            field=models.CharField(max_length=20, null=True, blank=True, verbose_name='int.'),
+            model_name="organization",
+            name="tel_internal",
+            field=models.CharField(max_length=20, null=True, blank=True, verbose_name="int."),
         ),
     ]

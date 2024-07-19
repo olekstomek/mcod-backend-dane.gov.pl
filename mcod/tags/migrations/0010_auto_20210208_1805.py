@@ -7,13 +7,13 @@ import modeltrans.fields
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('tags', '0009_create_keywords_from_tags'),
+        ("tags", "0009_create_keywords_from_tags"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='tag',
-            name='i18n',
-            field=modeltrans.fields.TranslationField(fields=('name', 'slug'), required_languages=('pl',), virtual_fields=True),
+            model_name="tag",
+            name="i18n",
+            field=modeltrans.fields.TranslationField(fields=("name", "slug"), required_languages=("pl",), virtual_fields=True),
         ),
     ]

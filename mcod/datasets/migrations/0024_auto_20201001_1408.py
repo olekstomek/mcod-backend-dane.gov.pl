@@ -8,23 +8,34 @@ import modeltrans.fields
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('datasets', '0023_auto_20200219_1636'),
+        ("datasets", "0023_auto_20200219_1636"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='dataset',
-            name='image',
-            field=models.ImageField(blank=True, max_length=200, null=True, storage=mcod.core.storages.DatasetsImagesStorage(base_url=None, location=None), upload_to='dataset_logo/%Y%m%d', verbose_name='Image URL'),
+            model_name="dataset",
+            name="image",
+            field=models.ImageField(
+                blank=True,
+                max_length=200,
+                null=True,
+                storage=mcod.core.storages.DatasetsImagesStorage(base_url=None, location=None),
+                upload_to="dataset_logo/%Y%m%d",
+                verbose_name="Image URL",
+            ),
         ),
         migrations.AddField(
-            model_name='dataset',
-            name='image_alt',
-            field=models.CharField(blank=True, max_length=255, verbose_name='Alternative text'),
+            model_name="dataset",
+            name="image_alt",
+            field=models.CharField(blank=True, max_length=255, verbose_name="Alternative text"),
         ),
         migrations.AlterField(
-            model_name='dataset',
-            name='i18n',
-            field=modeltrans.fields.TranslationField(fields=('title', 'notes', 'image_alt', 'slug'), required_languages=(), virtual_fields=True),
+            model_name="dataset",
+            name="i18n",
+            field=modeltrans.fields.TranslationField(
+                fields=("title", "notes", "image_alt", "slug"),
+                required_languages=(),
+                virtual_fields=True,
+            ),
         ),
     ]

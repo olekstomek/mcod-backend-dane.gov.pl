@@ -14,9 +14,7 @@ class SparqlGraphRegistry:
         self._named_graph = None
         self.sparql_store = get_sparql_store()
 
-    def process_graph(
-        self, action, app_label, object_name, instance_id, *args, **kwargs
-    ):
+    def process_graph(self, action, app_label, object_name, instance_id, *args, **kwargs):
         instance = _instance(app_label, object_name, instance_id)
         query, ns = getattr(self, action)(instance, *args, **kwargs)
         if not query:
@@ -94,9 +92,7 @@ class SparqlGraphRegistry:
         queries = []
         ns = {}
         for model in related_models:
-            related_instance = _instance(
-                model["app_label"], model["model_cls"], model["instance_id"]
-            )
+            related_instance = _instance(model["app_label"], model["model_cls"], model["instance_id"])
             _q, _ns = self.update(related_instance)
             queries.append(_q)
             ns.update(**_ns)
@@ -112,9 +108,7 @@ class SparqlGraphRegistry:
         ns = {}
         if model_cls in self._models:
             for graph in self._models[model_cls]:
-                _q, _ns = getattr(graph(named_graph=self._named_graph), action)(
-                    instance
-                )
+                _q, _ns = getattr(graph(named_graph=self._named_graph), action)(instance)
                 queries.append(_q)
                 ns.update(**_ns)
         full_query = "; ".join(queries)

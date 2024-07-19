@@ -13,16 +13,16 @@ from mcod.suggestions.models import (
 
 
 class DatasetSubmissionFactory(factory.django.DjangoModelFactory):
-    title = factory.Faker('text', max_nb_chars=15, locale='pl_PL')
-    notes = factory.Faker('paragraph', nb_sentences=5)
+    title = factory.Faker("text", max_nb_chars=15, locale="pl_PL")
+    notes = factory.Faker("paragraph", nb_sentences=5)
 
     class Meta:
         model = DatasetSubmission
 
 
 class AcceptedDatasetSubmissionFactory(factory.django.DjangoModelFactory):
-    title = factory.Faker('text', max_nb_chars=15, locale='pl_PL')
-    notes = factory.Faker('paragraph', nb_sentences=5)
+    title = factory.Faker("text", max_nb_chars=15, locale="pl_PL")
+    notes = factory.Faker("paragraph", nb_sentences=5)
 
     class Meta:
         model = AcceptedDatasetSubmission
@@ -30,7 +30,7 @@ class AcceptedDatasetSubmissionFactory(factory.django.DjangoModelFactory):
 
 class DatasetCommentFactory(factory.django.DjangoModelFactory):
     dataset = factory.SubFactory(DatasetFactory)
-    comment = factory.Faker('paragraph', nb_sentences=5)
+    comment = factory.Faker("paragraph", nb_sentences=5)
 
     class Meta:
         model = DatasetComment
@@ -38,7 +38,7 @@ class DatasetCommentFactory(factory.django.DjangoModelFactory):
 
 class ResourceCommentFactory(factory.django.DjangoModelFactory):
     resource = factory.SubFactory(ResourceFactory)
-    comment = factory.Faker('paragraph', nb_sentences=5)
+    comment = factory.Faker("paragraph", nb_sentences=5)
 
     class Meta:
         model = ResourceComment
@@ -50,8 +50,8 @@ class SubmissionFeedbackFactory(factory.django.DjangoModelFactory):
         model = SubmissionFeedback
 
 
-factories_registry.register('datasetsubmission', DatasetSubmissionFactory)
-factories_registry.register('accepteddatasetsubmission', AcceptedDatasetSubmissionFactory)
-factories_registry.register('datasetcomment', DatasetCommentFactory)
-factories_registry.register('resourcecomment', ResourceCommentFactory)
-factories_registry.register('submissionfeedback', SubmissionFeedbackFactory)
+factories_registry.register("datasetsubmission", DatasetSubmissionFactory)
+factories_registry.register("accepteddatasetsubmission", AcceptedDatasetSubmissionFactory)
+factories_registry.register("datasetcomment", DatasetCommentFactory)
+factories_registry.register("resourcecomment", ResourceCommentFactory)
+factories_registry.register("submissionfeedback", SubmissionFeedbackFactory)

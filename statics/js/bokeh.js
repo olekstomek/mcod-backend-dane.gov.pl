@@ -1,21 +1,21 @@
 /*!
  * Copyright (c) 2012 - 2020, Anaconda, Inc., and Bokeh Contributors
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  * Redistributions of source code must retain the above copyright notice,
  * this list of conditions and the following disclaimer.
- * 
+ *
  * Redistributions in binary form must reproduce the above copyright notice,
  * this list of conditions and the following disclaimer in the documentation
  * and/or other materials provided with the distribution.
- * 
+ *
  * Neither the name of Anaconda nor the names of any contributors
  * may be used to endorse or promote products derived from this software
  * without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -150,10 +150,10 @@
 /* tslib/tslib.es6.js */ function _(require, module, exports) {
     /*! *****************************************************************************
     Copyright (c) Microsoft Corporation.
-    
+
     Permission to use, copy, modify, and/or distribute this software for any
     purpose with or without fee is hereby granted.
-    
+
     THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
     REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
     AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
@@ -15636,19 +15636,19 @@ void main()
         _computed_image_dimensions() {
             /*
             Heuristics to determine ColorBar image dimensions if set to "auto"
-        
+
             Note: Returns the height/width values for the ColorBar's scale image, not
             the dimensions of the entire ColorBar.
-        
+
             If the short dimension (the width of a vertical bar or height of a
             horizontal bar) is set to "auto", the resulting dimension will be set to
             25 px.
-        
+
             For a ColorBar in a side panel with the long dimension (the height of a
             vertical bar or width of a horizontal bar) set to "auto", the
             resulting dimension will be as long as the adjacent frame edge, so that the
             bar "fits" to the plot.
-        
+
             For a ColorBar in the plot frame with the long dimension set to "auto", the
             resulting dimension will be the greater of:
               * The length of the color palette * 25px
@@ -15699,7 +15699,7 @@ void main()
             (low to high) to a screen space range equal to the length of the ColorBar's
             scale image. The scale is used to calculate the tick coordinates in screen
             coordinates for plotting purposes.
-        
+
             Note: the type of color_mapper has to match the type of scale (i.e.
             a LinearColorMapper will require a corresponding LinearScale instance).
             */
@@ -19882,7 +19882,7 @@ void main()
             console.log.apply(console, __slice.call(arguments, 0));
             return process.exit(1);
           }
-        
+
           function say () { return console.log.apply(console, __slice.call(arguments, 0)) }
         */
         function actualize(entry, rule, year) {
@@ -20382,13 +20382,13 @@ void main()
     /************************************
         Constants
     ************************************/
-    var numbro, VERSION = '1.6.2', 
+    var numbro, VERSION = '1.6.2',
     // internal storage for culture config files
-    cultures = {}, 
+    cultures = {},
     // Todo: Remove in 2.0.0
-    languages = cultures, currentCulture = 'en-US', zeroFormat = null, defaultFormat = '0,0', defaultCurrencyFormat = '0$', 
+    languages = cultures, currentCulture = 'en-US', zeroFormat = null, defaultFormat = '0,0', defaultCurrencyFormat = '0$',
     // check for nodeJS
-    hasModule = (typeof module !== 'undefined' && module.exports), 
+    hasModule = (typeof module !== 'undefined' && module.exports),
     // default culture
     enUS = {
         delimiters: {

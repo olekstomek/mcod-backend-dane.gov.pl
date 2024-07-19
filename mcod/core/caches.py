@@ -7,7 +7,7 @@ marker = object()
 
 
 def _memoize(func, *args, **kw):
-    cache = getattr(func, '_cache', marker)
+    cache = getattr(func, "_cache", marker)
     if cache is marker:
         func._cache = func(*args, **kw)
         return func._cache
@@ -21,9 +21,9 @@ def memoize(f):
 
 def flush_sessions():
     _cache = caches[settings.SESSION_CACHE_ALIAS]
-    _cache.delete_pattern('*')
+    _cache.delete_pattern("*")
 
 
-def flush_cache(cache='default'):
+def flush_cache(cache="default"):
     _cache = caches[cache]
-    _cache.delete_pattern('*')
+    _cache.delete_pattern("*")

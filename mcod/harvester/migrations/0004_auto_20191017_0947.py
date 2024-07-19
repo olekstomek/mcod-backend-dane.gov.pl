@@ -6,28 +6,28 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('harvester', '0003_auto_20191015_1140'),
+        ("harvester", "0003_auto_20191015_1140"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='datasourceimport',
-            name='datasets_created_count',
-            field=models.PositiveIntegerField(blank=True, null=True, verbose_name='number of created datasets'),
+            model_name="datasourceimport",
+            name="datasets_created_count",
+            field=models.PositiveIntegerField(blank=True, null=True, verbose_name="number of created datasets"),
         ),
         migrations.AddField(
-            model_name='datasourceimport',
-            name='datasets_deleted_count',
-            field=models.PositiveIntegerField(blank=True, null=True, verbose_name='number of deleted datasets'),
+            model_name="datasourceimport",
+            name="datasets_deleted_count",
+            field=models.PositiveIntegerField(blank=True, null=True, verbose_name="number of deleted datasets"),
         ),
         migrations.AddField(
-            model_name='datasourceimport',
-            name='resources_created_count',
-            field=models.PositiveIntegerField(blank=True, null=True, verbose_name='number of created resources'),
+            model_name="datasourceimport",
+            name="resources_created_count",
+            field=models.PositiveIntegerField(blank=True, null=True, verbose_name="number of created resources"),
         ),
         migrations.AddField(
-            model_name='datasourceimport',
-            name='resources_deleted_count',
-            field=models.PositiveIntegerField(blank=True, null=True, verbose_name='number of deleted resources'),
+            model_name="datasourceimport",
+            name="resources_deleted_count",
+            field=models.PositiveIntegerField(blank=True, null=True, verbose_name="number of deleted resources"),
         ),
     ]

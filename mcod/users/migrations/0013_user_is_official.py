@@ -4,8 +4,8 @@ from django.db import migrations, models
 
 
 def set_gov_user_types(apps, schema_editor):
-    User = apps.get_model('users', 'User')
-    User.objects.filter(email__endswith='gov.pl').update(is_official=True)
+    User = apps.get_model("users", "User")
+    User.objects.filter(email__endswith="gov.pl").update(is_official=True)
 
 
 def reverse_gov_user_types(apps, schema_editor):
@@ -15,14 +15,14 @@ def reverse_gov_user_types(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('users', '0012_user_is_active'),
+        ("users", "0012_user_is_active"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='user',
-            name='is_official',
-            field=models.BooleanField(default=False, verbose_name='Official'),
+            model_name="user",
+            name="is_official",
+            field=models.BooleanField(default=False, verbose_name="Official"),
         ),
         migrations.RunPython(set_gov_user_types, reverse_gov_user_types),
     ]

@@ -17,25 +17,25 @@ from mcod import settings
 
 class DiscourseClient(BaseDiscourseClient):
     def list_api_keys(self):
-        return self._get('/admin/api/keys')
+        return self._get("/admin/api/keys")
 
     def create_api_key(self, username, scopes=None):
         kwargs = {
-            'key': {
-                'username': username,
-                'description': f'Access key for user {username}'
+            "key": {
+                "username": username,
+                "description": f"Access key for user {username}",
             },
         }
-        return self._post("/admin/api/keys", json=True, ** kwargs)
+        return self._post("/admin/api/keys", json=True, **kwargs)
 
     def upload_theme(self, theme_path):
-        with open(theme_path, 'rb') as f:
+        with open(theme_path, "rb") as f:
             mime = magic.Magic(mime=True)
-            files = {'theme': (os.path.basename(theme_path), f, mime.from_file(theme_path))}
-            return self._post('/admin/themes/import', files=files)
+            files = {"theme": (os.path.basename(theme_path), f, mime.from_file(theme_path))}
+            return self._post("/admin/themes/import", files=files)
 
     def set_default_theme(self, theme_id):
-        return self._put('/admin/themes/{0}'.format(theme_id), json=True, theme={'default': True})
+        return self._put("/admin/themes/{0}".format(theme_id), json=True, theme={"default": True})
 
     def revoke_api_key(self, keyid):
         return self._post("/admin/api/keys/{0}/revoke".format(keyid))
@@ -52,7 +52,10 @@ class DiscourseClient(BaseDiscourseClient):
 
 def get_client():
     return DiscourseClient(
-        settings.DISCOURSE_HOST, api_username=settings.DISCOURSE_API_USER, api_key=settings.DISCOURSE_API_KEY)
+        settings.DISCOURSE_HOST,
+        api_username=settings.DISCOURSE_API_USER,
+        api_key=settings.DISCOURSE_API_KEY,
+    )
 
 
 class DiscourseClientPasswordAuth(DiscourseClient):
@@ -65,7 +68,15 @@ class DiscourseClientPasswordAuth(DiscourseClient):
         self.session = requests.Session()
 
     def _request(  # noqa: C901
-            self, verb, path, params=None, files=None, data=None, json=None, override_request_kwargs=None):
+        self,
+        verb,
+        path,
+        params=None,
+        files=None,
+        data=None,
+        json=None,
+        override_request_kwargs=None,
+    ):
         """
         Executes HTTP request to API and handles response
 
@@ -108,35 +119,29 @@ class DiscourseClientPasswordAuth(DiscourseClient):
 
             response = self.session.request(verb, url, **request_kwargs)
 
-            log.debug("response %s: %s", response.status_code,
-                      repr(response.text))
+            log.debug("response %s: %s", response.status_code, repr(response.text))
             if response.ok:
                 break
             if not response.ok:
                 try:
-                    msg = u",".join(response.json()["errors"])
+                    msg = ",".join(response.json()["errors"])
                 except (ValueError, TypeError, KeyError):
                     if response.reason:
                         msg = response.reason
                     else:
-                        msg = u"{0}: {1}".format(
-                            response.status_code, response.text)
+                        msg = "{0}: {1}".format(response.status_code, response.text)
 
                 if 400 <= response.status_code < 500:
                     if 429 == response.status_code:
                         # This codepath relies on wait_seconds from Discourse v2.0.0.beta3 / v1.9.3 or higher.
                         rj = response.json()
-                        wait_delay = (
-                            retry_backoff + rj["extras"]["wait_seconds"]
-                        )  # how long to back off for.
+                        wait_delay = retry_backoff + rj["extras"]["wait_seconds"]  # how long to back off for.
 
                         if retry_count > 1:
                             time.sleep(wait_delay)
                         retry_count -= 1
                         log.info(
-                            "We have been rate limited and waited {0} seconds ({1} retries left)".format(
-                                wait_delay, retry_count
-                            )
+                            "We have been rate limited and waited {0} seconds ({1} retries left)".format(wait_delay, retry_count)
                         )
                         log.debug("API returned {0}".format(rj))
                         continue
@@ -153,9 +158,7 @@ class DiscourseClientPasswordAuth(DiscourseClient):
             )
 
         if response.status_code == 302:
-            raise DiscourseError(
-                "Unexpected Redirect, invalid api key or host?", response=response
-            )
+            raise DiscourseError("Unexpected Redirect, invalid api key or host?", response=response)
 
         json_content = "application/json; charset=utf-8"
         content_type = response.headers["content-type"]
@@ -165,30 +168,27 @@ class DiscourseClientPasswordAuth(DiscourseClient):
                 return None
 
             raise DiscourseError(
-                'Invalid Response, expecting "{0}" got "{1}"'.format(
-                    json_content, content_type
-                ),
+                'Invalid Response, expecting "{0}" got "{1}"'.format(json_content, content_type),
                 response=response,
             )
 
         try:
             decoded = response.json()
         except ValueError:
-            raise DiscourseError(
-                "failed to decode response", response=response)
+            raise DiscourseError("failed to decode response", response=response)
 
         if "errors" in decoded:
             message = decoded.get("message")
             if not message:
-                message = u",".join(decoded["errors"])
+                message = ",".join(decoded["errors"])
             raise DiscourseError(message, response=response)
 
         return decoded
 
     def get_csrf(self):
         res = self._get("/session/csrf")
-        return res['csrf']
+        return res["csrf"]
 
     def login(self):
-        data = {'login': self.username, 'password': self.password}
+        data = {"login": self.username, "password": self.password}
         return self._post("/session", **data)

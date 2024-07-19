@@ -6,13 +6,24 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('academy', '0003_auto_20200602_1354'),
+        ("academy", "0003_auto_20200602_1354"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='coursemodule',
-            name='type',
-            field=models.CharField(blank=True, choices=[('general', 'academy course module type'), ('technical', 'Technical'), ('law', 'Law'), ('extra', 'Extra'), ('exam', 'Exam')], max_length=9, verbose_name='module type'),
+            model_name="coursemodule",
+            name="type",
+            field=models.CharField(
+                blank=True,
+                choices=[
+                    ("general", "academy course module type"),
+                    ("technical", "Technical"),
+                    ("law", "Law"),
+                    ("extra", "Extra"),
+                    ("exam", "Exam"),
+                ],
+                max_length=9,
+                verbose_name="module type",
+            ),
         ),
     ]

@@ -7,21 +7,21 @@ import modeltrans.fields
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('tags', '0007_remove_tags_from_trash'),
+        ("tags", "0007_remove_tags_from_trash"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='tag',
-            name='is_removed',
+            model_name="tag",
+            name="is_removed",
         ),
         migrations.RemoveField(
-            model_name='tag',
-            name='removed_at',
+            model_name="tag",
+            name="removed_at",
         ),
         migrations.AlterField(
-            model_name='tag',
-            name='i18n',
-            field=modeltrans.fields.TranslationField(fields=('name',), required_languages=('pl',), virtual_fields=True),
+            model_name="tag",
+            name="i18n",
+            field=modeltrans.fields.TranslationField(fields=("name",), required_languages=("pl",), virtual_fields=True),
         ),
     ]

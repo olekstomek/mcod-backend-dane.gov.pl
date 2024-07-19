@@ -15,14 +15,14 @@ class PhoneNumberField(forms.CharField):
     widget = PhoneNumberWidget
     default_validators = [RegexValidator(r"^\d{7,9}$")]
 
-    def __init__(self, *, strip=True, empty_value='', **kwargs):
+    def __init__(self, *, strip=True, empty_value="", **kwargs):
         super().__init__(min_length=7, max_length=9, strip=strip, empty_value=empty_value, **kwargs)
 
     def prepare_value(self, value):
         if value:
-            if value[:3] == '+48':
+            if value[:3] == "+48":
                 return value[3:]
-            if value[:4] == '0048':
+            if value[:4] == "0048":
                 return value[4:]
         return value
 
@@ -36,7 +36,7 @@ class PhoneNumberField(forms.CharField):
 class InternalPhoneNumberWidget(forms.TextInput):
     def __init__(self, attrs=None):
         super().__init__(attrs)
-        self.attrs['style'] = 'width: 5em;'
+        self.attrs["style"] = "width: 5em;"
 
 
 class InternalPhoneNumberField(forms.CharField):

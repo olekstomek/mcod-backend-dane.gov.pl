@@ -28,11 +28,7 @@ def save_searchhistories_task():
                         if isinstance(query_sentence, list):
                             query_sentence = query_sentence[0]
 
-                        SearchHistory.objects.create(
-                            url=url,
-                            query_sentence=query_sentence,
-                            user_id=user_id
-                        )
+                        SearchHistory.objects.create(url=url, query_sentence=query_sentence, user_id=user_id)
 
                 else:
                     break

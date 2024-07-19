@@ -181,4 +181,3 @@ Feature: Global Search API
     | contains_protected_data_value |
     | true                          |
     | false                         |
-

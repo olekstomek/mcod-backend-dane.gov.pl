@@ -33,99 +33,107 @@ from mcod.suggestions.serializers import DatasetSubmissionCSVSerializer
 from mcod.users.serializers import UserLocalTimeCSVSerializer
 
 User = get_user_model()
-logger = logging.getLogger('mcod')
-kronika_logger = logging.getLogger('kronika-sparql-performance')
+logger = logging.getLogger("mcod")
+kronika_logger = logging.getLogger("kronika-sparql-performance")
 
 
-@extended_shared_task(name='reports', ignore_result=False)
+@extended_shared_task(name="reports", ignore_result=False)
 def generate_csv(pks, model_name, user_id, file_name_postfix):
-    app, _model = model_name.split('.')
+    app, _model = model_name.split(".")
     model = apps.get_model(app, _model)
     serializer_cls = csr.get_serializer(model)
-    if _model == 'DatasetSubmission':  # TODO: how to register it in csr?
+    if _model == "DatasetSubmission":  # TODO: how to register it in csr?
         serializer_cls = DatasetSubmissionCSVSerializer
-    elif _model == 'ShowcaseProposal':
+    elif _model == "ShowcaseProposal":
         serializer_cls = ShowcaseProposalCSVSerializer
-    elif _model == 'User':
+    elif _model == "User":
         serializer_cls = UserLocalTimeCSVSerializer
 
     if not serializer_cls:
-        raise Exception('Cound not find serializer for model %s' % model_name)
+        raise Exception("Cound not find serializer for model %s" % model_name)
 
     serializer = serializer_cls(many=True)
     queryset = model.objects.filter(pk__in=pks)
     data = serializer_cls(many=True).dump(queryset)
     user = User.objects.get(pk=user_id)
-    file_name = f'{_model.lower()}s_{file_name_postfix}.csv'
+    file_name = f"{_model.lower()}s_{file_name_postfix}.csv"
     reports_path = os.path.join(settings.REPORTS_MEDIA_ROOT, app)
     os.makedirs(reports_path, exist_ok=True)
 
     file_path = os.path.join(reports_path, file_name)
-    file_url_path = f'{settings.REPORTS_MEDIA}/{app}/{file_name}'
+    file_url_path = f"{settings.REPORTS_MEDIA}/{app}/{file_name}"
 
-    with open(file_path, 'w') as f:
+    with open(file_path, "w") as f:
         save_as_csv(f, serializer.get_csv_headers(), data)
 
-    return json.dumps({
-        'model': model_name,
-        'csv_file': file_url_path,
-        'date': now().strftime('%Y.%m.%d %H:%M'),
-        'user_email': user.email
-    })
+    return json.dumps(
+        {
+            "model": model_name,
+            "csv_file": file_url_path,
+            "date": now().strftime("%Y.%m.%d %H:%M"),
+            "user_email": user.email,
+        }
+    )
 
 
 @extended_shared_task(ignore_result=False)
 def create_no_resource_dataset_report():
-    logger.debug('Running create_no_resource_dataset_report task.')
-    app = 'datasets'
-    file_name_postfix = now().strftime('%Y%m%d%H%M%S.%s')
-    queryset =\
+    logger.debug("Running create_no_resource_dataset_report task.")
+    app = "datasets"
+    file_name_postfix = now().strftime("%Y%m%d%H%M%S.%s")
+    queryset = (
         Dataset.objects.annotate(
-            all_resources=Count('resources__pk'),
-            unpublished_resources=Count('resources__pk', filter=Q(resources__status='draft'))
-        ).filter(Q(resources__isnull=True) | Q(all_resources=F('unpublished_resources')), status='published').distinct()
+            all_resources=Count("resources__pk"),
+            unpublished_resources=Count("resources__pk", filter=Q(resources__status="draft")),
+        )
+        .filter(
+            Q(resources__isnull=True) | Q(all_resources=F("unpublished_resources")),
+            status="published",
+        )
+        .distinct()
+    )
     serializer_cls = csr.get_serializer(Dataset)
     serializer = serializer_cls(many=True)
     data = serializer.dump(queryset)
-    file_name = f'nodata_datasets_{file_name_postfix}.csv'
+    file_name = f"nodata_datasets_{file_name_postfix}.csv"
     reports_path = os.path.join(settings.REPORTS_MEDIA_ROOT, app)
     os.makedirs(reports_path, exist_ok=True)
 
     file_path = os.path.join(reports_path, file_name)
-    file_url_path = f'{settings.REPORTS_MEDIA}/{app}/{file_name}'
-    with open(file_path, 'w') as f:
+    file_url_path = f"{settings.REPORTS_MEDIA}/{app}/{file_name}"
+    with open(file_path, "w") as f:
         save_as_csv(f, serializer.get_csv_headers(), data)
-    return json.dumps({
-        'file': file_url_path,
-        'model': 'datasets.Dataset'
-    })
+    return json.dumps({"file": file_url_path, "model": "datasets.Dataset"})
 
 
 def create_resource_link_validation_report():
-    app = 'resources'
-    file_name_postfix = now().strftime('%Y%m%d%H%M%S.%s')
-    queryset =\
-        Resource.objects.filter(
-            status='published', link__isnull=False, link_tasks_last_status='FAILURE'
-        ).exclude(Q(link__startswith=settings.API_URL) | Q(link__startswith=settings.BASE_URL))
+    app = "resources"
+    file_name_postfix = now().strftime("%Y%m%d%H%M%S.%s")
+    queryset = Resource.objects.filter(status="published", link__isnull=False, link_tasks_last_status="FAILURE").exclude(
+        Q(link__startswith=settings.API_URL) | Q(link__startswith=settings.BASE_URL)
+    )
     serializer_cls = csr.get_serializer(Resource)
-    excluded_fields =\
-        ['link_is_valid', 'file_is_valid', 'data_is_valid', 'format', 'status',
-         'openness_score', 'views_count', 'downloads_count']
+    excluded_fields = [
+        "link_is_valid",
+        "file_is_valid",
+        "data_is_valid",
+        "format",
+        "status",
+        "openness_score",
+        "views_count",
+        "downloads_count",
+    ]
     serializer = serializer_cls(many=True, exclude=excluded_fields)
     data = serializer.dump(queryset)
-    file_name = f'brokenlinks_resources_{file_name_postfix}.csv'
+    file_name = f"brokenlinks_resources_{file_name_postfix}.csv"
     reports_path = os.path.join(settings.REPORTS_MEDIA_ROOT, app)
     os.makedirs(reports_path, exist_ok=True)
 
     file_path = os.path.join(reports_path, file_name)
-    file_url_path = f'{settings.REPORTS_MEDIA}/{app}/{file_name}'
-    with open(file_path, 'w') as f:
+    file_url_path = f"{settings.REPORTS_MEDIA}/{app}/{file_name}"
+    with open(file_path, "w") as f:
         save_as_csv(f, serializer.get_csv_headers(), data)
-    return json.dumps({
-        'file': file_url_path,
-        'model': 'resources.Resource'
-    })
+    return json.dumps({"file": file_url_path, "model": "resources.Resource"})
 
 
 @extended_shared_task(ignore_result=False)
@@ -141,18 +149,14 @@ def link_validation_error_callback():
 @task_prerun.connect(sender=generate_csv)
 def append_report_task(sender, task_id, task, signal, **kwargs):
     try:
-        pks, model_name, user_id, d = kwargs['args']
+        pks, model_name, user_id, d = kwargs["args"]
         task_obj = TaskResult.objects.get_task(task_id)
         task_obj.save()
         try:
             ordered_by = User.objects.get(pk=user_id)
         except User.DoesNotExist:
             ordered_by = None
-        report = Report(
-            model=model_name,
-            ordered_by=ordered_by,
-            task=task_obj
-        )
+        report = Report(model=model_name, ordered_by=ordered_by, task=task_obj)
         report.save()
     except Exception as e:
         logger.error(f"reports.task: exception on append_report_task:\n{e}")
@@ -160,22 +164,19 @@ def append_report_task(sender, task_id, task, signal, **kwargs):
 
 @extended_shared_task(ignore_result=False)
 def create_resources_report_task(data, headers, report_name):
-    logger.debug(f'Creating resource {report_name} report.')
-    app_name = 'resources'
-    file_name_postfix = now().strftime('%Y%m%d%H%M%S.%s')
-    file_name = f'{report_name}_{file_name_postfix}.csv'
+    logger.debug(f"Creating resource {report_name} report.")
+    app_name = "resources"
+    file_name_postfix = now().strftime("%Y%m%d%H%M%S.%s")
+    file_name = f"{report_name}_{file_name_postfix}.csv"
     reports_path = os.path.join(settings.REPORTS_MEDIA_ROOT, app_name)
     os.makedirs(reports_path, exist_ok=True)
     file_path = os.path.join(reports_path, file_name)
-    file_url_path = f'{settings.REPORTS_MEDIA}/{app_name}/{file_name}'
-    with open(file_path, 'w') as f:
+    file_url_path = f"{settings.REPORTS_MEDIA}/{app_name}/{file_name}"
+    with open(file_path, "w") as f:
         w = csv.DictWriter(f, headers)
         w.writeheader()
         w.writerows(data)
-    return json.dumps({
-        'file': file_url_path,
-        'model': 'resources.Resource'
-    })
+    return json.dumps({"file": file_url_path, "model": "resources.Resource"})
 
 
 @task_success.connect(sender=link_validation_success_callback)
@@ -189,9 +190,9 @@ def generating_monthly_report_success(sender, result, **kwargs):
 
         result_task = TaskResult.objects.get_task(sender.request.id)
         result_task.result = result
-        result_task.status = 'SUCCESS'
+        result_task.status = "SUCCESS"
         result_task.save()
-        result_dict['task'] = result_task
+        result_dict["task"] = result_task
         Report.objects.create(**result_dict)
     except Exception as e:
         logger.error(f"reports.task: exception on generating_monthly_report_success:\n{e}")
@@ -202,10 +203,11 @@ def validate_resources_links(ids=None):
     if ids:
         resources_ids = ids
     else:
-        resources_ids = list(Resource.objects.filter(
-            status='published', link__isnull=False
-        ).exclude(Q(link__startswith=settings.API_URL) | Q(link__startswith=settings.BASE_URL)
-                  ).values_list('pk', flat=True))
+        resources_ids = list(
+            Resource.objects.filter(status="published", link__isnull=False)
+            .exclude(Q(link__startswith=settings.API_URL) | Q(link__startswith=settings.BASE_URL))
+            .values_list("pk", flat=True)
+        )
     subtasks = [validate_link.s(res_id) for res_id in resources_ids]
     callback = link_validation_success_callback.si().on_error(link_validation_error_callback.si())
     chord(subtasks, callback).apply_async()
@@ -219,11 +221,11 @@ def generating_report_success(sender, result, **kwargs):
 
         result_task = TaskResult.objects.get_task(sender.request.id)
         result_task.result = result
-        result_task.status = 'SUCCESS'
+        result_task.status = "SUCCESS"
         result_task.save()
 
         report = Report.objects.get(task=result_task)
-        report.file = result_dict.get('csv_file')
+        report.file = result_dict.get("csv_file")
         report.save()
     except Exception as e:
         logger.error(f"reports.task: exception on generating_report_success:\n{e}")
@@ -237,7 +239,7 @@ def generating_report_failure(sender, task_id, exception, args, traceback, einfo
     logger.debug(f"generating report failed with:\n{exception}")
     try:
         result_task = TaskResult.objects.get_task(task_id)
-        result_task.status = 'FAILURE'
+        result_task.status = "FAILURE"
         result_task.save()
     except Exception as e:
         logger.error(f"reports.task: exception on generating_report_failure:\n{e}")
@@ -251,8 +253,8 @@ def dict_fetch_all(cursor):
 
 @app.task(ignore_result=False)
 def create_daily_resources_report():
-    str_date = datetime.datetime.now().strftime('%Y_%m_%d_%H%M')
-    view_name = 'mv_resource_dataset_organization_report_d_hv_r_data'
+    str_date = datetime.datetime.now().strftime("%Y_%m_%d_%H%M")
+    view_name = "mv_resource_dataset_organization_report_d_hv_r_data"
     report_fields = """
             id_zasobu,
             NULL as link_zasobu,
@@ -287,27 +289,30 @@ def create_daily_resources_report():
         """
     with connection.cursor() as cursor:
         cursor.execute(f"""REFRESH MATERIALIZED VIEW {view_name}""")
-        cursor.execute(f"""
+        cursor.execute(
+            f"""
             SELECT {report_fields}
             FROM {view_name}
-        """)
+        """
+        )
         results = dict_fetch_all(cursor)
 
     for r in results:
-        if r['id_zasobu']:
-            r['link_zasobu'] = f"{settings.BASE_URL}/{get_language()}/dataset/{r['id_zbioru_danych']}/resource/{r['id_zasobu']}"
-        if r['id_zbioru_danych']:
-            r['link_zbioru'] = f"{settings.BASE_URL}/{get_language()}/dataset/{r['id_zbioru_danych']}"
-        if r['id_instytucji']:
-            r['link_instytucji'] = f"{settings.BASE_URL}/{get_language()}/institution/{r['id_instytucji']}"
+        if r["id_zasobu"]:
+            r["link_zasobu"] = f"{settings.BASE_URL}/{get_language()}/dataset/{r['id_zbioru_danych']}/resource/{r['id_zasobu']}"
+        if r["id_zbioru_danych"]:
+            r["link_zbioru"] = f"{settings.BASE_URL}/{get_language()}/dataset/{r['id_zbioru_danych']}"
+        if r["id_instytucji"]:
+            r["link_instytucji"] = f"{settings.BASE_URL}/{get_language()}/institution/{r['id_instytucji']}"
 
-    os.makedirs(Path(settings.REPORTS_MEDIA_ROOT, 'daily'), exist_ok=True)
-    file_path = Path(settings.REPORTS_MEDIA[1:], 'daily', f'Zbiorczy_raport_dzienny_{str_date}.csv')
-    save_path = Path(settings.REPORTS_MEDIA_ROOT, 'daily', f'Zbiorczy_raport_dzienny_{str_date}.csv')
+    os.makedirs(Path(settings.REPORTS_MEDIA_ROOT, "daily"), exist_ok=True)
+    file_path = Path(settings.REPORTS_MEDIA[1:], "daily", f"Zbiorczy_raport_dzienny_{str_date}.csv")
+    save_path = Path(settings.REPORTS_MEDIA_ROOT, "daily", f"Zbiorczy_raport_dzienny_{str_date}.csv")
 
-    with open(save_path, 'w') as f:
-        results_new_format: list[OrderedDict] = [OrderedDict({k.replace("_", " ").capitalize(): v
-                                                              for k, v in element.items()}) for element in results]
+    with open(save_path, "w") as f:
+        results_new_format: list[OrderedDict] = [
+            OrderedDict({k.replace("_", " ").capitalize(): v for k, v in element.items()}) for element in results
+        ]
         w = csv.DictWriter(f, results_new_format[0].keys())
         w.writeheader()
         w.writerows(results_new_format)
@@ -322,25 +327,24 @@ def create_daily_resources_report():
 
 @extended_shared_task
 def check_kronika_connection_performance():
-    logger.info('Executing check_kronika_connection_performance task')
-    format_ = 'json'
-    store = get_sparql_store(readonly=True, return_format=format_,
-                             external_sparql_endpoint='kronika')
-    query = 'SELECT ?s ?p ?o WHERE {?s a dcat:distribution}'
+    logger.info("Executing check_kronika_connection_performance task")
+    format_ = "json"
+    store = get_sparql_store(readonly=True, return_format=format_, external_sparql_endpoint="kronika")
+    query = "SELECT ?s ?p ?o WHERE {?s a dcat:distribution}"
     log_msg = f'Sending query "{query}" to kronika sparql api;'
     try:
         start = time()
         response = store.query(query, initNs=NAMESPACES)
         end = time()
         if isinstance(response, tuple):
-            log_msg += f'Kronika SPARQL api returned status code {response[0]}. Details: {response[1]};'
+            log_msg += f"Kronika SPARQL api returned status code {response[0]}. Details: {response[1]};"
         time_delta = end - start
         try:
             result = json.loads(response.serialize(format=format_, encoding="utf-8"))
-            res_count = len(result['results']['bindings'])
+            res_count = len(result["results"]["bindings"])
         except AttributeError:
             res_count = 0
-        log_msg += f'Request execution took {time_delta:.4f} seconds; Query returned {res_count} items;'
+        log_msg += f"Request execution took {time_delta:.4f} seconds; Query returned {res_count} items;"
         kronika_logger.info(log_msg)
     except Exception as err:
-        kronika_logger.error(f'{log_msg} Exception occurred while sending request to kronika api: {err};')
+        kronika_logger.error(f"{log_msg} Exception occurred while sending request to kronika api: {err};")

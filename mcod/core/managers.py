@@ -11,9 +11,9 @@ class SoftDeletableManagerMixin:
     _queryset_class = SoftDeletableQuerySet
 
     def get_queryset(self):
-        kwargs = {'model': self.model, 'using': self._db}
-        if hasattr(self, '_hints'):
-            kwargs['hints'] = self._hints
+        kwargs = {"model": self.model, "using": self._db}
+        if hasattr(self, "_hints"):
+            kwargs["hints"] = self._hints
 
         return self._queryset_class(**kwargs).filter(is_removed=False, is_permanently_removed=False)
 

@@ -8,16 +8,22 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('suggestions', '0013_auto_20200729_1439'),
+        ("suggestions", "0013_auto_20200729_1439"),
     ]
 
     operations = [
         migrations.RunSQL(
             sql=open(
-                os.path.join(settings.DATABASE_DIR,
-                             'ODSOFT-410-suggestions-datasetsubmission-history_other.sql')).read(),
+                os.path.join(
+                    settings.DATABASE_DIR,
+                    "ODSOFT-410-suggestions-datasetsubmission-history_other.sql",
+                )
+            ).read(),
             reverse_sql=open(
-                os.path.join(settings.DATABASE_DIR,
-                             'ODSOFT-410-suggestions-datasetsubmission-history_other_backward.sql')).read(),
+                os.path.join(
+                    settings.DATABASE_DIR,
+                    "ODSOFT-410-suggestions-datasetsubmission-history_other_backward.sql",
+                )
+            ).read(),
         )
     ]

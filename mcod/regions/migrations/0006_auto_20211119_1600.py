@@ -7,18 +7,22 @@ import modeltrans.fields
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('regions', '0005_default_reg_add_geonames_id'),
+        ("regions", "0005_default_reg_add_geonames_id"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='region',
-            name='hierarchy_label',
-            field=models.CharField(max_length=250, null=True, verbose_name='Hierarchy label'),
+            model_name="region",
+            name="hierarchy_label",
+            field=models.CharField(max_length=250, null=True, verbose_name="Hierarchy label"),
         ),
         migrations.AlterField(
-            model_name='region',
-            name='i18n',
-            field=modeltrans.fields.TranslationField(fields=('name', 'hierarchy_label', 'slug'), required_languages=(), virtual_fields=True),
+            model_name="region",
+            name="i18n",
+            field=modeltrans.fields.TranslationField(
+                fields=("name", "hierarchy_label", "slug"),
+                required_languages=(),
+                virtual_fields=True,
+            ),
         ),
     ]

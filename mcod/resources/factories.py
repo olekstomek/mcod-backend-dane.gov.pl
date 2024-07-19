@@ -14,7 +14,7 @@ from mcod.resources import models
 from mcod.resources.dga_constants import DGA_COLUMNS
 
 _RESOURCE_TYPES = [i[0] for i in models.RESOURCE_TYPE]
-_TASK_STATUSES = ['SUCCESS', 'NOT AVAILABLE', 'ERROR']
+_TASK_STATUSES = ["SUCCESS", "NOT AVAILABLE", "ERROR"]
 
 data = b"""\
 col1,col2,col3
@@ -24,20 +24,12 @@ col1,col2,col3
 
 
 def get_csv_file() -> BytesIO:
-    return BytesIO(
-        b"\n".join(
-            [b"col1,col2,col3",
-             b"1,3,foo",
-             b"2,5,bar",
-             b"-1,7,baz"
-             ]
-        )
-    )
+    return BytesIO(b"\n".join([b"col1,col2,col3", b"1,3,foo", b"2,5,bar", b"-1,7,baz"]))
 
 
 def get_csv_file2() -> tempfile.TemporaryFile:
     fp = tempfile.TemporaryFile()
-    fp.write(b'Hello world!')
+    fp.write(b"Hello world!")
     fp.close()
     return fp
 
@@ -47,40 +39,44 @@ def get_dga_csv_file() -> BytesIO:
     rows = [
         b"1,zasob1,csv,10 KB,foo",
         b"2,zasob2,xls,12 MB,bar",
-        b"3,zasob3,xlsx,1 MB,baz"
+        b"3,zasob3,xlsx,1 MB,baz",
     ]
     return BytesIO(b"\n".join([header] + rows))
 
 
 class ResourceFileFactory(factory.django.DjangoModelFactory):
-    file = factory.django.FileField(from_func=get_csv_file, filename='{}.csv'.format(str(uuid.uuid4())))
-    format = 'csv'
-    openness_score = factory.Faker('random_int', min=1, max=5)
-    resource = factory.SubFactory('mcod.resources.factories.ResourceFactory')
+    file = factory.django.FileField(from_func=get_csv_file, filename="{}.csv".format(str(uuid.uuid4())))
+    format = "csv"
+    openness_score = factory.Faker("random_int", min=1, max=5)
+    resource = factory.SubFactory("mcod.resources.factories.ResourceFactory")
     is_main = True
-    mimetype = 'application/csv'
+    mimetype = "application/csv"
 
     @classmethod
     def _create(cls, model, *args, **kwargs):
         from mcod.core.tests.fixtures import adapter
         from mcod.resources.link_validation import session
-        file = kwargs.get('file')
-        format = kwargs.get('format')
-        content_type = kwargs.pop('content_type', None)
-        if content_type or kwargs['resource'].link:
+
+        file = kwargs.get("file")
+        format = kwargs.get("format")
+        content_type = kwargs.pop("content_type", None)
+        if content_type or kwargs["resource"].link:
             if content_type is None:
-                content_type = 'application/csv'
-            adapter.register_uri('GET', kwargs['resource'].link,
-                                 content=file.read(),
-                                 headers={'Content-Type': content_type})
-            session.mount(kwargs['resource'].link, adapter)
-        if hasattr(file, 'name'):
+                content_type = "application/csv"
+            adapter.register_uri(
+                "GET",
+                kwargs["resource"].link,
+                content=file.read(),
+                headers={"Content-Type": content_type},
+            )
+            session.mount(kwargs["resource"].link, adapter)
+        if hasattr(file, "name"):
             filename = file.name
         else:
             filename = file
         ext = os.path.splitext(filename)[1][1:]
         if ext != format:
-            kwargs['format'] = ext
+            kwargs["format"] = ext
         return super()._create(model, *args, **kwargs)
 
     class Meta:
@@ -90,7 +86,7 @@ class ResourceFileFactory(factory.django.DjangoModelFactory):
 class ResourceFileDGACompliantFactory(ResourceFileFactory):
     file = factory.django.FileField(
         from_func=get_dga_csv_file,
-        filename='{}.csv'.format(str(uuid.uuid4())),
+        filename="{}.csv".format(str(uuid.uuid4())),
     )
 
 
@@ -101,23 +97,23 @@ class MainDGAResourceFileFactory(ResourceFileFactory):
     )
     format = "xlsx"
     openness_score = 2
-    mimetype = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    mimetype = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
 
 class ResourceFactory(factory.django.DjangoModelFactory):
-    title = factory.Faker('text', max_nb_chars=100, locale='pl_PL')
-    description = factory.Faker('paragraph', nb_sentences=3, variable_nb_sentences=True, locale='pl_PL')
-    views_count = factory.Faker('random_int', min=0, max=500)
-    downloads_count = factory.Faker('random_int', min=0, max=500)
-    main_file = factory.RelatedFactory(ResourceFileFactory, factory_related_name='resource')
-    link = factory.LazyAttribute(lambda obj: 'https://test.mcod/media/resources/{}'.format(str(uuid.uuid4())))
-    format = 'csv'
-    type = factory.Faker('random_element', elements=_RESOURCE_TYPES)
-    openness_score = factory.Faker('random_int', min=1, max=5)
+    title = factory.Faker("text", max_nb_chars=100, locale="pl_PL")
+    description = factory.Faker("paragraph", nb_sentences=3, variable_nb_sentences=True, locale="pl_PL")
+    views_count = factory.Faker("random_int", min=0, max=500)
+    downloads_count = factory.Faker("random_int", min=0, max=500)
+    main_file = factory.RelatedFactory(ResourceFileFactory, factory_related_name="resource")
+    link = factory.LazyAttribute(lambda obj: "https://test.mcod/media/resources/{}".format(str(uuid.uuid4())))
+    format = "csv"
+    type = factory.Faker("random_element", elements=_RESOURCE_TYPES)
+    openness_score = factory.Faker("random_int", min=1, max=5)
     dataset = factory.SubFactory(DatasetFactory)
     forced_api_type = False
     forced_file_type = False
-    data_date = factory.Faker('past_date', start_date="-7d")
+    data_date = factory.Faker("past_date", start_date="-7d")
     contains_protected_data = False
 
     @factory.post_generation
@@ -162,7 +158,7 @@ class ResourceFactory(factory.django.DjangoModelFactory):
 
     class Meta:
         model = models.Resource
-        django_get_or_create = ('title',)
+        django_get_or_create = ("title",)
 
 
 class DGACompliantResourceFactory(ResourceFactory):
@@ -179,9 +175,7 @@ class MainDGAResourceFactory(ResourceFactory):
         factory_related_name="resource",
     )
     format = "xlsx"
-    title = factory.Sequence(
-        lambda n: f"{settings.MAIN_DGA_RESOURCE_DEFAULT_TITLE} {n}"
-    )
+    title = factory.Sequence(lambda n: f"{settings.MAIN_DGA_RESOURCE_DEFAULT_TITLE} {n}")
     description = settings.MAIN_DGA_RESOURCE_DEFAULT_DESC
 
 
@@ -191,13 +185,13 @@ class DGAResourceFactory(DGACompliantResourceFactory):
 
 def json_sequence(number):
     return {
-        'x': f'col{number}',
-        'y': f'col{number + 1}',
+        "x": f"col{number}",
+        "y": f"col{number + 1}",
     }
 
 
 class ChartFactory(factory.django.DjangoModelFactory):
-    name = factory.Faker('text', max_nb_chars=200, locale='pl_PL')
+    name = factory.Faker("text", max_nb_chars=200, locale="pl_PL")
     chart = factory.Sequence(json_sequence)
     resource = factory.SubFactory(ResourceFactory)
     is_default = True
@@ -207,20 +201,20 @@ class ChartFactory(factory.django.DjangoModelFactory):
 
 
 class SupplementFactory(factory.django.DjangoModelFactory):
-    name = factory.Faker('text', max_nb_chars=200, locale='pl_PL')
-    file = factory.django.FileField(from_func=get_csv_file, filename='{}.txt'.format(str(uuid.uuid4())))
+    name = factory.Faker("text", max_nb_chars=200, locale="pl_PL")
+    file = factory.django.FileField(from_func=get_csv_file, filename="{}.txt".format(str(uuid.uuid4())))
     resource = factory.SubFactory(ResourceFactory)
     order = 0
-    language = 'pl'
+    language = "pl"
 
     class Meta:
         model = models.Supplement
 
 
 class TaskResultFactory(factory.django.DjangoModelFactory):
-    task_id = factory.Faker('uuid4')
-    status = factory.Faker('random_element', elements=_TASK_STATUSES)
-    result = factory.Faker('paragraph', nb_sentences=3, variable_nb_sentences=True, locale='pl_PL')
+    task_id = factory.Faker("uuid4")
+    status = factory.Faker("random_element", elements=_TASK_STATUSES)
+    result = factory.Faker("paragraph", nb_sentences=3, variable_nb_sentences=True, locale="pl_PL")
 
     class Meta:
         model = models.TaskResult
@@ -254,8 +248,8 @@ class TaskResultFactory(factory.django.DjangoModelFactory):
 
     @classmethod
     def _adjust_kwargs(cls, **kwargs):
-        if isinstance(kwargs.get('result'), dict):
-            kwargs['result'] = json.dumps(kwargs['result'])
+        if isinstance(kwargs.get("result"), dict):
+            kwargs["result"] = json.dumps(kwargs["result"])
         return kwargs
 
 
@@ -266,8 +260,8 @@ class AggregatedDGAInfoFactory(factory.django.DjangoModelFactory):
         model = models.AggregatedDGAInfo
 
 
-factories_registry.register('resource', ResourceFactory)
-factories_registry.register('resourcefile', ResourceFileFactory)
-factories_registry.register('chart', ChartFactory)
-factories_registry.register('task result', TaskResultFactory)
-factories_registry.register('supplement', SupplementFactory)
+factories_registry.register("resource", ResourceFactory)
+factories_registry.register("resourcefile", ResourceFileFactory)
+factories_registry.register("chart", ChartFactory)
+factories_registry.register("task result", TaskResultFactory)
+factories_registry.register("supplement", SupplementFactory)

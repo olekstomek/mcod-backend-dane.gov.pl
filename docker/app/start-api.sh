@@ -29,4 +29,3 @@ while [ $flag -eq 0 ]; do
         let retries++
     fi
 done
-

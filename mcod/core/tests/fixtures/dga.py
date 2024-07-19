@@ -1,12 +1,11 @@
 from io import BytesIO
-from typing import Tuple, List
+from typing import List, Tuple
+from unittest.mock import PropertyMock, patch
 
 import factory
 import pandas as pd
 import pytest
 from django.conf import settings
-from unittest.mock import patch, PropertyMock
-
 from django.db.models import QuerySet
 
 from mcod.categories.factories import CategoryFactory
@@ -17,27 +16,25 @@ from mcod.organizations.factories import OrganizationFactory
 from mcod.organizations.models import Organization
 from mcod.resources.factories import (
     AggregatedDGAInfoFactory,
-    MainDGAResourceFactory,
     DGACompliantResourceFactory,
+    MainDGAResourceFactory,
     get_dga_csv_file,
 )
-from mcod.resources.models import Resource, AggregatedDGAInfo
+from mcod.resources.models import AggregatedDGAInfo, Resource
 from mcod.tags.factories import TagFactory
 from mcod.tags.models import Tag
 
 
 @pytest.fixture
 def main_dga_owner_organization() -> Organization:
-    return OrganizationFactory.create(
-        pk=settings.MAIN_DGA_DATASET_OWNER_ORGANIZATION_PK
-    )
+    return OrganizationFactory.create(pk=settings.MAIN_DGA_DATASET_OWNER_ORGANIZATION_PK)
 
 
 @pytest.fixture
 def main_dga_dataset_categories() -> List[Category]:
     return CategoryFactory.create_batch(
         size=len(settings.MAIN_DGA_DATASET_CATEGORIES_TITLES),
-        title=factory.Iterator(settings.MAIN_DGA_DATASET_CATEGORIES_TITLES)
+        title=factory.Iterator(settings.MAIN_DGA_DATASET_CATEGORIES_TITLES),
     )
 
 
@@ -51,9 +48,9 @@ def main_dga_dataset_tags() -> List[Tag]:
 
 @pytest.fixture
 def main_dga_dataset(
-        main_dga_owner_organization: Organization,
-        main_dga_dataset_categories: List[Category],
-        main_dga_dataset_tags: List[Tag],
+    main_dga_owner_organization: Organization,
+    main_dga_dataset_categories: List[Category],
+    main_dga_dataset_tags: List[Tag],
 ) -> Dataset:
     dataset: Dataset = DatasetFactory.create(
         organization=main_dga_owner_organization,
@@ -72,9 +69,7 @@ def main_dga_dataset(
 
 @pytest.fixture
 def main_dga_resource(main_dga_dataset: Dataset) -> Resource:
-    resource: Resource = MainDGAResourceFactory.create(
-        dataset=main_dga_dataset
-    )
+    resource: Resource = MainDGAResourceFactory.create(dataset=main_dga_dataset)
     AggregatedDGAInfoFactory.create(resource=resource)
     return resource
 
@@ -107,27 +102,22 @@ def indexed_data_available_property_mock():
         A PropertyMock object for the `available` property of IndexedData.
     """
     from mcod.resources.indexed_data import IndexedData
-    with patch.object(
-            IndexedData, 'available', new_callable=PropertyMock
-    ) as mock_available:
+
+    with patch.object(IndexedData, "available", new_callable=PropertyMock) as mock_available:
         yield mock_available
 
 
 @pytest.fixture
 def dga_resources_with_df(
-        indexed_data_available_property_mock
+    indexed_data_available_property_mock,
 ) -> Tuple[QuerySet, pd.DataFrame]:
     """
     Fixture that creates and returns a queryset of DGA resources and a
     DataFrame with tabular data representation of those resources.
     """
     indexed_data_available_property_mock.return_value = True
-    dga_resources: List[Resource] = DGACompliantResourceFactory.create_batch(
-        5, contains_protected_data=True
-    )
-    dga_resources_queryset: QuerySet = Resource.objects.filter(
-        id__in=[resource.id for resource in dga_resources]
-    )
+    dga_resources: List[Resource] = DGACompliantResourceFactory.create_batch(5, contains_protected_data=True)
+    dga_resources_queryset: QuerySet = Resource.objects.filter(id__in=[resource.id for resource in dga_resources])
 
     csv_file: BytesIO = get_dga_csv_file()
     csv_file.seek(0)

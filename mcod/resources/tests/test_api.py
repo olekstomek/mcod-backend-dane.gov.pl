@@ -55,12 +55,8 @@ def validate_response(resource, valid_response):
     links = resp.json["links"]
     assert len(links) == 4
     assert links["self"] == "http://api.test.mcod/resources/{}/data?page=1".format(_rid)
-    assert links["first"] == "http://api.test.mcod/resources/{}/data?page=1".format(
-        _rid
-    )
-    assert links["last"] == "http://api.test.mcod/resources/{}/data?page=50".format(
-        _rid
-    )
+    assert links["first"] == "http://api.test.mcod/resources/{}/data?page=1".format(_rid)
+    assert links["last"] == "http://api.test.mcod/resources/{}/data?page=50".format(_rid)
     assert links["next"] == "http://api.test.mcod/resources/{}/data?page=2".format(_rid)
 
 
@@ -125,9 +121,7 @@ def test_tabular_data_api14(buzzfeed_fakenews_resource, client14, mocker):
     links = resp.json["links"]
     assert len(links) == 3
     assert links["self"] == "http://api.test.mcod/resources/{}/data?page=1".format(_rid)
-    assert links["last"] == "http://api.test.mcod/resources/{}/data?page=50".format(
-        _rid
-    )
+    assert links["last"] == "http://api.test.mcod/resources/{}/data?page=50".format(_rid)
     assert links["next"] == "http://api.test.mcod/resources/{}/data?page=2".format(_rid)
 
     # Test search
@@ -157,11 +151,7 @@ def test_tabular_data_api14(buzzfeed_fakenews_resource, client14, mocker):
     assert meta["count"] == 21
     links = resp.json["links"]
     assert len(links) == 1
-    assert links[
-        "self"
-    ] == "http://api.test.mcod/resources/{}/data?per_page=25&q=col5%3ACrime&page=1".format(
-        _rid
-    )
+    assert links["self"] == "http://api.test.mcod/resources/{}/data?per_page=25&q=col5%3ACrime&page=1".format(_rid)
 
     req = FalconOpenAPIWrapper(
         app,
@@ -254,10 +244,7 @@ def test_tabular_data_api14(buzzfeed_fakenews_resource, client14, mocker):
     valid, validated_data, errors = jsonapi_validator(resp.json)
     assert valid is True
     assert len(validated_data) == 10
-    assert (
-        validated_data["col1"]["val"]
-        == "Mums across Britain preparing to strum one off over CBeebies Bedtime Story tonight"
-    )
+    assert validated_data["col1"]["val"] == "Mums across Britain preparing to strum one off over CBeebies Bedtime Story tonight"
     assert validated_data["resource"]["id"] == str(_rid)
     data = resp.json["data"]
     assert data["type"] == "row"
@@ -273,9 +260,7 @@ def test_tabular_data_api14(buzzfeed_fakenews_resource, client14, mocker):
 
     links = resp.json["links"]
     assert len(links) == 1
-    assert links["self"] == "http://api.test.mcod/resources/{}/" "data/{}".format(
-        _rid, row_id
-    )
+    assert links["self"] == "http://api.test.mcod/resources/{}/" "data/{}".format(_rid, row_id)
 
 
 @pytest.mark.elasticsearch
@@ -288,18 +273,10 @@ def test_dates_in_detail_views_api14(buzzfeed_fakenews_resource, client14):
 
     rs = Resource.objects.get(pk=buzzfeed_fakenews_resource.id)
 
-    assert resp.json["data"]["attributes"]["modified"] == rs.modified.strftime(
-        "%Y-%m-%dT%H:%M:%SZ"
-    )
-    assert resp.json["data"]["attributes"]["created"] == rs.created.strftime(
-        "%Y-%m-%dT%H:%M:%SZ"
-    )
-    assert resp.json["data"]["attributes"]["verified"] == rs.verified.strftime(
-        "%Y-%m-%dT%H:%M:%SZ"
-    )
-    assert resp.json["data"]["attributes"]["data_date"] == rs.data_date.strftime(
-        "%Y-%m-%d"
-    )
+    assert resp.json["data"]["attributes"]["modified"] == rs.modified.strftime("%Y-%m-%dT%H:%M:%SZ")
+    assert resp.json["data"]["attributes"]["created"] == rs.created.strftime("%Y-%m-%dT%H:%M:%SZ")
+    assert resp.json["data"]["attributes"]["verified"] == rs.verified.strftime("%Y-%m-%dT%H:%M:%SZ")
+    assert resp.json["data"]["attributes"]["data_date"] == rs.data_date.strftime("%Y-%m-%d")
 
 
 @pytest.mark.elasticsearch
@@ -315,18 +292,10 @@ def test_dates_in_detail_views(buzzfeed_fakenews_resource, client):
 
     rs = Resource.objects.get(pk=buzzfeed_fakenews_resource.id)
 
-    assert resp.json["data"]["attributes"]["modified"] == rs.modified.strftime(
-        "%Y-%m-%dT%H:%M:%SZ"
-    )
-    assert resp.json["data"]["attributes"]["created"] == rs.created.strftime(
-        "%Y-%m-%dT%H:%M:%SZ"
-    )
-    assert resp.json["data"]["attributes"]["verified"] == rs.verified.strftime(
-        "%Y-%m-%dT%H:%M:%SZ"
-    )
-    assert resp.json["data"]["attributes"]["data_date"] == rs.data_date.strftime(
-        "%Y-%m-%d"
-    )
+    assert resp.json["data"]["attributes"]["modified"] == rs.modified.strftime("%Y-%m-%dT%H:%M:%SZ")
+    assert resp.json["data"]["attributes"]["created"] == rs.created.strftime("%Y-%m-%dT%H:%M:%SZ")
+    assert resp.json["data"]["attributes"]["verified"] == rs.verified.strftime("%Y-%m-%dT%H:%M:%SZ")
+    assert resp.json["data"]["attributes"]["data_date"] == rs.data_date.strftime("%Y-%m-%d")
 
 
 def test_remote_file_download_redirection(remote_file_resource, client):
@@ -348,17 +317,12 @@ def test_local_file_download_redirection(local_file_resource, client):
         False,
     ),
 )
-def test_response_dga_flag_in_details(
-    local_file_resource: Resource, client: TestClient, contains_protected_data: bool
-):
+def test_response_dga_flag_in_details(local_file_resource: Resource, client: TestClient, contains_protected_data: bool):
     local_file_resource.contains_protected_data = contains_protected_data
     local_file_resource.save()
     resp = client.simulate_get(f"/resources/{local_file_resource.id}/")
     assert HTTP_OK == resp.status, resp.json
-    assert (
-        resp.json["data"]["attributes"]["contains_protected_data"]
-        == contains_protected_data
-    )
+    assert resp.json["data"]["attributes"]["contains_protected_data"] == contains_protected_data
 
 
 @pytest.mark.feat_dga
@@ -370,11 +334,7 @@ def test_response_dga_flag_in_details(
         (None, HTTP_NOT_FOUND),
     ],
 )
-def test_api_aggregated_dga_info(
-        client: TestClient,
-        dga_info_params: Optional[Dict[str, Any]],
-        status_code: str
-):
+def test_api_aggregated_dga_info(client: TestClient, dga_info_params: Optional[Dict[str, Any]], status_code: str):
 
     if dga_info_params is not None:
         AggregatedDGAInfoFactory.create(**dga_info_params)
@@ -393,9 +353,7 @@ def test_api_aggregated_dga_info(
         (dict(status="published"), HTTP_OK),
     ],
 )
-def test_api_aggregated_dga_info_resource_removed_draft(
-        client: TestClient, resource_params: Dict[str, Any], status_code: str
-):
+def test_api_aggregated_dga_info_resource_removed_draft(client: TestClient, resource_params: Dict[str, Any], status_code: str):
     resource: Resource = DGAResourceFactory.create(**resource_params)
     AggregatedDGAInfoFactory.create(resource=resource)
 

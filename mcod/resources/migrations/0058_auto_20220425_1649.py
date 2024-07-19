@@ -8,18 +8,32 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('resources', '0057_supplement_language'),
+        ("resources", "0057_supplement_language"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='supplement',
-            name='created_by',
-            field=models.ForeignKey(editable=False, null=True, on_delete=django.db.models.deletion.DO_NOTHING, related_name='resources_supplement_created', to=settings.AUTH_USER_MODEL, verbose_name='created by'),
+            model_name="supplement",
+            name="created_by",
+            field=models.ForeignKey(
+                editable=False,
+                null=True,
+                on_delete=django.db.models.deletion.DO_NOTHING,
+                related_name="resources_supplement_created",
+                to=settings.AUTH_USER_MODEL,
+                verbose_name="created by",
+            ),
         ),
         migrations.AlterField(
-            model_name='supplement',
-            name='modified_by',
-            field=models.ForeignKey(editable=False, null=True, on_delete=django.db.models.deletion.DO_NOTHING, related_name='resources_supplement_modified', to=settings.AUTH_USER_MODEL, verbose_name='modified by'),
+            model_name="supplement",
+            name="modified_by",
+            field=models.ForeignKey(
+                editable=False,
+                null=True,
+                on_delete=django.db.models.deletion.DO_NOTHING,
+                related_name="resources_supplement_modified",
+                to=settings.AUTH_USER_MODEL,
+                verbose_name="modified by",
+            ),
         ),
     ]

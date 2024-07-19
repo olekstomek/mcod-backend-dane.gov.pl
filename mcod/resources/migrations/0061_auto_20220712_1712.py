@@ -7,18 +7,31 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('resources', '0060_auto_20220708_1649'),
+        ("resources", "0060_auto_20220708_1649"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='resource',
-            name='language',
-            field=models.CharField(choices=[('pl', 'Polish'), ('en', 'English')], db_index=True, default='pl', max_length=2, verbose_name='language version of the data'),
+            model_name="resource",
+            name="language",
+            field=models.CharField(
+                choices=[("pl", "Polish"), ("en", "English")],
+                db_index=True,
+                default="pl",
+                max_length=2,
+                verbose_name="language version of the data",
+            ),
         ),
         migrations.AddField(
-            model_name='resource',
-            name='related_resource',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.DO_NOTHING, related_name='related_data', to='resources.Resource', verbose_name='related data'),
+            model_name="resource",
+            name="related_resource",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.DO_NOTHING,
+                related_name="related_data",
+                to="resources.Resource",
+                verbose_name="related data",
+            ),
         ),
     ]

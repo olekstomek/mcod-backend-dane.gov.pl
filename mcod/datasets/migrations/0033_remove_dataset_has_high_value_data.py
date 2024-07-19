@@ -6,12 +6,12 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('datasets', '0032_dataset_archived_resources_files'),
+        ("datasets", "0032_dataset_archived_resources_files"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='dataset',
-            name='has_high_value_data',
+            model_name="dataset",
+            name="has_high_value_data",
         ),
     ]

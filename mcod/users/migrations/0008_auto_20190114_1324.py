@@ -6,23 +6,30 @@ from django.conf import settings
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('users', '0007_auto_20180820_1143')
-    ]
+    dependencies = [("users", "0007_auto_20180820_1143")]
 
     operations = [
         migrations.AddField(
-            model_name='user',
-            name='phone',
-            field=models.CharField(blank=True, db_column='tel', max_length=50, null=True, verbose_name='Phone number'),
+            model_name="user",
+            name="phone",
+            field=models.CharField(
+                blank=True,
+                db_column="tel",
+                max_length=50,
+                null=True,
+                verbose_name="Phone number",
+            ),
         ),
         migrations.AddField(
-            model_name='user',
-            name='phone_internal',
-            field=models.CharField(blank=True, db_column='tel_internal', max_length=20, null=True, verbose_name='Internal phone number'),
+            model_name="user",
+            name="phone_internal",
+            field=models.CharField(
+                blank=True,
+                db_column="tel_internal",
+                max_length=20,
+                null=True,
+                verbose_name="Internal phone number",
+            ),
         ),
-        migrations.RunSQL(
-            open(
-                os.path.join(settings.DATABASE_DIR,'MCOD-1227-user-phone.sql')).read()
-        ),
+        migrations.RunSQL(open(os.path.join(settings.DATABASE_DIR, "MCOD-1227-user-phone.sql")).read()),
     ]

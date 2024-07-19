@@ -16,8 +16,8 @@ class Document(DESDocument):
         Build queryset (iterator) for use by indexing.
         """
         qs = self.get_queryset()
-        if 'chunk_size' not in kwargs:
-            kwargs['chunk_size'] = self.django.queryset_pagination or DEFAULT_CHUNK_SIZE
+        if "chunk_size" not in kwargs:
+            kwargs["chunk_size"] = self.django.queryset_pagination or DEFAULT_CHUNK_SIZE
         return qs.iterator(**kwargs)
 
     def get_queryset_count(self):
@@ -29,8 +29,8 @@ class Document(DESDocument):
             yield prepared_action
 
     def parallel_bulk(self, actions, **kwargs):
-        if 'chunk_size' not in kwargs:
-            kwargs['chunk_size'] = self.django.queryset_pagination or DEFAULT_CHUNK_SIZE
+        if "chunk_size" not in kwargs:
+            kwargs["chunk_size"] = self.django.queryset_pagination or DEFAULT_CHUNK_SIZE
 
         bulk_actions = parallel_bulk(client=self._get_connection(), actions=actions, **kwargs)
         # As the `parallel_bulk` is lazy, we need to get it into `deque` to run it instantly
@@ -42,48 +42,40 @@ class Document(DESDocument):
 
     def _bulk(self, *args, **kwargs):
         """Helper for switching between normal and parallel bulk operation"""
-        parallel = kwargs.pop('parallel', False)
+        parallel = kwargs.pop("parallel", False)
         if parallel:
             return self.parallel_bulk(*args, **kwargs)
         else:
             return self.bulk(*args, **kwargs)
 
-    def update(self, thing, refresh=None, action='index', parallel=False, **kwargs):
+    def update(self, thing, refresh=None, action="index", parallel=False, **kwargs):
         """
         Update each document in ES for a model, iterable of models or queryset
         """
-        if refresh is True or (
-            refresh is None and self.django.auto_refresh
-        ):
-            kwargs['refresh'] = True
+        if refresh is True or (refresh is None and self.django.auto_refresh):
+            kwargs["refresh"] = True
 
         if isinstance(thing, models.Model):
             object_list = [thing]
         else:
             object_list = thing
 
-        return self._bulk(
-            self._get_actions(object_list, action),
-            parallel=parallel,
-            **kwargs
-        )
+        return self._bulk(self._get_actions(object_list, action), parallel=parallel, **kwargs)
 
     def prepare_id(self, instance):
         return instance.pk
 
     def delete_by_id(self, _id, refresh=None, **kwargs):
-        if refresh is True or (
-            refresh is None and self.django.auto_refresh
-        ):
-            kwargs['refresh'] = True
+        if refresh is True or (refresh is None and self.django.auto_refresh):
+            kwargs["refresh"] = True
 
         actions = [
             {
-                '_index': self._index._name,
-                '_id': self.prepare_id(self.django.model(pk=_id)),
-                '_type': 'doc',
-                '_op_type': 'delete',
-                '_source': None,
+                "_index": self._index._name,
+                "_id": self.prepare_id(self.django.model(pk=_id)),
+                "_type": "doc",
+                "_op_type": "delete",
+                "_source": None,
             }
         ]
         self._bulk(actions, **kwargs)
@@ -124,11 +116,13 @@ class ProxyDocumentRegistry:
         for obj in related_instances:
             if not obj.is_removed and not obj.is_permanently_removed:
                 meta = obj._meta
-                data.append({
-                    'app_label': meta.app_label,
-                    'object_name': meta.concrete_model._meta.object_name,
-                    'instance_id': obj.id,
-                })
+                data.append(
+                    {
+                        "app_label": meta.app_label,
+                        "object_name": meta.concrete_model._meta.object_name,
+                        "instance_id": obj.id,
+                    }
+                )
 
         return data
 

@@ -88,9 +88,7 @@ class TestResourceModel:
             Resource.trash.get(id=resource.id)
 
     def test_file_url_and_path(self, resource, mocker):
-        mocker.patch(
-            "mcod.resources.link_validation.download_file", return_value=("file", {})
-        )
+        mocker.patch("mcod.resources.link_validation.download_file", return_value=("file", {}))
         resource = Resource.objects.get(pk=resource.pk)
         assert resource.main_file
         date_folder = timezone.now().date().isoformat().replace("-", "")
@@ -105,9 +103,7 @@ class TestResourceModel:
         run_on_commit_events()
         assert len(TaskResult.objects.all()) > k
 
-    def test_update_resource_sets_has_map_attribute_if_geo_data_available(
-        self, geo_tabular_data_resource
-    ):
+    def test_update_resource_sets_has_map_attribute_if_geo_data_available(self, geo_tabular_data_resource):
         tr = TaskResult.objects.create(status=states.SUCCESS)
         geo_tabular_data_resource.tabular_data_schema = {
             "geo": {"label": "etykieta", "b": 1, "l": 2},
@@ -123,9 +119,7 @@ class TestResourceModel:
         geo_tabular_data_resource.refresh_from_db()
         assert geo_tabular_data_resource.has_map
 
-    def test_title_and_description_content_validation(
-        self, resource_of_type_website: Resource
-    ):
+    def test_title_and_description_content_validation(self, resource_of_type_website: Resource):
         """
         Validates Resource object content: checks invalid description content
         raises ValidationError.
@@ -173,9 +167,7 @@ class TestTaskResultModel:
     def test_result_parser_elastic_search_mapping_error(self):
         tr = TaskResult()
         tr.result = "{\"exc_type\": \"BulkIndexError\", \"exc_message\": \"('500 document(s) failed to index.', [{'index': {'_index': 'resource-16652', '_type': 'doc', '_id': '1b632e0f-e7e2-5cc5-89e9-60e19acf63f6', 'status': 400, 'error': {'type': 'mapper_parsing_exception', 'reason': \\\"failed to parse field [col2] of type [scaled_float] in document with id '1b632e0f-e7e2-5cc5-89e9-60e19acf63f6'\\\", 'caused_by': {'type': 'number_format_exception', 'reason': 'For input string: \\\"102\\\\xa0944\\\"'}}, 'data': {'col1': 'NOWAK', 'col2': '102\\\\xa0944', 'updated_at': datetime.datetime(2020, 2, 17, 10, 29, 22, 936871), 'row_no': 1, 'resource': {'id': 16652, 'title': '123'}}}}])\", \"uuid\": \"5bb6ff28-3542-4fe4-ab67-986c13c80b82\", \"link\": \"http://api.mcod.local/media/resources/20200217/Wykaz_nazwisk__%C5%BCe%C5%84skich_os__%C5%BCyj%C4%85ce_2020-01-22.csv\", \"format\": \"csv\", \"type\": \"file\"}"  # noqa
-        assert tr.message == [
-            "Błąd indeksacji. Wartości z kolumny [col2] nie mogą być typu [Liczba zmiennoprzecinkowa]."
-        ]
+        assert tr.message == ["Błąd indeksacji. Wartości z kolumny [col2] nie mogą być typu [Liczba zmiennoprzecinkowa]."]
         assert tr.recommendation == ["Zmień typ kolumny [col2] na [Dane tekstowe]."]
 
     def test_result_parser_unhandled_elasticsearch_error(self):
@@ -193,13 +185,9 @@ class TestTaskResultModel:
         assert TaskResult._find_error_code(result) == "TestError"
 
         result["exc_type"] = "OperationalError"
-        result[
-            "exc_message"
-        ] = "could not connect to server: Connection refused, cośtam cośtam"
+        result["exc_message"] = "could not connect to server: Connection refused, cośtam cośtam"
         assert TaskResult._find_error_code(result) == "connection-error"
-        result[
-            "exc_message"
-        ] = "Lorem ipsum remaining connection slots are reserved cośtam dalej"
+        result["exc_message"] = "Lorem ipsum remaining connection slots are reserved cośtam dalej"
         assert TaskResult._find_error_code(result) == "connection-error"
 
         result["exc_type"] = "Exception"
@@ -251,8 +239,5 @@ class TestAggregatedDGAInfo:
     def test_create_second_instance_aggregated_dga(self):
         AggregatedDGAInfoFactory.create()
 
-        with pytest.raises(
-                ValidationError,
-                match="'There can be only one AggregatedDGAInfo instance'"
-        ):
+        with pytest.raises(ValidationError, match="'There can be only one AggregatedDGAInfo instance'"):
             AggregatedDGAInfoFactory.create()

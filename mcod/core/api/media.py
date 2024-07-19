@@ -20,9 +20,7 @@ class RDFHandler(BaseHandler):
             content_type = RDF_FORMAT_TO_MIMETYPE["jsonld"]
 
         if content_type == "application/ld+json":
-            result = media.serialize(
-                format=content_type, auto_compact=True, encoding="utf-8"
-            )
+            result = media.serialize(format=content_type, auto_compact=True, encoding="utf-8")
         else:
             result = media.serialize(format=content_type, encoding="utf-8")
 
@@ -79,11 +77,7 @@ class ExportHandler(BaseHandler):
     def _as_csv(self, context):
         if not getattr(context, "serializer_schema", None):
             schema_class = context.data.model.get_csv_serializer_schema()
-            exclude = (
-                ["recommendation_state_name", "recommendation_notes"]
-                if not context.full
-                else []
-            )
+            exclude = ["recommendation_state_name", "recommendation_notes"] if not context.full else []
             if context.state == "planned":
                 exclude += [
                     "is_resource_added_yes_no",
@@ -100,9 +94,7 @@ class ExportHandler(BaseHandler):
 
     def to_xlsx(self, context):
         output = io.BytesIO()
-        writer = pd.ExcelWriter(
-            output, engine="xlsxwriter"
-        )  # https://stackoverflow.com/a/28065603
+        writer = pd.ExcelWriter(output, engine="xlsxwriter")  # https://stackoverflow.com/a/28065603
         csv_output = self._as_csv(context)
         csv_output.seek(0)
         pd.read_csv(csv_output, sep=";").to_excel(writer, index=False)

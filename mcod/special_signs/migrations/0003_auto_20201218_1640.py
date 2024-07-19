@@ -9,18 +9,34 @@ class Migration(migrations.Migration):
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('special_signs', '0002_specialsign_history_trigger'),
+        ("special_signs", "0002_specialsign_history_trigger"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='specialsign',
-            name='created_by',
-            field=models.ForeignKey(blank=True, editable=False, null=True, on_delete=django.db.models.deletion.DO_NOTHING, related_name='special_signs_created', to=settings.AUTH_USER_MODEL, verbose_name='created by'),
+            model_name="specialsign",
+            name="created_by",
+            field=models.ForeignKey(
+                blank=True,
+                editable=False,
+                null=True,
+                on_delete=django.db.models.deletion.DO_NOTHING,
+                related_name="special_signs_created",
+                to=settings.AUTH_USER_MODEL,
+                verbose_name="created by",
+            ),
         ),
         migrations.AddField(
-            model_name='specialsign',
-            name='modified_by',
-            field=models.ForeignKey(blank=True, editable=False, null=True, on_delete=django.db.models.deletion.DO_NOTHING, related_name='special_signs_modified', to=settings.AUTH_USER_MODEL, verbose_name='modified by'),
+            model_name="specialsign",
+            name="modified_by",
+            field=models.ForeignKey(
+                blank=True,
+                editable=False,
+                null=True,
+                on_delete=django.db.models.deletion.DO_NOTHING,
+                related_name="special_signs_modified",
+                to=settings.AUTH_USER_MODEL,
+                verbose_name="modified by",
+            ),
         ),
     ]

@@ -12,10 +12,8 @@ from mcod import settings
 from mcod.core.api.search import constants
 from mcod.lib import field_validators
 
-
 MISSING_ERROR_MESSAGE = (
-    'ValidationError raised by `{class_name}`, but error key `{key}` does '
-    'not exist in the `error_messages` dictionary.'
+    "ValidationError raised by `{class_name}`, but error key `{key}` does " "not exist in the `error_messages` dictionary."
 )
 
 
@@ -38,7 +36,7 @@ class TranslatedErrorsMixin:
             try:
                 r = validator(value)
                 if not isinstance(validator, Validator) and r is False:
-                    self.make_error('validator_failed')
+                    self.make_error("validator_failed")
             except ValidationError as err:
                 kwargs.update(err.kwargs)
                 if isinstance(err.messages, dict):
@@ -60,7 +58,7 @@ class DataMixin:
 class SearchFieldMixin:
     @staticmethod
     def _filter_empty(filter_list):
-        return list(filter(lambda el: el != '', filter_list))
+        return list(filter(lambda el: el != "", filter_list))
 
     def split_lookup_value(self, value, maxsplit=-1):
         return self._filter_empty(value.split(constants.SEPARATOR_LOOKUP_VALUE, maxsplit))
@@ -160,21 +158,24 @@ class Constant(DataMixin, TranslatedErrorsMixin, fields.Constant):
 
 class Base64(String):
     default_error_messages = {
-        'invalid_base64': 'Invalid data format for base64 encoding.',
-        'too_long': 'Too long data.'
+        "invalid_base64": "Invalid data format for base64 encoding.",
+        "too_long": "Too long data.",
     }
 
     def __init__(self, max_size=None, **kwargs):
         super().__init__(**kwargs)
-        self.validators.insert(0, field_validators.Base64(
-            max_size=max_size,
-            base64_error=self.error_messages['invalid_base64'],
-            length_error=self.error_messages['too_long']
-        ))
+        self.validators.insert(
+            0,
+            field_validators.Base64(
+                max_size=max_size,
+                base64_error=self.error_messages["invalid_base64"],
+                length_error=self.error_messages["too_long"],
+            ),
+        )
 
 
 class FilteringFilterField(SearchFieldMixin, DataMixin, TranslatedErrorsMixin, fields.Field):
-    def __init__(self, field_name='', lookups=None, translated=False, **metadata):
+    def __init__(self, field_name="", lookups=None, translated=False, **metadata):
         super().__init__(**metadata)
         self.lookups = lookups if isinstance(lookups, list) else []
         self.field_name = field_name
@@ -191,7 +192,11 @@ class FilteringFilterField(SearchFieldMixin, DataMixin, TranslatedErrorsMixin, f
     def prepare_data(self, name, data):
         data = dict(data)
         if name in data:
-            nkey = '%s%s%s' % (name, constants.SEPARATOR_LOOKUP_FILTER, constants.LOOKUP_FILTER_TERM)
+            nkey = "%s%s%s" % (
+                name,
+                constants.SEPARATOR_LOOKUP_FILTER,
+                constants.LOOKUP_FILTER_TERM,
+            )
             data[nkey] = data.pop(name)
         field_data = {k: v for k, v in data.items() if k.startswith(name)}
         data.update(FlatDict(field_data, delimiter=constants.SEPARATOR_LOOKUP_FILTER).as_dict())
@@ -205,7 +210,7 @@ class FilteringFilterField(SearchFieldMixin, DataMixin, TranslatedErrorsMixin, f
     def _validate(self, values):
         unsupported_lookups = list(set(values.keys() - self.lookups))
         if unsupported_lookups:
-            raise ValidationError('Unsupported filter')
+            raise ValidationError("Unsupported filter")
 
     def get_range_params(self, value):
         __values = self.split_lookup_value(value, maxsplit=3)
@@ -214,15 +219,13 @@ class FilteringFilterField(SearchFieldMixin, DataMixin, TranslatedErrorsMixin, f
         if __len_values == 0:
             return {}
 
-        params = {
-            'gte': __values[0]
-        }
+        params = {"gte": __values[0]}
 
         if __len_values == 3:
-            params['lte'] = __values[1]
-            params['boost'] = __values[2]
+            params["lte"] = __values[1]
+            params["boost"] = __values[2]
         elif __len_values == 2:
-            params['lte'] = __values[1]
+            params["lte"] = __values[1]
 
         return params
 
@@ -233,12 +236,10 @@ class FilteringFilterField(SearchFieldMixin, DataMixin, TranslatedErrorsMixin, f
         if __len_values == 0:
             return {}
 
-        params = {
-            lookup: __values[0]
-        }
+        params = {lookup: __values[0]}
 
         if __len_values == 2:
-            params['boost'] = __values[1]
+            params["boost"] = __values[1]
 
         return params
 
@@ -249,17 +250,23 @@ class FilteringFilterField(SearchFieldMixin, DataMixin, TranslatedErrorsMixin, f
         if self.trans:
             _qs = []
             for lookup, value in data.items():
-                func = getattr(self, 'get_filter_{}'.format(lookup), None)
+                func = getattr(self, "get_filter_{}".format(lookup), None)
                 if not func:
                     continue
                 q = func(value)
                 if q:
                     _qs.append(q)
 
-            return queryset.query(Q('nested', path=self._base_name, query=six.moves.reduce(operator.and_, _qs)))
+            return queryset.query(
+                Q(
+                    "nested",
+                    path=self._base_name,
+                    query=six.moves.reduce(operator.and_, _qs),
+                )
+            )
         else:
             for lookup, value in data.items():
-                func = getattr(self, 'get_filter_{}'.format(lookup), None)
+                func = getattr(self, "get_filter_{}".format(lookup), None)
                 if not func:
                     continue
                 q = func(value)
@@ -275,11 +282,11 @@ class FilteringFilterField(SearchFieldMixin, DataMixin, TranslatedErrorsMixin, f
             __values = self.split_lookup_value(value)
         must = []
         for value in list(set(__values)):
-            must.append(Q('term', **{self._name: value}))
-        return Q('bool', must=must)
+            must.append(Q("term", **{self._name: value}))
+        return Q("bool", must=must)
 
     def get_filter_term(self, value):
-        return Q('term', **{self._name: value})
+        return Q("term", **{self._name: value})
 
     def get_filter_terms(self, value):
         if isinstance(value, (list, tuple)):
@@ -287,16 +294,10 @@ class FilteringFilterField(SearchFieldMixin, DataMixin, TranslatedErrorsMixin, f
         else:
             __values = self.split_lookup_value(value)
 
-        return Q(
-            'terms',
-            **{self._name: __values}
-        )
+        return Q("terms", **{self._name: __values})
 
     def get_filter_range(self, value):
-        return Q(
-            'range',
-            **{self._name: self.get_range_params(value)}
-        )
+        return Q("range", **{self._name: self.get_range_params(value)})
 
     def get_filter_exists(self, value):
         _value_lower = value.lower()
@@ -307,56 +308,41 @@ class FilteringFilterField(SearchFieldMixin, DataMixin, TranslatedErrorsMixin, f
         return None
 
     def get_filter_prefix(self, value):
-        return Q(
-            'prefix',
-            **{self._name: value}
-        )
+        return Q("prefix", **{self._name: value})
 
     def get_filter_wildcard(self, value):
-        return Q('wildcard', **{self._name: value})
+        return Q("wildcard", **{self._name: value})
 
     def get_filter_contains(self, value):
-        return Q('wildcard', **{self._name: '*{}*'.format(value)})
+        return Q("wildcard", **{self._name: "*{}*".format(value)})
 
     def get_filter_startswith(self, value):
-        return Q('prefix', **{self._name: '{}'.format(value)})
+        return Q("prefix", **{self._name: "{}".format(value)})
 
     def get_filter_endswith(self, value):
-        return Q('wildcard', **{self._name: '*{}'.format(value)})
+        return Q("wildcard", **{self._name: "*{}".format(value)})
 
     def get_filter_in(self, value):
         return self.get_filter_terms(value)
 
     def get_filter_gt(self, value):
-        return Bool(filter=[
-            Q('range', **{self._name: self.get_gte_lte_params(value, 'gt')})
-        ])
+        return Bool(filter=[Q("range", **{self._name: self.get_gte_lte_params(value, "gt")})])
 
     def get_filter_gte(self, value):
-        return Bool(filter=[
-            Q('range', **{self._name: self.get_gte_lte_params(value, 'gte')})
-        ])
+        return Bool(filter=[Q("range", **{self._name: self.get_gte_lte_params(value, "gte")})])
 
     def get_filter_lt(self, value):
-        return Bool(filter=[Q(
-            'range',
-            **{self._name: self.get_gte_lte_params(value, 'lt')}
-        )])
+        return Bool(filter=[Q("range", **{self._name: self.get_gte_lte_params(value, "lt")})])
 
     def get_filter_lte(self, value):
-        return Bool(filter=[Q(
-            'range',
-            **{self._name: self.get_gte_lte_params(value, 'lte')}
-        )])
+        return Bool(filter=[Q("range", **{self._name: self.get_gte_lte_params(value, "lte")})])
 
     def get_filter_exclude(self, value):
         __values = self.split_lookup_value(value)
 
         __queries = []
         for __value in __values:
-            __queries.append(
-                ~Q('term', **{self._name: __value})
-            )
+            __queries.append(~Q("term", **{self._name: __value}))
 
         if __queries:
             return six.moves.reduce(operator.or_, __queries)
@@ -374,12 +360,12 @@ class NestedFilteringField(FilteringFilterField):
         if not data:
             return queryset
         for lookup, value in data.items():
-            func = getattr(self, 'get_filter_{}'.format(lookup), None)
+            func = getattr(self, "get_filter_{}".format(lookup), None)
             if not func:
                 continue
             q = func(value)
             if q:
-                queryset = queryset.query('nested', path=self.path, query=q)
+                queryset = queryset.query("nested", path=self.path, query=q)
 
         return queryset
 
@@ -396,9 +382,7 @@ class IdsSearchField(SearchFieldMixin, DataMixin, TranslatedErrorsMixin, fields.
 
         if __ids:
             __ids = list(set(__ids))
-            queryset = queryset.query(
-                'ids', **{'values': __ids}
-            )
+            queryset = queryset.query("ids", **{"values": __ids})
         return queryset
 
 
@@ -415,25 +399,13 @@ class SuggesterFilterField(SearchFieldMixin, DataMixin, TranslatedErrorsMixin, f
         return data
 
     def apply_suggester_term(self, queryset, value):
-        return queryset.suggest(
-            self.name,
-            value,
-            term={'field': self.field_name}
-        )
+        return queryset.suggest(self.name, value, term={"field": self.field_name})
 
     def apply_suggester_phrase(self, queryset, value):
-        return queryset.suggest(
-            self.name,
-            value,
-            phrase={'field': self.field_name}
-        )
+        return queryset.suggest(self.name, value, phrase={"field": self.field_name})
 
     def apply_suggester_completion(self, queryset, value):
-        return queryset.suggest(
-            self.name,
-            value,
-            completion={'field': self.field_name}
-        )
+        return queryset.suggest(self.name, value, completion={"field": self.field_name})
 
     def prepare_queryset(self, queryset, context=None):
         data = context or self.context
@@ -451,7 +423,13 @@ class SuggesterFilterField(SearchFieldMixin, DataMixin, TranslatedErrorsMixin, f
 
 
 class SearchFilterField(SearchFieldMixin, DataMixin, TranslatedErrorsMixin, fields.Field):
-    def __init__(self, search_fields=None, search_nested_fields=None, search_i18n_fields=None, **metadata):
+    def __init__(
+        self,
+        search_fields=None,
+        search_nested_fields=None,
+        search_i18n_fields=None,
+        **metadata,
+    ):
         self.field_names = search_fields if isinstance(search_fields, (list, tuple, dict)) else ()
         self.search_nested_fields = search_nested_fields if isinstance(search_nested_fields, dict) else {}
         self.search_i18n_fields = search_i18n_fields if isinstance(search_i18n_fields, (list, tuple)) else ()
@@ -459,7 +437,9 @@ class SearchFilterField(SearchFieldMixin, DataMixin, TranslatedErrorsMixin, fiel
 
     def _deserialize(self, value, attr, data):
         if isinstance(value, str):
-            return [value, ]
+            return [
+                value,
+            ]
         return value
 
     def construct_nested_search(self, data):
@@ -470,18 +450,23 @@ class SearchFilterField(SearchFieldMixin, DataMixin, TranslatedErrorsMixin, fiel
                 for field in _fields:
                     field_key = "{}.{}".format(path, field)
                     queries.append(
-                        Q("match", **{field_key: {
-                            'query': search_term,
-                            'fuzziness': 'AUTO',
-                            'fuzzy_transpositions': True
-                        }})
+                        Q(
+                            "match",
+                            **{
+                                field_key: {
+                                    "query": search_term,
+                                    "fuzziness": "AUTO",
+                                    "fuzzy_transpositions": True,
+                                }
+                            },
+                        )
                     )
 
                 __queries.append(
                     Q(
                         "nested",
                         path=path,
-                        query=six.moves.reduce(operator.or_, queries)
+                        query=six.moves.reduce(operator.or_, queries),
                     )
                 )
 
@@ -495,34 +480,47 @@ class SearchFilterField(SearchFieldMixin, DataMixin, TranslatedErrorsMixin, fiel
                 for lang in settings.MODELTRANS_AVAILABLE_LANGUAGES:
                     field_key = f"{field}.{lang}"
                     queries += [
-                        Q("match", **{field_key: {
-                            'query': search_term,
-                            'fuzziness': 'AUTO',
-                            'fuzzy_transpositions': True
-                        }}),
-                        Q("match", **{field_key + ".asciied": {
-                            'query': search_term,
-                            'fuzziness': 'AUTO',
-                            'fuzzy_transpositions': True
-                        }}),
+                        Q(
+                            "match",
+                            **{
+                                field_key: {
+                                    "query": search_term,
+                                    "fuzziness": "AUTO",
+                                    "fuzzy_transpositions": True,
+                                }
+                            },
+                        ),
+                        Q(
+                            "match",
+                            **{
+                                field_key
+                                + ".asciied": {
+                                    "query": search_term,
+                                    "fuzziness": "AUTO",
+                                    "fuzzy_transpositions": True,
+                                }
+                            },
+                        ),
                     ]
 
                 __queries.append(
                     Q(
                         "nested",
                         path=field,
-                        query=six.moves.reduce(operator.or_, queries)
+                        query=six.moves.reduce(operator.or_, queries),
                     )
                 )
         return __queries
 
     def _prepare_match_query(self, field, value):
         # Initial kwargs for the match query
-        field_kwargs = {field: {
-            'query': value,
-            'fuzziness': 'AUTO',
-            'fuzzy_transpositions': True,
-        }}
+        field_kwargs = {
+            field: {
+                "query": value,
+                "fuzziness": "AUTO",
+                "fuzzy_transpositions": True,
+            }
+        }
         # In case if we deal with structure 2
         if isinstance(self.field_names, dict):
             extra_field_kwargs = self.field_names[field]
@@ -540,28 +538,28 @@ class SearchFilterField(SearchFieldMixin, DataMixin, TranslatedErrorsMixin, fiel
             if __len_values > 1:
                 field, value = __values
                 if field in self.field_names:
-                    __queries.append(
-                        self._prepare_match_query(field, value)
-                    )
+                    __queries.append(self._prepare_match_query(field, value))
 
             else:
                 for field in self.field_names:
-                    __queries.append(
-                        self._prepare_match_query(field, search_term)
-                    )
+                    __queries.append(self._prepare_match_query(field, search_term))
         return __queries
 
     def prepare_queryset(self, queryset, context=None):
         data = context or self.context
         if not data:
             return queryset
-        __queries = sum((self.construct_search(data),
-                         self.construct_nested_search(data),
-                         self.construct_translated_search(data)),
-                        [])
+        __queries = sum(
+            (
+                self.construct_search(data),
+                self.construct_nested_search(data),
+                self.construct_translated_search(data),
+            ),
+            [],
+        )
 
         if __queries:
-            queryset = queryset.query('bool', should=__queries)
+            queryset = queryset.query("bool", should=__queries)
         return queryset
 
 
@@ -572,7 +570,7 @@ class FacetedFilterField(SearchFieldMixin, DataMixin, TranslatedErrorsMixin, fie
 
     def _deserialize(self, value, attr, data):
         if isinstance(value, str):
-            return value.split(',')
+            return value.split(",")
         return value
 
     def prepare_queryset(self, queryset, context=None):
@@ -583,48 +581,46 @@ class FacetedFilterField(SearchFieldMixin, DataMixin, TranslatedErrorsMixin, fie
         for __field, __facet in self.facets.items():
             if __field in data:
                 agg = __facet.get_aggregation()
-                agg_filter = Q('match_all')
+                agg_filter = Q("match_all")
 
-                queryset.aggs.bucket(
-                    '_filter_' + __field,
-                    'filter',
-                    filter=agg_filter
-                ).bucket(__field, agg)
+                queryset.aggs.bucket("_filter_" + __field, "filter", filter=agg_filter).bucket(__field, agg)
         return queryset
 
 
 class OrderingFilterField(SearchFieldMixin, DataMixin, TranslatedErrorsMixin, fields.Field):
-    ordering_param = 'sort'
+    ordering_param = "sort"
 
     def __init__(self, ordering_fields=None, default_ordering=None, **metadata):
         self.ordering_fields = ordering_fields if isinstance(ordering_fields, dict) else {}
-        self.ordering_fields['_score'] = '_score'
+        self.ordering_fields["_score"] = "_score"
         self.default_ordering = default_ordering or []
         super().__init__(**metadata)
 
     def prepare_fields_data(self, data):
         sort_params = data or self.default_ordering
         if isinstance(sort_params, str):
-            sort_params = [sort_params, ]
+            sort_params = [
+                sort_params,
+            ]
         __sort_params = []
         for param in sort_params:
-            __key = param.lstrip('-')
-            __direction = '-' if param.startswith('-') else ''
+            __key = param.lstrip("-")
+            __direction = "-" if param.startswith("-") else ""
             if __key in self.ordering_fields:
                 __field_name = self.ordering_fields[__key] or __key
-                if '{lang}' in __field_name:
+                if "{lang}" in __field_name:
                     __field_name = __field_name.format(lang=get_language())
-                    nested_path = __field_name.split('.')[0]
-                    __sort_params.append({
-                        __field_name: {
-                            'order': 'desc' if __direction == '-' else 'asc',
-                            'nested': {
-                                'path': nested_path
+                    nested_path = __field_name.split(".")[0]
+                    __sort_params.append(
+                        {
+                            __field_name: {
+                                "order": "desc" if __direction == "-" else "asc",
+                                "nested": {"path": nested_path},
                             }
                         }
-                    })
+                    )
                 else:
-                    __sort_params.append('{}{}'.format(__direction, __field_name.format(lang=get_language())))
+                    __sort_params.append("{}{}".format(__direction, __field_name.format(lang=get_language())))
         return __sort_params
 
     def prepare_queryset(self, queryset, context=None):
@@ -636,7 +632,7 @@ class OrderingFilterField(SearchFieldMixin, DataMixin, TranslatedErrorsMixin, fi
 
 
 class HighlightBackend(SearchFieldMixin, DataMixin, TranslatedErrorsMixin, fields.Field):
-    _ALL = '_all'
+    _ALL = "_all"
     _ES_ALL_KEY = _ALL
 
     def __init__(self, highlight_fields=None, **metadata):
@@ -647,19 +643,21 @@ class HighlightBackend(SearchFieldMixin, DataMixin, TranslatedErrorsMixin, field
         highlight_fields = data or []
         __params = {}
         if isinstance(highlight_fields, str):
-            highlight_fields = [highlight_fields, ]
+            highlight_fields = [
+                highlight_fields,
+            ]
 
         if self._ALL in self.highlight_fields:
             __params[self._ES_ALL_KEY] = self.highlight_fields[self._ALL]
-            __params[self._ES_ALL_KEY]['enabled'] = True
+            __params[self._ES_ALL_KEY]["enabled"] = True
 
         for field in highlight_fields:
             if field in self.highlight_fields:
-                if 'enabled' not in self.highlight_fields[field]:
-                    self.highlight_fields[field]['enabled'] = False
+                if "enabled" not in self.highlight_fields[field]:
+                    self.highlight_fields[field]["enabled"] = False
 
-                if 'options' not in self.highlight_fields[field]:
-                    self.highlight_fields[field]['options'] = {}
+                if "options" not in self.highlight_fields[field]:
+                    self.highlight_fields[field]["options"] = {}
                 __params[field] = self.highlight_fields[field]
         return __params
 
@@ -671,7 +669,7 @@ class HighlightBackend(SearchFieldMixin, DataMixin, TranslatedErrorsMixin, field
         params = self.prepare_fields_data(data)
 
         for __field, __options in params.items():
-            if __options['enabled']:
-                queryset = queryset.highlight(__field, **__options['options'])
+            if __options["enabled"]:
+                queryset = queryset.highlight(__field, **__options["options"])
 
         return queryset

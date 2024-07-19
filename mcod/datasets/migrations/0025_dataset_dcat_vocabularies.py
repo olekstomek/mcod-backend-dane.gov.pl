@@ -7,13 +7,13 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('datasets', '0024_auto_20201001_1408'),
+        ("datasets", "0024_auto_20201001_1408"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='dataset',
-            name='dcat_vocabularies',
-            field=django.contrib.postgres.fields.jsonb.JSONField(blank=True, null=True, verbose_name='Controlled Vocabularies'),
+            model_name="dataset",
+            name="dcat_vocabularies",
+            field=django.contrib.postgres.fields.jsonb.JSONField(blank=True, null=True, verbose_name="Controlled Vocabularies"),
         ),
     ]

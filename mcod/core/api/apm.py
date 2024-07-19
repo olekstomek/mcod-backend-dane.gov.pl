@@ -9,10 +9,14 @@ from mcod import settings
 
 
 def get_client():
-    if not hasattr(settings, 'ELASTIC_APM'):
+    if not hasattr(settings, "ELASTIC_APM"):
         return None
-    if not settings.DEBUG or settings.ELASTIC_APM.get('DEBUG', False):
-        return Client(settings.ELASTIC_APM, framework_name='falcon', framework_version=falcon.__version__)
+    if not settings.DEBUG or settings.ELASTIC_APM.get("DEBUG", False):
+        return Client(
+            settings.ELASTIC_APM,
+            framework_name="falcon",
+            framework_version=falcon.__version__,
+        )
 
     return None
 
@@ -21,8 +25,10 @@ def get_data_from_request(request, capture_body=False, capture_headers=True):
     result = {
         "env": dict(get_environ(request.env)),
         "method": request.method,
-        "socket": {"remote_address": request.env.get("REMOTE_ADDR"),
-                   "encrypted": True if request.scheme == 'https' else False},
+        "socket": {
+            "remote_address": request.env.get("REMOTE_ADDR"),
+            "encrypted": True if request.scheme == "https" else False,
+        },
         "cookies": request.cookies,
     }
     if capture_headers:
@@ -62,5 +68,5 @@ def get_data_from_response(response, capture_headers=True):
 def get_status_code_number(status_code):
     if not status_code:
         return None
-    number, message = status_code.split(' ', 1)
+    number, message = status_code.split(" ", 1)
     return int(number)

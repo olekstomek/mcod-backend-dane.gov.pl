@@ -1,21 +1,21 @@
 /*!
  * Copyright (c) 2012 - 2020, Anaconda, Inc., and Bokeh Contributors
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  * Redistributions of source code must retain the above copyright notice,
  * this list of conditions and the following disclaimer.
- * 
+ *
  * Redistributions in binary form must reproduce the above copyright notice,
  * this list of conditions and the following disclaimer in the documentation
  * and/or other materials provided with the distribution.
- * 
+ *
  * Neither the name of Anaconda nor the names of any contributors
  * may be used to endorse or promote products derived from this software
  * without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -5345,12 +5345,12 @@
     const conversions = require(29) /* ./conversions */;
     /*
         This function routes a model to all other models.
-    
+
         all functions that are routed have a property `.conversion` attached
         to the returned synthetic function. This property is an array
         of strings, each with the steps in between the 'from' and 'to'
         color models (inclusive).
-    
+
         conversions that are not possible simply are not included.
     */
     function buildGraph() {
@@ -5941,17 +5941,17 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
 /* yargs/build/lib/levenshtein.js */ function _(require, module, exports) {
     /*
     Copyright (c) 2011 Andrei Mackenzie
-    
+
     Permission is hereby granted, free of charge, to any person obtaining a copy of
     this software and associated documentation files (the "Software"), to deal in
     the Software without restriction, including without limitation the rights to
     use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
     the Software, and to permit persons to whom the Software is furnished to do so,
     subject to the following conditions:
-    
+
     The above copyright notice and this permission notice shall be included in all
     copies or substantial portions of the Software.
-    
+
     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
     IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
     FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
@@ -11654,7 +11654,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                             fileCallback(fileName, FileWatcherEventKind.Changed);
                         }
                     }
-                }, 
+                },
                 /*recursive*/ false, PollingInterval.Medium, fallbackOptions);
                 watcher.referenceCount = 0;
                 dirWatchers.set(dirPath, watcher);
@@ -11977,7 +11977,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                     case ts.WatchFileKind.DynamicPriorityPolling:
                         return ensureDynamicPollingWatchFile()(fileName, callback, pollingInterval, /*options*/ undefined);
                     case ts.WatchFileKind.UseFsEvents:
-                        return fsWatch(fileName, 0 /* File */, createFsWatchCallbackForFileWatcherCallback(fileName, callback, fileExists), 
+                        return fsWatch(fileName, 0 /* File */, createFsWatchCallbackForFileWatcherCallback(fileName, callback, fileExists),
                         /*recursive*/ false, pollingInterval, ts.getFallbackOptions(options));
                     case ts.WatchFileKind.UseFsEventsOnParentDirectory:
                         if (!nonPollingWatchFile) {
@@ -12051,10 +12051,10 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 var watchDirectoryKind = ts.Debug.assertDefined(options.watchDirectory);
                 switch (watchDirectoryKind) {
                     case ts.WatchDirectoryKind.FixedPollingInterval:
-                        return pollingWatchFile(directoryName, function () { return callback(directoryName); }, PollingInterval.Medium, 
+                        return pollingWatchFile(directoryName, function () { return callback(directoryName); }, PollingInterval.Medium,
                         /*options*/ undefined);
                     case ts.WatchDirectoryKind.DynamicPriorityPolling:
-                        return ensureDynamicPollingWatchFile()(directoryName, function () { return callback(directoryName); }, PollingInterval.Medium, 
+                        return ensureDynamicPollingWatchFile()(directoryName, function () { return callback(directoryName); }, PollingInterval.Medium,
                         /*options*/ undefined);
                     case ts.WatchDirectoryKind.UseFsEvents:
                         return fsWatch(directoryName, 1 /* Directory */, createFsWatchCallbackForDirectoryWatcherCallback(directoryName, callback), recursive, PollingInterval.Medium, ts.getFallbackOptions(options));
@@ -14888,7 +14888,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 Combining spacing mark (Mc),
                 Decimal number (Nd), or
                 Connector punctuation (Pc).
-    
+
             Codepoint ranges for ES3 Identifiers are extracted from the Unicode 3.0.0 specification at:
             http://www.unicode.org/Public/3.0-Update/UnicodeData-3.0.0.txt
         */
@@ -14912,7 +14912,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 Connector punctuation (Pc),
                 <ZWNJ>, or
                 <ZWJ>.
-    
+
             Codepoint ranges for ES5 Identifiers are extracted from the Unicode 6.2 specification at:
             http://www.unicode.org/Public/6.2.0/ucd/UnicodeData.txt
         */
@@ -34029,8 +34029,8 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
             result.path = ts.toPath(configFileName, cwd, ts.createGetCanonicalFileName(host.useCaseSensitiveFileNames));
             result.resolvedPath = result.path;
             result.originalFileName = result.fileName;
-            return parseJsonSourceFileConfigFileContent(result, host, ts.getNormalizedAbsolutePath(ts.getDirectoryPath(configFileName), cwd), optionsToExtend, ts.getNormalizedAbsolutePath(configFileName, cwd), 
-            /*resolutionStack*/ undefined, 
+            return parseJsonSourceFileConfigFileContent(result, host, ts.getNormalizedAbsolutePath(ts.getDirectoryPath(configFileName), cwd), optionsToExtend, ts.getNormalizedAbsolutePath(configFileName, cwd),
+            /*resolutionStack*/ undefined,
             /*extraFileExtension*/ undefined, extendedConfigCache, watchOptionsToExtend);
         }
         ts.getParsedCommandLineOfConfigFile = getParsedCommandLineOfConfigFile;
@@ -34314,7 +34314,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                             return convertObjectLiteralExpressionToJson(objectLiteralExpression, elementOptions, extraKeyDiagnostics, optionName);
                         }
                         else {
-                            return convertObjectLiteralExpressionToJson(objectLiteralExpression, /* knownOptions*/ undefined, 
+                            return convertObjectLiteralExpressionToJson(objectLiteralExpression, /* knownOptions*/ undefined,
                             /*extraKeyDiagnosticMessage */ undefined, /*parentOption*/ undefined);
                         }
                     case 192 /* ArrayLiteralExpression */:
@@ -39787,7 +39787,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                     return false;
                 }
                 if (currentFlow === unreachableFlow) {
-                    var reportError = 
+                    var reportError =
                     // report error on all statements except empty ones
                     (ts.isStatementButNotDeclaration(node) && node.kind !== 224 /* EmptyStatement */) ||
                         // report error on class declarations
@@ -45127,7 +45127,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                         if (modifiers) {
                             context.approximateLength += 9;
                         }
-                        var propertySignature = ts.createPropertySignature(modifiers, propertyName, optionalToken, propertyTypeNode, 
+                        var propertySignature = ts.createPropertySignature(modifiers, propertyName, optionalToken, propertyTypeNode,
                         /*initializer*/ undefined);
                         typeElements.push(preserveCommentsOn(propertySignature));
                     }
@@ -45186,10 +45186,10 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                     var name = ts.getNameFromIndexInfo(indexInfo) || "x";
                     var indexerTypeNode = ts.createKeywordTypeNode(kind === 0 /* String */ ? 143 /* StringKeyword */ : 140 /* NumberKeyword */);
                     var indexingParameter = ts.createParameter(
-                    /*decorators*/ undefined, 
-                    /*modifiers*/ undefined, 
-                    /*dotDotDotToken*/ undefined, name, 
-                    /*questionToken*/ undefined, indexerTypeNode, 
+                    /*decorators*/ undefined,
+                    /*modifiers*/ undefined,
+                    /*dotDotDotToken*/ undefined, name,
+                    /*questionToken*/ undefined, indexerTypeNode,
                     /*initializer*/ undefined);
                     var typeNode = typeToTypeNodeHelper(indexInfo.type || anyType, context);
                     if (!indexInfo.type && !(context.flags & 2097152 /* AllowEmptyIndexInfoType */)) {
@@ -45278,7 +45278,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                     var isOptional = parameterDeclaration && isOptionalParameter(parameterDeclaration) || ts.getCheckFlags(parameterSymbol) & 16384 /* OptionalParameter */;
                     var questionToken = isOptional ? ts.createToken(57 /* QuestionToken */) : undefined;
                     var parameterNode = ts.createParameter(
-                    /*decorators*/ undefined, modifiers, dotDotDotToken, name, questionToken, parameterTypeNode, 
+                    /*decorators*/ undefined, modifiers, dotDotDotToken, name, questionToken, parameterTypeNode,
                     /*initializer*/ undefined);
                     context.approximateLength += ts.symbolName(parameterSymbol).length + 3;
                     return parameterNode;
@@ -45800,8 +45800,8 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                             var excessExports = ts.filter(statements, function (s) { return !!(ts.getModifierFlags(s) & 1 /* Export */); });
                             if (ts.length(excessExports)) {
                                 ns.body.statements = ts.createNodeArray(__spreadArrays(ns.body.statements, [ts.createExportDeclaration(
-                                    /*decorators*/ undefined, 
-                                    /*modifiers*/ undefined, ts.createNamedExports(ts.map(ts.flatMap(excessExports, function (e) { return getNamesOfDeclaration(e); }), function (id) { return ts.createExportSpecifier(/*alias*/ undefined, id); })), 
+                                    /*decorators*/ undefined,
+                                    /*modifiers*/ undefined, ts.createNamedExports(ts.map(ts.flatMap(excessExports, function (e) { return getNamesOfDeclaration(e); }), function (id) { return ts.createExportSpecifier(/*alias*/ undefined, id); })),
                                     /*moduleSpecifier*/ undefined)]));
                             }
                             // Pass 1: Flatten `export namespace _exports {} export = _exports;` so long as the `export=` only points at a single namespace declaration
@@ -45821,8 +45821,8 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                         if (ts.length(exports) > 1) {
                             var nonExports = ts.filter(statements, function (d) { return !ts.isExportDeclaration(d) || !!d.moduleSpecifier || !d.exportClause; });
                             statements = __spreadArrays(nonExports, [ts.createExportDeclaration(
-                                /*decorators*/ undefined, 
-                                /*modifiers*/ undefined, ts.createNamedExports(ts.flatMap(exports, function (e) { return ts.cast(e.exportClause, ts.isNamedExports).elements; })), 
+                                /*decorators*/ undefined,
+                                /*modifiers*/ undefined, ts.createNamedExports(ts.flatMap(exports, function (e) { return ts.cast(e.exportClause, ts.isNamedExports).elements; })),
                                 /*moduleSpecifier*/ undefined)]);
                         }
                         // Pass 2b: Also combine all `export {} from "..."` declarations as needed
@@ -45835,7 +45835,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                                         // remove group members from statements and then merge group members and add back to statements
                                         statements = __spreadArrays(ts.filter(statements, function (s) { return group_1.indexOf(s) === -1; }), [
                                             ts.createExportDeclaration(
-                                            /*decorators*/ undefined, 
+                                            /*decorators*/ undefined,
                                             /*modifiers*/ undefined, ts.createNamedExports(ts.flatMap(group_1, function (e) { return ts.cast(e.exportClause, ts.isNamedExports).elements; })), group_1[0].moduleSpecifier)
                                         ]);
                                     }
@@ -46082,7 +46082,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                         var indexSignatures = serializeIndexSignatures(interfaceType, baseType);
                         var heritageClauses = !ts.length(baseTypes) ? undefined : [ts.createHeritageClause(90 /* ExtendsKeyword */, ts.mapDefined(baseTypes, function (b) { return trySerializeAsTypeReference(b); }))];
                         addResult(ts.createInterfaceDeclaration(
-                        /*decorators*/ undefined, 
+                        /*decorators*/ undefined,
                         /*modifiers*/ undefined, getInternalSymbolName(symbol, symbolName), typeParamDecls, heritageClauses, __spreadArrays(indexSignatures, constructSignatures, callSignatures, members)), modifierFlags);
                     }
                     function getNamespaceMembersForSerialization(symbol) {
@@ -46107,7 +46107,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                         if (ts.length(mergedMembers)) {
                             var localName = getInternalSymbolName(symbol, symbolName);
                             var nsBody = ts.createModuleBlock([ts.createExportDeclaration(
-                                /*decorators*/ undefined, 
+                                /*decorators*/ undefined,
                                 /*modifiers*/ undefined, ts.createNamedExports(ts.map(ts.filter(mergedMembers, function (n) { return n.escapedName !== "export=" /* ExportEquals */; }), function (s) {
                                     var name = ts.unescapeLeadingUnderscores(s.escapedName);
                                     var localName = getInternalSymbolName(s, name);
@@ -46118,7 +46118,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                                     return ts.createExportSpecifier(name === targetName ? undefined : targetName, name);
                                 })))]);
                             addResult(ts.createModuleDeclaration(
-                            /*decorators*/ undefined, 
+                            /*decorators*/ undefined,
                             /*modifiers*/ undefined, ts.createIdentifier(localName), nsBody, 16 /* Namespace */), 0 /* None */);
                         }
                     }
@@ -46182,7 +46182,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                                     // ```
                                     // To create an export named `g` that does _not_ shadow the local `g`
                                     addResult(ts.createExportDeclaration(
-                                    /*decorators*/ undefined, 
+                                    /*decorators*/ undefined,
                                     /*modifiers*/ undefined, ts.createNamedExports([ts.createExportSpecifier(name, localName)])), 0 /* None */);
                                 }
                             }
@@ -46274,10 +46274,10 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                         // Boil down all private properties into a single one.
                         var privateProperties = hasPrivateIdentifier ?
                             [ts.createProperty(
-                                /*decorators*/ undefined, 
-                                /*modifiers*/ undefined, ts.createPrivateIdentifier("#private"), 
-                                /*questionOrExclamationToken*/ undefined, 
-                                /*type*/ undefined, 
+                                /*decorators*/ undefined,
+                                /*modifiers*/ undefined, ts.createPrivateIdentifier("#private"),
+                                /*questionOrExclamationToken*/ undefined,
+                                /*type*/ undefined,
                                 /*initializer*/ undefined)] :
                             ts.emptyArray;
                         var publicProperties = ts.flatMap(publicSymbolProps, function (p) { return serializePropertySymbolForClass(p, /*isStatic*/ false, baseTypes[0]); });
@@ -46295,7 +46295,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                         }
                         var indexSignatures = serializeIndexSignatures(classType, baseTypes[0]);
                         addResult(ts.setTextRange(ts.createClassDeclaration(
-                        /*decorators*/ undefined, 
+                        /*decorators*/ undefined,
                         /*modifiers*/ undefined, localName, typeParamDecls, heritageClauses, __spreadArrays(indexSignatures, staticMembers, constructors, publicProperties, privateProperties)), symbol.declarations && ts.filter(symbol.declarations, function (d) { return ts.isClassDeclaration(d) || ts.isClassExpression(d); })[0]), modifierFlags);
                     }
                     function serializeAsAlias(symbol, localName, modifierFlags) {
@@ -46322,7 +46322,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                                 // an external `import localName = require("whatever")`
                                 var isLocalImport = !(target.flags & 512 /* ValueModule */);
                                 addResult(ts.createImportEqualsDeclaration(
-                                /*decorators*/ undefined, 
+                                /*decorators*/ undefined,
                                 /*modifiers*/ undefined, ts.createIdentifier(localName), isLocalImport
                                     ? symbolToName(target, context, 67108863 /* All */, /*expectsIdentifier*/ false)
                                     : ts.createExternalModuleReference(ts.createLiteral(getSpecifierForModuleSymbol(symbol, context)))), isLocalImport ? modifierFlags : 0 /* None */);
@@ -46335,8 +46335,8 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                                 break;
                             case 255 /* ImportClause */:
                                 addResult(ts.createImportDeclaration(
-                                /*decorators*/ undefined, 
-                                /*modifiers*/ undefined, ts.createImportClause(ts.createIdentifier(localName), /*namedBindings*/ undefined), 
+                                /*decorators*/ undefined,
+                                /*modifiers*/ undefined, ts.createImportClause(ts.createIdentifier(localName), /*namedBindings*/ undefined),
                                 // We use `target.parent || target` below as `target.parent` is unset when the target is a module which has been export assigned
                                 // And then made into a default by the `esModuleInterop` or `allowSyntheticDefaultImports` flag
                                 // In such cases, the `target` refers to the module itself already
@@ -46344,17 +46344,17 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                                 break;
                             case 256 /* NamespaceImport */:
                                 addResult(ts.createImportDeclaration(
-                                /*decorators*/ undefined, 
+                                /*decorators*/ undefined,
                                 /*modifiers*/ undefined, ts.createImportClause(/*importClause*/ undefined, ts.createNamespaceImport(ts.createIdentifier(localName))), ts.createLiteral(getSpecifierForModuleSymbol(target, context))), 0 /* None */);
                                 break;
                             case 262 /* NamespaceExport */:
                                 addResult(ts.createExportDeclaration(
-                                /*decorators*/ undefined, 
+                                /*decorators*/ undefined,
                                 /*modifiers*/ undefined, ts.createNamespaceExport(ts.createIdentifier(localName)), ts.createLiteral(getSpecifierForModuleSymbol(target, context))), 0 /* None */);
                                 break;
                             case 258 /* ImportSpecifier */:
                                 addResult(ts.createImportDeclaration(
-                                /*decorators*/ undefined, 
+                                /*decorators*/ undefined,
                                 /*modifiers*/ undefined, ts.createImportClause(/*importClause*/ undefined, ts.createNamedImports([
                                     ts.createImportSpecifier(localName !== verbatimTargetName ? ts.createIdentifier(verbatimTargetName) : undefined, ts.createIdentifier(localName))
                                 ])), ts.createLiteral(getSpecifierForModuleSymbol(target.parent || target, context))), 0 /* None */);
@@ -46388,7 +46388,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                     }
                     function serializeExportSpecifier(localName, targetName, specifier) {
                         addResult(ts.createExportDeclaration(
-                        /*decorators*/ undefined, 
+                        /*decorators*/ undefined,
                         /*modifiers*/ undefined, ts.createNamedExports([ts.createExportSpecifier(localName !== targetName ? targetName : undefined, localName)]), specifier), 0 /* None */);
                     }
                     function serializeMaybeAliasAssignment(symbol) {
@@ -46425,7 +46425,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                             context.tracker.trackSymbol = ts.noop;
                             if (isExportAssignment) {
                                 results.push(ts.createExportAssignment(
-                                /*decorators*/ undefined, 
+                                /*decorators*/ undefined,
                                 /*modifiers*/ undefined, isExportEquals, symbolToExpression(target, context, 67108863 /* All */)));
                             }
                             else {
@@ -46440,7 +46440,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                                     // serialize as `import _Ref = t.arg.et; export { _Ref as name }`
                                     var varName = getUnusedName(name, symbol);
                                     addResult(ts.createImportEqualsDeclaration(
-                                    /*decorators*/ undefined, 
+                                    /*decorators*/ undefined,
                                     /*modifiers*/ undefined, ts.createIdentifier(varName), symbolToName(target, context, 67108863 /* All */, /*expectsIdentifier*/ false)), 0 /* None */);
                                     serializeExportSpecifier(name, varName);
                                 }
@@ -46465,7 +46465,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                             }
                             if (isExportAssignment) {
                                 results.push(ts.createExportAssignment(
-                                /*decorators*/ undefined, 
+                                /*decorators*/ undefined,
                                 /*modifiers*/ undefined, isExportEquals, ts.createIdentifier(varName)));
                             }
                             else if (name !== varName) {
@@ -46512,16 +46512,16 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                                 if (p.flags & 65536 /* SetAccessor */) {
                                     result.push(ts.setTextRange(ts.createSetAccessor(
                                     /*decorators*/ undefined, ts.createModifiersFromModifierFlags(flag), name, [ts.createParameter(
-                                        /*decorators*/ undefined, 
-                                        /*modifiers*/ undefined, 
-                                        /*dotDotDotToken*/ undefined, "arg", 
-                                        /*questionToken*/ undefined, isPrivate ? undefined : serializeTypeForDeclaration(getTypeOfSymbol(p), p))], 
+                                        /*decorators*/ undefined,
+                                        /*modifiers*/ undefined,
+                                        /*dotDotDotToken*/ undefined, "arg",
+                                        /*questionToken*/ undefined, isPrivate ? undefined : serializeTypeForDeclaration(getTypeOfSymbol(p), p))],
                                     /*body*/ undefined), ts.find(p.declarations, ts.isSetAccessor) || firstPropertyLikeDecl));
                                 }
                                 if (p.flags & 32768 /* GetAccessor */) {
                                     var isPrivate_1 = modifierFlags & 8 /* Private */;
                                     result.push(ts.setTextRange(ts.createGetAccessor(
-                                    /*decorators*/ undefined, ts.createModifiersFromModifierFlags(flag), name, [], isPrivate_1 ? undefined : serializeTypeForDeclaration(getTypeOfSymbol(p), p), 
+                                    /*decorators*/ undefined, ts.createModifiersFromModifierFlags(flag), name, [], isPrivate_1 ? undefined : serializeTypeForDeclaration(getTypeOfSymbol(p), p),
                                     /*body*/ undefined), ts.find(p.declarations, ts.isGetAccessor) || firstPropertyLikeDecl));
                                 }
                                 return result;
@@ -46530,7 +46530,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                             // If this happens, we assume the accessor takes priority, as it imposes more constraints
                             else if (p.flags & (4 /* Property */ | 3 /* Variable */)) {
                                 return ts.setTextRange(createProperty(
-                                /*decorators*/ undefined, ts.createModifiersFromModifierFlags((isReadonlySymbol(p) ? 64 /* Readonly */ : 0) | flag), name, p.flags & 16777216 /* Optional */ ? ts.createToken(57 /* QuestionToken */) : undefined, isPrivate ? undefined : serializeTypeForDeclaration(getTypeOfSymbol(p), p), 
+                                /*decorators*/ undefined, ts.createModifiersFromModifierFlags((isReadonlySymbol(p) ? 64 /* Readonly */ : 0) | flag), name, p.flags & 16777216 /* Optional */ ? ts.createToken(57 /* QuestionToken */) : undefined, isPrivate ? undefined : serializeTypeForDeclaration(getTypeOfSymbol(p), p),
                                 // TODO: https://github.com/microsoft/TypeScript/pull/32372#discussion_r328386357
                                 // interface members can't have initializers, however class members _can_
                                 /*initializer*/ undefined), ts.find(p.declarations, ts.or(ts.isPropertyDeclaration, ts.isVariableDeclaration)) || firstPropertyLikeDecl);
@@ -46540,8 +46540,8 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                                 var signatures = getSignaturesOfType(type, 0 /* Call */);
                                 if (flag & 8 /* Private */) {
                                     return ts.setTextRange(createProperty(
-                                    /*decorators*/ undefined, ts.createModifiersFromModifierFlags((isReadonlySymbol(p) ? 64 /* Readonly */ : 0) | flag), name, p.flags & 16777216 /* Optional */ ? ts.createToken(57 /* QuestionToken */) : undefined, 
-                                    /*type*/ undefined, 
+                                    /*decorators*/ undefined, ts.createModifiersFromModifierFlags((isReadonlySymbol(p) ? 64 /* Readonly */ : 0) | flag), name, p.flags & 16777216 /* Optional */ ? ts.createToken(57 /* QuestionToken */) : undefined,
+                                    /*type*/ undefined,
                                     /*initializer*/ undefined), ts.find(p.declarations, ts.isFunctionLikeDeclaration) || signatures[0] && signatures[0].declaration || p.declarations[0]);
                                 }
                                 var results_1 = [];
@@ -46608,11 +46608,11 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                             }
                             if ((ts.isExpressionWithTypeArguments(node) || ts.isTypeReferenceNode(node)) && ts.isJSDocIndexSignature(node)) {
                                 return ts.createTypeLiteralNode([ts.createIndexSignature(
-                                    /*decorators*/ undefined, 
+                                    /*decorators*/ undefined,
                                     /*modifiers*/ undefined, [ts.createParameter(
-                                        /*decorators*/ undefined, 
-                                        /*modifiers*/ undefined, 
-                                        /*dotdotdotToken*/ undefined, "x", 
+                                        /*decorators*/ undefined,
+                                        /*modifiers*/ undefined,
+                                        /*dotdotdotToken*/ undefined, "x",
                                         /*questionToken*/ undefined, ts.visitNode(node.typeArguments[0], visitExistingNodeTreeSymbols))], ts.visitNode(node.typeArguments[1], visitExistingNodeTreeSymbols))]);
                             }
                             if (ts.isJSDocFunctionType(node)) {
@@ -46620,16 +46620,16 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                                     var newTypeNode_1;
                                     return ts.createConstructorTypeNode(ts.visitNodes(node.typeParameters, visitExistingNodeTreeSymbols), ts.mapDefined(node.parameters, function (p, i) {
                                         return p.name && ts.isIdentifier(p.name) && p.name.escapedText === "new" ? (newTypeNode_1 = p.type, undefined) : ts.createParameter(
-                                        /*decorators*/ undefined, 
-                                        /*modifiers*/ undefined, p.dotDotDotToken, p.name || p.dotDotDotToken ? "args" : "arg" + i, p.questionToken, ts.visitNode(p.type, visitExistingNodeTreeSymbols), 
+                                        /*decorators*/ undefined,
+                                        /*modifiers*/ undefined, p.dotDotDotToken, p.name || p.dotDotDotToken ? "args" : "arg" + i, p.questionToken, ts.visitNode(p.type, visitExistingNodeTreeSymbols),
                                         /*initializer*/ undefined);
                                     }), ts.visitNode(newTypeNode_1 || node.type, visitExistingNodeTreeSymbols));
                                 }
                                 else {
                                     return ts.createFunctionTypeNode(ts.visitNodes(node.typeParameters, visitExistingNodeTreeSymbols), ts.map(node.parameters, function (p, i) {
                                         return ts.createParameter(
-                                        /*decorators*/ undefined, 
-                                        /*modifiers*/ undefined, p.dotDotDotToken, p.name || p.dotDotDotToken ? "args" : "arg" + i, p.questionToken, ts.visitNode(p.type, visitExistingNodeTreeSymbols), 
+                                        /*decorators*/ undefined,
+                                        /*modifiers*/ undefined, p.dotDotDotToken, p.name || p.dotDotDotToken ? "args" : "arg" + i, p.questionToken, ts.visitNode(p.type, visitExistingNodeTreeSymbols),
                                         /*initializer*/ undefined);
                                     }), ts.visitNode(node.type, visitExistingNodeTreeSymbols));
                                 }
@@ -46714,8 +46714,8 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                             }
                             if (privateProtected) {
                                 return [ts.setTextRange(ts.createConstructor(
-                                    /*decorators*/ undefined, ts.createModifiersFromModifierFlags(privateProtected), 
-                                    /*parameters*/ [], 
+                                    /*decorators*/ undefined, ts.createModifiersFromModifierFlags(privateProtected),
+                                    /*parameters*/ [],
                                     /*body*/ undefined), signatures[0].declaration)];
                             }
                         }
@@ -49128,7 +49128,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 return sig;
             }
             function cloneSignature(sig) {
-                var result = createSignature(sig.declaration, sig.typeParameters, sig.thisParameter, sig.parameters, /*resolvedReturnType*/ undefined, 
+                var result = createSignature(sig.declaration, sig.typeParameters, sig.thisParameter, sig.parameters, /*resolvedReturnType*/ undefined,
                 /*resolvedTypePredicate*/ undefined, sig.minArgumentCount, sig.flags & 3 /* PropagatingFlags */);
                 result.target = sig.target;
                 result.mapper = sig.mapper;
@@ -49349,8 +49349,8 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 var params = combineUnionParameters(left, right);
                 var thisParam = combineUnionThisParam(left.thisParameter, right.thisParameter);
                 var minArgCount = Math.max(left.minArgumentCount, right.minArgumentCount);
-                var result = createSignature(declaration, left.typeParameters || right.typeParameters, thisParam, params, 
-                /*resolvedReturnType*/ undefined, 
+                var result = createSignature(declaration, left.typeParameters || right.typeParameters, thisParam, params,
+                /*resolvedReturnType*/ undefined,
                 /*resolvedTypePredicate*/ undefined, minArgCount, (left.flags | right.flags) & 3 /* PropagatingFlags */);
                 result.unionSignatures = ts.concatenate(left.unionSignatures || [left], [right]);
                 return result;
@@ -50506,7 +50506,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                     if (ts.hasRestParameter(declaration) || ts.isInJSFile(declaration) && maybeAddJsSyntheticRestParameter(declaration, parameters)) {
                         flags |= 1 /* HasRestParameter */;
                     }
-                    links.resolvedSignature = createSignature(declaration, typeParameters, thisParameter, parameters, 
+                    links.resolvedSignature = createSignature(declaration, typeParameters, thisParameter, parameters,
                     /*resolvedReturnType*/ undefined, /*resolvedTypePredicate*/ undefined, minArgumentCount, flags);
                 }
                 return links.resolvedSignature;
@@ -53171,8 +53171,8 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 // Don't compute resolvedReturnType and resolvedTypePredicate now,
                 // because using `mapper` now could trigger inferences to become fixed. (See `createInferenceContext`.)
                 // See GH#17600.
-                var result = createSignature(signature.declaration, freshTypeParameters, signature.thisParameter && instantiateSymbol(signature.thisParameter, mapper), instantiateList(signature.parameters, mapper, instantiateSymbol), 
-                /*resolvedReturnType*/ undefined, 
+                var result = createSignature(signature.declaration, freshTypeParameters, signature.thisParameter && instantiateSymbol(signature.thisParameter, mapper), instantiateList(signature.parameters, mapper, instantiateSymbol),
+                /*resolvedReturnType*/ undefined,
                 /*resolvedTypePredicate*/ undefined, signature.minArgumentCount, signature.flags & 3 /* PropagatingFlags */);
                 result.target = signature;
                 result.mapper = mapper;
@@ -54072,7 +54072,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 return checkTypeRelatedTo(source, target, comparableRelation, errorNode, headMessage, containingMessageChain);
             }
             function isSignatureAssignableTo(source, target, ignoreReturnTypes) {
-                return compareSignaturesRelated(source, target, ignoreReturnTypes ? 4 /* IgnoreReturnTypes */ : 0, /*reportErrors*/ false, 
+                return compareSignaturesRelated(source, target, ignoreReturnTypes ? 4 /* IgnoreReturnTypes */ : 0, /*reportErrors*/ false,
                 /*errorReporter*/ undefined, /*errorReporter*/ undefined, compareTypesAssignable, /*reportUnreliableMarkers*/ undefined) !== 0 /* False */;
             }
             /**
@@ -58079,7 +58079,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 var links = getNodeLinks(node);
                 if (!links.resolvedSymbol) {
                     links.resolvedSymbol = !ts.nodeIsMissing(node) &&
-                        resolveName(node, node.escapedText, 111551 /* Value */ | 1048576 /* ExportValue */, getCannotFindNameDiagnosticForName(node), node, !ts.isWriteOnlyAccess(node), 
+                        resolveName(node, node.escapedText, 111551 /* Value */ | 1048576 /* ExportValue */, getCannotFindNameDiagnosticForName(node), node, !ts.isWriteOnlyAccess(node),
                         /*excludeGlobals*/ false, ts.Diagnostics.Cannot_find_name_0_Did_you_mean_1) || unknownSymbol;
                 }
                 return links.resolvedSymbol;
@@ -59587,11 +59587,11 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                     /*
                       The implied type is the raw type suggested by a
                       value being caught in this clause.
-    
+
                       When the clause contains a default case we ignore
                       the implied type and try to narrow using any facts
                       we can learn: see `switchFacts`.
-    
+
                       Example:
                       switch (typeof x) {
                           case 'number':
@@ -59600,12 +59600,12 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                           case 'number':
                           case 'boolean': break
                       }
-    
+
                       In the first clause (case `number` and `string`) the
                       implied type is number | string.
-    
+
                       In the default clause we de not compute an implied type.
-    
+
                       In the third clause (case `number` and `boolean`)
                       the naive implied type is number | boolean, however
                       we use the type facts to narrow the implied type to
@@ -63314,7 +63314,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 // can be specified by users through attributes property.
                 var paramType = getEffectiveFirstArgumentForJsxSignature(signature, node);
                 var attributesType = checkExpressionWithContextualType(node.attributes, paramType, /*inferenceContext*/ undefined, checkMode);
-                return checkTypeRelatedToAndOptionallyElaborate(attributesType, paramType, relation, reportErrors ? node.tagName : undefined, node.attributes, 
+                return checkTypeRelatedToAndOptionallyElaborate(attributesType, paramType, relation, reportErrors ? node.tagName : undefined, node.attributes,
                 /*headMessage*/ undefined, containingMessageChain, errorOutputContainer);
             }
             function getSignatureApplicabilityError(node, args, signature, relation, checkMode, reportErrors, containingMessageChain) {
@@ -63920,10 +63920,10 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 if (candidates.some(signatureHasLiteralTypes)) {
                     flags |= 2 /* HasLiteralTypes */;
                 }
-                return createSignature(candidates[0].declaration, 
+                return createSignature(candidates[0].declaration,
                 /*typeParameters*/ undefined, // Before calling this we tested for `!candidates.some(c => !!c.typeParameters)`.
-                thisParameter, parameters, 
-                /*resolvedReturnType*/ getIntersectionType(candidates.map(getReturnTypeOfSignature)), 
+                thisParameter, parameters,
+                /*resolvedReturnType*/ getIntersectionType(candidates.map(getReturnTypeOfSignature)),
                 /*typePredicate*/ undefined, minArgumentCount, flags);
             }
             function getNumNonRestParameters(signature) {
@@ -64400,9 +64400,9 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 var declaration = ts.createFunctionTypeNode(/*typeParameters*/ undefined, [ts.createParameter(/*decorators*/ undefined, /*modifiers*/ undefined, /*dotdotdot*/ undefined, "props", /*questionMark*/ undefined, nodeBuilder.typeToTypeNode(result, node))], returnNode ? ts.createTypeReferenceNode(returnNode, /*typeArguments*/ undefined) : ts.createKeywordTypeNode(125 /* AnyKeyword */));
                 var parameterSymbol = createSymbol(1 /* FunctionScopedVariable */, "props");
                 parameterSymbol.type = result;
-                return createSignature(declaration, 
-                /*typeParameters*/ undefined, 
-                /*thisParameter*/ undefined, [parameterSymbol], typeSymbol ? getDeclaredTypeOfSymbol(typeSymbol) : errorType, 
+                return createSignature(declaration,
+                /*typeParameters*/ undefined,
+                /*thisParameter*/ undefined, [parameterSymbol], typeSymbol ? getDeclaredTypeOfSymbol(typeSymbol) : errorType,
                 /*returnTypePredicate*/ undefined, 1, 0 /* None */);
             }
             function resolveJsxOpeningLikeElement(node, candidatesOutArray, checkMode) {
@@ -67126,7 +67126,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                         else {
                             if (typePredicate.type) {
                                 var leadingError = function () { return ts.chainDiagnosticMessages(/*details*/ undefined, ts.Diagnostics.A_type_predicate_s_type_must_be_assignable_to_its_parameter_s_type); };
-                                checkTypeAssignableTo(typePredicate.type, getTypeOfSymbol(signature.parameters[typePredicate.parameterIndex]), node.type, 
+                                checkTypeAssignableTo(typePredicate.type, getTypeOfSymbol(signature.parameters[typePredicate.parameterIndex]), node.type,
                                 /*headMessage*/ undefined, leadingError);
                             }
                         }
@@ -68645,7 +68645,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                     // Since the javascript won't do semantic analysis like typescript,
                     // if the javascript file comes before the typescript file and both contain same name functions,
                     // checkFunctionOrConstructorSymbol wouldn't be called if we didnt ignore javascript function.
-                    var firstDeclaration = ts.find(localSymbol.declarations, 
+                    var firstDeclaration = ts.find(localSymbol.declarations,
                     // Get first non javascript function declaration
                     function (declaration) { return declaration.kind === node.kind && !(declaration.flags & 131072 /* JavaScriptFile */); });
                     // Only type check the symbol once
@@ -71566,7 +71566,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 if (!node.parent.parent.moduleSpecifier) {
                     var exportedName = node.propertyName || node.name;
                     // find immediate value referenced by exported name (SymbolFlags.Alias is set so we don't chase down aliases)
-                    var symbol = resolveName(exportedName, exportedName.escapedText, 111551 /* Value */ | 788968 /* Type */ | 1920 /* Namespace */ | 2097152 /* Alias */, 
+                    var symbol = resolveName(exportedName, exportedName.escapedText, 111551 /* Value */ | 788968 /* Type */ | 1920 /* Namespace */ | 2097152 /* Alias */,
                     /*nameNotFoundMessage*/ undefined, /*nameArg*/ undefined, /*isUse*/ true);
                     if (symbol && (symbol === undefinedSymbol || symbol === globalThisSymbol || isGlobalSourceFile(getDeclarationContainer(symbol.declarations[0])))) {
                         error(exportedName, ts.Diagnostics.Cannot_export_0_Only_local_declarations_can_be_exported_from_a_module, ts.idText(exportedName));
@@ -72294,7 +72294,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 }
                 if (name.parent.kind === 259 /* ExportAssignment */ && ts.isEntityNameExpression(name)) {
                     // Even an entity name expression that doesn't resolve as an entityname may still typecheck as a property access expression
-                    var success = resolveEntityName(name, 
+                    var success = resolveEntityName(name,
                     /*all meanings*/ 111551 /* Value */ | 788968 /* Type */ | 1920 /* Namespace */ | 2097152 /* Alias */, /*ignoreErrors*/ true);
                     if (success && success !== unknownSymbol) {
                         return success;
@@ -75406,7 +75406,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
         }
         ts.createMethod = createMethod;
         function createMethodCall(object, methodName, argumentsList) {
-            return createCall(createPropertyAccess(object, asName(methodName)), 
+            return createCall(createPropertyAccess(object, asName(methodName)),
             /*typeArguments*/ undefined, argumentsList);
         }
         function createGlobalMethodCall(globalObjectName, methodName, argumentsList) {
@@ -77905,24 +77905,24 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
         ts.updateBundle = updateBundle;
         function createImmediatelyInvokedFunctionExpression(statements, param, paramValue) {
             return createCall(createFunctionExpression(
-            /*modifiers*/ undefined, 
-            /*asteriskToken*/ undefined, 
-            /*name*/ undefined, 
-            /*typeParameters*/ undefined, 
-            /*parameters*/ param ? [param] : [], 
-            /*type*/ undefined, createBlock(statements, /*multiLine*/ true)), 
-            /*typeArguments*/ undefined, 
+            /*modifiers*/ undefined,
+            /*asteriskToken*/ undefined,
+            /*name*/ undefined,
+            /*typeParameters*/ undefined,
+            /*parameters*/ param ? [param] : [],
+            /*type*/ undefined, createBlock(statements, /*multiLine*/ true)),
+            /*typeArguments*/ undefined,
             /*argumentsArray*/ paramValue ? [paramValue] : []);
         }
         ts.createImmediatelyInvokedFunctionExpression = createImmediatelyInvokedFunctionExpression;
         function createImmediatelyInvokedArrowFunction(statements, param, paramValue) {
             return createCall(createArrowFunction(
-            /*modifiers*/ undefined, 
-            /*typeParameters*/ undefined, 
-            /*parameters*/ param ? [param] : [], 
-            /*type*/ undefined, 
-            /*equalsGreaterThanToken*/ undefined, createBlock(statements, /*multiLine*/ true)), 
-            /*typeArguments*/ undefined, 
+            /*modifiers*/ undefined,
+            /*typeParameters*/ undefined,
+            /*parameters*/ param ? [param] : [],
+            /*type*/ undefined,
+            /*equalsGreaterThanToken*/ undefined, createBlock(statements, /*multiLine*/ true)),
+            /*typeArguments*/ undefined,
             /*argumentsArray*/ paramValue ? [paramValue] : []);
         }
         ts.createImmediatelyInvokedArrowFunction = createImmediatelyInvokedArrowFunction;
@@ -78388,14 +78388,14 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
         }
         ts.createMemberAccessForPropertyName = createMemberAccessForPropertyName;
         function createFunctionCall(func, thisArg, argumentsList, location) {
-            return ts.setTextRange(ts.createCall(ts.createPropertyAccess(func, "call"), 
+            return ts.setTextRange(ts.createCall(ts.createPropertyAccess(func, "call"),
             /*typeArguments*/ undefined, __spreadArrays([
                 thisArg
             ], argumentsList)), location);
         }
         ts.createFunctionCall = createFunctionCall;
         function createFunctionApply(func, thisArg, argumentsExpression, location) {
-            return ts.setTextRange(ts.createCall(ts.createPropertyAccess(func, "apply"), 
+            return ts.setTextRange(ts.createCall(ts.createPropertyAccess(func, "apply"),
             /*typeArguments*/ undefined, [
                 thisArg,
                 argumentsExpression
@@ -78411,12 +78411,12 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
         }
         ts.createArraySlice = createArraySlice;
         function createArrayConcat(array, values) {
-            return ts.createCall(ts.createPropertyAccess(array, "concat"), 
+            return ts.createCall(ts.createPropertyAccess(array, "concat"),
             /*typeArguments*/ undefined, values);
         }
         ts.createArrayConcat = createArrayConcat;
         function createMathPow(left, right, location) {
-            return ts.setTextRange(ts.createCall(ts.createPropertyAccess(ts.createIdentifier("Math"), "pow"), 
+            return ts.setTextRange(ts.createCall(ts.createPropertyAccess(ts.createIdentifier("Math"), "pow"),
             /*typeArguments*/ undefined, [left, right]), location);
         }
         ts.createMathPow = createMathPow;
@@ -78467,7 +78467,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                     argumentsList.push(children[0]);
                 }
             }
-            return ts.setTextRange(ts.createCall(createJsxFactoryExpression(jsxFactoryEntity, reactNamespace, parentElement), 
+            return ts.setTextRange(ts.createCall(createJsxFactoryExpression(jsxFactoryEntity, reactNamespace, parentElement),
             /*typeArguments*/ undefined, argumentsList), location);
         }
         ts.createExpressionForJsxElement = createExpressionForJsxElement;
@@ -78487,7 +78487,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                     argumentsList.push(children[0]);
                 }
             }
-            return ts.setTextRange(ts.createCall(createJsxFactoryExpression(jsxFactoryEntity, reactNamespace, parentElement), 
+            return ts.setTextRange(ts.createCall(createJsxFactoryExpression(jsxFactoryEntity, reactNamespace, parentElement),
             /*typeArguments*/ undefined, argumentsList), location);
         }
         ts.createExpressionForJsxFragment = createExpressionForJsxFragment;
@@ -78507,7 +78507,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
         };
         function createValuesHelper(context, expression, location) {
             context.requestEmitHelper(ts.valuesHelper);
-            return ts.setTextRange(ts.createCall(getUnscopedHelperName("__values"), 
+            return ts.setTextRange(ts.createCall(getUnscopedHelperName("__values"),
             /*typeArguments*/ undefined, [expression]), location);
         }
         ts.createValuesHelper = createValuesHelper;
@@ -78519,7 +78519,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
         };
         function createReadHelper(context, iteratorRecord, count, location) {
             context.requestEmitHelper(ts.readHelper);
-            return ts.setTextRange(ts.createCall(getUnscopedHelperName("__read"), 
+            return ts.setTextRange(ts.createCall(getUnscopedHelperName("__read"),
             /*typeArguments*/ undefined, count !== undefined
                 ? [iteratorRecord, ts.createLiteral(count)]
                 : [iteratorRecord]), location);
@@ -78534,7 +78534,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
         function createSpreadHelper(context, argumentList, location) {
             context.requestEmitHelper(ts.readHelper);
             context.requestEmitHelper(ts.spreadHelper);
-            return ts.setTextRange(ts.createCall(getUnscopedHelperName("__spread"), 
+            return ts.setTextRange(ts.createCall(getUnscopedHelperName("__spread"),
             /*typeArguments*/ undefined, argumentList), location);
         }
         ts.createSpreadHelper = createSpreadHelper;
@@ -78546,7 +78546,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
         };
         function createSpreadArraysHelper(context, argumentList, location) {
             context.requestEmitHelper(ts.spreadArraysHelper);
-            return ts.setTextRange(ts.createCall(getUnscopedHelperName("__spreadArrays"), 
+            return ts.setTextRange(ts.createCall(getUnscopedHelperName("__spreadArrays"),
             /*typeArguments*/ undefined, argumentList), location);
         }
         ts.createSpreadArraysHelper = createSpreadArraysHelper;
@@ -78554,10 +78554,10 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
         function createForOfBindingStatement(node, boundValue) {
             if (ts.isVariableDeclarationList(node)) {
                 var firstDeclaration = ts.first(node.declarations);
-                var updatedDeclaration = ts.updateVariableDeclaration(firstDeclaration, firstDeclaration.name, 
+                var updatedDeclaration = ts.updateVariableDeclaration(firstDeclaration, firstDeclaration.name,
                 /*typeNode*/ undefined, boundValue);
                 return ts.setTextRange(ts.createVariableStatement(
-                /*modifiers*/ undefined, ts.updateVariableDeclarationList(node, [updatedDeclaration])), 
+                /*modifiers*/ undefined, ts.updateVariableDeclarationList(node, [updatedDeclaration])),
                 /*location*/ node);
             }
             else {
@@ -78723,10 +78723,10 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
             if (property === firstAccessor) {
                 var properties_5 = [];
                 if (getAccessor) {
-                    var getterFunction = ts.createFunctionExpression(getAccessor.modifiers, 
-                    /*asteriskToken*/ undefined, 
-                    /*name*/ undefined, 
-                    /*typeParameters*/ undefined, getAccessor.parameters, 
+                    var getterFunction = ts.createFunctionExpression(getAccessor.modifiers,
+                    /*asteriskToken*/ undefined,
+                    /*name*/ undefined,
+                    /*typeParameters*/ undefined, getAccessor.parameters,
                     /*type*/ undefined, getAccessor.body // TODO: GH#18217
                     );
                     ts.setTextRange(getterFunction, getAccessor);
@@ -78735,10 +78735,10 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                     properties_5.push(getter);
                 }
                 if (setAccessor) {
-                    var setterFunction = ts.createFunctionExpression(setAccessor.modifiers, 
-                    /*asteriskToken*/ undefined, 
-                    /*name*/ undefined, 
-                    /*typeParameters*/ undefined, setAccessor.parameters, 
+                    var setterFunction = ts.createFunctionExpression(setAccessor.modifiers,
+                    /*asteriskToken*/ undefined,
+                    /*name*/ undefined,
+                    /*typeParameters*/ undefined, setAccessor.parameters,
                     /*type*/ undefined, setAccessor.body // TODO: GH#18217
                     );
                     ts.setTextRange(setterFunction, setAccessor);
@@ -78748,12 +78748,12 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 }
                 properties_5.push(ts.createPropertyAssignment("enumerable", ts.createTrue()));
                 properties_5.push(ts.createPropertyAssignment("configurable", ts.createTrue()));
-                var expression = ts.setTextRange(ts.createCall(ts.createPropertyAccess(ts.createIdentifier("Object"), "defineProperty"), 
+                var expression = ts.setTextRange(ts.createCall(ts.createPropertyAccess(ts.createIdentifier("Object"), "defineProperty"),
                 /*typeArguments*/ undefined, [
                     receiver,
                     createExpressionForPropertyName(property.name),
                     ts.createObjectLiteral(properties_5, multiLine)
-                ]), 
+                ]),
                 /*location*/ firstAccessor);
                 return ts.aggregateTransformFlags(expression);
             }
@@ -78763,19 +78763,19 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
             return ts.aggregateTransformFlags(ts.setOriginalNode(ts.setTextRange(ts.createAssignment(createMemberAccessForPropertyName(receiver, property.name, /*location*/ property.name), property.initializer), property), property));
         }
         function createExpressionForShorthandPropertyAssignment(property, receiver) {
-            return ts.aggregateTransformFlags(ts.setOriginalNode(ts.setTextRange(ts.createAssignment(createMemberAccessForPropertyName(receiver, property.name, /*location*/ property.name), ts.getSynthesizedClone(property.name)), 
-            /*location*/ property), 
+            return ts.aggregateTransformFlags(ts.setOriginalNode(ts.setTextRange(ts.createAssignment(createMemberAccessForPropertyName(receiver, property.name, /*location*/ property.name), ts.getSynthesizedClone(property.name)),
+            /*location*/ property),
             /*original*/ property));
         }
         function createExpressionForMethodDeclaration(method, receiver) {
-            return ts.aggregateTransformFlags(ts.setOriginalNode(ts.setTextRange(ts.createAssignment(createMemberAccessForPropertyName(receiver, method.name, /*location*/ method.name), ts.setOriginalNode(ts.setTextRange(ts.createFunctionExpression(method.modifiers, method.asteriskToken, 
-            /*name*/ undefined, 
-            /*typeParameters*/ undefined, method.parameters, 
+            return ts.aggregateTransformFlags(ts.setOriginalNode(ts.setTextRange(ts.createAssignment(createMemberAccessForPropertyName(receiver, method.name, /*location*/ method.name), ts.setOriginalNode(ts.setTextRange(ts.createFunctionExpression(method.modifiers, method.asteriskToken,
+            /*name*/ undefined,
+            /*typeParameters*/ undefined, method.parameters,
             /*type*/ undefined, method.body // TODO: GH#18217
-            ), 
-            /*location*/ method), 
-            /*original*/ method)), 
-            /*location*/ method), 
+            ),
+            /*location*/ method),
+            /*original*/ method)),
+            /*location*/ method),
             /*original*/ method));
         }
         /**
@@ -79566,7 +79566,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 }
                 if (namedBindings) {
                     var externalHelpersImportDeclaration = ts.createImportDeclaration(
-                    /*decorators*/ undefined, 
+                    /*decorators*/ undefined,
                     /*modifiers*/ undefined, ts.createImportClause(/*name*/ undefined, namedBindings), ts.createLiteral(ts.externalHelpersModuleNameText));
                     ts.addEmitFlags(externalHelpersImportDeclaration, 67108864 /* NeverApplyImportHelper */);
                     return externalHelpersImportDeclaration;
@@ -80096,7 +80096,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 case 158 /* PropertySignature */:
                     return ts.updatePropertySignature(node, nodesVisitor(node.modifiers, visitor, ts.isToken), visitNode(node.name, visitor, ts.isPropertyName), visitNode(node.questionToken, tokenVisitor, ts.isToken), visitNode(node.type, visitor, ts.isTypeNode), visitNode(node.initializer, visitor, ts.isExpression));
                 case 159 /* PropertyDeclaration */:
-                    return ts.updateProperty(node, nodesVisitor(node.decorators, visitor, ts.isDecorator), nodesVisitor(node.modifiers, visitor, ts.isModifier), visitNode(node.name, visitor, ts.isPropertyName), 
+                    return ts.updateProperty(node, nodesVisitor(node.decorators, visitor, ts.isDecorator), nodesVisitor(node.modifiers, visitor, ts.isModifier), visitNode(node.name, visitor, ts.isPropertyName),
                     // QuestionToken and ExclamationToken is uniqued in Property Declaration and the signature of 'updateProperty' is that too
                     visitNode(node.questionToken || node.exclamationToken, tokenVisitor, ts.isToken), visitNode(node.type, visitor, ts.isTypeNode), visitNode(node.initializer, visitor, ts.isExpression));
                 case 160 /* MethodSignature */:
@@ -80934,7 +80934,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
             };
             function addSource(fileName) {
                 enter();
-                var source = ts.getRelativePathToDirectoryOrUrl(sourcesDirectoryPath, fileName, host.getCurrentDirectory(), host.getCanonicalFileName, 
+                var source = ts.getRelativePathToDirectoryOrUrl(sourcesDirectoryPath, fileName, host.getCurrentDirectory(), host.getCanonicalFileName,
                 /*isAbsolutePathAnUrl*/ true);
                 var sourceIndex = sourceToSourceIndexMap.get(source);
                 if (sourceIndex === undefined) {
@@ -82054,7 +82054,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
             }
             for (var _i = 0, pendingDeclarations_1 = pendingDeclarations; _i < pendingDeclarations_1.length; _i++) {
                 var _a = pendingDeclarations_1[_i], pendingExpressions_1 = _a.pendingExpressions, name = _a.name, value = _a.value, location = _a.location, original = _a.original;
-                var variable = ts.createVariableDeclaration(name, 
+                var variable = ts.createVariableDeclaration(name,
                 /*type*/ undefined, pendingExpressions_1 ? ts.inlineExpressions(ts.append(pendingExpressions_1, value)) : value);
                 variable.original = original;
                 ts.setTextRange(variable, location);
@@ -82184,7 +82184,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 // Read the elements of the iterable into an array
                 value = ensureIdentifier(flattenContext, ts.createReadHelper(flattenContext.context, value, numElements > 0 && ts.getRestIndicatorOfBindingOrAssignmentElement(elements[numElements - 1])
                     ? undefined
-                    : numElements, location), 
+                    : numElements, location),
                 /*reuseIdentifierExpressions*/ false, location);
             }
             else if (numElements !== 1 && (flattenContext.level < 1 /* ObjectRest */ || numElements === 0)
@@ -82350,7 +82350,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                     }
                 }
             }
-            return ts.createCall(ts.getUnscopedHelperName("__rest"), 
+            return ts.createCall(ts.getUnscopedHelperName("__rest"),
             /*typeArguments*/ undefined, [
                 value,
                 ts.setTextRange(ts.createArrayLiteral(propertyNames), location)
@@ -82928,7 +82928,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                     ts.setEmitFlags(iife, 33554432 /* TypeScriptClassWrapper */);
                     var varStatement = ts.createVariableStatement(
                     /*modifiers*/ undefined, ts.createVariableDeclarationList([
-                        ts.createVariableDeclaration(ts.getLocalName(node, /*allowComments*/ false, /*allowSourceMaps*/ false), 
+                        ts.createVariableDeclaration(ts.getLocalName(node, /*allowComments*/ false, /*allowSourceMaps*/ false),
                         /*type*/ undefined, iife)
                     ]));
                     ts.setOriginalNode(varStatement, node);
@@ -82974,7 +82974,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                     ? ts.visitNodes(node.modifiers, modifierVisitor, ts.isModifier)
                     : undefined;
                 var classDeclaration = ts.createClassDeclaration(
-                /*decorators*/ undefined, modifiers, name, 
+                /*decorators*/ undefined, modifiers, name,
                 /*typeParameters*/ undefined, ts.visitNodes(node.heritageClauses, visitor, ts.isHeritageClause), transformClassMembers(node));
                 // To better align with the old emitter, we should not emit a trailing source map
                 // entry if the class has static properties.
@@ -83094,7 +83094,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 //                                         or decoratedClassAlias if the class contain self-reference.
                 var statement = ts.createVariableStatement(
                 /*modifiers*/ undefined, ts.createVariableDeclarationList([
-                    ts.createVariableDeclaration(declName, 
+                    ts.createVariableDeclaration(declName,
                     /*type*/ undefined, classAlias ? ts.createAssignment(classAlias, classExpression) : classExpression)
                 ], 1 /* Let */));
                 ts.setOriginalNode(statement, node);
@@ -83107,7 +83107,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                     return ts.visitEachChild(node, visitor, context);
                 }
                 var classExpression = ts.createClassExpression(
-                /*modifiers*/ undefined, node.name, 
+                /*modifiers*/ undefined, node.name,
                 /*typeParameters*/ undefined, ts.visitNodes(node.heritageClauses, visitor, ts.isHeritageClause), transformClassMembers(node));
                 ts.aggregateTransformFlags(classExpression);
                 ts.setOriginalNode(classExpression, node);
@@ -83129,10 +83129,10 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                         var parameter = parametersWithPropertyAssignments_1[_i];
                         if (ts.isIdentifier(parameter.name)) {
                             members.push(ts.setOriginalNode(ts.aggregateTransformFlags(ts.createProperty(
-                            /*decorators*/ undefined, 
-                            /*modifiers*/ undefined, parameter.name, 
-                            /*questionOrExclamationToken*/ undefined, 
-                            /*type*/ undefined, 
+                            /*decorators*/ undefined,
+                            /*modifiers*/ undefined, parameter.name,
+                            /*questionOrExclamationToken*/ undefined,
+                            /*type*/ undefined,
                             /*initializer*/ undefined)), parameter));
                         }
                     }
@@ -83449,7 +83449,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                     expressions = [];
                     for (var _i = 0, decorators_1 = decorators; _i < decorators_1.length; _i++) {
                         var decorator = decorators_1[_i];
-                        var helper = createParamHelper(context, transformDecorator(decorator), parameterOffset, 
+                        var helper = createParamHelper(context, transformDecorator(decorator), parameterOffset,
                         /*location*/ decorator.expression);
                         ts.setEmitFlags(helper, 1536 /* NoComments */);
                         expressions.push(helper);
@@ -83938,7 +83938,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
              * @param node The ExpressionWithTypeArguments to transform.
              */
             function visitExpressionWithTypeArguments(node) {
-                return ts.updateExpressionWithTypeArguments(node, 
+                return ts.updateExpressionWithTypeArguments(node,
                 /*typeArguments*/ undefined, ts.visitNode(node.expression, visitor, ts.isLeftHandSideExpression));
             }
             /**
@@ -83954,9 +83954,9 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 if (node.flags & 8388608 /* Ambient */) {
                     return undefined;
                 }
-                var updated = ts.updateProperty(node, 
-                /*decorators*/ undefined, ts.visitNodes(node.modifiers, visitor, ts.isModifier), visitPropertyNameOfClassElement(node), 
-                /*questionOrExclamationToken*/ undefined, 
+                var updated = ts.updateProperty(node,
+                /*decorators*/ undefined, ts.visitNodes(node.modifiers, visitor, ts.isModifier), visitPropertyNameOfClassElement(node),
+                /*questionOrExclamationToken*/ undefined,
                 /*type*/ undefined, ts.visitNode(node.initializer, visitor));
                 if (updated !== node) {
                     // While we emit the source map for the node after skipping decorators and modifiers,
@@ -83970,8 +83970,8 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 if (!shouldEmitFunctionLikeDeclaration(node)) {
                     return undefined;
                 }
-                return ts.updateConstructor(node, 
-                /*decorators*/ undefined, 
+                return ts.updateConstructor(node,
+                /*decorators*/ undefined,
                 /*modifiers*/ undefined, ts.visitParameterList(node.parameters, visitor, context), transformConstructorBody(node.body, node));
             }
             function transformConstructorBody(body, constructor) {
@@ -84026,10 +84026,10 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 if (!shouldEmitFunctionLikeDeclaration(node)) {
                     return undefined;
                 }
-                var updated = ts.updateMethod(node, 
-                /*decorators*/ undefined, ts.visitNodes(node.modifiers, modifierVisitor, ts.isModifier), node.asteriskToken, visitPropertyNameOfClassElement(node), 
-                /*questionToken*/ undefined, 
-                /*typeParameters*/ undefined, ts.visitParameterList(node.parameters, visitor, context), 
+                var updated = ts.updateMethod(node,
+                /*decorators*/ undefined, ts.visitNodes(node.modifiers, modifierVisitor, ts.isModifier), node.asteriskToken, visitPropertyNameOfClassElement(node),
+                /*questionToken*/ undefined,
+                /*typeParameters*/ undefined, ts.visitParameterList(node.parameters, visitor, context),
                 /*type*/ undefined, ts.visitFunctionBody(node.body, visitor, context));
                 if (updated !== node) {
                     // While we emit the source map for the node after skipping decorators and modifiers,
@@ -84052,8 +84052,8 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 if (!shouldEmitAccessorDeclaration(node)) {
                     return undefined;
                 }
-                var updated = ts.updateGetAccessor(node, 
-                /*decorators*/ undefined, ts.visitNodes(node.modifiers, modifierVisitor, ts.isModifier), visitPropertyNameOfClassElement(node), ts.visitParameterList(node.parameters, visitor, context), 
+                var updated = ts.updateGetAccessor(node,
+                /*decorators*/ undefined, ts.visitNodes(node.modifiers, modifierVisitor, ts.isModifier), visitPropertyNameOfClassElement(node), ts.visitParameterList(node.parameters, visitor, context),
                 /*type*/ undefined, ts.visitFunctionBody(node.body, visitor, context) || ts.createBlock([]));
                 if (updated !== node) {
                     // While we emit the source map for the node after skipping decorators and modifiers,
@@ -84067,7 +84067,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 if (!shouldEmitAccessorDeclaration(node)) {
                     return undefined;
                 }
-                var updated = ts.updateSetAccessor(node, 
+                var updated = ts.updateSetAccessor(node,
                 /*decorators*/ undefined, ts.visitNodes(node.modifiers, modifierVisitor, ts.isModifier), visitPropertyNameOfClassElement(node), ts.visitParameterList(node.parameters, visitor, context), ts.visitFunctionBody(node.body, visitor, context) || ts.createBlock([]));
                 if (updated !== node) {
                     // While we emit the source map for the node after skipping decorators and modifiers,
@@ -84081,9 +84081,9 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 if (!shouldEmitFunctionLikeDeclaration(node)) {
                     return ts.createNotEmittedStatement(node);
                 }
-                var updated = ts.updateFunctionDeclaration(node, 
-                /*decorators*/ undefined, ts.visitNodes(node.modifiers, modifierVisitor, ts.isModifier), node.asteriskToken, node.name, 
-                /*typeParameters*/ undefined, ts.visitParameterList(node.parameters, visitor, context), 
+                var updated = ts.updateFunctionDeclaration(node,
+                /*decorators*/ undefined, ts.visitNodes(node.modifiers, modifierVisitor, ts.isModifier), node.asteriskToken, node.name,
+                /*typeParameters*/ undefined, ts.visitParameterList(node.parameters, visitor, context),
                 /*type*/ undefined, ts.visitFunctionBody(node.body, visitor, context) || ts.createBlock([]));
                 if (isExportOfNamespace(node)) {
                     var statements = [updated];
@@ -84096,14 +84096,14 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 if (!shouldEmitFunctionLikeDeclaration(node)) {
                     return ts.createOmittedExpression();
                 }
-                var updated = ts.updateFunctionExpression(node, ts.visitNodes(node.modifiers, modifierVisitor, ts.isModifier), node.asteriskToken, node.name, 
-                /*typeParameters*/ undefined, ts.visitParameterList(node.parameters, visitor, context), 
+                var updated = ts.updateFunctionExpression(node, ts.visitNodes(node.modifiers, modifierVisitor, ts.isModifier), node.asteriskToken, node.name,
+                /*typeParameters*/ undefined, ts.visitParameterList(node.parameters, visitor, context),
                 /*type*/ undefined, ts.visitFunctionBody(node.body, visitor, context) || ts.createBlock([]));
                 return updated;
             }
             function visitArrowFunction(node) {
-                var updated = ts.updateArrowFunction(node, ts.visitNodes(node.modifiers, modifierVisitor, ts.isModifier), 
-                /*typeParameters*/ undefined, ts.visitParameterList(node.parameters, visitor, context), 
+                var updated = ts.updateArrowFunction(node, ts.visitNodes(node.modifiers, modifierVisitor, ts.isModifier),
+                /*typeParameters*/ undefined, ts.visitParameterList(node.parameters, visitor, context),
                 /*type*/ undefined, node.equalsGreaterThanToken, ts.visitFunctionBody(node.body, visitor, context));
                 return updated;
             }
@@ -84111,10 +84111,10 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 if (ts.parameterIsThisKeyword(node)) {
                     return undefined;
                 }
-                var updated = ts.updateParameter(node, 
-                /*decorators*/ undefined, 
-                /*modifiers*/ undefined, node.dotDotDotToken, ts.visitNode(node.name, visitor, ts.isBindingName), 
-                /*questionToken*/ undefined, 
+                var updated = ts.updateParameter(node,
+                /*decorators*/ undefined,
+                /*modifiers*/ undefined, node.dotDotDotToken, ts.visitNode(node.name, visitor, ts.isBindingName),
+                /*questionToken*/ undefined,
                 /*type*/ undefined, ts.visitNode(node.initializer, visitor, ts.isExpression));
                 if (updated !== node) {
                     // While we emit the source map for the node after skipping decorators and modifiers,
@@ -84142,17 +84142,17 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
             function transformInitializedVariable(node) {
                 var name = node.name;
                 if (ts.isBindingPattern(name)) {
-                    return ts.flattenDestructuringAssignment(node, visitor, context, 0 /* All */, 
+                    return ts.flattenDestructuringAssignment(node, visitor, context, 0 /* All */,
                     /*needsValue*/ false, createNamespaceExportExpression);
                 }
                 else {
-                    return ts.setTextRange(ts.createAssignment(getNamespaceMemberNameWithSourceMapsAndWithoutComments(name), ts.visitNode(node.initializer, visitor, ts.isExpression)), 
+                    return ts.setTextRange(ts.createAssignment(getNamespaceMemberNameWithSourceMapsAndWithoutComments(name), ts.visitNode(node.initializer, visitor, ts.isExpression)),
                     /*location*/ node);
                 }
             }
             function visitVariableDeclaration(node) {
-                return ts.updateTypeScriptVariableDeclaration(node, ts.visitNode(node.name, visitor, ts.isBindingName), 
-                /*exclaimationToken*/ undefined, 
+                return ts.updateTypeScriptVariableDeclaration(node, ts.visitNode(node.name, visitor, ts.isBindingName),
+                /*exclaimationToken*/ undefined,
                 /*type*/ undefined, ts.visitNode(node.initializer, visitor, ts.isExpression));
             }
             function visitParenthesizedExpression(node) {
@@ -84192,15 +84192,15 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 return ts.createPartiallyEmittedExpression(expression, node);
             }
             function visitCallExpression(node) {
-                return ts.updateCall(node, ts.visitNode(node.expression, visitor, ts.isExpression), 
+                return ts.updateCall(node, ts.visitNode(node.expression, visitor, ts.isExpression),
                 /*typeArguments*/ undefined, ts.visitNodes(node.arguments, visitor, ts.isExpression));
             }
             function visitNewExpression(node) {
-                return ts.updateNew(node, ts.visitNode(node.expression, visitor, ts.isExpression), 
+                return ts.updateNew(node, ts.visitNode(node.expression, visitor, ts.isExpression),
                 /*typeArguments*/ undefined, ts.visitNodes(node.arguments, visitor, ts.isExpression));
             }
             function visitTaggedTemplateExpression(node) {
-                return ts.updateTaggedTemplate(node, ts.visitNode(node.tag, visitor, ts.isExpression), 
+                return ts.updateTaggedTemplate(node, ts.visitNode(node.tag, visitor, ts.isExpression),
                 /*typeArguments*/ undefined, ts.visitNode(node.template, visitor, ts.isExpression));
             }
             /**
@@ -84260,11 +84260,11 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 //      ...
                 //  })(x || (x = {}));
                 var enumStatement = ts.createExpressionStatement(ts.createCall(ts.createFunctionExpression(
-                /*modifiers*/ undefined, 
-                /*asteriskToken*/ undefined, 
-                /*name*/ undefined, 
-                /*typeParameters*/ undefined, [ts.createParameter(/*decorators*/ undefined, /*modifiers*/ undefined, /*dotDotDotToken*/ undefined, parameterName)], 
-                /*type*/ undefined, transformEnumBody(node, containerName)), 
+                /*modifiers*/ undefined,
+                /*asteriskToken*/ undefined,
+                /*name*/ undefined,
+                /*typeParameters*/ undefined, [ts.createParameter(/*decorators*/ undefined, /*modifiers*/ undefined, /*dotDotDotToken*/ undefined, parameterName)],
+                /*type*/ undefined, transformEnumBody(node, containerName)),
                 /*typeArguments*/ undefined, [moduleArg]));
                 ts.setOriginalNode(enumStatement, node);
                 if (varAdded) {
@@ -84294,7 +84294,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 ts.insertStatementsAfterStandardPrologue(statements, endLexicalEnvironment());
                 ts.addRange(statements, members);
                 currentNamespaceContainerName = savedCurrentNamespaceLocalName;
-                return ts.createBlock(ts.setTextRange(ts.createNodeArray(statements), /*location*/ node.members), 
+                return ts.createBlock(ts.setTextRange(ts.createNodeArray(statements), /*location*/ node.members),
                 /*multiLine*/ true);
             }
             /**
@@ -84489,11 +84489,11 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 //      x_1.y = ...;
                 //  })(x || (x = {}));
                 var moduleStatement = ts.createExpressionStatement(ts.createCall(ts.createFunctionExpression(
-                /*modifiers*/ undefined, 
-                /*asteriskToken*/ undefined, 
-                /*name*/ undefined, 
-                /*typeParameters*/ undefined, [ts.createParameter(/*decorators*/ undefined, /*modifiers*/ undefined, /*dotDotDotToken*/ undefined, parameterName)], 
-                /*type*/ undefined, transformModuleBody(node, containerName)), 
+                /*modifiers*/ undefined,
+                /*asteriskToken*/ undefined,
+                /*name*/ undefined,
+                /*typeParameters*/ undefined, [ts.createParameter(/*decorators*/ undefined, /*modifiers*/ undefined, /*dotDotDotToken*/ undefined, parameterName)],
+                /*type*/ undefined, transformModuleBody(node, containerName)),
                 /*typeArguments*/ undefined, [moduleArg]));
                 ts.setOriginalNode(moduleStatement, node);
                 if (varAdded) {
@@ -84548,8 +84548,8 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 currentNamespaceContainerName = savedCurrentNamespaceContainerName;
                 currentNamespace = savedCurrentNamespace;
                 currentScopeFirstDeclarationsOfName = savedCurrentScopeFirstDeclarationsOfName;
-                var block = ts.createBlock(ts.setTextRange(ts.createNodeArray(statements), 
-                /*location*/ statementsLocation), 
+                var block = ts.createBlock(ts.setTextRange(ts.createNodeArray(statements),
+                /*location*/ statementsLocation),
                 /*multiLine*/ true);
                 ts.setTextRange(block, blockLocation);
                 // namespace hello.hi.world {
@@ -84603,8 +84603,8 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 return importClause ||
                     compilerOptions.importsNotUsedAsValues === 1 /* Preserve */ ||
                     compilerOptions.importsNotUsedAsValues === 2 /* Error */
-                    ? ts.updateImportDeclaration(node, 
-                    /*decorators*/ undefined, 
+                    ? ts.updateImportDeclaration(node,
+                    /*decorators*/ undefined,
                     /*modifiers*/ undefined, importClause, node.moduleSpecifier)
                     : undefined;
             }
@@ -84680,8 +84680,8 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 // Elide the export declaration if all of its named exports are elided.
                 var exportClause = ts.visitNode(node.exportClause, visitNamedExportBindings, ts.isNamedImportBindings);
                 return exportClause
-                    ? ts.updateExportDeclaration(node, 
-                    /*decorators*/ undefined, 
+                    ? ts.updateExportDeclaration(node,
+                    /*decorators*/ undefined,
                     /*modifiers*/ undefined, exportClause, node.moduleSpecifier, node.isTypeOnly)
                     : undefined;
             }
@@ -84735,8 +84735,8 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                     // If the alias is unreferenced but we want to keep the import, replace with 'import "mod"'.
                     if (!isReferenced && compilerOptions.importsNotUsedAsValues === 1 /* Preserve */) {
                         return ts.setOriginalNode(ts.setTextRange(ts.createImportDeclaration(
-                        /*decorators*/ undefined, 
-                        /*modifiers*/ undefined, 
+                        /*decorators*/ undefined,
+                        /*modifiers*/ undefined,
                         /*importClause*/ undefined, node.moduleReference.expression), node), node);
                     }
                     return isReferenced ? ts.visitEachChild(node, visitor, context) : undefined;
@@ -84750,7 +84750,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                     //  export var ${name} = ${moduleReference};
                     //  var ${name} = ${moduleReference};
                     return ts.setOriginalNode(ts.setTextRange(ts.createVariableStatement(ts.visitNodes(node.modifiers, modifierVisitor, ts.isModifier), ts.createVariableDeclarationList([
-                        ts.setOriginalNode(ts.createVariableDeclaration(node.name, 
+                        ts.setOriginalNode(ts.createVariableDeclaration(node.name,
                         /*type*/ undefined, moduleReference), node)
                     ])), node), node);
                 }
@@ -84988,7 +84988,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                         var substitute = (applicableSubstitutions & 2 /* NamespaceExports */ && container.kind === 249 /* ModuleDeclaration */) ||
                             (applicableSubstitutions & 8 /* NonQualifiedEnumMembers */ && container.kind === 248 /* EnumDeclaration */);
                         if (substitute) {
-                            return ts.setTextRange(ts.createPropertyAccess(ts.getGeneratedNameForNode(container), node), 
+                            return ts.setTextRange(ts.createPropertyAccess(ts.getGeneratedNameForNode(container), node),
                             /*location*/ node);
                         }
                     }
@@ -85037,7 +85037,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 }
             }
             context.requestEmitHelper(ts.decorateHelper);
-            return ts.setTextRange(ts.createCall(ts.getUnscopedHelperName("__decorate"), 
+            return ts.setTextRange(ts.createCall(ts.getUnscopedHelperName("__decorate"),
             /*typeArguments*/ undefined, argumentsArray), location);
         }
         ts.decorateHelper = {
@@ -85049,7 +85049,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
         };
         function createMetadataHelper(context, metadataKey, metadataValue) {
             context.requestEmitHelper(ts.metadataHelper);
-            return ts.createCall(ts.getUnscopedHelperName("__metadata"), 
+            return ts.createCall(ts.getUnscopedHelperName("__metadata"),
             /*typeArguments*/ undefined, [
                 ts.createLiteral(metadataKey),
                 metadataValue
@@ -85064,7 +85064,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
         };
         function createParamHelper(context, expression, parameterOffset, location) {
             context.requestEmitHelper(ts.paramHelper);
-            return ts.setTextRange(ts.createCall(ts.getUnscopedHelperName("__param"), 
+            return ts.setTextRange(ts.createCall(ts.getUnscopedHelperName("__param"),
             /*typeArguments*/ undefined, [
                 ts.createLiteral(parameterOffset),
                 expression
@@ -85235,10 +85235,10 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 ts.Debug.assert(!ts.some(node.decorators));
                 if (!shouldTransformPrivateFields && ts.isPrivateIdentifier(node.name)) {
                     // Initializer is elided as the field is initialized in transformConstructor.
-                    return ts.updateProperty(node, 
-                    /*decorators*/ undefined, ts.visitNodes(node.modifiers, visitor, ts.isModifier), node.name, 
-                    /*questionOrExclamationToken*/ undefined, 
-                    /*type*/ undefined, 
+                    return ts.updateProperty(node,
+                    /*decorators*/ undefined, ts.visitNodes(node.modifiers, visitor, ts.isModifier), node.name,
+                    /*questionOrExclamationToken*/ undefined,
+                    /*type*/ undefined,
                     /*initializer*/ undefined);
                 }
                 // Create a temporary variable to store a computed property name (if necessary).
@@ -85327,7 +85327,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 if (shouldTransformPrivateFields && ts.isPrivateIdentifierPropertyAccessExpression(node.expression)) {
                     // Transform call expressions of private names to properly bind the `this` parameter.
                     var _a = ts.createCallBinding(node.expression, hoistVariableDeclaration, languageVersion), thisArg = _a.thisArg, target = _a.target;
-                    return ts.updateCall(node, ts.createPropertyAccess(ts.visitNode(target, visitor), "call"), 
+                    return ts.updateCall(node, ts.createPropertyAccess(ts.visitNode(target, visitor), "call"),
                     /*typeArguments*/ undefined, __spreadArrays([ts.visitNode(thisArg, visitor, ts.isExpression)], ts.visitNodes(node.arguments, visitor, ts.isExpression)));
                 }
                 return ts.visitEachChild(node, visitor, context);
@@ -85336,7 +85336,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 if (shouldTransformPrivateFields && ts.isPrivateIdentifierPropertyAccessExpression(node.tag)) {
                     // Bind the `this` correctly for tagged template literals when the tag is a private identifier property access.
                     var _a = ts.createCallBinding(node.tag, hoistVariableDeclaration, languageVersion), thisArg = _a.thisArg, target = _a.target;
-                    return ts.updateTaggedTemplate(node, ts.createCall(ts.createPropertyAccess(ts.visitNode(target, visitor), "bind"), 
+                    return ts.updateTaggedTemplate(node, ts.createCall(ts.createPropertyAccess(ts.visitNode(target, visitor), "bind"),
                     /*typeArguments*/ undefined, [ts.visitNode(thisArg, visitor, ts.isExpression)]), ts.visitNode(node.template, visitor, ts.isTemplateLiteral));
                 }
                 return ts.visitEachChild(node, visitor, context);
@@ -85409,8 +85409,8 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 var extendsClauseElement = ts.getEffectiveBaseTypeNode(node);
                 var isDerivedClass = !!(extendsClauseElement && ts.skipOuterExpressions(extendsClauseElement.expression).kind !== 100 /* NullKeyword */);
                 var statements = [
-                    ts.updateClassDeclaration(node, 
-                    /*decorators*/ undefined, node.modifiers, node.name, 
+                    ts.updateClassDeclaration(node,
+                    /*decorators*/ undefined, node.modifiers, node.name,
                     /*typeParameters*/ undefined, ts.visitNodes(node.heritageClauses, visitor, ts.isHeritageClause), transformClassMembers(node, isDerivedClass))
                 ];
                 // Write any pending expressions from elided or moved computed property names
@@ -85443,7 +85443,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 var staticProperties = ts.getProperties(node, /*requireInitializer*/ true, /*isStatic*/ true);
                 var extendsClauseElement = ts.getEffectiveBaseTypeNode(node);
                 var isDerivedClass = !!(extendsClauseElement && ts.skipOuterExpressions(extendsClauseElement.expression).kind !== 100 /* NullKeyword */);
-                var classExpression = ts.updateClassExpression(node, node.modifiers, node.name, 
+                var classExpression = ts.updateClassExpression(node, node.modifiers, node.name,
                 /*typeParameters*/ undefined, ts.visitNodes(node.heritageClauses, visitor, ts.isHeritageClause), transformClassMembers(node, isDerivedClass));
                 if (ts.some(staticProperties) || ts.some(pendingExpressions)) {
                     if (isDecoratedClassDeclaration) {
@@ -85522,7 +85522,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                     return undefined;
                 }
                 return ts.startOnNewLine(ts.setOriginalNode(ts.setTextRange(ts.createConstructor(
-                /*decorators*/ undefined, 
+                /*decorators*/ undefined,
                 /*modifiers*/ undefined, parameters, body), constructor || node), constructor));
             }
             function transformConstructorBody(node, constructor, isDerivedClass) {
@@ -85543,7 +85543,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                     //
                     //  super(...arguments);
                     //
-                    statements.push(ts.createExpressionStatement(ts.createCall(ts.createSuper(), 
+                    statements.push(ts.createExpressionStatement(ts.createCall(ts.createSuper(),
                     /*typeArguments*/ undefined, [ts.createSpread(ts.createIdentifier("arguments"))])));
                 }
                 if (constructor) {
@@ -85577,9 +85577,9 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                     ts.addRange(statements, ts.visitNodes(constructor.body.statements, visitor, ts.isStatement, indexOfFirstStatement));
                 }
                 statements = ts.mergeLexicalEnvironment(statements, endLexicalEnvironment());
-                return ts.setTextRange(ts.createBlock(ts.setTextRange(ts.createNodeArray(statements), 
-                /*location*/ constructor ? constructor.body.statements : node.members), 
-                /*multiLine*/ true), 
+                return ts.setTextRange(ts.createBlock(ts.setTextRange(ts.createNodeArray(statements),
+                /*location*/ constructor ? constructor.body.statements : node.members),
+                /*multiLine*/ true),
                 /*location*/ constructor ? constructor.body : undefined);
             }
             /**
@@ -85759,7 +85759,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 hoistVariableDeclaration(weakMapName);
                 (currentPrivateIdentifierEnvironment || (currentPrivateIdentifierEnvironment = ts.createUnderscoreEscapedMap()))
                     .set(name.escapedText, { placement: 0 /* InstanceField */, weakMapName: weakMapName });
-                (pendingExpressions || (pendingExpressions = [])).push(ts.createAssignment(weakMapName, ts.createNew(ts.createIdentifier("WeakMap"), 
+                (pendingExpressions || (pendingExpressions = [])).push(ts.createAssignment(weakMapName, ts.createNew(ts.createIdentifier("WeakMap"),
                 /*typeArguments*/ undefined, [])));
             }
             function accessPrivateIdentifier(name) {
@@ -85799,13 +85799,13 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 // Explicit parens required because of v8 regression (https://bugs.chromium.org/p/v8/issues/detail?id=9560)
                 ts.createParen(ts.createObjectLiteral([
                     ts.createSetAccessor(
-                    /*decorators*/ undefined, 
+                    /*decorators*/ undefined,
                     /*modifiers*/ undefined, "value", [ts.createParameter(
-                        /*decorators*/ undefined, 
-                        /*modifiers*/ undefined, 
-                        /*dotDotDotToken*/ undefined, parameter, 
-                        /*questionToken*/ undefined, 
-                        /*type*/ undefined, 
+                        /*decorators*/ undefined,
+                        /*modifiers*/ undefined,
+                        /*dotDotDotToken*/ undefined, parameter,
+                        /*questionToken*/ undefined,
+                        /*type*/ undefined,
                         /*initializer*/ undefined)], ts.createBlock([ts.createExpressionStatement(createPrivateIdentifierAssignment(info, receiver, parameter, 62 /* EqualsToken */))]))
                 ])), "value");
             }
@@ -85862,7 +85862,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
         }
         ts.transformClassFields = transformClassFields;
         function createPrivateInstanceFieldInitializer(receiver, initializer, weakMapName) {
-            return ts.createCall(ts.createPropertyAccess(weakMapName, "set"), 
+            return ts.createCall(ts.createPropertyAccess(weakMapName, "set"),
             /*typeArguments*/ undefined, [receiver, initializer || ts.createVoidZero()]);
         }
         ts.classPrivateFieldGetHelper = {
@@ -86104,10 +86104,10 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
              * @param node The node to visit.
              */
             function visitMethodDeclaration(node) {
-                return ts.updateMethod(node, 
-                /*decorators*/ undefined, ts.visitNodes(node.modifiers, visitor, ts.isModifier), node.asteriskToken, node.name, 
-                /*questionToken*/ undefined, 
-                /*typeParameters*/ undefined, ts.visitParameterList(node.parameters, visitor, context), 
+                return ts.updateMethod(node,
+                /*decorators*/ undefined, ts.visitNodes(node.modifiers, visitor, ts.isModifier), node.asteriskToken, node.name,
+                /*questionToken*/ undefined,
+                /*typeParameters*/ undefined, ts.visitParameterList(node.parameters, visitor, context),
                 /*type*/ undefined, ts.getFunctionFlags(node) & 2 /* Async */
                     ? transformAsyncFunctionBody(node)
                     : ts.visitFunctionBody(node.body, visitor, context));
@@ -86121,9 +86121,9 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
              * @param node The node to visit.
              */
             function visitFunctionDeclaration(node) {
-                return ts.updateFunctionDeclaration(node, 
-                /*decorators*/ undefined, ts.visitNodes(node.modifiers, visitor, ts.isModifier), node.asteriskToken, node.name, 
-                /*typeParameters*/ undefined, ts.visitParameterList(node.parameters, visitor, context), 
+                return ts.updateFunctionDeclaration(node,
+                /*decorators*/ undefined, ts.visitNodes(node.modifiers, visitor, ts.isModifier), node.asteriskToken, node.name,
+                /*typeParameters*/ undefined, ts.visitParameterList(node.parameters, visitor, context),
                 /*type*/ undefined, ts.getFunctionFlags(node) & 2 /* Async */
                     ? transformAsyncFunctionBody(node)
                     : ts.visitFunctionBody(node.body, visitor, context));
@@ -86137,8 +86137,8 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
              * @param node The node to visit.
              */
             function visitFunctionExpression(node) {
-                return ts.updateFunctionExpression(node, ts.visitNodes(node.modifiers, visitor, ts.isModifier), node.asteriskToken, node.name, 
-                /*typeParameters*/ undefined, ts.visitParameterList(node.parameters, visitor, context), 
+                return ts.updateFunctionExpression(node, ts.visitNodes(node.modifiers, visitor, ts.isModifier), node.asteriskToken, node.name,
+                /*typeParameters*/ undefined, ts.visitParameterList(node.parameters, visitor, context),
                 /*type*/ undefined, ts.getFunctionFlags(node) & 2 /* Async */
                     ? transformAsyncFunctionBody(node)
                     : ts.visitFunctionBody(node.body, visitor, context));
@@ -86152,8 +86152,8 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
              * @param node The node to visit.
              */
             function visitArrowFunction(node) {
-                return ts.updateArrowFunction(node, ts.visitNodes(node.modifiers, visitor, ts.isModifier), 
-                /*typeParameters*/ undefined, ts.visitParameterList(node.parameters, visitor, context), 
+                return ts.updateArrowFunction(node, ts.visitNodes(node.modifiers, visitor, ts.isModifier),
+                /*typeParameters*/ undefined, ts.visitParameterList(node.parameters, visitor, context),
                 /*type*/ undefined, node.equalsGreaterThanToken, ts.getFunctionFlags(node) & 2 /* Async */
                     ? transformAsyncFunctionBody(node)
                     : ts.visitFunctionBody(node.body, visitor, context));
@@ -86406,7 +86406,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                     var argumentExpression = ts.isPropertyAccessExpression(expression)
                         ? substitutePropertyAccessExpression(expression)
                         : substituteElementAccessExpression(expression);
-                    return ts.createCall(ts.createPropertyAccess(argumentExpression, "call"), 
+                    return ts.createCall(ts.createPropertyAccess(argumentExpression, "call"),
                     /*typeArguments*/ undefined, __spreadArrays([
                         ts.createThis()
                     ], node.arguments));
@@ -86423,11 +86423,11 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
             }
             function createSuperElementAccessInAsyncMethod(argumentExpression, location) {
                 if (enclosingSuperContainerFlags & 4096 /* AsyncMethodWithSuperBinding */) {
-                    return ts.setTextRange(ts.createPropertyAccess(ts.createCall(ts.createFileLevelUniqueName("_superIndex"), 
+                    return ts.setTextRange(ts.createPropertyAccess(ts.createCall(ts.createFileLevelUniqueName("_superIndex"),
                     /*typeArguments*/ undefined, [argumentExpression]), "value"), location);
                 }
                 else {
-                    return ts.setTextRange(ts.createCall(ts.createFileLevelUniqueName("_superIndex"), 
+                    return ts.setTextRange(ts.createCall(ts.createFileLevelUniqueName("_superIndex"),
                     /*typeArguments*/ undefined, [argumentExpression]), location);
                 }
             }
@@ -86443,33 +86443,33 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 var name = ts.unescapeLeadingUnderscores(key);
                 var getterAndSetter = [];
                 getterAndSetter.push(ts.createPropertyAssignment("get", ts.createArrowFunction(
-                /* modifiers */ undefined, 
-                /* typeParameters */ undefined, 
-                /* parameters */ [], 
-                /* type */ undefined, 
+                /* modifiers */ undefined,
+                /* typeParameters */ undefined,
+                /* parameters */ [],
+                /* type */ undefined,
                 /* equalsGreaterThanToken */ undefined, ts.setEmitFlags(ts.createPropertyAccess(ts.setEmitFlags(ts.createSuper(), 4 /* NoSubstitution */), name), 4 /* NoSubstitution */))));
                 if (hasBinding) {
                     getterAndSetter.push(ts.createPropertyAssignment("set", ts.createArrowFunction(
-                    /* modifiers */ undefined, 
-                    /* typeParameters */ undefined, 
+                    /* modifiers */ undefined,
+                    /* typeParameters */ undefined,
                     /* parameters */ [
                         ts.createParameter(
-                        /* decorators */ undefined, 
-                        /* modifiers */ undefined, 
-                        /* dotDotDotToken */ undefined, "v", 
-                        /* questionToken */ undefined, 
-                        /* type */ undefined, 
+                        /* decorators */ undefined,
+                        /* modifiers */ undefined,
+                        /* dotDotDotToken */ undefined, "v",
+                        /* questionToken */ undefined,
+                        /* type */ undefined,
                         /* initializer */ undefined)
-                    ], 
-                    /* type */ undefined, 
+                    ],
+                    /* type */ undefined,
                     /* equalsGreaterThanToken */ undefined, ts.createAssignment(ts.setEmitFlags(ts.createPropertyAccess(ts.setEmitFlags(ts.createSuper(), 4 /* NoSubstitution */), name), 4 /* NoSubstitution */), ts.createIdentifier("v")))));
                 }
                 accessors.push(ts.createPropertyAssignment(name, ts.createObjectLiteral(getterAndSetter)));
             });
             return ts.createVariableStatement(
             /* modifiers */ undefined, ts.createVariableDeclarationList([
-                ts.createVariableDeclaration(ts.createFileLevelUniqueName("_super"), 
-                /* type */ undefined, ts.createCall(ts.createPropertyAccess(ts.createIdentifier("Object"), "create"), 
+                ts.createVariableDeclaration(ts.createFileLevelUniqueName("_super"),
+                /* type */ undefined, ts.createCall(ts.createPropertyAccess(ts.createIdentifier("Object"), "create"),
                 /* typeArguments */ undefined, [
                     ts.createNull(),
                     ts.createObjectLiteral(accessors, /* multiline */ true)
@@ -86487,14 +86487,14 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
         function createAwaiterHelper(context, hasLexicalThis, hasLexicalArguments, promiseConstructor, body) {
             context.requestEmitHelper(ts.awaiterHelper);
             var generatorFunc = ts.createFunctionExpression(
-            /*modifiers*/ undefined, ts.createToken(41 /* AsteriskToken */), 
-            /*name*/ undefined, 
-            /*typeParameters*/ undefined, 
-            /*parameters*/ [], 
+            /*modifiers*/ undefined, ts.createToken(41 /* AsteriskToken */),
+            /*name*/ undefined,
+            /*typeParameters*/ undefined,
+            /*parameters*/ [],
             /*type*/ undefined, body);
             // Mark this node as originally an async function
             (generatorFunc.emitNode || (generatorFunc.emitNode = {})).flags |= 262144 /* AsyncFunctionBody */ | 524288 /* ReuseTempVariableScope */;
-            return ts.createCall(ts.getUnscopedHelperName("__awaiter"), 
+            return ts.createCall(ts.getUnscopedHelperName("__awaiter"),
             /*typeArguments*/ undefined, [
                 hasLexicalThis ? ts.createThis() : ts.createVoidZero(),
                 hasLexicalArguments ? ts.createIdentifier("arguments") : ts.createVoidZero(),
@@ -86644,7 +86644,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
             }
             function visitAwaitExpression(node) {
                 if (enclosingFunctionFlags & 2 /* Async */ && enclosingFunctionFlags & 1 /* Generator */) {
-                    return ts.setOriginalNode(ts.setTextRange(ts.createYield(createAwaitHelper(context, ts.visitNode(node.expression, visitor, ts.isExpression))), 
+                    return ts.setOriginalNode(ts.setTextRange(ts.createYield(createAwaitHelper(context, ts.visitNode(node.expression, visitor, ts.isExpression))),
                     /*location*/ node), node);
                 }
                 return ts.visitEachChild(node, visitor, context);
@@ -86806,7 +86806,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
             function visitVariableDeclarationWorker(node, exportedVariableStatement) {
                 // If we are here it is because the name contains a binding pattern with a rest somewhere in it.
                 if (ts.isBindingPattern(node.name) && node.name.transformFlags & 16384 /* ContainsObjectRestOrSpread */) {
-                    return ts.flattenDestructuringBinding(node, visitor, context, 1 /* ObjectRest */, 
+                    return ts.flattenDestructuringBinding(node, visitor, context, 1 /* ObjectRest */,
                     /*rval*/ undefined, exportedVariableStatement);
                 }
                 return ts.visitEachChild(node, visitor, context);
@@ -86852,7 +86852,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                     }
                     return ts.updateForOf(node, node.awaitModifier, ts.setTextRange(ts.createVariableDeclarationList([
                         ts.setTextRange(ts.createVariableDeclaration(temp), node.initializer)
-                    ], 1 /* Let */), node.initializer), node.expression, ts.setTextRange(ts.createBlock(ts.setTextRange(ts.createNodeArray(statements), statementsLocation), 
+                    ], 1 /* Let */), node.initializer), node.expression, ts.setTextRange(ts.createBlock(ts.setTextRange(ts.createNodeArray(statements), statementsLocation),
                     /*multiLine*/ true), bodyLocation));
                 }
                 return node;
@@ -86871,7 +86871,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 else {
                     statements.push(statement);
                 }
-                return ts.setEmitFlags(ts.setTextRange(ts.createBlock(ts.setTextRange(ts.createNodeArray(statements), statementsLocation), 
+                return ts.setEmitFlags(ts.setTextRange(ts.createBlock(ts.setTextRange(ts.createNodeArray(statements), statementsLocation),
                 /*multiLine*/ true), bodyLocation), 48 /* NoSourceMap */ | 384 /* NoTokenSourceMaps */);
             }
             function createDownlevelAwait(expression) {
@@ -86897,10 +86897,10 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 /*initializer*/ ts.setEmitFlags(ts.setTextRange(ts.createVariableDeclarationList([
                     ts.setTextRange(ts.createVariableDeclaration(iterator, /*type*/ undefined, callValues), node.expression),
                     ts.createVariableDeclaration(result)
-                ]), node.expression), 2097152 /* NoHoisting */), 
-                /*condition*/ ts.createComma(ts.createAssignment(result, createDownlevelAwait(callNext)), ts.createLogicalNot(getDone)), 
-                /*incrementor*/ undefined, 
-                /*statement*/ convertForOfStatementHead(node, getValue)), 
+                ]), node.expression), 2097152 /* NoHoisting */),
+                /*condition*/ ts.createComma(ts.createAssignment(result, createDownlevelAwait(callNext)), ts.createLogicalNot(getDone)),
+                /*incrementor*/ undefined,
+                /*statement*/ convertForOfStatementHead(node, getValue)),
                 /*location*/ node), 256 /* NoTokenTrailingSourceMaps */);
                 return ts.createTry(ts.createBlock([
                     ts.restoreEnclosingLabel(forStatement, outermostLabeledStatement)
@@ -86912,8 +86912,8 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                     ts.createTry(
                     /*tryBlock*/ ts.createBlock([
                         ts.setEmitFlags(ts.createIf(ts.createLogicalAnd(ts.createLogicalAnd(result, ts.createLogicalNot(getDone)), ts.createAssignment(returnMethod, ts.createPropertyAccess(iterator, "return"))), ts.createExpressionStatement(createDownlevelAwait(callReturn))), 1 /* SingleLine */)
-                    ]), 
-                    /*catchClause*/ undefined, 
+                    ]),
+                    /*catchClause*/ undefined,
                     /*finallyBlock*/ ts.setEmitFlags(ts.createBlock([
                         ts.setEmitFlags(ts.createIf(errorRecord, ts.createThrow(ts.createPropertyAccess(errorRecord, "error"))), 1 /* SingleLine */)
                     ]), 1 /* SingleLine */))
@@ -86923,10 +86923,10 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 if (node.transformFlags & 16384 /* ContainsObjectRestOrSpread */) {
                     // Binding patterns are converted into a generated name and are
                     // evaluated inside the function body.
-                    return ts.updateParameter(node, 
-                    /*decorators*/ undefined, 
-                    /*modifiers*/ undefined, node.dotDotDotToken, ts.getGeneratedNameForNode(node), 
-                    /*questionToken*/ undefined, 
+                    return ts.updateParameter(node,
+                    /*decorators*/ undefined,
+                    /*modifiers*/ undefined, node.dotDotDotToken, ts.getGeneratedNameForNode(node),
+                    /*questionToken*/ undefined,
                     /*type*/ undefined, ts.visitNode(node.initializer, visitor, ts.isExpression));
                 }
                 return ts.visitEachChild(node, visitor, context);
@@ -86934,7 +86934,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
             function visitConstructorDeclaration(node) {
                 var savedEnclosingFunctionFlags = enclosingFunctionFlags;
                 enclosingFunctionFlags = 0 /* Normal */;
-                var updated = ts.updateConstructor(node, 
+                var updated = ts.updateConstructor(node,
                 /*decorators*/ undefined, node.modifiers, ts.visitParameterList(node.parameters, visitor, context), transformFunctionBody(node));
                 enclosingFunctionFlags = savedEnclosingFunctionFlags;
                 return updated;
@@ -86942,8 +86942,8 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
             function visitGetAccessorDeclaration(node) {
                 var savedEnclosingFunctionFlags = enclosingFunctionFlags;
                 enclosingFunctionFlags = 0 /* Normal */;
-                var updated = ts.updateGetAccessor(node, 
-                /*decorators*/ undefined, node.modifiers, ts.visitNode(node.name, visitor, ts.isPropertyName), ts.visitParameterList(node.parameters, visitor, context), 
+                var updated = ts.updateGetAccessor(node,
+                /*decorators*/ undefined, node.modifiers, ts.visitNode(node.name, visitor, ts.isPropertyName), ts.visitParameterList(node.parameters, visitor, context),
                 /*type*/ undefined, transformFunctionBody(node));
                 enclosingFunctionFlags = savedEnclosingFunctionFlags;
                 return updated;
@@ -86951,7 +86951,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
             function visitSetAccessorDeclaration(node) {
                 var savedEnclosingFunctionFlags = enclosingFunctionFlags;
                 enclosingFunctionFlags = 0 /* Normal */;
-                var updated = ts.updateSetAccessor(node, 
+                var updated = ts.updateSetAccessor(node,
                 /*decorators*/ undefined, node.modifiers, ts.visitNode(node.name, visitor, ts.isPropertyName), ts.visitParameterList(node.parameters, visitor, context), transformFunctionBody(node));
                 enclosingFunctionFlags = savedEnclosingFunctionFlags;
                 return updated;
@@ -86959,13 +86959,13 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
             function visitMethodDeclaration(node) {
                 var savedEnclosingFunctionFlags = enclosingFunctionFlags;
                 enclosingFunctionFlags = ts.getFunctionFlags(node);
-                var updated = ts.updateMethod(node, 
+                var updated = ts.updateMethod(node,
                 /*decorators*/ undefined, enclosingFunctionFlags & 1 /* Generator */
                     ? ts.visitNodes(node.modifiers, visitorNoAsyncModifier, ts.isModifier)
                     : node.modifiers, enclosingFunctionFlags & 2 /* Async */
                     ? undefined
-                    : node.asteriskToken, ts.visitNode(node.name, visitor, ts.isPropertyName), ts.visitNode(/*questionToken*/ undefined, visitor, ts.isToken), 
-                /*typeParameters*/ undefined, ts.visitParameterList(node.parameters, visitor, context), 
+                    : node.asteriskToken, ts.visitNode(node.name, visitor, ts.isPropertyName), ts.visitNode(/*questionToken*/ undefined, visitor, ts.isToken),
+                /*typeParameters*/ undefined, ts.visitParameterList(node.parameters, visitor, context),
                 /*type*/ undefined, enclosingFunctionFlags & 2 /* Async */ && enclosingFunctionFlags & 1 /* Generator */
                     ? transformAsyncGeneratorFunctionBody(node)
                     : transformFunctionBody(node));
@@ -86975,13 +86975,13 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
             function visitFunctionDeclaration(node) {
                 var savedEnclosingFunctionFlags = enclosingFunctionFlags;
                 enclosingFunctionFlags = ts.getFunctionFlags(node);
-                var updated = ts.updateFunctionDeclaration(node, 
+                var updated = ts.updateFunctionDeclaration(node,
                 /*decorators*/ undefined, enclosingFunctionFlags & 1 /* Generator */
                     ? ts.visitNodes(node.modifiers, visitorNoAsyncModifier, ts.isModifier)
                     : node.modifiers, enclosingFunctionFlags & 2 /* Async */
                     ? undefined
-                    : node.asteriskToken, node.name, 
-                /*typeParameters*/ undefined, ts.visitParameterList(node.parameters, visitor, context), 
+                    : node.asteriskToken, node.name,
+                /*typeParameters*/ undefined, ts.visitParameterList(node.parameters, visitor, context),
                 /*type*/ undefined, enclosingFunctionFlags & 2 /* Async */ && enclosingFunctionFlags & 1 /* Generator */
                     ? transformAsyncGeneratorFunctionBody(node)
                     : transformFunctionBody(node));
@@ -86991,8 +86991,8 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
             function visitArrowFunction(node) {
                 var savedEnclosingFunctionFlags = enclosingFunctionFlags;
                 enclosingFunctionFlags = ts.getFunctionFlags(node);
-                var updated = ts.updateArrowFunction(node, node.modifiers, 
-                /*typeParameters*/ undefined, ts.visitParameterList(node.parameters, visitor, context), 
+                var updated = ts.updateArrowFunction(node, node.modifiers,
+                /*typeParameters*/ undefined, ts.visitParameterList(node.parameters, visitor, context),
                 /*type*/ undefined, node.equalsGreaterThanToken, transformFunctionBody(node));
                 enclosingFunctionFlags = savedEnclosingFunctionFlags;
                 return updated;
@@ -87004,8 +87004,8 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                     ? ts.visitNodes(node.modifiers, visitorNoAsyncModifier, ts.isModifier)
                     : node.modifiers, enclosingFunctionFlags & 2 /* Async */
                     ? undefined
-                    : node.asteriskToken, node.name, 
-                /*typeParameters*/ undefined, ts.visitParameterList(node.parameters, visitor, context), 
+                    : node.asteriskToken, node.name,
+                /*typeParameters*/ undefined, ts.visitParameterList(node.parameters, visitor, context),
                 /*type*/ undefined, enclosingFunctionFlags & 2 /* Async */ && enclosingFunctionFlags & 1 /* Generator */
                     ? transformAsyncGeneratorFunctionBody(node)
                     : transformFunctionBody(node));
@@ -87022,9 +87022,9 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 capturedSuperProperties = ts.createUnderscoreEscapedMap();
                 hasSuperElementAccess = false;
                 var returnStatement = ts.createReturn(createAsyncGeneratorHelper(context, ts.createFunctionExpression(
-                /*modifiers*/ undefined, ts.createToken(41 /* AsteriskToken */), node.name && ts.getGeneratedNameForNode(node.name), 
-                /*typeParameters*/ undefined, 
-                /*parameters*/ [], 
+                /*modifiers*/ undefined, ts.createToken(41 /* AsteriskToken */), node.name && ts.getGeneratedNameForNode(node.name),
+                /*typeParameters*/ undefined,
+                /*parameters*/ [],
                 /*type*/ undefined, ts.updateBlock(node.body, ts.visitLexicalEnvironment(node.body.statements, visitor, context, statementOffset))), hasLexicalThis));
                 // Minor optimization, emit `_super` helper to capture `super` access in an arrow.
                 // This step isn't needed if we eventually transform this to ES5.
@@ -87073,8 +87073,8 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                     var parameter = _a[_i];
                     if (parameter.transformFlags & 16384 /* ContainsObjectRestOrSpread */) {
                         var temp = ts.getGeneratedNameForNode(parameter);
-                        var declarations = ts.flattenDestructuringBinding(parameter, visitor, context, 1 /* ObjectRest */, temp, 
-                        /*doNotRecordTempVariablesInLine*/ false, 
+                        var declarations = ts.flattenDestructuringBinding(parameter, visitor, context, 1 /* ObjectRest */, temp,
+                        /*doNotRecordTempVariablesInLine*/ false,
                         /*skipInitializer*/ true);
                         if (ts.some(declarations)) {
                             var statement = ts.createVariableStatement(
@@ -87176,7 +87176,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                     var argumentExpression = ts.isPropertyAccessExpression(expression)
                         ? substitutePropertyAccessExpression(expression)
                         : substituteElementAccessExpression(expression);
-                    return ts.createCall(ts.createPropertyAccess(argumentExpression, "call"), 
+                    return ts.createCall(ts.createPropertyAccess(argumentExpression, "call"),
                     /*typeArguments*/ undefined, __spreadArrays([
                         ts.createThis()
                     ], node.arguments));
@@ -87193,11 +87193,11 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
             }
             function createSuperElementAccessInAsyncMethod(argumentExpression, location) {
                 if (enclosingSuperContainerFlags & 4096 /* AsyncMethodWithSuperBinding */) {
-                    return ts.setTextRange(ts.createPropertyAccess(ts.createCall(ts.createIdentifier("_superIndex"), 
+                    return ts.setTextRange(ts.createPropertyAccess(ts.createCall(ts.createIdentifier("_superIndex"),
                     /*typeArguments*/ undefined, [argumentExpression]), "value"), location);
                 }
                 else {
-                    return ts.setTextRange(ts.createCall(ts.createIdentifier("_superIndex"), 
+                    return ts.setTextRange(ts.createCall(ts.createIdentifier("_superIndex"),
                     /*typeArguments*/ undefined, [argumentExpression]), location);
                 }
             }
@@ -87215,7 +87215,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 return ts.createCall(ts.createPropertyAccess(ts.createIdentifier("Object"), "assign"), /*typeArguments*/ undefined, attributesSegments);
             }
             context.requestEmitHelper(ts.assignHelper);
-            return ts.createCall(ts.getUnscopedHelperName("__assign"), 
+            return ts.createCall(ts.getUnscopedHelperName("__assign"),
             /*typeArguments*/ undefined, attributesSegments);
         }
         ts.createAssignHelper = createAssignHelper;
@@ -87240,7 +87240,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
             context.requestEmitHelper(ts.asyncGeneratorHelper);
             // Mark this node as originally an async function
             (generatorFunc.emitNode || (generatorFunc.emitNode = {})).flags |= 262144 /* AsyncFunctionBody */;
-            return ts.createCall(ts.getUnscopedHelperName("__asyncGenerator"), 
+            return ts.createCall(ts.getUnscopedHelperName("__asyncGenerator"),
             /*typeArguments*/ undefined, [
                 hasLexicalThis ? ts.createThis() : ts.createVoidZero(),
                 ts.createIdentifier("arguments"),
@@ -87256,7 +87256,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
         function createAsyncDelegatorHelper(context, expression, location) {
             context.requestEmitHelper(ts.awaitHelper);
             context.requestEmitHelper(ts.asyncDelegator);
-            return ts.setTextRange(ts.createCall(ts.getUnscopedHelperName("__asyncDelegator"), 
+            return ts.setTextRange(ts.createCall(ts.getUnscopedHelperName("__asyncDelegator"),
             /*typeArguments*/ undefined, [expression]), location);
         }
         ts.asyncValues = {
@@ -87267,7 +87267,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
         };
         function createAsyncValuesHelper(context, expression, location) {
             context.requestEmitHelper(ts.asyncValues);
-            return ts.setTextRange(ts.createCall(ts.getUnscopedHelperName("__asyncValues"), 
+            return ts.setTextRange(ts.createCall(ts.getUnscopedHelperName("__asyncValues"),
             /*typeArguments*/ undefined, [expression]), location);
         }
     })(ts || (ts = {}));
@@ -87429,7 +87429,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                                 rightExpression = ts.createFunctionCall(rightExpression, leftThisArg.kind === 102 /* SuperKeyword */ ? ts.createThis() : leftThisArg, ts.visitNodes(segment.arguments, visitor, ts.isExpression));
                             }
                             else {
-                                rightExpression = ts.createCall(rightExpression, 
+                                rightExpression = ts.createCall(rightExpression,
                                 /*typeArguments*/ undefined, ts.visitNodes(segment.arguments, visitor, ts.isExpression));
                             }
                             break;
@@ -88503,7 +88503,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 //          }
                 //          return C;
                 //      }());
-                var variable = ts.createVariableDeclaration(ts.getLocalName(node, /*allowComments*/ true), 
+                var variable = ts.createVariableDeclaration(ts.getLocalName(node, /*allowComments*/ true),
                 /*type*/ undefined, transformClassLikeDeclarationToExpression(node));
                 ts.setOriginalNode(variable, node);
                 var statements = [];
@@ -88578,10 +88578,10 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 }
                 var extendsClauseElement = ts.getClassExtendsHeritageElement(node);
                 var classFunction = ts.createFunctionExpression(
-                /*modifiers*/ undefined, 
-                /*asteriskToken*/ undefined, 
-                /*name*/ undefined, 
-                /*typeParameters*/ undefined, extendsClauseElement ? [ts.createParameter(/*decorators*/ undefined, /*modifiers*/ undefined, /*dotDotDotToken*/ undefined, ts.createFileLevelUniqueName("_super"))] : [], 
+                /*modifiers*/ undefined,
+                /*asteriskToken*/ undefined,
+                /*name*/ undefined,
+                /*typeParameters*/ undefined, extendsClauseElement ? [ts.createParameter(/*decorators*/ undefined, /*modifiers*/ undefined, /*dotDotDotToken*/ undefined, ts.createFileLevelUniqueName("_super"))] : [],
                 /*type*/ undefined, transformClassBody(node, extendsClauseElement));
                 // To preserve the behavior of the old emitter, we explicitly indent
                 // the body of the function here if it was requested in an earlier
@@ -88595,7 +88595,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 var outer = ts.createPartiallyEmittedExpression(inner);
                 outer.end = ts.skipTrivia(currentText, node.pos);
                 ts.setEmitFlags(outer, 1536 /* NoComments */);
-                var result = ts.createParen(ts.createCall(outer, 
+                var result = ts.createParen(ts.createCall(outer,
                 /*typeArguments*/ undefined, extendsClauseElement
                     ? [ts.visitNode(extendsClauseElement.expression, visitor, ts.isExpression)]
                     : []));
@@ -88640,7 +88640,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
              */
             function addExtendsHelperIfNeeded(statements, node, extendsClauseElement) {
                 if (extendsClauseElement) {
-                    statements.push(ts.setTextRange(ts.createExpressionStatement(createExtendsHelper(context, ts.getInternalName(node))), 
+                    statements.push(ts.setTextRange(ts.createExpressionStatement(createExtendsHelper(context, ts.getInternalName(node))),
                     /*location*/ extendsClauseElement));
                 }
             }
@@ -88658,10 +88658,10 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 var constructor = ts.getFirstConstructorWithBody(node);
                 var hasSynthesizedSuper = hasSynthesizedDefaultSuperCall(constructor, extendsClauseElement !== undefined);
                 var constructorFunction = ts.createFunctionDeclaration(
-                /*decorators*/ undefined, 
-                /*modifiers*/ undefined, 
-                /*asteriskToken*/ undefined, ts.getInternalName(node), 
-                /*typeParameters*/ undefined, transformConstructorParameters(constructor, hasSynthesizedSuper), 
+                /*decorators*/ undefined,
+                /*modifiers*/ undefined,
+                /*asteriskToken*/ undefined, ts.getInternalName(node),
+                /*typeParameters*/ undefined, transformConstructorParameters(constructor, hasSynthesizedSuper),
                 /*type*/ undefined, transformConstructorBody(constructor, node, extendsClauseElement, hasSynthesizedSuper));
                 ts.setTextRange(constructorFunction, constructor || node);
                 if (extendsClauseElement) {
@@ -88842,8 +88842,8 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                     // ```
                     insertCaptureThisForNodeIfNeeded(prologue, constructor);
                 }
-                var block = ts.createBlock(ts.setTextRange(ts.createNodeArray(ts.concatenate(prologue, statements)), 
-                /*location*/ constructor.body.statements), 
+                var block = ts.createBlock(ts.setTextRange(ts.createNodeArray(ts.concatenate(prologue, statements)),
+                /*location*/ constructor.body.statements),
                 /*multiLine*/ true);
                 ts.setTextRange(block, constructor.body);
                 return block;
@@ -88895,25 +88895,25 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                     // Binding patterns are converted into a generated name and are
                     // evaluated inside the function body.
                     return ts.setOriginalNode(ts.setTextRange(ts.createParameter(
-                    /*decorators*/ undefined, 
-                    /*modifiers*/ undefined, 
-                    /*dotDotDotToken*/ undefined, ts.getGeneratedNameForNode(node), 
-                    /*questionToken*/ undefined, 
-                    /*type*/ undefined, 
-                    /*initializer*/ undefined), 
-                    /*location*/ node), 
+                    /*decorators*/ undefined,
+                    /*modifiers*/ undefined,
+                    /*dotDotDotToken*/ undefined, ts.getGeneratedNameForNode(node),
+                    /*questionToken*/ undefined,
+                    /*type*/ undefined,
+                    /*initializer*/ undefined),
+                    /*location*/ node),
                     /*original*/ node);
                 }
                 else if (node.initializer) {
                     // Initializers are elided
                     return ts.setOriginalNode(ts.setTextRange(ts.createParameter(
-                    /*decorators*/ undefined, 
-                    /*modifiers*/ undefined, 
-                    /*dotDotDotToken*/ undefined, node.name, 
-                    /*questionToken*/ undefined, 
-                    /*type*/ undefined, 
-                    /*initializer*/ undefined), 
-                    /*location*/ node), 
+                    /*decorators*/ undefined,
+                    /*modifiers*/ undefined,
+                    /*dotDotDotToken*/ undefined, node.name,
+                    /*questionToken*/ undefined,
+                    /*type*/ undefined,
+                    /*initializer*/ undefined),
+                    /*location*/ node),
                     /*original*/ node);
                 }
                 else {
@@ -89031,9 +89031,9 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 // var param = [];
                 prologueStatements.push(ts.setEmitFlags(ts.setTextRange(ts.createVariableStatement(
                 /*modifiers*/ undefined, ts.createVariableDeclarationList([
-                    ts.createVariableDeclaration(declarationName, 
+                    ts.createVariableDeclaration(declarationName,
                     /*type*/ undefined, ts.createArrayLiteral([]))
-                ])), 
+                ])),
                 /*location*/ parameter), 1048576 /* CustomPrologue */));
                 // for (var _i = restIndex; _i < arguments.length; _i++) {
                 //   param[_i - restIndex] = arguments[_i];
@@ -89043,7 +89043,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 ]), parameter), ts.setTextRange(ts.createLessThan(temp, ts.createPropertyAccess(ts.createIdentifier("arguments"), "length")), parameter), ts.setTextRange(ts.createPostfixIncrement(temp), parameter), ts.createBlock([
                     ts.startOnNewLine(ts.setTextRange(ts.createExpressionStatement(ts.createAssignment(ts.createElementAccess(expressionName, restIndex === 0
                         ? temp
-                        : ts.createSubtract(temp, ts.createLiteral(restIndex))), ts.createElementAccess(ts.createIdentifier("arguments"), temp))), 
+                        : ts.createSubtract(temp, ts.createLiteral(restIndex))), ts.createElementAccess(ts.createIdentifier("arguments"), temp))),
                     /*location*/ parameter))
                 ]));
                 ts.setEmitFlags(forStatement, 1048576 /* CustomPrologue */);
@@ -89075,7 +89075,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 enableSubstitutionsForCapturedThis();
                 var captureThisStatement = ts.createVariableStatement(
                 /*modifiers*/ undefined, ts.createVariableDeclarationList([
-                    ts.createVariableDeclaration(ts.createFileLevelUniqueName("_this"), 
+                    ts.createVariableDeclaration(ts.createFileLevelUniqueName("_this"),
                     /*type*/ undefined, initializer)
                 ]));
                 ts.setEmitFlags(captureThisStatement, 1536 /* NoComments */ | 1048576 /* CustomPrologue */);
@@ -89111,7 +89111,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                     }
                     var captureNewTargetStatement = ts.createVariableStatement(
                     /*modifiers*/ undefined, ts.createVariableDeclarationList([
-                        ts.createVariableDeclaration(ts.createFileLevelUniqueName("_newTarget"), 
+                        ts.createVariableDeclaration(ts.createFileLevelUniqueName("_newTarget"),
                         /*type*/ undefined, newTarget)
                     ]));
                     ts.setEmitFlags(captureNewTargetStatement, 1536 /* NoComments */ | 1048576 /* CustomPrologue */);
@@ -89249,7 +89249,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                     properties.push(setter);
                 }
                 properties.push(ts.createPropertyAssignment("enumerable", ts.createTrue()), ts.createPropertyAssignment("configurable", ts.createTrue()));
-                var call = ts.createCall(ts.createPropertyAccess(ts.createIdentifier("Object"), "defineProperty"), 
+                var call = ts.createCall(ts.createPropertyAccess(ts.createIdentifier("Object"), "defineProperty"),
                 /*typeArguments*/ undefined, [
                     target,
                     propertyName,
@@ -89273,10 +89273,10 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 convertedLoopState = undefined;
                 var ancestorFacts = enterSubtree(15232 /* ArrowFunctionExcludes */, 66 /* ArrowFunctionIncludes */);
                 var func = ts.createFunctionExpression(
-                /*modifiers*/ undefined, 
-                /*asteriskToken*/ undefined, 
-                /*name*/ undefined, 
-                /*typeParameters*/ undefined, ts.visitParameterList(node.parameters, visitor, context), 
+                /*modifiers*/ undefined,
+                /*asteriskToken*/ undefined,
+                /*name*/ undefined,
+                /*typeParameters*/ undefined, ts.visitParameterList(node.parameters, visitor, context),
                 /*type*/ undefined, transformFunctionBody(node));
                 ts.setTextRange(func, node);
                 ts.setOriginalNode(func, node);
@@ -89307,9 +89307,9 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                     : node.name;
                 exitSubtree(ancestorFacts, 49152 /* FunctionSubtreeExcludes */, 0 /* None */);
                 convertedLoopState = savedConvertedLoopState;
-                return ts.updateFunctionExpression(node, 
-                /*modifiers*/ undefined, node.asteriskToken, name, 
-                /*typeParameters*/ undefined, parameters, 
+                return ts.updateFunctionExpression(node,
+                /*modifiers*/ undefined, node.asteriskToken, name,
+                /*typeParameters*/ undefined, parameters,
                 /*type*/ undefined, body);
             }
             /**
@@ -89328,9 +89328,9 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                     : node.name;
                 exitSubtree(ancestorFacts, 49152 /* FunctionSubtreeExcludes */, 0 /* None */);
                 convertedLoopState = savedConvertedLoopState;
-                return ts.updateFunctionDeclaration(node, 
-                /*decorators*/ undefined, ts.visitNodes(node.modifiers, visitor, ts.isModifier), node.asteriskToken, name, 
-                /*typeParameters*/ undefined, parameters, 
+                return ts.updateFunctionDeclaration(node,
+                /*decorators*/ undefined, ts.visitNodes(node.modifiers, visitor, ts.isModifier), node.asteriskToken, name,
+                /*typeParameters*/ undefined, parameters,
                 /*type*/ undefined, body);
             }
             /**
@@ -89354,9 +89354,9 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 exitSubtree(ancestorFacts, 49152 /* FunctionSubtreeExcludes */, 0 /* None */);
                 convertedLoopState = savedConvertedLoopState;
                 return ts.setOriginalNode(ts.setTextRange(ts.createFunctionExpression(
-                /*modifiers*/ undefined, node.asteriskToken, name, 
-                /*typeParameters*/ undefined, parameters, 
-                /*type*/ undefined, body), location), 
+                /*modifiers*/ undefined, node.asteriskToken, name,
+                /*typeParameters*/ undefined, parameters,
+                /*type*/ undefined, body), location),
                 /*original*/ node);
             }
             /**
@@ -89666,7 +89666,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 var ancestorFacts = enterSubtree(32 /* ExportedVariableStatement */, 0 /* None */);
                 var updated;
                 if (ts.isBindingPattern(node.name)) {
-                    updated = ts.flattenDestructuringBinding(node, visitor, context, 0 /* All */, 
+                    updated = ts.flattenDestructuringBinding(node, visitor, context, 0 /* All */,
                     /*value*/ undefined, (ancestorFacts & 32 /* ExportedVariableStatement */) !== 0);
                 }
                 else {
@@ -89746,7 +89746,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                         // to emit it separately.
                         statements.push(ts.setTextRange(ts.createVariableStatement(
                         /*modifiers*/ undefined, ts.setOriginalNode(ts.setTextRange(ts.createVariableDeclarationList([
-                            ts.createVariableDeclaration(firstOriginalDeclaration ? firstOriginalDeclaration.name : ts.createTempVariable(/*recordTempVariable*/ undefined), 
+                            ts.createVariableDeclaration(firstOriginalDeclaration ? firstOriginalDeclaration.name : ts.createTempVariable(/*recordTempVariable*/ undefined),
                             /*type*/ undefined, boundValue)
                         ]), ts.moveRangePos(initializer, -1)), initializer)), ts.moveRangeEnd(initializer, -1)));
                     }
@@ -89779,7 +89779,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 }
             }
             function createSyntheticBlockForConvertedStatements(statements) {
-                return ts.setEmitFlags(ts.createBlock(ts.createNodeArray(statements), 
+                return ts.setEmitFlags(ts.createBlock(ts.createNodeArray(statements),
                 /*multiLine*/ true), 48 /* NoSourceMap */ | 384 /* NoTokenSourceMaps */);
             }
             function convertForOfStatementForArray(node, outermostLabeledStatement, convertedLoopBodyStatements) {
@@ -89817,10 +89817,10 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 /*initializer*/ ts.setEmitFlags(ts.setTextRange(ts.createVariableDeclarationList([
                     ts.setTextRange(ts.createVariableDeclaration(counter, /*type*/ undefined, ts.createLiteral(0)), ts.moveRangePos(node.expression, -1)),
                     ts.setTextRange(ts.createVariableDeclaration(rhsReference, /*type*/ undefined, expression), node.expression)
-                ]), node.expression), 2097152 /* NoHoisting */), 
-                /*condition*/ ts.setTextRange(ts.createLessThan(counter, ts.createPropertyAccess(rhsReference, "length")), node.expression), 
-                /*incrementor*/ ts.setTextRange(ts.createPostfixIncrement(counter), node.expression), 
-                /*statement*/ convertForOfStatementHead(node, ts.createElementAccess(rhsReference, counter), convertedLoopBodyStatements)), 
+                ]), node.expression), 2097152 /* NoHoisting */),
+                /*condition*/ ts.setTextRange(ts.createLessThan(counter, ts.createPropertyAccess(rhsReference, "length")), node.expression),
+                /*incrementor*/ ts.setTextRange(ts.createPostfixIncrement(counter), node.expression),
+                /*statement*/ convertForOfStatementHead(node, ts.createElementAccess(rhsReference, counter), convertedLoopBodyStatements)),
                 /*location*/ node);
                 // Disable trailing source maps for the OpenParenToken to align source map emit with the old emitter.
                 ts.setEmitFlags(forStatement, 256 /* NoTokenTrailingSourceMaps */);
@@ -89846,10 +89846,10 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 /*initializer*/ ts.setEmitFlags(ts.setTextRange(ts.createVariableDeclarationList([
                     ts.setTextRange(ts.createVariableDeclaration(iterator, /*type*/ undefined, initializer), node.expression),
                     ts.createVariableDeclaration(result, /*type*/ undefined, next)
-                ]), node.expression), 2097152 /* NoHoisting */), 
-                /*condition*/ ts.createLogicalNot(ts.createPropertyAccess(result, "done")), 
-                /*incrementor*/ ts.createAssignment(result, next), 
-                /*statement*/ convertForOfStatementHead(node, ts.createPropertyAccess(result, "value"), convertedLoopBodyStatements)), 
+                ]), node.expression), 2097152 /* NoHoisting */),
+                /*condition*/ ts.createLogicalNot(ts.createPropertyAccess(result, "done")),
+                /*incrementor*/ ts.createAssignment(result, next),
+                /*statement*/ convertForOfStatementHead(node, ts.createPropertyAccess(result, "value"), convertedLoopBodyStatements)),
                 /*location*/ node), 256 /* NoTokenTrailingSourceMaps */);
                 return ts.createTry(ts.createBlock([
                     ts.restoreEnclosingLabel(forStatement, outermostLabeledStatement, convertedLoopState && resetLabel)
@@ -89861,8 +89861,8 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                     ts.createTry(
                     /*tryBlock*/ ts.createBlock([
                         ts.setEmitFlags(ts.createIf(ts.createLogicalAnd(ts.createLogicalAnd(result, ts.createLogicalNot(ts.createPropertyAccess(result, "done"))), ts.createAssignment(returnMethod, ts.createPropertyAccess(iterator, "return"))), ts.createExpressionStatement(ts.createFunctionCall(returnMethod, iterator, []))), 1 /* SingleLine */),
-                    ]), 
-                    /*catchClause*/ undefined, 
+                    ]),
+                    /*catchClause*/ undefined,
                     /*finallyBlock*/ ts.setEmitFlags(ts.createBlock([
                         ts.setEmitFlags(ts.createIf(errorRecord, ts.createThrow(ts.createPropertyAccess(errorRecord, "error"))), 1 /* SingleLine */)
                     ]), 1 /* SingleLine */))
@@ -90022,7 +90022,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 return ts.updateFor(node, ts.visitNode(initializerFunction ? initializerFunction.part : node.initializer, visitor, ts.isForInitializer), ts.visitNode(shouldConvertCondition ? undefined : node.condition, visitor, ts.isExpression), ts.visitNode(shouldConvertIncrementor ? undefined : node.incrementor, visitor, ts.isExpression), convertedLoopBody);
             }
             function convertForOfStatement(node, convertedLoopBody) {
-                return ts.updateForOf(node, 
+                return ts.updateForOf(node,
                 /*awaitModifier*/ undefined, ts.visitNode(node.initializer, visitor, ts.isForInitializer), ts.visitNode(node.expression, visitor, ts.isExpression), convertedLoopBody);
             }
             function convertForInStatement(node, convertedLoopBody) {
@@ -90090,7 +90090,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                     }
                     else {
                         // this is top level converted loop and we need to create an alias for 'arguments' object
-                        (extraVariableDeclarations || (extraVariableDeclarations = [])).push(ts.createVariableDeclaration(state.argumentsName, 
+                        (extraVariableDeclarations || (extraVariableDeclarations = [])).push(ts.createVariableDeclaration(state.argumentsName,
                         /*type*/ undefined, ts.createIdentifier("arguments")));
                     }
                 }
@@ -90105,7 +90105,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                         // NOTE:
                         // if converted loops were all nested in arrow function then we'll always emit '_this' so convertedLoopState.thisName will not be set.
                         // If it is set this means that all nested loops are not nested in arrow function and it is safe to capture 'this'.
-                        (extraVariableDeclarations || (extraVariableDeclarations = [])).push(ts.createVariableDeclaration(state.thisName, 
+                        (extraVariableDeclarations || (extraVariableDeclarations = [])).push(ts.createVariableDeclaration(state.thisName,
                         /*type*/ undefined, ts.createIdentifier("this")));
                     }
                 }
@@ -90190,12 +90190,12 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 // from affecting the initial value for `i` outside of the per-iteration environment.
                 var functionDeclaration = ts.createVariableStatement(
                 /*modifiers*/ undefined, ts.setEmitFlags(ts.createVariableDeclarationList([
-                    ts.createVariableDeclaration(functionName, 
+                    ts.createVariableDeclaration(functionName,
                     /*type*/ undefined, ts.setEmitFlags(ts.createFunctionExpression(
-                    /*modifiers*/ undefined, containsYield ? ts.createToken(41 /* AsteriskToken */) : undefined, 
-                    /*name*/ undefined, 
-                    /*typeParameters*/ undefined, 
-                    /*parameters*/ undefined, 
+                    /*modifiers*/ undefined, containsYield ? ts.createToken(41 /* AsteriskToken */) : undefined,
+                    /*name*/ undefined,
+                    /*typeParameters*/ undefined,
+                    /*parameters*/ undefined,
                     /*type*/ undefined, ts.visitNode(ts.createBlock(statements, /*multiLine*/ true), visitor, ts.isBlock)), emitFlags))
                 ]), 2097152 /* NoHoisting */));
                 var part = ts.createVariableDeclarationList(ts.map(currentState.loopOutParameters, createOutVariable));
@@ -90290,11 +90290,11 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 //  }
                 var functionDeclaration = ts.createVariableStatement(
                 /*modifiers*/ undefined, ts.setEmitFlags(ts.createVariableDeclarationList([
-                    ts.createVariableDeclaration(functionName, 
+                    ts.createVariableDeclaration(functionName,
                     /*type*/ undefined, ts.setEmitFlags(ts.createFunctionExpression(
-                    /*modifiers*/ undefined, containsYield ? ts.createToken(41 /* AsteriskToken */) : undefined, 
-                    /*name*/ undefined, 
-                    /*typeParameters*/ undefined, currentState.loopParameters, 
+                    /*modifiers*/ undefined, containsYield ? ts.createToken(41 /* AsteriskToken */) : undefined,
+                    /*name*/ undefined,
+                    /*typeParameters*/ undefined, currentState.loopParameters,
                     /*type*/ undefined, loopBody), emitFlags))
                 ]), 2097152 /* NoHoisting */));
                 var part = generateCallToConvertedLoop(functionName, currentState, outerState, containsYield);
@@ -90544,7 +90544,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 ts.Debug.assert(!ts.isComputedPropertyName(node.name));
                 var functionExpression = transformFunctionLikeToExpression(node, /*location*/ ts.moveRangePos(node, -1), /*name*/ undefined, /*container*/ undefined);
                 ts.setEmitFlags(functionExpression, 512 /* NoLeadingComments */ | ts.getEmitFlags(functionExpression));
-                return ts.setTextRange(ts.createPropertyAssignment(node.name, functionExpression), 
+                return ts.setTextRange(ts.createPropertyAssignment(node.name, functionExpression),
                 /*location*/ node);
             }
             /**
@@ -90576,7 +90576,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
              * @param node A ShorthandPropertyAssignment node.
              */
             function visitShorthandPropertyAssignment(node) {
-                return ts.setTextRange(ts.createPropertyAssignment(node.name, ts.getSynthesizedClone(node.name)), 
+                return ts.setTextRange(ts.createPropertyAssignment(node.name, ts.getSynthesizedClone(node.name)),
                 /*location*/ node);
             }
             function visitComputedPropertyName(node) {
@@ -90618,7 +90618,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                     ts.some(node.arguments, ts.isSpreadElement)) {
                     return visitCallExpressionWithPotentialCapturedThisAssignment(node, /*assignToCapturedThis*/ true);
                 }
-                return ts.updateCall(node, ts.visitNode(node.expression, callExpressionVisitor, ts.isExpression), 
+                return ts.updateCall(node, ts.visitNode(node.expression, callExpressionVisitor, ts.isExpression),
                 /*typeArguments*/ undefined, ts.visitNodes(node.arguments, visitor, ts.isExpression));
             }
             function visitTypeScriptClassWrapper(node) {
@@ -90722,12 +90722,12 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 ts.addRange(statements, classStatements, /*start*/ 1);
                 // Recreate any outer parentheses or partially-emitted expressions to preserve source map
                 // and comment locations.
-                return ts.recreateOuterExpressions(node.expression, ts.recreateOuterExpressions(variable.initializer, ts.recreateOuterExpressions(aliasAssignment && aliasAssignment.right, ts.updateCall(call, ts.recreateOuterExpressions(call.expression, ts.updateFunctionExpression(func, 
-                /*modifiers*/ undefined, 
-                /*asteriskToken*/ undefined, 
-                /*name*/ undefined, 
-                /*typeParameters*/ undefined, func.parameters, 
-                /*type*/ undefined, ts.updateBlock(func.body, statements))), 
+                return ts.recreateOuterExpressions(node.expression, ts.recreateOuterExpressions(variable.initializer, ts.recreateOuterExpressions(aliasAssignment && aliasAssignment.right, ts.updateCall(call, ts.recreateOuterExpressions(call.expression, ts.updateFunctionExpression(func,
+                /*modifiers*/ undefined,
+                /*asteriskToken*/ undefined,
+                /*name*/ undefined,
+                /*typeParameters*/ undefined, func.parameters,
+                /*type*/ undefined, ts.updateBlock(func.body, statements))),
                 /*typeArguments*/ undefined, call.arguments))));
             }
             function visitImmediateSuperCallInBody(node) {
@@ -90770,7 +90770,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                         //      _super.call(this, a)
                         //      _super.m.call(this, a)
                         //      _super.prototype.m.call(this, a)
-                        resultingCall = ts.createFunctionCall(ts.visitNode(target, callExpressionVisitor, ts.isExpression), node.expression.kind === 102 /* SuperKeyword */ ? thisArg : ts.visitNode(thisArg, visitor, ts.isExpression), ts.visitNodes(node.arguments, visitor, ts.isExpression), 
+                        resultingCall = ts.createFunctionCall(ts.visitNode(target, callExpressionVisitor, ts.isExpression), node.expression.kind === 102 /* SuperKeyword */ ? thisArg : ts.visitNode(thisArg, visitor, ts.isExpression), ts.visitNodes(node.arguments, visitor, ts.isExpression),
                         /*location*/ node);
                     }
                     if (node.expression.kind === 102 /* SuperKeyword */) {
@@ -90797,7 +90797,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                     // [output]
                     //      new ((_a = C).bind.apply(_a, [void 0].concat(a)))()
                     var _a = ts.createCallBinding(ts.createPropertyAccess(node.expression, "bind"), hoistVariableDeclaration), target = _a.target, thisArg = _a.thisArg;
-                    return ts.createNew(ts.createFunctionApply(ts.visitNode(target, visitor, ts.isExpression), thisArg, transformAndSpreadElements(ts.createNodeArray(__spreadArrays([ts.createVoidZero()], node.arguments)), /*needsUniqueCopy*/ false, /*multiLine*/ false, /*hasTrailingComma*/ false)), 
+                    return ts.createNew(ts.createFunctionApply(ts.visitNode(target, visitor, ts.isExpression), thisArg, transformAndSpreadElements(ts.createNodeArray(__spreadArrays([ts.createVoidZero()], node.arguments)), /*needsUniqueCopy*/ false, /*multiLine*/ false, /*hasTrailingComma*/ false)),
                     /*typeArguments*/ undefined, []);
                 }
                 return ts.visitEachChild(node, visitor, context);
@@ -91262,7 +91262,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
         ts.transformES2015 = transformES2015;
         function createExtendsHelper(context, name) {
             context.requestEmitHelper(ts.extendsHelper);
-            return ts.createCall(ts.getUnscopedHelperName("__extends"), 
+            return ts.createCall(ts.getUnscopedHelperName("__extends"),
             /*typeArguments*/ undefined, [
                 name,
                 ts.createFileLevelUniqueName("_super")
@@ -91270,7 +91270,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
         }
         function createTemplateObjectHelper(context, cooked, raw) {
             context.requestEmitHelper(ts.templateObjectHelper);
-            return ts.createCall(ts.getUnscopedHelperName("__makeTemplateObject"), 
+            return ts.createCall(ts.getUnscopedHelperName("__makeTemplateObject"),
             /*typeArguments*/ undefined, [
                 cooked,
                 raw
@@ -91776,10 +91776,10 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 // Currently, we only support generators that were originally async functions.
                 if (node.asteriskToken) {
                     node = ts.setOriginalNode(ts.setTextRange(ts.createFunctionDeclaration(
-                    /*decorators*/ undefined, node.modifiers, 
-                    /*asteriskToken*/ undefined, node.name, 
-                    /*typeParameters*/ undefined, ts.visitParameterList(node.parameters, visitor, context), 
-                    /*type*/ undefined, transformGeneratorFunctionBody(node.body)), 
+                    /*decorators*/ undefined, node.modifiers,
+                    /*asteriskToken*/ undefined, node.name,
+                    /*typeParameters*/ undefined, ts.visitParameterList(node.parameters, visitor, context),
+                    /*type*/ undefined, transformGeneratorFunctionBody(node.body)),
                     /*location*/ node), node);
                 }
                 else {
@@ -91814,10 +91814,10 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 // Currently, we only support generators that were originally async functions.
                 if (node.asteriskToken) {
                     node = ts.setOriginalNode(ts.setTextRange(ts.createFunctionExpression(
-                    /*modifiers*/ undefined, 
-                    /*asteriskToken*/ undefined, node.name, 
-                    /*typeParameters*/ undefined, ts.visitParameterList(node.parameters, visitor, context), 
-                    /*type*/ undefined, transformGeneratorFunctionBody(node.body)), 
+                    /*modifiers*/ undefined,
+                    /*asteriskToken*/ undefined, node.name,
+                    /*typeParameters*/ undefined, ts.visitParameterList(node.parameters, visitor, context),
+                    /*type*/ undefined, transformGeneratorFunctionBody(node.body)),
                     /*location*/ node), node);
                 }
                 else {
@@ -92304,7 +92304,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                     //  .mark resumeLabel
                     //      _b.apply(_a, _c.concat([%sent%, 2]));
                     var _a = ts.createCallBinding(node.expression, hoistVariableDeclaration, languageVersion, /*cacheIdentifiers*/ true), target = _a.target, thisArg = _a.thisArg;
-                    return ts.setOriginalNode(ts.createFunctionApply(cacheExpression(ts.visitNode(target, visitor, ts.isLeftHandSideExpression)), thisArg, visitElements(node.arguments), 
+                    return ts.setOriginalNode(ts.createFunctionApply(cacheExpression(ts.visitNode(target, visitor, ts.isLeftHandSideExpression)), thisArg, visitElements(node.arguments),
                     /*location*/ node), node);
                 }
                 return ts.visitEachChild(node, visitor, context);
@@ -92322,8 +92322,8 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                     //  .mark resumeLabel
                     //      new (_b.apply(_a, _c.concat([%sent%, 2])));
                     var _a = ts.createCallBinding(ts.createPropertyAccess(node.expression, "bind"), hoistVariableDeclaration), target = _a.target, thisArg = _a.thisArg;
-                    return ts.setOriginalNode(ts.setTextRange(ts.createNew(ts.createFunctionApply(cacheExpression(ts.visitNode(target, visitor, ts.isExpression)), thisArg, visitElements(node.arguments, 
-                    /*leadingElement*/ ts.createVoidZero())), 
+                    return ts.setOriginalNode(ts.setTextRange(ts.createNew(ts.createFunctionApply(cacheExpression(ts.visitNode(target, visitor, ts.isExpression)), thisArg, visitElements(node.arguments,
+                    /*leadingElement*/ ts.createVoidZero())),
                     /*typeArguments*/ undefined, []), node), node);
                 }
                 return ts.visitEachChild(node, visitor, context);
@@ -92642,7 +92642,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                     var initializer = node.initializer;
                     hoistVariableDeclaration(keysIndex);
                     emitAssignment(keysArray, ts.createArrayLiteral());
-                    emitStatement(ts.createForIn(key, ts.visitNode(node.expression, visitor, ts.isExpression), ts.createExpressionStatement(ts.createCall(ts.createPropertyAccess(keysArray, "push"), 
+                    emitStatement(ts.createForIn(key, ts.visitNode(node.expression, visitor, ts.isExpression), ts.createExpressionStatement(ts.createCall(ts.createPropertyAccess(keysArray, "push"),
                     /*typeArguments*/ undefined, [key]))));
                     emitAssignment(keysIndex, ts.createLiteral(0));
                     var conditionLabel = defineLabel();
@@ -92744,11 +92744,11 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 return ts.visitEachChild(node, visitor, context);
             }
             function transformAndEmitReturnStatement(node) {
-                emitReturn(ts.visitNode(node.expression, visitor, ts.isExpression), 
+                emitReturn(ts.visitNode(node.expression, visitor, ts.isExpression),
                 /*location*/ node);
             }
             function visitReturnStatement(node) {
-                return createInlineReturn(ts.visitNode(node.expression, visitor, ts.isExpression), 
+                return createInlineReturn(ts.visitNode(node.expression, visitor, ts.isExpression),
                 /*location*/ node);
             }
             function transformAndEmitWithStatement(node) {
@@ -92905,7 +92905,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 return node;
             }
             function transformAndEmitThrowStatement(node) {
-                emitThrow(ts.visitNode(node.expression, visitor, ts.isExpression), 
+                emitThrow(ts.visitNode(node.expression, visitor, ts.isExpression),
                 /*location*/ node);
             }
             function transformAndEmitTryStatement(node) {
@@ -93441,7 +93441,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
              * Creates an expression that can be used to resume from a Yield operation.
              */
             function createGeneratorResume(location) {
-                return ts.setTextRange(ts.createCall(ts.createPropertyAccess(state, "sent"), 
+                return ts.setTextRange(ts.createCall(ts.createPropertyAccess(state, "sent"),
                 /*typeArguments*/ undefined, []), location);
             }
             /**
@@ -93583,11 +93583,11 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 withBlockStack = undefined;
                 var buildResult = buildStatements();
                 return createGeneratorHelper(context, ts.setEmitFlags(ts.createFunctionExpression(
-                /*modifiers*/ undefined, 
-                /*asteriskToken*/ undefined, 
-                /*name*/ undefined, 
-                /*typeParameters*/ undefined, [ts.createParameter(/*decorators*/ undefined, /*modifiers*/ undefined, /*dotDotDotToken*/ undefined, state)], 
-                /*type*/ undefined, ts.createBlock(buildResult, 
+                /*modifiers*/ undefined,
+                /*asteriskToken*/ undefined,
+                /*name*/ undefined,
+                /*typeParameters*/ undefined, [ts.createParameter(/*decorators*/ undefined, /*modifiers*/ undefined, /*dotDotDotToken*/ undefined, state)],
+                /*type*/ undefined, ts.createBlock(buildResult,
                 /*multiLine*/ buildResult.length > 0)), 524288 /* ReuseTempVariableScope */));
             }
             /**
@@ -93688,7 +93688,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                         // indicate entry into a protected region by pushing the label numbers
                         // for each block in the protected region.
                         var startLabel = currentExceptionBlock.startLabel, catchLabel = currentExceptionBlock.catchLabel, finallyLabel = currentExceptionBlock.finallyLabel, endLabel = currentExceptionBlock.endLabel;
-                        statements.unshift(ts.createExpressionStatement(ts.createCall(ts.createPropertyAccess(ts.createPropertyAccess(state, "trys"), "push"), 
+                        statements.unshift(ts.createExpressionStatement(ts.createCall(ts.createPropertyAccess(ts.createPropertyAccess(state, "trys"), "push"),
                         /*typeArguments*/ undefined, [
                             ts.createArrayLiteral([
                                 createLabel(startLabel),
@@ -93963,7 +93963,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
         ts.transformGenerators = transformGenerators;
         function createGeneratorHelper(context, body) {
             context.requestEmitHelper(ts.generatorHelper);
-            return ts.createCall(ts.getUnscopedHelperName("__generator"), 
+            return ts.createCall(ts.getUnscopedHelperName("__generator"),
             /*typeArguments*/ undefined, [ts.createThis(), body]);
         }
         // The __generator helper is used by down-level transformations to emulate the runtime
@@ -94156,7 +94156,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 //
                 //     define(moduleName?, ["module1", "module2"], function ...
                 var updated = ts.updateSourceFileNode(node, ts.setTextRange(ts.createNodeArray([
-                    ts.createExpressionStatement(ts.createCall(define, 
+                    ts.createExpressionStatement(ts.createCall(define,
                     /*typeArguments*/ undefined, __spreadArrays((moduleName ? [moduleName] : []), [
                         // Add the dependency array argument:
                         //
@@ -94171,16 +94171,16 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                         jsonSourceFile ?
                             jsonSourceFile.statements.length ? jsonSourceFile.statements[0].expression : ts.createObjectLiteral() :
                             ts.createFunctionExpression(
-                            /*modifiers*/ undefined, 
-                            /*asteriskToken*/ undefined, 
-                            /*name*/ undefined, 
+                            /*modifiers*/ undefined,
+                            /*asteriskToken*/ undefined,
+                            /*name*/ undefined,
                             /*typeParameters*/ undefined, __spreadArrays([
                                 ts.createParameter(/*decorators*/ undefined, /*modifiers*/ undefined, /*dotDotDotToken*/ undefined, "require"),
                                 ts.createParameter(/*decorators*/ undefined, /*modifiers*/ undefined, /*dotDotDotToken*/ undefined, "exports")
-                            ], importAliasNames), 
+                            ], importAliasNames),
                             /*type*/ undefined, transformAsynchronousModuleBody(node))
                     ])))
-                ]), 
+                ]),
                 /*location*/ node.statements));
                 ts.addEmitHelpers(updated, context.readEmitHelpers());
                 return updated;
@@ -94194,16 +94194,16 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 var _a = collectAsynchronousDependencies(node, /*includeNonAmdDependencies*/ false), aliasedModuleNames = _a.aliasedModuleNames, unaliasedModuleNames = _a.unaliasedModuleNames, importAliasNames = _a.importAliasNames;
                 var moduleName = ts.tryGetModuleNameFromFile(node, host, compilerOptions);
                 var umdHeader = ts.createFunctionExpression(
-                /*modifiers*/ undefined, 
-                /*asteriskToken*/ undefined, 
-                /*name*/ undefined, 
-                /*typeParameters*/ undefined, [ts.createParameter(/*decorators*/ undefined, /*modifiers*/ undefined, /*dotDotDotToken*/ undefined, "factory")], 
+                /*modifiers*/ undefined,
+                /*asteriskToken*/ undefined,
+                /*name*/ undefined,
+                /*typeParameters*/ undefined, [ts.createParameter(/*decorators*/ undefined, /*modifiers*/ undefined, /*dotDotDotToken*/ undefined, "factory")],
                 /*type*/ undefined, ts.setTextRange(ts.createBlock([
                     ts.createIf(ts.createLogicalAnd(ts.createTypeCheck(ts.createIdentifier("module"), "object"), ts.createTypeCheck(ts.createPropertyAccess(ts.createIdentifier("module"), "exports"), "object")), ts.createBlock([
                         ts.createVariableStatement(
                         /*modifiers*/ undefined, [
-                            ts.createVariableDeclaration("v", 
-                            /*type*/ undefined, ts.createCall(ts.createIdentifier("factory"), 
+                            ts.createVariableDeclaration("v",
+                            /*type*/ undefined, ts.createCall(ts.createIdentifier("factory"),
                             /*typeArguments*/ undefined, [
                                 ts.createIdentifier("require"),
                                 ts.createIdentifier("exports")
@@ -94211,7 +94211,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                         ]),
                         ts.setEmitFlags(ts.createIf(ts.createStrictInequality(ts.createIdentifier("v"), ts.createIdentifier("undefined")), ts.createExpressionStatement(ts.createAssignment(ts.createPropertyAccess(ts.createIdentifier("module"), "exports"), ts.createIdentifier("v")))), 1 /* SingleLine */)
                     ]), ts.createIf(ts.createLogicalAnd(ts.createTypeCheck(ts.createIdentifier("define"), "function"), ts.createPropertyAccess(ts.createIdentifier("define"), "amd")), ts.createBlock([
-                        ts.createExpressionStatement(ts.createCall(ts.createIdentifier("define"), 
+                        ts.createExpressionStatement(ts.createCall(ts.createIdentifier("define"),
                         /*typeArguments*/ undefined, __spreadArrays((moduleName ? [moduleName] : []), [
                             ts.createArrayLiteral(__spreadArrays([
                                 ts.createLiteral("require"),
@@ -94220,8 +94220,8 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                             ts.createIdentifier("factory")
                         ])))
                     ])))
-                ], 
-                /*multiLine*/ true), 
+                ],
+                /*multiLine*/ true),
                 /*location*/ undefined));
                 // Create an updated SourceFile:
                 //
@@ -94235,22 +94235,22 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 //      }
                 //  })(function ...)
                 var updated = ts.updateSourceFileNode(node, ts.setTextRange(ts.createNodeArray([
-                    ts.createExpressionStatement(ts.createCall(umdHeader, 
+                    ts.createExpressionStatement(ts.createCall(umdHeader,
                     /*typeArguments*/ undefined, [
                         // Add the module body function argument:
                         //
                         //     function (require, exports) ...
                         ts.createFunctionExpression(
-                        /*modifiers*/ undefined, 
-                        /*asteriskToken*/ undefined, 
-                        /*name*/ undefined, 
+                        /*modifiers*/ undefined,
+                        /*asteriskToken*/ undefined,
+                        /*name*/ undefined,
                         /*typeParameters*/ undefined, __spreadArrays([
                             ts.createParameter(/*decorators*/ undefined, /*modifiers*/ undefined, /*dotDotDotToken*/ undefined, "require"),
                             ts.createParameter(/*decorators*/ undefined, /*modifiers*/ undefined, /*dotDotDotToken*/ undefined, "exports")
-                        ], importAliasNames), 
+                        ], importAliasNames),
                         /*type*/ undefined, transformAsynchronousModuleBody(node))
                     ]))
-                ]), 
+                ]),
                 /*location*/ node.statements));
                 ts.addEmitHelpers(updated, context.readEmitHelpers());
                 return updated;
@@ -94508,15 +94508,15 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 if (ts.isSimpleCopiableExpression(arg)) {
                     var argClone = ts.isGeneratedIdentifier(arg) ? arg : ts.isStringLiteral(arg) ? ts.createLiteral(arg) : ts.setEmitFlags(ts.setTextRange(ts.getSynthesizedClone(arg), arg), 1536 /* NoComments */);
                     return ts.createConditional(
-                    /*condition*/ ts.createIdentifier("__syncRequire"), 
-                    /*whenTrue*/ createImportCallExpressionCommonJS(arg, containsLexicalThis), 
+                    /*condition*/ ts.createIdentifier("__syncRequire"),
+                    /*whenTrue*/ createImportCallExpressionCommonJS(arg, containsLexicalThis),
                     /*whenFalse*/ createImportCallExpressionAMD(argClone, containsLexicalThis));
                 }
                 else {
                     var temp = ts.createTempVariable(hoistVariableDeclaration);
                     return ts.createComma(ts.createAssignment(temp, arg), ts.createConditional(
-                    /*condition*/ ts.createIdentifier("__syncRequire"), 
-                    /*whenTrue*/ createImportCallExpressionCommonJS(temp, containsLexicalThis), 
+                    /*condition*/ ts.createIdentifier("__syncRequire"),
+                    /*whenTrue*/ createImportCallExpressionCommonJS(temp, containsLexicalThis),
                     /*whenFalse*/ createImportCallExpressionAMD(temp, containsLexicalThis)));
                 }
             }
@@ -94534,23 +94534,23 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                     ts.createParameter(/*decorator*/ undefined, /*modifiers*/ undefined, /*dotDotDotToken*/ undefined, /*name*/ reject)
                 ];
                 var body = ts.createBlock([
-                    ts.createExpressionStatement(ts.createCall(ts.createIdentifier("require"), 
+                    ts.createExpressionStatement(ts.createCall(ts.createIdentifier("require"),
                     /*typeArguments*/ undefined, [ts.createArrayLiteral([arg || ts.createOmittedExpression()]), resolve, reject]))
                 ]);
                 var func;
                 if (languageVersion >= 2 /* ES2015 */) {
                     func = ts.createArrowFunction(
-                    /*modifiers*/ undefined, 
-                    /*typeParameters*/ undefined, parameters, 
-                    /*type*/ undefined, 
+                    /*modifiers*/ undefined,
+                    /*typeParameters*/ undefined, parameters,
+                    /*type*/ undefined,
                     /*equalsGreaterThanToken*/ undefined, body);
                 }
                 else {
                     func = ts.createFunctionExpression(
-                    /*modifiers*/ undefined, 
-                    /*asteriskToken*/ undefined, 
-                    /*name*/ undefined, 
-                    /*typeParameters*/ undefined, parameters, 
+                    /*modifiers*/ undefined,
+                    /*asteriskToken*/ undefined,
+                    /*name*/ undefined,
+                    /*typeParameters*/ undefined, parameters,
                     /*type*/ undefined, body);
                     // if there is a lexical 'this' in the import call arguments, ensure we indicate
                     // that this new function expression indicates it captures 'this' so that the
@@ -94581,19 +94581,19 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 var func;
                 if (languageVersion >= 2 /* ES2015 */) {
                     func = ts.createArrowFunction(
-                    /*modifiers*/ undefined, 
-                    /*typeParameters*/ undefined, 
-                    /*parameters*/ [], 
-                    /*type*/ undefined, 
+                    /*modifiers*/ undefined,
+                    /*typeParameters*/ undefined,
+                    /*parameters*/ [],
+                    /*type*/ undefined,
                     /*equalsGreaterThanToken*/ undefined, requireCall);
                 }
                 else {
                     func = ts.createFunctionExpression(
-                    /*modifiers*/ undefined, 
-                    /*asteriskToken*/ undefined, 
-                    /*name*/ undefined, 
-                    /*typeParameters*/ undefined, 
-                    /*parameters*/ [], 
+                    /*modifiers*/ undefined,
+                    /*asteriskToken*/ undefined,
+                    /*name*/ undefined,
+                    /*typeParameters*/ undefined,
+                    /*parameters*/ [],
                     /*type*/ undefined, ts.createBlock([ts.createReturn(requireCall)]));
                     // if there is a lexical 'this' in the import call arguments, ensure we indicate
                     // that this new function expression indicates it captures 'this' so that the
@@ -94645,7 +94645,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                         var variables = [];
                         if (namespaceDeclaration && !ts.isDefaultImport(node)) {
                             // import * as n from "mod";
-                            variables.push(ts.createVariableDeclaration(ts.getSynthesizedClone(namespaceDeclaration.name), 
+                            variables.push(ts.createVariableDeclaration(ts.getSynthesizedClone(namespaceDeclaration.name),
                             /*type*/ undefined, getHelperExpressionForImport(node, createRequireCall(node))));
                         }
                         else {
@@ -94653,16 +94653,16 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                             // import { x, y } from "mod";
                             // import d, { x, y } from "mod";
                             // import d, * as n from "mod";
-                            variables.push(ts.createVariableDeclaration(ts.getGeneratedNameForNode(node), 
+                            variables.push(ts.createVariableDeclaration(ts.getGeneratedNameForNode(node),
                             /*type*/ undefined, getHelperExpressionForImport(node, createRequireCall(node))));
                             if (namespaceDeclaration && ts.isDefaultImport(node)) {
-                                variables.push(ts.createVariableDeclaration(ts.getSynthesizedClone(namespaceDeclaration.name), 
+                                variables.push(ts.createVariableDeclaration(ts.getSynthesizedClone(namespaceDeclaration.name),
                                 /*type*/ undefined, ts.getGeneratedNameForNode(node)));
                             }
                         }
                         statements = ts.append(statements, ts.setOriginalNode(ts.setTextRange(ts.createVariableStatement(
-                        /*modifiers*/ undefined, ts.createVariableDeclarationList(variables, languageVersion >= 2 /* ES2015 */ ? 2 /* Const */ : 0 /* None */)), 
-                        /*location*/ node), 
+                        /*modifiers*/ undefined, ts.createVariableDeclarationList(variables, languageVersion >= 2 /* ES2015 */ ? 2 /* Const */ : 0 /* None */)),
+                        /*location*/ node),
                         /*original*/ node));
                     }
                 }
@@ -94670,9 +94670,9 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                     // import d, * as n from "mod";
                     statements = ts.append(statements, ts.createVariableStatement(
                     /*modifiers*/ undefined, ts.createVariableDeclarationList([
-                        ts.setOriginalNode(ts.setTextRange(ts.createVariableDeclaration(ts.getSynthesizedClone(namespaceDeclaration.name), 
-                        /*type*/ undefined, ts.getGeneratedNameForNode(node)), 
-                        /*location*/ node), 
+                        ts.setOriginalNode(ts.setTextRange(ts.createVariableDeclaration(ts.getSynthesizedClone(namespaceDeclaration.name),
+                        /*type*/ undefined, ts.getGeneratedNameForNode(node)),
+                        /*location*/ node),
                         /*original*/ node)
                     ], languageVersion >= 2 /* ES2015 */ ? 2 /* Const */ : 0 /* None */)));
                 }
@@ -94714,9 +94714,9 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                     else {
                         statements = ts.append(statements, ts.setOriginalNode(ts.setTextRange(ts.createVariableStatement(
                         /*modifiers*/ undefined, ts.createVariableDeclarationList([
-                            ts.createVariableDeclaration(ts.getSynthesizedClone(node.name), 
+                            ts.createVariableDeclaration(ts.getSynthesizedClone(node.name),
                             /*type*/ undefined, createRequireCall(node))
-                        ], 
+                        ],
                         /*flags*/ languageVersion >= 2 /* ES2015 */ ? 2 /* Const */ : 0 /* None */)), node), node));
                     }
                 }
@@ -94753,10 +94753,10 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                     if (moduleKind !== ts.ModuleKind.AMD) {
                         statements.push(ts.setOriginalNode(ts.setTextRange(ts.createVariableStatement(
                         /*modifiers*/ undefined, ts.createVariableDeclarationList([
-                            ts.createVariableDeclaration(generatedName, 
+                            ts.createVariableDeclaration(generatedName,
                             /*type*/ undefined, createRequireCall(node))
-                        ])), 
-                        /*location*/ node), 
+                        ])),
+                        /*location*/ node),
                         /* original */ node));
                     }
                     for (var _i = 0, _a = node.exportClause.elements; _i < _a.length; _i++) {
@@ -94809,10 +94809,10 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 var statements;
                 if (ts.hasModifier(node, 1 /* Export */)) {
                     statements = ts.append(statements, ts.setOriginalNode(ts.setTextRange(ts.createFunctionDeclaration(
-                    /*decorators*/ undefined, ts.visitNodes(node.modifiers, modifierVisitor, ts.isModifier), node.asteriskToken, ts.getDeclarationName(node, /*allowComments*/ true, /*allowSourceMaps*/ true), 
-                    /*typeParameters*/ undefined, ts.visitNodes(node.parameters, moduleExpressionElementVisitor), 
-                    /*type*/ undefined, ts.visitEachChild(node.body, moduleExpressionElementVisitor, context)), 
-                    /*location*/ node), 
+                    /*decorators*/ undefined, ts.visitNodes(node.modifiers, modifierVisitor, ts.isModifier), node.asteriskToken, ts.getDeclarationName(node, /*allowComments*/ true, /*allowSourceMaps*/ true),
+                    /*typeParameters*/ undefined, ts.visitNodes(node.parameters, moduleExpressionElementVisitor),
+                    /*type*/ undefined, ts.visitEachChild(node.body, moduleExpressionElementVisitor, context)),
+                    /*location*/ node),
                     /*original*/ node));
                 }
                 else {
@@ -94837,7 +94837,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 var statements;
                 if (ts.hasModifier(node, 1 /* Export */)) {
                     statements = ts.append(statements, ts.setOriginalNode(ts.setTextRange(ts.createClassDeclaration(
-                    /*decorators*/ undefined, ts.visitNodes(node.modifiers, modifierVisitor, ts.isModifier), ts.getDeclarationName(node, /*allowComments*/ true, /*allowSourceMaps*/ true), 
+                    /*decorators*/ undefined, ts.visitNodes(node.modifiers, modifierVisitor, ts.isModifier), ts.getDeclarationName(node, /*allowComments*/ true, /*allowSourceMaps*/ true),
                     /*typeParameters*/ undefined, ts.visitNodes(node.heritageClauses, moduleExpressionElementVisitor), ts.visitNodes(node.members, moduleExpressionElementVisitor)), node), node));
                 }
                 else {
@@ -94920,12 +94920,12 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
              */
             function transformInitializedVariable(node) {
                 if (ts.isBindingPattern(node.name)) {
-                    return ts.flattenDestructuringAssignment(ts.visitNode(node, moduleExpressionElementVisitor), 
-                    /*visitor*/ undefined, context, 0 /* All */, 
+                    return ts.flattenDestructuringAssignment(ts.visitNode(node, moduleExpressionElementVisitor),
+                    /*visitor*/ undefined, context, 0 /* All */,
                     /*needsValue*/ false, createAllExportExpressions);
                 }
                 else {
-                    return ts.createAssignment(ts.setTextRange(ts.createPropertyAccess(ts.createIdentifier("exports"), node.name), 
+                    return ts.createAssignment(ts.setTextRange(ts.createPropertyAccess(ts.createIdentifier("exports"), node.name),
                     /*location*/ node.name), ts.visitNode(node.initializer, moduleExpressionElementVisitor));
                 }
             }
@@ -95134,7 +95134,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                     statement = ts.createExpressionStatement(createExportExpression(ts.createIdentifier("__esModule"), ts.createLiteral(/*value*/ true)));
                 }
                 else {
-                    statement = ts.createExpressionStatement(ts.createCall(ts.createPropertyAccess(ts.createIdentifier("Object"), "defineProperty"), 
+                    statement = ts.createExpressionStatement(ts.createCall(ts.createPropertyAccess(ts.createIdentifier("Object"), "defineProperty"),
                     /*typeArguments*/ undefined, [
                         ts.createIdentifier("exports"),
                         ts.createLiteral("__esModule"),
@@ -95289,18 +95289,18 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 if (!ts.isGeneratedIdentifier(node) && !ts.isLocalName(node)) {
                     var exportContainer = resolver.getReferencedExportContainer(node, ts.isExportName(node));
                     if (exportContainer && exportContainer.kind === 290 /* SourceFile */) {
-                        return ts.setTextRange(ts.createPropertyAccess(ts.createIdentifier("exports"), ts.getSynthesizedClone(node)), 
+                        return ts.setTextRange(ts.createPropertyAccess(ts.createIdentifier("exports"), ts.getSynthesizedClone(node)),
                         /*location*/ node);
                     }
                     var importDeclaration = resolver.getReferencedImportDeclaration(node);
                     if (importDeclaration) {
                         if (ts.isImportClause(importDeclaration)) {
-                            return ts.setTextRange(ts.createPropertyAccess(ts.getGeneratedNameForNode(importDeclaration.parent), ts.createIdentifier("default")), 
+                            return ts.setTextRange(ts.createPropertyAccess(ts.getGeneratedNameForNode(importDeclaration.parent), ts.createIdentifier("default")),
                             /*location*/ node);
                         }
                         else if (ts.isImportSpecifier(importDeclaration)) {
                             var name = importDeclaration.propertyName || importDeclaration.name;
-                            return ts.setTextRange(ts.createPropertyAccess(ts.getGeneratedNameForNode(importDeclaration.parent.parent.parent), ts.getSynthesizedClone(name)), 
+                            return ts.setTextRange(ts.createPropertyAccess(ts.getGeneratedNameForNode(importDeclaration.parent.parent.parent), ts.getSynthesizedClone(name)),
                             /*location*/ node);
                         }
                     }
@@ -95364,7 +95364,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                     var exportedNames = getExports(node.operand);
                     if (exportedNames) {
                         var expression = node.kind === 208 /* PostfixUnaryExpression */
-                            ? ts.setTextRange(ts.createBinary(node.operand, ts.createToken(node.operator === 45 /* PlusPlusToken */ ? 63 /* PlusEqualsToken */ : 64 /* MinusEqualsToken */), ts.createLiteral(1)), 
+                            ? ts.setTextRange(ts.createBinary(node.operand, ts.createToken(node.operator === 45 /* PlusPlusToken */ ? 63 /* PlusEqualsToken */ : 64 /* MinusEqualsToken */), ts.createLiteral(1)),
                             /*location*/ node)
                             : node;
                         for (var _i = 0, exportedNames_3 = exportedNames; _i < exportedNames_3.length; _i++) {
@@ -95495,13 +95495,13 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 var dependencyGroups = collectDependencyGroups(moduleInfo.externalImports);
                 var moduleBodyBlock = createSystemModuleBody(node, dependencyGroups);
                 var moduleBodyFunction = ts.createFunctionExpression(
-                /*modifiers*/ undefined, 
-                /*asteriskToken*/ undefined, 
-                /*name*/ undefined, 
+                /*modifiers*/ undefined,
+                /*asteriskToken*/ undefined,
+                /*name*/ undefined,
                 /*typeParameters*/ undefined, [
                     ts.createParameter(/*decorators*/ undefined, /*modifiers*/ undefined, /*dotDotDotToken*/ undefined, exportFunction),
                     ts.createParameter(/*decorators*/ undefined, /*modifiers*/ undefined, /*dotDotDotToken*/ undefined, contextObject)
-                ], 
+                ],
                 /*type*/ undefined, moduleBodyBlock);
                 // Write the call to `System.register`
                 // Clear the emit-helpers flag for later passes since we'll have already used it in the module body
@@ -95509,7 +95509,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 var moduleName = ts.tryGetModuleNameFromFile(node, host, compilerOptions);
                 var dependencies = ts.createArrayLiteral(ts.map(dependencyGroups, function (dependencyGroup) { return dependencyGroup.name; }));
                 var updated = ts.setEmitFlags(ts.updateSourceFileNode(node, ts.setTextRange(ts.createNodeArray([
-                    ts.createExpressionStatement(ts.createCall(ts.createPropertyAccess(ts.createIdentifier("System"), "register"), 
+                    ts.createExpressionStatement(ts.createCall(ts.createPropertyAccess(ts.createIdentifier("System"), "register"),
                     /*typeArguments*/ undefined, moduleName
                         ? [moduleName, dependencies, moduleBodyFunction]
                         : [dependencies, moduleBodyFunction]))
@@ -95616,7 +95616,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 // var __moduleName = context_1 && context_1.id;
                 statements.push(ts.createVariableStatement(
                 /*modifiers*/ undefined, ts.createVariableDeclarationList([
-                    ts.createVariableDeclaration("__moduleName", 
+                    ts.createVariableDeclaration("__moduleName",
                     /*type*/ undefined, ts.createLogicalAnd(contextObject, ts.createPropertyAccess(contextObject, "id")))
                 ])));
                 // Visit the synthetic external helpers import declaration if present
@@ -95639,11 +95639,11 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                     undefined;
                 var moduleObject = ts.createObjectLiteral([
                     ts.createPropertyAssignment("setters", createSettersArray(exportStarFunction, dependencyGroups)),
-                    ts.createPropertyAssignment("execute", ts.createFunctionExpression(modifiers, 
-                    /*asteriskToken*/ undefined, 
-                    /*name*/ undefined, 
-                    /*typeParameters*/ undefined, 
-                    /*parameters*/ [], 
+                    ts.createPropertyAssignment("execute", ts.createFunctionExpression(modifiers,
+                    /*asteriskToken*/ undefined,
+                    /*name*/ undefined,
+                    /*typeParameters*/ undefined,
+                    /*parameters*/ [],
                     /*type*/ undefined, ts.createBlock(executeStatements, /*multiLine*/ true)))
                 ]);
                 moduleObject.multiLine = true;
@@ -95716,7 +95716,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 var exportedNamesStorageRef = ts.createUniqueName("exportedNames");
                 statements.push(ts.createVariableStatement(
                 /*modifiers*/ undefined, ts.createVariableDeclarationList([
-                    ts.createVariableDeclaration(exportedNamesStorageRef, 
+                    ts.createVariableDeclaration(exportedNamesStorageRef,
                     /*type*/ undefined, ts.createObjectLiteral(exportedNames, /*multiline*/ true))
                 ])));
                 var exportStarFunction = createExportStarFunction(exportedNamesStorageRef);
@@ -95737,18 +95737,18 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 var exports = ts.createIdentifier("exports");
                 var condition = ts.createStrictInequality(n, ts.createLiteral("default"));
                 if (localNames) {
-                    condition = ts.createLogicalAnd(condition, ts.createLogicalNot(ts.createCall(ts.createPropertyAccess(localNames, "hasOwnProperty"), 
+                    condition = ts.createLogicalAnd(condition, ts.createLogicalNot(ts.createCall(ts.createPropertyAccess(localNames, "hasOwnProperty"),
                     /*typeArguments*/ undefined, [n])));
                 }
                 return ts.createFunctionDeclaration(
-                /*decorators*/ undefined, 
-                /*modifiers*/ undefined, 
-                /*asteriskToken*/ undefined, exportStarFunction, 
-                /*typeParameters*/ undefined, [ts.createParameter(/*decorators*/ undefined, /*modifiers*/ undefined, /*dotDotDotToken*/ undefined, m)], 
+                /*decorators*/ undefined,
+                /*modifiers*/ undefined,
+                /*asteriskToken*/ undefined, exportStarFunction,
+                /*typeParameters*/ undefined, [ts.createParameter(/*decorators*/ undefined, /*modifiers*/ undefined, /*dotDotDotToken*/ undefined, m)],
                 /*type*/ undefined, ts.createBlock([
                     ts.createVariableStatement(
                     /*modifiers*/ undefined, ts.createVariableDeclarationList([
-                        ts.createVariableDeclaration(exports, 
+                        ts.createVariableDeclaration(exports,
                         /*type*/ undefined, ts.createObjectLiteral([]))
                     ])),
                     ts.createForIn(ts.createVariableDeclarationList([
@@ -95756,7 +95756,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                     ]), m, ts.createBlock([
                         ts.setEmitFlags(ts.createIf(condition, ts.createExpressionStatement(ts.createAssignment(ts.createElementAccess(exports, n), ts.createElementAccess(m, n)))), 1 /* SingleLine */)
                     ])),
-                    ts.createExpressionStatement(ts.createCall(exportFunction, 
+                    ts.createExpressionStatement(ts.createCall(exportFunction,
                     /*typeArguments*/ undefined, [exports]))
                 ], /*multiline*/ true));
             }
@@ -95807,11 +95807,11 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                                             var e = _d[_c];
                                             properties.push(ts.createPropertyAssignment(ts.createLiteral(ts.idText(e.name)), ts.createElementAccess(parameterName, ts.createLiteral(ts.idText(e.propertyName || e.name)))));
                                         }
-                                        statements.push(ts.createExpressionStatement(ts.createCall(exportFunction, 
+                                        statements.push(ts.createExpressionStatement(ts.createCall(exportFunction,
                                         /*typeArguments*/ undefined, [ts.createObjectLiteral(properties, /*multiline*/ true)])));
                                     }
                                     else {
-                                        statements.push(ts.createExpressionStatement(ts.createCall(exportFunction, 
+                                        statements.push(ts.createExpressionStatement(ts.createCall(exportFunction,
                                         /*typeArguments*/ undefined, [
                                             ts.createLiteral(ts.idText(entry.exportClause.name)),
                                             parameterName
@@ -95824,17 +95824,17 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                                     // emit as:
                                     //
                                     //  exportStar(foo_1_1);
-                                    statements.push(ts.createExpressionStatement(ts.createCall(exportStarFunction, 
+                                    statements.push(ts.createExpressionStatement(ts.createCall(exportStarFunction,
                                     /*typeArguments*/ undefined, [parameterName])));
                                 }
                                 break;
                         }
                     }
                     setters.push(ts.createFunctionExpression(
-                    /*modifiers*/ undefined, 
-                    /*asteriskToken*/ undefined, 
-                    /*name*/ undefined, 
-                    /*typeParameters*/ undefined, [ts.createParameter(/*decorators*/ undefined, /*modifiers*/ undefined, /*dotDotDotToken*/ undefined, parameterName)], 
+                    /*modifiers*/ undefined,
+                    /*asteriskToken*/ undefined,
+                    /*name*/ undefined,
+                    /*typeParameters*/ undefined, [ts.createParameter(/*decorators*/ undefined, /*modifiers*/ undefined, /*dotDotDotToken*/ undefined, parameterName)],
                     /*type*/ undefined, ts.createBlock(statements, /*multiLine*/ true)));
                 }
                 return ts.createArrayLiteral(setters, /*multiLine*/ true);
@@ -95932,8 +95932,8 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
              */
             function visitFunctionDeclaration(node) {
                 if (ts.hasModifier(node, 1 /* Export */)) {
-                    hoistedStatements = ts.append(hoistedStatements, ts.updateFunctionDeclaration(node, node.decorators, ts.visitNodes(node.modifiers, modifierVisitor, ts.isModifier), node.asteriskToken, ts.getDeclarationName(node, /*allowComments*/ true, /*allowSourceMaps*/ true), 
-                    /*typeParameters*/ undefined, ts.visitNodes(node.parameters, destructuringAndImportCallVisitor, ts.isParameterDeclaration), 
+                    hoistedStatements = ts.append(hoistedStatements, ts.updateFunctionDeclaration(node, node.decorators, ts.visitNodes(node.modifiers, modifierVisitor, ts.isModifier), node.asteriskToken, ts.getDeclarationName(node, /*allowComments*/ true, /*allowSourceMaps*/ true),
+                    /*typeParameters*/ undefined, ts.visitNodes(node.parameters, destructuringAndImportCallVisitor, ts.isParameterDeclaration),
                     /*type*/ undefined, ts.visitNode(node.body, destructuringAndImportCallVisitor, ts.isBlock)));
                 }
                 else {
@@ -95961,7 +95961,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 hoistVariableDeclaration(name);
                 // Rewrite the class declaration into an assignment of a class expression.
                 statements = ts.append(statements, ts.setTextRange(ts.createExpressionStatement(ts.createAssignment(name, ts.setTextRange(ts.createClassExpression(
-                /*modifiers*/ undefined, node.name, 
+                /*modifiers*/ undefined, node.name,
                 /*typeParameters*/ undefined, ts.visitNodes(node.heritageClauses, destructuringAndImportCallVisitor, ts.isHeritageClause), ts.visitNodes(node.members, destructuringAndImportCallVisitor, ts.isClassElement)), node))), node));
                 if (hasAssociatedEndOfDeclarationMarker(node)) {
                     // Defer exports until we encounter an EndOfDeclarationMarker node
@@ -96047,7 +96047,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
             function transformInitializedVariable(node, isExportedDeclaration) {
                 var createAssignment = isExportedDeclaration ? createExportedVariableAssignment : createNonExportedVariableAssignment;
                 return ts.isBindingPattern(node.name)
-                    ? ts.flattenDestructuringAssignment(node, destructuringAndImportCallVisitor, context, 0 /* All */, 
+                    ? ts.flattenDestructuringAssignment(node, destructuringAndImportCallVisitor, context, 0 /* All */,
                     /*needsValue*/ false, createAssignment)
                     : node.initializer ? createAssignment(node.name, ts.visitNode(node.initializer, destructuringAndImportCallVisitor, ts.isExpression)) : node.name;
             }
@@ -96586,7 +96586,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 //         }
                 //     };
                 // });
-                return ts.createCall(ts.createPropertyAccess(contextObject, ts.createIdentifier("import")), 
+                return ts.createCall(ts.createPropertyAccess(contextObject, ts.createIdentifier("import")),
                 /*typeArguments*/ undefined, ts.some(node.arguments) ? [ts.visitNode(node.arguments[0], destructuringAndImportCallVisitor)] : []);
             }
             /**
@@ -96596,7 +96596,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
              */
             function visitDestructuringAssignment(node) {
                 if (hasExportedReferenceInDestructuringTarget(node.left)) {
-                    return ts.flattenDestructuringAssignment(node, destructuringAndImportCallVisitor, context, 0 /* All */, 
+                    return ts.flattenDestructuringAssignment(node, destructuringAndImportCallVisitor, context, 0 /* All */,
                     /*needsValue*/ true);
                 }
                 return ts.visitEachChild(node, destructuringAndImportCallVisitor, context);
@@ -96726,11 +96726,11 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                     var importDeclaration = resolver.getReferencedImportDeclaration(name);
                     if (importDeclaration) {
                         if (ts.isImportClause(importDeclaration)) {
-                            return ts.setTextRange(ts.createPropertyAssignment(ts.getSynthesizedClone(name), ts.createPropertyAccess(ts.getGeneratedNameForNode(importDeclaration.parent), ts.createIdentifier("default"))), 
+                            return ts.setTextRange(ts.createPropertyAssignment(ts.getSynthesizedClone(name), ts.createPropertyAccess(ts.getGeneratedNameForNode(importDeclaration.parent), ts.createIdentifier("default"))),
                             /*location*/ node);
                         }
                         else if (ts.isImportSpecifier(importDeclaration)) {
-                            return ts.setTextRange(ts.createPropertyAssignment(ts.getSynthesizedClone(name), ts.createPropertyAccess(ts.getGeneratedNameForNode(importDeclaration.parent.parent.parent), ts.getSynthesizedClone(importDeclaration.propertyName || importDeclaration.name))), 
+                            return ts.setTextRange(ts.createPropertyAssignment(ts.getSynthesizedClone(name), ts.createPropertyAccess(ts.getGeneratedNameForNode(importDeclaration.parent.parent.parent), ts.getSynthesizedClone(importDeclaration.propertyName || importDeclaration.name))),
                             /*location*/ node);
                         }
                     }
@@ -96779,11 +96779,11 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                     var importDeclaration = resolver.getReferencedImportDeclaration(node);
                     if (importDeclaration) {
                         if (ts.isImportClause(importDeclaration)) {
-                            return ts.setTextRange(ts.createPropertyAccess(ts.getGeneratedNameForNode(importDeclaration.parent), ts.createIdentifier("default")), 
+                            return ts.setTextRange(ts.createPropertyAccess(ts.getGeneratedNameForNode(importDeclaration.parent), ts.createIdentifier("default")),
                             /*location*/ node);
                         }
                         else if (ts.isImportSpecifier(importDeclaration)) {
-                            return ts.setTextRange(ts.createPropertyAccess(ts.getGeneratedNameForNode(importDeclaration.parent.parent.parent), ts.getSynthesizedClone(importDeclaration.propertyName || importDeclaration.name)), 
+                            return ts.setTextRange(ts.createPropertyAccess(ts.getGeneratedNameForNode(importDeclaration.parent.parent.parent), ts.getSynthesizedClone(importDeclaration.propertyName || importDeclaration.name)),
                             /*location*/ node);
                         }
                     }
@@ -96970,11 +96970,11 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 var oldIdentifier = node.exportClause.name;
                 var synthName = ts.getGeneratedNameForNode(oldIdentifier);
                 var importDecl = ts.createImportDeclaration(
-                /*decorators*/ undefined, 
+                /*decorators*/ undefined,
                 /*modifiers*/ undefined, ts.createImportClause(/*name*/ undefined, ts.createNamespaceImport(synthName)), node.moduleSpecifier);
                 ts.setOriginalNode(importDecl, node.exportClause);
                 var exportDecl = ts.createExportDeclaration(
-                /*decorators*/ undefined, 
+                /*decorators*/ undefined,
                 /*modifiers*/ undefined, ts.createNamedExports([ts.createExportSpecifier(synthName, oldIdentifier)]));
                 ts.setOriginalNode(exportDecl, node);
                 return [importDecl, exportDecl];
@@ -97754,7 +97754,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                             declFileName = paths.declarationFilePath || paths.jsFilePath || file.fileName;
                         }
                         if (declFileName) {
-                            var specifier = ts.moduleSpecifiers.getModuleSpecifier(__assign(__assign({}, options), { baseUrl: options.baseUrl && ts.toPath(options.baseUrl, host.getCurrentDirectory(), host.getCanonicalFileName) }), currentSourceFile, ts.toPath(outputFilePath, host.getCurrentDirectory(), host.getCanonicalFileName), ts.toPath(declFileName, host.getCurrentDirectory(), host.getCanonicalFileName), host, host.getSourceFiles(), 
+                            var specifier = ts.moduleSpecifiers.getModuleSpecifier(__assign(__assign({}, options), { baseUrl: options.baseUrl && ts.toPath(options.baseUrl, host.getCurrentDirectory(), host.getCanonicalFileName) }), currentSourceFile, ts.toPath(outputFilePath, host.getCurrentDirectory(), host.getCanonicalFileName), ts.toPath(declFileName, host.getCurrentDirectory(), host.getCanonicalFileName), host, host.getSourceFiles(),
                             /*preferences*/ undefined, host.redirectTargetsMap);
                             if (!ts.pathIsRelative(specifier)) {
                                 // If some compiler option/symlink/whatever allows access to the file containing the ambient module declaration
@@ -97763,7 +97763,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                                 recordTypeReferenceDirectivesIfNecessary([specifier]);
                                 return;
                             }
-                            var fileName = ts.getRelativePathToDirectoryOrUrl(outputFilePath, declFileName, host.getCurrentDirectory(), host.getCanonicalFileName, 
+                            var fileName = ts.getRelativePathToDirectoryOrUrl(outputFilePath, declFileName, host.getCurrentDirectory(), host.getCanonicalFileName,
                             /*isAbsolutePathAnUrl*/ false);
                             if (ts.startsWith(fileName, "./") && ts.hasExtension(fileName)) {
                                 fileName = fileName.substring(2);
@@ -97823,7 +97823,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                     oldDiag = getSymbolAccessibilityDiagnostic;
                     getSymbolAccessibilityDiagnostic = ts.createGetSymbolAccessibilityDiagnosticForNode(p);
                 }
-                var newParam = ts.updateParameter(p, 
+                var newParam = ts.updateParameter(p,
                 /*decorators*/ undefined, maskModifiers(p, modifierMask), p.dotDotDotToken, filterBindingPatternInitializers(p.name), resolver.isOptionalParameter(p) ? (p.questionToken || ts.createToken(57 /* QuestionToken */)) : undefined, ensureType(p, type || p.type, /*ignorePrivate*/ true), // Ignore private param props, since this type is going straight back into a param
                 ensureNoInitializer(p));
                 if (!suppressNewDiagnosticContexts) {
@@ -97950,8 +97950,8 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                     }
                     if (!newValueParameter) {
                         newValueParameter = ts.createParameter(
-                        /*decorators*/ undefined, 
-                        /*modifiers*/ undefined, 
+                        /*decorators*/ undefined,
+                        /*modifiers*/ undefined,
                         /*dotDotDotToken*/ undefined, "value");
                     }
                     newParams = ts.append(newParams, newValueParameter);
@@ -98008,7 +98008,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 if (decl.moduleReference.kind === 265 /* ExternalModuleReference */) {
                     // Rewrite external module names if necessary
                     var specifier = ts.getExternalModuleImportEqualsDeclarationExpression(decl);
-                    return ts.updateImportEqualsDeclaration(decl, 
+                    return ts.updateImportEqualsDeclaration(decl,
                     /*decorators*/ undefined, decl.modifiers, decl.name, ts.updateExternalModuleReference(decl.moduleReference, rewriteModuleSpecifier(decl, specifier)));
                 }
                 else {
@@ -98022,14 +98022,14 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
             function transformImportDeclaration(decl) {
                 if (!decl.importClause) {
                     // import "mod" - possibly needed for side effects? (global interface patches, module augmentations, etc)
-                    return ts.updateImportDeclaration(decl, 
+                    return ts.updateImportDeclaration(decl,
                     /*decorators*/ undefined, decl.modifiers, decl.importClause, rewriteModuleSpecifier(decl, decl.moduleSpecifier));
                 }
                 // The `importClause` visibility corresponds to the default's visibility.
                 var visibleDefaultBinding = decl.importClause && decl.importClause.name && resolver.isDeclarationVisible(decl.importClause) ? decl.importClause.name : undefined;
                 if (!decl.importClause.namedBindings) {
                     // No named bindings (either namespace or list), meaning the import is just default or should be elided
-                    return visibleDefaultBinding && ts.updateImportDeclaration(decl, /*decorators*/ undefined, decl.modifiers, ts.updateImportClause(decl.importClause, visibleDefaultBinding, 
+                    return visibleDefaultBinding && ts.updateImportDeclaration(decl, /*decorators*/ undefined, decl.modifiers, ts.updateImportClause(decl.importClause, visibleDefaultBinding,
                     /*namedBindings*/ undefined, decl.importClause.isTypeOnly), rewriteModuleSpecifier(decl, decl.moduleSpecifier));
                 }
                 if (decl.importClause.namedBindings.kind === 256 /* NamespaceImport */) {
@@ -98040,7 +98040,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 // Named imports (optionally with visible default)
                 var bindingList = ts.mapDefined(decl.importClause.namedBindings.elements, function (b) { return resolver.isDeclarationVisible(b) ? b : undefined; });
                 if ((bindingList && bindingList.length) || visibleDefaultBinding) {
-                    return ts.updateImportDeclaration(decl, 
+                    return ts.updateImportDeclaration(decl,
                     /*decorators*/ undefined, decl.modifiers, ts.updateImportClause(decl.importClause, visibleDefaultBinding, bindingList && bindingList.length ? ts.updateNamedImports(decl.importClause.namedBindings, bindingList) : undefined, decl.importClause.isTypeOnly), rewriteModuleSpecifier(decl, decl.moduleSpecifier));
                 }
                 // Nothing visible
@@ -98158,7 +98158,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                             return cleanup(ts.updateConstructSignature(input, ensureTypeParams(input, input.typeParameters), updateParamsList(input, input.parameters), ensureType(input, input.type)));
                         case 162 /* Constructor */: {
                             // A constructor declaration may not have a type annotation
-                            var ctor = ts.createSignatureDeclaration(162 /* Constructor */, ensureTypeParams(input, input.typeParameters), updateParamsList(input, input.parameters, 0 /* None */), 
+                            var ctor = ts.createSignatureDeclaration(162 /* Constructor */, ensureTypeParams(input, input.typeParameters), updateParamsList(input, input.parameters, 0 /* None */),
                             /*type*/ undefined);
                             ctor.modifiers = ts.createNodeArray(ensureModifiers(input));
                             return cleanup(ctor);
@@ -98178,23 +98178,23 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                                 return cleanup(/*returnValue*/ undefined);
                             }
                             var accessorType = getTypeAnnotationFromAllAccessorDeclarations(input, resolver.getAllAccessorDeclarations(input));
-                            return cleanup(ts.updateGetAccessor(input, 
-                            /*decorators*/ undefined, ensureModifiers(input), input.name, updateAccessorParamsList(input, ts.hasModifier(input, 8 /* Private */)), ensureType(input, accessorType), 
+                            return cleanup(ts.updateGetAccessor(input,
+                            /*decorators*/ undefined, ensureModifiers(input), input.name, updateAccessorParamsList(input, ts.hasModifier(input, 8 /* Private */)), ensureType(input, accessorType),
                             /*body*/ undefined));
                         }
                         case 164 /* SetAccessor */: {
                             if (ts.isPrivateIdentifier(input.name)) {
                                 return cleanup(/*returnValue*/ undefined);
                             }
-                            return cleanup(ts.updateSetAccessor(input, 
-                            /*decorators*/ undefined, ensureModifiers(input), input.name, updateAccessorParamsList(input, ts.hasModifier(input, 8 /* Private */)), 
+                            return cleanup(ts.updateSetAccessor(input,
+                            /*decorators*/ undefined, ensureModifiers(input), input.name, updateAccessorParamsList(input, ts.hasModifier(input, 8 /* Private */)),
                             /*body*/ undefined));
                         }
                         case 159 /* PropertyDeclaration */:
                             if (ts.isPrivateIdentifier(input.name)) {
                                 return cleanup(/*returnValue*/ undefined);
                             }
-                            return cleanup(ts.updateProperty(input, 
+                            return cleanup(ts.updateProperty(input,
                             /*decorators*/ undefined, ensureModifiers(input), input.name, input.questionToken, ensureType(input, input.type), ensureNoInitializer(input)));
                         case 158 /* PropertySignature */:
                             if (ts.isPrivateIdentifier(input.name)) {
@@ -98211,7 +98211,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                             return cleanup(ts.updateCallSignature(input, ensureTypeParams(input, input.typeParameters), updateParamsList(input, input.parameters), ensureType(input, input.type)));
                         }
                         case 167 /* IndexSignature */: {
-                            return cleanup(ts.updateIndexSignature(input, 
+                            return cleanup(ts.updateIndexSignature(input,
                             /*decorators*/ undefined, ensureModifiers(input), updateParamsList(input, input.parameters), ts.visitNode(input.type, visitDeclarationSubtree) || ts.createKeywordTypeNode(125 /* AnyKeyword */)));
                         }
                         case 242 /* VariableDeclaration */: {
@@ -98292,7 +98292,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                         resultHasScopeMarker = true;
                         // Always visible if the parent node isn't dropped for being not visible
                         // Rewrite external module names if necessary
-                        return ts.updateExportDeclaration(input, 
+                        return ts.updateExportDeclaration(input,
                         /*decorators*/ undefined, input.modifiers, input.exportClause, rewriteModuleSpecifier(input, input.moduleSpecifier), input.isTypeOnly);
                     }
                     case 259 /* ExportAssignment */: {
@@ -98363,17 +98363,17 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 var previousNeedsDeclare = needsDeclare;
                 switch (input.kind) {
                     case 247 /* TypeAliasDeclaration */: // Type aliases get `declare`d if need be (for legacy support), but that's all
-                        return cleanup(ts.updateTypeAliasDeclaration(input, 
+                        return cleanup(ts.updateTypeAliasDeclaration(input,
                         /*decorators*/ undefined, ensureModifiers(input), input.name, ts.visitNodes(input.typeParameters, visitDeclarationSubtree, ts.isTypeParameterDeclaration), ts.visitNode(input.type, visitDeclarationSubtree, ts.isTypeNode)));
                     case 246 /* InterfaceDeclaration */: {
-                        return cleanup(ts.updateInterfaceDeclaration(input, 
+                        return cleanup(ts.updateInterfaceDeclaration(input,
                         /*decorators*/ undefined, ensureModifiers(input), input.name, ensureTypeParams(input, input.typeParameters), transformHeritageClauses(input.heritageClauses), ts.visitNodes(input.members, visitDeclarationSubtree)));
                     }
                     case 244 /* FunctionDeclaration */: {
                         // Generators lose their generator-ness, excepting their return type
-                        var clean = cleanup(ts.updateFunctionDeclaration(input, 
-                        /*decorators*/ undefined, ensureModifiers(input), 
-                        /*asteriskToken*/ undefined, input.name, ensureTypeParams(input, input.typeParameters), updateParamsList(input, input.parameters), ensureType(input, input.type), 
+                        var clean = cleanup(ts.updateFunctionDeclaration(input,
+                        /*decorators*/ undefined, ensureModifiers(input),
+                        /*asteriskToken*/ undefined, input.name, ensureTypeParams(input, input.typeParameters), updateParamsList(input, input.parameters), ensureType(input, input.type),
                         /*body*/ undefined));
                         if (clean && resolver.isExpandoFunctionDeclaration(input)) {
                             var props = resolver.getPropertiesOfContainerFunction(input);
@@ -98397,15 +98397,15 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                                 return [clean, namespaceDecl];
                             }
                             var modifiers = ts.createModifiersFromModifierFlags((ts.getModifierFlags(clean) & ~513 /* ExportDefault */) | 2 /* Ambient */);
-                            var cleanDeclaration = ts.updateFunctionDeclaration(clean, 
-                            /*decorators*/ undefined, modifiers, 
-                            /*asteriskToken*/ undefined, clean.name, clean.typeParameters, clean.parameters, clean.type, 
+                            var cleanDeclaration = ts.updateFunctionDeclaration(clean,
+                            /*decorators*/ undefined, modifiers,
+                            /*asteriskToken*/ undefined, clean.name, clean.typeParameters, clean.parameters, clean.type,
                             /*body*/ undefined);
-                            var namespaceDeclaration = ts.updateModuleDeclaration(namespaceDecl, 
+                            var namespaceDeclaration = ts.updateModuleDeclaration(namespaceDecl,
                             /*decorators*/ undefined, modifiers, namespaceDecl.name, namespaceDecl.body);
                             var exportDefaultDeclaration = ts.createExportAssignment(
-                            /*decorators*/ undefined, 
-                            /*modifiers*/ undefined, 
+                            /*decorators*/ undefined,
+                            /*modifiers*/ undefined,
                             /*isExportEquals*/ false, namespaceDecl.name);
                             if (ts.isSourceFile(input.parent)) {
                                 resultHasExternalModuleIndicator = true;
@@ -98447,7 +98447,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                             needsScopeFixMarker = oldNeedsScopeFix;
                             resultHasScopeMarker = oldHasScopeFix;
                             var mods = ensureModifiers(input);
-                            return cleanup(ts.updateModuleDeclaration(input, 
+                            return cleanup(ts.updateModuleDeclaration(input,
                             /*decorators*/ undefined, mods, ts.isExternalModuleAugmentation(input) ? rewriteModuleSpecifier(input, input.name) : input.name, body));
                         }
                         else {
@@ -98459,7 +98459,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                             var id = "" + ts.getOriginalNodeId(inner); // TODO: GH#18217
                             var body = lateStatementReplacementMap.get(id);
                             lateStatementReplacementMap.delete(id);
-                            return cleanup(ts.updateModuleDeclaration(input, 
+                            return cleanup(ts.updateModuleDeclaration(input,
                             /*decorators*/ undefined, mods, input.name, body));
                         }
                     }
@@ -98493,8 +98493,8 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                                         }
                                         elems = elems || [];
                                         elems.push(ts.createProperty(
-                                        /*decorators*/ undefined, ensureModifiers(param), elem.name, 
-                                        /*questionToken*/ undefined, ensureType(elem, /*type*/ undefined), 
+                                        /*decorators*/ undefined, ensureModifiers(param), elem.name,
+                                        /*questionToken*/ undefined, ensureType(elem, /*type*/ undefined),
                                         /*initializer*/ undefined));
                                     }
                                     return elems;
@@ -98505,10 +98505,10 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                         var hasPrivateIdentifier = ts.some(input.members, function (member) { return !!member.name && ts.isPrivateIdentifier(member.name); });
                         var privateIdentifier = hasPrivateIdentifier ? [
                             ts.createProperty(
-                            /*decorators*/ undefined, 
-                            /*modifiers*/ undefined, ts.createPrivateIdentifier("#private"), 
-                            /*questionToken*/ undefined, 
-                            /*type*/ undefined, 
+                            /*decorators*/ undefined,
+                            /*modifiers*/ undefined, ts.createPrivateIdentifier("#private"),
+                            /*questionToken*/ undefined,
+                            /*type*/ undefined,
                             /*initializer*/ undefined)
                         ] : undefined;
                         var memberNodes = ts.concatenate(ts.concatenate(privateIdentifier, parameterProperties), ts.visitNodes(input.members, visitDeclarationSubtree));
@@ -98537,12 +98537,12 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                                 }
                                 return ts.updateHeritageClause(clause, ts.visitNodes(ts.createNodeArray(ts.filter(clause.types, function (t) { return ts.isEntityNameExpression(t.expression) || t.expression.kind === 100 /* NullKeyword */; })), visitDeclarationSubtree));
                             }));
-                            return [statement, cleanup(ts.updateClassDeclaration(input, 
+                            return [statement, cleanup(ts.updateClassDeclaration(input,
                                 /*decorators*/ undefined, modifiers, input.name, typeParameters, heritageClauses, members))]; // TODO: GH#18217
                         }
                         else {
                             var heritageClauses = transformHeritageClauses(input.heritageClauses);
-                            return cleanup(ts.updateClassDeclaration(input, 
+                            return cleanup(ts.updateClassDeclaration(input,
                             /*decorators*/ undefined, modifiers, input.name, typeParameters, heritageClauses, members));
                         }
                     }
@@ -99687,7 +99687,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                         sourceMapDir = ts.combinePaths(host.getCommonSourceDirectory(), sourceMapDir);
                         return ts.getRelativePathToDirectoryOrUrl(ts.getDirectoryPath(ts.normalizePath(filePath)), // get the relative sourceMapDir path based on jsFilePath
                         ts.combinePaths(sourceMapDir, sourceMapFile), // this is where user expects to see sourceMap
-                        host.getCurrentDirectory(), host.getCanonicalFileName, 
+                        host.getCurrentDirectory(), host.getCanonicalFileName,
                         /*isAbsolutePathAnUrl*/ true);
                     }
                     else {
@@ -99797,7 +99797,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
             if (!buildInfo.bundle || !buildInfo.bundle.js || (declarationText && !buildInfo.bundle.dts))
                 return buildInfoPath;
             var buildInfoDirectory = ts.getDirectoryPath(ts.getNormalizedAbsolutePath(buildInfoPath, host.getCurrentDirectory()));
-            var ownPrependInput = ts.createInputFiles(jsFileText, declarationText, sourceMapFilePath, sourceMapText, declarationMapPath, declarationMapText, jsFilePath, declarationFilePath, buildInfoPath, buildInfo, 
+            var ownPrependInput = ts.createInputFiles(jsFileText, declarationText, sourceMapFilePath, sourceMapText, declarationMapPath, declarationMapText, jsFilePath, declarationFilePath, buildInfoPath, buildInfo,
             /*onlyOwnText*/ true);
             var outputFiles = [];
             var prependNodes = ts.createPrependNodes(config.projectReferences, getCommandLine, function (f) { return host.readFile(f); });
@@ -99860,7 +99860,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 getSourceFileFromReference: ts.returnUndefined,
                 redirectTargetsMap: ts.createMultiMap()
             };
-            emitFiles(ts.notImplementedResolver, emitHost, 
+            emitFiles(ts.notImplementedResolver, emitHost,
             /*targetSourceFile*/ undefined, ts.getTransformers(config.options, customTransformers));
             return outputFiles;
         }
@@ -103751,7 +103751,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                     return;
                 }
                 var _a = ts.getLineAndCharacterOfPosition(sourceMapSource, pos), sourceLine = _a.line, sourceCharacter = _a.character;
-                sourceMapGenerator.addMapping(writer.getLine(), writer.getColumn(), sourceMapSourceIndex, sourceLine, sourceCharacter, 
+                sourceMapGenerator.addMapping(writer.getLine(), writer.getColumn(), sourceMapSourceIndex, sourceLine, sourceCharacter,
                 /*nameIndex*/ undefined);
             }
             function emitSourcePos(source, pos) {
@@ -105473,10 +105473,10 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
             function emitBuildInfo(writeFileCallback) {
                 ts.Debug.assert(!options.out && !options.outFile);
                 ts.performance.mark("beforeEmit");
-                var emitResult = ts.emitFiles(ts.notImplementedResolver, getEmitHost(writeFileCallback), 
-                /*targetSourceFile*/ undefined, 
-                /*transformers*/ ts.noTransformers, 
-                /*emitOnlyDtsFiles*/ false, 
+                var emitResult = ts.emitFiles(ts.notImplementedResolver, getEmitHost(writeFileCallback),
+                /*targetSourceFile*/ undefined,
+                /*transformers*/ ts.noTransformers,
+                /*emitOnlyDtsFiles*/ false,
                 /*onlyBuildInfo*/ true);
                 ts.performance.mark("afterEmit");
                 ts.performance.measure("Emit", "beforeEmit", "afterEmit");
@@ -105546,7 +105546,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 // checked is to not pass the file to getEmitResolver.
                 var emitResolver = getDiagnosticsProducingTypeChecker().getEmitResolver((options.outFile || options.out) ? undefined : sourceFile, cancellationToken);
                 ts.performance.mark("beforeEmit");
-                var emitResult = ts.emitFiles(emitResolver, getEmitHost(writeFileCallback), sourceFile, ts.getTransformers(options, customTransformers, emitOnlyDtsFiles), emitOnlyDtsFiles, 
+                var emitResult = ts.emitFiles(emitResolver, getEmitHost(writeFileCallback), sourceFile, ts.getTransformers(options, customTransformers, emitOnlyDtsFiles), emitOnlyDtsFiles,
                 /*onlyBuildInfo*/ false, forceDtsEmit);
                 ts.performance.mark("afterEmit");
                 ts.performance.measure("Emit", "beforeEmit", "afterEmit");
@@ -106436,8 +106436,8 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
             function processReferencedFiles(file, isDefaultLib) {
                 ts.forEach(file.referencedFiles, function (ref, index) {
                     var referencedFileName = resolveTripleslashReference(ref.fileName, file.originalFileName);
-                    processSourceFile(referencedFileName, isDefaultLib, 
-                    /*ignoreNoDefaultLib*/ false, 
+                    processSourceFile(referencedFileName, isDefaultLib,
+                    /*ignoreNoDefaultLib*/ false,
                     /*packageId*/ undefined, {
                         kind: ts.RefFileKind.ReferenceFile,
                         index: index,
@@ -106590,8 +106590,8 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                         else if (shouldAddFile) {
                             var path = toPath(resolvedFileName);
                             var pos = ts.skipTrivia(file.text, file.imports[i].pos);
-                            findSourceFile(resolvedFileName, path, 
-                            /*isDefaultLib*/ false, 
+                            findSourceFile(resolvedFileName, path,
+                            /*isDefaultLib*/ false,
                             /*ignoreNoDefaultLib*/ false, {
                                 kind: ts.RefFileKind.Import,
                                 index: i,
@@ -107470,9 +107470,9 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                     }
                 }
                 else {
-                    var emitOutput_1 = getFileEmitOutput(programOfThisState, sourceFile, 
-                    /*emitOnlyDtsFiles*/ true, cancellationToken, 
-                    /*customTransformers*/ undefined, 
+                    var emitOutput_1 = getFileEmitOutput(programOfThisState, sourceFile,
+                    /*emitOnlyDtsFiles*/ true, cancellationToken,
+                    /*customTransformers*/ undefined,
                     /*forceDtsEmit*/ true);
                     var firstDts_1 = emitOutput_1.outputFiles &&
                         programOfThisState.getCompilerOptions().declarationMap ?
@@ -108364,11 +108364,11 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                                 return undefined;
                             }
                             var affected_1 = ts.Debug.assertDefined(state.program);
-                            return toAffectedFileEmitResult(state, 
+                            return toAffectedFileEmitResult(state,
                             // When whole program is affected, do emit only once (eg when --out or --outFile is specified)
                             // Otherwise just affected file
-                            affected_1.emitBuildInfo(writeFile || ts.maybeBind(host, host.writeFile), cancellationToken), affected_1, 1 /* Full */, 
-                            /*isPendingEmitFile*/ false, 
+                            affected_1.emitBuildInfo(writeFile || ts.maybeBind(host, host.writeFile), cancellationToken), affected_1, 1 /* Full */,
+                            /*isPendingEmitFile*/ false,
                             /*isBuildInfoEmit*/ true);
                         }
                         (affected = pendingAffectedFile.affectedFile, emitKind = pendingAffectedFile.emitKind);
@@ -108381,7 +108381,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                         affected = program;
                     }
                 }
-                return toAffectedFileEmitResult(state, 
+                return toAffectedFileEmitResult(state,
                 // When whole program is affected, do emit only once (eg when --out or --outFile is specified)
                 // Otherwise just affected file
                 ts.Debug.assertDefined(state.program).emit(affected === state.program ? undefined : affected, writeFile || ts.maybeBind(host, host.writeFile), cancellationToken, emitOnlyDtsFiles || emitKind === 0 /* DtsOnly */, customTransformers), affected, emitKind, isPendingEmitFile);
@@ -108885,12 +108885,12 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 }
             }
             function resolveTypeReferenceDirectives(typeDirectiveNames, containingFile, redirectedReference) {
-                return resolveNamesWithLocalCache(typeDirectiveNames, containingFile, redirectedReference, resolvedTypeReferenceDirectives, perDirectoryResolvedTypeReferenceDirectives, ts.resolveTypeReferenceDirective, getResolvedTypeReferenceDirective, 
-                /*shouldRetryResolution*/ function (resolution) { return resolution.resolvedTypeReferenceDirective === undefined; }, 
+                return resolveNamesWithLocalCache(typeDirectiveNames, containingFile, redirectedReference, resolvedTypeReferenceDirectives, perDirectoryResolvedTypeReferenceDirectives, ts.resolveTypeReferenceDirective, getResolvedTypeReferenceDirective,
+                /*shouldRetryResolution*/ function (resolution) { return resolution.resolvedTypeReferenceDirective === undefined; },
                 /*reusedNames*/ undefined, /*logChanges*/ false);
             }
             function resolveModuleNames(moduleNames, containingFile, reusedNames, redirectedReference) {
-                return resolveNamesWithLocalCache(moduleNames, containingFile, redirectedReference, resolvedModuleNames, perDirectoryResolvedModuleNames, resolveModuleName, getResolvedModule, 
+                return resolveNamesWithLocalCache(moduleNames, containingFile, redirectedReference, resolvedModuleNames, perDirectoryResolvedModuleNames, resolveModuleName, getResolvedModule,
                 /*shouldRetryResolution*/ function (resolution) { return !resolution.resolvedModule || !ts.resolutionExtensionIsTSOrJson(resolution.resolvedModule.extension); }, reusedNames, logChangesWhenResolvingModule);
             }
             function getResolvedModuleWithFailedLookupLocationsFromCache(moduleName, containingFile) {
@@ -110195,7 +110195,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
             // Cache for the module resolution
             var resolutionCache = ts.createResolutionCache(compilerHost, configFileName ?
                 ts.getDirectoryPath(ts.getNormalizedAbsolutePath(configFileName, currentDirectory)) :
-                currentDirectory, 
+                currentDirectory,
             /*logChangesWhenResolvingModule*/ false);
             // Resolve module using host module resolution strategy if provided otherwise use resolution cache to resolve module names
             compilerHost.resolveModuleNames = host.resolveModuleNames ?
@@ -111145,9 +111145,9 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 var declDiagnostics;
                 var reportDeclarationDiagnostics = function (d) { return (declDiagnostics || (declDiagnostics = [])).push(d); };
                 var outputFiles = [];
-                var emitResult = ts.emitFilesAndReportErrors(program, reportDeclarationDiagnostics, 
-                /*writeFileName*/ undefined, 
-                /*reportSummary*/ undefined, function (name, text, writeByteOrderMark) { return outputFiles.push({ name: name, text: text, writeByteOrderMark: writeByteOrderMark }); }, cancellationToken, 
+                var emitResult = ts.emitFilesAndReportErrors(program, reportDeclarationDiagnostics,
+                /*writeFileName*/ undefined,
+                /*reportSummary*/ undefined, function (name, text, writeByteOrderMark) { return outputFiles.push({ name: name, text: text, writeByteOrderMark: writeByteOrderMark }); }, cancellationToken,
                 /*emitOnlyDts*/ false, customTransformers).emitResult;
                 // Don't emit .d.ts if there are decl file errors
                 if (declDiagnostics) {
@@ -111185,7 +111185,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                         newestDeclarationFileContentChangedTime = newer(priorChangeTime, newestDeclarationFileContentChangedTime);
                     }
                 });
-                finishEmit(emitterDiagnostics, emittedOutputs, newestDeclarationFileContentChangedTime, 
+                finishEmit(emitterDiagnostics, emittedOutputs, newestDeclarationFileContentChangedTime,
                 /*newestDeclarationFileContentChangedTimeIsMaximumDate*/ anyDtsChanged, outputFiles.length ? outputFiles[0].name : ts.getFirstProjectOutput(config, !host.useCaseSensitiveFileNames()), resultFlags);
                 return emitResult;
             }
@@ -111248,7 +111248,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                     emittedOutputs.set(toPath(state, name), name);
                     ts.writeFile(writeFileCallback ? { writeFile: writeFileCallback } : compilerHost, emitterDiagnostics, name, text, writeByteOrderMark);
                 });
-                var emitDiagnostics = finishEmit(emitterDiagnostics, emittedOutputs, minimumDate, 
+                var emitDiagnostics = finishEmit(emitterDiagnostics, emittedOutputs, minimumDate,
                 /*newestDeclarationFileContentChangedTimeIsMaximumDate*/ false, outputFiles[0].name, BuildResultFlags.DeclarationOutputUnchanged);
                 return { emitSkipped: false, diagnostics: emitDiagnostics };
             }
@@ -113852,7 +113852,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                     return n;
                 }
                 return ts.firstDefined(n.getChildren(sourceFile), function (child) {
-                    var shouldDiveInChildNode = 
+                    var shouldDiveInChildNode =
                     // previous token is enclosed somewhere in the child
                     (child.pos <= previousToken.pos && child.end > previousToken.end) ||
                         // previous token ends exactly at the beginning of child
@@ -114378,7 +114378,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
         ts.makeImportIfNecessary = makeImportIfNecessary;
         function makeImport(defaultImport, namedImports, moduleSpecifier, quotePreference, isTypeOnly) {
             return ts.createImportDeclaration(
-            /*decorators*/ undefined, 
+            /*decorators*/ undefined,
             /*modifiers*/ undefined, defaultImport || namedImports
                 ? ts.createImportClause(defaultImport, namedImports && namedImports.length ? ts.createNamedImports(namedImports) : undefined, isTypeOnly)
                 : undefined, typeof moduleSpecifier === "string" ? makeStringLiteral(moduleSpecifier, quotePreference) : moduleSpecifier);
@@ -122072,7 +122072,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 // This is not needed when searching for re-exports.
                 function populateSearchSymbolSet(symbol, location, checker, isForRename, providePrefixAndSuffixText, implementations) {
                     var result = [];
-                    forEachRelatedSymbol(symbol, location, checker, isForRename, !(isForRename && providePrefixAndSuffixText), function (sym, root, base) { result.push(base || root || sym); }, 
+                    forEachRelatedSymbol(symbol, location, checker, isForRename, !(isForRename && providePrefixAndSuffixText), function (sym, root, base) { result.push(base || root || sym); },
                     /*allowBaseTypes*/ function () { return !implementations; });
                     return result;
                 }
@@ -122182,13 +122182,13 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 }
                 function getRelatedSymbol(search, referenceSymbol, referenceLocation, state) {
                     var checker = state.checker;
-                    return forEachRelatedSymbol(referenceSymbol, referenceLocation, checker, /*isForRenamePopulateSearchSymbolSet*/ false, 
+                    return forEachRelatedSymbol(referenceSymbol, referenceLocation, checker, /*isForRenamePopulateSearchSymbolSet*/ false,
                     /*onlyIncludeBindingElementAtReferenceLocation*/ state.options.use !== 2 /* Rename */ || !!state.options.providePrefixAndSuffixTextForRename, function (sym, rootSymbol, baseSymbol, kind) {
                         return search.includes(baseSymbol || rootSymbol || sym)
                             // For a base type, use the symbol for the derived type. For a synthetic (e.g. union) property, use the union symbol.
                             ? { symbol: rootSymbol && !(ts.getCheckFlags(sym) & 6 /* Synthetic */) ? rootSymbol : sym, kind: kind }
                             : undefined;
-                    }, 
+                    },
                     /*allowBaseTypes*/ function (rootSymbol) {
                         return !(search.parents && !search.parents.some(function (parent) { return explicitlyInheritsFrom(rootSymbol.parent, parent, state.inheritsFromCache, checker); }));
                     });
@@ -124230,9 +124230,9 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                             }
                         }
                         lastANode = a.node = ts.setTextRange(ts.createClassDeclaration(
-                        /* decorators */ undefined, 
-                        /* modifiers */ undefined, a.name || ts.createIdentifier("__class__"), 
-                        /* typeParameters */ undefined, 
+                        /* decorators */ undefined,
+                        /* modifiers */ undefined, a.name || ts.createIdentifier("__class__"),
+                        /* typeParameters */ undefined,
                         /* heritageClauses */ undefined, []), a.node);
                     }
                     else {
@@ -124255,9 +124255,9 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                         if (!a.additionalNodes)
                             a.additionalNodes = [];
                         a.additionalNodes.push(ts.setTextRange(ts.createClassDeclaration(
-                        /* decorators */ undefined, 
-                        /* modifiers */ undefined, a.name || ts.createIdentifier("__class__"), 
-                        /* typeParameters */ undefined, 
+                        /* decorators */ undefined,
+                        /* modifiers */ undefined, a.name || ts.createIdentifier("__class__"),
+                        /* typeParameters */ undefined,
                         /* heritageClauses */ undefined, []), b.node));
                     }
                     return true;
@@ -124712,7 +124712,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                     else if (hasModuleDeclarationMatchingSpecifier(sourceFile, moduleSpecifier)) {
                         // If we’re in a declaration file, it’s safe to remove the import clause from it
                         if (sourceFile.isDeclarationFile) {
-                            usedImports.push(ts.createImportDeclaration(importDecl.decorators, importDecl.modifiers, 
+                            usedImports.push(ts.createImportDeclaration(importDecl.decorators, importDecl.modifiers,
                             /*importClause*/ undefined, moduleSpecifier));
                         }
                         // If we’re not in a declaration file, we can’t remove the import clause even though
@@ -132003,7 +132003,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                         }
                         case 254 /* ImportDeclaration */:
                             var isFirstImport = sourceFile.imports.length && node === ts.first(sourceFile.imports).parent || node === ts.find(sourceFile.statements, ts.isImportDeclaration);
-                            deleteNode(changes, sourceFile, node, 
+                            deleteNode(changes, sourceFile, node,
                             // For first import, leave header comment in place
                             isFirstImport ? { leadingTriviaOption: LeadingTriviaOption.Exclude } : undefined);
                             break;
@@ -132301,9 +132301,9 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                     var sourceFile = context.sourceFile;
                     var changes = ts.textChanges.ChangeTracker.with(context, function (changes) {
                         var exportDeclaration = ts.createExportDeclaration(
-                        /*decorators*/ undefined, 
-                        /*modifiers*/ undefined, ts.createNamedExports([]), 
-                        /*moduleSpecifier*/ undefined, 
+                        /*decorators*/ undefined,
+                        /*modifiers*/ undefined, ts.createNamedExports([]),
+                        /*moduleSpecifier*/ undefined,
                         /*isTypeOnly*/ false);
                         changes.insertNodeAtEndOfScope(sourceFile, sourceFile, exportDeclaration);
                     });
@@ -132920,10 +132920,10 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
             }
             function transformJSDocIndexSignature(node) {
                 var index = ts.createParameter(
-                /*decorators*/ undefined, 
-                /*modifiers*/ undefined, 
-                /*dotDotDotToken*/ undefined, node.typeArguments[0].kind === 140 /* NumberKeyword */ ? "n" : "s", 
-                /*questionToken*/ undefined, ts.createTypeReferenceNode(node.typeArguments[0].kind === 140 /* NumberKeyword */ ? "number" : "string", []), 
+                /*decorators*/ undefined,
+                /*modifiers*/ undefined,
+                /*dotDotDotToken*/ undefined, node.typeArguments[0].kind === 140 /* NumberKeyword */ ? "n" : "s",
+                /*questionToken*/ undefined, ts.createTypeReferenceNode(node.typeArguments[0].kind === 140 /* NumberKeyword */ ? "number" : "string", []),
                 /*initializer*/ undefined);
                 var indexSignature = ts.createTypeLiteralNode([ts.createIndexSignature(/*decorators*/ undefined, /*modifiers*/ undefined, [index], node.typeArguments[1])]);
                 ts.setEmitFlags(indexSignature, 1 /* SingleLine */);
@@ -134008,14 +134008,14 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                             ? assignmentBinaryExpression.parent : assignmentBinaryExpression;
                         changes.delete(sourceFile, nodeToDelete);
                         if (!assignmentBinaryExpression.right) {
-                            return ts.createProperty([], modifiers, symbol.name, /*questionToken*/ undefined, 
+                            return ts.createProperty([], modifiers, symbol.name, /*questionToken*/ undefined,
                             /*type*/ undefined, /*initializer*/ undefined);
                         }
                         switch (assignmentBinaryExpression.right.kind) {
                             case 201 /* FunctionExpression */: {
                                 var functionExpression = assignmentBinaryExpression.right;
                                 var fullModifiers = ts.concatenate(modifiers, getModifierKindFromSource(functionExpression, 126 /* AsyncKeyword */));
-                                var method = ts.createMethod(/*decorators*/ undefined, fullModifiers, /*asteriskToken*/ undefined, memberDeclaration.name, /*questionToken*/ undefined, 
+                                var method = ts.createMethod(/*decorators*/ undefined, fullModifiers, /*asteriskToken*/ undefined, memberDeclaration.name, /*questionToken*/ undefined,
                                 /*typeParameters*/ undefined, functionExpression.parameters, /*type*/ undefined, functionExpression.body);
                                 ts.copyLeadingComments(assignmentBinaryExpression, method, sourceFile);
                                 return method;
@@ -134033,7 +134033,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                                     bodyBlock = ts.createBlock([ts.createReturn(arrowFunctionBody)]);
                                 }
                                 var fullModifiers = ts.concatenate(modifiers, getModifierKindFromSource(arrowFunction, 126 /* AsyncKeyword */));
-                                var method = ts.createMethod(/*decorators*/ undefined, fullModifiers, /*asteriskToken*/ undefined, memberDeclaration.name, /*questionToken*/ undefined, 
+                                var method = ts.createMethod(/*decorators*/ undefined, fullModifiers, /*asteriskToken*/ undefined, memberDeclaration.name, /*questionToken*/ undefined,
                                 /*typeParameters*/ undefined, arrowFunction.parameters, /*type*/ undefined, bodyBlock);
                                 ts.copyLeadingComments(assignmentBinaryExpression, method, sourceFile);
                                 return method;
@@ -134043,7 +134043,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                                 if (ts.isSourceFileJS(sourceFile)) {
                                     return;
                                 }
-                                var prop = ts.createProperty(/*decorators*/ undefined, modifiers, memberDeclaration.name, /*questionToken*/ undefined, 
+                                var prop = ts.createProperty(/*decorators*/ undefined, modifiers, memberDeclaration.name, /*questionToken*/ undefined,
                                 /*type*/ undefined, assignmentBinaryExpression.right);
                                 ts.copyLeadingComments(assignmentBinaryExpression.parent, prop, sourceFile);
                                 return prop;
@@ -134064,7 +134064,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                         memberElements.unshift(ts.createConstructor(/*decorators*/ undefined, /*modifiers*/ undefined, initializer.parameters, initializer.body));
                     }
                     var modifiers = getModifierKindFromSource(precedingNode, 89 /* ExportKeyword */);
-                    var cls = ts.createClassDeclaration(/*decorators*/ undefined, modifiers, node.name, 
+                    var cls = ts.createClassDeclaration(/*decorators*/ undefined, modifiers, node.name,
                     /*typeParameters*/ undefined, /*heritageClauses*/ undefined, memberElements);
                     // Don't call copyComments here because we'll already leave them in place
                     return cls;
@@ -134075,7 +134075,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                         memberElements.unshift(ts.createConstructor(/*decorators*/ undefined, /*modifiers*/ undefined, node.parameters, node.body));
                     }
                     var modifiers = getModifierKindFromSource(node, 89 /* ExportKeyword */);
-                    var cls = ts.createClassDeclaration(/*decorators*/ undefined, modifiers, node.name, 
+                    var cls = ts.createClassDeclaration(/*decorators*/ undefined, modifiers, node.name,
                     /*typeParameters*/ undefined, /*heritageClauses*/ undefined, memberElements);
                     // Don't call copyComments here because we'll already leave them in place
                     return cls;
@@ -135079,7 +135079,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
             }
             function makeExportDeclaration(exportSpecifiers, moduleSpecifier) {
                 return ts.createExportDeclaration(
-                /*decorators*/ undefined, 
+                /*decorators*/ undefined,
                 /*modifiers*/ undefined, exportSpecifiers && ts.createNamedExports(exportSpecifiers), moduleSpecifier === undefined ? undefined : ts.createLiteral(moduleSpecifier));
             }
         })(codefix = ts.codefix || (ts.codefix = {}));
@@ -135160,15 +135160,15 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 var exportDeclaration = exportClause.parent;
                 var typeExportSpecifiers = getTypeExportSpecifiers(exportSpecifier, context);
                 if (typeExportSpecifiers.length === exportClause.elements.length) {
-                    changes.replaceNode(context.sourceFile, exportDeclaration, ts.updateExportDeclaration(exportDeclaration, exportDeclaration.decorators, exportDeclaration.modifiers, exportClause, exportDeclaration.moduleSpecifier, 
+                    changes.replaceNode(context.sourceFile, exportDeclaration, ts.updateExportDeclaration(exportDeclaration, exportDeclaration.decorators, exportDeclaration.modifiers, exportClause, exportDeclaration.moduleSpecifier,
                     /*isTypeOnly*/ true));
                 }
                 else {
-                    var valueExportDeclaration = ts.updateExportDeclaration(exportDeclaration, exportDeclaration.decorators, exportDeclaration.modifiers, ts.updateNamedExports(exportClause, ts.filter(exportClause.elements, function (e) { return !ts.contains(typeExportSpecifiers, e); })), exportDeclaration.moduleSpecifier, 
+                    var valueExportDeclaration = ts.updateExportDeclaration(exportDeclaration, exportDeclaration.decorators, exportDeclaration.modifiers, ts.updateNamedExports(exportClause, ts.filter(exportClause.elements, function (e) { return !ts.contains(typeExportSpecifiers, e); })), exportDeclaration.moduleSpecifier,
                     /*isTypeOnly*/ false);
                     var typeExportDeclaration = ts.createExportDeclaration(
-                    /*decorators*/ undefined, 
-                    /*modifiers*/ undefined, ts.createNamedExports(typeExportSpecifiers), exportDeclaration.moduleSpecifier, 
+                    /*decorators*/ undefined,
+                    /*modifiers*/ undefined, ts.createNamedExports(typeExportSpecifiers), exportDeclaration.moduleSpecifier,
                     /*isTypeOnly*/ true);
                     changes.replaceNode(context.sourceFile, exportDeclaration, valueExportDeclaration);
                     changes.insertNodeAfter(context.sourceFile, exportDeclaration, typeExportDeclaration);
@@ -135438,7 +135438,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
             function isTypeOnlyPosition(sourceFile, position) {
                 return ts.isValidTypeOnlyAliasUseSite(ts.getTokenAtPosition(sourceFile, position));
             }
-            function getFixForImport(exportInfos, symbolName, 
+            function getFixForImport(exportInfos, symbolName,
             /** undefined only for missing JSX namespace */
             position, program, sourceFile, host, preferences) {
                 var checker = program.getTypeChecker();
@@ -135800,7 +135800,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
             }
             function createConstEqualsRequireDeclaration(name, quotedModuleSpecifier) {
                 return ts.createVariableStatement(/*modifiers*/ undefined, ts.createVariableDeclarationList([
-                    ts.createVariableDeclaration(ts.createIdentifier(name), 
+                    ts.createVariableDeclaration(ts.createIdentifier(name),
                     /*type*/ undefined, ts.createCall(ts.createIdentifier("require"), /*typeArguments*/ undefined, [quotedModuleSpecifier]))
                 ], 2 /* Const */));
             }
@@ -136271,10 +136271,10 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 }
                 else if (ts.isPrivateIdentifier(token)) {
                     var property = ts.createProperty(
-                    /*decorators*/ undefined, 
-                    /*modifiers*/ undefined, tokenName, 
-                    /*questionToken*/ undefined, 
-                    /*type*/ undefined, 
+                    /*decorators*/ undefined,
+                    /*modifiers*/ undefined, tokenName,
+                    /*questionToken*/ undefined,
+                    /*type*/ undefined,
                     /*initializer*/ undefined);
                     var lastProp = getNodeToInsertPropertyAfter(classDeclaration);
                     if (lastProp) {
@@ -136321,9 +136321,9 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
             }
             function addPropertyDeclaration(changeTracker, declSourceFile, classDeclaration, tokenName, typeNode, makeStatic) {
                 var property = ts.createProperty(
-                /*decorators*/ undefined, 
-                /*modifiers*/ makeStatic ? [ts.createToken(120 /* StaticKeyword */)] : undefined, tokenName, 
-                /*questionToken*/ undefined, typeNode, 
+                /*decorators*/ undefined,
+                /*modifiers*/ makeStatic ? [ts.createToken(120 /* StaticKeyword */)] : undefined, tokenName,
+                /*questionToken*/ undefined, typeNode,
                 /*initializer*/ undefined);
                 var lastProp = getNodeToInsertPropertyAfter(classDeclaration);
                 if (lastProp) {
@@ -136348,13 +136348,13 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 // Index signatures cannot have the static modifier.
                 var stringTypeNode = ts.createKeywordTypeNode(143 /* StringKeyword */);
                 var indexingParameter = ts.createParameter(
-                /*decorators*/ undefined, 
-                /*modifiers*/ undefined, 
-                /*dotDotDotToken*/ undefined, "x", 
-                /*questionToken*/ undefined, stringTypeNode, 
+                /*decorators*/ undefined,
+                /*modifiers*/ undefined,
+                /*dotDotDotToken*/ undefined, "x",
+                /*questionToken*/ undefined, stringTypeNode,
                 /*initializer*/ undefined);
                 var indexSignature = ts.createIndexSignature(
-                /*decorators*/ undefined, 
+                /*decorators*/ undefined,
                 /*modifiers*/ undefined, [indexingParameter], typeNode);
                 var changes = ts.textChanges.ChangeTracker.with(context, function (t) { return t.insertNodeAtClassStart(declSourceFile, classDeclaration, indexSignature); });
                 // No fixId here because code-fix-all currently only works on adding individual named properties.
@@ -137457,7 +137457,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                         var flags = preferences.quotePreference === "single" ? 268435456 /* UseSingleQuotesForStringLiteralType */ : undefined;
                         var typeNode = checker.typeToTypeNode(type, enclosingDeclaration, flags, getNoopSymbolTrackerWithResolver(context));
                         out(ts.createProperty(
-                        /*decorators*/ undefined, modifiers, name, optional ? ts.createToken(57 /* QuestionToken */) : undefined, typeNode, 
+                        /*decorators*/ undefined, modifiers, name, optional ? ts.createToken(57 /* QuestionToken */) : undefined, typeNode,
                         /*initializer*/ undefined));
                         break;
                     case 163 /* GetAccessor */:
@@ -137553,14 +137553,14 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 var contextualType = checker.getContextualType(call);
                 var returnType = (inJs || !contextualType) ? undefined : checker.typeToTypeNode(contextualType, contextNode, /*flags*/ undefined, tracker);
                 return ts.createMethod(
-                /*decorators*/ undefined, 
-                /*modifiers*/ makeStatic ? [ts.createToken(120 /* StaticKeyword */)] : undefined, 
-                /*asteriskToken*/ ts.isYieldExpression(parent) ? ts.createToken(41 /* AsteriskToken */) : undefined, methodName, 
-                /*questionToken*/ undefined, 
+                /*decorators*/ undefined,
+                /*modifiers*/ makeStatic ? [ts.createToken(120 /* StaticKeyword */)] : undefined,
+                /*asteriskToken*/ ts.isYieldExpression(parent) ? ts.createToken(41 /* AsteriskToken */) : undefined, methodName,
+                /*questionToken*/ undefined,
                 /*typeParameters*/ inJs ? undefined : ts.map(typeArguments, function (_, i) {
                     return ts.createTypeParameterDeclaration(84 /* T */ + typeArguments.length - 1 <= 90 /* Z */ ? String.fromCharCode(84 /* T */ + i) : "T" + i);
-                }), 
-                /*parameters*/ createDummyParameters(args.length, names, types, /*minArgumentCount*/ undefined, inJs), 
+                }),
+                /*parameters*/ createDummyParameters(args.length, names, types, /*minArgumentCount*/ undefined, inJs),
                 /*type*/ returnType, body ? createStubbedMethodBody(preferences) : undefined);
             }
             codefix.createMethodFromCallExpression = createMethodFromCallExpression;
@@ -137568,12 +137568,12 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 var parameters = [];
                 for (var i = 0; i < argCount; i++) {
                     var newParameter = ts.createParameter(
-                    /*decorators*/ undefined, 
-                    /*modifiers*/ undefined, 
-                    /*dotDotDotToken*/ undefined, 
-                    /*name*/ names && names[i] || "arg" + i, 
-                    /*questionToken*/ minArgumentCount !== undefined && i >= minArgumentCount ? ts.createToken(57 /* QuestionToken */) : undefined, 
-                    /*type*/ inJs ? undefined : types && types[i] || ts.createKeywordTypeNode(125 /* AnyKeyword */), 
+                    /*decorators*/ undefined,
+                    /*modifiers*/ undefined,
+                    /*dotDotDotToken*/ undefined,
+                    /*name*/ names && names[i] || "arg" + i,
+                    /*questionToken*/ minArgumentCount !== undefined && i >= minArgumentCount ? ts.createToken(57 /* QuestionToken */) : undefined,
+                    /*type*/ inJs ? undefined : types && types[i] || ts.createKeywordTypeNode(125 /* AnyKeyword */),
                     /*initializer*/ undefined);
                     parameters.push(newParameter);
                 }
@@ -137603,26 +137603,26 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 if (someSigHasRestParameter) {
                     var anyArrayType = ts.createArrayTypeNode(ts.createKeywordTypeNode(125 /* AnyKeyword */));
                     var restParameter = ts.createParameter(
-                    /*decorators*/ undefined, 
-                    /*modifiers*/ undefined, ts.createToken(25 /* DotDotDotToken */), maxArgsParameterSymbolNames[maxNonRestArgs] || "rest", 
-                    /*questionToken*/ maxNonRestArgs >= minArgumentCount ? ts.createToken(57 /* QuestionToken */) : undefined, anyArrayType, 
+                    /*decorators*/ undefined,
+                    /*modifiers*/ undefined, ts.createToken(25 /* DotDotDotToken */), maxArgsParameterSymbolNames[maxNonRestArgs] || "rest",
+                    /*questionToken*/ maxNonRestArgs >= minArgumentCount ? ts.createToken(57 /* QuestionToken */) : undefined, anyArrayType,
                     /*initializer*/ undefined);
                     parameters.push(restParameter);
                 }
-                return createStubbedMethod(modifiers, name, optional, 
-                /*typeParameters*/ undefined, parameters, 
+                return createStubbedMethod(modifiers, name, optional,
+                /*typeParameters*/ undefined, parameters,
                 /*returnType*/ undefined, preferences);
             }
             function createStubbedMethod(modifiers, name, optional, typeParameters, parameters, returnType, preferences) {
                 return ts.createMethod(
-                /*decorators*/ undefined, modifiers, 
+                /*decorators*/ undefined, modifiers,
                 /*asteriskToken*/ undefined, name, optional ? ts.createToken(57 /* QuestionToken */) : undefined, typeParameters, parameters, returnType, createStubbedMethodBody(preferences));
             }
             function createStubbedMethodBody(preferences) {
-                return ts.createBlock([ts.createThrow(ts.createNew(ts.createIdentifier("Error"), 
-                    /*typeArguments*/ undefined, 
+                return ts.createBlock([ts.createThrow(ts.createNew(ts.createIdentifier("Error"),
+                    /*typeArguments*/ undefined,
                     // TODO Handle auto quote preference.
-                    [ts.createLiteral("Method not implemented.", /*isSingleQuote*/ preferences.quotePreference === "single")]))], 
+                    [ts.createLiteral("Method not implemented.", /*isSingleQuote*/ preferences.quotePreference === "single")]))],
                 /*multiline*/ true);
             }
             function createVisibilityModifier(flags) {
@@ -137692,7 +137692,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 if (ts.getEmitModuleKind(opts) === ts.ModuleKind.CommonJS) {
                     // import Bluebird = require("bluebird");
                     variations.push(createAction(context, sourceFile, node, ts.createImportEqualsDeclaration(
-                    /*decorators*/ undefined, 
+                    /*decorators*/ undefined,
                     /*modifiers*/ undefined, namespace.name, ts.createExternalModuleReference(node.moduleSpecifier))));
                 }
                 return variations;
@@ -138148,7 +138148,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 var importClause = ts.Debug.assertDefined(importDeclaration.importClause);
                 changes.replaceNode(context.sourceFile, importDeclaration, ts.updateImportDeclaration(importDeclaration, importDeclaration.decorators, importDeclaration.modifiers, ts.updateImportClause(importClause, importClause.name, /*namedBindings*/ undefined, importClause.isTypeOnly), importDeclaration.moduleSpecifier));
                 changes.insertNodeAfter(context.sourceFile, importDeclaration, ts.createImportDeclaration(
-                /*decorators*/ undefined, 
+                /*decorators*/ undefined,
                 /*modifiers*/ undefined, ts.updateImportClause(importClause, /*name*/ undefined, importClause.namedBindings, importClause.isTypeOnly), importDeclaration.moduleSpecifier));
             }
         })(codefix = ts.codefix || (ts.codefix = {}));
@@ -139142,10 +139142,10 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                             typeNode = checker.typeToTypeNode(type, scope, 1 /* NoTruncation */);
                         }
                         var paramDecl = ts.createParameter(
-                        /*decorators*/ undefined, 
-                        /*modifiers*/ undefined, 
-                        /*dotDotDotToken*/ undefined, 
-                        /*name*/ name, 
+                        /*decorators*/ undefined,
+                        /*modifiers*/ undefined,
+                        /*dotDotDotToken*/ undefined,
+                        /*name*/ name,
                         /*questionToken*/ undefined, typeNode);
                         parameters.push(paramDecl);
                         if (usage.usage === 2 /* Write */) {
@@ -139182,7 +139182,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                             modifiers.push(ts.createToken(126 /* AsyncKeyword */));
                         }
                         newFunction = ts.createMethod(
-                        /*decorators*/ undefined, modifiers.length ? modifiers : undefined, range.facts & RangeFacts.IsGenerator ? ts.createToken(41 /* AsteriskToken */) : undefined, functionName, 
+                        /*decorators*/ undefined, modifiers.length ? modifiers : undefined, range.facts & RangeFacts.IsGenerator ? ts.createToken(41 /* AsteriskToken */) : undefined, functionName,
                         /*questionToken*/ undefined, typeParameters, parameters, returnType, body);
                     }
                     else {
@@ -139231,16 +139231,16 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                             for (var _i = 0, exposedVariableDeclarations_1 = exposedVariableDeclarations; _i < exposedVariableDeclarations_1.length; _i++) {
                                 var variableDeclaration = exposedVariableDeclarations_1[_i];
                                 bindingElements.push(ts.createBindingElement(
-                                /*dotDotDotToken*/ undefined, 
-                                /*propertyName*/ undefined, 
+                                /*dotDotDotToken*/ undefined,
+                                /*propertyName*/ undefined,
                                 /*name*/ ts.getSynthesizedDeepClone(variableDeclaration.name)));
                                 // Being returned through an object literal will have widened the type.
                                 var variableType = checker.typeToTypeNode(checker.getBaseTypeOfLiteralType(checker.getTypeAtLocation(variableDeclaration)), scope, 1 /* NoTruncation */);
                                 typeElements.push(ts.createPropertySignature(
-                                /*modifiers*/ undefined, 
-                                /*name*/ variableDeclaration.symbol.name, 
-                                /*questionToken*/ undefined, 
-                                /*type*/ variableType, 
+                                /*modifiers*/ undefined,
+                                /*name*/ variableDeclaration.symbol.name,
+                                /*questionToken*/ undefined,
+                                /*type*/ variableType,
                                 /*initializer*/ undefined));
                                 sawExplicitType = sawExplicitType || variableDeclaration.type !== undefined;
                                 commonNodeFlags = commonNodeFlags & variableDeclaration.parent.flags;
@@ -139250,8 +139250,8 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                                 ts.setEmitFlags(typeLiteral, 1 /* SingleLine */);
                             }
                             newNodes.push(ts.createVariableStatement(
-                            /*modifiers*/ undefined, ts.createVariableDeclarationList([ts.createVariableDeclaration(ts.createObjectBindingPattern(bindingElements), 
-                                /*type*/ typeLiteral, 
+                            /*modifiers*/ undefined, ts.createVariableDeclarationList([ts.createVariableDeclaration(ts.createObjectBindingPattern(bindingElements),
+                                /*type*/ typeLiteral,
                                 /*initializer*/ call)], commonNodeFlags)));
                         }
                     }
@@ -139361,7 +139361,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                         }
                         modifiers.push(ts.createToken(138 /* ReadonlyKeyword */));
                         var newVariable = ts.createProperty(
-                        /*decorators*/ undefined, modifiers, localNameText, 
+                        /*decorators*/ undefined, modifiers, localNameText,
                         /*questionToken*/ undefined, variableType, initializer);
                         var localReference = ts.createPropertyAccess(rangeFacts & RangeFacts.InStaticRegion
                             ? ts.createIdentifier(scope.name.getText()) // TODO: GH#18217
@@ -139468,9 +139468,9 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                                 if ((!firstParameter || (ts.isIdentifier(firstParameter.name) && firstParameter.name.escapedText !== "this"))) {
                                     var thisType = checker.getTypeOfSymbolAtLocation(functionSignature.thisParameter, node);
                                     parameters.splice(0, 0, ts.createParameter(
-                                    /* decorators */ undefined, 
-                                    /* modifiers */ undefined, 
-                                    /* dotDotDotToken */ undefined, "this", 
+                                    /* decorators */ undefined,
+                                    /* modifiers */ undefined,
+                                    /* dotDotDotToken */ undefined, "this",
                                     /* questionToken */ undefined, checker.typeToTypeNode(thisType, scope, 1 /* NoTruncation */)));
                                 }
                             }
@@ -140218,7 +140218,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
             function doTypeAliasChange(changes, file, name, info) {
                 var firstStatement = info.firstStatement, selection = info.selection, typeParameters = info.typeParameters;
                 var newTypeNode = ts.createTypeAliasDeclaration(
-                /* decorators */ undefined, 
+                /* decorators */ undefined,
                 /* modifiers */ undefined, name, typeParameters.map(function (id) { return ts.updateTypeParameterDeclaration(id, id.name, id.constraint, /* defaultType */ undefined); }), selection);
                 changes.insertNodeBefore(file, firstStatement, newTypeNode, /* blankLineBetween */ true);
                 changes.replaceNode(file, selection, ts.createTypeReferenceNode(name, typeParameters.map(function (id) { return ts.createTypeReferenceNode(id.name, /* typeArguments */ undefined); })));
@@ -140226,8 +140226,8 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
             function doInterfaceChange(changes, file, name, info) {
                 var firstStatement = info.firstStatement, selection = info.selection, typeParameters = info.typeParameters, typeElements = info.typeElements;
                 var newTypeNode = ts.createInterfaceDeclaration(
-                /* decorators */ undefined, 
-                /* modifiers */ undefined, name, typeParameters, 
+                /* decorators */ undefined,
+                /* modifiers */ undefined, name, typeParameters,
                 /* heritageClauses */ undefined, typeElements);
                 changes.insertNodeBefore(file, firstStatement, newTypeNode, /* blankLineBetween */ true);
                 changes.replaceNode(file, selection, ts.createTypeReferenceNode(name, typeParameters.map(function (id) { return ts.createTypeReferenceNode(id.name, /* typeArguments */ undefined); })));
@@ -140369,7 +140369,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 }
                 function generateGetAccessor(fieldName, accessorName, type, modifiers, isStatic, container) {
                     return ts.createGetAccessor(
-                    /*decorators*/ undefined, modifiers, accessorName, 
+                    /*decorators*/ undefined, modifiers, accessorName,
                     /*parameters*/ undefined, // TODO: GH#18217
                     type, ts.createBlock([
                         ts.createReturn(createAccessorAccessExpression(fieldName, isStatic, container))
@@ -140378,9 +140378,9 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                 function generateSetAccessor(fieldName, accessorName, type, modifiers, isStatic, container) {
                     return ts.createSetAccessor(
                     /*decorators*/ undefined, modifiers, accessorName, [ts.createParameter(
-                        /*decorators*/ undefined, 
-                        /*modifiers*/ undefined, 
-                        /*dotDotDotToken*/ undefined, ts.createIdentifier("value"), 
+                        /*decorators*/ undefined,
+                        /*modifiers*/ undefined,
+                        /*dotDotDotToken*/ undefined, ts.createIdentifier("value"),
                         /*questionToken*/ undefined, type)], ts.createBlock([
                         ts.createStatement(ts.createAssignment(createAccessorAccessExpression(fieldName, isStatic, container), ts.createIdentifier("value")))
                     ], /*multiLine*/ true));
@@ -141579,16 +141579,16 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                         objectInitializer = ts.createObjectLiteral();
                     }
                     var objectParameter = ts.createParameter(
-                    /*decorators*/ undefined, 
-                    /*modifiers*/ undefined, 
-                    /*dotDotDotToken*/ undefined, objectParameterName, 
+                    /*decorators*/ undefined,
+                    /*modifiers*/ undefined,
+                    /*dotDotDotToken*/ undefined, objectParameterName,
                     /*questionToken*/ undefined, objectParameterType, objectInitializer);
                     if (hasThisParameter(functionDeclaration.parameters)) {
                         var thisParameter = functionDeclaration.parameters[0];
                         var newThisParameter = ts.createParameter(
-                        /*decorators*/ undefined, 
-                        /*modifiers*/ undefined, 
-                        /*dotDotDotToken*/ undefined, thisParameter.name, 
+                        /*decorators*/ undefined,
+                        /*modifiers*/ undefined,
+                        /*dotDotDotToken*/ undefined, thisParameter.name,
                         /*questionToken*/ undefined, thisParameter.type);
                         ts.suppressLeadingAndTrailingTrivia(newThisParameter.name);
                         copyComments(thisParameter.name, newThisParameter.name);
@@ -141601,7 +141601,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                     return ts.createNodeArray([objectParameter]);
                     function createBindingElementFromParameterDeclaration(parameterDeclaration) {
                         var element = ts.createBindingElement(
-                        /*dotDotDotToken*/ undefined, 
+                        /*dotDotDotToken*/ undefined,
                         /*propertyName*/ undefined, getParameterName(parameterDeclaration), ts.isRestParameter(parameterDeclaration) && isOptionalParameter(parameterDeclaration) ? ts.createArrayLiteral() : parameterDeclaration.initializer);
                         ts.suppressLeadingAndTrailingTrivia(element);
                         if (parameterDeclaration.initializer && element.initializer) {
@@ -141620,7 +141620,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
                             parameterType = getTypeNode(parameterDeclaration);
                         }
                         var propertySignature = ts.createPropertySignature(
-                        /*modifiers*/ undefined, getParameterName(parameterDeclaration), isOptionalParameter(parameterDeclaration) ? ts.createToken(57 /* QuestionToken */) : parameterDeclaration.questionToken, parameterType, 
+                        /*modifiers*/ undefined, getParameterName(parameterDeclaration), isOptionalParameter(parameterDeclaration) ? ts.createToken(57 /* QuestionToken */) : parameterDeclaration.questionToken, parameterType,
                         /*initializer*/ undefined);
                         ts.suppressLeadingAndTrailingTrivia(propertySignature);
                         copyComments(parameterDeclaration.name, propertySignature.name);
@@ -144795,14 +144795,14 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
             };
             LanguageServiceShimObject.prototype.getEncodedSyntacticClassifications = function (fileName, start, length) {
                 var _this = this;
-                return this.forwardJSONCall("getEncodedSyntacticClassifications('" + fileName + "', " + start + ", " + length + ")", 
+                return this.forwardJSONCall("getEncodedSyntacticClassifications('" + fileName + "', " + start + ", " + length + ")",
                 // directly serialize the spans out to a string.  This is much faster to decode
                 // on the managed side versus a full JSON array.
                 function () { return convertClassifications(_this.languageService.getEncodedSyntacticClassifications(fileName, ts.createTextSpan(start, length))); });
             };
             LanguageServiceShimObject.prototype.getEncodedSemanticClassifications = function (fileName, start, length) {
                 var _this = this;
-                return this.forwardJSONCall("getEncodedSemanticClassifications('" + fileName + "', " + start + ", " + length + ")", 
+                return this.forwardJSONCall("getEncodedSemanticClassifications('" + fileName + "', " + start + ", " + length + ")",
                 // directly serialize the spans out to a string.  This is much faster to decode
                 // on the managed side versus a full JSON array.
                 function () { return convertClassifications(_this.languageService.getEncodedSemanticClassifications(fileName, ts.createTextSpan(start, length))); });
@@ -145038,7 +145038,7 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
             };
             LanguageServiceShimObject.prototype.getEmitOutputObject = function (fileName) {
                 var _this = this;
-                return forwardCall(this.logger, "getEmitOutput('" + fileName + "')", 
+                return forwardCall(this.logger, "getEmitOutput('" + fileName + "')",
                 /*returnJson*/ false, function () { return _this.languageService.getEmitOutput(fileName); }, this.logPerformance);
             };
             return LanguageServiceShimObject;
@@ -154427,10 +154427,10 @@ ${comment(license)}
 /* tslib/tslib.js */ function _(require, module, exports) {
     /*! *****************************************************************************
     Copyright (c) Microsoft Corporation.
-    
+
     Permission to use, copy, modify, and/or distribute this software for any
     purpose with or without fee is hereby granted.
-    
+
     THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
     REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
     AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
@@ -158129,16 +158129,16 @@ ${comment(license)}
     /*
       Copyright (C) 2012-2013 Yusuke Suzuki <utatane.tea@gmail.com>
       Copyright (C) 2012 Ariya Hidayat <ariya.hidayat@gmail.com>
-    
+
       Redistribution and use in source and binary forms, with or without
       modification, are permitted provided that the following conditions are met:
-    
+
         * Redistributions of source code must retain the above copyright
           notice, this list of conditions and the following disclaimer.
         * Redistributions in binary form must reproduce the above copyright
           notice, this list of conditions and the following disclaimer in the
           documentation and/or other materials provided with the distribution.
-    
+
       THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
       AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
       IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -159515,16 +159515,16 @@ ${comment(license)}
 /* esrecurse/esrecurse.js */ function _(require, module, exports) {
     /*
       Copyright (C) 2014 Yusuke Suzuki <utatane.tea@gmail.com>
-    
+
       Redistribution and use in source and binary forms, with or without
       modification, are permitted provided that the following conditions are met:
-    
+
         * Redistributions of source code must retain the above copyright
           notice, this list of conditions and the following disclaimer.
         * Redistributions in binary form must reproduce the above copyright
           notice, this list of conditions and the following disclaimer in the
           documentation and/or other materials provided with the distribution.
-    
+
       THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
       AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
       IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -161607,7 +161607,7 @@ ${comment(license)}
             }
             if (statement & FUNC_STATEMENT) {
                 node.id = (statement & FUNC_NULLABLE_ID) && this.type !== types.name ? null : this.parseIdent();
-                if (node.id && !(statement & FUNC_HANGING_STATEMENT)) 
+                if (node.id && !(statement & FUNC_HANGING_STATEMENT))
                 // If it is a regular function declaration in sloppy mode, then it is
                 // subject to Annex B semantics (BIND_FUNCTION). Otherwise, the binding
                 // mode depends on properties of the current scope (see
@@ -187749,16 +187749,16 @@ ${comment(license)}
 /* esutils/lib/utils.js */ function _(require, module, exports) {
     /*
       Copyright (C) 2013 Yusuke Suzuki <utatane.tea@gmail.com>
-    
+
       Redistribution and use in source and binary forms, with or without
       modification, are permitted provided that the following conditions are met:
-    
+
         * Redistributions of source code must retain the above copyright
           notice, this list of conditions and the following disclaimer.
         * Redistributions in binary form must reproduce the above copyright
           notice, this list of conditions and the following disclaimer in the
           documentation and/or other materials provided with the distribution.
-    
+
       THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
       AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
       IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -187780,16 +187780,16 @@ ${comment(license)}
 /* esutils/lib/ast.js */ function _(require, module, exports) {
     /*
       Copyright (C) 2013 Yusuke Suzuki <utatane.tea@gmail.com>
-    
+
       Redistribution and use in source and binary forms, with or without
       modification, are permitted provided that the following conditions are met:
-    
+
         * Redistributions of source code must retain the above copyright
           notice, this list of conditions and the following disclaimer.
         * Redistributions in binary form must reproduce the above copyright
           notice, this list of conditions and the following disclaimer in the
           documentation and/or other materials provided with the distribution.
-    
+
       THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 'AS IS'
       AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
       IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -187920,16 +187920,16 @@ ${comment(license)}
     /*
       Copyright (C) 2013-2014 Yusuke Suzuki <utatane.tea@gmail.com>
       Copyright (C) 2014 Ivan Nikulin <ifaaan@gmail.com>
-    
+
       Redistribution and use in source and binary forms, with or without
       modification, are permitted provided that the following conditions are met:
-    
+
         * Redistributions of source code must retain the above copyright
           notice, this list of conditions and the following disclaimer.
         * Redistributions in binary form must reproduce the above copyright
           notice, this list of conditions and the following disclaimer in the
           documentation and/or other materials provided with the distribution.
-    
+
       THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
       AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
       IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -188036,16 +188036,16 @@ ${comment(license)}
 /* esutils/lib/keyword.js */ function _(require, module, exports) {
     /*
       Copyright (C) 2013 Yusuke Suzuki <utatane.tea@gmail.com>
-    
+
       Redistribution and use in source and binary forms, with or without
       modification, are permitted provided that the following conditions are met:
-    
+
         * Redistributions of source code must retain the above copyright
           notice, this list of conditions and the following disclaimer.
         * Redistributions in binary form must reproduce the above copyright
           notice, this list of conditions and the following disclaimer in the
           documentation and/or other materials provided with the distribution.
-    
+
       THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
       AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
       IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -196389,7 +196389,7 @@ ${comment(license)}
                 }
                 else if (this._lockedFirstTokens.has(token)) {
                     const firstToken = this._lockedFirstTokens.get(token);
-                    this._desiredIndentCache.set(token, 
+                    this._desiredIndentCache.set(token,
                     // (indentation for the first element's line)
                     this.getDesiredIndent(this._tokenInfo.getFirstTokenOfLine(firstToken)) +
                         // (space between the start of the first element's line and the first element)
@@ -197315,7 +197315,7 @@ ${comment(license)}
              * 2. Don't set any offsets against the first token of the node.
              * 3. Call `ignoreNode` on the node sometime after exiting it and before validating offsets.
              */
-            const offsetListeners = lodash.mapValues(baseOffsetListeners, 
+            const offsetListeners = lodash.mapValues(baseOffsetListeners,
             /*
              * Offset listener calls are deferred until traversal is finished, and are called as
              * part of the final `Program:exit` listener. This is necessary because a node might
@@ -201859,7 +201859,7 @@ ${comment(license)}
              */
             function checkProgramForMaxLength(node) {
                 // split (honors line-ending)
-                const lines = sourceCode.lines, 
+                const lines = sourceCode.lines,
                 // list of comments to ignore
                 comments = ignoreComments || maxCommentLength || ignoreTrailingComments ? getAllComments() : [];
                 // we iterate over comments in parallel with the lines
@@ -203679,7 +203679,7 @@ ${comment(license)}
                  * lastToken is the last token on the node's line. It will usually also be the last token of the node, but it will
                  * sometimes be second-last if there is a semicolon on a different line.
                  */
-                const lastToken = getLastToken(node), 
+                const lastToken = getLastToken(node),
                 /*
                  * If lastToken is the last token of the node, nextToken should be the token after the node. Otherwise, nextToken
                  * is the last token of the node.
@@ -233867,7 +233867,7 @@ ${comment(license)}
             replacedBy: []
         },
         create(context) {
-            const options = context.options[0] || {}, prefer = options.prefer || {}, sourceCode = context.getSourceCode(), 
+            const options = context.options[0] || {}, prefer = options.prefer || {}, sourceCode = context.getSourceCode(),
             // these both default to true, so you have to explicitly make them false
             requireReturn = options.requireReturn !== false, requireParamDescription = options.requireParamDescription !== false, requireReturnDescription = options.requireReturnDescription !== false, requireReturnType = options.requireReturnType !== false, requireParamType = options.requireParamType !== false, preferType = options.preferType || {}, checkPreferType = Object.keys(preferType).length !== 0;
             //--------------------------------------------------------------------------
@@ -238184,47 +238184,47 @@ ${comment(license)}
             return obj;
         }
         function buildExps(isIRI) {
-            var ALPHA$$ = "[A-Za-z]", CR$ = "[\\x0D]", DIGIT$$ = "[0-9]", DQUOTE$$ = "[\\x22]", HEXDIG$$ = merge(DIGIT$$, "[A-Fa-f]"), 
+            var ALPHA$$ = "[A-Za-z]", CR$ = "[\\x0D]", DIGIT$$ = "[0-9]", DQUOTE$$ = "[\\x22]", HEXDIG$$ = merge(DIGIT$$, "[A-Fa-f]"),
             //case-insensitive
-            LF$$ = "[\\x0A]", SP$$ = "[\\x20]", PCT_ENCODED$ = subexp(subexp("%[EFef]" + HEXDIG$$ + "%" + HEXDIG$$ + HEXDIG$$ + "%" + HEXDIG$$ + HEXDIG$$) + "|" + subexp("%[89A-Fa-f]" + HEXDIG$$ + "%" + HEXDIG$$ + HEXDIG$$) + "|" + subexp("%" + HEXDIG$$ + HEXDIG$$)), 
+            LF$$ = "[\\x0A]", SP$$ = "[\\x20]", PCT_ENCODED$ = subexp(subexp("%[EFef]" + HEXDIG$$ + "%" + HEXDIG$$ + HEXDIG$$ + "%" + HEXDIG$$ + HEXDIG$$) + "|" + subexp("%[89A-Fa-f]" + HEXDIG$$ + "%" + HEXDIG$$ + HEXDIG$$) + "|" + subexp("%" + HEXDIG$$ + HEXDIG$$)),
             //expanded
-            GEN_DELIMS$$ = "[\\:\\/\\?\\#\\[\\]\\@]", SUB_DELIMS$$ = "[\\!\\$\\&\\'\\(\\)\\*\\+\\,\\;\\=]", RESERVED$$ = merge(GEN_DELIMS$$, SUB_DELIMS$$), UCSCHAR$$ = isIRI ? "[\\xA0-\\u200D\\u2010-\\u2029\\u202F-\\uD7FF\\uF900-\\uFDCF\\uFDF0-\\uFFEF]" : "[]", 
+            GEN_DELIMS$$ = "[\\:\\/\\?\\#\\[\\]\\@]", SUB_DELIMS$$ = "[\\!\\$\\&\\'\\(\\)\\*\\+\\,\\;\\=]", RESERVED$$ = merge(GEN_DELIMS$$, SUB_DELIMS$$), UCSCHAR$$ = isIRI ? "[\\xA0-\\u200D\\u2010-\\u2029\\u202F-\\uD7FF\\uF900-\\uFDCF\\uFDF0-\\uFFEF]" : "[]",
             //subset, excludes bidi control characters
-            IPRIVATE$$ = isIRI ? "[\\uE000-\\uF8FF]" : "[]", 
+            IPRIVATE$$ = isIRI ? "[\\uE000-\\uF8FF]" : "[]",
             //subset
-            UNRESERVED$$ = merge(ALPHA$$, DIGIT$$, "[\\-\\.\\_\\~]", UCSCHAR$$), SCHEME$ = subexp(ALPHA$$ + merge(ALPHA$$, DIGIT$$, "[\\+\\-\\.]") + "*"), USERINFO$ = subexp(subexp(PCT_ENCODED$ + "|" + merge(UNRESERVED$$, SUB_DELIMS$$, "[\\:]")) + "*"), DEC_OCTET$ = subexp(subexp("25[0-5]") + "|" + subexp("2[0-4]" + DIGIT$$) + "|" + subexp("1" + DIGIT$$ + DIGIT$$) + "|" + subexp("[1-9]" + DIGIT$$) + "|" + DIGIT$$), DEC_OCTET_RELAXED$ = subexp(subexp("25[0-5]") + "|" + subexp("2[0-4]" + DIGIT$$) + "|" + subexp("1" + DIGIT$$ + DIGIT$$) + "|" + subexp("0?[1-9]" + DIGIT$$) + "|0?0?" + DIGIT$$), 
+            UNRESERVED$$ = merge(ALPHA$$, DIGIT$$, "[\\-\\.\\_\\~]", UCSCHAR$$), SCHEME$ = subexp(ALPHA$$ + merge(ALPHA$$, DIGIT$$, "[\\+\\-\\.]") + "*"), USERINFO$ = subexp(subexp(PCT_ENCODED$ + "|" + merge(UNRESERVED$$, SUB_DELIMS$$, "[\\:]")) + "*"), DEC_OCTET$ = subexp(subexp("25[0-5]") + "|" + subexp("2[0-4]" + DIGIT$$) + "|" + subexp("1" + DIGIT$$ + DIGIT$$) + "|" + subexp("[1-9]" + DIGIT$$) + "|" + DIGIT$$), DEC_OCTET_RELAXED$ = subexp(subexp("25[0-5]") + "|" + subexp("2[0-4]" + DIGIT$$) + "|" + subexp("1" + DIGIT$$ + DIGIT$$) + "|" + subexp("0?[1-9]" + DIGIT$$) + "|0?0?" + DIGIT$$),
             //relaxed parsing rules
-            IPV4ADDRESS$ = subexp(DEC_OCTET_RELAXED$ + "\\." + DEC_OCTET_RELAXED$ + "\\." + DEC_OCTET_RELAXED$ + "\\." + DEC_OCTET_RELAXED$), H16$ = subexp(HEXDIG$$ + "{1,4}"), LS32$ = subexp(subexp(H16$ + "\\:" + H16$) + "|" + IPV4ADDRESS$), IPV6ADDRESS1$ = subexp(subexp(H16$ + "\\:") + "{6}" + LS32$), 
+            IPV4ADDRESS$ = subexp(DEC_OCTET_RELAXED$ + "\\." + DEC_OCTET_RELAXED$ + "\\." + DEC_OCTET_RELAXED$ + "\\." + DEC_OCTET_RELAXED$), H16$ = subexp(HEXDIG$$ + "{1,4}"), LS32$ = subexp(subexp(H16$ + "\\:" + H16$) + "|" + IPV4ADDRESS$), IPV6ADDRESS1$ = subexp(subexp(H16$ + "\\:") + "{6}" + LS32$),
             //                           6( h16 ":" ) ls32
-            IPV6ADDRESS2$ = subexp("\\:\\:" + subexp(H16$ + "\\:") + "{5}" + LS32$), 
+            IPV6ADDRESS2$ = subexp("\\:\\:" + subexp(H16$ + "\\:") + "{5}" + LS32$),
             //                      "::" 5( h16 ":" ) ls32
-            IPV6ADDRESS3$ = subexp(subexp(H16$) + "?\\:\\:" + subexp(H16$ + "\\:") + "{4}" + LS32$), 
+            IPV6ADDRESS3$ = subexp(subexp(H16$) + "?\\:\\:" + subexp(H16$ + "\\:") + "{4}" + LS32$),
             //[               h16 ] "::" 4( h16 ":" ) ls32
-            IPV6ADDRESS4$ = subexp(subexp(subexp(H16$ + "\\:") + "{0,1}" + H16$) + "?\\:\\:" + subexp(H16$ + "\\:") + "{3}" + LS32$), 
+            IPV6ADDRESS4$ = subexp(subexp(subexp(H16$ + "\\:") + "{0,1}" + H16$) + "?\\:\\:" + subexp(H16$ + "\\:") + "{3}" + LS32$),
             //[ *1( h16 ":" ) h16 ] "::" 3( h16 ":" ) ls32
-            IPV6ADDRESS5$ = subexp(subexp(subexp(H16$ + "\\:") + "{0,2}" + H16$) + "?\\:\\:" + subexp(H16$ + "\\:") + "{2}" + LS32$), 
+            IPV6ADDRESS5$ = subexp(subexp(subexp(H16$ + "\\:") + "{0,2}" + H16$) + "?\\:\\:" + subexp(H16$ + "\\:") + "{2}" + LS32$),
             //[ *2( h16 ":" ) h16 ] "::" 2( h16 ":" ) ls32
-            IPV6ADDRESS6$ = subexp(subexp(subexp(H16$ + "\\:") + "{0,3}" + H16$) + "?\\:\\:" + H16$ + "\\:" + LS32$), 
+            IPV6ADDRESS6$ = subexp(subexp(subexp(H16$ + "\\:") + "{0,3}" + H16$) + "?\\:\\:" + H16$ + "\\:" + LS32$),
             //[ *3( h16 ":" ) h16 ] "::"    h16 ":"   ls32
-            IPV6ADDRESS7$ = subexp(subexp(subexp(H16$ + "\\:") + "{0,4}" + H16$) + "?\\:\\:" + LS32$), 
+            IPV6ADDRESS7$ = subexp(subexp(subexp(H16$ + "\\:") + "{0,4}" + H16$) + "?\\:\\:" + LS32$),
             //[ *4( h16 ":" ) h16 ] "::"              ls32
-            IPV6ADDRESS8$ = subexp(subexp(subexp(H16$ + "\\:") + "{0,5}" + H16$) + "?\\:\\:" + H16$), 
+            IPV6ADDRESS8$ = subexp(subexp(subexp(H16$ + "\\:") + "{0,5}" + H16$) + "?\\:\\:" + H16$),
             //[ *5( h16 ":" ) h16 ] "::"              h16
-            IPV6ADDRESS9$ = subexp(subexp(subexp(H16$ + "\\:") + "{0,6}" + H16$) + "?\\:\\:"), 
+            IPV6ADDRESS9$ = subexp(subexp(subexp(H16$ + "\\:") + "{0,6}" + H16$) + "?\\:\\:"),
             //[ *6( h16 ":" ) h16 ] "::"
-            IPV6ADDRESS$ = subexp([IPV6ADDRESS1$, IPV6ADDRESS2$, IPV6ADDRESS3$, IPV6ADDRESS4$, IPV6ADDRESS5$, IPV6ADDRESS6$, IPV6ADDRESS7$, IPV6ADDRESS8$, IPV6ADDRESS9$].join("|")), ZONEID$ = subexp(subexp(UNRESERVED$$ + "|" + PCT_ENCODED$) + "+"), 
+            IPV6ADDRESS$ = subexp([IPV6ADDRESS1$, IPV6ADDRESS2$, IPV6ADDRESS3$, IPV6ADDRESS4$, IPV6ADDRESS5$, IPV6ADDRESS6$, IPV6ADDRESS7$, IPV6ADDRESS8$, IPV6ADDRESS9$].join("|")), ZONEID$ = subexp(subexp(UNRESERVED$$ + "|" + PCT_ENCODED$) + "+"),
             //RFC 6874
-            IPV6ADDRZ$ = subexp(IPV6ADDRESS$ + "\\%25" + ZONEID$), 
+            IPV6ADDRZ$ = subexp(IPV6ADDRESS$ + "\\%25" + ZONEID$),
             //RFC 6874
-            IPV6ADDRZ_RELAXED$ = subexp(IPV6ADDRESS$ + subexp("\\%25|\\%(?!" + HEXDIG$$ + "{2})") + ZONEID$), 
+            IPV6ADDRZ_RELAXED$ = subexp(IPV6ADDRESS$ + subexp("\\%25|\\%(?!" + HEXDIG$$ + "{2})") + ZONEID$),
             //RFC 6874, with relaxed parsing rules
-            IPVFUTURE$ = subexp("[vV]" + HEXDIG$$ + "+\\." + merge(UNRESERVED$$, SUB_DELIMS$$, "[\\:]") + "+"), IP_LITERAL$ = subexp("\\[" + subexp(IPV6ADDRZ_RELAXED$ + "|" + IPV6ADDRESS$ + "|" + IPVFUTURE$) + "\\]"), 
+            IPVFUTURE$ = subexp("[vV]" + HEXDIG$$ + "+\\." + merge(UNRESERVED$$, SUB_DELIMS$$, "[\\:]") + "+"), IP_LITERAL$ = subexp("\\[" + subexp(IPV6ADDRZ_RELAXED$ + "|" + IPV6ADDRESS$ + "|" + IPVFUTURE$) + "\\]"),
             //RFC 6874
-            REG_NAME$ = subexp(subexp(PCT_ENCODED$ + "|" + merge(UNRESERVED$$, SUB_DELIMS$$)) + "*"), HOST$ = subexp(IP_LITERAL$ + "|" + IPV4ADDRESS$ + "(?!" + REG_NAME$ + ")" + "|" + REG_NAME$), PORT$ = subexp(DIGIT$$ + "*"), AUTHORITY$ = subexp(subexp(USERINFO$ + "@") + "?" + HOST$ + subexp("\\:" + PORT$) + "?"), PCHAR$ = subexp(PCT_ENCODED$ + "|" + merge(UNRESERVED$$, SUB_DELIMS$$, "[\\:\\@]")), SEGMENT$ = subexp(PCHAR$ + "*"), SEGMENT_NZ$ = subexp(PCHAR$ + "+"), SEGMENT_NZ_NC$ = subexp(subexp(PCT_ENCODED$ + "|" + merge(UNRESERVED$$, SUB_DELIMS$$, "[\\@]")) + "+"), PATH_ABEMPTY$ = subexp(subexp("\\/" + SEGMENT$) + "*"), PATH_ABSOLUTE$ = subexp("\\/" + subexp(SEGMENT_NZ$ + PATH_ABEMPTY$) + "?"), 
+            REG_NAME$ = subexp(subexp(PCT_ENCODED$ + "|" + merge(UNRESERVED$$, SUB_DELIMS$$)) + "*"), HOST$ = subexp(IP_LITERAL$ + "|" + IPV4ADDRESS$ + "(?!" + REG_NAME$ + ")" + "|" + REG_NAME$), PORT$ = subexp(DIGIT$$ + "*"), AUTHORITY$ = subexp(subexp(USERINFO$ + "@") + "?" + HOST$ + subexp("\\:" + PORT$) + "?"), PCHAR$ = subexp(PCT_ENCODED$ + "|" + merge(UNRESERVED$$, SUB_DELIMS$$, "[\\:\\@]")), SEGMENT$ = subexp(PCHAR$ + "*"), SEGMENT_NZ$ = subexp(PCHAR$ + "+"), SEGMENT_NZ_NC$ = subexp(subexp(PCT_ENCODED$ + "|" + merge(UNRESERVED$$, SUB_DELIMS$$, "[\\@]")) + "+"), PATH_ABEMPTY$ = subexp(subexp("\\/" + SEGMENT$) + "*"), PATH_ABSOLUTE$ = subexp("\\/" + subexp(SEGMENT_NZ$ + PATH_ABEMPTY$) + "?"),
             //simplified
-            PATH_NOSCHEME$ = subexp(SEGMENT_NZ_NC$ + PATH_ABEMPTY$), 
+            PATH_NOSCHEME$ = subexp(SEGMENT_NZ_NC$ + PATH_ABEMPTY$),
             //simplified
-            PATH_ROOTLESS$ = subexp(SEGMENT_NZ$ + PATH_ABEMPTY$), 
+            PATH_ROOTLESS$ = subexp(SEGMENT_NZ$ + PATH_ABEMPTY$),
             //simplified
             PATH_EMPTY$ = "(?!" + PCHAR$ + ")", PATH$ = subexp(PATH_ABEMPTY$ + "|" + PATH_ABSOLUTE$ + "|" + PATH_NOSCHEME$ + "|" + PATH_ROOTLESS$ + "|" + PATH_EMPTY$), QUERY$ = subexp(subexp(PCHAR$ + "|" + merge("[\\/\\?]", IPRIVATE$$)) + "*"), FRAGMENT$ = subexp(subexp(PCHAR$ + "|[\\/\\?]") + "*"), HIER_PART$ = subexp(subexp("\\/\\/" + AUTHORITY$ + PATH_ABEMPTY$) + "|" + PATH_ABSOLUTE$ + "|" + PATH_ROOTLESS$ + "|" + PATH_EMPTY$), URI$ = subexp(SCHEME$ + "\\:" + HIER_PART$ + subexp("\\?" + QUERY$) + "?" + subexp("\\#" + FRAGMENT$) + "?"), RELATIVE_PART$ = subexp(subexp("\\/\\/" + AUTHORITY$ + PATH_ABEMPTY$) + "|" + PATH_ABSOLUTE$ + "|" + PATH_NOSCHEME$ + "|" + PATH_EMPTY$), RELATIVE$ = subexp(RELATIVE_PART$ + subexp("\\?" + QUERY$) + "?" + subexp("\\#" + FRAGMENT$) + "?"), URI_REFERENCE$ = subexp(URI$ + "|" + RELATIVE$), ABSOLUTE_URI$ = subexp(SCHEME$ + "\\:" + HIER_PART$ + subexp("\\?" + QUERY$) + "?"), GENERIC_REF$ = "^(" + SCHEME$ + ")\\:" + subexp(subexp("\\/\\/(" + subexp("(" + USERINFO$ + ")@") + "?(" + HOST$ + ")" + subexp("\\:(" + PORT$ + ")") + "?)") + "?(" + PATH_ABEMPTY$ + "|" + PATH_ABSOLUTE$ + "|" + PATH_ROOTLESS$ + "|" + PATH_EMPTY$ + ")") + subexp("\\?(" + QUERY$ + ")") + "?" + subexp("\\#(" + FRAGMENT$ + ")") + "?$", RELATIVE_REF$ = "^(){0}" + subexp(subexp("\\/\\/(" + subexp("(" + USERINFO$ + ")@") + "?(" + HOST$ + ")" + subexp("\\:(" + PORT$ + ")") + "?)") + "?(" + PATH_ABEMPTY$ + "|" + PATH_ABSOLUTE$ + "|" + PATH_NOSCHEME$ + "|" + PATH_EMPTY$ + ")") + subexp("\\?(" + QUERY$ + ")") + "?" + subexp("\\#(" + FRAGMENT$ + ")") + "?$", ABSOLUTE_REF$ = "^(" + SCHEME$ + ")\\:" + subexp(subexp("\\/\\/(" + subexp("(" + USERINFO$ + ")@") + "?(" + HOST$ + ")" + subexp("\\:(" + PORT$ + ")") + "?)") + "?(" + PATH_ABEMPTY$ + "|" + PATH_ABSOLUTE$ + "|" + PATH_ROOTLESS$ + "|" + PATH_EMPTY$ + ")") + subexp("\\?(" + QUERY$ + ")") + "?$", SAMEDOC_REF$ = "^" + subexp("\\#(" + FRAGMENT$ + ")") + "?$", AUTHORITY_REF$ = "^" + subexp("(" + USERINFO$ + ")@") + "?(" + HOST$ + ")" + subexp("\\:(" + PORT$ + ")") + "?$";
             return {
@@ -254083,9 +254083,9 @@ ${comment(license)}
          * @returns {ConfigData} The converted object.
          */
         toCompatibleObjectAsConfigFileContent() {
-            const { 
+            const {
             /* eslint-disable no-unused-vars */
-            configNameOfNoInlineConfig: _ignore1, processor: _ignore2, 
+            configNameOfNoInlineConfig: _ignore1, processor: _ignore2,
             /* eslint-enable no-unused-vars */
             ignores, ...config } = this;
             config.parser = config.parser && config.parser.filePath;
@@ -254383,7 +254383,7 @@ ${comment(license)}
         }
         return patterns.map(pattern => {
             if (/^\.[/\\]/u.test(pattern)) {
-                return new Minimatch(pattern.slice(2), 
+                return new Minimatch(pattern.slice(2),
                 // `./*.js` should not match with `subdir/foo.js`
                 { ...minimatchOpts, matchBase: false });
             }
@@ -259061,7 +259061,7 @@ ${comment(license)}
                 // Check if the file is matched.
                 if (entry.isFile()) {
                     if (!config) {
-                        config = configArrayFactory.getConfigArrayForFile(filePath, 
+                        config = configArrayFactory.getConfigArrayForFile(filePath,
                         /*
                          * We must ignore `ConfigurationNotFoundError` at this
                          * point because we don't know if target files exist in
@@ -269676,9 +269676,9 @@ ${comment(license)}
             // where the types are assignable, but not the same type
             /*
             function foo(): ReadonlySet<number> { return new Set<any>(); }
-        
+
             // and
-        
+
             type Test<T> = { prop: T }
             type Test2 = { prop: string }
             declare const a: Test<any>;
@@ -272051,10 +272051,10 @@ ${comment(license)}
             const foundFunctions = [];
             /*
             # How the rule works:
-        
+
             As the rule traverses the AST, it immediately checks every single function that it finds is exported.
             "exported" means that it is either directly exported, or that its name is exported.
-        
+
             It also collects a list of every single function it finds on the way, but does not check them.
             After it's finished traversing the AST, it then iterates through the list of found functions, and checks to see if
             any of them are part of a higher-order function
@@ -274770,7 +274770,7 @@ ${comment(license)}
     /*
     These format functions are taken from `tslint-consistent-codestyle/naming-convention`:
     https://github.com/ajafff/tslint-consistent-codestyle/blob/ab156cc8881bcc401236d999f4ce034b59039e81/rules/namingConventionRule.ts#L603-L645
-    
+
     The licence for the code can be viewed here:
     https://github.com/ajafff/tslint-consistent-codestyle/blob/ab156cc8881bcc401236d999f4ce034b59039e81/LICENSE
     */
@@ -283974,7 +283974,7 @@ ${comment(license)}
     const util = __importStar(require(659) /* ../util */);
     /*
     The AST is always constructed such the first element is always the deepest element.
-    
+
     I.e. for this code: `foo && foo.bar && foo.bar.baz && foo.bar.baz.buzz`
     The AST will look like this:
     {
@@ -284030,7 +284030,7 @@ ${comment(license)}
                     let optionallyChainedCode = previousLeftText;
                     let expressionCount = 1;
                     while (current.type === experimental_utils_1.AST_NODE_TYPES.LogicalExpression) {
-                        if (!isValidChainTarget(current.right, 
+                        if (!isValidChainTarget(current.right,
                         // only allow identifiers for the first chain - foo && foo()
                         expressionCount === 1)) {
                             break;
@@ -284053,27 +284053,27 @@ ${comment(license)}
                             /*
                             Diff the left and right text to construct the fix string
                             There are the following cases:
-                
+
                             1)
                             rightText === 'foo.bar.baz.buzz'
                             leftText === 'foo.bar.baz'
                             diff === '.buzz'
-                
+
                             2)
                             rightText === 'foo.bar.baz.buzz()'
                             leftText === 'foo.bar.baz'
                             diff === '.buzz()'
-                
+
                             3)
                             rightText === 'foo.bar.baz.buzz()'
                             leftText === 'foo.bar.baz.buzz'
                             diff === '()'
-                
+
                             4)
                             rightText === 'foo.bar.baz[buzz]'
                             leftText === 'foo.bar.baz'
                             diff === '[buzz]'
-                
+
                             5)
                             rightText === 'foo.bar.baz?.buzz'
                             leftText === 'foo.bar.baz'
@@ -290243,7 +290243,7 @@ ${comment(license)}
                             type: ts_estree_1.AST_NODE_TYPES.ExportAllDeclaration,
                             source: this.convertChild(node.moduleSpecifier),
                             exportKind: node.isTypeOnly ? 'type' : 'value',
-                            exported: 
+                            exported:
                             // note - for compat with 3.7.x, where node.exportClause is always undefined and
                             //        SyntaxKind.NamespaceExport does not exist yet (i.e. is undefined), this
                             //        cannot be shortened to an optional chain, or else you end up with
@@ -291465,7 +291465,7 @@ ${comment(license)}
                 return n;
             }
             return firstDefined(n.getChildren(ast), (child) => {
-                const shouldDiveInChildNode = 
+                const shouldDiveInChildNode =
                 // previous token is enclosed somewhere in the child
                 (child.pos <= previousToken.pos && child.end > previousToken.end) ||
                     // previous token ends exactly at the beginning of child
@@ -292453,7 +292453,7 @@ ${comment(license)}
         if (!commandLine) {
             return undefined;
         }
-        const compilerHost = ts.createCompilerHost(commandLine.options, 
+        const compilerHost = ts.createCompilerHost(commandLine.options,
         /* setParentNodes */ true);
         const oldReadFile = compilerHost.readFile;
         compilerHost.readFile = (fileName) => path_1.default.normalize(fileName) === path_1.default.normalize(extra.filePath)
@@ -292631,7 +292631,7 @@ ${comment(license)}
                 return '\n';
             },
             getSourceFile(filename) {
-                return ts.createSourceFile(filename, code, ts.ScriptTarget.Latest, 
+                return ts.createSourceFile(filename, code, ts.ScriptTarget.Latest,
                 /* setParentNodes */ true, shared_1.getScriptKind(extra, filename));
             },
             readFile() {
@@ -292926,7 +292926,7 @@ ${comment(license)}
     function createWatchProgram(tsconfigPath, extra) {
         log('Creating watch program for %s.', tsconfigPath);
         // create compiler host
-        const watchCompilerHost = ts.createWatchCompilerHost(tsconfigPath, shared_1.createDefaultCompilerOptionsFromExtra(extra), ts.sys, ts.createAbstractBuilder, diagnosticReporter, 
+        const watchCompilerHost = ts.createWatchCompilerHost(tsconfigPath, shared_1.createDefaultCompilerOptionsFromExtra(extra), ts.sys, ts.createAbstractBuilder, diagnosticReporter,
         /*reportWatchStatus*/ () => { });
         // ensure readFile reads the code being linted instead of the copy on disk
         const oldReadFile = watchCompilerHost.readFile;
@@ -293159,7 +293159,7 @@ ${comment(license)}
     const log = debug_1.default('typescript-eslint:typescript-estree:createSourceFile');
     function createSourceFile(code, extra) {
         log('Getting AST without type information in %s mode for: %s', extra.jsx ? 'TSX' : 'TS', extra.filePath);
-        return ts.createSourceFile(extra.filePath, code, ts.ScriptTarget.Latest, 
+        return ts.createSourceFile(extra.filePath, code, ts.ScriptTarget.Latest,
         /* setParentNodes */ true, shared_1.getScriptKind(extra));
     }
     exports.createSourceFile = createSourceFile;
@@ -303473,7 +303473,7 @@ ${comment(license)}
                         function f(parse, stop) {
                             return {
                                 parse: parse,
-                                stop: stop // when true - stop after parse() and return its result, 
+                                stop: stop // when true - stop after parse() and return its result,
                                 // otherwise continue for plain args
                             };
                         }

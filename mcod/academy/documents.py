@@ -21,21 +21,23 @@ class CourseDoc(Document):
     materials_file_url = fields.KeywordField()
     sessions = fields.NestedField(
         properties={
-            'id': fields.IntegerField(),
-            'type': fields.KeywordField(),
-            'type_name': fields.KeywordField(),
-            'start': fields.DateField(),
-            'end': fields.DateField(),
+            "id": fields.IntegerField(),
+            "type": fields.KeywordField(),
+            "type_name": fields.KeywordField(),
+            "start": fields.DateField(),
+            "end": fields.DateField(),
         }
     )
 
     class Index:
-        name = mcs.ELASTICSEARCH_INDEX_NAMES['courses']
+        name = mcs.ELASTICSEARCH_INDEX_NAMES["courses"]
         settings = mcs.ELASTICSEARCH_DSL_INDEX_SETTINGS
 
     class Django:
         model = Course
-        related_models = [CourseModule, ]
+        related_models = [
+            CourseModule,
+        ]
 
     def get_instances_from_related(self, related_instance):
         if isinstance(related_instance, CourseModule):

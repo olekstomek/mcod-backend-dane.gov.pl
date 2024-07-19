@@ -2,9 +2,21 @@ from rdflib import Literal
 
 
 class RDFField:
-    def __init__(self, predicate=None, object_type=None, object_value=None, object=None, base_uri=None, allow_null=True,
-                 object_value_to_uppercase=False, swap_subject_and_object=False, many=False, required=True,
-                 try_non_lang=False, value_on_null=None):
+    def __init__(
+        self,
+        predicate=None,
+        object_type=None,
+        object_value=None,
+        object=None,
+        base_uri=None,
+        allow_null=True,
+        object_value_to_uppercase=False,
+        swap_subject_and_object=False,
+        many=False,
+        required=True,
+        try_non_lang=False,
+        value_on_null=None,
+    ):
 
         if object is None and object_type is None:
             object_type = Literal

@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('categories', '0011_datamigration_create_basic_dcat_categories'),
+        ("categories", "0011_datamigration_create_basic_dcat_categories"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='category',
-            name='is_permanently_removed',
+            model_name="category",
+            name="is_permanently_removed",
             field=models.BooleanField(default=False),
         ),
     ]

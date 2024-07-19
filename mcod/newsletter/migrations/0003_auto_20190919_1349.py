@@ -9,18 +9,32 @@ class Migration(migrations.Migration):
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('newsletter', '0002_newsletter_history_trigger'),
+        ("newsletter", "0002_newsletter_history_trigger"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='subscription',
-            name='created_by',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.DO_NOTHING, related_name='newsletter_subscriptions_created', to=settings.AUTH_USER_MODEL, verbose_name='created by'),
+            model_name="subscription",
+            name="created_by",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.DO_NOTHING,
+                related_name="newsletter_subscriptions_created",
+                to=settings.AUTH_USER_MODEL,
+                verbose_name="created by",
+            ),
         ),
         migrations.AddField(
-            model_name='subscription',
-            name='modified_by',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.DO_NOTHING, related_name='newsletter_subscriptions_modified', to=settings.AUTH_USER_MODEL, verbose_name='modified by'),
+            model_name="subscription",
+            name="modified_by",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.DO_NOTHING,
+                related_name="newsletter_subscriptions_modified",
+                to=settings.AUTH_USER_MODEL,
+                verbose_name="modified by",
+            ),
         ),
     ]

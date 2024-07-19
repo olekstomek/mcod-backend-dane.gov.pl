@@ -7,13 +7,17 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('resources', '0037_auto_20210416_2153'),
+        ("resources", "0037_auto_20210416_2153"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='chart',
-            name='resource',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='charts', to='resources.Resource'),
+            model_name="chart",
+            name="resource",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="charts",
+                to="resources.Resource",
+            ),
         ),
     ]

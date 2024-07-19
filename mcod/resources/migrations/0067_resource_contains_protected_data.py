@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('resources', '0066_auto_20231219_0956'),
+        ("resources", "0066_auto_20231219_0956"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='resource',
-            name='contains_protected_data',
-            field=models.BooleanField(default=False, verbose_name='Contains protected data list'),
+            model_name="resource",
+            name="contains_protected_data",
+            field=models.BooleanField(default=False, verbose_name="Contains protected data list"),
         ),
     ]

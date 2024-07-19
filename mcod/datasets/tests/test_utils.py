@@ -94,9 +94,7 @@ def test_xml_writer_raise_exception(mocker: "MockerFixture", tmp_path: Path):
     xml_file = io.StringIO()
     writer: XMLWriter = XMLWriter()
     with pytest.raises(ExpatError), override_settings(METADATA_MEDIA_ROOT=tmp_path):
-        writer.save(
-            file_object=xml_file, data=data, language_catalog_path=str(tmp_path)
-        )
+        writer.save(file_object=xml_file, data=data, language_catalog_path=str(tmp_path))
 
     expected_error_file_path = f"{tmp_path}/data.json"
     assert Path(expected_error_file_path).is_file()

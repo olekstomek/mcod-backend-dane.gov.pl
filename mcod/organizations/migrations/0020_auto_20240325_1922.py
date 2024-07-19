@@ -7,13 +7,20 @@ import mcod.organizations.model_validators
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('organizations', '0019_organization_electronic_delivery_address'),
+        ("organizations", "0019_organization_electronic_delivery_address"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='organization',
-            name='electronic_delivery_address',
-            field=models.CharField(blank=True, max_length=26, null=True, unique=True, validators=[mcod.organizations.model_validators.validate_eda], verbose_name='Address for electronic delivery'),
+            model_name="organization",
+            name="electronic_delivery_address",
+            field=models.CharField(
+                blank=True,
+                max_length=26,
+                null=True,
+                unique=True,
+                validators=[mcod.organizations.model_validators.validate_eda],
+                verbose_name="Address for electronic delivery",
+            ),
         ),
     ]

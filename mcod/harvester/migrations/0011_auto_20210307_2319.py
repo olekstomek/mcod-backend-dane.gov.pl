@@ -6,23 +6,41 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('harvester', '0010_auto_20210203_1801'),
+        ("harvester", "0010_auto_20210203_1801"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='datasourceimport',
-            name='datasets_rejected_count',
-            field=models.PositiveIntegerField(blank=True, null=True, verbose_name='number of rejected datasets'),
+            model_name="datasourceimport",
+            name="datasets_rejected_count",
+            field=models.PositiveIntegerField(blank=True, null=True, verbose_name="number of rejected datasets"),
         ),
         migrations.AlterField(
-            model_name='datasource',
-            name='last_import_status',
-            field=models.CharField(blank=True, choices=[('ok', 'OK'), ('ok-partial', 'OK - partial import'), ('error', 'Error')], max_length=50, verbose_name='last import status'),
+            model_name="datasource",
+            name="last_import_status",
+            field=models.CharField(
+                blank=True,
+                choices=[
+                    ("ok", "OK"),
+                    ("ok-partial", "OK - partial import"),
+                    ("error", "Error"),
+                ],
+                max_length=50,
+                verbose_name="last import status",
+            ),
         ),
         migrations.AlterField(
-            model_name='datasourceimport',
-            name='status',
-            field=models.CharField(blank=True, choices=[('ok', 'OK'), ('ok-partial', 'OK - partial import'), ('error', 'Error')], max_length=50, verbose_name='status'),
+            model_name="datasourceimport",
+            name="status",
+            field=models.CharField(
+                blank=True,
+                choices=[
+                    ("ok", "OK"),
+                    ("ok-partial", "OK - partial import"),
+                    ("error", "Error"),
+                ],
+                max_length=50,
+                verbose_name="status",
+            ),
         ),
     ]

@@ -6,15 +6,20 @@ import django.db.models.deletion
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('licenses', '0001_initial'),
-        ('articles', '0002_initial'),
+        ("licenses", "0001_initial"),
+        ("articles", "0002_initial"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='article',
-            name='license',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.DO_NOTHING,
-                                    to='licenses.License', verbose_name='License ID'),
+            model_name="article",
+            name="license",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.DO_NOTHING,
+                to="licenses.License",
+                verbose_name="License ID",
+            ),
         ),
     ]

@@ -18,16 +18,16 @@ class ReportsFormset(BaseInlineFormSet):
         _forms = [form for form in self.forms if form.is_valid() and form not in self.deleted_forms]
         if len(_forms) == 0:
             return
-        if self.data.get('event_type') == 'analysis' and len(_forms) > 1:
-            raise forms.ValidationError(_('Analysis can have only one report assigned'))
+        if self.data.get("event_type") == "analysis" and len(_forms) > 1:
+            raise forms.ValidationError(_("Analysis can have only one report assigned"))
 
 
 class AddReportStacked(nested_admin.NestedStackedInline):
-    template = 'admin/laboratory/report-inline-new.html'
+    template = "admin/laboratory/report-inline-new.html"
     model = LabReport
     form = AddReportForm
     formset = ReportsFormset
-    fields = ('switcher', 'file', 'link')
+    fields = ("switcher", "file", "link")
 
     extra = 0
     min_num = 0
@@ -47,7 +47,7 @@ class LabEventAdmin(HistoryMixin, ModelAdmin):
     @property
     def suit_form_tabs(self):
         return [
-            ('general', _('General')),
+            ("general", _("General")),
         ]
 
     def save_model(self, request, obj, form, change):
@@ -57,37 +57,40 @@ class LabEventAdmin(HistoryMixin, ModelAdmin):
         obj.save()
 
     def get_fieldsets(self, request, obj=None):
-        fieldsets = [(
-            None,
-            {
-                'classes': ('suit-tab', 'suit-tab-general',),
-                'fields': (
-                    "title",
-                    "event_type",
-                    "notes",
-                    "execution_date",
-                    "status",
-                ),
-            }
-        )]
+        fieldsets = [
+            (
+                None,
+                {
+                    "classes": (
+                        "suit-tab",
+                        "suit-tab-general",
+                    ),
+                    "fields": (
+                        "title",
+                        "event_type",
+                        "notes",
+                        "execution_date",
+                        "status",
+                    ),
+                },
+            )
+        ]
         fieldsets += self.get_translations_fieldsets()
-        fieldsets[1][1]['fields'].remove('slug_en')
+        fieldsets[1][1]["fields"].remove("slug_en")
         return fieldsets
 
     class Media:
-        css = {
-            'all': ('admin/css/laboratory.css',)
-        }
+        css = {"all": ("admin/css/laboratory.css",)}
 
 
 class LabEventTrashAdmin(HistoryMixin, TrashMixin):
     readonly_fields = (
-        'title',
-        'notes',
-        'event_type',
-        'status',
+        "title",
+        "notes",
+        "event_type",
+        "status",
     )
-    fields = [field for field in readonly_fields] + ['is_removed']
+    fields = [field for field in readonly_fields] + ["is_removed"]
     is_history_other = True
 
 

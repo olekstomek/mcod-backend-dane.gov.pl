@@ -4,7 +4,7 @@ from django.core.management.base import BaseCommand
 
 from mcod.discourse.manager import DiscourseManager
 
-logger = logging.getLogger('mcod')
+logger = logging.getLogger("mcod")
 
 
 class Command(BaseCommand):

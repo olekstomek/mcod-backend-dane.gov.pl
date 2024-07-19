@@ -11,22 +11,32 @@ class Migration(migrations.Migration):
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('categories', '0001_initial'),
+        ("categories", "0001_initial"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='category',
-            name='created_by',
-            field=models.ForeignKey(editable=False, null=True, on_delete=django.db.models.deletion.DO_NOTHING,
-                                    related_name='categories_created', to=settings.AUTH_USER_MODEL,
-                                    verbose_name='Created by'),
+            model_name="category",
+            name="created_by",
+            field=models.ForeignKey(
+                editable=False,
+                null=True,
+                on_delete=django.db.models.deletion.DO_NOTHING,
+                related_name="categories_created",
+                to=settings.AUTH_USER_MODEL,
+                verbose_name="Created by",
+            ),
         ),
         migrations.AddField(
-            model_name='category',
-            name='modified_by',
-            field=models.ForeignKey(editable=False, null=True, on_delete=django.db.models.deletion.DO_NOTHING,
-                                    related_name='categories_modified', to=settings.AUTH_USER_MODEL,
-                                    verbose_name='Modified by'),
+            model_name="category",
+            name="modified_by",
+            field=models.ForeignKey(
+                editable=False,
+                null=True,
+                on_delete=django.db.models.deletion.DO_NOTHING,
+                related_name="categories_modified",
+                to=settings.AUTH_USER_MODEL,
+                verbose_name="Modified by",
+            ),
         ),
     ]

@@ -36,16 +36,17 @@ class HistoryView(JsonAPIView):
         self.handle(request, response, self.GET, *args, **kwargs)
 
     class GET(RetrieveOneHdlr):
-        database_model = apps.get_model('histories', 'LogEntry')
+        database_model = apps.get_model("histories", "LogEntry")
         deserializer_schema = HistoryApiRequest
         serializer_schema = LogEntryApiResponse
 
         def _get_instance(self, id, *args, **kwargs):
-            instance = getattr(self, '_cached_instance', None)
+            instance = getattr(self, "_cached_instance", None)
             if not instance:
                 try:
-                    self._cached_instance = self.database_model.objects.filter(
-                        content_type__model='dataset').exclude(actor_id=1).get(pk=id)
+                    self._cached_instance = (
+                        self.database_model.objects.filter(content_type__model="dataset").exclude(actor_id=1).get(pk=id)
+                    )
                 except self.database_model.DoesNotExist:
                     raise falcon.HTTPNotFound
             return self._cached_instance

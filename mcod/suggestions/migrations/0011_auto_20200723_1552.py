@@ -6,17 +6,21 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('suggestions', '0010_auto_20200722_1701'),
+        ("suggestions", "0010_auto_20200722_1701"),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='datasetsubmission',
-            options={'default_manager_name': 'objects', 'ordering': ('-submission_date',), 'verbose_name': 'Dataset submission', 'verbose_name_plural': 'Dataset submissions'},
+            name="datasetsubmission",
+            options={
+                "default_manager_name": "objects",
+                "ordering": ("-submission_date",),
+                "verbose_name": "Dataset submission",
+                "verbose_name_plural": "Dataset submissions",
+            },
         ),
         migrations.AlterModelManagers(
-            name='datasetsubmission',
-            managers=[
-            ],
+            name="datasetsubmission",
+            managers=[],
         ),
     ]

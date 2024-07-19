@@ -187,10 +187,10 @@ if (typeof($.fn.filterDjangoField) != 'function') {
             }
             if (typeof(djRegexCache[prefix][fieldName]) == 'undefined') {
                 djRegexCache[prefix][fieldName] = new RegExp('^' + prefix + '-\\d+-' + fieldName + '$');
-            }            
+            }
             $field = this.find('input[name$="' + fieldName + '"]').filter(function() {
                 return this.getAttribute('name').match(djRegexCache[prefix][fieldName]);
-            });          
+            });
         }
         if (!$field.length && (fieldName == 'pk' || fieldName == 'position')) {
             fieldNameData = $('#' + prefix + '-group').djnData('fieldNames') || {};

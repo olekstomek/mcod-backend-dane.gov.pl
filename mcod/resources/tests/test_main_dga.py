@@ -1,45 +1,33 @@
 import os
+from typing import List, Optional
 from unittest import mock
 from unittest.mock import MagicMock, call
 
 import pandas as pd
 import pytest
 from django.conf import settings
-from typing import Optional, List
-
 from django.db.models import QuerySet
 
 from mcod.datasets.factories import DatasetFactory
 from mcod.datasets.models import Dataset
 from mcod.organizations.models import Organization
 from mcod.resources.dga_utils import (
-    get_main_dga_resource,
-    get_main_dga_dataset,
-    create_main_dga_dataset,
-    get_dga_resource_for_institution,
-    get_all_dga_resources,
-    get_or_create_main_dga_path,
-    create_main_dga_df,
     check_all_resource_validations_status,
-    create_main_dga_resource_with_dataset,
-    update_or_create_aggr_dga_info_and_delete_old_main_dga,
     clean_up_after_main_dga_resource_creation,
+    create_main_dga_dataset,
+    create_main_dga_df,
     create_main_dga_file,
+    create_main_dga_resource_with_dataset,
+    get_all_dga_resources,
+    get_dga_resource_for_institution,
+    get_main_dga_dataset,
+    get_main_dga_resource,
+    get_or_create_main_dga_path,
+    update_or_create_aggr_dga_info_and_delete_old_main_dga,
 )
-from mcod.resources.exceptions import (
-    PendingValidationException,
-    FailedValidationException,
-)
-from mcod.resources.factories import (
-    DGAResourceFactory,
-    ResourceFactory,
-    MainDGAResourceFactory,
-)
-from mcod.resources.models import (
-    AggregatedDGAInfo,
-    Resource,
-    ResourceFile,
-)
+from mcod.resources.exceptions import FailedValidationException, PendingValidationException
+from mcod.resources.factories import DGAResourceFactory, MainDGAResourceFactory, ResourceFactory
+from mcod.resources.models import AggregatedDGAInfo, Resource, ResourceFile
 from mcod.resources.tasks import create_main_dga_resource_task
 
 
@@ -78,23 +66,14 @@ def test_create_main_dga_dataset(main_dga_owner_organization: Organization):
     assert dataset.title == settings.MAIN_DGA_DATASET_DEFAULT_TITLE
     assert dataset.notes == settings.MAIN_DGA_DATASET_DEFAULT_DESC
     assert dataset.organization == main_dga_owner_organization
-    assert (
-        dataset.update_notification_recipient_email ==
-        settings.MAIN_DGA_DATASET_UPDATE_NOTIFICATION_EMAIL
-    )
+    assert dataset.update_notification_recipient_email == settings.MAIN_DGA_DATASET_UPDATE_NOTIFICATION_EMAIL
     assert dataset.has_dynamic_data is False
     assert dataset.has_high_value_data is False
     assert dataset.has_research_data is False
     assert dataset.update_frequency == "daily"
     assert dataset.status == "published"
-    assert (
-        list(dataset.categories.values_list("title", flat=True)) ==
-        settings.MAIN_DGA_DATASET_CATEGORIES_TITLES
-    )
-    assert (
-        list(dataset.tags.values_list("name", flat=True)) ==
-        settings.MAIN_DGA_DATASET_TAGS_NAMES
-    )
+    assert list(dataset.categories.values_list("title", flat=True)) == settings.MAIN_DGA_DATASET_CATEGORIES_TITLES
+    assert list(dataset.tags.values_list("name", flat=True)) == settings.MAIN_DGA_DATASET_TAGS_NAMES
 
 
 @pytest.mark.feat_main_dga
@@ -120,10 +99,10 @@ def test_get_all_dga_resources(main_dga_resource: Resource):
 @mock.patch("mcod.resources.dga_utils.os.makedirs")
 @mock.patch("mcod.resources.dga_utils.os.path.exists")
 def test_get_or_create_main_dga_path(
-        mock_path_exists: MagicMock,
-        mock_makedirs: MagicMock,
-        mock_datetime: MagicMock,
-        is_path_exists: bool,
+    mock_path_exists: MagicMock,
+    mock_makedirs: MagicMock,
+    mock_datetime: MagicMock,
+    is_path_exists: bool,
 ):
     mock_datetime.datetime.now.return_value.strftime.return_value = "20251201"
     mock_path_exists.return_value = is_path_exists
@@ -136,10 +115,7 @@ def test_get_or_create_main_dga_path(
     else:
         mock_makedirs.assert_called_once_with(directory)
 
-    expected_file_name = (
-        "Wykaz zasobów chronionych DGA – wykaz zbiorczy – "
-        "Ministerstwo Cyfryzacji 20251201.xlsx"
-    )
+    expected_file_name = "Wykaz zasobów chronionych DGA – wykaz zbiorczy – " "Ministerstwo Cyfryzacji 20251201.xlsx"
     expected_path = f"{directory}/{expected_file_name}"
     assert file_path == expected_path
 
@@ -183,25 +159,40 @@ def test_create_empty_main_dga_df():
         ("", "SUCCESS", "", PendingValidationException, None),
         ("", "", "SUCCESS", PendingValidationException, None),
         ("FAILURE", "SUCCESS", "SUCCESS", None, ["Brak wierszy z danymi"]),
-        ("FAILURE", "SUCCESS", "", PendingValidationException, [
-            "Brak wierszy z danymi"]),
-        ("FAILURE", "SUCCESS", "SUCCESS", FailedValidationException, [
-            "Brak wierszy z danymi", "Another Error"]),
-        ("FAILURE", "SUCCESS", "SUCCESS", FailedValidationException, [
-            "Unexpected Error"]),
+        (
+            "FAILURE",
+            "SUCCESS",
+            "",
+            PendingValidationException,
+            ["Brak wierszy z danymi"],
+        ),
+        (
+            "FAILURE",
+            "SUCCESS",
+            "SUCCESS",
+            FailedValidationException,
+            ["Brak wierszy z danymi", "Another Error"],
+        ),
+        (
+            "FAILURE",
+            "SUCCESS",
+            "SUCCESS",
+            FailedValidationException,
+            ["Unexpected Error"],
+        ),
         ("FAILURE", "FAILURE", "FAILURE", FailedValidationException, None),
         ("SUCCESS", "FAILURE", "SUCCESS", FailedValidationException, None),
         ("SUCCESS", "SUCCESS", "FAILURE", FailedValidationException, None),
         ("", "FAILURE", "", FailedValidationException, None),
         ("", "", "FAILURE", FailedValidationException, None),
-    ]
+    ],
 )
 def test_check_all_resource_validations_status(
-        data_status: str,
-        file_status: str,
-        link_status: str,
-        exception: Optional[Exception],
-        data_failure: Optional[List[str]],
+    data_status: str,
+    file_status: str,
+    link_status: str,
+    exception: Optional[Exception],
+    data_failure: Optional[List[str]],
 ):
     resource = MagicMock()
     resource.data_tasks_last_status = data_status
@@ -222,11 +213,9 @@ def test_check_all_resource_validations_status(
 
 @pytest.mark.feat_main_dga
 def test_create_main_dga_resource_with_dataset(
-        main_dga_owner_organization: Organization
+    main_dga_owner_organization: Organization,
 ):
-    file_path: str = (
-        f"{os.path.join(settings.TEST_SAMPLES_PATH, 'example_main_dga_file.xlsx')}"
-    )
+    file_path: str = f"{os.path.join(settings.TEST_SAMPLES_PATH, 'example_main_dga_file.xlsx')}"
     resource_pk, dataset_pk = create_main_dga_resource_with_dataset(file_path)
 
     assert resource_pk
@@ -252,9 +241,7 @@ def test_create_main_dga_resource_with_dataset(
 
 
 @pytest.mark.feat_main_dga
-def test_update_aggr_dga_info(
-        dga_info: AggregatedDGAInfo, main_dga_dataset: Dataset
-):
+def test_update_aggr_dga_info(dga_info: AggregatedDGAInfo, main_dga_dataset: Dataset):
     """
     Tests update_or_create_aggr_dga_info_and_delete_old_main_dga method
     when main DGA Resource already exists.
@@ -263,9 +250,7 @@ def test_update_aggr_dga_info(
     views_count: int = old_resource.dataset.computed_views_count
     downloads_count: int = old_resource.dataset.computed_downloads_count
 
-    new_resource: Resource = MainDGAResourceFactory.create(
-        dataset=main_dga_dataset
-    )
+    new_resource: Resource = MainDGAResourceFactory.create(dataset=main_dga_dataset)
 
     update_or_create_aggr_dga_info_and_delete_old_main_dga(new_resource)
 
@@ -284,9 +269,7 @@ def test_create_aggr_dga_info(main_dga_dataset: Dataset):
     Tests update_or_create_aggr_dga_info_and_delete_old_main_dga method
     when main DGA Resource does not exist.
     """
-    resource: Resource = MainDGAResourceFactory.create(
-        dataset=main_dga_dataset
-    )
+    resource: Resource = MainDGAResourceFactory.create(dataset=main_dga_dataset)
     update_or_create_aggr_dga_info_and_delete_old_main_dga(resource)
 
     dga_info: AggregatedDGAInfo = AggregatedDGAInfo.objects.last()
@@ -295,38 +278,38 @@ def test_create_aggr_dga_info(main_dga_dataset: Dataset):
 
 
 @pytest.mark.feat_main_dga
-@pytest.mark.parametrize(("resource_id", "dataset_id", "exc_occurred"), [
-    (123, 456, False),
-    (123, 456, True),
-    (123, None, False),
-    (123, None, True),
-    (None, None, True),
-    (None, None, False),
-])
+@pytest.mark.parametrize(
+    ("resource_id", "dataset_id", "exc_occurred"),
+    [
+        (123, 456, False),
+        (123, 456, True),
+        (123, None, False),
+        (123, None, True),
+        (None, None, True),
+        (None, None, False),
+    ],
+)
 @mock.patch("mcod.resources.dga_utils.sentry_sdk.api.capture_exception")
 @mock.patch("mcod.resources.dga_utils.os.remove")
-@mock.patch(
-    "mcod.resources.dga_utils.key_generator_for_create_main_dga_resource"
-)
+@mock.patch("mcod.resources.dga_utils.key_generator_for_create_main_dga_resource")
 @mock.patch("mcod.resources.dga_utils.key_generator_for_create_main_xlsx_file")
 @mock.patch("mcod.resources.dga_utils.caches")
 def test_clean_up_after_main_dga_resource_creation(
-        mock_caches: MagicMock,
-        mock_xlsx_key: MagicMock,
-        mock_objects_key: MagicMock,
-        mock_os_remove: MagicMock,
-        mock_sentry: MagicMock,
-        resource_id: Optional[int],
-        dataset_id: Optional[int],
-        exc_occurred: bool,
+    mock_caches: MagicMock,
+    mock_xlsx_key: MagicMock,
+    mock_objects_key: MagicMock,
+    mock_os_remove: MagicMock,
+    mock_sentry: MagicMock,
+    resource_id: Optional[int],
+    dataset_id: Optional[int],
+    exc_occurred: bool,
 ):
     # Set return values to cache key generators
     mock_xlsx_key.return_value = "xlsx_key"
     mock_objects_key.return_value = "objects_key"
 
     # Create objects
-    dataset: Optional[Dataset] = DatasetFactory.create(
-        pk=dataset_id) if dataset_id else None
+    dataset: Optional[Dataset] = DatasetFactory.create(pk=dataset_id) if dataset_id else None
 
     if dataset and resource_id:
         ResourceFactory.create(pk=resource_id, dataset=dataset)
@@ -351,8 +334,7 @@ def test_clean_up_after_main_dga_resource_creation(
         assert Resource.raw.filter(pk=resource_id).exists() is False
         assert Dataset.raw.filter(pk=dataset_id).exists() is False
     else:
-        assert bool(resource_id) is Resource.raw.filter(
-            pk=resource_id).exists()
+        assert bool(resource_id) is Resource.raw.filter(pk=resource_id).exists()
         assert bool(dataset_id) is Dataset.raw.filter(pk=dataset_id).exists()
 
     mock_os_remove.assert_called_once_with("/path/to/temporary/file.xlsx")
@@ -365,10 +347,10 @@ def test_clean_up_after_main_dga_resource_creation(
 @mock.patch("mcod.resources.dga_utils.create_main_dga_df")
 @mock.patch("mcod.resources.dga_utils.save_df_to_xlsx")
 def test_create_main_dga_file(
-        mock_save_df_to_xlsx: MagicMock,
-        mock_create_main_dga_df: MagicMock,
-        mock_get_all_dga_resources: MagicMock,
-        mock_get_or_create_main_dga_path: MagicMock,
+    mock_save_df_to_xlsx: MagicMock,
+    mock_create_main_dga_df: MagicMock,
+    mock_get_all_dga_resources: MagicMock,
+    mock_get_or_create_main_dga_path: MagicMock,
 ):
     # Set mocks
     mock_get_or_create_main_dga_path.return_value = "/path/to/dga_file.xlsx"
@@ -401,6 +383,7 @@ class TestMainDGAResourceCreationTask:
     """
     Test Class for create_main_dga_resource_task possible scenarios.
     """
+
     @pytest.fixture(autouse=True)
     def setup_mocks(self):
         """
@@ -408,17 +391,18 @@ class TestMainDGAResourceCreationTask:
         """
         self.resource_mock = MagicMock()
         self.resource_objects_get_mock = MagicMock()
-        self.resource_mock.objects = MagicMock(
-            get=self.resource_objects_get_mock)
+        self.resource_mock.objects = MagicMock(get=self.resource_objects_get_mock)
         with mock.patch(
-                "mcod.resources.tasks.apps.get_model",
-                return_value=self.resource_mock
-        ) as self.mock_get_model, \
-                mock.patch("mcod.resources.tasks.create_main_dga_file") as self.mock_create_file, \
-                mock.patch("mcod.resources.tasks.create_main_dga_resource_with_dataset") as self.mock_create_resource, \
-                mock.patch("mcod.resources.tasks.check_all_resource_validations_status") as self.mock_check_status, \
-                mock.patch("mcod.resources.tasks.update_or_create_aggr_dga_info_and_delete_old_main_dga") as self.mock_update_aggr_dga_info, \
-                mock.patch("mcod.resources.tasks.clean_up_after_main_dga_resource_creation") as self.mock_clean_up:  # noqa: E501
+            "mcod.resources.tasks.apps.get_model", return_value=self.resource_mock
+        ) as self.mock_get_model, mock.patch("mcod.resources.tasks.create_main_dga_file") as self.mock_create_file, mock.patch(
+            "mcod.resources.tasks.create_main_dga_resource_with_dataset"
+        ) as self.mock_create_resource, mock.patch(
+            "mcod.resources.tasks.check_all_resource_validations_status"
+        ) as self.mock_check_status, mock.patch(
+            "mcod.resources.tasks.update_or_create_aggr_dga_info_and_delete_old_main_dga"
+        ) as self.mock_update_aggr_dga_info, mock.patch(
+            "mcod.resources.tasks.clean_up_after_main_dga_resource_creation"
+        ) as self.mock_clean_up:  # noqa: E501
             yield
 
     def test_main_dga_resource_creation_task(self):
@@ -431,13 +415,10 @@ class TestMainDGAResourceCreationTask:
 
         # Assertions
         self.mock_create_file.assert_called_once()
-        self.mock_create_resource.assert_called_once_with(
-            file_path="/path/to/dga_file.xlsx")
+        self.mock_create_resource.assert_called_once_with(file_path="/path/to/dga_file.xlsx")
         self.resource_objects_get_mock.assert_called_once_with(pk=10)
-        self.mock_check_status.assert_called_once_with(
-            self.resource_objects_get_mock.return_value)
-        self.mock_update_aggr_dga_info.assert_called_once_with(
-            self.resource_objects_get_mock.return_value)
+        self.mock_check_status.assert_called_once_with(self.resource_objects_get_mock.return_value)
+        self.mock_update_aggr_dga_info.assert_called_once_with(self.resource_objects_get_mock.return_value)
         self.mock_clean_up.assert_called_once_with(exception_occurred=False)
 
     def test_main_dga_file_creation_exception(self):
@@ -464,15 +445,17 @@ class TestMainDGAResourceCreationTask:
 
         # Assertions
         self.mock_create_file.assert_called_once()
-        self.mock_create_resource.assert_called_once_with(
-            file_path="/path/to/dga_file.xlsx")
+        self.mock_create_resource.assert_called_once_with(file_path="/path/to/dga_file.xlsx")
         self.mock_clean_up.assert_called_once_with(exception_occurred=True)
 
-    @pytest.mark.parametrize("exception", [
-        Exception,
-        PendingValidationException,
-        FailedValidationException,
-    ])
+    @pytest.mark.parametrize(
+        "exception",
+        [
+            Exception,
+            PendingValidationException,
+            FailedValidationException,
+        ],
+    )
     def test_validations_exception(self, exception: Exception):
         # Set up mocks
         self.mock_create_file.return_value = "/path/to/dga_file.xlsx"
@@ -487,11 +470,9 @@ class TestMainDGAResourceCreationTask:
 
         # Assertions
         self.mock_create_file.assert_called_once()
-        self.mock_create_resource.assert_called_once_with(
-            file_path="/path/to/dga_file.xlsx")
+        self.mock_create_resource.assert_called_once_with(file_path="/path/to/dga_file.xlsx")
         self.resource_objects_get_mock.assert_called_once_with(pk=10)
-        self.mock_check_status.assert_called_once_with(
-            self.resource_objects_get_mock.return_value)
+        self.mock_check_status.assert_called_once_with(self.resource_objects_get_mock.return_value)
         if exception is PendingValidationException:
             self.mock_clean_up.assert_not_called()
         else:
@@ -511,11 +492,8 @@ class TestMainDGAResourceCreationTask:
 
         # Assertions
         self.mock_create_file.assert_called_once()
-        self.mock_create_resource.assert_called_once_with(
-            file_path="/path/to/dga_file.xlsx")
+        self.mock_create_resource.assert_called_once_with(file_path="/path/to/dga_file.xlsx")
         self.resource_objects_get_mock.assert_called_once_with(pk=10)
-        self.mock_check_status.assert_called_once_with(
-            self.resource_objects_get_mock.return_value)
-        self.mock_update_aggr_dga_info.assert_called_once_with(
-            self.resource_objects_get_mock.return_value)
+        self.mock_check_status.assert_called_once_with(self.resource_objects_get_mock.return_value)
+        self.mock_update_aggr_dga_info.assert_called_once_with(self.resource_objects_get_mock.return_value)
         self.mock_clean_up.assert_called_once_with(exception_occurred=True)

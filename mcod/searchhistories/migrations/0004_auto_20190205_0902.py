@@ -6,12 +6,15 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('searchhistories', '0003_clear_searchhistories_with_empty_q'),
+        ("searchhistories", "0003_clear_searchhistories_with_empty_q"),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='searchhistory',
-            options={'verbose_name': 'Search history', 'verbose_name_plural': 'Search Histories'},
+            name="searchhistory",
+            options={
+                "verbose_name": "Search history",
+                "verbose_name_plural": "Search Histories",
+            },
         ),
     ]

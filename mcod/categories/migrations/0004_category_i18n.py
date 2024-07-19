@@ -7,13 +7,13 @@ import modeltrans.fields
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('categories', '0003_auto_20180525_1430'),
+        ("categories", "0003_auto_20180525_1430"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='category',
-            name='i18n',
-            field=modeltrans.fields.TranslationField(fields=('title',), required_languages=(), virtual_fields=True),
+            model_name="category",
+            name="i18n",
+            field=modeltrans.fields.TranslationField(fields=("title",), required_languages=(), virtual_fields=True),
         ),
     ]

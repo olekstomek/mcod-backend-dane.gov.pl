@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('watchers', '0010_remove_watcher_api_version'),
+        ("watchers", "0010_remove_watcher_api_version"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='notification',
-            name='ref_value',
+            model_name="notification",
+            name="ref_value",
             field=models.TextField(null=True),
         ),
     ]

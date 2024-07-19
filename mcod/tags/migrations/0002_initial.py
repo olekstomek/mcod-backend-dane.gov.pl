@@ -10,23 +10,33 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('tags', '0001_initial'),
+        ("tags", "0001_initial"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='tag',
-            name='created_by',
-            field=models.ForeignKey(editable=False, null=True, on_delete=django.db.models.deletion.DO_NOTHING,
-                                    related_name='tags_created', to=settings.AUTH_USER_MODEL,
-                                    verbose_name='Created by'),
+            model_name="tag",
+            name="created_by",
+            field=models.ForeignKey(
+                editable=False,
+                null=True,
+                on_delete=django.db.models.deletion.DO_NOTHING,
+                related_name="tags_created",
+                to=settings.AUTH_USER_MODEL,
+                verbose_name="Created by",
+            ),
         ),
         migrations.AddField(
-            model_name='tag',
-            name='modified_by',
-            field=models.ForeignKey(editable=False, null=True, on_delete=django.db.models.deletion.DO_NOTHING,
-                                    related_name='tags_modified', to=settings.AUTH_USER_MODEL,
-                                    verbose_name='Modified by'),
+            model_name="tag",
+            name="modified_by",
+            field=models.ForeignKey(
+                editable=False,
+                null=True,
+                on_delete=django.db.models.deletion.DO_NOTHING,
+                related_name="tags_modified",
+                to=settings.AUTH_USER_MODEL,
+                verbose_name="Modified by",
+            ),
         ),
     ]

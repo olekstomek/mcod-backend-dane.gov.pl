@@ -6,33 +6,43 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('resources', '0058_auto_20220425_1649'),
+        ("resources", "0058_auto_20220425_1649"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='resource',
-            name='automatic_data_date_end',
-            field=models.DateField(blank=True, null=True, verbose_name='Data date end date update'),
+            model_name="resource",
+            name="automatic_data_date_end",
+            field=models.DateField(blank=True, null=True, verbose_name="Data date end date update"),
         ),
         migrations.AddField(
-            model_name='resource',
-            name='automatic_data_date_start',
-            field=models.DateField(blank=True, null=True, verbose_name='Data date start date update'),
+            model_name="resource",
+            name="automatic_data_date_start",
+            field=models.DateField(blank=True, null=True, verbose_name="Data date start date update"),
         ),
         migrations.AddField(
-            model_name='resource',
-            name='data_date_update_period',
-            field=models.CharField(blank=True, choices=[('daily', 'daily'), ('weekly', 'weekly'), ('monthly', 'monthly')], max_length=10, null=True, verbose_name='Data date update period'),
+            model_name="resource",
+            name="data_date_update_period",
+            field=models.CharField(
+                blank=True,
+                choices=[
+                    ("daily", "daily"),
+                    ("weekly", "weekly"),
+                    ("monthly", "monthly"),
+                ],
+                max_length=10,
+                null=True,
+                verbose_name="Data date update period",
+            ),
         ),
         migrations.AddField(
-            model_name='resource',
-            name='endless_data_date_update',
-            field=models.BooleanField(default=False, verbose_name='Endless data date update'),
+            model_name="resource",
+            name="endless_data_date_update",
+            field=models.BooleanField(default=False, verbose_name="Endless data date update"),
         ),
         migrations.AddField(
-            model_name='resource',
-            name='is_manual_data_date',
-            field=models.BooleanField(default=True, verbose_name='Manual update'),
+            model_name="resource",
+            name="is_manual_data_date",
+            field=models.BooleanField(default=True, verbose_name="Manual update"),
         ),
     ]

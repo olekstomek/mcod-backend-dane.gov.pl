@@ -6,18 +6,18 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('schedules', '0002_auto_20201016_1629'),
+        ("schedules", "0002_auto_20201016_1629"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='schedule',
-            name='period_name',
-            field=models.CharField(blank=True, max_length=100, verbose_name='period name'),
+            model_name="schedule",
+            name="period_name",
+            field=models.CharField(blank=True, max_length=100, verbose_name="period name"),
         ),
         migrations.AddField(
-            model_name='schedule',
-            name='start_date',
-            field=models.DateField(blank=True, null=True, verbose_name='start date'),
+            model_name="schedule",
+            name="start_date",
+            field=models.DateField(blank=True, null=True, verbose_name="start date"),
         ),
     ]

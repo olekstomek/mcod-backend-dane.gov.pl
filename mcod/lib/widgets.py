@@ -18,15 +18,15 @@ class CheckboxSelect(CheckboxSelectMultiple):
 class CKEditorMixin:
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.config['language_list'] = ["pl:Polski", "en:Angielski"]
-        toolbar_name = self.config.get('toolbar')
+        self.config["language_list"] = ["pl:Polski", "en:Angielski"]
+        toolbar_name = self.config.get("toolbar")
         if toolbar_name:
-            toolbar_config = self.config.get(f'toolbar_{toolbar_name}')
+            toolbar_config = self.config.get(f"toolbar_{toolbar_name}")
             last_elem = toolbar_config[-1] if isinstance(toolbar_config, list) and len(toolbar_config) else []
-            if 'Source' not in last_elem:
-                last_elem.append('Source')
-            if 'Language' not in last_elem:
-                last_elem.append('Language')
+            if "Source" not in last_elem:
+                last_elem.append("Source")
+            if "Language" not in last_elem:
+                last_elem.append("Language")
 
 
 class CKEditorWidget(CKEditorMixin, BaseCKEditorWidget):
@@ -38,10 +38,23 @@ class CKEditorUploadingWidget(CKEditorMixin, BaseCKEditorUploadingWidget):
 
 
 class RichTextUploadingFormField(fields.CharField):
-    def __init__(self, config_name='default', extra_plugins=None, external_plugin_resources=None, *args, **kwargs):
-        kwargs.update({
-            'widget': CKEditorUploadingWidget(config_name=config_name, extra_plugins=extra_plugins,
-                                              external_plugin_resources=external_plugin_resources)})
+    def __init__(
+        self,
+        config_name="default",
+        extra_plugins=None,
+        external_plugin_resources=None,
+        *args,
+        **kwargs,
+    ):
+        kwargs.update(
+            {
+                "widget": CKEditorUploadingWidget(
+                    config_name=config_name,
+                    extra_plugins=extra_plugins,
+                    external_plugin_resources=external_plugin_resources,
+                )
+            }
+        )
         super().__init__(*args, **kwargs)
 
 
@@ -71,17 +84,17 @@ def make_html_options(pairs, selected="", with_first=True):
         options = ""
     for pair in pairs:
         if pair[0] == selected:
-            options += options_tmp.format(pair[0], pair[2], 'selected', pair[1])
+            options += options_tmp.format(pair[0], pair[2], "selected", pair[1])
         elif pair[0] == "-":
             options += "<option disabled></option>\n"
         else:
-            options += options_tmp.format(pair[0], pair[2], '', pair[1])
+            options += options_tmp.format(pair[0], pair[2], "", pair[1])
     return options
 
 
 def make_row(cols, row):
     _result = [getattr(row, col) for col in cols]
-    return [(x.repr if x.repr is not None else '') if hasattr(x, 'repr') else x or '' for x in _result]
+    return [(x.repr if x.repr is not None else "") if hasattr(x, "repr") else x or "" for x in _result]
 
 
 def read(instance, limit=8):
@@ -129,9 +142,9 @@ class JsonPairDatasetInputs(JsonPairInputsWidget):
         twotuple = json.loads(value)
         if not twotuple:
             twotuple = {}
-            twotuple['key'] = 'value'
+            twotuple["key"] = "value"
 
-        ret = ''
+        ret = ""
         if value and len(value) > 0:
             for k, v in twotuple.items():
                 key, value = _(k), v
@@ -155,7 +168,7 @@ class JsonPairDatasetInputs(JsonPairInputsWidget):
         """
 
         customfields = {}
-        if ('json_key[%s]' % name) in data and ('json_value[%s]' % name) in data:
+        if ("json_key[%s]" % name) in data and ("json_value[%s]" % name) in data:
             keys = data.getlist("json_key[%s]" % name)
             values = data.getlist("json_value[%s]" % name)
             for key, value in zip(keys, values):
@@ -165,10 +178,8 @@ class JsonPairDatasetInputs(JsonPairInputsWidget):
 
     class Media:
 
-        js = ('admin/js/widgets/customfields.js',)
-        css = {
-            'all': ('admin/css/customfields.css',)
-        }
+        js = ("admin/js/widgets/customfields.js",)
+        css = {"all": ("admin/css/customfields.css",)}
 
 
 class ResourceDataRulesWidget(JsonPairInputsWidget):
@@ -191,12 +202,9 @@ class ResourceDataRulesWidget(JsonPairInputsWidget):
 
             data = read(self.instance)
 
-            html = get_template("widgets/resource_data_rules.html").render({
-                'data': data,
-                'selects': selects,
-                'headers': headers,
-                'fields': fields
-            })
+            html = get_template("widgets/resource_data_rules.html").render(
+                {"data": data, "selects": selects, "headers": headers, "fields": fields}
+            )
 
             return mark_safe(html)
 
@@ -223,24 +231,26 @@ class ResourceDataSchemaWidget(JsonPairInputsWidget):
 
             data = read(self.instance)
 
-            html = get_template("widgets/resource_data_types.html").render({
-                'data': data,
-                'selects': selects,
-                'headers': headers,
-            })
+            html = get_template("widgets/resource_data_types.html").render(
+                {
+                    "data": data,
+                    "selects": selects,
+                    "headers": headers,
+                }
+            )
 
             return mark_safe(html)
 
     def value_from_datadict(self, data, files, name):
         schema = self.instance.tabular_data_schema
-        _data = {int(k.replace('schema_type_', '')): v for k, v in data.items() if k.startswith('schema_type_')}
+        _data = {int(k.replace("schema_type_", "")): v for k, v in data.items() if k.startswith("schema_type_")}
         for k, v in _data.items():
-            schema['fields'][k]['type'] = v
-            if v in ['date', 'datetime', 'time'] and schema['fields'][k]['format'] == 'default':
-                schema['fields'][k]['format'] = 'any'
+            schema["fields"][k]["type"] = v
+            if v in ["date", "datetime", "time"] and schema["fields"][k]["format"] == "default":
+                schema["fields"][k]["format"] = "any"
             # The format keyword options for `string` are `default`, `email`, `uri`, `binary`, and `uuid`.
-            if v == 'string' and schema['fields'][k]['format'] == 'any':
-                schema['fields'][k]['format'] = 'default'
+            if v == "string" and schema["fields"][k]["format"] == "any":
+                schema["fields"][k]["format"] = "default"
         return json.dumps(schema)
 
 
@@ -260,41 +270,43 @@ class ResourceMapsAndPlotsWidget(JsonPairInputsWidget):
 
             data = read(self.instance)
 
-            html = get_template("widgets/resource_maps_and_plots.html").render({
-                'data': data,
-                'selects': selects,
-                'headers': headers,
-            })
+            html = get_template("widgets/resource_maps_and_plots.html").render(
+                {
+                    "data": data,
+                    "selects": selects,
+                    "headers": headers,
+                }
+            )
             return mark_safe(html)
 
     def value_from_datadict(self, data, files, name):
 
         schema = self.instance.tabular_data_schema or {}
         if schema:
-            schema['geo'] = {}
+            schema["geo"] = {}
             for k, v in data.items():
                 if k.startswith("geo_"):
                     index = int(k.replace("geo_", ""))
 
                     if v:
-                        schema["fields"][index]['geo'] = v
+                        schema["fields"][index]["geo"] = v
                         schema["geo"][v] = {
-                            "col_name": schema["fields"][index]['name'],
+                            "col_name": schema["fields"][index]["name"],
                             "col_index": index,
                         }
 
                     else:
-                        if 'geo' in schema['fields'][index]:
-                            del schema["fields"][index]['geo']
+                        if "geo" in schema["fields"][index]:
+                            del schema["fields"][index]["geo"]
         return json.dumps(schema)
 
 
 class ExternalDatasetsWidget(JsonPairDatasetInputs):
-    template_name = 'widgets/external_datasets.html'
+    template_name = "widgets/external_datasets.html"
 
     def __init__(self, *args, **kwargs):
-        kwargs['val_attrs'] = {'size': 35}
-        kwargs['key_attrs'] = {'class': 'large'}
+        kwargs["val_attrs"] = {"size": 35}
+        kwargs["key_attrs"] = {"class": "large"}
         super().__init__(*args, **kwargs)
 
     def render(self, name, value, attrs=None, renderer=None):
@@ -304,21 +316,19 @@ class ExternalDatasetsWidget(JsonPairDatasetInputs):
 
     def get_context(self, name, value, attrs):
         context = super().get_context(name, value, attrs)
-        context['items_list'] = json.loads(value) or [{'url': '', 'title': ''}]
+        context["items_list"] = json.loads(value) or [{"url": "", "title": ""}]
         return context
 
     def value_from_datadict(self, data, files, name):
         result = []
-        if 'json_key[customfields]' in data and 'json_value[customfields]' in data:
-            titles = data.getlist('json_key[customfields]')
-            urls = data.getlist('json_value[customfields]')
+        if "json_key[customfields]" in data and "json_value[customfields]" in data:
+            titles = data.getlist("json_key[customfields]")
+            urls = data.getlist("json_value[customfields]")
             for title, url in zip(titles, urls):
-                if len(title) > 0 and title != 'key':
-                    result.append({'title': title, 'url': url})
+                if len(title) > 0 and title != "key":
+                    result.append({"title": title, "url": url})
         return json.dumps(result)
 
     class Media:
         extend = False
-        css = {
-            'all': ('admin/css/customfields.css',)
-        }
+        css = {"all": ("admin/css/customfields.css",)}

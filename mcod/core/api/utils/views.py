@@ -47,36 +47,33 @@ class ClusterAllocationView:
 
 class SwaggerView:
     def on_get(self, request, response, *args, **kwargs):
-        template = loader.get_template('swagger_ui/index.html')
+        template = loader.get_template("swagger_ui/index.html")
         versions = sorted(DOC_VERSIONS, reverse=True)
-        active_spec_name = request.params.get('urls.primaryName', f'DANE.GOV.PL API v{versions[0]}')
+        active_spec_name = request.params.get("urls.primaryName", f"DANE.GOV.PL API v{versions[0]}")
 
         spec_urls = [
             *[
                 {
-                    'url': f'{settings.API_URL}/spec/{version}',
-                    'name': f'DANE.GOV.PL API v{version}',
+                    "url": f"{settings.API_URL}/spec/{version}",
+                    "name": f"DANE.GOV.PL API v{version}",
                 }
                 for version in versions
             ],
             {
-                'url': f'{settings.API_URL}/catalog/dcat_ap/spec',
-                'name': 'DANE.GOV.PL RDF API (DCAT-AP)',
+                "url": f"{settings.API_URL}/catalog/dcat_ap/spec",
+                "name": "DANE.GOV.PL RDF API (DCAT-AP)",
             },
             {
-                'url': f'{settings.API_URL}/catalog/dcat_ap_pl/spec',
-                'name': 'DANE.GOV.PL RDF API (DCAT-AP-PL)',
+                "url": f"{settings.API_URL}/catalog/dcat_ap_pl/spec",
+                "name": "DANE.GOV.PL RDF API (DCAT-AP-PL)",
             },
         ]
-        spec_urls.sort(key=lambda spec: spec['name'] != active_spec_name)
+        spec_urls.sort(key=lambda spec: spec["name"] != active_spec_name)
 
-        context = {
-            'spec_urls': spec_urls,
-            'custom_css': 'custom.css'
-        }
+        context = {"spec_urls": spec_urls, "custom_css": "custom.css"}
 
         response.status = falcon.HTTP_200
-        response.content_type = 'text/html'
+        response.content_type = "text/html"
         response.text = template.render(context)
 
 
@@ -84,24 +81,28 @@ class OpenApiSpec:
 
     def on_get(self, req, resp, version=None, *args, **kwargs):
         if version and version not in DOC_VERSIONS:
-            raise falcon.HTTPBadRequest(description='Invalid version')
+            raise falcon.HTTPBadRequest(description="Invalid version")
         spec = get_spec(version=version)
-        spec.components.schema('Institutions', schema=InstitutionApiResponse, many=True)
-        spec.components.schema('Institution', schema=InstitutionApiResponse, many=False)
-        spec.components.schema('Datasets', schema=dat_responses.DatasetApiResponse, many=True)
-        spec.components.schema('Dataset', schema=dat_responses.DatasetApiResponse, many=False)
-        spec.components.schema('Resources', schema=res_responses.ResourceApiResponse, many=True)
-        spec.components.schema('Resource', schema=res_responses.ResourceApiResponse, many=False)
-        spec.components.schema('AggregatedDGAInfo', schema=res_responses.AggregatedDGAInfoApiResponse, many=False)
-        spec.components.schema('Charts', schema=res_responses.ChartApiResponse, many=True)
-        spec.components.schema('Chart', schema=res_responses.ChartApiResponse, many=False)
-        spec.components.schema('ResourceTable', schema=res_responses.TableApiResponse, many=True)
-        spec.components.schema('ResourceTableRow', schema=res_responses.TableApiResponse, many=False)
-        spec.components.schema('Search', schema=CommonObjectResponse, many=True)
-        spec.components.schema('Showcases', schema=ShowcaseApiResponse, many=True)
-        spec.components.schema('Showcase', schema=ShowcaseApiResponse, many=False)
-        spec.components.schema('Histories', schema=LogEntryApiResponse, many=True)
-        spec.components.schema('History', schema=LogEntryApiResponse, many=False)
+        spec.components.schema("Institutions", schema=InstitutionApiResponse, many=True)
+        spec.components.schema("Institution", schema=InstitutionApiResponse, many=False)
+        spec.components.schema("Datasets", schema=dat_responses.DatasetApiResponse, many=True)
+        spec.components.schema("Dataset", schema=dat_responses.DatasetApiResponse, many=False)
+        spec.components.schema("Resources", schema=res_responses.ResourceApiResponse, many=True)
+        spec.components.schema("Resource", schema=res_responses.ResourceApiResponse, many=False)
+        spec.components.schema(
+            "AggregatedDGAInfo",
+            schema=res_responses.AggregatedDGAInfoApiResponse,
+            many=False,
+        )
+        spec.components.schema("Charts", schema=res_responses.ChartApiResponse, many=True)
+        spec.components.schema("Chart", schema=res_responses.ChartApiResponse, many=False)
+        spec.components.schema("ResourceTable", schema=res_responses.TableApiResponse, many=True)
+        spec.components.schema("ResourceTableRow", schema=res_responses.TableApiResponse, many=False)
+        spec.components.schema("Search", schema=CommonObjectResponse, many=True)
+        spec.components.schema("Showcases", schema=ShowcaseApiResponse, many=True)
+        spec.components.schema("Showcase", schema=ShowcaseApiResponse, many=False)
+        spec.components.schema("Histories", schema=LogEntryApiResponse, many=True)
+        spec.components.schema("History", schema=LogEntryApiResponse, many=False)
         spec.path(resource=org_views.InstitutionSearchView)
         spec.path(resource=org_views.InstitutionApiView)
         spec.path(resource=org_views.InstitutionDatasetSearchApiView)
@@ -129,20 +130,20 @@ class RdfApiSpec:
     spec = None
 
     def on_get(self, req, resp, version=None, *args, **kwargs):
-        with open(settings.SPEC_DIR.path(self.desc), 'r') as file:
+        with open(settings.SPEC_DIR.path(self.desc), "r") as file:
             description = file.read()
-        with open(settings.SPEC_DIR.path(self.spec), 'rb') as file:
+        with open(settings.SPEC_DIR.path(self.spec), "rb") as file:
             spec = json.load(file)
-        spec['info']['description'] = description
+        spec["info"]["description"] = description
         resp.media = spec
         resp.status = falcon.HTTP_200
 
 
 class RdfDcatApApiSpec(RdfApiSpec):
-    desc = 'rdf_api_desc_dcat_ap.html'
-    spec = 'rdf_api_spec_dcat_ap.json'
+    desc = "rdf_api_desc_dcat_ap.html"
+    spec = "rdf_api_spec_dcat_ap.json"
 
 
 class RdfDcatApPlApiSpec(RdfApiSpec):
-    desc = 'rdf_api_desc_dcat_ap_pl.html'
-    spec = 'rdf_api_spec_dcat_ap_pl.json'
+    desc = "rdf_api_desc_dcat_ap_pl.html"
+    spec = "rdf_api_spec_dcat_ap_pl.json"

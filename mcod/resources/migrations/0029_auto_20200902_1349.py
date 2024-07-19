@@ -6,23 +6,23 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('resources', '0028_update_resource_has_chart'),
+        ("resources", "0028_update_resource_has_chart"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='resource',
-            name='data_tasks_last_status',
-            field=models.CharField(blank=True, max_length=7, verbose_name='data tasks last status'),
+            model_name="resource",
+            name="data_tasks_last_status",
+            field=models.CharField(blank=True, max_length=7, verbose_name="data tasks last status"),
         ),
         migrations.AddField(
-            model_name='resource',
-            name='file_tasks_last_status',
-            field=models.CharField(blank=True, max_length=7, verbose_name='file tasks last status'),
+            model_name="resource",
+            name="file_tasks_last_status",
+            field=models.CharField(blank=True, max_length=7, verbose_name="file tasks last status"),
         ),
         migrations.AddField(
-            model_name='resource',
-            name='link_tasks_last_status',
-            field=models.CharField(blank=True, max_length=7, verbose_name='link tasks last status'),
+            model_name="resource",
+            name="link_tasks_last_status",
+            field=models.CharField(blank=True, max_length=7, verbose_name="link tasks last status"),
         ),
     ]

@@ -19,63 +19,62 @@ Dotyczy to tylko zasóbów z widokiem tabelarycznym. Nie ma zastosowania dla geo
 
 
 def update_schema(schema, dateformat, datetimeformat):
-    for field in schema['fields']:
-        if field['type'] == 'date':
-            field['format'] = dateformat
-        elif field['type'] == 'datetime':
-            field['format'] = datetimeformat
-        elif field['type'] == 'time':
-            field['format'] = datetimeformat
+    for field in schema["fields"]:
+        if field["type"] == "date":
+            field["format"] = dateformat
+        elif field["type"] == "datetime":
+            field["format"] = datetimeformat
+        elif field["type"] == "time":
+            field["format"] = datetimeformat
     return schema
 
 
 class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.description = description
-        parser.add_argument('--pks', type=str)
+        parser.add_argument("--pks", type=str)
         parser.add_argument(
-            '--async',
-            action='store_const',
-            dest='async',
+            "--async",
+            action="store_const",
+            dest="async",
             const=True,
-            help="Use celery task"
+            help="Use celery task",
         )
         parser.add_argument(
-            '--dateformat',
+            "--dateformat",
             type=str,
             default="any",
-            help="Schema datetime format - 'default' or 'any'. Now by default 'any' will be choosen"
+            help="Schema datetime format - 'default' or 'any'. Now by default 'any' will be choosen",
         )
         parser.add_argument(
-            '--datetimeformat',
+            "--datetimeformat",
             type=str,
             default="any",
-            help="Schema datetime format - 'default' or 'any'. Now by default 'any' will be choosen"
+            help="Schema datetime format - 'default' or 'any'. Now by default 'any' will be choosen",
         )
         parser.add_argument(
-            '--timeformat',
+            "--timeformat",
             type=str,
             default="any",
-            help="Schema datetime format - 'default' or 'any'. Now by default 'any' will be choosen"
+            help="Schema datetime format - 'default' or 'any'. Now by default 'any' will be choosen",
         )
 
     def handle(self, *args, **options):
-        if not options['pks']:
-            raise CommandError('No resource id specified. You must provide at least one.')
-        Resource = apps.get_model('resources', 'Resource')
-        asnc = options.get('async') or False
+        if not options["pks"]:
+            raise CommandError("No resource id specified. You must provide at least one.")
+        Resource = apps.get_model("resources", "Resource")
+        asnc = options.get("async") or False
         if not asnc:
             settings.CELERY_TASK_ALWAYS_EAGER = True
 
-        date_format = options['dateformat']
-        datetime_format = options['datetimeformat']
+        date_format = options["dateformat"]
+        datetime_format = options["datetimeformat"]
 
-        queryset = Resource.objects.with_tabular_data(
-            pks=(int(pk) for pk in options['pks'].split(',')))
-        self.stdout.write('The action will update schema for {} resource(s)'.format(queryset.count()))
-        for obj in tqdm(queryset, desc='Indexing'):
+        queryset = Resource.objects.with_tabular_data(pks=(int(pk) for pk in options["pks"].split(",")))
+        self.stdout.write("The action will update schema for {} resource(s)".format(queryset.count()))
+        for obj in tqdm(queryset, desc="Indexing"):
             if obj.tabular_data_schema:
                 tabular_data_schema = update_schema(obj.tabular_data_schema, date_format, datetime_format)
                 Resource.objects.filter(pk=obj.id).update(tabular_data_schema=tabular_data_schema)
             obj.index_file()
-        self.stdout.write('Done.')
+        self.stdout.write("Done.")

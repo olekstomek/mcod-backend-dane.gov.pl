@@ -19,16 +19,16 @@ from wagtailvideos.models import (
 class CustomVideo(AbstractVideo):
 
     admin_form_fields = (
-        'title',
-        'file',
-        'collection',
-        'thumbnail',
-        'tags',
+        "title",
+        "file",
+        "collection",
+        "thumbnail",
+        "tags",
     )
 
     @property
     def thumbnail_url(self):
-        return self._get_cms_url(self.thumbnail.url) if self.thumbnail else ''
+        return self._get_cms_url(self.thumbnail.url) if self.thumbnail else ""
 
     @property
     def video_url(self):
@@ -36,27 +36,27 @@ class CustomVideo(AbstractVideo):
 
     @property
     def embed_html(self):
-        attrs = {'controls': '',
-                 'style': 'max-width:100%;width:100%;height:auto;'}
+        attrs = {"controls": "", "style": "max-width:100%;width:100%;height:auto;"}
         if self.thumbnail:
-            attrs['poster'] = self.thumbnail_url
+            attrs["poster"] = self.thumbnail_url
 
         transcodes = self.get_current_transcodes()
         sources = []
         for transcode in transcodes:
-            sources.append("<source src='{0}' type='video/{1}' >".format(
-                self._get_cms_url(transcode.url), transcode.media_format.name))
+            sources.append(
+                "<source src='{0}' type='video/{1}' >".format(self._get_cms_url(transcode.url), transcode.media_format.name)
+            )
 
-        sources.append("<source src='{0}' type='{1}'>"
-                       .format(self.video_url, self.content_type))
+        sources.append("<source src='{0}' type='{1}'>".format(self.video_url, self.content_type))
         return mark_safe(
-            "<video {0}>\n{1}\n{2}\n</video>".format(flatatt(attrs), "\n".join(sources), "\n".join(self.get_tracks())))
+            "<video {0}>\n{1}\n{2}\n</video>".format(flatatt(attrs), "\n".join(sources), "\n".join(self.get_tracks()))
+        )
 
     def _get_cms_url(self, url):
-        return f'{settings.CMS_URL}{url}'
+        return f"{settings.CMS_URL}{url}"
 
     def update_video_embed(self, update_html_only=False):
-        url = self._get_cms_url(f'/admin/videos/{self.pk}/')
+        url = self._get_cms_url(f"/admin/videos/{self.pk}/")
         urls_to_check = [url, url[:-1]]
         embed_hashes = []
         for link in urls_to_check:
@@ -64,44 +64,42 @@ class CustomVideo(AbstractVideo):
         embeds = Embed.objects.filter(hash__in=embed_hashes)
         if embeds:
             update_kwargs = {
-                'html': self.embed_html,
+                "html": self.embed_html,
             }
             if not update_html_only:
-                update_kwargs['title'] = self.title
-                update_kwargs['thumbnail_url'] = self.thumbnail_url
+                update_kwargs["title"] = self.title
+                update_kwargs["thumbnail_url"] = self.thumbnail_url
             embeds.update(**update_kwargs)
 
     class Meta:
-        ordering = ['-created_at']
+        ordering = ["-created_at"]
 
 
 class CustomTranscode(AbstractVideoTranscode):
-    video = models.ForeignKey(CustomVideo, related_name='transcodes', on_delete=models.CASCADE)
+    video = models.ForeignKey(CustomVideo, related_name="transcodes", on_delete=models.CASCADE)
 
     class Meta:
-        unique_together = (
-            ('video', 'media_format')
-        )
+        unique_together = ("video", "media_format")
 
 
 class CustomTrackListing(AbstractTrackListing):
-    video = models.OneToOneField(CustomVideo, related_name='track_listing', on_delete=models.CASCADE)
+    video = models.OneToOneField(CustomVideo, related_name="track_listing", on_delete=models.CASCADE)
 
 
 class CustomVideoTrack(AbstractVideoTrack):
-    listing = ParentalKey(CustomTrackListing, related_name='tracks', on_delete=models.CASCADE)
+    listing = ParentalKey(CustomTrackListing, related_name="tracks", on_delete=models.CASCADE)
 
     def track_tag(self):
         attrs = {
-            'kind': self.kind,
-            'src': f'{settings.CMS_URL}{self.url}',
+            "kind": self.kind,
+            "src": f"{settings.CMS_URL}{self.url}",
         }
         if self.label:
-            attrs['label'] = self.label
+            attrs["label"] = self.label
         if self.language:
-            attrs['srclang'] = self.language
+            attrs["srclang"] = self.language
 
-        return "<track {0}{1}>".format(flatatt(attrs), ' default' if self.sort_order == 0 else '')
+        return "<track {0}{1}>".format(flatatt(attrs), " default" if self.sort_order == 0 else "")
 
 
 @receiver(post_save, sender=CustomVideo)

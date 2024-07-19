@@ -8,13 +8,18 @@ import mcod.users.models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('users', '0026_auto_20210531_1919'),
+        ("users", "0026_auto_20210531_1919"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='meetingfile',
-            name='file',
-            field=models.FileField(max_length=2000, storage=mcod.core.storages.MeetingStorage(base_url=None, location=None), upload_to=mcod.users.models.meeting_file_path, verbose_name='file'),
+            model_name="meetingfile",
+            name="file",
+            field=models.FileField(
+                max_length=2000,
+                storage=mcod.core.storages.MeetingStorage(base_url=None, location=None),
+                upload_to=mcod.users.models.meeting_file_path,
+                verbose_name="file",
+            ),
         ),
     ]

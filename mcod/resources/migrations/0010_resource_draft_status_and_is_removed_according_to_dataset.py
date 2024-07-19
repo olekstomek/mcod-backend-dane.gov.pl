@@ -4,8 +4,11 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('resources', '0009_resource_show_tabular_view'),
-        ('datasets', '0009_dataset_draft_status_and_is_removed_according_to_organization'),
+        ("resources", "0009_resource_show_tabular_view"),
+        (
+            "datasets",
+            "0009_dataset_draft_status_and_is_removed_according_to_organization",
+        ),
     ]
 
     operations = []

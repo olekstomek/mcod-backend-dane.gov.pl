@@ -6,11 +6,11 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('special_signs', '0003_auto_20201218_1640'),
+        ("special_signs", "0003_auto_20201218_1640"),
     ]
 
     operations = [
         migrations.DeleteModel(
-            name='SpecialSignTrash',
+            name="SpecialSignTrash",
         ),
     ]

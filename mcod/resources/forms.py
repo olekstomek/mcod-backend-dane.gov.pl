@@ -11,10 +11,7 @@ from django.conf import settings as dj_settings
 from django.contrib.admin.widgets import AdminDateWidget, FilteredSelectMultiple
 from django.contrib.postgres.forms.jsonb import JSONField
 from django.core.exceptions import MultipleObjectsReturned, ValidationError
-from django.core.files.uploadedfile import (
-    InMemoryUploadedFile,
-    SimpleUploadedFile,
-)
+from django.core.files.uploadedfile import InMemoryUploadedFile, SimpleUploadedFile
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 
@@ -38,18 +35,12 @@ from mcod.resources.dga_constants import (
 from mcod.resources.dga_utils import (
     create_uploaded_file_from_path,
     get_dga_resource_for_institution,
-    validate_dga_file_columns,
     get_main_dga_resource,
+    validate_dga_file_columns,
 )
-from mcod.resources.models import (
-    SUPPORTED_FILE_EXTENSIONS,
-    Resource,
-    ResourceFile,
-    Supplement,
-)
+from mcod.resources.models import SUPPORTED_FILE_EXTENSIONS, Resource, ResourceFile, Supplement
 from mcod.special_signs.models import SpecialSign
 from mcod.unleash import is_enabled
-
 
 logger = logging.getLogger("mcod")
 
@@ -129,12 +120,8 @@ class MapsJSONField(JSONField):
                 if p in g:
                     membership.add(k)
         if len(membership) > 1:
-            err_msg = _("Selected items {} come from different map data sets.").format(
-                names_repr(names)
-            )
-            err_msg += str(
-                _(" Redefine the map by selecting items from only one map data set.")
-            )
+            err_msg = _("Selected items {} come from different map data sets.").format(names_repr(names))
+            err_msg += str(_(" Redefine the map by selecting items from only one map data set."))
             raise ValidationError(err_msg)
 
     def complete_group(self, names):
@@ -160,12 +147,8 @@ class MapsJSONField(JSONField):
                 for g in groups:
                     if names.issubset(g[0]):
                         missing = names_repr(g[0] - names)
-                        err_msg = _(
-                            "Missing elements: {} for the map data set: {}."
-                        ).format(missing, _(g[1]))
-                        err_msg += str(
-                            _(" Redefine the map by selecting the selected items.")
-                        )
+                        err_msg = _("Missing elements: {} for the map data set: {}.").format(missing, _(g[1]))
+                        err_msg += str(_(" Redefine the map by selecting the selected items."))
                         raise ValidationError(err_msg)
 
                 raise ValidationError(_("The map data set is incomplete."))
@@ -271,23 +254,17 @@ class ResourceForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if "related_resource" in self.fields:
-            self.fields[
-                "related_resource"
-            ].label_from_instance = lambda obj: obj.label_from_instance
+            self.fields["related_resource"].label_from_instance = lambda obj: obj.label_from_instance
             self.fields["related_resource"].widget = autocomplete.ModelSelect2(
                 url="resource-autocomplete",
                 attrs={"data-html": True},
                 forward=["dataset", forward.Const(self.instance.id, "id")],
             )
             # https://stackoverflow.com/a/42629593/1845230
-            self.fields["related_resource"].widget.choices = self.fields[
-                "related_resource"
-            ].choices
+            self.fields["related_resource"].widget.choices = self.fields["related_resource"].choices
 
     def clean_confirm_save(self) -> bool:
-        confirm_save_str: str = self.cleaned_data.get(
-            SAVE_CONFIRMATION_FIELD, "false"
-        )
+        confirm_save_str: str = self.cleaned_data.get(SAVE_CONFIRMATION_FIELD, "false")
         confirm_save: bool = confirm_save_str.lower() == "true"
         return confirm_save
 
@@ -296,9 +273,7 @@ class ResourceForm(forms.ModelForm):
 
         instance_pk: Optional[int] = self.instance.pk
         creating_resource: bool = False if instance_pk else True
-        contains_protected_data: bool = data.get(
-            "contains_protected_data"
-        ) == "True"
+        contains_protected_data: bool = data.get("contains_protected_data") == "True"
 
         if contains_protected_data:
             if creating_resource:
@@ -313,9 +288,7 @@ class ResourceForm(forms.ModelForm):
         self._validate_related_resource(data)
 
         # Check if updating Main DGA Resource
-        is_main_dga_resource: bool = self._is_main_dga_resource_updated(
-            instance_pk
-        )
+        is_main_dga_resource: bool = self._is_main_dga_resource_updated(instance_pk)
 
         if contains_protected_data:
             self._validate_data_flags_when_contains_protected_data(data)
@@ -351,20 +324,18 @@ class ResourceForm(forms.ModelForm):
                 "it's dataset is still a draft. "
                 "You should first published that dataset: "
             )
-            self.add_error(
-                "status", mark_safe(error_message + dataset.title_as_link)
-            )
+            self.add_error("status", mark_safe(error_message + dataset.title_as_link))
 
     def _validate_related_resource(self, data: dict) -> None:
         related_resource = data.get("related_resource")
         dataset = data.get("dataset")
-        if all((
+        if all(
+            (
                 dataset,
                 related_resource,
-                related_resource not in Resource.raw.filter(
-                    dataset_id=dataset.id
-                )
-        )):
+                related_resource not in Resource.raw.filter(dataset_id=dataset.id),
+            )
+        ):
             self.add_error(
                 "related_resource",
                 _("Only resource from related dataset resources is valid!"),
@@ -384,10 +355,7 @@ class ResourceForm(forms.ModelForm):
         if any([has_dynamic_data, has_high_value_data, has_research_data]):
             self.add_error(
                 "contains_protected_data",
-                _(
-                    "To select YES here, select NO in the fields for "
-                    "dynamic, high-value and research data."
-                ),
+                _("To select YES here, select NO in the fields for " "dynamic, high-value and research data."),
             )
 
     def _validate_institution_when_contains_protected_data(self, data: dict) -> None:
@@ -403,10 +371,7 @@ class ResourceForm(forms.ModelForm):
             )
             self.add_error(
                 "contains_protected_data",
-                _(
-                    "To select YES here, above select the dataset of a "
-                    "government or local government institution."
-                ),
+                _("To select YES here, above select the dataset of a " "government or local government institution."),
             )
 
     def _validate_dga_file(self, creating_resource: bool) -> None:
@@ -416,10 +381,7 @@ class ResourceForm(forms.ModelForm):
 
         extension: Optional[str] = guess_extension(file.content_type)
         if extension is None:
-            logger.warning(
-                f"Could not find extension for content type: "
-                f"{file.content_type}"
-            )
+            logger.warning(f"Could not find extension for content type: " f"{file.content_type}")
             self.add_error(
                 "file",
                 _(
@@ -444,10 +406,7 @@ class ResourceForm(forms.ModelForm):
             else:
                 self.add_error(
                     "contains_protected_data",
-                    _(
-                        "The resource has a different type than csv, xls or "
-                        "xlsx format."
-                    ),
+                    _("The resource has a different type than csv, xls or " "xlsx format."),
                 )
             return
 
@@ -460,16 +419,15 @@ class ResourceForm(forms.ModelForm):
                         "The resource labeled below as a list of "
                         "protected data can only contain columns named "
                         "in this order: "
-                    ) + ", ".join(DGA_COLUMNS) + ".",
+                    )
+                    + ", ".join(DGA_COLUMNS)
+                    + ".",
                 )
             # can't add err message to not existing field "file" while updating
             else:
                 self.add_error(
                     "contains_protected_data",
-                    _(
-                        "The saved file has a different structure than that "
-                        "required for the list of protected data."
-                    ),
+                    _("The saved file has a different structure than that " "required for the list of protected data."),
                 )
 
     def _remove_dga_flag_from_current_dga_resource_if_needed(self, data):
@@ -480,13 +438,11 @@ class ResourceForm(forms.ModelForm):
         organization_id = dataset.organization.pk
         exclude_object_id = self.instance.pk if self.instance else None
         try:
-            current_dga_resource = get_dga_resource_for_institution(
-                organization_id, exclude_object_id
-            )
+            current_dga_resource = get_dga_resource_for_institution(organization_id, exclude_object_id)
         except MultipleObjectsReturned:
             self.add_error(
                 "contains_protected_data",
-                _("There is more than one resource containing protected data")
+                _("There is more than one resource containing protected data"),
             )
             return
 
@@ -510,7 +466,7 @@ class ResourceForm(forms.ModelForm):
                     "Pick a file from disk in xls, xlsx or csv format if "
                     "you mark the resource below as a list of protected "
                     "data."
-                )
+                ),
             )
             return
         # after dga save confirmation we get file_ref instead of file
@@ -523,10 +479,7 @@ class ResourceForm(forms.ModelForm):
         if not file:
             self.add_error(
                 "contains_protected_data",
-                _(
-                    "The resource has a different type than csv, xls or xlsx "
-                    "format."
-                )
+                _("The resource has a different type than csv, xls or xlsx " "format."),
             )
             return
 
@@ -536,7 +489,7 @@ class ResourceForm(forms.ModelForm):
         else:
             self.add_error(
                 "contains_protected_data",
-                _("Cannot read existing file") + f": {file.name}."
+                _("Cannot read existing file") + f": {file.name}.",
             )
 
 
@@ -560,11 +513,7 @@ class ChangeResourceForm(ResourceForm):
             self.fields["data_rules"].widget.instance = self.instance
             self.fields["maps_and_plots"].widget.instance = self.instance
             if "regions" in self.fields:
-                self.fields[
-                    "regions"
-                ].choices = self.instance.regions.all().values_list(
-                    "region_id", "hierarchy_label"
-                )
+                self.fields["regions"].choices = self.instance.regions.all().values_list("region_id", "hierarchy_label")
 
     def clean(self):
         data = super().clean()
@@ -596,9 +545,7 @@ class ChangeResourceForm(ResourceForm):
 
 
 class LinkOrFileUploadForm(forms.ModelForm):
-    switcher = ResourceSwitcherField(
-        label=_("Data source"), widget=ResourceSourceSwitcher
-    )
+    switcher = ResourceSwitcherField(label=_("Data source"), widget=ResourceSourceSwitcher)
     file = forms.FileField(label=_("File"), widget=ResourceFileWidget)
     link = forms.URLField(widget=ResourceLinkWidget(attrs={"style": "width: 99%"}))
 
@@ -610,9 +557,7 @@ class LinkOrFileUploadForm(forms.ModelForm):
 
     def clean_switcher(self):
         switcher_field = self.fields["switcher"]
-        selected_field = switcher_field.widget.value_from_datadict(
-            self.data, self.files, self.add_prefix("switcher")
-        )
+        selected_field = switcher_field.widget.value_from_datadict(self.data, self.files, self.add_prefix("switcher"))
         if self.instance and self.instance.id:
             self.fields["link"].required = self.fields["file"].required = False
             return selected_field
@@ -626,17 +571,9 @@ class LinkOrFileUploadForm(forms.ModelForm):
 
 
 class AddResourceForm(ResourceForm, LinkOrFileUploadForm):
-    data_date = forms.DateField(
-        initial=today, widget=AdminDateWidget, label=_("Data date")
-    )
-    from_resource = forms.ModelChoiceField(
-        queryset=Resource.objects.all(), widget=forms.HiddenInput(), required=False
-    )
-    link = forms.URLField(
-        widget=ResourceLinkWidget(
-            attrs={"style": "width: 99%", "placeholder": "https://"}
-        )
-    )
+    data_date = forms.DateField(initial=today, widget=AdminDateWidget, label=_("Data date"))
+    from_resource = forms.ModelChoiceField(queryset=Resource.objects.all(), widget=forms.HiddenInput(), required=False)
+    link = forms.URLField(widget=ResourceLinkWidget(attrs={"style": "width: 99%", "placeholder": "https://"}))
     file_ref = forms.CharField(required=False)
 
     regions_ = RegionsMultipleChoiceField(required=False, label=_("Regions"))
@@ -678,13 +615,9 @@ class AddResourceForm(ResourceForm, LinkOrFileUploadForm):
         if file:
             _name, ext = os.path.splitext(file.name)
             if ext.lower() not in SUPPORTED_FILE_EXTENSIONS:
-                self.add_error(
-                    "file", _("Invalid file extension: %(ext)s.") % {"ext": ext or "-"}
-                )
+                self.add_error("file", _("Invalid file extension: %(ext)s.") % {"ext": ext or "-"})
             elif is_password_protected_archive_file(file):
-                self.add_error(
-                    "file", _("Password protected archives are not allowed.")
-                )
+                self.add_error("file", _("Password protected archives are not allowed."))
         return file
 
 
@@ -692,9 +625,7 @@ class AddResourceInlineForm(AddResourceForm):
     # Setting DGA flag is disallowed in the inline flow because validating
     # business rules (that only a single DGA resource exists in a Dataset)
     # would add too much technical complexity
-    contains_protected_data = forms.CharField(
-        initial="False", widget=forms.HiddenInput(), required=False
-    )
+    contains_protected_data = forms.CharField(initial="False", widget=forms.HiddenInput(), required=False)
 
 
 class TrashResourceForm(forms.ModelForm):
@@ -706,9 +637,7 @@ class TrashResourceForm(forms.ModelForm):
                 "You can't restore this resource, because it's dataset is still removed. Please first restore dataset: "
             )
 
-            error_message += "<a href='{}'>{}</a>".format(
-                dataset.admin_trash_change_url, dataset.title
-            )
+            error_message += "<a href='{}'>{}</a>".format(dataset.admin_trash_change_url, dataset.title)
 
             raise forms.ValidationError(mark_safe(error_message))
 

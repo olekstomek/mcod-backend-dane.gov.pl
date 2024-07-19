@@ -7,13 +7,18 @@ import mcod.cms.fields
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('cms', '0021_customimage_alt'),
+        ("cms", "0021_customimage_alt"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='customimage',
-            name='alt',
-            field=mcod.cms.fields.CustomTextField(blank=True, help_text='Alternative text should be as descriptive and short as possible (max 150 chars).', max_length=150, verbose_name='Alternative text'),
+            model_name="customimage",
+            name="alt",
+            field=mcod.cms.fields.CustomTextField(
+                blank=True,
+                help_text="Alternative text should be as descriptive and short as possible (max 150 chars).",
+                max_length=150,
+                verbose_name="Alternative text",
+            ),
         ),
     ]

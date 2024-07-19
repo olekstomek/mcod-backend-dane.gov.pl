@@ -2,18 +2,27 @@
 
 from django.db import migrations, models
 
+
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('histories', '0001_initial'),
+        ("histories", "0001_initial"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='HistoryIndexSync',
+            name="HistoryIndexSync",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('last_indexed', models.DateTimeField()),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("last_indexed", models.DateTimeField()),
             ],
         )
     ]

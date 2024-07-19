@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('datasets', '0030_auto_20210621_1219'),
+        ("datasets", "0030_auto_20210621_1219"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='dataset',
-            name='has_high_value_data',
-            field=models.BooleanField(default=False, verbose_name='Has high value data'),
+            model_name="dataset",
+            name="has_high_value_data",
+            field=models.BooleanField(default=False, verbose_name="Has high value data"),
         ),
     ]

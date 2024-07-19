@@ -9,38 +9,58 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('applications', '0001_initial'),
-        ('tags', '0001_initial'),
+        ("applications", "0001_initial"),
+        ("tags", "0001_initial"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('datasets', '0001_initial'),
+        ("datasets", "0001_initial"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='application',
-            name='created_by',
-            field=models.ForeignKey(editable=False, null=True, on_delete=django.db.models.deletion.DO_NOTHING,
-                                    related_name='applications_created', to=settings.AUTH_USER_MODEL,
-                                    verbose_name='Created by'),
+            model_name="application",
+            name="created_by",
+            field=models.ForeignKey(
+                editable=False,
+                null=True,
+                on_delete=django.db.models.deletion.DO_NOTHING,
+                related_name="applications_created",
+                to=settings.AUTH_USER_MODEL,
+                verbose_name="Created by",
+            ),
         ),
         migrations.AddField(
-            model_name='application',
-            name='datasets',
-            field=models.ManyToManyField(db_table='application_dataset', related_name='applications',
-                                         related_query_name='application', to='datasets.Dataset',
-                                         verbose_name='Datasets'),
+            model_name="application",
+            name="datasets",
+            field=models.ManyToManyField(
+                db_table="application_dataset",
+                related_name="applications",
+                related_query_name="application",
+                to="datasets.Dataset",
+                verbose_name="Datasets",
+            ),
         ),
         migrations.AddField(
-            model_name='application',
-            name='modified_by',
-            field=models.ForeignKey(editable=False, null=True, on_delete=django.db.models.deletion.DO_NOTHING,
-                                    related_name='applications_modified', to=settings.AUTH_USER_MODEL,
-                                    verbose_name='Modified by'),
+            model_name="application",
+            name="modified_by",
+            field=models.ForeignKey(
+                editable=False,
+                null=True,
+                on_delete=django.db.models.deletion.DO_NOTHING,
+                related_name="applications_modified",
+                to=settings.AUTH_USER_MODEL,
+                verbose_name="Modified by",
+            ),
         ),
         migrations.AddField(
-            model_name='application',
-            name='tags',
-            field=models.ManyToManyField(blank=True, db_table='application_tag', related_name='applications',
-                                         related_query_name='application', to='tags.Tag', verbose_name='Tag'),
+            model_name="application",
+            name="tags",
+            field=models.ManyToManyField(
+                blank=True,
+                db_table="application_tag",
+                related_name="applications",
+                related_query_name="application",
+                to="tags.Tag",
+                verbose_name="Tag",
+            ),
         ),
     ]

@@ -6,33 +6,33 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('suggestions', '0028_auto_20201214_0737'),
+        ("suggestions", "0028_auto_20201214_0737"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='accepteddatasetsubmission',
-            name='is_permanently_removed',
+            model_name="accepteddatasetsubmission",
+            name="is_permanently_removed",
             field=models.BooleanField(default=False),
         ),
         migrations.AddField(
-            model_name='datasetcomment',
-            name='is_permanently_removed',
+            model_name="datasetcomment",
+            name="is_permanently_removed",
             field=models.BooleanField(default=False),
         ),
         migrations.AddField(
-            model_name='datasetsubmission',
-            name='is_permanently_removed',
+            model_name="datasetsubmission",
+            name="is_permanently_removed",
             field=models.BooleanField(default=False),
         ),
         migrations.AddField(
-            model_name='resourcecomment',
-            name='is_permanently_removed',
+            model_name="resourcecomment",
+            name="is_permanently_removed",
             field=models.BooleanField(default=False),
         ),
         migrations.AddField(
-            model_name='submissionfeedback',
-            name='is_permanently_removed',
+            model_name="submissionfeedback",
+            name="is_permanently_removed",
             field=models.BooleanField(default=False),
         ),
     ]

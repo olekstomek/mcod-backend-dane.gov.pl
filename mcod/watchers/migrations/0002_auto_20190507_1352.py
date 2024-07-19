@@ -6,13 +6,13 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('watchers', '0001_initial'),
+        ("watchers", "0001_initial"),
     ]
 
     operations = [
         migrations.RenameField(
-            model_name='subscription',
-            old_name='include_in_report',
-            new_name='enable_notifications',
+            model_name="subscription",
+            old_name="include_in_report",
+            new_name="enable_notifications",
         ),
     ]

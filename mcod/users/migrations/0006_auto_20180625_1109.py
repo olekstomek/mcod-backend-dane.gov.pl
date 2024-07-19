@@ -7,20 +7,26 @@ import model_utils.fields
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('users', '0005_auto_20180525_1430'),
+        ("users", "0005_auto_20180525_1430"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='token',
-            name='modified',
-            field=model_utils.fields.AutoLastModifiedField(default=django.utils.timezone.now, editable=False,
-                                                           verbose_name='modified'),
+            model_name="token",
+            name="modified",
+            field=model_utils.fields.AutoLastModifiedField(
+                default=django.utils.timezone.now,
+                editable=False,
+                verbose_name="modified",
+            ),
         ),
         migrations.AlterField(
-            model_name='user',
-            name='modified',
-            field=model_utils.fields.AutoLastModifiedField(default=django.utils.timezone.now, editable=False,
-                                                           verbose_name='modified'),
+            model_name="user",
+            name="modified",
+            field=model_utils.fields.AutoLastModifiedField(
+                default=django.utils.timezone.now,
+                editable=False,
+                verbose_name="modified",
+            ),
         ),
     ]

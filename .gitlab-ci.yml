@@ -123,7 +123,6 @@ lint:
     - schedules
   tags:
     - docker
-  allow_failure: true
 
 check-docker-build:
   stage: test

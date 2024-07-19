@@ -4,7 +4,7 @@ from mcod.lib.data_rules import boolean_rule, krs_rule, nip_rule, numeric_rule, 
 class TestRulesTemplates:
 
     def test_boolean_tmpl(self):
-        result = boolean_rule('col')
+        result = boolean_rule("col")
         expected = """
 def col = doc['col'].value;
 
@@ -63,7 +63,7 @@ if (col1?.length() == 10) {
         assert expected == result
 
     def test_nip_rule_tmpl(self):
-        result1 = nip_rule('col1')
+        result1 = nip_rule("col1")
         expected1 = """
 def col1 = doc['col1'].value;
 
@@ -76,7 +76,7 @@ if (col1.toString().length() == 10) {
 
 
 """
-        result2 = nip_rule('col1.keyword')
+        result2 = nip_rule("col1.keyword")
         expected2 = """
 def col1 = doc['col1.keyword'].value;
 

@@ -5,7 +5,7 @@ from mcod.core.managers import SoftDeletableManager, SoftDeletableQuerySet
 class SpecialSignQuerySet(SoftDeletableQuerySet):
 
     def published(self):
-        return self.filter(status='published')
+        return self.filter(status="published")
 
 
 class SpecialSignManagerMixin:

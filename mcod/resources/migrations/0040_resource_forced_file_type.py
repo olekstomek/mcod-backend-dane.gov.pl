@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('resources', '0039_merge_20210507_1157'),
+        ("resources", "0039_merge_20210507_1157"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='resource',
-            name='forced_file_type',
-            field=models.BooleanField(default=False, verbose_name='Mark resource as file'),
+            model_name="resource",
+            name="forced_file_type",
+            field=models.BooleanField(default=False, verbose_name="Mark resource as file"),
         ),
     ]

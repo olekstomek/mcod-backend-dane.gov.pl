@@ -29,9 +29,4 @@ def illegal_character_validator(value: str) -> None:
         try:
             parseString(data)
         except ExpatError:
-            raise ValidationError(
-                _(
-                    "Given text contains illegal character. "
-                    "Please revalidate provided data."
-                )
-            )
+            raise ValidationError(_("Given text contains illegal character. " "Please revalidate provided data."))

@@ -6,16 +6,19 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('suggestions', '0009_auto_20200721_1537'),
+        ("suggestions", "0009_auto_20200721_1537"),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='accepteddatasetsubmission',
-            options={'verbose_name': 'Accepted dataset submission', 'verbose_name_plural': 'Accepted dataset submissions'},
+            name="accepteddatasetsubmission",
+            options={
+                "verbose_name": "Accepted dataset submission",
+                "verbose_name_plural": "Accepted dataset submissions",
+            },
         ),
         migrations.AlterModelOptions(
-            name='datasetsubmissiontrash',
-            options={'verbose_name': 'Trash', 'verbose_name_plural': 'Trash'},
+            name="datasetsubmissiontrash",
+            options={"verbose_name": "Trash", "verbose_name_plural": "Trash"},
         ),
     ]

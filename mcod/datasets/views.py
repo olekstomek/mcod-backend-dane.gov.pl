@@ -56,7 +56,7 @@ class DatasetSearchView(JsonAPIView):
         self.handle(request, response, self.GET, *args, **kwargs)
 
     @falcon.before(login_optional)
-    @on_get.version('1.0')
+    @on_get.version("1.0")
     def on_get(self, request, response, *args, **kwargs):
         self.handle(request, response, self.GET, *args, **kwargs)
 
@@ -64,11 +64,11 @@ class DatasetSearchView(JsonAPIView):
         deserializer_schema = partial(DatasetApiSearchRequest, many=False)
         serializer_schema = partial(DatasetApiResponse, many=True)
         search_document = DatasetDocument()
-        include_default = ['institution']
+        include_default = ["institution"]
 
         def __init__(self, request, response):
             super().__init__(request, response)
-            self.deserializer.context['dataset_promotion_enabled'] = True
+            self.deserializer.context["dataset_promotion_enabled"] = True
 
 
 class DatasetApiView(JsonAPIView):
@@ -82,15 +82,15 @@ class DatasetApiView(JsonAPIView):
         self.handle(request, response, self.GET, *args, **kwargs)
 
     @falcon.before(login_optional)
-    @on_get.version('1.0')
+    @on_get.version("1.0")
     def on_get(self, request, response, *args, **kwargs):
         self.handle(request, response, self.GET, *args, **kwargs)
 
     class GET(RetrieveOneHdlr):
         deserializer_schema = partial(DatasetApiRequest)
-        database_model = apps.get_model('datasets', 'Dataset')
+        database_model = apps.get_model("datasets", "Dataset")
         serializer_schema = partial(DatasetApiResponse, many=False)
-        include_default = ['institution', 'resource']
+        include_default = ["institution", "resource"]
 
 
 class CatalogRDFView(RDFView):
@@ -103,16 +103,16 @@ class CatalogRDFView(RDFView):
         search_document = DatasetDocument()
 
         def _queryset_extra(self, queryset, *args, **kwargs):
-            queryset.aggs.metric('catalog_modified', A('max', field='last_modified_resource'))
+            queryset.aggs.metric("catalog_modified", A("max", field="last_modified_resource"))
             return queryset
 
         def serialize(self, *args, **kwargs):
-            cleaned = getattr(self.request.context, 'cleaned_data', {})
+            cleaned = getattr(self.request.context, "cleaned_data", {})
             if self.use_rdf_db():
                 store = self.get_sparql_store()
                 return store.get_catalog(**cleaned)
             result = self._get_data(cleaned, *args, **kwargs)
-            self.serializer.context['datasource'] = 'es'
+            self.serializer.context["datasource"] = "es"
             return self.serializer.dump(result)
 
 
@@ -122,16 +122,16 @@ class DatasetRDFView(RDFView):
 
     class GET(ShaclMixin, RetrieveOneHdlr):
         deserializer_schema = partial(DatasetApiRequest)
-        database_model = apps.get_model('datasets', 'Dataset')
+        database_model = apps.get_model("datasets", "Dataset")
         serializer_schema = partial(DatasetRDFResponseSchema, many=False)
 
         def serialize(self, *args, **kwargs):
             if self.use_rdf_db():
                 store = self.get_sparql_store()
                 return store.get_dataset_graph(**kwargs)
-            cleaned = getattr(self.request.context, 'cleaned_data', {})
+            cleaned = getattr(self.request.context, "cleaned_data", {})
             dataset = self._get_data(cleaned, *args, **kwargs)
-            self.serializer.context['datasource'] = 'db'
+            self.serializer.context["datasource"] = "db"
             return self.serializer.dump(dataset)
 
 
@@ -144,7 +144,7 @@ class DatasetResourceSearchApiView(JsonAPIView):
         """
         self.handle(request, response, self.GET, *args, **kwargs)
 
-    @on_get.version('1.0')
+    @on_get.version("1.0")
     def on_get(self, request, response, *args, **kwargs):
         self.handle(request, response, self.GET, *args, **kwargs)
 
@@ -155,9 +155,8 @@ class DatasetResourceSearchApiView(JsonAPIView):
 
         def _queryset_extra(self, queryset, id=None, **kwargs):
             if id:
-                queryset = queryset.query("nested", path="dataset",
-                                          query=Q("term", **{'dataset.id': id}))
-            return queryset.filter('term', status=Dataset.STATUS.published)
+                queryset = queryset.query("nested", path="dataset", query=Q("term", **{"dataset.id": id}))
+            return queryset.filter("term", status=Dataset.STATUS.published)
 
 
 class DatasetCommentsView(JsonAPIView):
@@ -167,10 +166,10 @@ class DatasetCommentsView(JsonAPIView):
     class POST(CreateOneHdlr):
         deserializer_schema = CreateCommentRequest
         serializer_schema = partial(CommentApiResponse, many=False)
-        database_model = apps.get_model('datasets', 'Dataset')
+        database_model = apps.get_model("datasets", "Dataset")
 
         def _get_resource(self, id, *args, **kwargs):
-            instance = getattr(self, '_cached_resource', None)
+            instance = getattr(self, "_cached_resource", None)
             if not instance:
                 try:
                     self._cached_resource = self.database_model.objects.get(pk=id, status="published")
@@ -184,8 +183,8 @@ class DatasetCommentsView(JsonAPIView):
             return cleaned
 
         def _get_data(self, cleaned, id, *args, **kwargs):
-            data = cleaned['data']['attributes']
-            model = apps.get_model('suggestions.DatasetComment')
+            data = cleaned["data"]["attributes"]
+            model = apps.get_model("suggestions.DatasetComment")
             self.response.context.data = model.objects.create(dataset_id=id, **data)
 
 
@@ -197,7 +196,7 @@ class CSVMetadataView(BaseView):
     class GET(CSVMetadataViewHandler):
 
         def _get_queryset(self, cleaned, *args, **kwargs):
-            return self.database_model.objects.filter(pk=kwargs['id'])
+            return self.database_model.objects.filter(pk=kwargs["id"])
 
     def on_get_catalog(self, request, response, *args, **kwargs):
         self.handle(request, response, self.GETCatalog, *args, **kwargs)
@@ -206,15 +205,15 @@ class CSVMetadataView(BaseView):
 
         def serialize(self, *args, **kwargs):
             try:
-                with open(f'{settings.METADATA_MEDIA_ROOT}/{get_language()}/katalog.csv', 'rb') as f:
+                with open(f"{settings.METADATA_MEDIA_ROOT}/{get_language()}/katalog.csv", "rb") as f:
                     catalog_file = f.read()
             except FileNotFoundError:
                 raise falcon.HTTPNotFound
-            self.response.downloadable_as = 'katalog.csv'
+            self.response.downloadable_as = "katalog.csv"
             return catalog_file
 
     def set_content_type(self, resp, **kwargs):
-        return settings.EXPORT_FORMAT_TO_MIMETYPE['csv']
+        return settings.EXPORT_FORMAT_TO_MIMETYPE["csv"]
 
 
 class XMLMetadataView(BaseView):
@@ -225,7 +224,7 @@ class XMLMetadataView(BaseView):
     class GET(XMLMetadataViewHandler):
 
         def _get_queryset(self, cleaned, *args, **kwargs):
-            return self.database_model.objects.filter(id=kwargs['id'])
+            return self.database_model.objects.filter(id=kwargs["id"])
 
     def on_get_catalog(self, request, response, *args, **kwargs):
         self.handle(request, response, self.GETCatalog, *args, **kwargs)
@@ -234,15 +233,15 @@ class XMLMetadataView(BaseView):
 
         def serialize(self, *args, **kwargs):
             try:
-                with open(f'{settings.METADATA_MEDIA_ROOT}/{get_language()}/katalog.xml', 'rb') as f:
+                with open(f"{settings.METADATA_MEDIA_ROOT}/{get_language()}/katalog.xml", "rb") as f:
                     catalog_file = f.read()
             except FileNotFoundError:
                 raise falcon.HTTPNotFound
-            self.response.downloadable_as = 'katalog.xml'
+            self.response.downloadable_as = "katalog.xml"
             return catalog_file
 
     def set_content_type(self, resp, **kwargs):
-        return settings.EXPORT_FORMAT_TO_MIMETYPE['xml']
+        return settings.EXPORT_FORMAT_TO_MIMETYPE["xml"]
 
 
 class LicenseView(JsonAPIView):
@@ -252,11 +251,11 @@ class LicenseView(JsonAPIView):
 
     class GET(BaseHdlr):
         deserializer_schema = LicenseApiRequest
-        database_model = apps.get_model('datasets', 'Dataset')
+        database_model = apps.get_model("datasets", "Dataset")
         serializer_schema = LicenseApiResponse
 
         def _get_data(self, cleaned, *args, **kwargs):
-            data = self.database_model.get_license_data(kwargs['name'])
+            data = self.database_model.get_license_data(kwargs["name"])
             if not data:
                 raise falcon.HTTPNotFound
             return data
@@ -277,19 +276,22 @@ class DatasetResourcesFilesBulkDownloadView(BaseView):
         pass
 
     def set_content_type(self, resp, **kwargs):
-        return 'application/zip'
+        return "application/zip"
 
 
 class ConditionLabelsAdminView(PermissionRequiredMixin, View):
-    http_method_names = ['get']
+    http_method_names = ["get"]
 
     def has_permission(self):
         return self.request.user.is_staff or self.request.user.is_superuser
 
     def get(self, request, *args, **kwargs):
-        req_organization_type = request.GET.get('organization_type')
-        org_type = req_organization_type if req_organization_type in LICENSE_CONDITION_LABELS else 'public'
+        req_organization_type = request.GET.get("organization_type")
+        org_type = req_organization_type if req_organization_type in LICENSE_CONDITION_LABELS else "public"
         labels = LICENSE_CONDITION_LABELS[org_type]
-        article_url = f"{settings.BASE_URL}{settings.PUBLIC_LICENSES_ARTICLE_URL}" if org_type == 'public' else\
-            f"{settings.BASE_URL}{settings.PRIVATE_LICENSES_ARTICLE_URL}"
-        return JsonResponse({'condition_labels': labels, 'article_url': article_url})
+        article_url = (
+            f"{settings.BASE_URL}{settings.PUBLIC_LICENSES_ARTICLE_URL}"
+            if org_type == "public"
+            else f"{settings.BASE_URL}{settings.PRIVATE_LICENSES_ARTICLE_URL}"
+        )
+        return JsonResponse({"condition_labels": labels, "article_url": article_url})

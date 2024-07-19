@@ -24,17 +24,17 @@ User = get_user_model()
 
 def random_csv_data(columns=5, rows=100):
     _faker_types = [
-        ('text', {'max_nb_chars': 100}),
-        ('time', {'pattern': '%H:%M:%S', 'end_datetime': None}),
-        ('date', {'pattern': '%d-%m-%Y', 'end_datetime': None}),
-        ('month_name', {}),
-        ('catch_phrase', {}),
-        ('bs', {}),
-        ('company', {}),
-        ('country', {}),
-        ('city', {}),
-        ('street_name', {}),
-        ('address', {}),
+        ("text", {"max_nb_chars": 100}),
+        ("time", {"pattern": "%H:%M:%S", "end_datetime": None}),
+        ("date", {"pattern": "%d-%m-%Y", "end_datetime": None}),
+        ("month_name", {}),
+        ("catch_phrase", {}),
+        ("bs", {}),
+        ("company", {}),
+        ("country", {}),
+        ("city", {}),
+        ("street_name", {}),
+        ("address", {}),
     ]
 
     header_types = [random.randint(0, len(_faker_types) - 1) for col in range(columns)]
@@ -42,17 +42,13 @@ def random_csv_data(columns=5, rows=100):
 
     f = io.StringIO()
     _writer = csv.writer(f)
-    _writer.writerow(
-        _headers
-    )
+    _writer.writerow(_headers)
 
     for row in range(rows):
         row = []
         for header_idx in header_types:
             provider, extra_kwargs = _faker_types[header_idx]
-            row.append(
-                factory.Faker(provider, locale='pl_PL').generate(extra_kwargs)
-            )
+            row.append(factory.Faker(provider, locale="pl_PL").generate(extra_kwargs))
         _writer.writerow(row)
 
     return f.getvalue()
@@ -61,20 +57,18 @@ def random_csv_data(columns=5, rows=100):
 @pytest.fixture
 def constance_config():
     from constance import config
+
     return config
 
 
 @pytest.fixture
 def client():
-    return testing.TestClient(app, headers={'X-API-VERSION': '1.0'})
+    return testing.TestClient(app, headers={"X-API-VERSION": "1.0"})
 
 
 @pytest.fixture
 def client14():
-    return testing.TestClient(app, headers={
-        'X-API-VERSION': '1.4',
-        'Accept-Language': 'pl'
-    })
+    return testing.TestClient(app, headers={"X-API-VERSION": "1.4", "Accept-Language": "pl"})
 
 
 @pytest.fixture
@@ -89,70 +83,69 @@ def sessions_cache():
 
 @pytest.fixture
 def default_cache():
-    return caches['default']
+    return caches["default"]
 
 
 @pytest.fixture
 def invalid_passwords():
     return [
-        'abcd1234',
-        'abcdefghi',
-        '123456789',
-        'alpha101',
-        '92541001101',
-        '9dragons',
-        '@@@@@@@@',
-        '.........',
-        '!!!!!!!!!!!',
-        '12@@@@@@@',
-        '!!@#$$@ab@@',
-        'admin@mc.gov.pl',
-        '1vdsA532A66',
+        "abcd1234",
+        "abcdefghi",
+        "123456789",
+        "alpha101",
+        "92541001101",
+        "9dragons",
+        "@@@@@@@@",
+        ".........",
+        "!!!!!!!!!!!",
+        "12@@@@@@@",
+        "!!@#$$@ab@@",
+        "admin@mc.gov.pl",
+        "1vdsA532A66",
     ]
 
 
 @pytest.fixture
 def invalid_passwords_with_user():
     return [
-        'abcd1234',
-        'abcdefghi',
-        '123456789',
-        'aaa@bbb.cc',
-        'aaa@bbb.c12',
-        'bbb@aaa.cc',
-        'TestUser123',
-        'Test User',
-        'Test.User',
-        'User.Test123',
-        'alpha101',
-        '92541001101',
-        '9dragons',
-        '@@@@@@@@',
-        '.........',
-        '!!!!!!!!!!!',
-        '12@@@@@@@',
-        '!!@#$$@ab@@',
-        'admin@mc.gov.pl',
-        '1vdsA532A66',
+        "abcd1234",
+        "abcdefghi",
+        "123456789",
+        "aaa@bbb.cc",
+        "aaa@bbb.c12",
+        "bbb@aaa.cc",
+        "TestUser123",
+        "Test User",
+        "Test.User",
+        "User.Test123",
+        "alpha101",
+        "92541001101",
+        "9dragons",
+        "@@@@@@@@",
+        ".........",
+        "!!!!!!!!!!!",
+        "12@@@@@@@",
+        "!!@#$$@ab@@",
+        "admin@mc.gov.pl",
+        "1vdsA532A66",
     ]
 
 
 @pytest.fixture
 def valid_passwords():
     passwords = [
-        '12@@@@@@Ab@',
-        '!!@#$$@aBB1@@',
-        'Iron.Man.Is.Th3.Best'
-        'Admin7@mc.gov.pl',
-        '1vDsA532A.6!6',
+        "12@@@@@@Ab@",
+        "!!@#$$@aBB1@@",
+        "Iron.Man.Is.Th3.Best" "Admin7@mc.gov.pl",
+        "1vDsA532A.6!6",
     ]
-    passwords.extend(['Abcd%s1234' % v for v in settings.SPECIAL_CHARS])
+    passwords.extend(["Abcd%s1234" % v for v in settings.SPECIAL_CHARS])
     return passwords
 
 
 def prepare_file(name, content):
-    os.makedirs('media/resources/test', exist_ok=True)
-    f = open(f"media/resources/test/{name}", 'w')
+    os.makedirs("media/resources/test", exist_ok=True)
+    f = open(f"media/resources/test/{name}", "w")
     f.write(content)
     f.close()
     return f
@@ -160,20 +153,15 @@ def prepare_file(name, content):
 
 @pytest.fixture
 def file_csv():
-    content = "a;b;c;d;\n" \
-              "1;2;3;4;\n" \
-              "5;6;7;8;\n" \
-              "9;0;1;2;\n" \
-              "3;4;5;6;\n" \
-              "7;8;9;0;\n" \
-              "1;2;;4;\n"
-    return prepare_file('test_file.csv', content)
+    content = "a;b;c;d;\n" "1;2;3;4;\n" "5;6;7;8;\n" "9;0;1;2;\n" "3;4;5;6;\n" "7;8;9;0;\n" "1;2;;4;\n"
+    return prepare_file("test_file.csv", content)
 
 
 @pytest.fixture
 def csv_with_date_and_datetime():
     content = "data;datetime"
-    content += dedent("""
+    content += dedent(
+        """
         2019-12-01;2019-12-01
         2019-12-01;2019-12-01 10:12
         2019-12-01;2019-12-01 10:12:01
@@ -203,8 +191,9 @@ def csv_with_date_and_datetime():
         01-12-2019;01/12/2019 10:12
         01-12-2019;01/12/2019 10:12:01
         01-12-2019;01/12/2019 10:12:01.123219
-        01-12-2019;01/12/2019T10:12:01.123219""")
-    return prepare_file('dates_and_datetime.csv', content)
+        01-12-2019;01/12/2019T10:12:01.123219"""
+    )
+    return prepare_file("dates_and_datetime.csv", content)
 
 
 xml_sample = """<?xml version="1.0"?>
@@ -218,7 +207,7 @@ xml_sample = """<?xml version="1.0"?>
 
 @pytest.fixture
 def file_xml():
-    return prepare_file('test_file.xml', xml_sample)
+    return prepare_file("test_file.xml", xml_sample)
 
 
 @pytest.fixture
@@ -235,7 +224,7 @@ def file_html():
         Some sample text
     </body>
 </html>"""
-    return prepare_file('test_file.html', content)
+    return prepare_file("test_file.html", content)
 
 
 @pytest.fixture
@@ -249,7 +238,7 @@ xmlns:si="https://www.w3schools.com/rdf/">
     <si:author>Jan Egil Refsnes</si:author>
   </rdf:Description>
 </rdf:RDF>"""
-    return prepare_file('test_file.rdf', content)
+    return prepare_file("test_file.rdf", content)
 
 
 json_sample = """{"menu": {
@@ -308,12 +297,12 @@ jsonstat_sample = """{
 
 @pytest.fixture
 def file_json():
-    return prepare_file('test_file.json', json_sample)
+    return prepare_file("test_file.json", json_sample)
 
 
 @pytest.fixture
 def file_jsonstat():
-    return prepare_file('example_jsonstat.json', jsonstat_sample)
+    return prepare_file("example_jsonstat.json", jsonstat_sample)
 
 
 jsonapi_sample = {
@@ -326,7 +315,7 @@ jsonapi_sample = {
             "slug": "test",
             "created": "2015-05-18 13:21:00.528480+00:00",
             "website": "http://www.uke.gov.pl/",
-            "modified": "2017-12-01 10:05:09.055606+00:00"
+            "modified": "2017-12-01 10:05:09.055606+00:00",
         },
         "id": "10",
         "relationships": {
@@ -334,69 +323,67 @@ jsonapi_sample = {
                 "links": {
                     "related": {
                         "href": "/institutions/10/datasets",
-                        "meta": {
-                            "count": 0
-                        }
+                        "meta": {"count": 0},
                     }
                 },
-                "data": []
+                "data": [],
             }
         },
-        "links": {
-            "self": "/institutions/10"
-        }
+        "links": {"self": "/institutions/10"},
     },
-    "links": {
-        "self": "/institutions/10"
-    },
+    "links": {"self": "/institutions/10"},
     "meta": {
         "language": "pl",
         "params": {},
         "path": "/institutions/10",
-        "rel_uri": "/institutions/10"
-    }
+        "rel_uri": "/institutions/10",
+    },
 }
 
 
 @pytest.fixture
 def file_jsonapi():
     content = json.dumps(jsonapi_sample)
-    return prepare_file('test_jsonapi.json', content)
+    return prepare_file("test_jsonapi.json", content)
 
 
 @pytest.fixture
 def file_txt():
-    content = "jhshjgfjkhgsdfkjas   123423 sdfasfoipm\n<br/>\n{\"fake\": \"json\"}\n" \
-              "<fake>xml</fake>\nyweqioeruxczvb 12  123\t\n\t76ytgfvbnju8765rtfd"
-    return prepare_file('test_noformat.txt', content)
+    content = (
+        'jhshjgfjkhgsdfkjas   123423 sdfasfoipm\n<br/>\n{"fake": "json"}\n'
+        "<fake>xml</fake>\nyweqioeruxczvb 12  123\t\n\t76ytgfvbnju8765rtfd"
+    )
+    return prepare_file("test_noformat.txt", content)
 
 
 @pytest.fixture
 def base64_image():
-    image = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAADIEl" \
-            "EQVR42mKQLz/JyAAF/LlHswXyAGWTA4AcWRCG+2wsY9u2bdu2bdu21dk4WXt3YtvunoxijfHd" \
-            "G5yrjar68eoMvw8Tx4hzBE28TtCEawQNOUVQv1SC+qTwW5+UIVIg8vSKC+TmjfhJ6pZWp+HKW" \
-            "3K/XQ/pF/Gcvhuu07frevp3XcfADdcYuO8J/bbcpsm8C/IXjQ7XkYLW/iT9FSL556GnlYlHnm" \
-            "K2u3EBHx8+42PxMnwqUQbz4+d4QHxzMWXXbULaRypSA1HkT9jezt7ktPvvCYQHgwoFc0HWLOj" \
-            "O3sSOrwYx53X0XnKB6kMT5EyN5SGSl7OA7ev8r1CeQ8li6MNyIm9IQfPUjscDnz7bSTmvpd3E" \
-            "FDI32Y/0+7DTosADXG5fg8Dp7wI6UWDPuiRSHttwuEUBs8OTfvEF7cYlkqX+HlFAKNx3x30+W" \
-            "l38K7RaKFEEQ2h29m9MJuWJHbMTjO/txJxWaTsyjqw1tyMFDUin37a7/y/w4T0Uzsur74PYuz" \
-            "qeuIc23thBfWfnxCmVNsOiyVZlM1Kw8Lbf5tt8tDgD8nn88CMi+FCjHvdqtSb26GXOvnCit8L" \
-            "D13aOalRaDzpB9vLrkUJ6JNJ/w82/CzjFtU8PHCHhJA5fwvGEhzw2WjA44JkZrhttHExXaN3/" \
-            "GDlKr0YK7RzDwHXXcXn8/d1uNy/HTuN2xcYkHz7HqQ9gcIHJA/fNcPWV03P4rI7WfY6Qq9hyU" \
-            "aBDJANXX8Fs82tgEZdUYZMcdZ97us+8dsMzC9zzJotiZ/R29qWrtOp5iFyFlyCJVTWk+ZR0ed" \
-            "qmK0SfUjC9s3JZsXgS7n3ijoD75J3DB9vb+YzOzrJ9t+g2LJJazXbIuQou9s/F1xW31glrsFf" \
-            "pO1tDmuh+6rKO+LNaIk+pQjDFx/nIGR1ymkr3oZHkzL9ICQmfUUf6O6b+JJXfWqdmz6Nyh+HR" \
-            "dBIWdRwSSTshVBvBtU3vw7TpdYhW3Q9Qq8l2OSR8pkju6h+mfG0O/jXOWSptGpJVeJutwgayl" \
-            "11LjlKryFl8BbmKLiNXocXkKrCQnPkW/DXORUqv/OIPGXytI4mF5NYAAAAASUVORK5CYII="
+    image = (
+        "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAADIEl"
+        "EQVR42mKQLz/JyAAF/LlHswXyAGWTA4AcWRCG+2wsY9u2bdu2bdu21dk4WXt3YtvunoxijfHd"
+        "G5yrjar68eoMvw8Tx4hzBE28TtCEawQNOUVQv1SC+qTwW5+UIVIg8vSKC+TmjfhJ6pZWp+HKW"
+        "3K/XQ/pF/Gcvhuu07frevp3XcfADdcYuO8J/bbcpsm8C/IXjQ7XkYLW/iT9FSL556GnlYlHnm"
+        "K2u3EBHx8+42PxMnwqUQbz4+d4QHxzMWXXbULaRypSA1HkT9jezt7ktPvvCYQHgwoFc0HWLOj"
+        "O3sSOrwYx53X0XnKB6kMT5EyN5SGSl7OA7ev8r1CeQ8li6MNyIm9IQfPUjscDnz7bSTmvpd3E"
+        "FDI32Y/0+7DTosADXG5fg8Dp7wI6UWDPuiRSHttwuEUBs8OTfvEF7cYlkqX+HlFAKNx3x30+W"
+        "l38K7RaKFEEQ2h29m9MJuWJHbMTjO/txJxWaTsyjqw1tyMFDUin37a7/y/w4T0Uzsur74PYuz"
+        "qeuIc23thBfWfnxCmVNsOiyVZlM1Kw8Lbf5tt8tDgD8nn88CMi+FCjHvdqtSb26GXOvnCit8L"
+        "D13aOalRaDzpB9vLrkUJ6JNJ/w82/CzjFtU8PHCHhJA5fwvGEhzw2WjA44JkZrhttHExXaN3/"
+        "GDlKr0YK7RzDwHXXcXn8/d1uNy/HTuN2xcYkHz7HqQ9gcIHJA/fNcPWV03P4rI7WfY6Qq9hyU"
+        "aBDJANXX8Fs82tgEZdUYZMcdZ97us+8dsMzC9zzJotiZ/R29qWrtOp5iFyFlyCJVTWk+ZR0ed"
+        "qmK0SfUjC9s3JZsXgS7n3ijoD75J3DB9vb+YzOzrJ9t+g2LJJazXbIuQou9s/F1xW31glrsFf"
+        "pO1tDmuh+6rKO+LNaIk+pQjDFx/nIGR1ymkr3oZHkzL9ICQmfUUf6O6b+JJXfWqdmz6Nyh+HR"
+        "dBIWdRwSSTshVBvBtU3vw7TpdYhW3Q9Qq8l2OSR8pkju6h+mfG0O/jXOWSptGpJVeJutwgayl"
+        "11LjlKryFl8BbmKLiNXocXkKrCQnPkW/DXORUqv/OIPGXytI4mF5NYAAAAASUVORK5CYII="
+    )
     return image, 857  # obraz i pierwotny rozmiar w bajtach
 
 
 @pytest.fixture
 def small_image(base64_image):
-    decoded_img = base64.b64decode(base64_image[0].split(';base64,')[-1].encode())
-    os.makedirs('media/images/applications/test/', exist_ok=True)
-    with open("media/images/applications/test/clock.png", 'wb') as outfile:
+    decoded_img = base64.b64decode(base64_image[0].split(";base64,")[-1].encode())
+    os.makedirs("media/images/applications/test/", exist_ok=True)
+    with open("media/images/applications/test/clock.png", "wb") as outfile:
         outfile.write(decoded_img)
     image = SimpleUploadedFile("clock.png", decoded_img)
     return image
@@ -409,12 +396,12 @@ def es_dsl_queryset():
 
 @pytest.fixture()
 def fake_user():
-    return namedtuple('User', 'email state fullname')
+    return namedtuple("User", "email state fullname")
 
 
 @pytest.fixture()
 def fake_session():
-    return namedtuple('Session', 'session_key')
+    return namedtuple("Session", "session_key")
 
 
 @pytest.fixture
@@ -434,7 +421,7 @@ def fake_client():
     class JsonapiResource:
         def on_get(self, request, response):
             response.status = falcon.HTTP_200
-            response.content_type = 'application/vnd.api+json; charset=UTF-8'
+            response.content_type = "application/vnd.api+json; charset=UTF-8"
             response.text = json.dumps(jsonapi_sample)
 
     fake_api = falcon.API()

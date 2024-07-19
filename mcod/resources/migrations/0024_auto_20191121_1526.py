@@ -7,30 +7,30 @@ import django.db.models.manager
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('resources', '0023_charts_history_trigger'),
+        ("resources", "0023_charts_history_trigger"),
     ]
 
     operations = [
         migrations.AlterModelManagers(
-            name='chart',
+            name="chart",
             managers=[
-                ('raw', django.db.models.manager.Manager()),
+                ("raw", django.db.models.manager.Manager()),
             ],
         ),
         migrations.RemoveField(
-            model_name='chart',
-            name='i18n',
+            model_name="chart",
+            name="i18n",
         ),
         migrations.RemoveField(
-            model_name='chart',
-            name='slug',
+            model_name="chart",
+            name="slug",
         ),
         migrations.RemoveField(
-            model_name='chart',
-            name='uuid',
+            model_name="chart",
+            name="uuid",
         ),
         migrations.RemoveField(
-            model_name='chart',
-            name='views_count',
+            model_name="chart",
+            name="views_count",
         ),
     ]

@@ -38,15 +38,9 @@ def test_dates_in_detail_views_api14(dataset, client14):
     for d_name in ["created", "modified", "verified"]:
         assert d_name in resp.json["data"]["attributes"]
 
-    assert resp.json["data"]["attributes"]["modified"] == dataset.modified.strftime(
-        "%Y-%m-%dT%H:%M:%SZ"
-    )
-    assert resp.json["data"]["attributes"]["created"] == dataset.created.strftime(
-        "%Y-%m-%dT%H:%M:%SZ"
-    )
-    assert resp.json["data"]["attributes"]["verified"] == dataset.created.strftime(
-        "%Y-%m-%dT%H:%M:%SZ"
-    )
+    assert resp.json["data"]["attributes"]["modified"] == dataset.modified.strftime("%Y-%m-%dT%H:%M:%SZ")
+    assert resp.json["data"]["attributes"]["created"] == dataset.created.strftime("%Y-%m-%dT%H:%M:%SZ")
+    assert resp.json["data"]["attributes"]["verified"] == dataset.created.strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 @pytest.mark.elasticsearch
@@ -62,15 +56,9 @@ def test_data_date_with_resource_views_api14(dataset_with_resources, client14):
     for d_name in ["created", "modified", "verified"]:
         assert d_name in resp.json["data"]["attributes"]
 
-    assert resp.json["data"]["attributes"]["modified"] == dataset.modified.strftime(
-        "%Y-%m-%dT%H:%M:%SZ"
-    )
-    assert resp.json["data"]["attributes"]["created"] == dataset.created.strftime(
-        "%Y-%m-%dT%H:%M:%SZ"
-    )
-    assert resp.json["data"]["attributes"][
-        "verified"
-    ] == dataset.resources.last().created.strftime("%Y-%m-%dT%H:%M:%SZ")
+    assert resp.json["data"]["attributes"]["modified"] == dataset.modified.strftime("%Y-%m-%dT%H:%M:%SZ")
+    assert resp.json["data"]["attributes"]["created"] == dataset.created.strftime("%Y-%m-%dT%H:%M:%SZ")
+    assert resp.json["data"]["attributes"]["verified"] == dataset.resources.last().created.strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 @pytest.mark.elasticsearch
@@ -90,15 +78,9 @@ def test_dates_in_detail_views_api14_in_path(dataset, client14):
     for d_name in ["created", "modified", "verified"]:
         assert d_name in resp.json["data"]["attributes"]
 
-    assert resp.json["data"]["attributes"]["modified"] == dataset.modified.strftime(
-        "%Y-%m-%dT%H:%M:%SZ"
-    )
-    assert resp.json["data"]["attributes"]["created"] == dataset.created.strftime(
-        "%Y-%m-%dT%H:%M:%SZ"
-    )
-    assert resp.json["data"]["attributes"]["verified"] == dataset.verified.strftime(
-        "%Y-%m-%dT%H:%M:%SZ"
-    )
+    assert resp.json["data"]["attributes"]["modified"] == dataset.modified.strftime("%Y-%m-%dT%H:%M:%SZ")
+    assert resp.json["data"]["attributes"]["created"] == dataset.created.strftime("%Y-%m-%dT%H:%M:%SZ")
+    assert resp.json["data"]["attributes"]["verified"] == dataset.verified.strftime("%Y-%m-%dT%H:%M:%SZ")
     assert resp.json.get("jsonapi")
 
 
@@ -121,15 +103,9 @@ def test_dataset_dates_in_detail_views(dataset, resource, client):
         assert d_name in resp.json["data"]["attributes"]
 
     ds = Dataset.objects.get(pk=dataset.id)
-    assert resp.json["data"]["attributes"]["modified"] == dataset.modified.strftime(
-        "%Y-%m-%dT%H:%M:%SZ"
-    )
-    assert resp.json["data"]["attributes"]["created"] == dataset.created.strftime(
-        "%Y-%m-%dT%H:%M:%SZ"
-    )
-    assert resp.json["data"]["attributes"]["verified"] == ds.verified.strftime(
-        "%Y-%m-%dT%H:%M:%SZ"
-    )
+    assert resp.json["data"]["attributes"]["modified"] == dataset.modified.strftime("%Y-%m-%dT%H:%M:%SZ")
+    assert resp.json["data"]["attributes"]["created"] == dataset.created.strftime("%Y-%m-%dT%H:%M:%SZ")
+    assert resp.json["data"]["attributes"]["verified"] == ds.verified.strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 @pytest.mark.elasticsearch
@@ -151,51 +127,41 @@ def test_dataset_dates_in_detail_views_api_1_0_in_path(dataset, resource, client
         assert d_name in resp.json["data"]["attributes"]
 
     ds = Dataset.objects.get(pk=dataset.id)
-    assert resp.json["data"]["attributes"]["modified"] == dataset.modified.strftime(
-        "%Y-%m-%dT%H:%M:%SZ"
-    )
-    assert resp.json["data"]["attributes"]["created"] == dataset.created.strftime(
-        "%Y-%m-%dT%H:%M:%SZ"
-    )
-    assert resp.json["data"]["attributes"]["verified"] == ds.verified.strftime(
-        "%Y-%m-%dT%H:%M:%SZ"
-    )
+    assert resp.json["data"]["attributes"]["modified"] == dataset.modified.strftime("%Y-%m-%dT%H:%M:%SZ")
+    assert resp.json["data"]["attributes"]["created"] == dataset.created.strftime("%Y-%m-%dT%H:%M:%SZ")
+    assert resp.json["data"]["attributes"]["verified"] == ds.verified.strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 @pytest.mark.elasticsearch
 def test_dataset_update_frequency_in_detail_views_api_1_0(dataset, client):
     resp = client.simulate_get("/1.0/datasets/{}/".format(dataset.id))
     assert HTTP_OK == resp.status
-    assert resp.json["data"]["attributes"]["update_frequency"] == _(
-        _UPDATE_FREQUENCY[dataset.update_frequency]
-    )
+    assert resp.json["data"]["attributes"]["update_frequency"] == _(_UPDATE_FREQUENCY[dataset.update_frequency])
 
 
 @pytest.mark.elasticsearch
 def test_dataset_update_frequency_in_detail_views_api_1_4(dataset, client):
     resp = client.simulate_get("/1.4/datasets/{}/".format(dataset.id))
     assert HTTP_OK == resp.status
-    assert resp.json["data"]["attributes"]["update_frequency"] == _(
-        _UPDATE_FREQUENCY[dataset.update_frequency]
-    )
+    assert resp.json["data"]["attributes"]["update_frequency"] == _(_UPDATE_FREQUENCY[dataset.update_frequency])
 
 
 @pytest.mark.elasticsearch
 def test_slug_in_organization_link_datasets_list(dataset, client):
     resp = client.simulate_get("/1.4/datasets/")
     assert HTTP_OK == resp.status
-    assert resp.json["data"][0]["relationships"]["institution"]["links"][
-        "related"
-    ].endswith(f"{dataset.institution.id},{dataset.institution.slug}")
+    assert resp.json["data"][0]["relationships"]["institution"]["links"]["related"].endswith(
+        f"{dataset.institution.id},{dataset.institution.slug}"
+    )
 
 
 @pytest.mark.elasticsearch
 def test_slug_in_organization_link_dataset_details(dataset, client):
     resp = client.simulate_get(f"/1.4/datasets/{dataset.id}")
     assert HTTP_OK == resp.status
-    assert resp.json["data"]["relationships"]["institution"]["links"][
-        "related"
-    ].endswith(f"{dataset.institution.id},{dataset.institution.slug}")
+    assert resp.json["data"]["relationships"]["institution"]["links"]["related"].endswith(
+        f"{dataset.institution.id},{dataset.institution.slug}"
+    )
 
 
 @pytest.mark.elasticsearch
@@ -233,7 +199,4 @@ def test_response_dataset_image_uri_in_details(dataset, client, small_image):
     dataset.save()
     resp = client.simulate_get("/1.4/datasets/{}/".format(dataset.id))
     assert HTTP_OK == resp.status
-    assert (
-        resp.json["data"]["attributes"]["image_url"]
-        == f"/media/images/datasets/{dataset.image.name}"
-    )
+    assert resp.json["data"]["attributes"]["image_url"] == f"/media/images/datasets/{dataset.image.name}"

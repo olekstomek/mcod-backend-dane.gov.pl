@@ -7,16 +7,21 @@ import mcod.core.storages
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('laboratory', '0004_auto_20200622_0838'),
+        ("laboratory", "0004_auto_20200622_0838"),
     ]
 
     operations = [
-        migrations.RenameModel('Report', 'LabReport'),
+        migrations.RenameModel("Report", "LabReport"),
         migrations.AlterField(
-            model_name='labreport',
-            name='file',
-            field=models.FileField(blank=True, max_length=2000, null=True,
-                                   storage=mcod.core.storages.LaboratoryStorage(base_url=None, location=None),
-                                   upload_to='', verbose_name='File'),
-        )
+            model_name="labreport",
+            name="file",
+            field=models.FileField(
+                blank=True,
+                max_length=2000,
+                null=True,
+                storage=mcod.core.storages.LaboratoryStorage(base_url=None, location=None),
+                upload_to="",
+                verbose_name="File",
+            ),
+        ),
     ]

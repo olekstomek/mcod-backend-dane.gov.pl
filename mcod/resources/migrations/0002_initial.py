@@ -9,30 +9,44 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('datasets', '0002_initial'),
-        ('resources', '0001_initial'),
+        ("datasets", "0002_initial"),
+        ("resources", "0001_initial"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='resource',
-            name='created_by',
-            field=models.ForeignKey(editable=False, null=True, on_delete=django.db.models.deletion.DO_NOTHING,
-                                    related_name='resources_created', to=settings.AUTH_USER_MODEL,
-                                    verbose_name='Created by'),
+            model_name="resource",
+            name="created_by",
+            field=models.ForeignKey(
+                editable=False,
+                null=True,
+                on_delete=django.db.models.deletion.DO_NOTHING,
+                related_name="resources_created",
+                to=settings.AUTH_USER_MODEL,
+                verbose_name="Created by",
+            ),
         ),
         migrations.AddField(
-            model_name='resource',
-            name='dataset',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='resources',
-                                    to='datasets.Dataset', verbose_name='Dataset'),
+            model_name="resource",
+            name="dataset",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="resources",
+                to="datasets.Dataset",
+                verbose_name="Dataset",
+            ),
         ),
         migrations.AddField(
-            model_name='resource',
-            name='modified_by',
-            field=models.ForeignKey(editable=False, null=True, on_delete=django.db.models.deletion.DO_NOTHING,
-                                    related_name='resources_modified', to=settings.AUTH_USER_MODEL,
-                                    verbose_name='Modified by'),
+            model_name="resource",
+            name="modified_by",
+            field=models.ForeignKey(
+                editable=False,
+                null=True,
+                on_delete=django.db.models.deletion.DO_NOTHING,
+                related_name="resources_modified",
+                to=settings.AUTH_USER_MODEL,
+                verbose_name="Modified by",
+            ),
         ),
     ]

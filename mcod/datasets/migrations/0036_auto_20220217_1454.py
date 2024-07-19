@@ -6,38 +6,54 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('datasets', '0035_dataset_has_dynamic_data'),
+        ("datasets", "0035_dataset_has_dynamic_data"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='dataset',
-            name='license_condition_cc40_responsibilities',
-            field=models.NullBooleanField(default=None, verbose_name=''),
+            model_name="dataset",
+            name="license_condition_cc40_responsibilities",
+            field=models.NullBooleanField(default=None, verbose_name=""),
         ),
         migrations.AlterField(
-            model_name='dataset',
-            name='license_condition_db_or_copyrighted',
-            field=models.TextField(blank=True, null=True, verbose_name='Condition for data with features of work with copy rights or database'),
+            model_name="dataset",
+            name="license_condition_db_or_copyrighted",
+            field=models.TextField(
+                blank=True,
+                null=True,
+                verbose_name="Condition for data with features of work with copy rights or database",
+            ),
         ),
         migrations.AlterField(
-            model_name='dataset',
-            name='license_condition_modification',
-            field=models.NullBooleanField(default=None, verbose_name='Condition for possible processing of data'),
+            model_name="dataset",
+            name="license_condition_modification",
+            field=models.NullBooleanField(default=None, verbose_name="Condition for possible processing of data"),
         ),
         migrations.AlterField(
-            model_name='dataset',
-            name='license_condition_personal_data',
-            field=models.CharField(blank=True, max_length=300, null=True, verbose_name='Condition for data containing personal data'),
+            model_name="dataset",
+            name="license_condition_personal_data",
+            field=models.CharField(
+                blank=True,
+                max_length=300,
+                null=True,
+                verbose_name="Condition for data containing personal data",
+            ),
         ),
         migrations.AlterField(
-            model_name='dataset',
-            name='license_condition_responsibilities',
-            field=models.TextField(blank=True, null=True, verbose_name='Condition for scope of responsibilities for data'),
+            model_name="dataset",
+            name="license_condition_responsibilities",
+            field=models.TextField(
+                blank=True,
+                null=True,
+                verbose_name="Condition for scope of responsibilities for data",
+            ),
         ),
         migrations.AlterField(
-            model_name='dataset',
-            name='license_condition_source',
-            field=models.NullBooleanField(default=None, verbose_name='Condition for informing about the source of data'),
+            model_name="dataset",
+            name="license_condition_source",
+            field=models.NullBooleanField(
+                default=None,
+                verbose_name="Condition for informing about the source of data",
+            ),
         ),
     ]

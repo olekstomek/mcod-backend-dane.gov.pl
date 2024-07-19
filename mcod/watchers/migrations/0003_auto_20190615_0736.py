@@ -8,17 +8,21 @@ class Migration(migrations.Migration):
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('watchers', '0002_auto_20190507_1352'),
+        ("watchers", "0002_auto_20190507_1352"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='watcher',
-            name='watcher_type',
-            field=models.CharField(choices=[('model', 'Model'), ('query', 'Search query')], default='model', max_length=15),
+            model_name="watcher",
+            name="watcher_type",
+            field=models.CharField(
+                choices=[("model", "Model"), ("query", "Search query")],
+                default="model",
+                max_length=15,
+            ),
         ),
         migrations.AlterUniqueTogether(
-            name='subscription',
-            unique_together={('user', 'watcher')},
+            name="subscription",
+            unique_together={("user", "watcher")},
         ),
     ]

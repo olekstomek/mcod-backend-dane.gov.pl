@@ -6,18 +6,34 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('showcases', '0002_auto_20211213_2350'),
+        ("showcases", "0002_auto_20211213_2350"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='showcase',
-            name='category',
-            field=models.CharField(choices=[('app', 'Application'), ('www', 'Website'), ('other', 'Other')], max_length=5, verbose_name='category'),
+            model_name="showcase",
+            name="category",
+            field=models.CharField(
+                choices=[
+                    ("app", "Application"),
+                    ("www", "Website"),
+                    ("other", "Other"),
+                ],
+                max_length=5,
+                verbose_name="category",
+            ),
         ),
         migrations.AlterField(
-            model_name='showcaseproposal',
-            name='category',
-            field=models.CharField(choices=[('app', 'Application'), ('www', 'Website'), ('other', 'Other')], max_length=5, verbose_name='category'),
+            model_name="showcaseproposal",
+            name="category",
+            field=models.CharField(
+                choices=[
+                    ("app", "Application"),
+                    ("www", "Website"),
+                    ("other", "Other"),
+                ],
+                max_length=5,
+                verbose_name="category",
+            ),
         ),
     ]

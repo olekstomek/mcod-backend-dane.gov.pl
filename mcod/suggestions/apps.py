@@ -5,8 +5,8 @@ from mcod.core.apps import ExtendedAppMixin
 
 
 class SuggestionsConfig(ExtendedAppMixin, AppConfig):
-    name = 'mcod.suggestions'
-    verbose_name = _('Suggestions')
+    name = "mcod.suggestions"
+    verbose_name = _("Suggestions")
 
     def ready(self):
         from mcod.suggestions.models import (
@@ -17,6 +17,7 @@ class SuggestionsConfig(ExtendedAppMixin, AppConfig):
             ResourceComment,
             SubmissionFeedback,
         )
+
         self.connect_core_signals(AcceptedDatasetSubmission)
         self.connect_core_signals(AcceptedDatasetSubmissionTrash)
         self.connect_core_signals(SubmissionFeedback)

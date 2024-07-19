@@ -20,8 +20,8 @@ class TypeField(drff.Field):
         return instance
 
     def to_representation(self, obj):
-        name = type(obj)._meta.app_label + '.' + type(obj).__name__
-        self.context['view'].seen_types[name] = type(obj)
+        name = type(obj)._meta.app_label + "." + type(obj).__name__
+        self.context["view"].seen_types[name] = type(obj)
         return name
 
 
@@ -40,7 +40,12 @@ class CharField(drff.CharField):
 
 class DetailUrlField(drff.Field):
     def get_attribute(self, instance):
-        url = get_object_detail_url(self.context['router'], self.context['request'], type(instance), instance.url_path)
+        url = get_object_detail_url(
+            self.context["router"],
+            self.context["request"],
+            type(instance),
+            instance.url_path,
+        )
 
         if url:
             return url
@@ -73,8 +78,8 @@ class PageTypeField(drff.Field):
     def to_representation(self, page):
         if page.specific_class is None:
             return None
-        name = page.specific_class._meta.app_label + '.' + page.specific_class.__name__
-        self.context['view'].seen_types[name] = page.specific_class
+        name = page.specific_class._meta.app_label + "." + page.specific_class.__name__
+        self.context["view"].seen_types[name] = page.specific_class
         return name
 
 
@@ -94,7 +99,7 @@ class RelatedField(relations.RelatedField):
     """
 
     def __init__(self, *args, **kwargs):
-        self.serializer_class = kwargs.pop('serializer_class')
+        self.serializer_class = kwargs.pop("serializer_class")
         super().__init__(*args, **kwargs)
 
     def to_representation(self, value):
@@ -106,33 +111,35 @@ class PageParentField(relations.RelatedField):
     def get_attribute(self, instance):
         parent = instance.get_parent()
 
-        if self.context['base_queryset'].filter(id=parent.id).exists():
+        if self.context["base_queryset"].filter(id=parent.id).exists():
             return parent
 
     def to_representation(self, value):
         from mcod.cms.api.serializers import CmsPageSerializer, get_serializer_class
+
         page = value.specific
-        serializer_class = get_serializer_class(page.__class__,
-                                                [
-                                                    'id',
-                                                    'type',
-                                                    'detail_url',
-                                                    'html_url',
-                                                    'slug',
-                                                    'first_published_at',
-                                                    'url_path',
-                                                    'title'
-                                                ],
-                                                meta_fields=[
-                                                    'type',
-                                                    'detail_url',
-                                                    'html_url',
-                                                    'slug',
-                                                    'url_path',
-                                                    'first_published_at',
-                                                ],
-                                                base=CmsPageSerializer
-                                                )
+        serializer_class = get_serializer_class(
+            page.__class__,
+            [
+                "id",
+                "type",
+                "detail_url",
+                "html_url",
+                "slug",
+                "first_published_at",
+                "url_path",
+                "title",
+            ],
+            meta_fields=[
+                "type",
+                "detail_url",
+                "html_url",
+                "slug",
+                "url_path",
+                "first_published_at",
+            ],
+            base=CmsPageSerializer,
+        )
         serializer = serializer_class(context=self.context)
         return serializer.to_representation(page)
 
@@ -158,7 +165,7 @@ class PageChildrenField(relations.RelatedField):
         if name not in params:
             return
         param_value = params[name]
-        field_name = param_value[1:] if param_value.startswith('-') else param_value
+        field_name = param_value[1:] if param_value.startswith("-") else param_value
         try:
             model._meta.get_field(field_name)
         except FieldDoesNotExist:
@@ -178,13 +185,13 @@ class PageChildrenField(relations.RelatedField):
     def get_attribute(self, instance):
         qs = instance.get_children().public().live()
         try:
-            params = self.context['request'].GET
+            params = self.context["request"].GET
         except (AttributeError, KeyError):
             params = {}
 
-        children_sort = self._parse_model_field_query_param(params, 'children_sort', qs.model)
-        children_per_page = self._parse_positive_int_query_param(params, 'children_per_page')
-        children_page = self._parse_positive_int_query_param(params, 'children_page', default=1)
+        children_sort = self._parse_model_field_query_param(params, "children_sort", qs.model)
+        children_per_page = self._parse_positive_int_query_param(params, "children_per_page")
+        children_page = self._parse_positive_int_query_param(params, "children_page", default=1)
 
         if children_sort:
             qs = qs.order_by(children_sort)
@@ -202,42 +209,44 @@ class PageChildrenField(relations.RelatedField):
         from mcod.cms.api.serializers import CmsPageSerializer, get_serializer_class
 
         try:
-            params = self.context['request'].GET
+            params = self.context["request"].GET
         except (AttributeError, KeyError):
             params = {}
 
         children_extra_fields = []
-        if 'children_extra_fields' in params:
-            children_extra_fields = params['children_extra_fields'].split(',')
+        if "children_extra_fields" in params:
+            children_extra_fields = params["children_extra_fields"].split(",")
 
         output = []
         for page in value:
             page = page.specific
-            self._validate_model_fields('children_extra_fields', children_extra_fields, page.__class__)
-            page_serializer_class = getattr(page, 'serializer_class', CmsPageSerializer)
-            serializer_class = get_serializer_class(page.__class__,
-                                                    [
-                                                        'id',
-                                                        'type',
-                                                        'detail_url',
-                                                        'html_url',
-                                                        'slug',
-                                                        'first_published_at',
-                                                        'last_published_at',
-                                                        'url_path',
-                                                        'title',
-                                                        *children_extra_fields,
-                                                    ],
-                                                    meta_fields=[
-                                                        'type',
-                                                        'detail_url',
-                                                        'html_url',
-                                                        'slug',
-                                                        'url_path',
-                                                        'first_published_at',
-                                                        'last_published_at',
-                                                    ],
-                                                    base=page_serializer_class)
+            self._validate_model_fields("children_extra_fields", children_extra_fields, page.__class__)
+            page_serializer_class = getattr(page, "serializer_class", CmsPageSerializer)
+            serializer_class = get_serializer_class(
+                page.__class__,
+                [
+                    "id",
+                    "type",
+                    "detail_url",
+                    "html_url",
+                    "slug",
+                    "first_published_at",
+                    "last_published_at",
+                    "url_path",
+                    "title",
+                    *children_extra_fields,
+                ],
+                meta_fields=[
+                    "type",
+                    "detail_url",
+                    "html_url",
+                    "slug",
+                    "url_path",
+                    "first_published_at",
+                    "last_published_at",
+                ],
+                base=page_serializer_class,
+            )
             serializer = serializer_class(context=self.context)
             output.append(serializer.to_representation(page))
         return output
@@ -283,16 +292,13 @@ class ChildRelationField(drff.Field):
     """
 
     def __init__(self, *args, **kwargs):
-        self.serializer_class = kwargs.pop('serializer_class')
+        self.serializer_class = kwargs.pop("serializer_class")
         super().__init__(*args, **kwargs)
 
     def to_representation(self, value):
         serializer = self.serializer_class(context=self.context)
 
-        return [
-            serializer.to_representation(child_object)
-            for child_object in value.all()
-        ]
+        return [serializer.to_representation(child_object) for child_object in value.all()]
 
 
 class StreamField(drff.Field):
@@ -349,29 +355,30 @@ class TagsField(drff.Field):
     """
 
     def to_representation(self, value):
-        return list(value.all().order_by('name').values_list('name', flat=True))
+        return list(value.all().order_by("name").values_list("name", flat=True))
 
 
 class LocalizedHyperField(HyperField):
 
     def __init__(self, *args, **kwargs):
-        self.default_classes = kwargs.pop('default_classes', {})
+        self.default_classes = kwargs.pop("default_classes", {})
         super().__init__(*args, **kwargs)
 
     def get_uploaded_video(self, block_settings):
-        od_pattern = [pattern for pattern in settings.OD_EMBED['urls'] if re.match(
-            pattern, block_settings.get('video_url', ''))]
+        od_pattern = [pattern for pattern in settings.OD_EMBED["urls"] if re.match(pattern, block_settings.get("video_url", ""))]
         if od_pattern:
-            match = re.search(r'/(\d+)/?', block_settings.get('video_url', ''))
+            match = re.search(r"/(\d+)/?", block_settings.get("video_url", ""))
             video_pk = match.group(1)
             try:
                 video = get_video_model().objects.get(pk=video_pk)
-                video_data = {'title': video.title,
-                              'thumbnail_url': video.thumbnail_url,
-                              'download_url': video.video_url}
+                video_data = {
+                    "title": video.title,
+                    "thumbnail_url": video.thumbnail_url,
+                    "download_url": video.video_url,
+                }
             except get_video_model().DoesNotExist:
                 video_data = {}
-            block_settings['uploaded_video'] = video_data
+            block_settings["uploaded_video"] = video_data
 
     def from_db_value(self, value, expression, connection, context=None):
         # Django>=3.0 upgrade fix.
@@ -380,18 +387,10 @@ class LocalizedHyperField(HyperField):
 
     def update_general_settings(self, block):
         for block_type, default_classes_str in self.default_classes.items():
-            if block['settings'].get(block_type) and 'id' in block:
-                classes = [
-                    class_name
-                    for class_name in block['general'].get('classes', '').split(' ')
-                    if class_name
-                ]
-                classes.extend([
-                    class_name
-                    for class_name in default_classes_str.split(' ')
-                    if class_name not in classes
-                ])
-                block['general']['classes'] = ' '.join(classes)
+            if block["settings"].get(block_type) and "id" in block:
+                classes = [class_name for class_name in block["general"].get("classes", "").split(" ") if class_name]
+                classes.extend([class_name for class_name in default_classes_str.split(" ") if class_name not in classes])
+                block["general"]["classes"] = " ".join(classes)
 
     def to_python(self, value):
         """
@@ -400,26 +399,26 @@ class LocalizedHyperField(HyperField):
         """
         response = super().to_python(value)
 
-        if hasattr(response, 'data') and isinstance(response.data, dict):
-            blocks = response.data.get('blocks', [])
+        if hasattr(response, "data") and isinstance(response.data, dict):
+            blocks = response.data.get("blocks", [])
             all_blocks_settings = []
             visit_queue = deque(blocks)
             while visit_queue:
                 block = visit_queue.popleft()
-                if isinstance(block.get('settings'), dict):
+                if isinstance(block.get("settings"), dict):
                     self.update_general_settings(block)
-                    all_blocks_settings.append(block['settings'])
+                    all_blocks_settings.append(block["settings"])
 
                 try:
-                    visit_queue.extend(block['children'])
+                    visit_queue.extend(block["children"])
                 except KeyError:
                     pass
 
             for block_settings in all_blocks_settings:
-                if isinstance(block_settings.get('image'), dict) and 'id' in block_settings['image']:
+                if isinstance(block_settings.get("image"), dict) and "id" in block_settings["image"]:
                     try:
-                        img = CustomImage.objects.get(pk=block_settings['image']['id'])
-                        block_settings['image']['alt'] = img.alt_i18n
+                        img = CustomImage.objects.get(pk=block_settings["image"]["id"])
+                        block_settings["image"]["alt"] = img.alt_i18n
                     except CustomImage.DoesNotExist:
                         pass
                 self.get_uploaded_video(block_settings)
@@ -429,23 +428,23 @@ class LocalizedHyperField(HyperField):
 
 class RichTextField(drff.CharField):
     def to_representation(self, value):
-        soup = BeautifulSoup(value, 'html.parser')
-        for embed in soup.findAll('embed'):
-            _type = embed.attrs.get('embedtype', 'image')
-            if _type == 'image':
+        soup = BeautifulSoup(value, "html.parser")
+        for embed in soup.findAll("embed"):
+            _type = embed.attrs.get("embedtype", "image")
+            if _type == "image":
                 try:
-                    _id = embed.attrs['id']
-                    alt = embed.attrs['alt']
+                    _id = embed.attrs["id"]
+                    alt = embed.attrs["alt"]
                     img = CustomImage.objects.get(pk=_id)
                     attrs = {
-                        'src': '{}{}'.format(settings.CMS_URL, img.file.url),
-                        'alt': alt,
-                        'id': 'cmsImage-{}'.format(_id),
-                        'class': 'cmsImage--{}'.format(embed.attrs.get('format', 'center'))
+                        "src": "{}{}".format(settings.CMS_URL, img.file.url),
+                        "alt": alt,
+                        "id": "cmsImage-{}".format(_id),
+                        "class": "cmsImage--{}".format(embed.attrs.get("format", "center")),
                     }
-                    new_tag = soup.new_tag('img', **attrs)
+                    new_tag = soup.new_tag("img", **attrs)
                 except (CustomImage.DoesNotExist, KeyError):
-                    new_tag = ''
+                    new_tag = ""
 
                 embed.replace_with(new_tag)
 
@@ -455,9 +454,6 @@ class RichTextField(drff.CharField):
 class HyperEditorJSONField(drff.JSONField):
     def get_attribute(self, instance):
         if getattr(instance, self.source, None):
-            self.source_attrs = [
-                self.source,
-                'data'
-            ]
+            self.source_attrs = [self.source, "data"]
 
         return super().get_attribute(instance)

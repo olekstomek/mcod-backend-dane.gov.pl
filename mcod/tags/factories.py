@@ -5,13 +5,13 @@ from mcod.tags import models
 
 
 class TagFactory(factory.django.DjangoModelFactory):
-    name = factory.Faker('word', locale='pl_PL')
-    status = 'published'
-    language = ''
+    name = factory.Faker("word", locale="pl_PL")
+    status = "published"
+    language = ""
 
     class Meta:
         model = models.Tag
-        django_get_or_create = ('name',)
+        django_get_or_create = ("name",)
 
     @factory.post_generation
     def datasets(self, create, extracted, **kwargs):
@@ -32,4 +32,4 @@ class TagFactory(factory.django.DjangoModelFactory):
                 self.showcases.add(showcase)
 
 
-factories_registry.register('tag', TagFactory)
+factories_registry.register("tag", TagFactory)

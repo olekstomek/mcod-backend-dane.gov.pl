@@ -6,29 +6,31 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('resources', '0003_auto_20180507_1429'),
+        ("resources", "0003_auto_20180507_1429"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Trash',
-            fields=[
-            ],
+            name="Trash",
+            fields=[],
             options={
-                'verbose_name': 'Trash',
-                'verbose_name_plural': 'Trash',
-                'proxy': True,
-                'indexes': [],
+                "verbose_name": "Trash",
+                "verbose_name_plural": "Trash",
+                "proxy": True,
+                "indexes": [],
             },
-            bases=('resources.resource',),
+            bases=("resources.resource",),
         ),
         migrations.AlterModelOptions(
-            name='resource',
-            options={'default_manager_name': 'objects', 'verbose_name': 'Resource', 'verbose_name_plural': 'Resources'},
+            name="resource",
+            options={
+                "default_manager_name": "objects",
+                "verbose_name": "Resource",
+                "verbose_name_plural": "Resources",
+            },
         ),
         migrations.AlterModelManagers(
-            name='resource',
-            managers=[
-            ],
+            name="resource",
+            managers=[],
         ),
     ]

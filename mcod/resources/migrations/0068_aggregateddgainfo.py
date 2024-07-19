@@ -7,19 +7,34 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('resources', '0067_resource_contains_protected_data'),
+        ("resources", "0067_resource_contains_protected_data"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='AggregatedDGAInfo',
+            name="AggregatedDGAInfo",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('views_count', models.PositiveIntegerField(default=0)),
-                ('downloads_count', models.PositiveIntegerField(default=0)),
-                ('resource', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, to='resources.Resource')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                ("views_count", models.PositiveIntegerField(default=0)),
+                ("downloads_count", models.PositiveIntegerField(default=0)),
+                (
+                    "resource",
+                    models.ForeignKey(
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        to="resources.Resource",
+                    ),
+                ),
             ],
         ),
     ]

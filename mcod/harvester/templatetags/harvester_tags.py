@@ -7,7 +7,7 @@ from mcod.lib.utils import is_django_ver_lt
 
 register = template.Library()
 
-DOT = '.'
+DOT = "."
 
 
 @register.simple_tag
@@ -21,13 +21,20 @@ def paginator_number(cl, i):
         page_arg_num = i + 1
     if i == DOT:
         return mark_safe(
-            '<li class="disabled"><a href="#" onclick="return false;">..'
-            '.</a></li>')
+            '<li class="disabled"><a href="#" onclick="return false;">..' ".</a></li>"
+        )
     elif i == cl.page_num:
-        return mark_safe(
-            '<li class="active"><a href="">%d</a></li> ' % (i + 1))
+        return mark_safe('<li class="active"><a href="">%d</a></li> ' % (i + 1))
     else:
-        return mark_safe('<li><a href="%s"%s>%d</a></li> ' % (
-            escape(cl.get_query_string({getattr(cl, 'page_param', PAGE_VAR): page_arg_num})),
-            (i == cl.paginator.num_pages - 1 and ' class="end"' or ''),
-            i + 1))
+        return mark_safe(
+            '<li><a href="%s"%s>%d</a></li> '
+            % (
+                escape(
+                    cl.get_query_string(
+                        {getattr(cl, "page_param", PAGE_VAR): page_arg_num}
+                    )
+                ),
+                (i == cl.paginator.num_pages - 1 and ' class="end"' or ""),
+                i + 1,
+            )
+        )

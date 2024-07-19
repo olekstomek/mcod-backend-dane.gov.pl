@@ -3,5 +3,5 @@ from django.utils.translation import gettext_lazy as _
 
 
 class ToolsConfig(AppConfig):
-    name = 'mcod.tools'
-    verbose_name = _('Tools')
+    name = "mcod.tools"
+    verbose_name = _("Tools")

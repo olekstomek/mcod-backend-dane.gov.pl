@@ -7,14 +7,14 @@ import django.db.models.manager
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('harvester', '0001_initial'),
+        ("harvester", "0001_initial"),
     ]
 
     operations = [
         migrations.AlterModelManagers(
-            name='datasource',
+            name="datasource",
             managers=[
-                ('raw', django.db.models.manager.Manager()),
+                ("raw", django.db.models.manager.Manager()),
             ],
         ),
     ]

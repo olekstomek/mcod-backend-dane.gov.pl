@@ -48,9 +48,7 @@ NOTEBOOKS_DIR = env("NOTEBOOKS_DIR", default=str(ROOT_DIR.path("notebooks/notebo
 
 NOTEBOOK_ARGUMENTS = ["--config", "mcod/settings/jupyter_config.py"]
 
-DEBUG = env("DEBUG", default="no") in ("yes", 1, "true") or env(
-    "TEST_DEBUG", default="no"
-) in ("yes", 1, "true")
+DEBUG = env("DEBUG", default="no") in ("yes", 1, "true") or env("TEST_DEBUG", default="no") in ("yes", 1, "true")
 
 SECRET_KEY = env("DJANGO_SECRET_KEY", default="xb2rTZ57yOY9iCdqR7W+UAWnU")
 
@@ -170,10 +168,7 @@ ALLOWED_HOSTS = env.list(
 
 FIXTURE_DIRS = (str(ROOT_DIR.path("fixtures")),)
 
-ADMINS = [
-    tuple(x.split(":"))
-    for x in env.list("DJANGO_ADMINS", default=["admin:admin@example.com"])
-]
+ADMINS = [tuple(x.split(":")) for x in env.list("DJANGO_ADMINS", default=["admin:admin@example.com"])]
 
 ADMIN_URL = r"^$"
 
@@ -203,9 +198,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
     {
         "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
-        "OPTIONS": {
-            "password_list_path": str(DATA_DIR.path("common-passwords.txt.gz"))
-        },
+        "OPTIONS": {"password_list_path": str(DATA_DIR.path("common-passwords.txt.gz"))},
     },
 ]
 
@@ -222,9 +215,7 @@ if env("ENABLE_VAULT_HELPERS", default="yes") in ["yes", "1", "true"]:
     ]
 
     DATABASES = {
-        "default": vaulthelpers.database.get_config(
-            {"ATOMIC_REQUESTS": True, "CONN_MAX_AGE": 3600}
-        ),
+        "default": vaulthelpers.database.get_config({"ATOMIC_REQUESTS": True, "CONN_MAX_AGE": 3600}),
     }
 else:
     DATABASES = {
@@ -368,9 +359,7 @@ DATASETS_MEDIA_ROOT = str(ROOT_DIR.path(MEDIA_ROOT, "datasets"))
 REPORTS_MEDIA_ROOT = str(ROOT_DIR.path(MEDIA_ROOT, "reports"))
 SHOWCASES_MEDIA_ROOT = str(ROOT_DIR.path(MEDIA_ROOT, "showcases"))
 LABORATORY_MEDIA_ROOT = str(ROOT_DIR.path(MEDIA_ROOT, "lab_reports"))
-RESOURCES_FILES_TO_REMOVE_ROOT = str(
-    ROOT_DIR.path(MEDIA_ROOT, "to_be_removed", "resources")
-)
+RESOURCES_FILES_TO_REMOVE_ROOT = str(ROOT_DIR.path(MEDIA_ROOT, "to_be_removed", "resources"))
 DCAT_VOCABULARIES_MEDIA_ROOT = str(ROOT_DIR.path(MEDIA_ROOT, "dcat", "vocabularies"))
 METADATA_MEDIA_ROOT = str(ROOT_DIR.path(MEDIA_ROOT, "datasets", "catalog"))
 DGA_RESOURCE_CREATION_STAGING_ROOT = str(ROOT_DIR.path(MEDIA_ROOT, "dga_temp"))
@@ -790,9 +779,7 @@ ELASTICSEARCH_HISTORIES_IDX_SETTINGS = {"number_of_shards": 3, "number_of_replic
 
 ELASTICSEARCH_INDEX_PREFIX = ""
 
-CELERY_BROKER_URL = "amqp://%s" % str(
-    env("RABBITMQ_HOST", default="mcod-rabbitmq:5672")
-)
+CELERY_BROKER_URL = "amqp://%s" % str(env("RABBITMQ_HOST", default="mcod-rabbitmq:5672"))
 
 CELERY_RESULT_BACKEND = "django-db"
 CELERY_TASK_ALWAYS_EAGER = False
@@ -822,20 +809,14 @@ CELERY_TASK_ROUTES = {
     "mcod.core.api.search.tasks.delete_related_documents_task": {"queue": "indexing"},
     "mcod.core.api.search.tasks.update_related_task": {"queue": "indexing"},
     "mcod.core.api.search.tasks.bulk_delete_documents_task": {"queue": "indexing"},
-    "mcod.resources.tasks.process_resource_data_indexing_task": {
-        "queue": "indexing_data"
-    },
+    "mcod.resources.tasks.process_resource_data_indexing_task": {"queue": "indexing_data"},
     "mcod.resources.tasks.check_link_protocol": {"queue": "periodic"},
     "mcod.resources.tasks.process_resource_from_url_task": {"queue": "resources"},
     "mcod.resources.tasks.process_resource_file_task": {"queue": "resources"},
     "mcod.resources.tasks.process_resource_res_file_task": {"queue": "resources"},
     "mcod.resources.tasks.process_resource_file_data_task": {"queue": "resources"},
-    "mcod.resources.tasks.update_resource_has_table_has_map_task": {
-        "queue": "resources"
-    },
-    "mcod.resources.tasks.update_resource_validation_results_task": {
-        "queue": "resources"
-    },
+    "mcod.resources.tasks.update_resource_has_table_has_map_task": {"queue": "resources"},
+    "mcod.resources.tasks.update_resource_validation_results_task": {"queue": "resources"},
     "mcod.resources.tasks.send_resource_comment": {"queue": "notifications"},
     "mcod.counters.tasks.save_counters": {"queue": "periodic"},
     "mcod.harvester.tasks.harvester_supervisor": {"queue": "harvester"},
@@ -851,17 +832,11 @@ CELERY_TASK_ROUTES = {
     "mcod.schedules.tasks.send_schedule_notifications_task": {"queue": "notifications"},
     "mcod.schedules.tasks.update_notifications_task": {"queue": "notifications"},
     "mcod.searchhistories.tasks.create_search_history": {"queue": "search_history"},
-    "mcod.suggestions.tasks.create_accepted_dataset_suggestion_task": {
-        "queue": "notifications"
-    },
+    "mcod.suggestions.tasks.create_accepted_dataset_suggestion_task": {"queue": "notifications"},
     "mcod.suggestions.tasks.create_data_suggestion": {"queue": "notifications"},
     "mcod.suggestions.tasks.create_dataset_suggestion": {"queue": "notifications"},
-    "mcod.suggestions.tasks.deactivate_accepted_dataset_submissions": {
-        "queue": "notifications"
-    },
-    "mcod.suggestions.tasks.send_dataset_suggestion_mail_task": {
-        "queue": "notifications"
-    },
+    "mcod.suggestions.tasks.deactivate_accepted_dataset_submissions": {"queue": "notifications"},
+    "mcod.suggestions.tasks.send_dataset_suggestion_mail_task": {"queue": "notifications"},
     "mcod.suggestions.tasks.send_data_suggestion": {"queue": "notifications"},
     "mcod.users.tasks.send_registration_email_task": {"queue": "notifications"},
     "mcod.watchers.tasks.update_model_watcher_task": {"queue": "watchers"},
@@ -1310,9 +1285,7 @@ ARCHIVE_CONTENT_TYPES = {
 }
 
 ARCHIVE_EXTENSIONS = {"bz", "bz2", "gz", "rar", "tar", "zip", "7z"}
-ALLOWED_CONTENT_TYPES = [x[1] for x in SUPPORTED_CONTENT_TYPES] + list(
-    ARCHIVE_CONTENT_TYPES
-)
+ALLOWED_CONTENT_TYPES = [x[1] for x in SUPPORTED_CONTENT_TYPES] + list(ARCHIVE_CONTENT_TYPES)
 ALLOWED_SUPPLEMENT_MIMETYPES = env.list(
     "ALLOWED_SUPPLEMENT_MIMETYPES",
     default=[
@@ -1595,22 +1568,18 @@ RESEARCH_DATA_MANUAL_URL = env(
     "RESEARCH_DATA_MANUAL_URL",
     default="/pl/knowledgebase/useful-materials/dane-badawcze",
 )
-PROTECTED_DATA_MANUAL_URL = env(
-    "PROTECTED_DATA_MANUAL_URL", default="/pl/dga/information"
-)
+PROTECTED_DATA_MANUAL_URL = env("PROTECTED_DATA_MANUAL_URL", default="/pl/dga/information")
 TOURPICKER_URL = f"{BASE_URL}?tourPicker=1"
 API_URL_INTERNAL = env("API_URL_INTERNAL", default="http://mcod-api:8000")
 
 # Main DGA Resource creation task related constants
-MAIN_DGA_RESOURCE_XLSX_CREATION_CACHE_TIMEOUT = 60*60  # 60 minutes
+MAIN_DGA_RESOURCE_XLSX_CREATION_CACHE_TIMEOUT = 60 * 60  # 60 minutes
 
 # Set None to prevent release cache before deleting created objects if any
 # exception will occur. Cache will be released when the task is completed
 # in `clean_up_after_main_dga_resource_creation` method.
 MAIN_DGA_RESOURCE_CREATION_CACHE_TIMEOUT = None
-MAIN_DGA_DATASET_OWNER_ORGANIZATION_PK = env(
-    "MAIN_DGA_DATASET_OWNER_ORGANIZATION_PK", default=333
-)
+MAIN_DGA_DATASET_OWNER_ORGANIZATION_PK = env("MAIN_DGA_DATASET_OWNER_ORGANIZATION_PK", default=333)
 MAIN_DGA_RESOURCE_DEFAULT_TITLE = "Wykaz chronionych danych"
 MAIN_DGA_RESOURCE_DEFAULT_DESC = (
     f"Wykaz zasobów chronionych danych Ministerstwa Cyfryzacji raport zbiorczy "
@@ -1622,9 +1591,7 @@ MAIN_DGA_RESOURCE_DEFAULT_DESC = (
     f"(w tym jak złożyć wniosek) dowiesz się w Punkcie informacyjnym pod "
     f'adresem: <a href="{BASE_URL}/pl/dga/information">{BASE_URL}/pl/dga/information</a>'
 )
-MAIN_DGA_DATASET_DEFAULT_TITLE = (
-    "Wykaz zasobów chronionych danych DGA – raport zbiorczy"
-)
+MAIN_DGA_DATASET_DEFAULT_TITLE = "Wykaz zasobów chronionych danych DGA – raport zbiorczy"
 MAIN_DGA_DATASET_DEFAULT_DESC = (
     f"Wykaz zasobów chronionych danych raport zbiorczy. Dane w tym zasobie "
     f"odzwierciedlają właściwy wykaz chronionych danych umieszczony w zakładce "
@@ -1637,9 +1604,7 @@ MAIN_DGA_DATASET_DEFAULT_DESC = (
     f"dostępnym pod adresem: "
     f'<a href="{BASE_URL}/pl/dga/information">{BASE_URL}/pl/dga/information</a>'
 )
-MAIN_DGA_XLSX_FILE_NAME_PREFIX = (
-    "Wykaz zasobów chronionych DGA – wykaz zbiorczy – Ministerstwo Cyfryzacji"
-)
+MAIN_DGA_XLSX_FILE_NAME_PREFIX = "Wykaz zasobów chronionych DGA – wykaz zbiorczy – Ministerstwo Cyfryzacji"
 MAIN_DGA_XLSX_WORKSHEET_NAME = "Arkusz 1"
 MAIN_DGA_DATASET_UPDATE_NOTIFICATION_EMAIL = "chronionedane@cyfra.gov.pl"
 MAIN_DGA_DATASET_CATEGORIES_TITLES = ["Rząd i sektor publiczny"]
@@ -1934,9 +1899,7 @@ API_CSRF_HEADER_NAME = "X-MCOD-CSRF-TOKEN"
 API_CSRF_TRUSTED_ORIGINS = [
     "dane.gov.pl",
 ]
-API_CSRF_COOKIE_DOMAINS = env(
-    "API_CSRF_COOKIE_DOMAINS", default=SESSION_COOKIE_DOMAIN
-).split(",")
+API_CSRF_COOKIE_DOMAINS = env("API_CSRF_COOKIE_DOMAINS", default=SESSION_COOKIE_DOMAIN).split(",")
 
 # ELASTICSEARCH SYNONYMS
 ES_EN_SYN_FILTER_KWARGS = {
@@ -1957,19 +1920,13 @@ DESCRIPTION_FIELD_MAX_LENGTH = 10000
 DESCRIPTION_FIELD_MIN_LENGTH = 20
 
 SHACL_SHAPES = {
-    "deprecateduris": SHACL_SHAPES_DIR.path(
-        "dcat-ap_2.1.0_shacl_deprecateduris.ttl"
-    ).root,
+    "deprecateduris": SHACL_SHAPES_DIR.path("dcat-ap_2.1.0_shacl_deprecateduris.ttl").root,
     "imports": SHACL_SHAPES_DIR.path("dcat-ap_2.1.0_shacl_imports.ttl").root,
-    "mdr-vocabularies": SHACL_SHAPES_DIR.path(
-        "dcat-ap_2.1.0_shacl_mdr-vocabularies.shape.ttl"
-    ).root,
+    "mdr-vocabularies": SHACL_SHAPES_DIR.path("dcat-ap_2.1.0_shacl_mdr-vocabularies.shape.ttl").root,
     "mdr_imports": SHACL_SHAPES_DIR.path("dcat-ap_2.1.0_shacl_mdr_imports.ttl").root,
     "range": SHACL_SHAPES_DIR.path("dcat-ap_2.1.0_shacl_range.ttl").root,
     "shapes": SHACL_SHAPES_DIR.path("dcat-ap_2.1.0_shacl_shapes.ttl").root,
-    "shapes_recommended": SHACL_SHAPES_DIR.path(
-        "dcat-ap_2.1.0_shacl_shapes_recommended_modified.ttl"
-    ).root,
+    "shapes_recommended": SHACL_SHAPES_DIR.path("dcat-ap_2.1.0_shacl_shapes_recommended_modified.ttl").root,
 }
 
 NOTIFICATIONS_NOTIFICATION_MODEL = "schedules.Notification"
@@ -1989,21 +1946,15 @@ FALCON_LIMITER_ENABLED = env("FALCON_LIMITER_ENABLED", default="yes") in (
     "true",
 )
 # https://falcon-limiter.readthedocs.io/en/latest/#rate-limit-string-notation
-FALCON_LIMITER_DEFAULT_LIMITS = env(
-    "FALCON_LIMITER_DEFAULT_LIMITS", default="5 per minute,2 per second"
-)
-FALCON_LIMITER_SPARQL_LIMITS = env(
-    "FALCON_LIMITER_SPARQL_LIMITS", default="20 per minute,1 per second"
-)
+FALCON_LIMITER_DEFAULT_LIMITS = env("FALCON_LIMITER_DEFAULT_LIMITS", default="5 per minute,2 per second")
+FALCON_LIMITER_SPARQL_LIMITS = env("FALCON_LIMITER_SPARQL_LIMITS", default="20 per minute,1 per second")
 
 DISCOURSE_HOST = env("DISCOURSE_HOST", default="http://forum.mcod.local")
 DISCOURSE_SYNC_HOST = env("DISCOURSE_SYNC_HOST", default="http://forum.mcod.local")
 DISCOURSE_API_USER = env("DISCOURSE_API_USER", default="system")
 DISCOURSE_API_KEY = env("DISCOURSE_API_KEY", default="")
 DISCOURSE_SSO_SECRET = env("DISCOURSE_SSO_SECRET", default="")
-DISCOURSE_SSO_REDIRECT = env(
-    "DISCOURSE_SSO_REDIRECT", default=f"{DISCOURSE_HOST}/session/sso_login"
-)
+DISCOURSE_SSO_REDIRECT = env("DISCOURSE_SSO_REDIRECT", default=f"{DISCOURSE_HOST}/session/sso_login")
 DISCOURSE_CONNECT_URL = f"{ADMIN_URL}/discourse/connect/start"
 DISCOURSE_LOGOUT_REDIRECT = f"{BASE_URL}/pl/user/logout"
 
@@ -2029,9 +1980,7 @@ DISCOURSE_FORUM_ENABLED = env("DISCOURSE_FORUM_ENABLED", default=True)
 
 SPARQL_ENDPOINTS = {
     "kronika": {
-        "query_endpoint": env(
-            "KRONIKA_SPARQL_URL", default="http://kronika.mcod.local"
-        ),
+        "query_endpoint": env("KRONIKA_SPARQL_URL", default="http://kronika.mcod.local"),
         "returnFormat": "json",
     }
 }

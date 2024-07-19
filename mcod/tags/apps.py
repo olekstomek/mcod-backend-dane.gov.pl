@@ -5,10 +5,11 @@ from mcod.core.apps import ExtendedAppMixin
 
 
 class TagsConfig(ExtendedAppMixin, AppConfig):
-    name = 'mcod.tags'
+    name = "mcod.tags"
     verbose_name = _("Tags")
 
     def ready(self):
         from mcod.tags.models import Tag
+
         self.connect_core_signals(Tag)
         self.connect_history(Tag)

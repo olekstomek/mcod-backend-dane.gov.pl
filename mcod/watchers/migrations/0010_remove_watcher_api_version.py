@@ -6,12 +6,12 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('watchers', '0009_watcher_api_version'),
+        ("watchers", "0009_watcher_api_version"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='watcher',
-            name='api_version',
+            model_name="watcher",
+            name="api_version",
         ),
     ]

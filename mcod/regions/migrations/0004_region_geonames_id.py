@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('regions', '0003_create_default_region'),
+        ("regions", "0003_create_default_region"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='region',
-            name='geonames_id',
+            model_name="region",
+            name="geonames_id",
             field=models.PositiveIntegerField(blank=True, null=True),
         ),
     ]

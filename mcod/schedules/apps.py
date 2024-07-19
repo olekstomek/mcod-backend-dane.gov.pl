@@ -5,5 +5,5 @@ from mcod.core.apps import ExtendedAppMixin
 
 
 class SchedulesConfig(ExtendedAppMixin, AppConfig):
-    name = 'mcod.schedules'
-    verbose_name = _('Schedules')
+    name = "mcod.schedules"
+    verbose_name = _("Schedules")

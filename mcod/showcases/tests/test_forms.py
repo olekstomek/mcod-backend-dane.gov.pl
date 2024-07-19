@@ -16,7 +16,7 @@ fields = [
     "validity",
 ]
 
-entry = namedlist('entry', fields)
+entry = namedlist("entry", fields)
 
 minimal = entry(
     title="only required fields",
@@ -26,7 +26,7 @@ minimal = entry(
     status="published",
     url="http://test.pl",
     image=None,
-    validity=True
+    validity=True,
 )
 
 full = entry(
@@ -37,7 +37,7 @@ full = entry(
     status="published",
     url="http://test.pl",
     image="/smth/smwhre/1.jpg",
-    validity=True
+    validity=True,
 )
 
 
@@ -70,44 +70,62 @@ class TestApplicationFormValidity:
             # incorect scenarios
             # title
             #   no title
-            change_namedlist(minimal, {'title': None, 'validity': False}),
+            change_namedlist(minimal, {"title": None, "validity": False}),
             #   too long
-            change_namedlist(minimal, {'title': "T" * 301, 'validity': False}),
+            change_namedlist(minimal, {"title": "T" * 301, "validity": False}),
             # name                *   auto/manual - base on title
             #   no name
-            change_namedlist(minimal, {'title': 'no name', 'slug': None, 'validity': True}),
+            change_namedlist(minimal, {"title": "no name", "slug": None, "validity": True}),
             #   too long name
-            change_namedlist(minimal, {'title': 'too long name', 'slug': "T" * 601, 'validity': False}),
+            change_namedlist(
+                minimal,
+                {"title": "too long name", "slug": "T" * 601, "validity": False},
+            ),
             # notes               *
-            change_namedlist(minimal, {'title': 'no notes', 'notes': None, 'validity': False}),
+            change_namedlist(minimal, {"title": "no notes", "notes": None, "validity": False}),
             # author
             #   author too long
-            change_namedlist(minimal, {'title': 'to long author', 'author': "a" * 51, 'validity': False}),
+            change_namedlist(
+                minimal,
+                {"title": "to long author", "author": "a" * 51, "validity": False},
+            ),
             # status               *   choices
             #   No status choice
-            change_namedlist(minimal, {'title': 'no status', 'status': None, 'validity': False}),
+            change_namedlist(minimal, {"title": "no status", "status": None, "validity": False}),
             #   wrong choice value of status
-            change_namedlist(minimal, {'title': 'wrong status', 'status': "XXX", 'validity': False}),
+            change_namedlist(minimal, {"title": "wrong status", "status": "XXX", "validity": False}),
             #   no app url
-            change_namedlist(minimal, {'title': 'no url', 'url': None, 'validity': False}),
+            change_namedlist(minimal, {"title": "no url", "url": None, "validity": False}),
             #   to long app_url
-            change_namedlist(minimal, {'title': 'too long app url', 'url': "http://smth." + "a" * 300 + ".pl",
-                                       'validity': False}),
+            change_namedlist(
+                minimal,
+                {
+                    "title": "too long app url",
+                    "url": "http://smth." + "a" * 300 + ".pl",
+                    "validity": False,
+                },
+            ),
             #   wrong url format
-            change_namedlist(minimal, {'title': 'wrong url format', 'url': "wrong format", 'validity': False}),
-        ])
+            change_namedlist(
+                minimal,
+                {"title": "wrong url format", "url": "wrong format", "validity": False},
+            ),
+        ],
+    )
     def test_application_form_validity(self, title, slug, notes, author, status, url, image, validity):
-        form = ShowcaseForm(data={
-            'category': 'app',
-            'license_type': 'free',
-            "title": title,
-            "slug": slug,
-            "notes": notes,
-            "author": author,
-            "status": status,
-            "url": url,
-            "image": image
-        })
+        form = ShowcaseForm(
+            data={
+                "category": "app",
+                "license_type": "free",
+                "title": title,
+                "slug": slug,
+                "notes": notes,
+                "author": author,
+                "status": status,
+                "url": url,
+                "image": image,
+            }
+        )
         assert form.is_valid() is validity
 
         if validity and title != "no name":
@@ -115,46 +133,50 @@ class TestApplicationFormValidity:
             assert Showcase.objects.last().title == title
 
     def test_showcase_form_add_datasets(self, dataset):
-        form = ShowcaseForm(data={
-            'category': 'app',
-            'license_type': 'free',
-            'title': "Test with dataset title",
-            'slug': "test-with-dataset-title",
-            'url': "http://test.pl",
-            'notes': 'tresc',
-            'status': 'published',
-            'datasets': [dataset]
-        })
+        form = ShowcaseForm(
+            data={
+                "category": "app",
+                "license_type": "free",
+                "title": "Test with dataset title",
+                "slug": "test-with-dataset-title",
+                "url": "http://test.pl",
+                "notes": "tresc",
+                "status": "published",
+                "datasets": [dataset],
+            }
+        )
         assert form.is_valid() is True
         form.save()
         obj = Showcase.objects.last()
-        assert obj.title == 'Test with dataset title'
+        assert obj.title == "Test with dataset title"
         assert dataset in obj.datasets.all()
 
     def test_showcase_form_add_invalid_datasets(self):
-        form = ShowcaseForm(data={
-            'category': 'app',
-            'license_type': 'free',
-            'title': "Test with dataset title",
-            'slug': "test-with-dataset-title",
-            'url': "http://test.pl",
-            'notes': 'tresc',
-            'status': 'published',
-            'datasets': 'aaaa'
-        })
+        form = ShowcaseForm(
+            data={
+                "category": "app",
+                "license_type": "free",
+                "title": "Test with dataset title",
+                "slug": "test-with-dataset-title",
+                "url": "http://test.pl",
+                "notes": "tresc",
+                "status": "published",
+                "datasets": "aaaa",
+            }
+        )
         assert form.is_valid() is False
-        assert form.errors == {'datasets': ['Podaj listę wartości.']}
+        assert form.errors == {"datasets": ["Podaj listę wartości."]}
 
     def test_showcase_form_add_tags(self, tag, tag_pl):
         data = {
-            'category': 'app',
-            'license_type': 'free',
-            'title': "Test add tag",
-            'slug': "test-add-tag",
-            'url': "http://test.pl",
-            'notes': 'tresc',
-            'status': 'published',
-            'tags_pl': [tag_pl.id],
+            "category": "app",
+            "license_type": "free",
+            "title": "Test add tag",
+            "slug": "test-add-tag",
+            "url": "http://test.pl",
+            "notes": "tresc",
+            "status": "published",
+            "tags_pl": [tag_pl.id],
         }
 
         form = ShowcaseForm(data=data)

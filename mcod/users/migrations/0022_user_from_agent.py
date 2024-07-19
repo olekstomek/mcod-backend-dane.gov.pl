@@ -8,13 +8,18 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('users', '0021_auto_20201214_0737'),
+        ("users", "0021_auto_20201214_0737"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='user',
-            name='from_agent',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to=settings.AUTH_USER_MODEL),
+            model_name="user",
+            name="from_agent",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                to=settings.AUTH_USER_MODEL,
+            ),
         ),
     ]

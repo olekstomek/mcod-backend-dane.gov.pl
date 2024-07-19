@@ -6,22 +6,27 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('tags', '0005_auto_20190604_2022'),
+        ("tags", "0005_auto_20190604_2022"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='tag',
-            name='language',
-            field=models.CharField(choices=[('pl', 'Polish'), ('en', 'English')], default='', max_length=2, verbose_name='language'),
+            model_name="tag",
+            name="language",
+            field=models.CharField(
+                choices=[("pl", "Polish"), ("en", "English")],
+                default="",
+                max_length=2,
+                verbose_name="language",
+            ),
         ),
         migrations.AlterField(
-            model_name='tag',
-            name='name',
-            field=models.CharField(max_length=100, verbose_name='name'),
+            model_name="tag",
+            name="name",
+            field=models.CharField(max_length=100, verbose_name="name"),
         ),
         migrations.AlterUniqueTogether(
-            name='tag',
-            unique_together={('name', 'language')},
+            name="tag",
+            unique_together={("name", "language")},
         ),
     ]

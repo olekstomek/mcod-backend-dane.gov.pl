@@ -7,13 +7,19 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('suggestions', '0016_auto_20200731_1625'),
+        ("suggestions", "0016_auto_20200731_1625"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='datasetsubmission',
-            name='accepted_dataset_submission',
-            field=models.OneToOneField(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='suggestions.AcceptedDatasetSubmission', verbose_name='accepted dataset submission'),
+            model_name="datasetsubmission",
+            name="accepted_dataset_submission",
+            field=models.OneToOneField(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                to="suggestions.AcceptedDatasetSubmission",
+                verbose_name="accepted dataset submission",
+            ),
         ),
     ]
