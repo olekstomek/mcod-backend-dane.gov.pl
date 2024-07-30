@@ -151,6 +151,7 @@ def process_for_separate_file_model(
 def process_resource_file_data_task(resource_id, **kwargs):
     resource_model = apps.get_model("resources", "Resource")
     resource = resource_model.raw.get(id=resource_id)
+    logger.info(f"process_resource_file_data_task: Resource {resource_id}")
     if not resource.is_data_processable:
         return json.dumps({})
     if not resource.data:
@@ -171,6 +172,7 @@ def process_resource_file_data_task(resource_id, **kwargs):
     resource.data.validate()
 
     success, failed = resource.data.index(force=True)
+    logger.info(f"process_resource_file_data_task: {success=}, {failed=}")
 
     return json.dumps(
         {

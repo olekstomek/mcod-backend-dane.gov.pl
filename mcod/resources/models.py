@@ -958,9 +958,6 @@ class Resource(ExtendedModel):
                 logger.debug(exc)
                 return None
 
-    def index_file(self):
-        process_resource_file_data_task.delay(self.id, update_verification_date=False)
-
     def save_file(self, content, filename):
         dt = self.created.date() if self.created else now().date()
         subdir = dt.isoformat().replace("-", "")

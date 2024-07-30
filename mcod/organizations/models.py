@@ -6,7 +6,6 @@ from django.contrib.postgres.indexes import GinIndex
 from django.db import models
 from django.db.models import CheckConstraint, Q
 from django.dispatch import receiver
-from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 from model_utils import FieldTracker
 from modeltrans.fields import TranslationField
@@ -15,6 +14,7 @@ from mcod.core import signals as core_signals, storages
 from mcod.core.api.rdf import signals as rdf_signals
 from mcod.core.api.search import signals as search_signals
 from mcod.core.db.models import ExtendedModel, TrashModelBase, update_watcher
+from mcod.lib.utils import escape_braces_and_format_html
 from mcod.organizations.managers import OrganizationManager, OrganizationTrashManager
 from mcod.organizations.signals import remove_related_datasets
 
@@ -176,7 +176,7 @@ class Organization(ExtendedModel):
 
     @property
     def description_html(self):
-        return format_html(self.description)
+        return escape_braces_and_format_html(self.description)
 
     @property
     def datasets_count(self):

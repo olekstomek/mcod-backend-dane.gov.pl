@@ -4,6 +4,7 @@ import logging
 import os
 import uuid
 from mimetypes import guess_type
+from pathlib import Path
 from typing import List, Optional, Set, Tuple, Union
 
 import pandas as pd
@@ -18,8 +19,12 @@ from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.core.files.uploadedfile import InMemoryUploadedFile, SimpleUploadedFile
 from django.db import transaction
 from django.db.models import QuerySet
+from openpyxl.reader.excel import load_workbook
+from openpyxl.styles import Alignment, Border, Side
+from openpyxl.workbook import Workbook
+from openpyxl.worksheet.worksheet import Worksheet
 
-from mcod.core.utils import save_df_to_xlsx
+from mcod.core.utils import clean_columns_in_dataframe, save_df_to_xlsx
 from mcod.resources.dga_constants import DGA_COLUMNS
 from mcod.resources.exceptions import FailedValidationException, PendingValidationException
 from mcod.resources.goodtables_checks import ZERO_DATA_ROWS_MSG
@@ -143,15 +148,14 @@ def key_generator_for_create_main_xlsx_file(*args, **kwargs) -> str:
     return "main_xlsx_file_path_to_clean"
 
 
-def get_or_create_main_dga_path() -> str:
-    directory: str = settings.MAIN_DGA_RESOURCE_XLSX_CREATION_ROOT
+def get_or_create_main_dga_path() -> Path:
+    directory: Path = Path(settings.MAIN_DGA_RESOURCE_XLSX_CREATION_ROOT)
     if not os.path.exists(directory):
         os.makedirs(directory)
 
     today_date: str = datetime.datetime.now().strftime("%Y%m%d")
     file_name: str = f"{settings.MAIN_DGA_XLSX_FILE_NAME_PREFIX} {today_date}.xlsx"
-    file_path: str = f"{directory}/{file_name}"
-    return file_path
+    return directory / file_name
 
 
 def get_all_dga_resources() -> QuerySet:
@@ -165,6 +169,7 @@ def get_all_dga_resources() -> QuerySet:
         Resource.objects.filter(contains_protected_data=True, status="published")
         .exclude(id=main_dga_id)
         .select_related("dataset__organization")
+        .order_by("dataset__organization__title")
     )
     return dga_resources
 
@@ -189,6 +194,7 @@ def create_main_dga_df(resources: QuerySet) -> pd.DataFrame:
 
         try:
             df: pd.DataFrame = pd.DataFrame(data, columns=main_df.columns)
+            df = clean_columns_in_dataframe(df, "Zasób chronionych danych")
         except Exception as e:
             logger.error(f"Cannot create DataFrame for resource {resource.pk}: {e}")
             sentry_sdk.api.capture_exception(e)
@@ -217,12 +223,59 @@ def create_main_dga_df(resources: QuerySet) -> pd.DataFrame:
     return main_df
 
 
+def add_style_to_main_dga_excel_file(file_path: Path, sheet_name: str) -> None:
+    """
+    Stylizes the main DGA Excel file to enhance readability and presentation.
+
+    This function applies several formatting adjustments to the Excel sheet:
+    - Freezes the first row to keep headers visible while scrolling.
+    - Removes all borders from cells.
+    - Aligns all content to the left.
+    - Sets fixed widths for the first six columns.
+
+    Parameters:
+    file_path (Path): The path to the Excel file that needs styling.
+    sheet_name (str): The name of the sheet within the Excel file to be styled.
+
+    The function modifies the Excel file in place, saving the changes directly
+    to the provided file path.
+
+    Note:
+    - The function assumes that the sheet name provided exists in the Excel
+      workbook.
+    - Columns widths are set specifically for the first six columns as follows:
+      Column 1: 6 units, Column 2: 32 units, Column 3: 95 units,
+      Column 4: 16 units, Column 5: 16 units, Column 6: 36 units.
+
+    See more: https://jira.coi.gov.pl/browse/OTD-689
+    """
+    workbook: Workbook = load_workbook(filename=file_path)
+    worksheet: Worksheet = workbook[sheet_name]
+
+    # Freeze first row
+    worksheet.freeze_panes = "A2"
+
+    # Remove all borders and align all content to left
+    no_border: Border = Border(left=Side(style=None), right=Side(style=None), top=Side(style=None), bottom=Side(style=None))
+    for row in worksheet.iter_rows():
+        for cell in row:
+            cell.border = no_border
+            cell.alignment = Alignment(horizontal="left")
+
+    # Set column widths
+    columns_widths = {"A": 6, "B": 32, "C": 95, "D": 16, "E": 16, "F": 36}
+    for col, width in columns_widths.items():
+        worksheet.column_dimensions[col].width = width
+
+    workbook.save(file_path)
+
+
 @cache_memoize(
     timeout=settings.MAIN_DGA_RESOURCE_XLSX_CREATION_CACHE_TIMEOUT,
     hit_callable=lambda *args, **kwargs: logger.info("Using cache for main DGA file path."),
     key_generator_callable=key_generator_for_create_main_xlsx_file,
 )
-def create_main_dga_file() -> str:
+def create_main_dga_file() -> Path:
     """
     Creates the main DGA XLSX file based on all DGA resources.
 
@@ -231,14 +284,15 @@ def create_main_dga_file() -> str:
     created file is returned.
 
     Returns:
-        str: The path to the created XLSX file.
+        Path: The path to the created XLSX file.
     """
-    file_path: str = get_or_create_main_dga_path()
+    file_path: Path = get_or_create_main_dga_path()
     dga_resources: QuerySet = get_all_dga_resources()
     main_df: pd.DataFrame = create_main_dga_df(dga_resources)
 
     sheet_name: str = settings.MAIN_DGA_XLSX_WORKSHEET_NAME
     save_df_to_xlsx(df=main_df, file_path=file_path, sheet_name=sheet_name)
+    add_style_to_main_dga_excel_file(file_path=file_path, sheet_name=sheet_name)
     return file_path
 
 

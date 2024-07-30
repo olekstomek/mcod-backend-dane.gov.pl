@@ -1,4 +1,7 @@
 import os
+import shutil
+import tempfile
+from pathlib import Path
 from typing import List, Optional
 from unittest import mock
 from unittest.mock import MagicMock, call
@@ -12,6 +15,7 @@ from mcod.datasets.factories import DatasetFactory
 from mcod.datasets.models import Dataset
 from mcod.organizations.models import Organization
 from mcod.resources.dga_utils import (
+    add_style_to_main_dga_excel_file,
     check_all_resource_validations_status,
     clean_up_after_main_dga_resource_creation,
     create_main_dga_dataset,
@@ -92,6 +96,11 @@ def test_get_all_dga_resources(main_dga_resource: Resource):
     for resource in dga_resources:
         assert resource in all_dga_resources
 
+    # check if Resources are sorted by Organization title
+    expected_organization_titles: List[str] = sorted([resource.dataset.organization.title for resource in dga_resources])
+    organization_titles: List[str] = list(all_dga_resources.values_list("dataset__organization__title", flat=True))
+    assert organization_titles == expected_organization_titles
+
 
 @pytest.mark.feat_main_dga
 @pytest.mark.parametrize("is_path_exists", [True, False])
@@ -107,8 +116,8 @@ def test_get_or_create_main_dga_path(
     mock_datetime.datetime.now.return_value.strftime.return_value = "20251201"
     mock_path_exists.return_value = is_path_exists
 
-    directory: str = settings.MAIN_DGA_RESOURCE_XLSX_CREATION_ROOT
-    file_path: str = get_or_create_main_dga_path()
+    directory: Path = Path(settings.MAIN_DGA_RESOURCE_XLSX_CREATION_ROOT)
+    file_path: Path = get_or_create_main_dga_path()
 
     if is_path_exists:
         mock_makedirs.assert_not_called()
@@ -116,7 +125,7 @@ def test_get_or_create_main_dga_path(
         mock_makedirs.assert_called_once_with(directory)
 
     expected_file_name = "Wykaz zasobów chronionych DGA – wykaz zbiorczy – " "Ministerstwo Cyfryzacji 20251201.xlsx"
-    expected_path = f"{directory}/{expected_file_name}"
+    expected_path: Path = directory / expected_file_name
     assert file_path == expected_path
 
 
@@ -342,18 +351,34 @@ def test_clean_up_after_main_dga_resource_creation(
 
 
 @pytest.mark.feat_main_dga
+def test_add_style_to_main_dga_excel_file_smoke():
+    source_file_path = Path(settings.TEST_SAMPLES_PATH, "example_main_dga_file.xlsx")
+    with tempfile.TemporaryDirectory() as temp_dir:
+        # Given
+        temp_file_path = Path(temp_dir, "file_name.xlsx")
+        shutil.copy(source_file_path, temp_file_path)
+        original_mtime: float = os.path.getmtime(temp_file_path)
+        # When
+        add_style_to_main_dga_excel_file(temp_file_path, "Arkusz 1")
+        # Then
+        assert original_mtime != os.path.getmtime(temp_file_path)
+
+
+@pytest.mark.feat_main_dga
 @mock.patch("mcod.resources.dga_utils.get_or_create_main_dga_path")
 @mock.patch("mcod.resources.dga_utils.get_all_dga_resources")
 @mock.patch("mcod.resources.dga_utils.create_main_dga_df")
 @mock.patch("mcod.resources.dga_utils.save_df_to_xlsx")
+@mock.patch("mcod.resources.dga_utils.add_style_to_main_dga_excel_file")
 def test_create_main_dga_file(
+    mock_add_style_to_main_dga_excel_file: MagicMock,
     mock_save_df_to_xlsx: MagicMock,
     mock_create_main_dga_df: MagicMock,
     mock_get_all_dga_resources: MagicMock,
     mock_get_or_create_main_dga_path: MagicMock,
 ):
     # Set mocks
-    mock_get_or_create_main_dga_path.return_value = "/path/to/dga_file.xlsx"
+    mock_get_or_create_main_dga_path.return_value = Path("path", "to", "dga_file.xlsx")
 
     mock_df = MagicMock()
     mock_create_main_dga_df.return_value = mock_df
@@ -370,12 +395,16 @@ def test_create_main_dga_file(
     mock_create_main_dga_df.assert_called_once_with(mock_dga_resources)
     mock_save_df_to_xlsx.assert_called_once_with(
         df=mock_df,
-        file_path="/path/to/dga_file.xlsx",
+        file_path=Path("path", "to", "dga_file.xlsx"),
+        sheet_name=settings.MAIN_DGA_XLSX_WORKSHEET_NAME,
+    )
+    mock_add_style_to_main_dga_excel_file.assert_called_once_with(
+        file_path=Path("path", "to", "dga_file.xlsx"),
         sheet_name=settings.MAIN_DGA_XLSX_WORKSHEET_NAME,
     )
 
     # Check result
-    assert result == "/path/to/dga_file.xlsx"
+    assert result == Path("path", "to", "dga_file.xlsx")
 
 
 @pytest.mark.feat_main_dga

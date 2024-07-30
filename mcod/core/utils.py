@@ -11,7 +11,7 @@ from collections import OrderedDict
 from http.cookies import SimpleCookie
 from io import StringIO, TextIOWrapper
 from pathlib import Path
-from typing import Any, List, Optional, TextIO, Union
+from typing import List, Optional, TextIO, Union
 from xml.dom.minidom import parseString
 
 import json_api_doc
@@ -460,25 +460,28 @@ def clean_filename(filename, limit=220):
 
 def save_df_to_xlsx(
     df: pd.DataFrame,
-    file_path: str,
+    file_path: Path,
     sheet_name: str = "Arkusz1",
-    adjust_col_width: bool = True,
 ) -> None:
     with pd.ExcelWriter(file_path, engine="xlsxwriter") as writer:
         df.to_excel(writer, index=False, sheet_name=sheet_name)
-        worksheet: Any = writer.sheets[sheet_name]
-
-        if adjust_col_width:
-            # Find and set max width for each column in worksheet.
-            for i, col in enumerate(df.columns):
-                # NaN (float type) is returned when there are no records.
-                # Set to 0 in such cases.
-                max_record_len: Union[int, float] = df[col].astype(str).map(len).max()
-                if pd.isna(max_record_len):
-                    max_record_len = 0
-
-                col_header_len: int = len(str(col))
-                column_len: int = max(max_record_len, col_header_len)
-                worksheet.set_column(i, i, column_len + 1)
-
         writer.save()
+
+
+def clean_columns_in_dataframe(df: pd.DataFrame, *columns: str) -> pd.DataFrame:
+    """
+    Removes rows in specified columns from the DataFrame where values are
+    None, empty, or contain only whitespace.
+    """
+    existing_columns: List[str] = [col for col in columns if col in df.columns]
+    if not existing_columns:
+        return df.copy()
+
+    # Build a condition for non-empty and non-NaN values across specified columns
+    non_empty_conditions: pd.Series = (
+        df[existing_columns].apply(lambda col: col.str.strip().replace("", pd.NA).notna(), axis=0).all(axis=1)
+    )
+
+    # Filter DataFrame based on the condition
+    df_cleaned: pd.DataFrame = df[non_empty_conditions]
+    return df_cleaned

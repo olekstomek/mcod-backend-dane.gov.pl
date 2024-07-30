@@ -143,6 +143,7 @@ py7zr = "==0.18.5"
 sentry-sdk = {version = "==1.6.0", extras = ["falcon"]}
 numpy = "==1.23.0"
 fake-useragent = "==1.3.0"
+openpyxl = "==3.1.2"
 
 [dev-packages]
 flake8 = "*"

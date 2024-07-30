@@ -114,7 +114,7 @@ def fetch_data(url):
 
 def get_xml_schema_version(*, xml_path=None, xml_url=None):
     if xml_url:
-        root = ElementTree.fromstring(requests.get(xml_url).text)
+        root = ElementTree.fromstring(requests.get(xml_url, **settings.HTTP_REQUEST_DEFAULT_PARAMS).text)
     else:
         root = ElementTree.parse(xml_path).getroot()
 

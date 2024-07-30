@@ -1,8 +1,9 @@
 from django.apps import apps
-from django.conf import settings
 from django.core.management import BaseCommand
 from django.core.management.base import CommandError
 from tqdm import tqdm
+
+from mcod.resources.tasks import process_resource_file_data_task
 
 
 class Command(BaseCommand):
@@ -20,12 +21,15 @@ class Command(BaseCommand):
         if not options["pks"]:
             raise CommandError("No resource id specified. You must provide at least one.")
         Resource = apps.get_model("resources", "Resource")
-        asnc = options.get("async") or False
-        if not asnc:
-            settings.CELERY_TASK_ALWAYS_EAGER = True
-
+        async_ = options.get("async") or False
         queryset = Resource.objects.with_tabular_data(pks=(int(pk) for pk in options["pks"].split(",")))
         self.stdout.write("The action will reindex files for {} resource(s)".format(queryset.count()))
         for obj in tqdm(queryset, desc="Indexing"):
-            obj.index_file()
+            if async_:
+                process_resource_file_data_task.delay(obj.pk, update_verification_date=False)
+            else:
+                process_resource_file_data_task.apply(
+                    kwargs={"resource_id": obj.pk, "update_verification_date": False}, throw=True
+                )
+
         self.stdout.write("Done.")

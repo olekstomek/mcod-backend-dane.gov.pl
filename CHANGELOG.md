@@ -14,6 +14,26 @@
 ### Breaks
 
 
+## 2.35.2 - (2024-07-19)
+---
+
+### New
+
+* Komenda do masowej re-walidacji Zasobów (Resource) tabelarycznych (OTD-592)
+
+
+### Changes
+
+* Sposób organizacji danych Wykazu Głównego - od teraz zasoby będą posortowane po kolumnie "Nazwa dysponenta zasobu" (OTD-688)
+* Stylowanie w pliku xlsx Wykazu Głównego (OTD-689)
+* Zawartość pliku Wykazu Głównego - usunięto wiersze, które nie zawierają informacji w kolumnie "Zasób chronionych danych" (OTD-690)
+* Rozluźnienie polityki sprawdzania certyfikatów "self signed certificate" przy imporcie pliku XML za pomocą Harvestera (OTD-691)
+
+### Fixes
+
+* Naprawa błędów spowodowanych umieszczeniem znaków '{', '}' w opisie komunikatów (Alert) oraz opisie instytucji (Organization) (OTD-601)
+
+
 ## 2.35.1 - (2024-07-01)
 ---
 

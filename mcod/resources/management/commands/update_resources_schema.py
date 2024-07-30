@@ -1,8 +1,9 @@
 from django.apps import apps
-from django.conf import settings
 from django.core.management import BaseCommand
 from django.core.management.base import CommandError
 from tqdm import tqdm
+
+from mcod.resources.tasks import process_resource_file_data_task
 
 description = """
 Po zmianie sposobu wyświetlania i indeksowania date i datetime stare zasoby mogą mieć problem ze zmianą typu.
@@ -63,10 +64,7 @@ class Command(BaseCommand):
         if not options["pks"]:
             raise CommandError("No resource id specified. You must provide at least one.")
         Resource = apps.get_model("resources", "Resource")
-        asnc = options.get("async") or False
-        if not asnc:
-            settings.CELERY_TASK_ALWAYS_EAGER = True
-
+        async_ = options.get("async") or False
         date_format = options["dateformat"]
         datetime_format = options["datetimeformat"]
 
@@ -76,5 +74,10 @@ class Command(BaseCommand):
             if obj.tabular_data_schema:
                 tabular_data_schema = update_schema(obj.tabular_data_schema, date_format, datetime_format)
                 Resource.objects.filter(pk=obj.id).update(tabular_data_schema=tabular_data_schema)
-            obj.index_file()
+            if async_:
+                process_resource_file_data_task.delay(obj.pk, update_verification_date=False)
+            else:
+                process_resource_file_data_task.apply(
+                    kwargs={"resource_id": obj.pk, "update_verification_date": False}, throw=True
+                )
         self.stdout.write("Done.")
