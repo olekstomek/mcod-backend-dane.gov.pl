@@ -11,6 +11,7 @@ from django.contrib.auth.models import (
     Permission,
     PermissionsMixin,
 )
+from django.contrib.auth.signals import user_logged_out
 from django.contrib.postgres.fields import JSONField
 from django.contrib.sessions.backends.cache import KEY_PREFIX
 from django.core.cache import caches
@@ -24,6 +25,7 @@ from django.utils import timezone
 from django.utils.crypto import constant_time_compare
 from django.utils.functional import cached_property
 from django.utils.translation import get_language, gettext_lazy as _, override, pgettext_lazy
+from encrypted_fields import fields as enc_fields
 from model_utils import FieldTracker
 from modeltrans.fields import TranslationField
 
@@ -269,6 +271,13 @@ class User(
 
     objects = UserManager()
 
+    _pesel = enc_fields.EncryptedCharField(null=True, max_length=11, blank=True)
+    pesel = enc_fields.SearchField(
+        hash_key=settings.FIELD_ENCRYPTION_KEYS[0],
+        encrypted_field_name="_pesel",
+    )
+    is_gov_auth = models.BooleanField(default=False)
+
     class Meta:
         verbose_name = _("User")
         verbose_name_plural = _("Users")
@@ -326,11 +335,7 @@ class User(
         token = self._get_active_token(token_type)
         if not token:
             expiration_delta = expiration_delta or timezone.timedelta(hours=settings.TOKEN_EXPIRATION_TIME)
-            token = Token.objects.create(
-                user=self,
-                token_type=token_type,
-                expiration_date=timezone.now() + expiration_delta,
-            )
+            token = Token.objects.create(user=self, token_type=token_type, expiration_date=timezone.now() + expiration_delta)
         return token.token
 
     @property
@@ -725,6 +730,27 @@ class User(
     def has_from_agent_changed(self):
         return self._original_from_agent_id != getattr(self.from_agent, "pk", None)
 
+    @property
+    def is_gov_linked(self) -> bool:
+        """Checks if the user is linked to the login.gov.pl service (has updated PESEL)."""
+        return bool(self.pesel)
+
+    @property
+    def connected_gov_users(self) -> list:
+        """Retrieves a list of other active users linked to the login.gov.pl service,
+        connected by the same PESEL number. This property only returns users for instances
+        that are authenticated via login.gov.pl service and not marked as removed
+        or permanently removed.
+        """
+        other_users = self._meta.model.objects.filter(
+            pesel=self.pesel,
+            state="active",
+            is_active=True,
+            is_removed=False,
+            is_permanently_removed=False,
+        ).exclude(id=self.id)
+        return list(other_users) if self.is_gov_linked and self.is_gov_auth else []
+
 
 @receiver(pre_save, sender=User)
 def pre_save_handler(sender, instance, *args, **kwargs):
@@ -767,6 +793,13 @@ def post_save_handler(
                 obj.save()
 
     user_changed.send(sender=User, user=instance, created=created)
+
+
+@receiver(user_logged_out)
+def handle_logout(sender, request, user, **kwargs) -> None:
+    if user:
+        user.is_gov_auth = False
+        user.save()
 
 
 def get_token_expiration_date():

@@ -1,6 +1,7 @@
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from marshmallow import post_dump, pre_dump
+from rest_framework import serializers
 
 from mcod.core.api import fields
 from mcod.core.api.jsonapi.serializers import (
@@ -231,6 +232,8 @@ class UserSchemaMixin:
     rodo_privacy_policy_opt_in = fields.Boolean()
     count_datasets_created = fields.Int()
     count_datasets_modified = fields.Int()
+    is_gov_linked = fields.Boolean()
+    connected_gov_users = fields.List(fields.Str())
 
     @post_dump
     def prepare_data(self, data, **kwargs):
@@ -394,3 +397,20 @@ class VerifyEmailAttrs(ObjectAttrs):
 class VerifyEmailApiResponse(TopLevel):
     class Meta:
         attrs_schema = VerifyEmailAttrs
+
+
+class ACSResponse(serializers.Serializer):
+    """Serialize the response from the ogin.gov.pl service."""
+
+    SAMLart = serializers.CharField(required=True, allow_blank=False)
+    RelayState = serializers.CharField(required=False, allow_blank=True)
+
+
+class ACSTemplateResponse(serializers.Serializer):
+    """Serialize the response from the template mocking the login.gov.pl service."""
+
+    in_response_to = serializers.CharField(required=True, allow_blank=False)
+    first_name = serializers.CharField(required=True, allow_blank=False)
+    last_name = serializers.CharField(required=True, allow_blank=False)
+    dob = serializers.CharField(required=True, allow_blank=False)
+    pesel = serializers.CharField(required=True, allow_blank=False)

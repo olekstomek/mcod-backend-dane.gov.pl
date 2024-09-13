@@ -31,6 +31,7 @@ from mcod.core.csrf import _sanitize_token, compare_salted_tokens, generate_csrf
 from mcod.core.utils import falcon_set_cookie, jsonapi_validator, route_to_name
 from mcod.counters.lib import Counter
 from mcod.lib.encoders import DateTimeToISOEncoder
+from mcod.unleash import is_enabled
 
 logger = logging.getLogger(__name__)
 
@@ -133,6 +134,21 @@ class FalconCacheMiddleware(BaseFalconCacheMiddleware):
 
     def serialize(self, req, resp, resource):
         return resp.media
+
+    @staticmethod
+    def generate_cache_key(req: falcon.request.Request, method: str = None) -> str:
+        """Custom cache key method to take into account language from req.params (query string).
+        Args:
+            method: HTTP verb
+
+        Returns: string to cache response under
+        """
+        default_key = BaseFalconCacheMiddleware.generate_cache_key(req, method)
+        if is_enabled("S63_fix_for_cache_collision_falcon_api.be"):
+            lang = req.params.get("lang", "pl")
+            return f"{default_key}:{lang}"
+        else:
+            return default_key
 
 
 class LocaleMiddleware:

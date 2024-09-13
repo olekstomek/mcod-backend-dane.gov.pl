@@ -14,6 +14,25 @@
 ### Breaks
 
 
+## 2.36.0 - (2024-08-14)
+---
+
+### New
+
+* Pola pesel, _pesel, is_gov_auth dla modelu User
+* Bibliotekę django-logingovpl (plik .whl) oraz django-encrypted-model-fields.
+* Zmienne środowiskowe niezbędne do działania funkcjonalności: USERS_TEST_LOGINGOVPL, LOGINGOVPL_ISSUER, LOGINGOVPL_SSO_URL,LOGINGOVPL_ASSERTION_CONSUMER_URL, LOGINGOVPL_ENC_KEY,
+LOGINGOVPL_ENC_CERT, LOGINGOVPL_ARTIFACT_RESOLVE_URL, LOGINGOVPL_SL_URL, FIELD_ENCRYPTION_KEYS, FRONTEND_BASE_URL
+* Interfejs (budowanie adresów URL dla przekierowań - klasa LOGINGOVPL_ACTION) związany z komunikacją backend - frontend.
+* Endpointy: /logingovpl, /logingovpl/idp, /logingovpl/switch, /logingovpl/unlink.
+* Uniwersalną klasę (MethodsNotAllowedTestMixin) do testowania metod zezwolonych dla testowanego API.
+* Serwisy odpowiedzialne za wykonywanie różnych zadań dla funkcjonalności Węzła Krajowego (LoginGovPlService) jak i związanych z użytkownikiem (UserService).
+* Testowy formularz do logowania przez Węzeł Krajowy - Django Template.
+* Dodanie dodatkowego atrybutu (connected_gov_users) do zwrotnego wyniku w formacie JSON w endpoincie /auth/user
+* Nowe właściwości dla modelu User: is_gov_linked, connected_gov_users.
+* Moduł contants oraz exceptions dla aplikacji users.
+
+
 ## 2.35.2 - (2024-07-19)
 ---
 

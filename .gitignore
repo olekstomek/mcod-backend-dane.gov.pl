@@ -265,3 +265,6 @@ requeststest
 .ipynb_checkpoints/
 
 mcod/api_key.txt
+
+# login.gov.pl certs, keys
+pki/

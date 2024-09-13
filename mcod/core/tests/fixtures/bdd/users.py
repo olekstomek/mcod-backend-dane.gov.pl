@@ -90,6 +90,33 @@ def logged_user_type(context, user_type):
     DjangoClient().force_login(context.user)
 
 
+@given(parsers.parse("logingovpl {user_type} with email {email} and pesel {pesel}"))
+def logingovpl_user_type_with_email_and_pesel(context, user_type, email, pesel):
+    """Returns the user with fixed user type, email and pesel, not logged in."""
+    _factory = factories_registry.get_factory(user_type)
+    return _factory(email=email, pesel=pesel)
+
+
+@given(parsers.parse("{user_type} linked to logingovpl and logged by form with email {email} and pesel {pesel}"))
+def logged_by_form_logingovpl_user_type_with_email_and_pesel(context, user_type, email, pesel):
+    """Returns the user with fixed user type, email and pesel, logged in via standard form
+    (the field `is_gov_auth` is `False`).
+    """
+    _factory = factories_registry.get_factory(user_type)
+    context.user = _factory(email=email, pesel=pesel, is_gov_auth=False)
+    DjangoClient().force_login(context.user)
+
+
+@given(parsers.parse("{user_type} linked to logingovpl and logged by logingovpl with email {email} and pesel {pesel}"))
+def logged_by_logingovpl_logingovpl_user_type_with_email_and_pesel(context, user_type, email, pesel):
+    """Returns the user with fixed user type, email and pesel, logged in via the login.gov.pl service
+    (the field `is_gov_auth` is `True`).
+    """
+    _factory = factories_registry.get_factory(user_type)
+    context.user = _factory(email=email, pesel=pesel, is_gov_auth=True)
+    DjangoClient().force_login(context.user)
+
+
 @given(parsers.parse("logged active user with email {email} and newsletter subscription enabled with code {activation_code}"))
 def logged_active_user_with_newsletter_subscription_enabled(context, email, activation_code):
     user = UserFactory(email=email, password="12345.Abcde", state="active")

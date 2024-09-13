@@ -1,21 +1,24 @@
 import string
 from collections import OrderedDict
 from datetime import date
+
+import environ
 import sentry_sdk
-from sentry_sdk.integrations.django import DjangoIntegration
+from bokeh.util.paths import bokehjsdir
+from celery.schedules import crontab
+from django.utils.translation import gettext_lazy as _
+from django.utils.translation import pgettext_lazy
+from kombu import Queue
 from sentry_sdk.integrations.celery import CeleryIntegration
+from sentry_sdk.integrations.django import DjangoIntegration
+from wagtail.embeds.oembed_providers import all_providers
+
 from mcod.lib.sentry_falcon import (
     FalconIntegration,
 )  # Update to Sentry's integration when
 
 # https://github.com/getsentry/sentry-python/pull/1297 will be merged and released
 
-import environ
-from bokeh.util.paths import bokehjsdir
-from celery.schedules import crontab
-from django.utils.translation import gettext_lazy as _, pgettext_lazy
-from kombu import Queue
-from wagtail.embeds.oembed_providers import all_providers
 
 env = environ.Env()
 ROOT_DIR = environ.Path(__file__) - 3
@@ -73,6 +76,7 @@ INSTALLED_APPS = [
     "modelcluster",
     "taggit",
     "rest_framework",
+    "corsheaders",
     "dal",
     "dal_select2",
     "dal_admin_filters",
@@ -103,6 +107,7 @@ INSTALLED_APPS = [
     "notifications",
     "django_admin_multiple_choice_list_filter",
     "auditlog",
+    "logingovpl",
     # Our apps
     "mcod.core",
     "mcod.organizations",
@@ -138,6 +143,7 @@ INSTALLED_APPS = [
 CMS_MIDDLEWARE = ["mcod.cms.middleware.CounterMiddleware"] if COMPONENT == "cms" else []
 
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "mcod.cms.middleware.SiteMiddleware",
@@ -2068,3 +2074,23 @@ SENTRY_SDK_KWARGS = {
 
 if COMPONENT in ["admin", "cms", "celery"] and ENABLE_SENTRY:
     sentry_sdk.init(**SENTRY_SDK_KWARGS[COMPONENT])
+
+
+USERS_TEST_LOGINGOVPL = env.bool("USERS_TEST_LOGINGOVPL", default=False)
+LOGINGOVPL_ISSUER = env("LOGINGOVPL_ISSUER", default="CA_INT_LOGIN")
+LOGINGOVPL_SSO_URL = env("LOGINGOVPL_SSO_URL", default="https://int.login.gov.pl/login/SingleSignOnService")
+LOGINGOVPL_ASSERTION_CONSUMER_URL = env("LOGINGOVPL_ASSERTION_CONSUMER_URL", default="http://127.0.0.1/idp")
+LOGINGOVPL_ENC_KEY = env("LOGINGOVPL_ENC_KEY", default="pki/logingovpl_int_enc.key.pem")
+LOGINGOVPL_ENC_CERT = env("LOGINGOVPL_ENC_CERT", default="pki/logingovpl_int_enc.crt.pem")
+
+LOGINGOVPL_ARTIFACT_RESOLVE_URL = env(
+    "LOGINGOVPL_ARTIFACT_RESOLVE_URL",
+    default="https://int.login.gov.pl/login-services/idpArtifactResolutionService",
+)
+LOGINGOVPL_SL_URL = env(
+    "LOGINGOVPL_SL_URL",
+    default="https://int.login.gov.pl/login-services/singleLogoutService",
+)
+
+FIELD_ENCRYPTION_KEYS = env.list("FIELD_ENCRYPTION_KEYS", default=list())
+FRONTEND_BASE_URL = env("FRONTEND_BASE_URL", default="https://dane.gov.pl")

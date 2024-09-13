@@ -23,6 +23,8 @@ https://git-scm.com/book/en/v2/Getting-Started-Installing-Git
 
 Aby projekt działał prawidłowo, należy skopiować zawartość pliku env.sample do nowo utworzonego pliku .env.
 
+**Uwaga:** Do poprawnego dzialania biblioteki django-searchable-encrypted-fields, należy wygenerować samodzielnie `encryption key` biblioteką secrets  `secrets.token_hex(32)`. Jest to konieczne, ponieważ biblioteka szyfruje i odszyfrowuje pola z bazy danych (działa w dwie strony). Klucz należy dodać do pliku env zmiennej FIELD_ENCRYPTION_KEYS. Zmienna odczytywana jest jako lista, dlatego kolejne klucze dodaje sie przecinkiem na początku stringa. (https://pypi.org/project/django-searchable-encrypted-fields/). Przykład: FIELD_ENCRYPTION_KEYS=new_key,some_old_key
+
 ## Konfiguracja Django:
 
 Aby projekt działał prawidłowo, należy skopiować zawartość pliku `mcod/settings/local.py.sample` do nowo utworzonego pliku `mcod/settings/local.py`.

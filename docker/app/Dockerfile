@@ -6,8 +6,23 @@ ARG UNAME=mcod
 
 ENV PYTHONUNBUFFERED 1
 
-RUN apt-get update && apt-get install -y software-properties-common && add-apt-repository "deb http://deb.debian.org/debian bullseye main contrib non-free"
-RUN apt-get update && apt-get install -y --allow-unauthenticated gettext locales libarchive13 libmagickwand-dev libmagickcore-6.q16-3-extra curl dirmngr apt-transport-https lsb-release ca-certificates firefox-esr ffmpeg unrar
+RUN apt-get update && apt-get install -y software-properties-common \
+    && add-apt-repository "deb http://deb.debian.org/debian bullseye main contrib non-free"
+RUN apt-get update && apt-get install -y --allow-unauthenticated \
+    gettext \
+    locales \
+    libarchive13 \
+    libmagickwand-dev \
+    libmagickcore-6.q16-3-extra \
+    curl \
+    dirmngr \
+    apt-transport-https \
+    lsb-release \
+    ca-certificates \
+    firefox-esr \
+    ffmpeg \
+    unrar \
+    libxmlsec1-dev
 
 RUN curl -sL https://deb.nodesource.com/setup_16.x | bash -
 

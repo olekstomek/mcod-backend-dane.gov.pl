@@ -1,16 +1,104 @@
 Feature: User Account API
-  Scenario: Get user account in API 1.0
+
+  @feat_wk
+  Scenario: Get user account in API
     Given logged active user
-    When api request path is /1.0/auth/user
+    When api request path is <request_path>
     And send api request and fetch the response
     Then api's response status code is 200
     And api's response body has field /data/id
-    And api's response body field data/attributes has fields email,state,fullname
-    And api's response body field data/attributes has no fields password1,password2
+    And api's response body field data/attributes has fields email,state,fullname,is_gov_linked,connected_gov_users
+    And api's response body field data/attributes has no fields password1,password2,pesel
     And api's response body field /data/attributes/rodo_privacy_policy_opt_in is False
     And api's response body field /data/attributes/subscriptions_report_opt_in is False
     And api's response body field /data/attributes/state is active
     And api's response body has field /data/relationships/institutions
+    And api's response body field /data/attributes/is_gov_linked is False
+    And api's response body field /data/attributes/connected_gov_users is []
+
+    Examples:
+    | request_path   |
+    | /1.0/auth/user |
+    | /1.4/auth/user |
+
+  @feat_wk
+  Scenario: Get linked to logingovpl and logged by logingovpl user account in API
+    Given active user linked to logingovpl and logged by logingovpl with email logingovpl@example.com and pesel 11223344556
+    When api request path is <request_path>
+    And send api request and fetch the response
+    Then api's response status code is 200
+    And api's response body field /data/attributes/is_gov_linked is True
+    And api's response body field /data/attributes/connected_gov_users is []
+
+    Examples:
+    | request_path   |
+    | /1.0/auth/user |
+    | /1.4/auth/user |
+
+  @feat_wk
+  Scenario: Get linked to logingovpl and logged by form user account in API
+    Given active user linked to logingovpl and logged by form with email logingovpl@example.com and pesel 11223344556
+    When api request path is <request_path>
+    And send api request and fetch the response
+    Then api's response status code is 200
+    And api's response body field /data/attributes/is_gov_linked is True
+    And api's response body field /data/attributes/connected_gov_users is []
+
+    Examples:
+    | request_path   |
+    | /1.0/auth/user |
+    | /1.4/auth/user |
+
+  @feat_wk
+  Scenario: Get linked to logingovpl and logged by logingovpl user account with connected active logingovpl user in API
+    Given active user linked to logingovpl and logged by logingovpl with email logingovpl@example.com and pesel 11223344556
+    And logingovpl active user with email otherlogingovpl@example.com and pesel 11223344556
+    When api request path is <request_path>
+    And send api request and fetch the response
+    Then api's response status code is 200
+    And api's response body field /data/attributes/is_gov_linked is True
+    And api's response body field /data/attributes/connected_gov_users is ['otherlogingovpl@example.com']
+
+    Examples:
+    | request_path   |
+    | /1.0/auth/user |
+    | /1.4/auth/user |
+
+  @feat_wk
+  Scenario: Get linked to logingovpl and logged by form user account with connected active logingovpl user in API
+    Given active user linked to logingovpl and logged by form with email logingovpl@example.com and pesel 11223344556
+    And logingovpl active user with email otherlogingovpl@example.com and pesel 11223344556
+    When api request path is <request_path>
+    And send api request and fetch the response
+    Then api's response status code is 200
+    And api's response body field /data/attributes/is_gov_linked is True
+    And api's response body field /data/attributes/connected_gov_users is []
+
+    Examples:
+    | request_path   |
+    | /1.0/auth/user |
+    | /1.4/auth/user |
+
+  @feat_wk
+  Scenario: Get linked to logingovpl and logged by logingovpl user account with connected not active logingovpl user in API 1.0
+    Given active user linked to logingovpl and logged by logingovpl with email logingovpl@example.com and pesel 11223344556
+    And logingovpl <not_active_user_type> with email otherlogingovpl@example.com and pesel 11223344556
+    When api request path is <request_path>
+    And send api request and fetch the response
+    Then api's response status code is 200
+    And api's response body field /data/attributes/is_gov_linked is True
+    And api's response body field /data/attributes/connected_gov_users is []
+
+    Examples:
+        | not_active_user_type | request_path   |
+        | pending user         | /1.0/auth/user |
+        | inactive user        | /1.0/auth/user |
+        | unconfirmed user     | /1.0/auth/user |
+        | blocked user         | /1.0/auth/user |
+        | pending user         | /1.4/auth/user |
+        | inactive user        | /1.4/auth/user |
+        | unconfirmed user     | /1.4/auth/user |
+        | blocked user         | /1.4/auth/user |
 
   Scenario: Get user account for not logged user
     When api request path is /1.0/auth/user

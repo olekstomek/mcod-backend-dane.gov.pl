@@ -5,6 +5,7 @@ import requests_mock
 from django.conf import settings
 from falcon.util.structures import Context
 
+from mcod.core.tests.fixtures.api_fixtures import *  # noqa
 from mcod.core.tests.fixtures.bdd import *  # noqa
 from mcod.core.tests.fixtures.categories import *  # noqa
 from mcod.core.tests.fixtures.datasets_fixtures import *  # noqa

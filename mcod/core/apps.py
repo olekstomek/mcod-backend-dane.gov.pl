@@ -29,6 +29,9 @@ class ExtendedAppMixin:
         for sender in senders:
             history_registry.register(sender)
             auditlog.register(sender)
+            exclude_fields_mapping = {"User": ["pesel", "_pesel"]}
+            exclude_fields = exclude_fields_mapping.get(sender.__name__, [])
+            auditlog.register(sender, exclude_fields=exclude_fields)
             if hasattr(sender, "trash_class"):
                 auditlog.register(sender.trash_class)
 

@@ -8,11 +8,17 @@ from mcod.datasets.factories import DatasetFactory
 from mcod.organizations.factories import OrganizationFactory
 from mcod.resources.factories import ResourceFactory
 from mcod.users.factories import AdminFactory, EditorFactory, UserFactory
+from mcod.users.models import User
 
 
 @pytest.fixture
-def active_user():
+def active_user() -> User:
     return UserFactory.create(email="active_user@dane.gov.pl", password="12345.Abcde", state="active")
+
+
+@pytest.fixture
+def active_user_with_id(request) -> User:
+    return UserFactory.create(id=request.param, email="active_user@dane.gov.pl", password="12345.Abcde", state="active")
 
 
 @pytest.fixture

@@ -1,3 +1,4 @@
+import copy
 from collections import namedtuple
 from functools import partial
 from smtplib import SMTPException
@@ -10,9 +11,13 @@ from django.contrib.auth.password_validation import validate_password as dj_vali
 from django.contrib.auth.views import LoginView as DjangoLoginView
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.http import HttpResponseRedirect
+from django.shortcuts import render
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
+from logingovpl.views import SSOView as BaseSSOView
+from rest_framework import permissions, renderers
+from rest_framework.views import APIView
 
 from mcod.academy.models import Course
 from mcod.core.api.handlers import CreateOneHdlr, RetrieveOneHdlr, SearchHdlr, UpdateOneHdlr
@@ -30,6 +35,7 @@ from mcod.lib.triggers import session_store
 from mcod.schedules.models import Schedule
 from mcod.suggestions.models import AcceptedDatasetSubmission
 from mcod.tools.api.dashboard import DashboardMetaSerializer, DashboardSerializer
+from mcod.users.constants import LOGINGOVPL_ACTION, LOGINGOVPL_PROCESS
 from mcod.users.deserializers import (
     ChangePasswordApiRequest,
     ConfirmResetPasswordApiRequest,
@@ -41,9 +47,12 @@ from mcod.users.deserializers import (
     UserUpdateApiRequest,
 )
 from mcod.users.documents import MeetingDoc
+from mcod.users.exceptions import SAMLArtException
 from mcod.users.forms import AdminLoginForm
 from mcod.users.models import Meeting, Token
 from mcod.users.serializers import (
+    ACSResponse,
+    ACSTemplateResponse,
     ChangePasswordApiResponse,
     ConfirmResetPasswordApiResponse,
     LoginApiResponse,
@@ -55,6 +64,7 @@ from mcod.users.serializers import (
     UserApiResponse,
     VerifyEmailApiResponse,
 )
+from mcod.users.services import logingovpl_service, user_service
 
 User = get_user_model()
 
@@ -491,3 +501,144 @@ class MeetingsView(JsonAPIView):
         deserializer_schema = MeetingApiSearchRequest
         serializer_schema = partial(MeetingApiResponse, many=True)
         search_document = MeetingDoc()
+
+
+class SSOView(BaseSSOView):
+
+    def get(self, request, *args, **kwargs):
+        """Prepare an envelope and send it to the login.gov.pl service
+        or render the template mocking that service.
+        """
+        if settings.USERS_TEST_LOGINGOVPL:
+            if self.request.user.is_authenticated:
+                in_response_to = logingovpl_service.prepare_authn_request_id(self.request.user.id)
+            else:
+                in_response_to = logingovpl_service.prepare_authn_request_id()
+
+            context = {"in_response_to": in_response_to}
+            return render(request, "logingovpl/test_login_gov_pl.html", context=context)
+        return super().get(request, *args, **kwargs)
+
+    def get_authn_request_id(self):
+        if self.request.user.is_authenticated:
+            return logingovpl_service.prepare_authn_request_id(self.request.user.id)
+        return logingovpl_service.prepare_authn_request_id()
+
+
+class ACSView(APIView):
+    """/idp endpoint view responsible for handling login.gov.pl requests."""
+
+    permission_classes = [permissions.AllowAny]
+    renderer_classes = [renderers.JSONRenderer]
+
+    def post(self, request, *args, **kwargs):  # noqa
+        """Link or log-in user, based on the data received from the login.gov.pl service."""
+
+        if settings.USERS_TEST_LOGINGOVPL:
+            serializer = ACSTemplateResponse(data=request.data)
+        else:
+            serializer = ACSResponse(data=request.data)
+
+        if not serializer.is_valid():
+            return HttpResponseRedirect(LOGINGOVPL_ACTION.UNKNOWN.value)
+
+        try:
+            logingovpl_data = logingovpl_service.get_logingovpl_data_and_logout(
+                serializer.validated_data, settings.USERS_TEST_LOGINGOVPL
+            )
+        except SAMLArtException:
+            return HttpResponseRedirect(LOGINGOVPL_ACTION.UNKNOWN.value)
+
+        process = logingovpl_service.get_process_or_none_from_authn_request_id(logingovpl_data.in_response_to)
+
+        # linking process
+        if process == LOGINGOVPL_PROCESS.LINK:
+            user = user_service.get_user_by_authn_request_id_or_none(logingovpl_data.in_response_to)
+            if user is None:
+                return HttpResponseRedirect(LOGINGOVPL_ACTION.LINK_ERROR.value)
+
+            user_service.link_to_logingovpl(user=user, pesel=logingovpl_data.user.pesel)
+            user.is_gov_auth = True
+            user.save()
+            return HttpResponseRedirect(LOGINGOVPL_ACTION.LINK_SUCCESS.value)
+
+        # logging process
+        if process == LOGINGOVPL_PROCESS.LOGIN:
+            user = user_service.get_last_user_by_pesel_or_none(logingovpl_data.user.pesel)
+            if user is None:
+                return HttpResponseRedirect(LOGINGOVPL_ACTION.LOGIN_ERROR.value)
+
+            if not hasattr(request, "session"):
+                request.session = session_store()
+                request.META = {}
+            login(self.request, user, backend="django.contrib.auth.backends.ModelBackend")
+            request.session.save()
+            user.is_gov_auth = True
+            user.save()
+            user.token = get_auth_token(user, self.request.session.session_key)
+            return HttpResponseRedirect(LOGINGOVPL_ACTION.LOGIN_SUCCESS.value)
+
+        # not linking nor logging process
+        return HttpResponseRedirect(LOGINGOVPL_ACTION.UNKNOWN.value)
+
+
+class LogingovplUnlinkView(APIView):
+    permission_classes = [permissions.AllowAny]
+    renderer_classes = [renderers.JSONRenderer]
+
+    def get(self, request, *args, **kwargs):  # noqa
+        if not request.user.is_authenticated:
+            return HttpResponseRedirect(LOGINGOVPL_ACTION.UNLINK_ERROR.value)
+
+        user_service.unlink_from_logingovpl(request.user)
+        return HttpResponseRedirect(LOGINGOVPL_ACTION.UNLINK_SUCCESS.value)
+
+
+class LogingovplSwitchView(APIView):
+    permission_classes = [permissions.AllowAny]
+    renderer_classes = [renderers.JSONRenderer]
+
+    def get(self, request, *args, **kwargs):  # noqa
+
+        user = copy.copy(request.user)
+        logout(request)
+        email = request.query_params.get("email")
+        if not user.is_authenticated or not email:
+            return HttpResponseRedirect(LOGINGOVPL_ACTION.SWITCH_ERROR.value)
+
+        new_user = user_service.get_user_to_switch_or_none(user, email)
+        if new_user is None:
+            return HttpResponseRedirect(LOGINGOVPL_ACTION.SWITCH_ERROR.value)
+
+        if not hasattr(request, "session"):
+            request.session = session_store()
+            request.META = {}
+        login(request, new_user, backend="django.contrib.auth.backends.ModelBackend")
+        request.session.save()
+        new_user.is_gov_auth = True
+        new_user.save()
+        new_user.token = get_auth_token(new_user, request.session.session_key)
+
+        response = HttpResponseRedirect(LOGINGOVPL_ACTION.SWITCH_SUCCESS.value)
+        response.set_cookie(
+            settings.API_TOKEN_COOKIE_NAME,
+            new_user.token,
+            domain=settings.SESSION_COOKIE_DOMAIN,
+            httponly=settings.SESSION_COOKIE_HTTPONLY,
+            samesite=settings.SESSION_COOKIE_SAMESITE,
+            secure=settings.SESSION_COOKIE_SECURE,
+            path=settings.SESSION_COOKIE_PATH,
+            max_age=settings.JWT_EXPIRATION_DELTA,
+        )
+        response.set_cookie(
+            settings.SESSION_COOKIE_NAME,
+            request.session.session_key,
+            domain=settings.SESSION_COOKIE_DOMAIN,
+            httponly=settings.SESSION_COOKIE_HTTPONLY,
+            samesite=settings.SESSION_COOKIE_SAMESITE,
+            secure=settings.SESSION_COOKIE_SECURE,
+            path=settings.SESSION_COOKIE_PATH,
+            max_age=settings.JWT_EXPIRATION_DELTA,
+        )
+
+        return response

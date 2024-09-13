@@ -76,8 +76,8 @@ def test_create_main_dga_dataset(main_dga_owner_organization: Organization):
     assert dataset.has_research_data is False
     assert dataset.update_frequency == "daily"
     assert dataset.status == "published"
-    assert list(dataset.categories.values_list("title", flat=True)) == settings.MAIN_DGA_DATASET_CATEGORIES_TITLES
-    assert list(dataset.tags.values_list("name", flat=True)) == settings.MAIN_DGA_DATASET_TAGS_NAMES
+    assert set(dataset.categories.values_list("title", flat=True)) == set(settings.MAIN_DGA_DATASET_CATEGORIES_TITLES)
+    assert set(dataset.tags.values_list("name", flat=True)) == set(settings.MAIN_DGA_DATASET_TAGS_NAMES)
 
 
 @pytest.mark.feat_main_dga
