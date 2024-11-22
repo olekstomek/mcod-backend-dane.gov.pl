@@ -20,10 +20,13 @@ def memoize(f):
 
 
 def flush_sessions():
-    _cache = caches[settings.SESSION_CACHE_ALIAS]
-    _cache.delete_pattern("*")
-
-
-def flush_cache(cache="default"):
-    _cache = caches[cache]
-    _cache.delete_pattern("*")
+    """
+    Clear session cache for the current pytest worker or all sessions if no
+    worker ID. Used in tests to isolate cache between test runs.
+    """
+    _session_cache = caches[settings.SESSION_CACHE_ALIAS]
+    session_cache_prefix = _session_cache.key_prefix
+    if session_cache_prefix:
+        _session_cache.delete_pattern(f"{session_cache_prefix}*")
+    else:
+        _session_cache.delete_pattern("*")

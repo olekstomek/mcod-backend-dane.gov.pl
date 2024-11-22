@@ -3,6 +3,7 @@ from __future__ import absolute_import, unicode_literals
 import os
 
 import celery
+import pytz
 from celery.schedules import crontab
 
 from mcod.unleash import is_enabled
@@ -24,7 +25,7 @@ def config_loggers(*args, **kwags):
 
 app.autodiscover_tasks()
 
-app.conf.timezone = "UTC"
+app.conf.timezone = pytz.timezone("UTC")
 
 app.conf.beat_schedule["kibana-statistics"] = {
     "task": "mcod.counters.tasks.kibana_statistics",

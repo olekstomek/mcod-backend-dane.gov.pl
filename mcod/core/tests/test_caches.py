@@ -1,29 +1,26 @@
+from typing import Optional
+from unittest.mock import Mock, patch
+
 import pytest
 
-from mcod.core.caches import flush_cache, flush_sessions
+from mcod.core.caches import flush_sessions
 
 
-@pytest.mark.run(order=2)
-def test_flush_sessions(sessions_cache):
-    sessions_cache.set("aaaa", {"a": "b"})
-    val = sessions_cache.get("aaaa")
-    assert "a" in val
-    assert val["a"] == "b"
+@pytest.mark.parametrize(
+    "prefix",
+    ["test_key", " ", "_", "_test_key_", " test key", "", None],
+)
+def test_flush_sessions(prefix: Optional[str]):
+    with patch("mcod.core.caches.caches") as mock_caches:
+        session_cache = Mock()
+        session_cache.key_prefix = prefix
 
-    flush_sessions()
+        mock_caches.__getitem__.return_value = session_cache
 
-    val = sessions_cache.get("aaaa")
-    assert val is None
+        flush_sessions()
 
-
-@pytest.mark.run(order=2)
-def test_flush_cache(default_cache):
-    default_cache.set("aaaa", {"a": "b"})
-    val = default_cache.get("aaaa")
-    assert "a" in val
-    assert val["a"] == "b"
-
-    flush_cache()
-
-    val = default_cache.get("aaaa")
-    assert val is None
+    mock_caches.__getitem__.assert_called_once_with("sessions")
+    if prefix:
+        session_cache.delete_pattern.assert_called_once_with(f"{prefix}*")
+    else:
+        session_cache.delete_pattern.assert_called_once_with("*")

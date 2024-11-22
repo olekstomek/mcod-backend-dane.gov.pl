@@ -1,4 +1,5 @@
 import os
+from typing import Optional
 
 from mcod.settings.base import *  # noqa: F403, F405
 
@@ -178,3 +179,9 @@ SPARQL_ENDPOINTS = {
 FIELD_ENCRYPTION_KEYS = ["c2d95c58322ca6ddcf8b0c304c8131f6b515ff5f3a297dcdadeda1a82cb4ec9b"]
 
 MAIN_DGA_DATASET_OWNER_ORGANIZATION_PK = 99
+
+# Set unique cache prefix for each pytest worker to isolate session clearing
+# in a shared cache environment, preventing conflicts between workers.
+worker_id: Optional[str] = os.environ.get("PYTEST_XDIST_WORKER")
+if worker_id:
+    CACHES["sessions"].update({"KEY_PREFIX": f"worker_{worker_id}_cache_session_"})

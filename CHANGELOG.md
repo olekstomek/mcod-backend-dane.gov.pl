@@ -14,6 +14,14 @@
 ### Breaks
 
 
+## 2.37.1 - (2024-10-22)
+---
+
+### Fixes:
+* Naprawa niedeterministycznych testów związanych ze współdzieleniem cache dla sesji przez workery testowe (OTD-899)
+* Naprawa niepodejmowania cyklicznych tasków - celery beat (OTD-930)
+
+
 ## 2.37.0 - (2024-10-04)
 ---
 

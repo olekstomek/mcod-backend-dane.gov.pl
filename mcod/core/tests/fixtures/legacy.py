@@ -82,11 +82,6 @@ def sessions_cache():
 
 
 @pytest.fixture
-def default_cache():
-    return caches["default"]
-
-
-@pytest.fixture
 def invalid_passwords():
     return [
         "abcd1234",
