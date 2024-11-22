@@ -1,5 +1,7 @@
 import logging
 import time
+from enum import Enum
+from typing import List, Union
 from uuid import uuid4
 
 from constance import config
@@ -80,6 +82,14 @@ LABS_PERMS_CODENAMES = [
     "delete_labeventtrash",
     "view_labeventtrash",
 ]
+
+
+class LoggingMethod(str, Enum):
+    """CLass represents different kind of logging to service methods."""
+
+    WK = "WK"
+    FORM = _("Form")
+
 
 session_cache = caches[settings.SESSION_CACHE_ALIAS]
 
@@ -277,12 +287,20 @@ class User(
         encrypted_field_name="_pesel",
     )
     is_gov_auth = models.BooleanField(default=False)
+    last_logged_method = models.CharField(
+        choices=[(field.value, field.value) for field in LoggingMethod], blank=True, null=True, max_length=50
+    )
 
     class Meta:
         verbose_name = _("User")
         verbose_name_plural = _("Users")
         db_table = "user"
         default_manager_name = "objects"
+
+    def update_last_logging_method(self, logging_form: LoggingMethod) -> None:
+        """Update user last logging method."""
+        self.last_logged_method = logging_form
+        self.save()
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -507,12 +525,21 @@ class User(
         return self.is_superuser or self.organizations.private().exists()
 
     @property
+    def has_access_to_admin_panel(self) -> bool:
+        """Check if the given user has access to the admin panel."""
+        return bool(self.is_staff or self.is_superuser)
+
+    @property
     def is_academy_admin(self):
         perms = self.user_permissions.values_list("codename", flat=True)
         return bool(ACADEMY_PERMS_CODENAMES and all([perm in perms for perm in ACADEMY_PERMS_CODENAMES]))
 
     @property
     def is_editor(self):
+        """
+        Note: this property is not saying that user is an editor.
+        Flag responsible for telling if user is editor is called is_staff
+        """
         return all([self.is_staff, not self.is_academy_admin, not self.is_labs_admin])
 
     @property
@@ -750,6 +777,19 @@ class User(
             is_permanently_removed=False,
         ).exclude(id=self.id)
         return list(other_users) if self.is_gov_linked and self.is_gov_auth else []
+
+    @property
+    def connected_gov_users_for_admin_page(self) -> List[Union[str, None]]:
+        """
+        Returns a list of email addresses for user accounts that are valid for switching on the admin page.
+
+        The validation checks if the users meet the following criteria:
+        - They are administrators (i.e., `is_superuser` is `True`).
+        - They are editors (i.e., `is_editor` property evaluates to `True`).
+
+        Excludes the current user from the results.
+        """
+        return [user for user in self.connected_gov_users if user.has_access_to_admin_panel]
 
 
 @receiver(pre_save, sender=User)

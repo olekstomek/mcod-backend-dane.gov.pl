@@ -14,6 +14,30 @@
 ### Breaks
 
 
+## 2.37.0 - (2024-10-04)
+---
+
+### New:
+* Dodano możliwość logowania do Panelu Administracyjnego z wykorzystaniem węzła krajowego
+* Nowy blok w base.html generujacy dropdown userów powiązanych z WK.
+* Nowy blok w login.html do logowania przez WK.
+* Nowe pole w bazie dla modelu User: last_logged_method
+* Nowe pola w formularzu użytkowników w panelu admina: is_gov_linked
+* Nowa stałą typu Enum: PORTAL_TYPE definiujący z jakiego portalu został wykonany request związany z Węzłem Krajowym.
+* Nowa metoda dla modelu User update_last_logging_method(), aktualizująca pole w bazie last_logged_method definujące jak użytkownik się zalogował do serwisu (WK, Formularz).
+* Nowa metoda w modelu User definiująca, czy użytkownik ma dostęp do panelu admina has_access_to_admin_panel().
+* Nowe property dla modelu User connected_gov_users_for_admin_page zwracajace konta użytkowników powiązanych z WK.
+* Nowe pola dla raportu użytkowników: wk_linked, last_logged_method
+
+### Changes
+* Zwiekszenie liczby obrazkow w stopce dla wersji angielskiej (OTD-829)
+* Usunieto biblioteke corsheaders
+* Sposób generowania linków do przekierowań dla frontendu (get_redirect_url())
+* Zmiany css dla login.html, base.html.
+* Podniesienie wersji Celery z 5.0.2 na 5.3.0
+* Dostosowanie testu sprawdzającego sortowanie zasobów DGA po tytule organizacji (OTD-819)
+
+
 ## 2.36.0 - (2024-08-14)
 ---
 

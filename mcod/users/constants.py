@@ -1,30 +1,37 @@
 from enum import Enum
 
-from django.conf import settings
-
 
 class LOGINGOVPL_PROCESS(Enum):
-    """The type of process related to linking/logging by the login.gov.pl service."""
+    """The type of process related to linking/logging by the login.gov.pl service.
+    The process can be `UNKNOWN` due to the problem with serializing data obtained
+    from the login.gov.pl service.
+    """
 
     LOGIN = "LOGIN"
     LINK = "LINK"
+    UNLINK = "UNLINK"
+    SWITCH = "SWITCH"
+    UNKNOWN = "UNKNOWN"
 
 
-class LOGINGOVPL_ACTION(Enum):
-    """Actions about success/failure of linking to/unlinking from/login to
-    the login.gov.pl service. The value is the URL built for the frontend needs.
+class LOGINGOVPL_PROCESS_RESULT(Enum):
+    """The result of the login.gov.pl process (success/error). The result can be `UNKNOWN`
+    due to the problem with serializing data obtained from the login.gov.pl service.
     """
 
-    LINK_SUCCESS = settings.FRONTEND_BASE_URL + "/user/dashboard/desktop" + "?logingovpl=link-success"
-    LINK_ERROR = settings.FRONTEND_BASE_URL + "/user/dashboard/desktop" + "?logingovpl=link-error"
-    UNLINK_SUCCESS = settings.FRONTEND_BASE_URL + "/user/dashboard/desktop" + "?logingovpl=unlink-success"
-    UNLINK_ERROR = settings.FRONTEND_BASE_URL + "/user/dashboard/desktop" + "?logingovpl=unlink-error"
-    LOGIN_SUCCESS = settings.FRONTEND_BASE_URL + "/user/dashboard/desktop" + "?logingovpl=login-success"
-    LOGIN_ERROR = settings.FRONTEND_BASE_URL + "/user/logingovpl-error" + "?logingovpl=login-error"
-    SWITCH_SUCCESS = settings.FRONTEND_BASE_URL + "/user/dashboard/desktop" + "?logingovpl=switch-success"
-    SWITCH_ERROR = settings.FRONTEND_BASE_URL + "/user/dashboard/desktop" + "?logingovpl=switch-error"
-    UNKNOWN = settings.FRONTEND_BASE_URL + "/idp-unknown-error"
+    SUCCESS = "SUCCESS"
+    ERROR = "ERROR"
+    UNKNOWN = "UNKNOWN"
+
+
+class PORTAL_TYPE(Enum):
+    """The type of portal (main or admin panel)."""
+
+    MAIN = "MAIN"
+    ADMIN = "ADMIN"
+    UNKNOWN = "UNKNOWN"
 
 
 LOGINGOVPL_REQUEST_ID_SEPARATOR = "-"
 LOGINGOVPL_UNKNOWN_USER_IDENTIFIER = "UNKNOWN"
+EMAIL_REGEX = r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)"  # https://emailregex.com/

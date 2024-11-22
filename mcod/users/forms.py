@@ -3,6 +3,7 @@ from django.contrib.admin import forms as admin_forms
 from django.contrib.admin.widgets import FilteredSelectMultiple
 from django.contrib.auth import forms as auth_forms
 from django.core.exceptions import ValidationError
+from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 from suit.widgets import SuitDateWidget, SuitTimeWidget
 
@@ -65,6 +66,14 @@ class RadioSelect(forms.widgets.RadioSelect):
     template_name = "admin/users/user/radio.html"
 
 
+class GovLinkedWidget(forms.Widget):
+    """Widget for changing form field to string."""
+
+    def render(self, name, value, attrs=None, renderer=None):
+        val = mark_safe(value)
+        return _("Yes" if val == "True" else "No")
+
+
 class UserForm(forms.ModelForm):
     phone = PhoneNumberField(label=_("Phone number"), required=False)
     phone_internal = InternalPhoneNumberField(label=_("int."), required=False)
@@ -83,6 +92,7 @@ class UserForm(forms.ModelForm):
         required=False,
         help_text=_("(Select of agent is required)"),
     )
+    is_gov_linked = forms.CharField(label=_("WK logging"), required=False, disabled=True, widget=GovLinkedWidget)
 
     class Meta:
         model = User
@@ -99,6 +109,8 @@ class UserForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if self.instance.pk:
+            if "is_gov_linked" in self.fields:
+                self.fields["is_gov_linked"].initial = self.instance.is_gov_linked
             if "is_academy_admin" in self.fields:
                 self.fields["is_academy_admin"].initial = self.instance.is_academy_admin
             if "is_labs_admin" in self.fields:

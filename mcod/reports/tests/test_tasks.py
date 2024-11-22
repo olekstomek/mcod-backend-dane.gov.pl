@@ -73,9 +73,9 @@ class TestTasks:
         expected_active_user_last_login = localized_active_user_last_login.strftime("%Y-%m-%dT%H:%M:%S+02:00\n")
         for line in lines:
             split_line = line.split(";")
-            assert len(split_line) == 15
+            assert len(split_line) == 17
             if split_line[1] == active_user_with_last_login.email:
-                assert split_line[14] == expected_active_user_last_login
+                assert split_line[16] == expected_active_user_last_login
 
     def test_invalid_user_ordering_report(self, active_user):
         request_date = datetime.datetime.now()
@@ -93,6 +93,40 @@ class TestTasks:
         r = Report.objects.get(task=result_task)
         assert r.task == result_task
         assert r.task.status == "FAILURE"
+
+    def test_columns_in_user_csv_report(self, tmp_path: str, active_user):
+        """Check if required columns are present in csv metadata report."""
+
+        columns_required = [
+            "id",
+            "Email",
+            "Imię i nazwisko",
+            "telefon służbowy",
+            "Edytor",
+            "Urzędnik",
+            "Administrator",
+            "Administrator AOD",
+            "Administrator LOD",
+            "Pełnomocnik",
+            "Dodatkowy pełnomocnik",
+            "Stan",
+            "Instytucja1",
+            "Instytucja2",
+            "Powiązanie z WK",
+            "Sposób ostatniego logowania",
+            "Data ostatniego logowania",
+        ]
+
+        with override_settings(REPORTS_MEDIA_ROOT=tmp_path):
+            file_name_postfix = "csv_test"
+            user_ids = [user.pk for user in User.objects.all()]
+            generate_csv(user_ids, "users.User", active_user.pk, file_name_postfix)
+            filename = "users_" + file_name_postfix + ".csv"
+            file = Path(tmp_path) / "users" / filename
+            dataframe_report = pd.read_csv(file, sep=";")
+
+            for column in columns_required:
+                assert column in dataframe_report
 
     def test_wrong_model_report(self, active_user):
         request_date = datetime.datetime.now()

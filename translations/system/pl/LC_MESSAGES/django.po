@@ -5175,8 +5175,20 @@ msgstr "Administrator LOD"
 msgid "Personal info"
 msgstr "Informacje personalne"
 
+msgid "Linked with WK"
+msgstr "Powiązanie z WK"
+
+msgid "Form"
+msgstr "Formularz"
+
+msgid "Last logged method"
+msgstr "Sposób ostatniego logowania"
+
 msgid "Permissions"
 msgstr "Uprawnienia"
+
+msgid "WK logging"
+msgstr "Logowanie przez WK"
 
 msgid "Add files"
 msgstr "Dodaj pliki"

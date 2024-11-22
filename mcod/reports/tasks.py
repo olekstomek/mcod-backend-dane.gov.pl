@@ -217,6 +217,7 @@ def validate_resources_links(ids=None):
 def generating_report_success(sender, result, **kwargs):
     try:
         result_dict = json.loads(result)
+        logger.info("Started task generating_report_success")
         logger.info(f"reports.task: report generated: {result_dict.get('csv_file')}")
 
         result_task = TaskResult.objects.get_task(sender.request.id)

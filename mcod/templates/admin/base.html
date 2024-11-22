@@ -1,4 +1,6 @@
-{% load static suit_tags core_tags %}{% load url from suit_compat %}<!DOCTYPE html>
+{% load static suit_tags core_tags %}
+{% load url from suit_compat %}
+<!DOCTYPE html>
 <html lang="{{ LANGUAGE_CODE|default:"en-us" }}" {% if LANGUAGE_BIDI %}dir="rtl"{% endif %}>
 <head>
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -75,25 +77,51 @@
             {% endblock %}
 
             {% if user.is_active and user.is_staff %}
-              <div id="user-tools">
-                {% block welcome-msg %}
-                  {% trans 'Welcome,' %}
-                  <strong>
-                    {% filter force_escape %}
-                      {% firstof user.first_name user.username user.fullname user.email %}{% endfilter %}</strong>.
-                {% endblock %}
-                <span class="user-links">
-                {% block userlinks %}
-                  {% url 'django-admindocs-docroot' as docsroot %}
-                  {% if docsroot %}
-                    <a href="{{ docsroot }}">{% trans 'Documentation' %}</a>
-                    <span class="separator">|</span>
+              <div id="user-tools" style="padding: 0 20px 0 0">
+                <div id="user-gov-list-container" onclick="showList()">
+
+                  {% block welcome-msg %}
+                    {% trans 'Welcome,' %}
+                    <strong>
+                      {% filter force_escape %}
+                        {% firstof user.first_name user.username user.fullname user.email %}
+                      {% endfilter %}
+                    </strong>
+                    {% if request.user.connected_gov_users_for_admin_page %}
+                    <img id="switch-image" src="{% static 'admin/img/up.svg' %}" alt="" class="user-gov-list__image rotate"/>
+                    {% endif %}
+                  {% endblock %}
+
+                  {% if request.user.connected_gov_users_for_admin_page %}
+                  {% url 'switch' as switch_url %}
+                    <div id="user-gov-list">
+                      <div class="user-gov-list__item user-gov-list__switch">Przełącz konto</div>
+                      {% for user in request.user.connected_gov_users_for_admin_page %}
+                        <div class="user-gov-list__item">
+                          <a href="{{ switch_url }}?portal=admin&email={{user.email}}">{{user.email}}</a>
+                        </div>
+                      {% endfor %}
+                    </div>
                   {% endif %}
-                  <a href="{% url 'admin:password_change' %}">{% trans 'Change password' %}</a>
-                  <span class="separator">|</span>
-                  <a href="{% url 'admin:logout' %}">{% trans 'Log out' %}</a>
-                {% endblock %}
-                </span>
+
+                </div>
+
+                <div id="user-links">
+                  <span class="user-links">
+                    {% block userlinks %}
+                    {% url 'django-admindocs-docroot' as docsroot %}
+
+                    {% if docsroot %}
+                      <a href="{{ docsroot }}">{% trans 'Documentation' %}</a>
+                      <span class="separator">|</span>
+                    {% endif %}
+                    <a href="{% url 'admin:password_change' %}">{% trans 'Change password' %}</a>
+                    <span class="separator">|</span>
+                    <a href="{% url 'admin:logout' %}">{% trans 'Log out' %}</a>
+                  {% endblock %}
+                  </span>
+                </div>
+
               </div>
             {% endif %}
             {% block nav-global %}{% endblock %}
@@ -226,11 +254,29 @@
         pageLoadTransactionName: "{{ admin_amp_transaction_name }}",
         pageLoadTraceId: "{{ apm.trace_id }}",
         pageLoadSpanId: "{{ apm.span_id }}",
-        pageLoadSampled: {{ apm.is_sampled_js }}
-    })
+        pageLoadSampled: "{{ apm.is_sampled_js }}"
+    });
     </script>
   {% endif %}
   {% block extrajs %}{% endblock %}
+<script>
+      function showList(){
+        const userList = document.getElementById("user-gov-list")
+        const image = document.getElementById("switch-image")
+        if (image.classList.contains("rotate")) {
+          image.classList.remove("rotate")
+        } else {
+          image.classList.add("rotate")
+        }
+        if (userList.style.display === "flex"){
+          userList.style.display = "none"
+        }
+        else{
+          userList.style.display = "flex";
+          userList.style.flexDirection = "column"
+        }
+    }
+</script>
 <script src="{% static 'admin/js/od2021.js' %}"></script>
 </body>
 </html>

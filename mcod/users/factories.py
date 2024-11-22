@@ -87,6 +87,10 @@ class EditorFactory(UserFactory):
     is_superuser = False
 
 
+class PendingEditorFactory(EditorFactory):
+    state = "pending"
+
+
 class OfficialUserFactory(UserFactory):
     is_official = True
 
@@ -142,6 +146,7 @@ factories_registry.register("unconfirmed user", UnconfirmedUserFactory)
 factories_registry.register("blocked user", BlockedUserFactory)
 factories_registry.register("admin user", AdminFactory)
 factories_registry.register("editor user", EditorFactory)
+factories_registry.register("pending editor user", PendingEditorFactory)
 factories_registry.register("official user", OfficialUserFactory)
 factories_registry.register("agent user", AgentFactory)
 factories_registry.register("academy admin", AcademyAdminFactory)

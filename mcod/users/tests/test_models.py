@@ -4,10 +4,15 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.signals import user_logged_in
 from django.core.exceptions import ObjectDoesNotExist
-from django.test import Client
+from django.test import Client, override_settings
+from django.urls import reverse
 from django.utils import timezone, translation
+from falcon.testing import TestClient
+from rest_framework.test import APIRequestFactory
 
-from mcod.users.models import Token, get_token_expiration_date
+from mcod.core.caches import flush_sessions
+from mcod.users.models import LoggingMethod, Token, get_token_expiration_date
+from mcod.users.views import ACSView
 
 User = get_user_model()
 
@@ -219,3 +224,97 @@ def test__get_absolute_url_with_lang(active_user):
     test_url = "/test/path"
     with translation.override("pl"):
         assert active_user._get_absolute_url(test_url) == f"{settings.BASE_URL}/pl/test/path"
+
+
+def test_last_logged_method_logging_by_form(client: TestClient, active_user: User):
+    """Test if user has last_logged_method set to `formularz` when logged via form."""
+    flush_sessions()
+    client.simulate_post(
+        path="/auth/login",
+        json={
+            "data": {
+                "type": "user",
+                "attributes": {
+                    "email": active_user.email,
+                    "password": "12345.Abcde",
+                },
+            }
+        },
+    )
+    active_user.refresh_from_db()
+    assert active_user.last_logged_method == LoggingMethod.FORM.value
+
+
+def test_last_logged_method_logging_by_wk(admin_user: User, test_user_pesel: str):
+    """
+    Test if user has last_logged_method attribute set to `WK` when logged via /idp endpoint.
+    Simulate django admin WK login.
+    """
+    admin_user.pesel = test_user_pesel
+    admin_user.save()
+    with override_settings(USERS_TEST_LOGINGOVPL=True):
+        login_gov_pl_data = dict(
+            in_response_to=f"ID-3226742f-c93b-4647-b138-81b6ba8f631e-ADMIN-LOGIN-{admin_user.id}",
+            first_name="Some",
+            last_name="Name",
+            dob="1234",
+            pesel=test_user_pesel,
+        )
+        request = APIRequestFactory().post(reverse("idp"), data=login_gov_pl_data, format="json")
+
+        acs_view = ACSView.as_view()
+        acs_view(request)
+        admin_user.refresh_from_db()
+        assert admin_user.last_logged_method == LoggingMethod.WK.value
+
+
+def test_last_logged_method_logging_by_wk_admin(admin_user: User, test_user_pesel: str):
+    """
+    Test if user has last_logged_method attribute set to `WK` when logged via /idp endpoint using portal type `ADMIN`.
+    It's simulate a WK loging in django admin page.
+    """
+    admin_user.pesel = test_user_pesel
+    admin_user.save()
+    with override_settings(USERS_TEST_LOGINGOVPL=True):
+        login_gov_pl_data = dict(
+            in_response_to=f"ID-3226742f-c93b-4647-b138-81b6ba8f631e-ADMIN-LOGIN-{admin_user.id}",
+            first_name="Some",
+            last_name="Name",
+            dob="1234",
+            pesel=test_user_pesel,
+        )
+        url_reverse = reverse("logingovpl")
+        url = f"{url_reverse}?portal=admin"
+        request = APIRequestFactory().post(url, data=login_gov_pl_data, format="json")
+
+        acs_view = ACSView.as_view()
+        acs_view(request)
+
+        admin_user.refresh_from_db()
+        assert admin_user.last_logged_method == LoggingMethod.WK.value
+
+
+def test_last_logged_method_logging_by_form_admin(admin_user: User, test_user_pesel: str):
+    """
+    Test if user has last_logged_method attribute set to `WK` when logged by form using portal type `ADMIN`.
+    Simulates logging in django admin page by form.
+    """
+    client = Client()
+    admin_user.pesel = test_user_pesel
+    admin_user.save()
+
+    password = "adminpassword123"
+    admin_user.set_password(password)
+    admin_user.save()
+
+    # Prepare the login data as expected by the admin login form
+    login_data = {
+        "username": admin_user.email,  # Admin login uses 'username'
+        "password": password,  # The known password
+        "next": reverse("admin:index"),  # Redirect to admin dashboard after login
+    }
+
+    client.post(reverse("admin:login"), data=login_data)
+    admin_user.refresh_from_db()
+
+    assert admin_user.last_logged_method == LoggingMethod.FORM

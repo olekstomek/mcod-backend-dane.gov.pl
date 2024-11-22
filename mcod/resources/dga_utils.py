@@ -158,14 +158,14 @@ def get_or_create_main_dga_path() -> Path:
     return directory / file_name
 
 
-def get_all_dga_resources() -> QuerySet:
+def get_all_dga_resources_sorted_by_organizations() -> QuerySet:
     Resource = apps.get_model("resources", "Resource")
 
     # Exclude current main DGA Resource in file creation process.
     main_dga_resource: Optional[Resource] = get_main_dga_resource()
     main_dga_id = main_dga_resource.pk if main_dga_resource else None
 
-    dga_resources = (
+    dga_resources: QuerySet = (
         Resource.objects.filter(contains_protected_data=True, status="published")
         .exclude(id=main_dga_id)
         .select_related("dataset__organization")
@@ -287,7 +287,7 @@ def create_main_dga_file() -> Path:
         Path: The path to the created XLSX file.
     """
     file_path: Path = get_or_create_main_dga_path()
-    dga_resources: QuerySet = get_all_dga_resources()
+    dga_resources: QuerySet = get_all_dga_resources_sorted_by_organizations()
     main_df: pd.DataFrame = create_main_dga_df(dga_resources)
 
     sheet_name: str = settings.MAIN_DGA_XLSX_WORKSHEET_NAME

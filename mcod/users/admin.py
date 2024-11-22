@@ -344,10 +344,7 @@ class UserAdmin(HistoryMixin, AdminConfirmMixin, UserAdmin):
                     "suit-tab",
                     "suit-tab-general",
                 ),
-                "fields": [
-                    "fullname",
-                    ("phone", "phone_internal"),
-                ],
+                "fields": ["fullname", ("phone", "phone_internal"), "is_gov_linked"],
             },
         )
         permissions_tab = (

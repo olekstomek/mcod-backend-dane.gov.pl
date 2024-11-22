@@ -118,3 +118,9 @@ msgstr "Ponów definiowanie mapy wybierając tylko raz wymagany element zestawu 
 #, python-format
 msgid "Delete selected %(verbose_name_plural)s"
 msgstr "Usuń wybrane %(verbose_name_plural)s"
+
+msgid "No permissions to the admin panel."
+msgstr "Brak uprawnień do panelu administratora."
+
+msgid "An error occurred and the account switch failed."
+msgstr "Wystąpił błąd i nie udało się przełączyć konta. Spróbuj ponownie później."

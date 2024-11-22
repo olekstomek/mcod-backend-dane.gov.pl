@@ -76,7 +76,6 @@ INSTALLED_APPS = [
     "modelcluster",
     "taggit",
     "rest_framework",
-    "corsheaders",
     "dal",
     "dal_select2",
     "dal_admin_filters",
@@ -143,7 +142,6 @@ INSTALLED_APPS = [
 CMS_MIDDLEWARE = ["mcod.cms.middleware.CounterMiddleware"] if COMPONENT == "cms" else []
 
 MIDDLEWARE = [
-    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "mcod.cms.middleware.SiteMiddleware",

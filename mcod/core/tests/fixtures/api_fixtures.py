@@ -12,7 +12,7 @@ User = get_user_model()
 
 
 @pytest.fixture
-def log_gov_pl_user() -> LoginGovPlUser:
+def logingovpl_user() -> LoginGovPlUser:
     """Returns a LoginGovPlUser instance."""
     return LoginGovPlUser("first_name", "last_name", "date_of_birth", "pesel")
 

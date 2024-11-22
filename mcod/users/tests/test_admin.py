@@ -17,6 +17,14 @@ class TestUserAdmin:
         response = client.get(reverse("admin:users_user_changelist"))
         assert response.content.count(b"field-email") == 1
 
+    def test_admin_form_fields_rendered(self, admin):
+        """Test if "Logowanie przez WK" text is displayed in response content."""
+        client = Client()
+        client.force_login(admin)
+        url = reverse("admin:users_user_change", args=[admin.id])
+        response = client.get(url)
+        assert "Logowanie przez WK" in response.content.decode()
+
     def test_editor_with_organization_get_queryset(self, admin, active_editor):
         client = Client()
         client.force_login(active_editor)

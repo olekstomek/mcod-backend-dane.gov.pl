@@ -13,6 +13,7 @@ from django.db.models import QuerySet
 
 from mcod.datasets.factories import DatasetFactory
 from mcod.datasets.models import Dataset
+from mcod.organizations.factories import OrganizationFactory
 from mcod.organizations.models import Organization
 from mcod.resources.dga_utils import (
     add_style_to_main_dga_excel_file,
@@ -22,7 +23,7 @@ from mcod.resources.dga_utils import (
     create_main_dga_df,
     create_main_dga_file,
     create_main_dga_resource_with_dataset,
-    get_all_dga_resources,
+    get_all_dga_resources_sorted_by_organizations,
     get_dga_resource_for_institution,
     get_main_dga_dataset,
     get_main_dga_resource,
@@ -81,25 +82,32 @@ def test_create_main_dga_dataset(main_dga_owner_organization: Organization):
 
 
 @pytest.mark.feat_main_dga
-def test_get_all_dga_resources(main_dga_resource: Resource):
-    dga_resources: List[Resource] = DGAResourceFactory.create_batch(5)
+def test_get_all_dga_resources_sorted_by_organizations(main_dga_resource: Resource):
+    # GIVEN
+    resources_org_titles = ["Ś org", "w org", "ś org", "S org", "W org", "s org"]
+    organizations = [OrganizationFactory.create(title=title) for title in resources_org_titles]
+    for org in organizations:
+        DGAResourceFactory(
+            dataset__organization=org,
+            contains_protected_data=True,
+            status="published",
+        )
 
     # Creation of Resources that should not be included
     DGAResourceFactory.create_batch(3, status="draft")
     DGAResourceFactory.create_batch(2, status="published", is_removed=True)
 
-    all_dga_resources: QuerySet = get_all_dga_resources()
+    # WHEN
+    dga_resources_from_db: QuerySet = get_all_dga_resources_sorted_by_organizations()
 
-    assert len(all_dga_resources) == 5
-    assert main_dga_resource not in all_dga_resources
-
-    for resource in dga_resources:
-        assert resource in all_dga_resources
+    # THEN
+    assert dga_resources_from_db.count() == len(resources_org_titles)
+    assert main_dga_resource not in dga_resources_from_db
 
     # check if Resources are sorted by Organization title
-    expected_organization_titles: List[str] = sorted([resource.dataset.organization.title for resource in dga_resources])
-    organization_titles: List[str] = list(all_dga_resources.values_list("dataset__organization__title", flat=True))
-    assert organization_titles == expected_organization_titles
+    # also checks if all resources are retrieved
+    dga_resources_from_db_titles: List[str] = [res.dataset.organization.title for res in dga_resources_from_db]
+    assert dga_resources_from_db_titles == ["s org", "S org", "ś org", "Ś org", "w org", "W org"]
 
 
 @pytest.mark.feat_main_dga
@@ -366,7 +374,7 @@ def test_add_style_to_main_dga_excel_file_smoke():
 
 @pytest.mark.feat_main_dga
 @mock.patch("mcod.resources.dga_utils.get_or_create_main_dga_path")
-@mock.patch("mcod.resources.dga_utils.get_all_dga_resources")
+@mock.patch("mcod.resources.dga_utils.get_all_dga_resources_sorted_by_organizations")
 @mock.patch("mcod.resources.dga_utils.create_main_dga_df")
 @mock.patch("mcod.resources.dga_utils.save_df_to_xlsx")
 @mock.patch("mcod.resources.dga_utils.add_style_to_main_dga_excel_file")
@@ -374,7 +382,7 @@ def test_create_main_dga_file(
     mock_add_style_to_main_dga_excel_file: MagicMock,
     mock_save_df_to_xlsx: MagicMock,
     mock_create_main_dga_df: MagicMock,
-    mock_get_all_dga_resources: MagicMock,
+    mock_get_all_dga_resources_sorted_by_organizations: MagicMock,
     mock_get_or_create_main_dga_path: MagicMock,
 ):
     # Set mocks
@@ -384,14 +392,14 @@ def test_create_main_dga_file(
     mock_create_main_dga_df.return_value = mock_df
 
     mock_dga_resources = MagicMock()
-    mock_get_all_dga_resources.return_value = mock_dga_resources
+    mock_get_all_dga_resources_sorted_by_organizations.return_value = mock_dga_resources
 
     # Test function call
     result = create_main_dga_file()
 
     # Check functions calls with appropriate arguments
     mock_get_or_create_main_dga_path.assert_called_once()
-    mock_get_all_dga_resources.assert_called_once()
+    mock_get_all_dga_resources_sorted_by_organizations.assert_called_once()
     mock_create_main_dga_df.assert_called_once_with(mock_dga_resources)
     mock_save_df_to_xlsx.assert_called_once_with(
         df=mock_df,

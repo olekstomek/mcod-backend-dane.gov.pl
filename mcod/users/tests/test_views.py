@@ -17,9 +17,16 @@ from mcod.core.caches import flush_sessions
 from mcod.core.tests.test_mixins import MethodsNotAllowedTestMixin
 from mcod.lib.jwt import decode_jwt_token, get_auth_header
 from mcod.lib.triggers import session_store
-from mcod.users.constants import LOGINGOVPL_ACTION, LOGINGOVPL_REQUEST_ID_SEPARATOR
+from mcod.users.constants import (
+    LOGINGOVPL_PROCESS,
+    LOGINGOVPL_PROCESS_RESULT,
+    LOGINGOVPL_REQUEST_ID_SEPARATOR,
+    LOGINGOVPL_UNKNOWN_USER_IDENTIFIER,
+    PORTAL_TYPE,
+)
+from mcod.users.factories import AdminFactory, EditorFactory, UserFactory
 from mcod.users.models import User as TypeUser
-from mcod.users.services import LoginGovPlData
+from mcod.users.services import LoginGovPlData, logingovpl_service
 from mcod.users.views import ACSView
 
 User = get_user_model()
@@ -317,32 +324,62 @@ class TestLogingovplSSOView(MethodsNotAllowedTestMixin):
         assert res.status_code == 200
         assert "Testowa strona logowania login.gov.pl" in res.content.decode()
 
+    @pytest.mark.parametrize("portal_type", ["MAIN", "ADMIN"])
+    @override_settings(USERS_TEST_LOGINGOVPL=True)
+    def test_in_response_to_template(self, portal_type, admin_user):
+        """
+        Test if the test logingovpl template renders with proper in_response_to identifier.
+        """
+        url = f"{self.url}?portal=admin" if portal_type == "ADMIN" else self.url
+        res = self.client.get(url)
+        content = res.content.decode()
+        assert f"{portal_type}-LOGIN-{LOGINGOVPL_UNKNOWN_USER_IDENTIFIER}" in content
+
+        self.client.force_login(admin_user)
+        res2 = self.client.get(url)
+        content = res2.content.decode()
+        assert f"{portal_type}-LINK-{admin_user.pk}" in content
+
+    @pytest.mark.parametrize("portal_type", ["MAIN", "ADMIN"])
     @override_settings(USERS_TEST_LOGINGOVPL=False)
-    def test_envelope_is_prepared_for_linking_success(self, active_user):
-        """Test if for the logged user (logging process), the correct envelope is prepared."""
+    def test_envelope_is_prepared_for_linking_success(self, portal_type, active_user):
+        """Test if for the logged user (linking process from the portal defined in `portal_type`),
+        the correct envelope is prepared.
+        """
+        url = f"{self.url}?portal=admin" if portal_type == "ADMIN" else self.url
         with patch("logingovpl.views.add_sign", return_value="signed_xml"):
             with patch("django.contrib.auth.get_user", return_value=active_user):
-                res = self.client.get(self.url)
+                res = self.client.get(url)
 
         assert res.status_code == 200
         assert 'onload="document.forms[0].submit()"' in res.content.decode()
         assert "envelop" in res.context
         assert "relay_state" in res.context
         assert "sso_url" in res.context
-        assert f"LINK{LOGINGOVPL_REQUEST_ID_SEPARATOR}{active_user.id}" in res.context["authn_request_id"]
+        assert (
+            f"{portal_type}{LOGINGOVPL_REQUEST_ID_SEPARATOR}LINK{LOGINGOVPL_REQUEST_ID_SEPARATOR}{active_user.id}"
+            in res.context["authn_request_id"]
+        )
 
+    @pytest.mark.parametrize("portal_type", ["MAIN", "ADMIN"])
     @override_settings(USERS_TEST_LOGINGOVPL=False)
-    def test_envelope_is_prepared_for_logging_success(self):
-        """Test if for the not logged user (logging process), the correct envelope is prepared."""
+    def test_envelope_is_prepared_for_logging_success(self, portal_type):
+        """Test if for the not logged user (logging process from the portal defined in `portal_type`),
+        the correct envelope is prepared.
+        """
+        url = f"{self.url}?portal=admin" if portal_type == "ADMIN" else self.url
         with patch("logingovpl.views.add_sign", return_value="signed_xml"):
-            res = self.client.get(self.url)
+            res = self.client.get(url)
 
         assert res.status_code == 200
         assert 'onload="document.forms[0].submit()"' in res.content.decode()
         assert "envelop" in res.context
         assert "relay_state" in res.context
         assert "sso_url" in res.context
-        assert f"LOGIN{LOGINGOVPL_REQUEST_ID_SEPARATOR}UNKNOWN" in res.context["authn_request_id"]
+        assert (
+            f"{portal_type}{LOGINGOVPL_REQUEST_ID_SEPARATOR}LOGIN{LOGINGOVPL_REQUEST_ID_SEPARATOR}UNKNOWN"
+            in res.context["authn_request_id"]
+        )
 
 
 class TestLogingovplACSView(MethodsNotAllowedTestMixin):
@@ -371,7 +408,9 @@ class TestLogingovplACSView(MethodsNotAllowedTestMixin):
 
         # Then
         assert response.status_code == 302
-        assert response.url == LOGINGOVPL_ACTION.UNKNOWN.value
+        assert response.url == logingovpl_service.get_redirect_url(
+            PORTAL_TYPE.UNKNOWN, LOGINGOVPL_PROCESS.UNKNOWN, LOGINGOVPL_PROCESS_RESULT.UNKNOWN
+        )
 
     @patch("mcod.users.services.ACSMixin.resolve_artifact")
     def test_saml_art_response_auth_failed(
@@ -395,13 +434,25 @@ class TestLogingovplACSView(MethodsNotAllowedTestMixin):
 
         # Then
         assert response.status_code == 302
-        assert response.url == LOGINGOVPL_ACTION.UNKNOWN.value
+        assert response.url == logingovpl_service.get_redirect_url(
+            PORTAL_TYPE.UNKNOWN, LOGINGOVPL_PROCESS.UNKNOWN, LOGINGOVPL_PROCESS_RESULT.UNKNOWN
+        )
 
     @pytest.mark.parametrize(
         "user_exists, account_link_result, status_code, redirect_url",
         [
-            (False, False, 302, LOGINGOVPL_ACTION.LINK_ERROR.value),
-            (True, True, 302, LOGINGOVPL_ACTION.LINK_SUCCESS.value),
+            (
+                False,
+                False,
+                302,
+                logingovpl_service.get_redirect_url(PORTAL_TYPE.MAIN, LOGINGOVPL_PROCESS.LINK, LOGINGOVPL_PROCESS_RESULT.ERROR),
+            ),
+            (
+                True,
+                True,
+                302,
+                logingovpl_service.get_redirect_url(PORTAL_TYPE.MAIN, LOGINGOVPL_PROCESS.LINK, LOGINGOVPL_PROCESS_RESULT.SUCCESS),
+            ),
         ],
     )
     @patch("mcod.users.views.logingovpl_service.get_logingovpl_data_and_logout")
@@ -413,7 +464,7 @@ class TestLogingovplACSView(MethodsNotAllowedTestMixin):
         account_link_result: bool,
         status_code: int,
         redirect_url: str,
-        log_gov_pl_user: LoginGovPlUser,
+        logingovpl_user: LoginGovPlUser,
         active_user: TypeUser,
         response_data_from_logingovpl: Dict[str, str],
     ):
@@ -431,9 +482,9 @@ class TestLogingovplACSView(MethodsNotAllowedTestMixin):
             user_id = active_user.id + 100
 
         login_gov_pl_data = LoginGovPlData(
-            user=log_gov_pl_user,
+            user=logingovpl_user,
             name_id="some_logingovpl_user",
-            in_response_to=f"ID-3226742f-c93b-4647-b138-81b6ba8f631e-LINK-{user_id}",
+            in_response_to=f"ID-3226742f-c93b-4647-b138-81b6ba8f631e-MAIN-LINK-{user_id}",
             session_id="61e435c2d509977d896b837c157da46e4fa52b7b6c82df0cd122ee3dc527ce49",
         )
         mocked_get_logingovpl_data_and_logout.return_value = login_gov_pl_data
@@ -457,11 +508,60 @@ class TestLogingovplACSView(MethodsNotAllowedTestMixin):
         assert response.url == redirect_url
 
     @pytest.mark.parametrize(
-        "pesel, is_user_authenticated, redirect_url_part, is_gov_auth",
+        "portal_type, user, pesel, is_user_authenticated, redirect_url, is_gov_auth",
         [
-            (None, False, LOGINGOVPL_ACTION.LOGIN_ERROR.value, None),
-            ("other_pesel", False, LOGINGOVPL_ACTION.LOGIN_ERROR.value, None),
-            ("pesel", True, LOGINGOVPL_ACTION.LOGIN_SUCCESS.value, True),
+            (
+                PORTAL_TYPE.MAIN,
+                "active_user",
+                None,
+                False,
+                logingovpl_service.get_redirect_url(PORTAL_TYPE.MAIN, LOGINGOVPL_PROCESS.LOGIN, LOGINGOVPL_PROCESS_RESULT.ERROR),
+                None,
+            ),
+            (
+                PORTAL_TYPE.MAIN,
+                "active_user",
+                "other_pesel",
+                False,
+                logingovpl_service.get_redirect_url(PORTAL_TYPE.MAIN, LOGINGOVPL_PROCESS.LOGIN, LOGINGOVPL_PROCESS_RESULT.ERROR),
+                None,
+            ),
+            (
+                PORTAL_TYPE.MAIN,
+                "active_user",
+                "pesel",
+                True,
+                logingovpl_service.get_redirect_url(
+                    PORTAL_TYPE.MAIN, LOGINGOVPL_PROCESS.LOGIN, LOGINGOVPL_PROCESS_RESULT.SUCCESS
+                ),
+                True,
+            ),
+            (
+                PORTAL_TYPE.ADMIN,
+                "active_editor",
+                None,
+                False,
+                logingovpl_service.get_redirect_url(PORTAL_TYPE.ADMIN, LOGINGOVPL_PROCESS.LOGIN, LOGINGOVPL_PROCESS_RESULT.ERROR),
+                None,
+            ),
+            (
+                PORTAL_TYPE.ADMIN,
+                "active_editor",
+                "other_pesel",
+                False,
+                logingovpl_service.get_redirect_url(PORTAL_TYPE.ADMIN, LOGINGOVPL_PROCESS.LOGIN, LOGINGOVPL_PROCESS_RESULT.ERROR),
+                None,
+            ),
+            (
+                PORTAL_TYPE.ADMIN,
+                "active_editor",
+                "pesel",
+                True,
+                logingovpl_service.get_redirect_url(
+                    PORTAL_TYPE.ADMIN, LOGINGOVPL_PROCESS.LOGIN, LOGINGOVPL_PROCESS_RESULT.SUCCESS
+                ),
+                True,
+            ),
         ],
     )
     @patch("mcod.users.views.logingovpl_service.get_logingovpl_data_and_logout")
@@ -469,32 +569,35 @@ class TestLogingovplACSView(MethodsNotAllowedTestMixin):
     def test_login_with_wk_pesel_match_user(
         self,
         mocked_get_logingovpl_data_and_logout,
+        portal_type: PORTAL_TYPE,
+        user: TypeUser,
         pesel: Optional[str],
         is_user_authenticated: bool,
-        redirect_url_part: str,
+        redirect_url: str,
         is_gov_auth: bool,
-        log_gov_pl_user: LoginGovPlUser,
-        active_user: TypeUser,
+        logingovpl_user: LoginGovPlUser,
         response_data_from_logingovpl: Dict[str, str],
+        request,
     ):
         """
-        Login process using WK. 3 cases:
+        Login process using WK. 3 cases below for main portal (active user) and for admin panel (editor user):
         1. no user in DB has pesel info matching WK response (no user with any pesel in DB).
         2. no user in DB has pesel info matching WK response (only one user in DB, but without matching pesel).
         3. one user in DB has pesel info matching WK response.
         """
 
         # Given
+        db_user = request.getfixturevalue(user)
+        db_user.pesel = pesel
+        db_user.save()
         login_gov_pl_data = LoginGovPlData(
-            user=log_gov_pl_user,
+            user=logingovpl_user,
             name_id="some_logingovpl_user",
-            in_response_to=f"ID-3226742f-c93b-4647-b138-81b6ba8f631e-LOGIN-{active_user.id}",
+            in_response_to=f"ID-3226742f-c93b-4647-b138-81b6ba8f631e-{portal_type.value}-LOGIN-{db_user.id}",
             session_id="61e435c2d509977d896b837c157da46e4fa52b7b6c82df0cd122ee3dc527ce49",
         )
         mocked_get_logingovpl_data_and_logout.return_value = login_gov_pl_data
         request = APIRequestFactory().post(self.url, data=response_data_from_logingovpl, format="json")
-        active_user.pesel = pesel
-        active_user.save()
         acs_view = ACSView.as_view()
         assert not hasattr(request, "user")
 
@@ -505,7 +608,7 @@ class TestLogingovplACSView(MethodsNotAllowedTestMixin):
         # check if active_user is logged
         assert request.user.is_authenticated is is_user_authenticated
         assert response.status_code == 302
-        assert redirect_url_part in response.url
+        assert redirect_url == response.url
         if is_gov_auth is not None:
             assert request.user.is_gov_auth is is_gov_auth
 
@@ -529,7 +632,9 @@ class TestLogingovplUnlinkView(MethodsNotAllowedTestMixin):
             res = self.client.get(self.url)
 
         assert res.status_code == status.HTTP_302_FOUND
-        assert res.url == LOGINGOVPL_ACTION.UNLINK_SUCCESS.value
+        assert res.url == logingovpl_service.get_redirect_url(
+            PORTAL_TYPE.MAIN, LOGINGOVPL_PROCESS.UNLINK, LOGINGOVPL_PROCESS_RESULT.SUCCESS
+        )
         active_user.refresh_from_db()
         assert active_user.is_gov_linked is False
 
@@ -545,7 +650,9 @@ class TestLogingovplUnlinkView(MethodsNotAllowedTestMixin):
         res = self.client.get(self.url)
 
         assert res.status_code == status.HTTP_302_FOUND
-        assert res.url == LOGINGOVPL_ACTION.UNLINK_ERROR.value
+        assert res.url == logingovpl_service.get_redirect_url(
+            PORTAL_TYPE.MAIN, LOGINGOVPL_PROCESS.UNLINK, LOGINGOVPL_PROCESS_RESULT.ERROR
+        )
         active_user.refresh_from_db()
         assert active_user.is_gov_linked is True
 
@@ -558,76 +665,150 @@ class TestLogingovplSwitchView(MethodsNotAllowedTestMixin):
     header_prefix = getattr(settings, "JWT_HEADER_PREFIX")
     common_pesel = "11111111111"
 
-    def test_switch_logged_user_success(self, active_user):
-        """Test if the user logged by the login.gov.pl service can be switched
+    def test_switch_logged_by_logingovpl_user_in_main_success(self):
+        """Test if the user logged by the login.gov.pl service in the main panel can be switched
         to the other active account linked to the login.gov.pl service by the same PESEL.
         """
 
-        active_user.pesel = self.common_pesel
-        active_user.is_gov_auth = True
-        active_user.save()
-
-        active_user2 = User.objects.create_user("test-active2@example.com", "12345.Abcde")
-        active_user2.state = "active"
-        active_user2.pesel = self.common_pesel
-        active_user2.save()
+        active_user = UserFactory.create(email="active_user@dane.gov.pl", pesel=self.common_pesel, is_gov_auth=True)
+        active_user2 = UserFactory.create(email="active_user2@dane.gov.pl", pesel=self.common_pesel)
 
         # try to switch from active_user to active_user2
         with patch("django.contrib.auth.get_user", return_value=active_user):
-            res = self.client.get(self.url + f"?&email={active_user2.email}")
+            res = self.client.get(self.url + f"?email={active_user2.email}")
 
         assert res.status_code == status.HTTP_302_FOUND
-        assert res.url == LOGINGOVPL_ACTION.SWITCH_SUCCESS.value
+        assert res.url == logingovpl_service.get_redirect_url(
+            PORTAL_TYPE.MAIN, LOGINGOVPL_PROCESS.SWITCH, LOGINGOVPL_PROCESS_RESULT.SUCCESS
+        )
         active_user.refresh_from_db()
         assert active_user.is_gov_auth is False
         active_user2.refresh_from_db()
         assert active_user2.is_gov_auth is True
 
-    def test_switch_not_logged_user_failure(self, active_user):
-        """Test if the not logged user linked to the login.gov.pl service can not be switched
-        to the other active account linked to the login.gov.pl service by the same PESEL.
+    def test_switch_logged_by_logingovpl_user_in_admin_success(self):
+        """Test if the user logged by the login.gov.pl service in the admin panel can be switched
+        to the other active account accepted by the admin panel and linked to the login.gov.pl service
+        by the same PESEL.
         """
 
-        active_user.pesel = self.common_pesel
-        active_user.save()
-
-        active_user2 = User.objects.create_user("test-active2@example.com", "12345.Abcde")
-        active_user2.state = "active"
-        active_user2.pesel = self.common_pesel
-        active_user2.save()
+        active_user = AdminFactory.create(email="admin@dane.gov.pl", pesel=self.common_pesel, is_gov_auth=True)
+        active_user2 = EditorFactory.create(email="editor_user@dane.gov.pl", pesel=self.common_pesel)
 
         # try to switch from active_user to active_user2
-        res = self.client.get(self.url + f"?&email={active_user2.email}")
+        with patch("django.contrib.auth.get_user", return_value=active_user):
+            res = self.client.get(self.url + f"?email={active_user2.email}&portal=admin")
 
         assert res.status_code == status.HTTP_302_FOUND
-        assert res.url == LOGINGOVPL_ACTION.SWITCH_ERROR.value
+        assert res.url == logingovpl_service.get_redirect_url(
+            PORTAL_TYPE.ADMIN, LOGINGOVPL_PROCESS.SWITCH, LOGINGOVPL_PROCESS_RESULT.SUCCESS
+        )
+        active_user.refresh_from_db()
+        assert active_user.is_gov_auth is False
+        active_user2.refresh_from_db()
+        assert active_user2.is_gov_auth is True
+
+    def test_switch_not_logged_by_logingovpl_user_in_main_failure(self):
+        """Test if the not logged by the main panel user, linked to the login.gov.pl service,
+        can not be switched to the other active account linked to the login.gov.pl service
+        by the same PESEL.
+        """
+
+        active_user = UserFactory.create(email="active_user@dane.gov.pl", pesel=self.common_pesel)
+        active_user2 = UserFactory.create(email="active_user2@dane.gov.pl", pesel=self.common_pesel)
+
+        # try to switch from active_user to active_user2
+        res = self.client.get(self.url + f"?email={active_user2.email}")
+
+        assert res.status_code == status.HTTP_302_FOUND
+        assert res.url == logingovpl_service.get_redirect_url(
+            PORTAL_TYPE.MAIN, LOGINGOVPL_PROCESS.SWITCH, LOGINGOVPL_PROCESS_RESULT.ERROR
+        )
         active_user.refresh_from_db()
         assert active_user.is_gov_auth is False
         active_user2.refresh_from_db()
         assert active_user2.is_gov_auth is False
 
-    def test_switch_logged_user_without_email_failure(self, active_user):
-        """Test if the user logged by the login.gov.pl service can not be switched
+    def test_switch_not_logged_by_logingovpl_user_in_admin_failure(self):
+        """Test if the not logged by the admin panel user linked to the login.gov.pl service
+        can not be switched to the other active account accepted by the admin panel
+        and linked to the login.gov.pl service by the same PESEL.
+        """
+
+        active_user = AdminFactory.create(email="admin@dane.gov.pl", pesel=self.common_pesel)
+        active_user2 = EditorFactory.create(email="editor_user@dane.gov.pl", pesel=self.common_pesel)
+
+        # try to switch from active_user to active_user2
+        res = self.client.get(self.url + f"?email={active_user2.email}&portal=admin")
+
+        assert res.status_code == status.HTTP_302_FOUND
+        assert res.url == logingovpl_service.get_redirect_url(
+            PORTAL_TYPE.ADMIN, LOGINGOVPL_PROCESS.SWITCH, LOGINGOVPL_PROCESS_RESULT.ERROR
+        )
+        active_user.refresh_from_db()
+        assert active_user.is_gov_auth is False
+        active_user2.refresh_from_db()
+        assert active_user2.is_gov_auth is False
+
+    def test_switch_logged_user_in_main_without_email_failure(self):
+        """Test if the user logged by the login.gov.pl service in the main panel can not be switched
         to the other active account linked to the login.gov.pl service by the same PESEL,
         due to the lack of the email in the request URL.
         """
 
-        active_user.pesel = self.common_pesel
-        active_user.is_gov_auth = True
-        active_user.save()
-
-        active_user2 = User.objects.create_user("test-active2@example.com", "12345.Abcde")
-        active_user2.state = "active"
-        active_user2.pesel = self.common_pesel
-        active_user2.save()
-        assert active_user2 in active_user.connected_gov_users
+        active_user = UserFactory.create(email="active_user@dane.gov.pl", pesel=self.common_pesel, is_gov_auth=True)
+        active_user2 = UserFactory.create(email="active_user2@dane.gov.pl", pesel=self.common_pesel)
 
         # try to switch from active_user to active_user2 without the email attribute
         with patch("django.contrib.auth.get_user", return_value=active_user):
             res = self.client.get(self.url)
 
         assert res.status_code == status.HTTP_302_FOUND
-        assert res.url == LOGINGOVPL_ACTION.SWITCH_ERROR.value
+        assert res.url == logingovpl_service.get_redirect_url(
+            PORTAL_TYPE.MAIN, LOGINGOVPL_PROCESS.SWITCH, LOGINGOVPL_PROCESS_RESULT.ERROR
+        )
+        active_user.refresh_from_db()
+        assert active_user.is_gov_auth is False
+        active_user2.refresh_from_db()
+        assert active_user2.is_gov_auth is False
+
+    def test_switch_logged_user_in_main_with_not_validated_email_failure(self):
+        """Test if the user logged by the login.gov.pl service in the main panel can not be switched
+        to the other active account linked to the login.gov.pl service by the same PESEL,
+        due to the not valid email in the request URL.
+        """
+
+        active_user = UserFactory.create(email="active_user@dane.gov.pl", pesel=self.common_pesel, is_gov_auth=True)
+        not_valid_email = "wrong_letter_]@example.com"
+
+        # try to switch from active_user to active_user2 without the email attribute
+        with patch("django.contrib.auth.get_user", return_value=active_user):
+            res = self.client.get(self.url + f"?email={not_valid_email}")
+
+        assert res.status_code == status.HTTP_302_FOUND
+        assert res.url == logingovpl_service.get_redirect_url(
+            PORTAL_TYPE.MAIN, LOGINGOVPL_PROCESS.SWITCH, LOGINGOVPL_PROCESS_RESULT.ERROR
+        )
+        active_user.refresh_from_db()
+        assert active_user.is_gov_auth is False
+
+    def test_switch_logged_user_in_admin_without_email_failure(self):
+        """Test if the user logged by the login.gov.pl service in the admin panel can not be switched
+        to the other active account accepted by the admin panel and linked to the login.gov.pl service
+        by the same PESEL, due to the lack of the email in the request URL.
+        """
+
+        active_user = AdminFactory.create(email="admin@dane.gov.pl", pesel=self.common_pesel, is_gov_auth=True)
+        active_user2 = EditorFactory.create(email="editor_user@dane.gov.pl", pesel=self.common_pesel)
+
+        # try to switch from active_user to active_user2 without the email attribute
+        with patch("django.contrib.auth.get_user", return_value=active_user):
+            res = self.client.get(self.url + "?portal=admin")
+
+        assert res.status_code == status.HTTP_302_FOUND
+        assert res.url == logingovpl_service.get_redirect_url(
+            PORTAL_TYPE.ADMIN, LOGINGOVPL_PROCESS.SWITCH, LOGINGOVPL_PROCESS_RESULT.ERROR
+        )
         active_user.refresh_from_db()
         assert active_user.is_gov_auth is False
         active_user2.refresh_from_db()

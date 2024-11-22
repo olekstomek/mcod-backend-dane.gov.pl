@@ -8,6 +8,12 @@ from mcod.cms.api.fields import HyperEditorJSONField, LocalizedHyperField
 from mcod.cms.blocks.common import CarouselBlock
 from mcod.cms.models.base import BasePage
 
+# Image limit in footer to handle many sets of logos depends on contrast mode
+# For example: 5 normal logos, and 5 logos for yellow_black, etc...
+# Currently we have 4 different contrast modes.
+# Logos are filtered in frontend base on the file name.
+FOOTER_LOGOS_LIMIT = 20
+
 
 class RootPage(BasePage):
     over_login_section_cb = StreamField(
@@ -57,13 +63,13 @@ class RootPage(BasePage):
     footer_nav_en = LocalizedHyperField(default=None, blank=True, null=True, verbose_name="Stopka - sekcja nawigacji")
 
     footer_logos = StreamField(
-        CarouselBlock(max_num=5, required=False),
+        CarouselBlock(max_num=FOOTER_LOGOS_LIMIT, required=False),
         default=None,
         blank=True,
         verbose_name="Stopka - sekcja logo",
     )
     footer_logos_en = StreamField(
-        CarouselBlock(max_num=5, required=False),
+        CarouselBlock(max_num=FOOTER_LOGOS_LIMIT, required=False),
         default=None,
         blank=True,
         verbose_name="Stopka - sekcja logo",

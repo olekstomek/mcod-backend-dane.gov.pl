@@ -155,8 +155,8 @@ p.irreversible-deletion-warning {
 	position: absolute;
 	top: 7px;
 	right: -10px;
-	width: 0px;
-	height: 0px;
+	width: 0;
+	height: 0;
 	border-left: 4px solid transparent;
 	border-right: 4px solid transparent;
 	border-top: 6px solid #666;
@@ -454,7 +454,6 @@ p.irreversible-deletion-warning {
 	font-weight: bold;
 	background: #B30000;
 	color: #fff;
-	font-weight: normal;
 	padding: 5px 0;
 }
 
@@ -673,12 +672,12 @@ p.irreversible-deletion-warning {
 	overflow: auto;
 }
 .deletelink, #duplicate_button {
-	padding: 0px;
+	padding: 0;
 }
 
 .btn.extra-btn {
-	padding-left: 0px;
-	padding-right: 0px;
+	padding-left: 0;
+	padding-right: 0;
 }
 
 li.disabledTab {
@@ -825,4 +824,64 @@ a {
   padding: 0;
   position: absolute;
   width: 1px;
+}
+
+#user-gov-list-container:hover {
+	cursor: pointer;
+}
+
+#user-gov-list{
+	display: none;
+	position: absolute;
+	width: max-content;
+	max-width: 250px;
+	background-color: #124;
+	align-items: center;
+	border: 1px solid white;
+	border-top: none;
+	margin-top: 13px;
+}
+
+#user-gov-list>div{
+	z-index: 1000;
+	background-color: #124;
+	align-items: center;
+}
+
+#user-tools{
+	display: flex;
+	padding: 0;
+	height: 100%;
+	align-items: center;
+}
+
+.admin-gov-user-list{
+	background-color: #124;
+	z-index: 1000;
+	width: 100%;
+	padding: 5px 10px 5px 10px
+}
+
+.user-gov-list__item {
+	padding: 5px;
+	width: 100%;
+	border-top: 1px white solid;
+	overflow-wrap: break-word;
+}
+
+.user-gov-list__switch {
+	color: white;
+	font-weight: bold;
+	border-top: none;
+}
+
+.user-gov-list__image {
+	width: 20px;
+	height: 15px;
+	filter: invert(41%) sepia(3%) saturate(11%) hue-rotate(345deg) brightness(94%) contrast(92%);
+}
+#user-gov-list-container {
+	.rotate {
+		transform: rotate(180deg);
+	}
 }

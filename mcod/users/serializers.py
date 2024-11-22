@@ -1,3 +1,4 @@
+from django.contrib.auth import get_user_model
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from marshmallow import post_dump, pre_dump
@@ -14,6 +15,8 @@ from mcod.core.api.jsonapi.serializers import (
 from mcod.core.serializers import CSVSchemaRegistrator, CSVSerializer
 from mcod.schedules.serializers import UserScheduleApiAttrs
 from mcod.users.models import Meeting
+
+User = get_user_model()
 
 
 class ChangePasswordApiAttrs(ObjectAttrs):
@@ -72,6 +75,8 @@ class UserCSVSerializer(CSVSerializer):
     is_official = fields.Method("get_is_official", data_key=_("Official"), example="Nie")
     is_staff = fields.Method("get_is_staff", data_key=_("Editor"), example="Nie")
     is_superuser = fields.Method("get_is_superuser", data_key=_("Admin"), example="Nie")
+    wk_linked = fields.Method("is_wk_linked", data_key=_("Linked with WK"), example="Nie")
+    last_logged_method = fields.Method("logging_method", data_key=_("Last logged method"), example="WK")
     last_login = fields.DateTime(data_key=_("Last login date"), example="2021-01-01T00:00:00Z", default=None)
 
     @staticmethod
@@ -81,6 +86,15 @@ class UserCSVSerializer(CSVSerializer):
     @staticmethod
     def get_no():
         return _("No")
+
+    @staticmethod
+    def logging_method(obj: User) -> str:
+        """Returns last logged method for specified user."""
+        return obj.last_logged_method
+
+    def is_wk_linked(self, obj) -> str:
+        """Returns YES if user is connected to WK, otherwise NO."""
+        return self.get_yes() if obj.is_gov_linked else self.get_no()
 
     def get_is_academy_admin(self, obj):
         return self.get_yes() if obj.is_academy_admin else self.get_no()
@@ -137,6 +151,8 @@ class UserCSVSerializer(CSVSerializer):
             "state",
             "institution1",
             "institution2",
+            "wk_linked",
+            "last_logged_method",
             "last_login",
         )
 

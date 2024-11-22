@@ -68,6 +68,20 @@ def active_editor():
 
 
 @pytest.fixture
+def pending_editor():
+    usr = EditorFactory.create(
+        email="editor_user@dane.gov.pl",
+        password="12345.Abcde",
+        phone="0048123456789",
+        state="pending",
+    )
+    org = OrganizationFactory.create(users=(usr,))
+    ds = DatasetFactory.create(organization=org)
+    ResourceFactory.create_batch(2, dataset=ds)
+    return usr
+
+
+@pytest.fixture
 def active_editor_without_org():
     usr = EditorFactory.create(
         email="editor_user_wo_org@dane.gov.pl",
@@ -113,3 +127,9 @@ def create_user_with_params(user_type, params=None):
         kwargs.update(json.loads(params))
     created_user = _factory(**kwargs)
     return created_user
+
+
+@pytest.fixture
+def test_user_pesel() -> str:
+    """Returns test user pesel."""
+    return "some_pesel"

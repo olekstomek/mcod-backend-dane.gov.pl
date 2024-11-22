@@ -35,7 +35,7 @@ from mcod.lib.triggers import session_store
 from mcod.schedules.models import Schedule
 from mcod.suggestions.models import AcceptedDatasetSubmission
 from mcod.tools.api.dashboard import DashboardMetaSerializer, DashboardSerializer
-from mcod.users.constants import LOGINGOVPL_ACTION, LOGINGOVPL_PROCESS
+from mcod.users.constants import LOGINGOVPL_PROCESS, LOGINGOVPL_PROCESS_RESULT, PORTAL_TYPE
 from mcod.users.deserializers import (
     ChangePasswordApiRequest,
     ConfirmResetPasswordApiRequest,
@@ -49,7 +49,7 @@ from mcod.users.deserializers import (
 from mcod.users.documents import MeetingDoc
 from mcod.users.exceptions import SAMLArtException
 from mcod.users.forms import AdminLoginForm
-from mcod.users.models import Meeting, Token
+from mcod.users.models import LoggingMethod, Meeting, Token
 from mcod.users.serializers import (
     ACSResponse,
     ACSTemplateResponse,
@@ -133,6 +133,7 @@ class LoginView(JsonAPIView):
             login(self.request, user)
             self.request.session.save()
             user.token = get_auth_token(user, self.request.session.session_key)
+            user.update_last_logging_method(LoggingMethod.FORM)
             return user
 
 
@@ -489,6 +490,15 @@ class CustomAdminLoginView(DjangoLoginView):
             return HttpResponseRedirect(index_path)
         return super().get(request, *args, **kwargs)
 
+    def form_valid(self, form):
+        """New logic (setting flag last_logging_method) when user form is valid."""
+        response = super().form_valid(form)
+        if form.is_valid():
+            user: User = form.get_user()
+            user.update_last_logging_method(LoggingMethod.FORM)
+            user.save()
+        return response
+
 
 class MeetingsView(JsonAPIView):
 
@@ -510,19 +520,18 @@ class SSOView(BaseSSOView):
         or render the template mocking that service.
         """
         if settings.USERS_TEST_LOGINGOVPL:
-            if self.request.user.is_authenticated:
-                in_response_to = logingovpl_service.prepare_authn_request_id(self.request.user.id)
-            else:
-                in_response_to = logingovpl_service.prepare_authn_request_id()
-
-            context = {"in_response_to": in_response_to}
+            context = {"in_response_to": self.get_authn_request_id()}
             return render(request, "logingovpl/test_login_gov_pl.html", context=context)
         return super().get(request, *args, **kwargs)
 
     def get_authn_request_id(self):
-        if self.request.user.is_authenticated:
-            return logingovpl_service.prepare_authn_request_id(self.request.user.id)
-        return logingovpl_service.prepare_authn_request_id()
+        """Prepare the request identifier needed to the later processing of logging or linking
+        via the login.gov.pl service.
+        """
+        portal = self.request.GET.get("portal")
+        is_admin_panel = True if portal == "admin" else False
+        user_identifier = self.request.user.id if self.request.user.is_authenticated else None
+        return logingovpl_service.prepare_authn_request_id(user_identifier, is_admin_panel)
 
 
 class ACSView(APIView):
@@ -539,47 +548,50 @@ class ACSView(APIView):
         else:
             serializer = ACSResponse(data=request.data)
 
+        unknown_url = logingovpl_service.get_redirect_url(
+            PORTAL_TYPE.UNKNOWN, LOGINGOVPL_PROCESS.UNKNOWN, LOGINGOVPL_PROCESS_RESULT.UNKNOWN
+        )
         if not serializer.is_valid():
-            return HttpResponseRedirect(LOGINGOVPL_ACTION.UNKNOWN.value)
-
+            return HttpResponseRedirect(unknown_url)
         try:
             logingovpl_data = logingovpl_service.get_logingovpl_data_and_logout(
-                serializer.validated_data, settings.USERS_TEST_LOGINGOVPL
+                request_data=serializer.validated_data, is_logingovpl_mocked=settings.USERS_TEST_LOGINGOVPL
             )
         except SAMLArtException:
-            return HttpResponseRedirect(LOGINGOVPL_ACTION.UNKNOWN.value)
+            return HttpResponseRedirect(unknown_url)
 
+        portal = logingovpl_service.get_portal_or_none_from_authn_request_id(logingovpl_data.in_response_to)
         process = logingovpl_service.get_process_or_none_from_authn_request_id(logingovpl_data.in_response_to)
+
+        if portal is None or process is None:
+            return HttpResponseRedirect(unknown_url)
+
+        error_url = logingovpl_service.get_redirect_url(portal, process, LOGINGOVPL_PROCESS_RESULT.ERROR)
+        success_url = logingovpl_service.get_redirect_url(portal, process, LOGINGOVPL_PROCESS_RESULT.SUCCESS)
 
         # linking process
         if process == LOGINGOVPL_PROCESS.LINK:
-            user = user_service.get_user_by_authn_request_id_or_none(logingovpl_data.in_response_to)
-            if user is None:
-                return HttpResponseRedirect(LOGINGOVPL_ACTION.LINK_ERROR.value)
+            user_id = logingovpl_service.get_user_id_or_none_from_authn_request_id(logingovpl_data.in_response_to)
+            user = user_service.get_active_session_user_or_none(user_id, portal)
 
-            user_service.link_to_logingovpl(user=user, pesel=logingovpl_data.user.pesel)
-            user.is_gov_auth = True
-            user.save()
-            return HttpResponseRedirect(LOGINGOVPL_ACTION.LINK_SUCCESS.value)
+            if user is None:
+                return HttpResponseRedirect(error_url)
+
+            user_service.link_to_logingovpl(user, logingovpl_data.user.pesel)
+            return HttpResponseRedirect(success_url)
 
         # logging process
         if process == LOGINGOVPL_PROCESS.LOGIN:
-            user = user_service.get_last_user_by_pesel_or_none(logingovpl_data.user.pesel)
+            user = user_service.get_last_user_by_pesel_or_none(logingovpl_data.user.pesel, portal)
             if user is None:
-                return HttpResponseRedirect(LOGINGOVPL_ACTION.LOGIN_ERROR.value)
+                return HttpResponseRedirect(error_url)
 
-            if not hasattr(request, "session"):
-                request.session = session_store()
-                request.META = {}
-            login(self.request, user, backend="django.contrib.auth.backends.ModelBackend")
-            request.session.save()
-            user.is_gov_auth = True
-            user.save()
-            user.token = get_auth_token(user, self.request.session.session_key)
-            return HttpResponseRedirect(LOGINGOVPL_ACTION.LOGIN_SUCCESS.value)
+            user_service.login_by_logingovpl(request, user)
+            user.update_last_logging_method(LoggingMethod.WK)
+            return HttpResponseRedirect(success_url)
 
         # not linking nor logging process
-        return HttpResponseRedirect(LOGINGOVPL_ACTION.UNKNOWN.value)
+        return HttpResponseRedirect(unknown_url)
 
 
 class LogingovplUnlinkView(APIView):
@@ -587,11 +599,17 @@ class LogingovplUnlinkView(APIView):
     renderer_classes = [renderers.JSONRenderer]
 
     def get(self, request, *args, **kwargs):  # noqa
+        error_url = logingovpl_service.get_redirect_url(
+            PORTAL_TYPE.MAIN, LOGINGOVPL_PROCESS.UNLINK, LOGINGOVPL_PROCESS_RESULT.ERROR
+        )
+        success_url = logingovpl_service.get_redirect_url(
+            PORTAL_TYPE.MAIN, LOGINGOVPL_PROCESS.UNLINK, LOGINGOVPL_PROCESS_RESULT.SUCCESS
+        )
         if not request.user.is_authenticated:
-            return HttpResponseRedirect(LOGINGOVPL_ACTION.UNLINK_ERROR.value)
+            return HttpResponseRedirect(error_url)
 
         user_service.unlink_from_logingovpl(request.user)
-        return HttpResponseRedirect(LOGINGOVPL_ACTION.UNLINK_SUCCESS.value)
+        return HttpResponseRedirect(success_url)
 
 
 class LogingovplSwitchView(APIView):
@@ -599,27 +617,26 @@ class LogingovplSwitchView(APIView):
     renderer_classes = [renderers.JSONRenderer]
 
     def get(self, request, *args, **kwargs):  # noqa
-
         user = copy.copy(request.user)
         logout(request)
-        email = request.query_params.get("email")
-        if not user.is_authenticated or not email:
-            return HttpResponseRedirect(LOGINGOVPL_ACTION.SWITCH_ERROR.value)
+
+        email = logingovpl_service.check_attr_email(request.query_params.get("email"))
+        portal = logingovpl_service.check_attr_portal(request.query_params.get("portal"))
+        error_url = logingovpl_service.get_redirect_url(portal, LOGINGOVPL_PROCESS.SWITCH, LOGINGOVPL_PROCESS_RESULT.ERROR)
+        success_url = logingovpl_service.get_redirect_url(portal, LOGINGOVPL_PROCESS.SWITCH, LOGINGOVPL_PROCESS_RESULT.SUCCESS)
+
+        if email is None or portal is None or not user.is_authenticated:
+            return HttpResponseRedirect(error_url)
 
         new_user = user_service.get_user_to_switch_or_none(user, email)
         if new_user is None:
-            return HttpResponseRedirect(LOGINGOVPL_ACTION.SWITCH_ERROR.value)
+            return HttpResponseRedirect(error_url)
 
-        if not hasattr(request, "session"):
-            request.session = session_store()
-            request.META = {}
-        login(request, new_user, backend="django.contrib.auth.backends.ModelBackend")
-        request.session.save()
-        new_user.is_gov_auth = True
-        new_user.save()
+        user_service.login_by_logingovpl(request=request, user=new_user)
         new_user.token = get_auth_token(new_user, request.session.session_key)
+        new_user.update_last_logging_method(LoggingMethod.WK)
 
-        response = HttpResponseRedirect(LOGINGOVPL_ACTION.SWITCH_SUCCESS.value)
+        response = HttpResponseRedirect(success_url)
         response.set_cookie(
             settings.API_TOKEN_COOKIE_NAME,
             new_user.token,
@@ -640,5 +657,4 @@ class LogingovplSwitchView(APIView):
             path=settings.SESSION_COOKIE_PATH,
             max_age=settings.JWT_EXPIRATION_DELTA,
         )
-
         return response
