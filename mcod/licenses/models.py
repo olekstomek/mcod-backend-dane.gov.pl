@@ -11,6 +11,7 @@ from mcod.core.api.search.tasks import null_field_in_related_task
 from mcod.core.db.managers import TrashManager
 from mcod.core.db.models import ExtendedModel
 from mcod.core.managers import SoftDeletableManager
+from mcod.lib.model_sanitization import SanitizedCharField
 from mcod.licenses.signals import null_in_related_datasets, update_related_datasets
 
 
@@ -21,8 +22,8 @@ class License(ExtendedModel):
         "restored": (update_related_datasets, rdf_signals.update_related_graph),
         "removed": (null_in_related_datasets, rdf_signals.update_related_graph),
     }
-    name = models.CharField(max_length=200, verbose_name=_("Name"))
-    title = models.CharField(max_length=250, verbose_name=_("Title"))
+    name = SanitizedCharField(max_length=200, verbose_name=_("Name"))
+    title = SanitizedCharField(max_length=250, verbose_name=_("Title"))
     url = models.URLField(blank=True, null=True, verbose_name=_("URL"))
 
     def __str__(self):

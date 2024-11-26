@@ -4,10 +4,14 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 from model_utils import Choices
 from model_utils.models import StatusModel
-from modeltrans.fields import TranslationField
 
 from mcod.core.db.mixins import AdminMixin
 from mcod.core.db.models import TimeStampedModel
+from mcod.lib.model_sanitization import (
+    SanitizedCharField,
+    SanitizedTextField,
+    SanitizedTranslationField,
+)
 
 User = get_user_model()
 
@@ -26,14 +30,14 @@ DISPLAY_STATUS = {
 
 class Alert(AdminMixin, StatusModel, TimeStampedModel):
     STATUS = Choices(*STATUS_CHOICES)
-    title = models.CharField(
+    title = SanitizedCharField(
         max_length=300,
         verbose_name=_("Title"),
         null=False,
         blank=False,
         help_text=_("Title of the alert (300 characters max.)"),
     )
-    description = models.TextField(
+    description = SanitizedTextField(
         verbose_name=_("Description"),
         null=False,
         blank=False,
@@ -71,7 +75,7 @@ class Alert(AdminMixin, StatusModel, TimeStampedModel):
         related_name="alerts_modified",
     )
 
-    i18n = TranslationField(fields=("title", "description"), required_languages=("pl",))
+    i18n = SanitizedTranslationField(fields=("title", "description"), required_languages=("pl",))
 
     @classmethod
     def accusative_case(cls):

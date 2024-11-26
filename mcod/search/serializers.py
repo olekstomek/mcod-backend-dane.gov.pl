@@ -91,6 +91,7 @@ class CommonObjectApiAttrs(ObjectAttrs, HighlightObjectMixin):
     category = fields.Nested(Category)
     has_dynamic_data = fields.Boolean()
     has_high_value_data = fields.Boolean()
+    has_high_value_data_from_ec_list = fields.Boolean()
     has_research_data = fields.Boolean()
 
     # datasets
@@ -236,6 +237,11 @@ class CommonObjectApiAggregations(ExtSchema):
         partial(BoolDataAggregation, context={"only_true": True}),
         many=True,
         attribute="_filter_by_has_high_value_data.by_has_high_value_data.buckets",
+    )
+    by_has_high_value_data_from_ec_list = fields.Nested(
+        partial(BoolDataAggregation, context={"only_true": True}),
+        many=True,
+        attribute="_filter_by_has_high_value_data_from_ec_list.by_has_high_value_data_from_ec_list.buckets",
     )
     by_has_research_data = fields.Nested(
         partial(BoolDataAggregation, context={"only_true": True}),

@@ -1,7 +1,7 @@
 import logging
 import os
 from mimetypes import guess_extension
-from typing import Optional
+from typing import Any, Dict, Optional
 
 import magic
 from dal import autocomplete, forward
@@ -16,7 +16,11 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 
 from mcod import settings
+from mcod.datasets.models import Dataset
 from mcod.lib.field_validators import ContainsLetterValidator
+from mcod.lib.forms.mixins import HighValueDataFormValidatorMixin
+from mcod.lib.metadata_validators import validate_high_value_data_from_ec_list_organization
+from mcod.lib.utils import capitalize_first_character
 from mcod.lib.widgets import (
     CheckboxSelect,
     CKEditorWidget,
@@ -24,6 +28,7 @@ from mcod.lib.widgets import (
     ResourceDataSchemaWidget,
     ResourceMapsAndPlotsWidget,
 )
+from mcod.organizations.models import Organization
 from mcod.regions.fields import RegionsMultipleChoiceField
 from mcod.resources.archives import is_password_protected_archive_file
 from mcod.resources.dga_constants import (
@@ -169,7 +174,7 @@ class SpecialSignMultipleChoiceField(forms.ModelMultipleChoiceField):
         return f"{obj.symbol} ({obj.name}) - {obj.description}"
 
 
-class ResourceForm(forms.ModelForm):
+class ResourceForm(forms.ModelForm, HighValueDataFormValidatorMixin):
     title = forms.CharField(
         widget=forms.Textarea(attrs={"style": "width: 99%", "rows": 2}),
         label=_("Title"),
@@ -224,6 +229,17 @@ class ResourceForm(forms.ModelForm):
         % {"url": f"{settings.BASE_URL}{settings.HIGH_VALUE_DATA_MANUAL_URL}"},
         widget=CheckboxSelect(attrs={"class": "inline"}),
     )
+    has_high_value_data_from_ec_list = forms.ChoiceField(
+        label=capitalize_first_character(_("has high value data from the EC list")),  # `KE` / `EC` must be uppercase
+        choices=[(True, _("Yes")), (False, _("No"))],
+        help_text=(
+            "Wskazanie TAK oznacza, że zasób jest traktowany jako dane o wysokiej wartości z wykazu KE.<br><br>Jeżeli chcesz "
+            'się więcej dowiedzieć na temat danych o wysokiej wartości z wykazu KE <a href="%(url)s" target="_blank">przejdź '
+            "do strony</a>"
+        )
+        % {"url": f"{settings.BASE_URL}{settings.HIGH_VALUE_DATA_FROM_EC_LIST_MANUAL_URL}"},
+        widget=CheckboxSelect(attrs={"class": "inline"}),
+    )
     has_research_data = forms.ChoiceField(
         label=_("has research data").capitalize(),
         choices=[(True, _("Yes")), (False, _("No"))],
@@ -269,7 +285,8 @@ class ResourceForm(forms.ModelForm):
         return confirm_save
 
     def clean(self):
-        data = super().clean()
+        # Create a copy of cleaned data as using `self.add_error` may remove fields from the original dictionary.
+        data = super().clean().copy()
 
         instance_pk: Optional[int] = self.instance.pk
         creating_resource: bool = False if instance_pk else True
@@ -304,6 +321,9 @@ class ResourceForm(forms.ModelForm):
             # DGA Resource.
             if not is_main_dga_resource:
                 self._remove_dga_flag_from_current_dga_resource_if_needed(data)
+
+        self.validate_high_value_data_flags_conflict(data)
+        self._validate_high_value_data_from_ec_list_organization(data)
         return data
 
     def _validate_data_date(self, data: dict) -> None:
@@ -351,11 +371,15 @@ class ResourceForm(forms.ModelForm):
     def _validate_data_flags_when_contains_protected_data(self, data: dict) -> None:
         has_dynamic_data: bool = data.get("has_dynamic_data") == "True"
         has_high_value_data: bool = data.get("has_high_value_data") == "True"
+        has_high_value_data_from_ec_list: bool = data.get("has_high_value_data_from_ec_list") == "True"
         has_research_data: bool = data.get("has_research_data") == "True"
-        if any([has_dynamic_data, has_high_value_data, has_research_data]):
+        if any([has_dynamic_data, has_high_value_data, has_research_data, has_high_value_data_from_ec_list]):
             self.add_error(
                 "contains_protected_data",
-                _("To select YES here, select NO in the fields for " "dynamic, high-value and research data."),
+                _(
+                    "To select YES here, select NO in the fields for "
+                    "dynamic, high-value, high-value from the EC list and research data."
+                ),
             )
 
     def _validate_institution_when_contains_protected_data(self, data: dict) -> None:
@@ -490,6 +514,21 @@ class ResourceForm(forms.ModelForm):
             self.add_error(
                 "contains_protected_data",
                 _("Cannot read existing file") + f": {file.name}.",
+            )
+
+    def _validate_high_value_data_from_ec_list_organization(self, data: Dict[str, Any]) -> None:
+        dataset: Optional[Dataset] = data.get("dataset")
+        if dataset is None:
+            return
+        organization: Organization = dataset.organization
+        has_high_value_data_from_ec_list: bool = data.get("has_high_value_data_from_ec_list") == "True"
+
+        try:
+            validate_high_value_data_from_ec_list_organization(has_high_value_data_from_ec_list, organization.institution_type)
+        except ValidationError:
+            self.add_error(
+                "has_high_value_data_from_ec_list",
+                _("Data of private institutions are not high-value data from EC list."),
             )
 
 

@@ -1,9 +1,13 @@
+from typing import List
+
 from django.apps import apps
 from django.conf import settings
 from django.db.models import Count, Manager, Prefetch, Q
 from django.db.models.query import QuerySet
 
+from mcod.core.db.managers import TrashManager
 from mcod.core.managers import RawManager, SoftDeletableManager, SoftDeletableQuerySet
+from mcod.resources.tasks import delete_es_resource_tabular_data_index
 
 
 class ChartQuerySet(SoftDeletableQuerySet):
@@ -222,3 +226,16 @@ class ResourceFileManager(Manager):
 
 class SupplementManager(SoftDeletableManager):
     pass
+
+
+class ResourceTrashQuerySet(QuerySet):
+    def delete(self):
+        # delete tabular data indexes connected with permanently removed resources
+        resources_ids: List[int] = list(self.values_list("pk", flat=True))
+        delete_es_resource_tabular_data_index.s(resources_ids).apply_async_on_commit()
+
+        self.update(is_permanently_removed=True)
+
+
+class ResourceTrashManager(TrashManager):
+    _queryset_class = ResourceTrashQuerySet

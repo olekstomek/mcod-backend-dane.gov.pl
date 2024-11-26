@@ -167,11 +167,23 @@ class ResourceApiSearchRequest(ListingSchema):
         doc_base_url="/resources",
         doc_field_name="has_high_value_data",
     )
+    has_high_value_data_from_ec_list = search_fields.FilterField(
+        BooleanTermSchema,
+        doc_template="docs/generic/fields/boolean_term_field.html",
+        doc_base_url="/resources",
+        doc_field_name="has_high_value_data_from_ec_list",
+    )
     has_research_data = search_fields.FilterField(
         BooleanTermSchema,
         doc_template="docs/generic/fields/boolean_term_field.html",
         doc_base_url="/resources",
         doc_field_name="has_research_data",
+    )
+    contains_protected_data = search_fields.FilterField(
+        BooleanTermSchema,
+        doc_template="docs/generic/fields/boolean_term_field.html",
+        doc_base_url="/resources",
+        doc_field_name="contains_protected_data",
     )
     language = search_fields.FilterField(
         StringTermSchema,

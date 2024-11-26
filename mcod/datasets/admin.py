@@ -265,6 +265,7 @@ class AddResourceMixin:
                     "special_signs",
                     "has_dynamic_data",
                     "has_high_value_data",
+                    "has_high_value_data_from_ec_list",
                     "has_research_data",
                 )
             },
@@ -422,6 +423,11 @@ class DatasetAdminMixin(HistoryMixin):
 
     has_high_value_data_info.short_description = _("has high value data")
 
+    def has_high_value_data_from_ec_list_info(self, obj):
+        return yesno(obj.has_high_value_data_from_ec_list, "Tak,Nie,-")
+
+    has_high_value_data_from_ec_list_info.short_description = _("has high value data from the EC list")
+
     def has_research_data_info(self, obj):
         return yesno(obj.has_research_data, "Tak,Nie,-")
 
@@ -445,6 +451,9 @@ class DatasetAdminMixin(HistoryMixin):
             ]
         has_dynamic_data = ["has_dynamic_data_info"] if obj and obj.is_imported else ["has_dynamic_data"]
         has_high_value_data = ["has_high_value_data_info"] if obj and obj.is_imported else ["has_high_value_data"]
+        has_high_value_data_from_ec_list = (
+            ["has_high_value_data_from_ec_list_info"] if obj and obj.is_imported else ["has_high_value_data_from_ec_list"]
+        )
         has_research_data = ["has_research_data_info"] if obj and obj.is_imported else ["has_research_data"]
         show_is_promoted = all(
             [
@@ -476,6 +485,7 @@ class DatasetAdminMixin(HistoryMixin):
                         "organization",
                         category_field,
                         *has_high_value_data,
+                        *has_high_value_data_from_ec_list,
                         *has_research_data,
                         *is_promoted,
                         "archived_resources_files_media_url",
@@ -542,6 +552,7 @@ class DatasetAdminMixin(HistoryMixin):
         data = (
             {
                 "has_high_value_data": obj.has_high_value_data,
+                "has_high_value_data_from_ec_list": obj.has_high_value_data_from_ec_list,
                 "has_dynamic_data": obj.has_dynamic_data,
                 "has_research_data": obj.has_research_data,
             }

@@ -95,6 +95,7 @@ class DataAggregations(ExtSchema):
             "by_update_frequency": {"field": "update_frequency", "size": 100},
             "by_has_dynamic_data": {"field": "has_dynamic_data", "size": 100},
             "by_has_high_value_data": {"field": "has_high_value_data", "size": 100},
+            "by_has_high_value_data_from_ec_list": {"field": "has_high_value_data_from_ec_list", "size": 100},
             "by_has_research_data": {"field": "has_research_data", "size": 100},
             "by_showcase_category": {"field": "showcase_category", "size": 10},
             "by_showcase_types": {"field": "showcase_types", "size": 10},
@@ -230,6 +231,13 @@ class ApiSearchRequest(ListingSchema):
         doc_template="docs/generic/fields/boolean_term_field.html",
         doc_base_url="/search",
         doc_field_name="has_high_value_data",
+    )
+    has_high_value_data_from_ec_list = fields.FilterField(
+        BooleanTermSchema,
+        query_field="has_high_value_data_from_ec_list",
+        doc_template="docs/generic/fields/boolean_term_field.html",
+        doc_base_url="/search",
+        doc_field_name="has_high_value_data_from_ec_list",
     )
     has_research_data = fields.FilterField(
         BooleanTermSchema,

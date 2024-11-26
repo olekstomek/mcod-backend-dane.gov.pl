@@ -185,3 +185,8 @@ MAIN_DGA_DATASET_OWNER_ORGANIZATION_PK = 99
 worker_id: Optional[str] = os.environ.get("PYTEST_XDIST_WORKER")
 if worker_id:
     CACHES["sessions"].update({"KEY_PREFIX": f"worker_{worker_id}_cache_session_"})
+
+# update `HARVESTER_XML_VERSION_TO_SCHEMA_PATH` for XML harvester tests cases
+HARVESTER_XML_VERSION_TO_SCHEMA_PATH.update(
+    {"1.11_dataset_has_high_values_metadata_conflict": HARVESTER_DATA_DIR.path("xml_import_otwarte_dane_1_11.xsd").root}
+)

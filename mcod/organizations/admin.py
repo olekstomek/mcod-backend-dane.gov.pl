@@ -149,6 +149,7 @@ class AddDatasetStacked(ObjectPermissionsStackedInline):
                     "fields": (
                         "has_dynamic_data",
                         "has_high_value_data",
+                        "has_high_value_data_from_ec_list",
                         "has_research_data",
                         *is_promoted,
                     )

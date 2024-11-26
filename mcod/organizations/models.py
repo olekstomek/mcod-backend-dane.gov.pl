@@ -8,12 +8,16 @@ from django.db.models import CheckConstraint, Q
 from django.dispatch import receiver
 from django.utils.translation import gettext_lazy as _
 from model_utils import FieldTracker
-from modeltrans.fields import TranslationField
 
 from mcod.core import signals as core_signals, storages
 from mcod.core.api.rdf import signals as rdf_signals
 from mcod.core.api.search import signals as search_signals
 from mcod.core.db.models import ExtendedModel, TrashModelBase, update_watcher
+from mcod.lib.model_sanitization import (
+    SanitizedCharField,
+    SanitizedTextField,
+    SanitizedTranslationField,
+)
 from mcod.lib.utils import escape_braces_and_format_html
 from mcod.organizations.managers import OrganizationManager, OrganizationTrashManager
 from mcod.organizations.signals import remove_related_datasets
@@ -56,8 +60,8 @@ class Organization(ExtendedModel):
         ),
     }
 
-    title = models.CharField(max_length=200, verbose_name=_("Name"))
-    description = models.TextField(blank=True, null=True, verbose_name=_("Description"))
+    title = SanitizedCharField(max_length=200, verbose_name=_("Name"))
+    description = SanitizedTextField(blank=True, null=True, verbose_name=_("Description"))
     image = models.ImageField(
         max_length=254,
         storage=storages.get_storage("organizations"),
@@ -67,14 +71,14 @@ class Organization(ExtendedModel):
         verbose_name=_("Image URL"),
     )
     postal_code = models.CharField(max_length=6, null=True, verbose_name=_("Postal code"))
-    city = models.CharField(max_length=200, null=True, verbose_name=_("City"))
-    street_type = models.CharField(max_length=50, null=True, verbose_name=_("Street type"))
-    street = models.CharField(max_length=200, null=True, verbose_name=_("Street"))
-    street_number = models.CharField(max_length=200, null=True, blank=True, verbose_name=_("Street number"))
-    flat_number = models.CharField(max_length=200, null=True, blank=True, verbose_name=_("Flat number"))
+    city = SanitizedCharField(max_length=200, null=True, verbose_name=_("City"))
+    street_type = SanitizedCharField(max_length=50, null=True, verbose_name=_("Street type"))
+    street = SanitizedCharField(max_length=200, null=True, verbose_name=_("Street"))
+    street_number = SanitizedCharField(max_length=200, null=True, blank=True, verbose_name=_("Street number"))
+    flat_number = SanitizedCharField(max_length=200, null=True, blank=True, verbose_name=_("Flat number"))
 
     email = models.CharField(max_length=300, null=True, verbose_name=_("Email"))
-    epuap = models.CharField(max_length=500, null=True, verbose_name=_("EPUAP"))
+    epuap = SanitizedCharField(max_length=500, null=True, verbose_name=_("EPUAP"))
     fax = models.CharField(max_length=50, null=True, verbose_name=_("Fax"))
     fax_internal = models.CharField(max_length=20, null=True, blank=True, verbose_name=_("int."))
 
@@ -94,9 +98,9 @@ class Organization(ExtendedModel):
     tel = models.CharField(max_length=50, null=True, verbose_name=_("Phone"))
     tel_internal = models.CharField(max_length=20, null=True, blank=True, verbose_name=_("int."))
     website = models.CharField(max_length=200, null=True, verbose_name=_("Website"))
-    abbreviation = models.CharField(max_length=30, null=True, verbose_name=_("Abbreviation"))
+    abbreviation = SanitizedCharField(max_length=30, null=True, verbose_name=_("Abbreviation"))
 
-    i18n = TranslationField(fields=("title", "description", "slug"))
+    i18n = SanitizedTranslationField(fields=("title", "description", "slug"))
 
     created_by = models.ForeignKey(
         User,

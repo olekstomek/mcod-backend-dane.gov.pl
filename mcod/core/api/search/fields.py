@@ -810,6 +810,10 @@ class NumberField(ElasticField, fields.Integer):
 
 
 class StringField(ElasticField, fields.String):
+    """Represents TextField and KeywordField from Elasticsearch,
+    https://www.elastic.co/blog/strings-are-dead-long-live-strings
+    """
+
     def _prepare_queryset(self, queryset, data):
         return queryset
 

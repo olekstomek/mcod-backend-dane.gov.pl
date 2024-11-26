@@ -13,6 +13,7 @@ from django.utils.translation import get_language, gettext_lazy as _, override
 from mcod import settings
 from mcod.core import storages
 from mcod.core.db.models import TimeStampedModel
+from mcod.lib.model_sanitization import SanitizedCharField, SanitizedTextField
 from mcod.newsletter.tasks import (
     remove_inactive_subscription,
     send_newsletter_mail,
@@ -38,7 +39,7 @@ class Subscription(TimeStampedModel):
     )
     lang = models.CharField(max_length=7, choices=NEWSLETTER_LANGUAGES, verbose_name=_("language"))
     email = models.EmailField(verbose_name=_("email"), unique=True)
-    activation_code = models.CharField(verbose_name=_("activation code"), max_length=40, default=make_activation_code)
+    activation_code = SanitizedCharField(verbose_name=_("activation code"), max_length=40, default=make_activation_code)
     is_active = models.BooleanField(default=False, verbose_name=_("is active?"), db_index=True)
     is_personal_data_processing_accepted = models.BooleanField(
         default=False,
@@ -203,7 +204,7 @@ class Newsletter(TimeStampedModel):
         ("sent", _("Sent")),
         ("error", _("Error")),
     )
-    title = models.CharField(max_length=255, verbose_name=_("title"))
+    title = SanitizedCharField(max_length=255, verbose_name=_("title"))
     lang = models.CharField(max_length=7, choices=NEWSLETTER_LANGUAGES, verbose_name=_("language version"))
     planned_sending_date = models.DateField(verbose_name=_("planned sending date"))
     sending_date = models.DateTimeField(verbose_name=_("sending date"), null=True, blank=True)
@@ -314,7 +315,7 @@ class Submission(TimeStampedModel):
         related_name="subscription_submissions",
         on_delete=models.CASCADE,
     )
-    message = models.TextField(verbose_name=_("message"), blank=True)
+    message = SanitizedTextField(verbose_name=_("message"), blank=True)
 
     class Meta:
         verbose_name = _("submission")

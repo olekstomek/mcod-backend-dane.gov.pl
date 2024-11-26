@@ -2,15 +2,26 @@ import json
 import logging
 import os
 from copy import deepcopy
+from pathlib import Path
+from typing import List, Set, Tuple, Union
 
 import pytz
 import sentry_sdk
+from constance import config
 from django.apps import apps
 from django.conf import settings
+from django.core.mail import send_mail
 from django.utils.timezone import now
+from django_elasticsearch_dsl import Index
+from elasticsearch.exceptions import (
+    ConnectionError as ElasticsearchConnectionError,
+    ElasticsearchException,
+)
 from elasticsearch.helpers.errors import BulkIndexError
+from urllib3.exceptions import NewConnectionError
 
-from mcod.core.tasks import extended_shared_task
+from mcod.core.tasks import FIVE_MINUTES, extended_shared_task
+from mcod.lib.db_utils import IndexConsistency, get_db_and_es_inconsistencies
 from mcod.resources.archives import ArchiveReader, UnsupportedArchiveError
 from mcod.resources.dga_utils import (
     check_all_resource_validations_status,
@@ -505,7 +516,7 @@ def create_main_dga_resource_task(self) -> None:
     try:
         # Step 1: Main DGA file creation
         logger.info("Step 1/4: Creating Main DGA xlsx file.")
-        file_path: str = create_main_dga_file()
+        file_path: Path = create_main_dga_file()
 
         # Step 2: Main DGA Resource creation
         # (also creates ResourceFile and Dataset if needed).
@@ -545,3 +556,110 @@ def create_main_dga_resource_task(self) -> None:
         logger.error(f"Cleaning after main DGA resource creation task due to " f"unexpected error: {exc}")
         clean_up_after_main_dga_resource_creation(exception_occurred=True)
         raise
+
+
+def delete_index(index_name: str) -> bool:
+    index = Index(index_name)
+    if index.exists():
+        result = index.delete()
+        if result.get("acknowledged") is True:
+            return True
+    return False
+
+
+@extended_shared_task(
+    max_retries=5,
+    atomic=False,
+    retry_countdown=60,
+    retry_on_errors=(ElasticsearchException,),
+    bind=True,
+)
+def delete_es_resource_tabular_data_index(self, resource_ids: Union[int, List[int]]):
+    """
+    Task which removes tabular data index for resource when resource is permanently deleted.
+    F.e. for resource with id=123 removed index will be `resource-123`.
+    """
+    logger.info("Started delete_es_resource_tabular_data_index task.")
+    es_index_deleted: bool = False
+
+    if isinstance(resource_ids, int):
+        resource_ids: List[int] = [resource_ids]
+
+    for resource_id in resource_ids:
+        index_name = f"resource-{resource_id}"
+        result = delete_index(index_name)
+        if result:
+            es_index_deleted = True
+            logger.info(f"Tabular data index {index_name} deleted.")
+    if not es_index_deleted:
+        logger.info("No tabular data index deleted.")
+    logger.info("Finished delete_es_resource_tabular_data_index task.")
+
+
+@extended_shared_task(
+    max_retries=5,
+    retry_on_errors=(NewConnectionError, ElasticsearchConnectionError),
+    retry_countdown=FIVE_MINUTES,
+)
+def compare_postgres_and_elasticsearch_consistency_task(models_to_check: Tuple[str]) -> None:
+    """
+    Compare the existence consistency between Postgres and ElasticSearch for
+    given models. Send email with consistency check result.
+
+    Args:
+        models_to_check (Tuple[str]): A tuple of model identifiers to check for consistency.
+            Each element should follow the pattern "<django_application_label>.<django_model_name>".
+            Example: ("resources.Resource", "datasets.Dataset")
+    """
+    if not models_to_check:
+        logger.info("No models to check consistency for.")
+        return
+
+    logger.info(f"Starting compare consistency between Postgres and ElasticSearch for: {models_to_check}")
+
+    error_msg = ""  # errors details which will be sent as email message
+    for model in models_to_check:
+        app_label, model_name = model.split(".")
+        try:
+            db_and_es_inconsistencies: List[IndexConsistency] = get_db_and_es_inconsistencies(app_label, model_name)
+        except Exception as e:
+            logger.error(f"Could not check consistency for {model}: {e}")
+            # Add info about failed consistency check to email error message.
+            error_msg += f"Could not check consistency for {model}. Error details: {e}"
+            continue
+
+        for inconsistency in db_and_es_inconsistencies:
+            only_db_model_ids: Set[int] = inconsistency.only_db_ids
+            only_es_model_ids: Set[int] = inconsistency.only_es_ids
+
+            if only_db_model_ids:
+                error_msg += (
+                    f"{len(only_db_model_ids)} {model_name} objects present in "
+                    f"PostgreSQL but not in ElasticSearch index"
+                    f" {inconsistency.index_name}.\n"
+                )
+                error_msg += f"{model_name} ids: {only_db_model_ids}\n\n"
+
+            if only_es_model_ids:
+                error_msg += (
+                    f"{len(only_es_model_ids)} documents for {model_name} present in "
+                    f"ElasticSearch index {inconsistency.index_name} but not in PostgreSQL.\n"
+                )
+                error_msg += f"{model_name} ids: {only_es_model_ids}\n\n"
+
+    if error_msg:
+        logger.info("Database and ElasticSearch are inconsistent or an exception occurred.")
+    else:
+        logger.info("Database and ElasticSearch are consistent.")
+
+    # Send email
+    email_message = error_msg or "Database and ElasticSearch are consistent."
+    recipients: List[str] = settings.DB_ES_CONSISTENCY_EMAIL_RECIPIENTS.split(",")
+
+    logger.info(f"Sending email to {recipients}.")
+    send_mail(
+        subject="Postgres and ElasticSearch consistency check - Otwarte Dane.",
+        message=email_message,
+        from_email=config.NO_REPLY_EMAIL,
+        recipient_list=recipients,
+    )

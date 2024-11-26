@@ -121,6 +121,7 @@ class ResourceDocument(ExtendedDocument):
     computed_views_count = fields.IntegerField()
     has_dynamic_data = fields.BooleanField()
     has_high_value_data = fields.BooleanField()
+    has_high_value_data_from_ec_list = fields.BooleanField()
     has_research_data = fields.BooleanField()
     regions = regions_field(attr="all_regions")
     files = files_field(attr="all_files")

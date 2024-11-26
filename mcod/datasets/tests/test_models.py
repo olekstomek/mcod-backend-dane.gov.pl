@@ -118,10 +118,23 @@ class TestDatasetModel:
             "status",
             "image",
             "image_alt",
+            "has_high_value_data",
+            "has_high_value_data_from_ec_list",
+            "has_research_data",
+            "has_dynamic_data",
         ]
 
         for f in fields:
             assert f in dataset_dict
+
+    def test_default_dataset_metadata_values(self, dataset):
+        """
+        Check if new instance of `Dataset` has default values of all metadata as None.
+        """
+        assert dataset.has_high_value_data is None
+        assert dataset.has_high_value_data_from_ec_list is None
+        assert dataset.has_research_data is None
+        assert dataset.has_dynamic_data is None
 
     def test_delete_dataset(self, dataset):
         assert dataset.status == "published"

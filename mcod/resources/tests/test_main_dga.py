@@ -74,6 +74,7 @@ def test_create_main_dga_dataset(main_dga_owner_organization: Organization):
     assert dataset.update_notification_recipient_email == settings.MAIN_DGA_DATASET_UPDATE_NOTIFICATION_EMAIL
     assert dataset.has_dynamic_data is False
     assert dataset.has_high_value_data is False
+    assert dataset.has_high_value_data_from_ec_list is False
     assert dataset.has_research_data is False
     assert dataset.update_frequency == "daily"
     assert dataset.status == "published"
@@ -247,6 +248,7 @@ def test_create_main_dga_resource_with_dataset(
     assert resource.dataset.institution == main_dga_owner_organization
     assert resource.has_dynamic_data is False
     assert resource.has_high_value_data is False
+    assert resource.has_high_value_data_from_ec_list is False
     assert resource.has_research_data is False
     assert resource.contains_protected_data is True
     assert resource.status == "published"

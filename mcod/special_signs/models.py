@@ -4,13 +4,14 @@ from model_utils import FieldTracker
 from modeltrans.fields import TranslationField
 
 from mcod.core.db.models import ExtendedModel
+from mcod.lib.model_sanitization import SanitizedCharField, SanitizedTextField
 from mcod.special_signs.managers import SpecialSignManager, SpecialSignTrashManager
 
 
 class SpecialSign(ExtendedModel):
     symbol = models.CharField(max_length=30, verbose_name=_("symbol"))
-    name = models.CharField(max_length=100, verbose_name=_("name"))
-    description = models.TextField(verbose_name=_("description"))
+    name = SanitizedCharField(max_length=100, verbose_name=_("name"))
+    description = SanitizedTextField(verbose_name=_("description"))
     created_by = models.ForeignKey(
         "users.User",
         models.DO_NOTHING,

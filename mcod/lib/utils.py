@@ -23,3 +23,11 @@ def escape_braces_and_format_html(text: str) -> str:
     - str: The HTML-safe formatted text with escaped braces.
     """
     return format_html(text.replace("{", "{{").replace("}", "}}"))
+
+
+def capitalize_first_character(text: str) -> str:
+    """
+    Capitalize the first character of the provided text and return the
+    modified text.
+    """
+    return text[:1].upper() + text[1:]

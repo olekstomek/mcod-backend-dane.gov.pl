@@ -18,7 +18,7 @@ class LabEventDoc(Document):
         properties={
             "type": fields.KeywordField(attr="report_type"),
             "download_url": fields.TextField(),
-            "link": fields.StringField(),
+            "link": fields.TextField(),
         }
     )
 

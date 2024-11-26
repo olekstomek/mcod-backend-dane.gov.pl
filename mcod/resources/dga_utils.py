@@ -437,6 +437,7 @@ def create_main_dga_dataset() -> int:
         "update_notification_recipient_email": settings.MAIN_DGA_DATASET_UPDATE_NOTIFICATION_EMAIL,
         "has_dynamic_data": False,
         "has_high_value_data": False,
+        "has_high_value_data_from_ec_list": False,
         "has_research_data": False,
         "update_frequency": "daily",
         "status": "published",
@@ -465,14 +466,14 @@ def key_generator_for_create_main_dga_resource(*args, **kwargs) -> str:
     hit_callable=lambda *args, **kwargs: logger.info("DGA objects get from cache."),
     key_generator_callable=key_generator_for_create_main_dga_resource,
 )
-def create_main_dga_resource_with_dataset(file_path: str) -> Tuple[int, Optional[int]]:
+def create_main_dga_resource_with_dataset(file_path: Path) -> Tuple[int, Optional[int]]:
     """
     Creates the main DGA Resource, including related ResourceFile objects and
     the main DGA Dataset for the `Ministerstwo Cyfryzacji` institution if it
     does not already exist.
 
     Args:
-        file_path (str): The path to the XLSX file to be used for the Resource.
+        file_path (Path): The path to the XLSX file to be used for the Resource.
 
     Returns:
         int: The primary key of the newly created Resource.
@@ -510,6 +511,7 @@ def create_main_dga_resource_with_dataset(file_path: str) -> Tuple[int, Optional
             "dataset": main_dga_dataset,
             "has_dynamic_data": False,
             "has_high_value_data": False,
+            "has_high_value_data_from_ec_list": False,
             "has_research_data": False,
             "contains_protected_data": True,
             "status": "published",

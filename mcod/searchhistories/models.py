@@ -3,11 +3,12 @@ from django.utils.translation import gettext_lazy as _
 
 from mcod.core.api.search import signals as search_signals
 from mcod.core.db.models import TimeStampedModel
+from mcod.lib.model_sanitization import SanitizedCharField
 
 
 class SearchHistory(TimeStampedModel):
     url = models.URLField(max_length=512)
-    query_sentence = models.CharField(max_length=256)
+    query_sentence = SanitizedCharField(max_length=256)
     user = models.ForeignKey("users.User", on_delete=models.CASCADE)
 
     def __str__(self):

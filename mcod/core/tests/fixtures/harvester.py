@@ -61,6 +61,16 @@ def harvester_decoded_xml_1_9_import_data():
 
 
 @pytest.fixture
+def harvester_decoded_xml_1_11_import_data():
+    return get_harvested_xml_as_dict("1.11")
+
+
+@pytest.fixture
+def harvester_decoded_xml_1_11_import_data_dataset_has_high_values_metadata_conflict():
+    return get_harvested_xml_as_dict("1.11_dataset_has_high_values_metadata_conflict")
+
+
+@pytest.fixture
 def harvester_xml_expected_data():
     data = [
         OrderedDict(
@@ -105,6 +115,7 @@ def harvester_xml_expected_data():
                                     "modified",
                                     datetime.datetime(2020, 12, 8, 0, 0, tzinfo=pytz.utc),
                                 ),
+                                ("has_high_value_data_from_ec_list", None),
                             ]
                         ),
                         OrderedDict(
@@ -125,11 +136,13 @@ def harvester_xml_expected_data():
                                     "modified",
                                     datetime.datetime(2020, 1, 1, 0, 0, tzinfo=pytz.utc),
                                 ),
+                                ("has_high_value_data_from_ec_list", None),
                             ]
                         ),
                     ],
                 ),
                 ("tags", [OrderedDict([("lang", "pl"), ("name", "2028_tagPL")])]),
+                ("has_high_value_data_from_ec_list", None),
             ]
         )
     ]
@@ -201,6 +214,10 @@ def harvester_ckan_expected_data():
                             ("ext_ident", "6db2e083-72b8-4f92-a6ab-678fc8461865"),
                             ("link", "https://mock-resource.com.pl/simple.csv"),
                             ("description", "##Sektory:"),
+                            ("has_dynamic_data", None),
+                            ("has_high_value_data", None),
+                            ("has_high_value_data_from_ec_list", None),
+                            ("has_research_data", None),
                         ]
                     ),
                     OrderedDict(
@@ -221,12 +238,20 @@ def harvester_ckan_expected_data():
                             ("ext_ident", "6db2e083-72b8-4f92-a6ab-678fc8461866"),
                             ("link", "https://mock-resource.com.pl/simple.csv"),
                             ("description", "##Sektory:"),
+                            ("has_dynamic_data", None),
+                            ("has_high_value_data", None),
+                            ("has_high_value_data_from_ec_list", None),
+                            ("has_research_data", None),
                         ]
                     ),
                 ],
             ),
             ("tags", []),
             ("title", "Ilości odebranych odpadów z podziałem na sektory"),
+            ("has_dynamic_data", None),
+            ("has_high_value_data", None),
+            ("has_high_value_data_from_ec_list", None),
+            ("has_research_data", None),
         ]
     )
 

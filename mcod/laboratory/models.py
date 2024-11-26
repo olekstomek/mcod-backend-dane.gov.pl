@@ -8,13 +8,13 @@ from mcod.core import storages
 from mcod.core.db.managers import TrashManager
 from mcod.core.db.models import ExtendedModel, TrashModelBase
 from mcod.core.managers import SoftDeletableManager
-from mcod.lib.widgets import RichTextUploadingField
+from mcod.lib.model_sanitization import SanitizedCharField, SanitizedRichTextUploadingField
 
 EVENT_TYPES = [("analysis", _("Analysis")), ("research", _("Research"))]
 
 
 class LabEvent(ExtendedModel):
-    title = models.CharField(max_length=300, verbose_name=_("Title"))
+    title = SanitizedCharField(max_length=300, verbose_name=_("Title"))
     event_type = models.CharField(
         max_length=10,
         choices=EVENT_TYPES,
@@ -22,7 +22,7 @@ class LabEvent(ExtendedModel):
         editable=True,
         verbose_name=_("Event type"),
     )
-    notes = RichTextUploadingField(verbose_name=_("Notes"))
+    notes = SanitizedRichTextUploadingField(verbose_name=_("Notes"))
     execution_date = models.DateField(verbose_name=_("Execution date"))
 
     objects = SoftDeletableManager()

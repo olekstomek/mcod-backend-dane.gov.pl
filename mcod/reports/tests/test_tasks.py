@@ -4,6 +4,7 @@ import json
 import os
 from pathlib import Path
 from time import sleep
+from typing import Dict, List
 from unittest import mock
 
 import pandas as pd
@@ -160,24 +161,40 @@ class TestTasks:
         file_path = f"{settings.TEST_ROOT}/{r.file}"
         with open(file_path, "r") as report_file:
             reader = csv.reader(report_file, delimiter=",")
-            next(reader)
-            resource_data = next(reader)
+            headers: List[str] = next(reader)
+            resource_data: List[str] = next(reader)
+            resource_data_with_headers: Dict[str, str] = {header: value for header, value in zip(headers, resource_data)}
         views_count = ResourceViewCounter.objects.filter(resource_id=resource_with_counters.pk).aggregate(views_sum=Sum("count"))[
             "views_sum"
         ]
         downloads_count = ResourceDownloadCounter.objects.filter(resource_id=resource_with_counters.pk).aggregate(
             downloads_sum=Sum("count")
         )["downloads_sum"]
-        assert int(resource_data[14]) == views_count
-        assert int(resource_data[15]) == downloads_count
+
+        assert int(resource_data_with_headers["Liczba wyswietlen"]) == views_count
+        assert int(resource_data_with_headers["Liczba pobran"]) == downloads_count
 
     @pytest.mark.usefixtures("resource")
     @mock.patch("mcod.reports.tasks.datetime")
-    def test_column_contains_protected_data_is_in_report(self, mock_datetime, tmp_path, admin_with_id_1):
-        """Check if metadana contains protected data is in report."""
+    def test_daily_resources_report_includes_all_required_metadata_fields(self, mock_datetime, tmp_path, admin_with_id_1):
+        """
+        Test whether the daily resources report correctly includes all
+        necessary metadata fields.
+        """
         mock_datetime.datetime.now.return_value.strftime.return_value = "2020_02_05_2310"
         with override_settings(REPORTS_MEDIA_ROOT=tmp_path):
             create_daily_resources_report()
             report_file = Path(tmp_path, "daily", "Zbiorczy_raport_dzienny_2020_02_05_2310.csv")
             dataframe_report = pd.read_csv(report_file, sep=",")
+            # DGA
             assert "Zasob zawiera wykaz chronionych danych" in dataframe_report
+            # Resource metadata
+            assert "Zasob posiada dane wysokiej wartosci" in dataframe_report
+            assert "Zasob posiada dane wysokiej wartosci z wykazu KE" in dataframe_report
+            assert "Zasob posiada dane dynamiczne" in dataframe_report
+            assert "Zasob posiada dane badawcze" in dataframe_report
+            # Dataset metadata
+            assert "Zbior danych posiada dane wysokiej wartosci" in dataframe_report
+            assert "Zbior danych posiada dane wysokiej wartosci z wykazu KE" in dataframe_report
+            assert "Zbior danych posiada dane dynamiczne" in dataframe_report
+            assert "Zbior danych posiada dane badawcze" in dataframe_report

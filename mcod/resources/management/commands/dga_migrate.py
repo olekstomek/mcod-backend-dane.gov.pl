@@ -76,7 +76,12 @@ class DgaResourceValidator:
             return DgaResourceValidationResult.RESOURCE_NOT_TABLE
         if not self._check_columns(resource):
             return DgaResourceValidationResult.COLUMN_NAMES_ERROR
-        if resource.has_dynamic_data or resource.has_high_value_data or resource.has_research_data:
+        if (
+            resource.has_dynamic_data
+            or resource.has_high_value_data
+            or resource.has_research_data
+            or resource.has_high_value_data_from_ec_list
+        ):
             return DgaResourceValidationResult.OTHER_FLAG_ERROR
         return DgaResourceValidationResult.CORRECT_VALIDATION
 

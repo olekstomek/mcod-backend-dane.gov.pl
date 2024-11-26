@@ -23,7 +23,7 @@ class AcceptedDatasetSubmissionDoc(Document):
     published_at = fields.DateField()
     is_published_for_all = fields.BooleanField()
 
-    feedback = fields.NestedField(properties={"user_id": fields.IntegerField(), "opinion": fields.StringField()})
+    feedback = fields.NestedField(properties={"user_id": fields.IntegerField(), "opinion": fields.TextField()})
     feedback_counters = fields.NestedField(
         properties={
             "plus": fields.IntegerField(),

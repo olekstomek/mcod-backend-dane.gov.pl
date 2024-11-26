@@ -77,6 +77,15 @@
                     </xs:restriction>
                 </xs:simpleType>
             </xs:element>
+            <xs:element name="has_high_value_data_from_ec_list">
+                <xs:simpleType>
+                    <xs:restriction base="xs:string">
+                        <xs:enumeration value="False"/>
+                        <xs:enumeration value="True"/>
+                        <xs:enumeration value=""/>
+                    </xs:restriction>
+                </xs:simpleType>
+            </xs:element>
             <xs:element name="has_dynamic_data">
                 <xs:simpleType>
                     <xs:restriction base="xs:string">
@@ -87,6 +96,15 @@
                 </xs:simpleType>
             </xs:element>
             <xs:element name="has_research_data">
+                <xs:simpleType>
+                    <xs:restriction base="xs:string">
+                        <xs:enumeration value="False"/>
+                        <xs:enumeration value="True"/>
+                        <xs:enumeration value=""/>
+                    </xs:restriction>
+                </xs:simpleType>
+            </xs:element>
+            <xs:element name="contains_protected_data">
                 <xs:simpleType>
                     <xs:restriction base="xs:string">
                         <xs:enumeration value="False"/>
@@ -150,6 +168,15 @@
                 </xs:simpleType>
             </xs:element>
             <xs:element name="has_high_value_data">
+                <xs:simpleType>
+                    <xs:restriction base="xs:string">
+                        <xs:enumeration value="False"/>
+                        <xs:enumeration value="True"/>
+                        <xs:enumeration value=""/>
+                    </xs:restriction>
+                </xs:simpleType>
+            </xs:element>
+            <xs:element name="has_high_value_data_from_ec_list">
                 <xs:simpleType>
                     <xs:restriction base="xs:string">
                         <xs:enumeration value="False"/>

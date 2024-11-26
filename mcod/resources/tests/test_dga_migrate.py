@@ -25,6 +25,7 @@ def dga_resource(resource: Resource) -> Resource:
     dga_resource.has_table = True
     dga_resource.has_dynamic_data = False
     dga_resource.has_high_value_data = False
+    dga_resource.has_high_value_data_from_ec_list = False
     dga_resource.has_research_data = False
     dga_resource.tabular_data_schema = {
         "fields": [
@@ -87,7 +88,11 @@ def test_dga_resource_validator(dga_resource: Resource):
     dga_resource.has_research_data = True
     assert dga_resource_validator.validate(dga_resource) == DgaResourceValidationResult.OTHER_FLAG_ERROR
 
-    dga_resource.has_research_data = True
+    dga_resource.has_research_data = False
+    dga_resource.has_high_value_data_from_ec_list = True
+    assert dga_resource_validator.validate(dga_resource) == DgaResourceValidationResult.OTHER_FLAG_ERROR
+
+    dga_resource.has_high_value_data_from_ec_list = False
     dga_resource.tabular_data_schema["fields"][0]["name"] = "bad column name"
     assert dga_resource_validator.validate(dga_resource) == DgaResourceValidationResult.COLUMN_NAMES_ERROR
 

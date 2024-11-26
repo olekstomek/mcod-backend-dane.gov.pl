@@ -58,6 +58,7 @@ def main_dga_dataset(
         notes=settings.MAIN_DGA_DATASET_DEFAULT_DESC,
         has_dynamic_data=False,
         has_high_value_data=False,
+        has_high_value_data_from_ec_list=False,
         has_research_data=False,
         update_frequency="daily",
         status="published",

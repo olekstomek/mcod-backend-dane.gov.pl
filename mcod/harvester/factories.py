@@ -5,7 +5,11 @@ import factory
 from mcod.categories.factories import CategoryFactory
 from mcod.core.registries import factories_registry
 from mcod.harvester.models import FREQUENCY_CHOICES, DataSource, DataSourceImport
-from mcod.organizations.factories import OrganizationFactory
+from mcod.organizations.factories import (
+    OrganizationFactory,
+    PrivateOrganizationFactory,
+    StateOrganizationFactory,
+)
 from mcod.organizations.models import Organization
 from mcod.users.factories import AdminFactory
 
@@ -31,10 +35,29 @@ class CKANDataSourceFactory(DataSourceFactory):
     category = factory.SubFactory(CategoryFactory)
 
 
+class CKANDataSourceFactoryNoPrivateInstitution(DataSourceFactory):
+    source_type = "ckan"
+    portal_url = factory.Faker("url")
+    api_url = factory.Faker("url")
+    category = factory.SubFactory(CategoryFactory)
+    institution_type = factory.Faker(
+        "random_element",
+        elements=[Organization.INSTITUTION_TYPE_STATE, Organization.INSTITUTION_TYPE_LOCAL, Organization.INSTITUTION_TYPE_OTHER],
+    )
+
+
 class XMLDataSourceFactory(DataSourceFactory):
     source_type = "xml"
     xml_url = factory.Faker("url")
     organization = factory.SubFactory(OrganizationFactory)
+
+
+class XMLDataSourceOwnedByStateOrganizationFactory(XMLDataSourceFactory):
+    organization = factory.SubFactory(StateOrganizationFactory)
+
+
+class XMLDataSourceOwnedByPrivateOrganizationFactory(XMLDataSourceFactory):
+    organization = factory.SubFactory(PrivateOrganizationFactory)
 
 
 class DCATDataSourceFactory(DataSourceFactory):
@@ -54,6 +77,9 @@ class DataSourceImportFactory(factory.django.DjangoModelFactory):
 
 factories_registry.register("datasource", DataSourceFactory)
 factories_registry.register("ckan_datasource", CKANDataSourceFactory)
+factories_registry.register("ckan_datasource_no_private_institution", CKANDataSourceFactoryNoPrivateInstitution)
 factories_registry.register("xml_datasource", XMLDataSourceFactory)
+factories_registry.register("xml_datasource_owned_by_state_institution", XMLDataSourceOwnedByStateOrganizationFactory)
+factories_registry.register("xml_datasource_owned_by_private_institution", XMLDataSourceOwnedByPrivateOrganizationFactory)
 factories_registry.register("dcat_datasource", DCATDataSourceFactory)
 factories_registry.register("datasourceimport", DataSourceImportFactory)

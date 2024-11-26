@@ -121,6 +121,7 @@ class DatasetDocument(ExtendedDocument):
     computed_views_count = fields.IntegerField()
     has_dynamic_data = fields.BooleanField()
     has_high_value_data = fields.BooleanField()
+    has_high_value_data_from_ec_list = fields.BooleanField()
     has_research_data = fields.BooleanField()
     is_promoted = fields.BooleanField()
     regions = regions_field()

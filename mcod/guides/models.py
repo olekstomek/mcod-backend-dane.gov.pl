@@ -4,16 +4,20 @@ from django.utils.formats import localize
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from model_utils import FieldTracker
-from modeltrans.fields import TranslationField
 
 from mcod.core.db.managers import TrashManager
 from mcod.core.db.models import ExtendedModel, TrashModelBase
 from mcod.core.managers import SoftDeletableManager
 from mcod.guides.managers import GuideManager, GuideTrashManager
+from mcod.lib.model_sanitization import (
+    SanitizedCharField,
+    SanitizedTextField,
+    SanitizedTranslationField,
+)
 
 
 class Guide(ExtendedModel):
-    title = models.CharField(max_length=300, verbose_name=_("title"))
+    title = SanitizedCharField(max_length=300, verbose_name=_("title"))
     created_by = models.ForeignKey(
         "users.User",
         models.DO_NOTHING,
@@ -33,7 +37,7 @@ class Guide(ExtendedModel):
 
     objects = GuideManager()
     trash = GuideTrashManager()
-    i18n = TranslationField(fields=("title",))
+    i18n = SanitizedTranslationField(fields=("title",))
     tracker = FieldTracker()
 
     def __str__(self):
@@ -72,10 +76,10 @@ class GuideItem(ExtendedModel):
         ("right", _("right")),
     )
     guide = models.ForeignKey(Guide, on_delete=models.CASCADE, verbose_name=_("guide"), related_name="items")
-    title = models.CharField(max_length=200, verbose_name=_("title"))
-    content = models.TextField(verbose_name=_("content"))
-    route = models.CharField(max_length=200, verbose_name=_("route"))
-    css_selector = models.CharField(max_length=300, verbose_name=_("css selector"))
+    title = SanitizedCharField(max_length=200, verbose_name=_("title"))
+    content = SanitizedTextField(verbose_name=_("content"))
+    route = SanitizedCharField(max_length=200, verbose_name=_("route"))
+    css_selector = SanitizedCharField(max_length=300, verbose_name=_("css selector"))
     position = models.CharField(max_length=13, choices=POSITION_CHOICES, verbose_name=_("position"))
     order = models.PositiveIntegerField(verbose_name=_("order"))
     is_optional = models.BooleanField(verbose_name=_("optional communique"), default=False)
@@ -84,7 +88,7 @@ class GuideItem(ExtendedModel):
 
     objects = SoftDeletableManager()
     trash = TrashManager()
-    i18n = TranslationField(fields=("title", "content"))
+    i18n = SanitizedTranslationField(fields=("title", "content"))
     tracker = FieldTracker()
 
     def __str__(self):

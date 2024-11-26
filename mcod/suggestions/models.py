@@ -17,6 +17,7 @@ from modeltrans.fields import TranslationField
 from mcod import settings
 from mcod.core.db.models import STATUS_CHOICES, ExtendedModel, Model, TrashModelBase
 from mcod.datasets.tasks import send_dataset_comment
+from mcod.lib.model_sanitization import SanitizedTextField
 from mcod.resources.tasks import send_resource_comment
 from mcod.suggestions.managers import (
     AcceptedDatasetSubmissionManager,
@@ -33,7 +34,6 @@ from mcod.suggestions.tasks import send_data_suggestion, send_dataset_suggestion
 logger = logging.getLogger("mcod")
 User = get_user_model()
 
-
 ACCEPTED_DATASET_SUBMISSION_STATUS_CHOICES = [
     *STATUS_CHOICES,
     ("publication_finished", _("Publication finished")),
@@ -45,7 +45,7 @@ ACCEPTED_DATASET_SUBMISSION_STATUS_CHOICES_NO_PUBLISHED = [
 
 
 class Suggestion(Model):
-    notes = models.TextField()
+    notes = SanitizedTextField()
     send_date = models.DateTimeField(null=True, blank=True)
     created = models.DateTimeField(auto_now_add=True)
 
@@ -77,7 +77,7 @@ class DatasetSubmissionMixin(ExtendedModel):
     organization_name = models.CharField(max_length=100, blank=True, verbose_name=_("Institution name"))
     data_link = models.URLField(verbose_name=_("Link to data"), max_length=2000, blank=True, null=True)
     potential_possibilities = models.TextField(verbose_name=_("provide potential data use"), blank=True)
-    comment = models.TextField(verbose_name=_("Comment"), null=True, blank=True)
+    comment = SanitizedTextField(verbose_name=_("Comment"), null=True, blank=True)
     submission_date = models.DateField(null=True, verbose_name=_("Submission date"))
     decision = models.CharField(max_length=8, choices=DECISION_CHOICES, blank=True, verbose_name=_("decision"))
     decision_date = models.DateField(null=True, verbose_name=_("Decision date"))
@@ -382,8 +382,8 @@ class CommentMixin(ExtendedModel):
         ("accepted", _("Comment accepted")),
         ("rejected", _("Comment rejected")),
     )
-    comment = models.TextField(blank=True, verbose_name=_("comment"))
-    editor_comment = models.TextField(blank=True, verbose_name=_("comment"))
+    comment = SanitizedTextField(blank=True, verbose_name=_("comment"))
+    editor_comment = SanitizedTextField(blank=True, verbose_name=_("comment"))
     report_date = models.DateField(verbose_name=_("report date"))
     decision = models.CharField(max_length=8, verbose_name=_("decision"), choices=DECISION_CHOICES, blank=True)
     decision_date = models.DateField(verbose_name=_("decision date"), null=True, blank=True)
@@ -526,7 +526,6 @@ class ResourceComment(CommentMixin):
 
 
 class ResourceCommentTrash(ResourceComment, metaclass=TrashModelBase):
-
     class Meta(ResourceComment.Meta):
         proxy = True
         verbose_name = _("Resource Comment - Trash")

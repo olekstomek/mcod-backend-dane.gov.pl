@@ -1,5 +1,8 @@
 import datetime
+import enum
+from typing import Any, Dict, Optional
 
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.utils.timezone import is_naive, make_aware
 from django.utils.translation import gettext_lazy as _, override
 from marshmallow import (
@@ -16,6 +19,10 @@ from marshmallow.fields import URL, UUID, Bool, Date, DateTime, Int, List, Metho
 from mcod import settings
 from mcod.core.api.rdf.profiles.dcat_ap import DCATDatasetDeserializer
 from mcod.datasets.models import Dataset
+from mcod.lib.metadata_validators import (
+    validate_conflicting_high_value_data_flags,
+    validate_high_value_data_from_ec_list_organization,
+)
 from mcod.regions.api import PeliasApi
 from mcod.regions.exceptions import MalformedTerytCodeError
 from mcod.resources.link_validation import download_file
@@ -93,7 +100,7 @@ class OrganizationSchema(Schema):
     uuid = Str(data_key="id")
     image_name = Str(data_key="image_url")
     slug = Str(data_key="name")
-    title = Str()
+    title = Str(required=True)
 
     class Meta:
         fields = ("created", "description", "uuid", "image_name", "slug", "title")
@@ -180,6 +187,37 @@ class XMLSupplementSchema(XMLPreProcessedSchema):
         return data
 
 
+class HighValueDataFromEcValidationResult(enum.Enum):
+    NO_CONFLICT = enum.auto()
+    INSTITUTION_TYPE_AND_HIGH_VALUE_DATA_FROM_EC_CONFLICT = enum.auto()
+    HIGH_VALUE_DATA_CONFLICT = enum.auto()
+
+
+def _validate_has_high_value_data_from_ec_list(
+    data: Dict[str, Any], institution_type: str
+) -> HighValueDataFromEcValidationResult:
+    has_high_value_data: Optional[bool] = data.get("has_high_value_data")
+    has_high_value_data_from_ec_list: Optional[bool] = data.get("has_high_value_data_from_ec_list")
+
+    try:
+        validate_high_value_data_from_ec_list_organization(
+            has_high_value_data_from_ec_list,
+            institution_type,
+        )
+    except DjangoValidationError:
+        return HighValueDataFromEcValidationResult.INSTITUTION_TYPE_AND_HIGH_VALUE_DATA_FROM_EC_CONFLICT
+
+    try:
+        validate_conflicting_high_value_data_flags(
+            has_high_value_data,
+            has_high_value_data_from_ec_list,
+        )
+    except DjangoValidationError:
+        return HighValueDataFromEcValidationResult.HIGH_VALUE_DATA_CONFLICT
+
+    return HighValueDataFromEcValidationResult.NO_CONFLICT
+
+
 class ResourceSchema(ResourceMixin, CKANPreProcessedSchema):
     mimetype = Str(allow_none=True)
     cache_last_updated = Str(allow_none=True)
@@ -187,13 +225,19 @@ class ResourceSchema(ResourceMixin, CKANPreProcessedSchema):
     created = DateTime()
     description = Str()
     hash = Str()
-    ext_ident = Str(data_key="id", validate=validate.Length(max=36))
+    ext_ident = Str(data_key="id", validate=validate.Length(max=36), required=True)
     modified = DateTime(data_key="last_modified", allow_none=True)
     mimetype_inner = Str(allow_none=True)
-    title = Str(data_key="name")
+    title = Str(data_key="name", required=True)
     format = Str()
     link = URL(data_key="url")
     datastore_active = Bool()
+    has_dynamic_data = Bool(allow_none=True, missing=None)
+    has_high_value_data = Bool(allow_none=True, missing=None)
+    has_high_value_data_from_ec_list = Bool(
+        data_key="has_high_value_data_from_european_commission_list", allow_none=True, missing=None
+    )
+    has_research_data = Bool(allow_none=True, missing=None)
     package_id = UUID()
     position = Int()
     resource_type = Str(allow_none=True)
@@ -211,6 +255,10 @@ class ResourceSchema(ResourceMixin, CKANPreProcessedSchema):
             "description",
             "link",
             "format",
+            "has_dynamic_data",
+            "has_high_value_data",
+            "has_high_value_data_from_ec_list",
+            "has_research_data",
         )
         unknown = EXCLUDE
 
@@ -281,21 +329,27 @@ class DatasetSchema(CKANPreProcessedSchema):
     notes = Str()
     num_resources = Int()
     num_tags = Int()
-    ext_ident = Str(data_key="id", validate=validate.Length(max=36))
+    ext_ident = Str(data_key="id", validate=validate.Length(max=36), required=True)
     isopen = Bool()
-    organization = Nested(OrganizationSchema, many=False)
+    organization = Nested(OrganizationSchema, many=False, required=True)
     owner_org = UUID()
     private = Bool()
     relationships_as_object = Nested(RelationshipObjectSchema, many=True)
     relationships_as_subject = Nested(RelationshipSubjectSchema, many=True)
-    resources = Nested(ResourceSchema, many=True)
+    resources = Nested(ResourceSchema, many=True, missing=[])
     revision_id = UUID()
     status = Str(data_key="state")
     tags = Nested(TagSchema, many=True)
-    title = Str()
+    title = Str(required=True)
     type = Str()
     url = Str()
     version = Str()
+    has_dynamic_data = Bool(allow_none=True, missing=None)
+    has_high_value_data = Bool(allow_none=True, missing=None)
+    has_high_value_data_from_ec_list = Bool(
+        data_key="has_high_value_data_from_european_commission_list", allow_none=True, missing=None
+    )
+    has_research_data = Bool(allow_none=True, missing=None)
 
     class Meta:
         exclude = [
@@ -341,6 +395,7 @@ class XMLResourceSchema(ResourceMixin, XMLPreProcessedSchema):
     special_signs = List(Str())
     has_dynamic_data = Bool(data_key="hasDynamicData", allow_none=True)
     has_high_value_data = Bool(data_key="hasHighValueData", allow_none=True)
+    has_high_value_data_from_ec_list = Bool(data_key="hasHighValueDataFromEuropeanCommissionList", allow_none=True, missing=None)
     has_research_data = Bool(data_key="hasResearchData", allow_none=True)
     supplements = Nested(XMLSupplementSchema, many=True)
     is_auto_data_date = Bool(data_key="isAutoDataDate")
@@ -443,6 +498,30 @@ class XMLResourceSchema(ResourceMixin, XMLPreProcessedSchema):
                     field_name="regions",
                 )
 
+    @validates_schema
+    def validate_has_high_value_data_from_ec_list(self, data, **kwargs):
+        serializer_field_name = "has_high_value_data_from_ec_list"
+        msg_institution_type_conflict = _(
+            "Institution with type 'private' can not use field '%(field_name)s' with value true for resource."
+        ) % {
+            "field_name": "hasHighValueDataFromEuropeanCommissionList",
+        }
+        msg_high_value_data_flags_conflict = _(
+            "Resource field '%(first_field)s' must have value true if field '%(second_field)s' has value true."
+        ) % {
+            "first_field": "hasHighValueData",
+            "second_field": "hasHighValueDataFromEuropeanCommissionList",
+        }
+
+        result: HighValueDataFromEcValidationResult = _validate_has_high_value_data_from_ec_list(
+            data, self.context["organization"].institution_type
+        )
+
+        if result == HighValueDataFromEcValidationResult.INSTITUTION_TYPE_AND_HIGH_VALUE_DATA_FROM_EC_CONFLICT:
+            raise ValidationError(message=msg_institution_type_conflict, field_name=serializer_field_name)
+        elif result == HighValueDataFromEcValidationResult.HIGH_VALUE_DATA_CONFLICT:
+            raise ValidationError(message=msg_high_value_data_flags_conflict, field_name=serializer_field_name)
+
 
 class XMLDatasetSchema(XMLPreProcessedSchema):
     ext_ident = Str(data_key="extIdent", validate=validate.Length(max=36), required=True)
@@ -469,6 +548,7 @@ class XMLDatasetSchema(XMLPreProcessedSchema):
     tags = Nested(XMLTagSchema, many=True)
     has_dynamic_data = Bool(data_key="hasDynamicData", allow_none=True)
     has_high_value_data = Bool(data_key="hasHighValueData", allow_none=True)
+    has_high_value_data_from_ec_list = Bool(data_key="hasHighValueDataFromEuropeanCommissionList", allow_none=True, missing=None)
     has_research_data = Bool(data_key="hasResearchData", allow_none=True)
 
     class Meta:
@@ -536,6 +616,30 @@ class XMLDatasetSchema(XMLPreProcessedSchema):
                 message=_("Field 'dbOrCopyrighted' is required if field 'dbOrCopyrightedLicenseChosen' is provided."),
                 field_name=field_name,
             )
+
+    @validates_schema
+    def validate_has_high_value_data_from_ec_list(self, data, **kwargs):
+        serializer_field_name = "has_high_value_data_from_ec_list"
+        msg_institution_type_conflict = _(
+            "Institution with type 'private' can not use field '%(field_name)s' with value true for dataset."
+        ) % {
+            "field_name": "hasHighValueDataFromEuropeanCommissionList",
+        }
+        msg_high_value_data_flags_conflict = _(
+            "Dataset field '%(first_field)s' must have value true if field '%(second_field)s' has value true."
+        ) % {
+            "first_field": "hasHighValueData",
+            "second_field": "hasHighValueDataFromEuropeanCommissionList",
+        }
+
+        result: HighValueDataFromEcValidationResult = _validate_has_high_value_data_from_ec_list(
+            data, self.context["organization"].institution_type
+        )
+
+        if result == HighValueDataFromEcValidationResult.INSTITUTION_TYPE_AND_HIGH_VALUE_DATA_FROM_EC_CONFLICT:
+            raise ValidationError(message=msg_institution_type_conflict, field_name=serializer_field_name)
+        elif result == HighValueDataFromEcValidationResult.HIGH_VALUE_DATA_CONFLICT:
+            raise ValidationError(message=msg_high_value_data_flags_conflict, field_name=serializer_field_name)
 
 
 class ResourceDCATSchema(ResourceMixin, DCATSchema):

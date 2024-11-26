@@ -87,3 +87,10 @@ app.conf.beat_schedule["dga_main_resource_creation"] = {
     "options": {"queue": "periodic"},
     "schedule": crontab(minute=30, hour=3),
 }
+
+app.conf.beat_schedule["compare_postgres_and_elasticsearch_consistency"] = {
+    "task": "mcod.resources.tasks.compare_postgres_and_elasticsearch_consistency_task",
+    "kwargs": {"models_to_check": ("resources.Resource", "datasets.Dataset")},
+    "options": {"queue": "periodic"},
+    "schedule": crontab(minute=15, hour=6),
+}

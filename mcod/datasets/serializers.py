@@ -435,6 +435,7 @@ class DatasetApiAttrs(ObjectAttrs, HighlightObjectMixin):
     image_alt = TranslatedStr()
     has_dynamic_data = fields.Boolean()
     has_high_value_data = fields.Boolean()
+    has_high_value_data_from_ec_list = fields.Boolean()
     has_research_data = fields.Boolean()
     is_promoted = fields.Boolean()
     regions = fields.Nested(RegionSchema, many=True)
@@ -496,6 +497,7 @@ class DatasetCSVSchema(CSVSerializer, metaclass=CSVSchemaRegistrator):
     modified = fields.DateTime(data_key=_("modified"), default=None)
     followers_count = fields.Str(data_key=_("The number of followers"), default=None)
     has_high_value_data = fields.MetaDataNullBoolean(data_key=_("Dataset has high value data"))
+    has_high_value_data_from_ec_list = fields.MetaDataNullBoolean(data_key=_("Dataset has high value data from the EC list"))
     has_dynamic_data = fields.MetaDataNullBoolean(data_key=_("Dataset has dynamic data"))
     has_research_data = fields.MetaDataNullBoolean(data_key=_("Dataset has research data"))
 
@@ -525,6 +527,7 @@ class DatasetXMLSerializer(ExtSchema):
 
     source = fields.Nested(SourceXMLSchema)
     has_high_value_data = fields.Bool()
+    has_high_value_data_from_ec_list = fields.Bool()
     has_dynamic_data = fields.Bool()
     has_research_data = fields.Bool()
     regions = fields.Nested(RegionBaseSchema, many=True)
@@ -569,6 +572,7 @@ class DatasetResourcesCSVSerializer(CSVSerializer):
     dataset_license = fields.Str(attribute="license_name", data_key=_("License"))
     dataset_source = fields.Nested(SourceXMLSchema, attribute="source", data_key=_("source"))
     has_high_value_data = fields.MetaDataNullBoolean(data_key=_("Dataset has high value data"))
+    has_high_value_data_from_ec_list = fields.MetaDataNullBoolean(data_key=_("Dataset has high value data from the EC list"))
     has_dynamic_data = fields.MetaDataNullBoolean(data_key=_("Dataset has dynamic data"))
     has_research_data = fields.MetaDataNullBoolean(data_key=_("Dataset has research data"))
     regions = fields.Str(data_key=_("Dataset regions"), attribute="regions_str")

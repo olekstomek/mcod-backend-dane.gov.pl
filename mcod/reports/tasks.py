@@ -6,6 +6,7 @@ import os
 from collections import OrderedDict
 from pathlib import Path
 from time import time
+from typing import Dict, List
 
 from celery import chord
 from celery.signals import task_failure, task_prerun, task_success
@@ -252,6 +253,25 @@ def dict_fetch_all(cursor):
     return [OrderedDict(zip(columns, row)) for row in cursor.fetchall()]
 
 
+def format_report_header(header: str) -> str:
+    """
+    Formats a header string to be more readable and conform to specific
+    style requirements.
+    """
+    # Replace underscores with spaces and capitalize the string
+    formated_header: str = header.capitalize().replace("_", " ")
+
+    # Dictionary of specific phrases to replace
+    contents_to_replace: Dict[str, str] = {
+        "z wykazu ke": "z wykazu KE",
+    }
+
+    # Apply specific replacements for designated phrases
+    for key, value in contents_to_replace.items():
+        formated_header = formated_header.replace(key, value)
+    return formated_header
+
+
 @app.task(ignore_result=False)
 def create_daily_resources_report():
     str_date = datetime.datetime.now().strftime("%Y_%m_%d_%H%M")
@@ -268,6 +288,7 @@ def create_daily_resources_report():
             data_modyfikacji_zasobu,
             stopien_otwartosci,
             zasob_posiada_dane_wysokiej_wartosci,
+            zasob_posiada_dane_wysokiej_wartosci_z_wykazu_ke,
             zasob_posiada_dane_dynamiczne,
             zasob_posiada_dane_badawcze,
             zasob_zawiera_wykaz_chronionych_danych,
@@ -275,6 +296,7 @@ def create_daily_resources_report():
             liczba_pobran,
             id_zbioru_danych,
             zbior_danych_posiada_dane_wysokiej_wartosci,
+            zbior_danych_posiada_dane_wysokiej_wartosci_z_wykazu_ke,
             zbior_danych_posiada_dane_dynamiczne,
             zbior_danych_posiada_dane_badawcze,
             NULL as link_zbioru,
@@ -311,8 +333,8 @@ def create_daily_resources_report():
     save_path = Path(settings.REPORTS_MEDIA_ROOT, "daily", f"Zbiorczy_raport_dzienny_{str_date}.csv")
 
     with open(save_path, "w") as f:
-        results_new_format: list[OrderedDict] = [
-            OrderedDict({k.replace("_", " ").capitalize(): v for k, v in element.items()}) for element in results
+        results_new_format: List[OrderedDict] = [
+            OrderedDict({format_report_header(k): v for k, v in element.items()}) for element in results
         ]
         w = csv.DictWriter(f, results_new_format[0].keys())
         w.writeheader()

@@ -3,7 +3,7 @@ from io import BytesIO
 
 from django.apps import apps
 from django.contrib.auth import get_user_model
-from django.contrib.postgres.fields import ArrayField, JSONField
+from django.contrib.postgres.fields import ArrayField
 from django.contrib.postgres.indexes import GinIndex
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import models
@@ -22,6 +22,12 @@ from mcod import settings
 from mcod.core import signals as core_signals, storages
 from mcod.core.api.search import signals as search_signals
 from mcod.core.db.models import ExtendedModel, TrashModelBase
+from mcod.lib.model_sanitization import (
+    SanitizedCharField,
+    SanitizedJSONField,
+    SanitizedTextField,
+    SanitizedTranslationField,
+)
 from mcod.showcases.managers import (
     ShowcaseManager,
     ShowcaseProposalManager,
@@ -64,11 +70,11 @@ class ShowcaseMixin(ExtendedModel):
     LICENSE_TYPES = [code for code, _ in LICENSE_TYPE_CHOICES]
 
     category = models.CharField(max_length=5, verbose_name=_("category"), choices=CATEGORY_CHOICES)
-    title = models.CharField(max_length=300, verbose_name=_("title"))
-    notes = models.TextField(verbose_name=_("Notes"), null=True)
-    author = models.CharField(max_length=50, blank=True, null=True, verbose_name=_("Author"))
+    title = SanitizedCharField(max_length=300, verbose_name=_("title"))
+    notes = SanitizedTextField(verbose_name=_("Notes"), null=True)
+    author = SanitizedCharField(max_length=50, blank=True, null=True, verbose_name=_("Author"))
     url = models.URLField(max_length=300, verbose_name=_("App URL"), null=True)
-    external_datasets = JSONField(blank=True, null=True, default=list, verbose_name=_("external datasets"))
+    external_datasets = SanitizedJSONField(blank=True, null=True, default=list, verbose_name=_("external datasets"))
     is_mobile_app = models.BooleanField(default=False, verbose_name=_("is mobile app?"))
     is_desktop_app = models.BooleanField(default=False, verbose_name=_("is desktop app?"))
     mobile_apple_url = models.URLField(verbose_name=_("Apple Store URL"), blank=True)
@@ -212,11 +218,11 @@ class ShowcaseProposal(ShowcaseMixin):
         verbose_name=_("datasets"),
         related_name="showcase_proposals",
     )
-    keywords = ArrayField(models.CharField(max_length=100), verbose_name=_("keywords"), default=list)
+    keywords = ArrayField(SanitizedCharField(max_length=100), verbose_name=_("keywords"), default=list)
     report_date = models.DateField(verbose_name=_("report date"))
     decision = models.CharField(max_length=8, verbose_name=_("decision"), choices=DECISION_CHOICES, blank=True)
     decision_date = models.DateField(verbose_name=_("decision date"), null=True, blank=True)
-    comment = models.TextField(verbose_name=_("comment"), blank=True)
+    comment = SanitizedTextField(verbose_name=_("comment"), blank=True)
 
     showcase = models.OneToOneField(
         "showcases.Showcase",
@@ -413,7 +419,6 @@ class ShowcaseProposal(ShowcaseMixin):
 
 
 class ShowcaseProposalTrash(ShowcaseProposal, metaclass=TrashModelBase):
-
     class Meta(ShowcaseProposal.Meta):
         proxy = True
         verbose_name = _("Showcase Proposal Trash")
@@ -472,7 +477,7 @@ class Showcase(ShowcaseMixin):
         null=True,
         verbose_name=_("illustrative graphics"),
     )
-    illustrative_graphics_alt = models.CharField(
+    illustrative_graphics_alt = SanitizedCharField(
         max_length=255,
         blank=True,
         verbose_name=_("illustrative graphics alternative text"),
@@ -483,7 +488,7 @@ class Showcase(ShowcaseMixin):
         blank=True,
         null=True,
     )
-    image_alt = models.CharField(max_length=255, null=True, blank=True, verbose_name=_("Alternative text"))
+    image_alt = SanitizedCharField(max_length=255, null=True, blank=True, verbose_name=_("Alternative text"))
     datasets = models.ManyToManyField(
         "datasets.Dataset",
         db_table="showcase_dataset",
@@ -525,7 +530,7 @@ class Showcase(ShowcaseMixin):
         verbose_name=_("Modified by"),
         related_name="showcases_modified",
     )
-    i18n = TranslationField(fields=("title", "notes", "image_alt", "illustrative_graphics_alt"))
+    i18n = SanitizedTranslationField(fields=("title", "notes", "image_alt", "illustrative_graphics_alt"))
 
     objects = ShowcaseManager()
     trash = ShowcaseTrashManager()

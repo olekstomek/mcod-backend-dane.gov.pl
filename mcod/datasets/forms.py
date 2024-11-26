@@ -1,5 +1,8 @@
+from typing import Any, Dict, Optional
+
 from django import forms
 from django.contrib.postgres.forms.jsonb import JSONField
+from django.core.exceptions import ValidationError
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 
@@ -9,12 +12,16 @@ from mcod.datasets.field_validators import validate_dataset_image_file_extension
 from mcod.datasets.models import LICENSE_CONDITION_LABELS, UPDATE_FREQUENCY, Dataset, Supplement
 from mcod.datasets.widgets import CheckboxInputWithLabel
 from mcod.lib.field_validators import ContainsLetterValidator
+from mcod.lib.forms.mixins import HighValueDataFormValidatorMixin
+from mcod.lib.metadata_validators import validate_high_value_data_from_ec_list_organization
+from mcod.lib.utils import capitalize_first_character
 from mcod.lib.widgets import CheckboxSelect, CKEditorWidget, JsonPairDatasetInputs
+from mcod.organizations.models import Organization
 from mcod.resources.forms import SupplementForm as ResourceSupplementForm
 from mcod.tags.forms import ModelFormWithKeywords
 
 
-class DatasetForm(ModelFormWithKeywords):
+class DatasetForm(ModelFormWithKeywords, HighValueDataFormValidatorMixin):
     title = forms.CharField(
         widget=forms.Textarea(
             attrs={
@@ -95,6 +102,18 @@ class DatasetForm(ModelFormWithKeywords):
             '<a href="%(url)s" target="_blank">przejdź do strony</a>'
         )
         % {"url": f"{settings.BASE_URL}{settings.HIGH_VALUE_DATA_MANUAL_URL}"},
+        widget=CheckboxSelect(attrs={"class": "inline"}),
+    )
+    has_high_value_data_from_ec_list = forms.ChoiceField(
+        required=True,
+        label=capitalize_first_character(_("has high value data from the EC list")),  # `KE` / `EC` must be uppercase
+        choices=[(True, _("Yes")), (False, _("No"))],
+        help_text=(
+            "Zaznaczenie TAK spowoduje oznaczenie wszystkich nowo dodanych danych w zbiorze jako dane o wysokiej "
+            "wartości z wykazu KE.<br><br>Jeżeli chcesz się więcej dowiedzieć na temat danych wysokiej wartości z wykazu KE "
+            '<a href="%(url)s" target="_blank">przejdź do strony</a>'
+        )
+        % {"url": f"{settings.BASE_URL}{settings.HIGH_VALUE_DATA_FROM_EC_LIST_MANUAL_URL}"},
         widget=CheckboxSelect(attrs={"class": "inline"}),
     )
     has_research_data = forms.ChoiceField(
@@ -206,7 +225,10 @@ class DatasetForm(ModelFormWithKeywords):
         }
 
     def clean(self):
-        cleaned_data = super().clean()
+        # Create a copy of cleaned data as using `self.add_error` may remove fields from the original dictionary.
+        cleaned_data = super().clean().copy()
+        self.validate_high_value_data_flags_conflict(cleaned_data)
+        self._validate_high_value_data_from_ec_list_organization(cleaned_data)
         if cleaned_data.get("license_condition_db_or_copyrighted") and not cleaned_data.get("license_chosen"):
             self.add_error("license_chosen", _("Text area is filled, license must be selected"))
         if cleaned_data.get("license_condition_responsibilities") and cleaned_data.get("license_condition_cc40_responsibilities"):
@@ -253,6 +275,22 @@ class DatasetForm(ModelFormWithKeywords):
                 raise forms.ValidationError(mark_safe(error_message))
 
         return self.cleaned_data["status"]
+
+    def _validate_high_value_data_from_ec_list_organization(self, data: Dict[str, Any]):
+        organization: Optional[Organization] = data.get("organization")
+        if organization is None:
+            return
+
+        organization_type: str = organization.institution_type
+        has_high_value_data_from_ec_list: bool = data.get("has_high_value_data_from_ec_list") == "True"
+
+        try:
+            validate_high_value_data_from_ec_list_organization(has_high_value_data_from_ec_list, organization_type)
+        except ValidationError:
+            self.add_error(
+                "has_high_value_data_from_ec_list",
+                _("Data of private institutions are not high-value data from EC list."),
+            )
 
 
 class DatasetErrorList(forms.utils.ErrorList):

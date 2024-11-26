@@ -38,6 +38,7 @@ from mcod.core.db.models import ExtendedModel, TimeStampedModel, TrashModelBase
 from mcod.core.managers import SoftDeletableQuerySet
 from mcod.core.models import SoftDeletableModel
 from mcod.lib.jwt import decode_jwt_token
+from mcod.lib.model_sanitization import SanitizedCharField, SanitizedTextField
 from mcod.users.managers import (
     MeetingFileManager,
     MeetingFileTrashManager,
@@ -178,7 +179,7 @@ class User(
 ):
     email = models.EmailField(verbose_name=_("Email"), unique=True)
     password = models.CharField(max_length=130, verbose_name=_("Password"))
-    fullname = models.CharField(max_length=100, blank=True, null=True, verbose_name=_("Full name"))
+    fullname = SanitizedCharField(max_length=100, blank=True, null=True, verbose_name=_("Full name"))
     phone = models.CharField(
         max_length=50,
         blank=True,
@@ -906,9 +907,9 @@ class Meeting(ExtendedModel):
         "planned": pgettext_lazy("Planned", "meeting state"),
         "finished": pgettext_lazy("Finished", "meeting state"),
     }
-    title = models.CharField(max_length=300, verbose_name=_("title"))
-    venue = models.CharField(max_length=300, verbose_name=_("venue"))
-    description = models.TextField(verbose_name=_("agenda"))
+    title = SanitizedCharField(max_length=300, verbose_name=_("title"))
+    venue = SanitizedCharField(max_length=300, verbose_name=_("venue"))
+    description = SanitizedTextField(verbose_name=_("agenda"))
     start_date = models.DateField(null=True, verbose_name=_("meeting date"))
     start_time = models.TimeField(null=True, verbose_name=_("start time"))
     end_time = models.TimeField(null=True, verbose_name=_("end time"))

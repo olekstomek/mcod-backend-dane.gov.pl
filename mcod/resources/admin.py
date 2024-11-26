@@ -336,6 +336,9 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):
             regions = ["regions"] if not obj.is_imported else []
             has_dynamic_data = ["has_dynamic_data"] if not obj.is_imported else ["has_dynamic_data_info"]
             has_high_value_data = ["has_high_value_data"] if not obj.is_imported else ["has_high_value_data_info"]
+            has_high_value_data_from_ec_list = (
+                ["has_high_value_data_from_ec_list"] if not obj.is_imported else ["has_high_value_data_from_ec_list_info"]
+            )
             has_research_data = ["has_research_data"] if not obj.is_imported else ["has_research_data_info"]
             contains_protected_data = ["contains_protected_data"] if not obj.is_imported else ["contains_protected_data_info"]
             extra_fields = []
@@ -386,6 +389,7 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):
                             *dd_update_fields,
                             *has_dynamic_data,
                             *has_high_value_data,
+                            *has_high_value_data_from_ec_list,
                             *has_research_data,
                             *contains_protected_data,
                             "status",
@@ -489,6 +493,13 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):
                         {
                             "classes": ("suit-tab", "suit-tab-general"),
                             "fields": ("has_high_value_data",),
+                        },
+                    ),
+                    (
+                        None,
+                        {
+                            "classes": ("suit-tab", "suit-tab-general"),
+                            "fields": ("has_high_value_data_from_ec_list",),
                         },
                     ),
                     (
@@ -630,6 +641,7 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):
                 "is_chart_creation_blocked",
                 "has_dynamic_data_info",
                 "has_high_value_data_info",
+                "has_high_value_data_from_ec_list_info",
                 "has_research_data_info",
                 "contains_protected_data_info",
                 "language",
@@ -831,6 +843,11 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):
         return yesno(obj.has_high_value_data, "Tak,Nie,-")
 
     has_high_value_data_info.short_description = _("has high value data")
+
+    def has_high_value_data_from_ec_list_info(self, obj):
+        return yesno(obj.has_high_value_data_from_ec_list, "Tak,Nie,-")
+
+    has_high_value_data_from_ec_list_info.short_description = _("has high value data from the EC list")
 
     def has_research_data_info(self, obj):
         return yesno(obj.has_research_data, "Tak,Nie,-")

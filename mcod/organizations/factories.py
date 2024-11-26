@@ -2,6 +2,7 @@ import factory
 
 from mcod.core.registries import factories_registry
 from mcod.organizations.models import Organization
+from mcod.resources.dga_constants import ALLOWED_INSTITUTIONS_TO_USE_HIGH_VALUE_DATA_FROM_EC_LIST
 
 _INSTITUTION_TYPES = [i[0] for i in Organization.INSTITUTION_TYPE_CHOICES]
 
@@ -40,4 +41,17 @@ class OrganizationFactory(factory.django.DjangoModelFactory):
         django_get_or_create = ("title",)
 
 
+class HvdEcOrganizationFactory(OrganizationFactory):
+    institution_type = factory.Faker("random_element", elements=ALLOWED_INSTITUTIONS_TO_USE_HIGH_VALUE_DATA_FROM_EC_LIST)
+
+
+class StateOrganizationFactory(OrganizationFactory):
+    institution_type = Organization.INSTITUTION_TYPE_STATE
+
+
+class PrivateOrganizationFactory(OrganizationFactory):
+    institution_type = Organization.INSTITUTION_TYPE_PRIVATE
+
+
 factories_registry.register("institution", OrganizationFactory)
+factories_registry.register("hvd_institution", HvdEcOrganizationFactory)

@@ -2,11 +2,14 @@ import hashlib
 import json
 import os
 from datetime import datetime
+from typing import Optional
 from unittest.mock import MagicMock, patch
 
+import pytest
 import pytz
 import requests_mock
 from django.conf import settings
+from django.db.models.query import QuerySet
 from django.test import Client
 from django_celery_beat.models import PeriodicTask
 from pytest_bdd import given, parsers, then, when
@@ -60,9 +63,9 @@ def active_datasource_by_type_for_data(datasource_type, obj_id, data_str):
     return _factory.create(**data)
 
 
-@when(parsers.parse("ckan datasource with id {obj_id:d} finishes importing objects"))
+@when(parsers.parse("ckan datasource with id {obj_id:d} finishes importing objects using {json_file}"))
 @requests_mock.Mocker(kw="mock_request")
-def datasource_finishes_import(obj_id, **kwargs):
+def datasource_finishes_import(obj_id, json_file, **kwargs):
     mock_request = kwargs["mock_request"]
     obj = DataSource.objects.get(pk=obj_id)
     example_image_path = os.path.join(settings.TEST_SAMPLES_PATH, "example.jpg")
@@ -74,7 +77,7 @@ def datasource_finishes_import(obj_id, **kwargs):
             content=tmp_file.read(),
         )
     mock_request.post(settings.SPARQL_UPDATE_ENDPOINT)
-    ckan_data_path = os.path.join(settings.TEST_SAMPLES_PATH, "harvester_ckan_import_example.json")
+    ckan_data_path = os.path.join(settings.TEST_SAMPLES_PATH, json_file)
     with open(ckan_data_path, "rb") as json_resp_data:
         mock_request.get(obj.api_url, headers={"content-type": "application/json"}, content=json_resp_data.read())
     with patch("mcod.harvester.utils.retrieve_to_file") as mock_retrieve_to_file:
@@ -109,6 +112,46 @@ def datasource_imported_resources(obj_id):
     assert second_res.ext_ident == "6db2e083-72b8-4f92-a6ab-678fc8461866"
 
 
+@then(parsers.parse("ckan datasource with id {obj_id:d} created all data in db with has metadata"))
+def datasource_imported_resources_with_has_metadata(obj_id):
+    dataset = Dataset.objects.get(source_id=obj_id)
+    resources: QuerySet = Resource.objects.filter(dataset__source_id=obj_id).order_by("ext_ident")
+    first_res: Resource = resources[0]
+    second_res: Resource = resources[1]
+
+    assert dataset.title == "Ilości odebranych odpadów z podziałem na sektory"
+    assert dataset.notes == "Wartości w tonach"
+    assert dataset.license_chosen == 2
+    assert dataset.has_dynamic_data is None
+    assert dataset.has_high_value_data is True
+    assert dataset.has_high_value_data_from_ec_list is True
+    assert dataset.has_research_data is False
+
+    assert first_res.title == "Ilości odebranych odpadów z podziałem na sektory"
+    assert first_res.ext_ident == "6db2e083-72b8-4f92-a6ab-678fc8461865"
+    assert first_res.description == "##Sektory:"
+    assert first_res.format == "csv"
+    assert first_res.has_dynamic_data is True
+    assert first_res.has_high_value_data is True
+    assert first_res.has_high_value_data_from_ec_list is False
+    assert first_res.has_research_data is None
+
+    assert second_res.title == "Ilości odebranych odpadów z podziałem na sektory ze spacja"
+    assert second_res.ext_ident == "6db2e083-72b8-4f92-a6ab-678fc8461866"
+    assert second_res.has_dynamic_data is None
+    assert second_res.has_high_value_data is None
+    assert second_res.has_high_value_data_from_ec_list is None
+    assert second_res.has_research_data is None
+
+
+@then(parsers.parse("ckan datasource with id {obj_id:d} import not successful"))
+def ckan_datasource_imported_resources_not_successful(obj_id):
+    DataSourceImport.objects.get(datasource_id=obj_id)
+
+    with pytest.raises(Dataset.DoesNotExist):
+        Dataset.objects.get(source_id=obj_id)
+
+
 @when(parsers.parse("xml datasource with id {obj_id:d} of version {version} finishes importing objects"))
 @requests_mock.Mocker(kw="mock_request")
 def xml_datasource_finishes_import(
@@ -121,6 +164,8 @@ def xml_datasource_finishes_import(
     harvester_decoded_xml_1_7_import_data,
     harvester_decoded_xml_1_8_import_data,
     harvester_decoded_xml_1_9_import_data,
+    harvester_decoded_xml_1_11_import_data,
+    harvester_decoded_xml_1_11_import_data_dataset_has_high_values_metadata_conflict,
     mocked_geocoder_responses_for_xml_import,
     **kwargs,
 ):
@@ -169,6 +214,8 @@ def xml_datasource_finishes_import(
         "1.7": harvester_decoded_xml_1_7_import_data,
         "1.8": harvester_decoded_xml_1_8_import_data,
         "1.9": harvester_decoded_xml_1_9_import_data,
+        "1.11": harvester_decoded_xml_1_11_import_data,
+        "1.11_dataset_has_high_values_metadata_conflict": harvester_decoded_xml_1_11_import_data_dataset_has_high_values_metadata_conflict,  # noqa: E501
     }
     for resp in mocked_geocoder_responses_for_xml_import:
         mock_request.get(resp[0], json=resp[1])
@@ -247,6 +294,79 @@ def xml_datasource_imported_resources(obj_id, version):
         first_res = res.get(ext_ident="zasob_extId_zasob_1")
         assert first_res.all_regions.count() == 5
         assert first_res.all_regions.filter(region_id="0918123", resourceregion__is_additional=False).exists()
+
+
+@then(parsers.parse("xml datasource with id {obj_id:d} of version {version} created all data in db - version xsd 1.11 and over"))
+def xml_datasource_imported_resources_version_1_11_and_over(obj_id: int, version: str):
+    ver_number: int = int(version.split(".")[1])  # version as string ('1.11') to version number (11)
+    datasource_import: Optional[DataSourceImport] = DataSourceImport.objects.get(datasource_id=obj_id)
+    dataset: Optional[Dataset] = Dataset.objects.get(source_id=obj_id)
+    resources: QuerySet = Resource.objects.filter(dataset__source_id=obj_id)
+
+    assert datasource_import.error_desc == ""
+    assert datasource_import.status == "ok"
+    assert datasource_import.datasets_count == 1
+    assert datasource_import.datasets_created_count == 1
+    assert datasource_import.resources_count == 4
+    assert datasource_import.resources_created_count == 4
+
+    if ver_number == 11:
+        assert dataset.title == "Zbiór danych - z nową metadaną hasHighValueDataFromEuropeanCommissionList"
+        assert dataset.notes == "Opis zbioru danych"
+        assert dataset.license_chosen == 1
+        assert dataset.ext_ident == "dataset_extId_ver1.11"
+        assert set(resources.values_list("ext_ident", flat=True)) == {
+            "dataset_extId_ver1.11_res_1",
+            "dataset_extId_ver1.11_res_2",
+            "dataset_extId_ver1.11_res_3",
+            "dataset_extId_ver1.11_res_4",
+        }
+
+        first_resource: Optional[Resource] = resources.get(ext_ident="dataset_extId_ver1.11_res_1")
+        assert first_resource.has_high_value_data_from_ec_list
+        assert dataset.keywords_list == [{"name": "2028_tagPL", "language": "pl"}]
+        assert set(resources.values_list("title", flat=True)) == {"zasób 1", "zasób 2", "zasób 3", "zasób 4"}
+
+        # from 1.5 version: has_high_value_data, has_dynamic_data are imported for resource and dataset
+        assert dataset.has_high_value_data
+        assert not dataset.has_dynamic_data
+        assert first_resource.has_dynamic_data
+        assert first_resource.has_high_value_data
+
+        # from 1.6 version: has_research_data is imported for resource and dataset
+        assert dataset.has_research_data
+        assert first_resource.has_research_data
+
+        # from 1.7 version: supplements are imported for resource and dataset
+        assert dataset.supplements.count() == 1
+        assert first_resource.supplements.count() == 1
+
+        # from 1.8 version: auto data date update meta data are imported
+        warsaw_tz = pytz.timezone("Europe/Warsaw")
+        third_resource = resources.get(ext_ident="dataset_extId_ver1.11_res_3")
+        fourth_resource = resources.get(ext_ident="dataset_extId_ver1.11_res_4")
+        assert PeriodicTask.objects.all().count() == 2
+        p_task = PeriodicTask.objects.get(name=third_resource.data_date_task_name)
+        second_p_task = PeriodicTask.objects.get(name=fourth_resource.data_date_task_name)
+        assert second_p_task.crontab is not None
+        assert p_task.interval is not None
+        assert p_task.start_time.astimezone(warsaw_tz).date() == datetime(2021, 10, 10).date()
+
+        # from 1.9 version: regions are imported
+        assert first_resource.all_regions.count() == 5
+        assert first_resource.all_regions.filter(region_id="0918123", resourceregion__is_additional=False).exists()
+
+        # from 1.11 version: has_high_value_data_from_ec_list is imported for resource and dataset
+        assert dataset.has_high_value_data_from_ec_list
+        assert first_resource.has_high_value_data_from_ec_list
+
+
+@then(parsers.parse("xml datasource with id {obj_id:d} import not successful"))
+def xml_datasource_imported_resources_not_successful(obj_id):
+    DataSourceImport.objects.get(datasource_id=obj_id)
+
+    with pytest.raises(Dataset.DoesNotExist):
+        Dataset.objects.get(source_id=obj_id)
 
 
 @patch("rdflib.plugins.stores.sparqlconnector.urlopen")

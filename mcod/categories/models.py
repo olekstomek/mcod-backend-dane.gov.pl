@@ -5,7 +5,6 @@ from django.db import models
 from django.dispatch import receiver
 from django.utils.translation import gettext_lazy as _
 from model_utils import FieldTracker
-from modeltrans.fields import TranslationField
 
 from mcod.categories.signals import null_in_related_datasets, update_related_datasets
 from mcod.core import storages
@@ -15,6 +14,11 @@ from mcod.core.api.search.tasks import null_field_in_related_task
 from mcod.core.db.managers import TrashManager
 from mcod.core.db.models import ExtendedModel, TrashModelBase
 from mcod.core.managers import SoftDeletableManager
+from mcod.lib.model_sanitization import (
+    SanitizedCharField,
+    SanitizedTextField,
+    SanitizedTranslationField,
+)
 
 User = get_user_model()
 
@@ -26,9 +30,9 @@ class Category(ExtendedModel):
         "restored": (update_related_datasets,),
         "removed": (null_in_related_datasets, rdf_signals.update_related_graph),
     }
-    code = models.CharField(max_length=100, verbose_name=_("Code"))
-    title = models.CharField(max_length=100, verbose_name=_("Title"))
-    description = models.TextField(null=True, verbose_name=_("Description"))
+    code = SanitizedCharField(max_length=100, verbose_name=_("Code"))
+    title = SanitizedCharField(max_length=100, verbose_name=_("Title"))
+    description = SanitizedTextField(null=True, verbose_name=_("Description"))
     color = models.CharField(max_length=20, default="#000000", null=True, verbose_name=_("Color"))
     image = models.ImageField(
         max_length=200,
@@ -70,7 +74,7 @@ class Category(ExtendedModel):
             return None
         return "{}{}".format(settings.BASE_URL, self.image.url)
 
-    i18n = TranslationField(fields=("title", "description"))
+    i18n = SanitizedTranslationField(fields=("title", "description"))
 
     objects = SoftDeletableManager()
     trash = TrashManager()

@@ -115,6 +115,7 @@ test:
   except:
     - tags
     - master
+    - pre-devel
     - schedules
   tags:
     - docker
@@ -128,6 +129,7 @@ lint:
   except:
     - tags
     - master
+    - pre-devel
     - schedules
   tags:
     - docker

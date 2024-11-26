@@ -1,11 +1,14 @@
+from unittest.mock import patch
+
 import pytest
 from celery import states
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.db.models import QuerySet
 from django.utils import timezone
 
 from mcod.core.tests.helpers.tasks import run_on_commit_events
-from mcod.resources.factories import AggregatedDGAInfoFactory
+from mcod.resources.factories import AggregatedDGAInfoFactory, ResourceFactory
 from mcod.resources.models import Chart, Resource, TaskResult, update_resource
 
 
@@ -59,16 +62,25 @@ class TestResourceModel:
             "modified_by_id",
             "created_by_id",
             "contains_protected_data",
+            "has_high_value_data",
+            "has_high_value_data_from_ec_list",
+            "has_research_data",
+            "has_dynamic_data",
         ]
 
         for f in fields:
             assert f in r_dict
 
-    def test_default_contains_protected_data_value(self, resource):
+    def test_default_resource_metadata_values(self, resource):
         """
-        Check if new instance of `Resource` has default value of `contains_protected_data` as  False.
+        Check new `Resource` metadata default values.
         """
-        assert not resource.contains_protected_data
+        assert resource.has_high_value_data is None
+        assert resource.has_high_value_data_from_ec_list is None
+        assert resource.has_research_data is None
+        assert resource.has_dynamic_data is None
+
+        assert resource.contains_protected_data is False
 
     def test_resource_safe_delete(self, resource):
         assert resource.status == "published"
@@ -241,3 +253,72 @@ class TestAggregatedDGAInfo:
 
         with pytest.raises(ValidationError, match="'There can be only one AggregatedDGAInfo instance'"):
             AggregatedDGAInfoFactory.create()
+
+
+class TestRemoveTabularDataIndex:
+    def test_delete_resource_in_two_steps(self):
+        """
+        GIVEN a resource
+        WHEN remove resource soft
+        AND remove again remove resource - permanent remove
+        THEN only during second remove call, task `delete_es_resource_tabular_data_index` will be called.
+        """
+        resource: Resource = ResourceFactory()
+        resource_id = resource.id
+
+        with patch("mcod.resources.models.delete_es_resource_tabular_data_index.s") as mocked_task_signature:
+
+            # first delete (soft delete) - task deleting tabular data not called
+            resource.delete()
+            mocked_task_signature.assert_not_called()
+
+            mock_task = mocked_task_signature.return_value
+            with patch.object(mock_task, "apply_async_on_commit") as mock_apply_async:
+
+                # second delete (permanent delete) - task deleting tabular data will be called
+                resource.delete()
+                mocked_task_signature.assert_called_once_with(resource_id)
+                mock_apply_async.assert_called_once()
+
+    def test_delete_resource_with_permanent_parameter(self):
+        """
+        GIVEN a resource
+        WHEN remove resource with `permanent=True` parameter
+        THEN task `delete_es_resource_tabular_data_index` for this resource will be called.
+        """
+        resource: Resource = ResourceFactory()
+        resource_id = resource.id
+
+        with patch("mcod.resources.models.delete_es_resource_tabular_data_index.s") as mocked_task_signature:
+            mock_task = mocked_task_signature.return_value
+            with patch.object(mock_task, "apply_async_on_commit") as mock_apply_async_on_commit:
+                # permament delete - task deleting tabular data will be called
+                resource.delete(permanent=True)
+                mocked_task_signature.assert_called_once_with(resource_id)
+                mock_apply_async_on_commit.assert_called_once()
+
+    def test_delete_resources_by_trash(self):
+        """
+        GIVEN resources
+        WHEN remove these resources from trash
+        THEN task `delete_es_resource_tabular_data_index` for these resources.
+        """
+        resource_1: Resource = ResourceFactory()
+        resource_2: Resource = ResourceFactory()
+        resource_1_id = resource_1.id
+        resource_2_id = resource_2.id
+
+        # put resources into trash
+        resource_1.delete()
+        resource_2.delete()
+
+        qs: QuerySet = Resource.trash.filter(id__in=[resource_1.id, resource_2.id])
+
+        with patch("mcod.resources.managers.delete_es_resource_tabular_data_index.s") as mocked_task_signature:
+            mock_task = mocked_task_signature.return_value
+            with patch.object(mock_task, "apply_async_on_commit") as mock_apply_async_on_commit:
+                # delete resources from trash
+                qs.delete()
+
+                mocked_task_signature.assert_called_with([resource_1_id, resource_2_id])
+                mock_apply_async_on_commit.assert_called_once()

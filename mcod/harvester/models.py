@@ -1,7 +1,7 @@
 import logging
 import os
-import pprint
 from collections import defaultdict
+from typing import Any, Callable, Dict, List, Optional, Tuple
 from urllib.parse import urlencode
 
 from dateutil.relativedelta import relativedelta
@@ -26,18 +26,29 @@ from mcod.core.db.managers import TrashManager
 from mcod.core.db.mixins import AdminMixin
 from mcod.core.db.models import LogMixin, TimeStampedModel, TrashModelBase
 from mcod.core.models import SoftDeletableModel
-from mcod.harvester.managers import DataSourceManager
-from mcod.harvester.utils import (
-    CKANImportDatasetInTrashError,
-    CKANImportError,
-    CKANImportInvalidLicenseError,
-    CKANImportOrganizationInTrashError,
-    make_request,
-    retrieve_to_file,
+from mcod.harvester.ckan_utils import (
+    CKANPartialImportError,
+    format_dataset_hvd_conflict_error_details,
+    format_dataset_in_trash_error_details,
+    format_dataset_org_hvd_ec_conflict_error_details,
+    format_invalid_license_error_details,
+    format_organization_in_trash_error_details,
+    format_res_hvd_conflict_error_details,
+    format_res_org_hvd_ec_conflict_error_details,
 )
+from mcod.harvester.exceptions import CKANPartialValidationException
+from mcod.harvester.managers import DataSourceManager
+from mcod.harvester.utils import make_request, retrieve_to_file
+from mcod.lib.metadata_validators import (
+    validate_conflicting_high_value_data_flags,
+    validate_high_value_data_from_ec_list_organization,
+)
+from mcod.lib.model_sanitization import SanitizedCharField, SanitizedTextField
 from mcod.organizations.models import Organization
 
 logger = logging.getLogger("mcod")
+
+ItemData = Dict[str, Any]
 
 OLD_CATEGORY_TITLE_2_DCAT_CATEGORY_CODE = {
     "Rolnictwo": "AGRI",
@@ -90,8 +101,8 @@ class DataSource(AdminMixin, LogMixin, SoftDeletableModel, TimeStampedModel):
         ("active", _("active")),
         ("inactive", _("inactive")),
     )
-    name = models.CharField(max_length=255, verbose_name=_("name"))
-    description = models.TextField(verbose_name=_("description"))
+    name = SanitizedCharField(max_length=255, verbose_name=_("name"))
+    description = SanitizedTextField(verbose_name=_("description"))
     frequency_in_days = models.PositiveIntegerField(choices=FREQUENCY_CHOICES, default=7, verbose_name=_("frequency"))
     status = models.CharField(max_length=8, verbose_name=_("status"), choices=STATUS_CHOICES)
     license_condition_db_or_copyrighted = models.TextField(blank=True, verbose_name=_("data use rules"))
@@ -604,48 +615,224 @@ class DataSource(AdminMixin, LogMixin, SoftDeletableModel, TimeStampedModel):
             tags_ids.append(tag.id)
         return self.tag_model.objects.filter(id__in=tags_ids)
 
-    def _items_partial_validation(self, items, error_desc):
-        ds_rejected = 0
-        accepted_items = []
-        import_errors = []
+    def _get_item_institution_type(self, item: ItemData) -> str:
+        organization = self.organization_model.raw.filter(title=item["organization"]["title"]).first()
+        return organization.institution_type if organization else self.institution_type
 
-        code_to_error_class = {
-            CKANImportError.INVALID_LICENSE_ID: CKANImportInvalidLicenseError,
-            CKANImportError.ORGANIZATION_IN_TRASH: CKANImportOrganizationInTrashError,
-            CKANImportError.DATASET_IN_TRASH: CKANImportDatasetInTrashError,
+    @staticmethod
+    def _ckan_validate_item_license_id(item: ItemData) -> None:
+        item_id: str = item["ext_ident"]
+        license_id: str = item.get("license_id")
+
+        if license_id not in settings.CKAN_LICENSES_WHITELIST:
+            error_data = {
+                "item_id": item_id,
+                "license_id": license_id,
+            }
+            raise CKANPartialValidationException(
+                error_code=CKANPartialImportError.INVALID_LICENSE_ID,
+                error_data=error_data,
+            )
+
+    def _ckan_validate_item_organization_not_in_trash(self, item: ItemData) -> None:
+        item_id: str = item["ext_ident"]
+        item_organization_title: str = item["organization"]["title"]
+
+        organization = self.organization_model.raw.filter(title=item_organization_title).first()
+        if organization and organization.is_removed:
+            error_data = {
+                "item_id": item_id,
+                "organization_title": item_organization_title,
+            }
+            raise CKANPartialValidationException(
+                error_code=CKANPartialImportError.ORGANIZATION_IN_TRASH,
+                error_data=error_data,
+            )
+
+    def _ckan_validate_item_dataset_not_in_trash(self, item: ItemData) -> None:
+        item_id: str = item["ext_ident"]
+
+        dataset = self.dataset_model.raw.filter(ext_ident=item.get("ext_ident"), source=self).first()
+        if dataset and dataset.is_removed:
+            error_data = {"item_id": item_id}
+            raise CKANPartialValidationException(
+                error_code=CKANPartialImportError.DATASET_IN_TRASH,
+                error_data=error_data,
+            )
+
+    def _ckan_validate_item_dataset_org_ec_conflict(self, item: ItemData) -> None:
+        item_id: str = item["ext_ident"]
+        has_hvd_ec: Optional[bool] = item.get("has_high_value_data_from_ec_list")
+
+        institution_type = self._get_item_institution_type(item)
+        try:
+            validate_high_value_data_from_ec_list_organization(
+                has_hvd_ec,
+                institution_type,
+            )
+        except ValidationError:
+            error_data = {"item_id": item_id}
+            raise CKANPartialValidationException(
+                error_code=CKANPartialImportError.DATASET_ORG_EC_CONFLICT,
+                error_data=error_data,
+            )
+
+    @staticmethod
+    def _ckan_validate_item_dataset_hvd_conflict(item: ItemData) -> None:
+        item_id: str = item["ext_ident"]
+        has_hvd: Optional[bool] = item.get("has_high_value_data")
+        has_hvd_ec: Optional[bool] = item.get("has_high_value_data_from_ec_list")
+
+        try:
+            validate_conflicting_high_value_data_flags(has_hvd, has_hvd_ec)
+        except ValidationError:
+            error_data = {"item_id": item_id}
+            raise CKANPartialValidationException(
+                error_code=CKANPartialImportError.DATASET_HVD_CONFLICT,
+                error_data=error_data,
+            )
+
+    def _ckan_validate_item_resources_org_ec_conflict(self, item: ItemData) -> None:
+        item_id: str = item["ext_ident"]
+        institution_type = self._get_item_institution_type(item)
+
+        resources: Optional[List[Dict[str, Any]]] = item.get("resources")
+        rejected_resources_ids: List[str] = []
+        for resource in resources:
+            has_hvd_ec: Optional[bool] = resource.get("has_high_value_data_from_ec_list")
+            try:
+                validate_high_value_data_from_ec_list_organization(
+                    has_hvd_ec,
+                    institution_type,
+                )
+            except ValidationError:
+                rejected_resources_ids.append(resource["ext_ident"])
+
+        if rejected_resources_ids:
+            error_data = {
+                "item_id": item_id,
+                "resources_ids": rejected_resources_ids,
+            }
+            raise CKANPartialValidationException(
+                error_code=CKANPartialImportError.RES_ORG_EC_CONFLICT,
+                error_data=error_data,
+            )
+
+    @staticmethod
+    def _ckan_validate_item_resources_hvd_conflict(item: ItemData) -> None:
+        item_id: str = item["ext_ident"]
+
+        resources: Optional[List[Dict[str, Any]]] = item.get("resources")
+        rejected_resources_ids: List[str] = []
+        for resource in resources:
+            has_hvd: Optional[bool] = resource.get("has_high_value_data")
+            has_hvd_ec: Optional[bool] = resource.get("has_high_value_data_from_ec_list")
+            try:
+                validate_conflicting_high_value_data_flags(has_hvd, has_hvd_ec)
+            except ValidationError:
+                rejected_resources_ids.append(resource["ext_ident"])
+
+        if rejected_resources_ids:
+            error_data = {
+                "item_id": item_id,
+                "resources_ids": rejected_resources_ids,
+            }
+            raise CKANPartialValidationException(
+                error_code=CKANPartialImportError.RES_HVD_CONFLICT,
+                error_data=error_data,
+            )
+
+    @staticmethod
+    def _get_error_description_formatters() -> Dict[CKANPartialImportError, Callable[[List[Dict[str, Any]]], str]]:
+        """
+        Initializes and returns a mapping of validation error codes to their
+        corresponding error description formatting functions.
+
+        Each function generates a detailed error description for all items
+        (datasets) that encountered the specific error type during the
+        CKAN partial validation process.
+
+        These descriptions are later used to provide comprehensive error
+        details in HTML format.
+
+        Returns:
+            dict: A dictionary mapping error codes (CKANPartialImportError) to
+                  their respective error description formatting functions.
+        """
+        error_description_functions = {
+            CKANPartialImportError.INVALID_LICENSE_ID: format_invalid_license_error_details,
+            CKANPartialImportError.ORGANIZATION_IN_TRASH: format_organization_in_trash_error_details,
+            CKANPartialImportError.DATASET_IN_TRASH: format_dataset_in_trash_error_details,
+            # High Value Data (HVD) error description formatters
+            CKANPartialImportError.DATASET_ORG_EC_CONFLICT: format_dataset_org_hvd_ec_conflict_error_details,
+            CKANPartialImportError.DATASET_HVD_CONFLICT: format_dataset_hvd_conflict_error_details,
+            CKANPartialImportError.RES_ORG_EC_CONFLICT: format_res_org_hvd_ec_conflict_error_details,
+            CKANPartialImportError.RES_HVD_CONFLICT: format_res_hvd_conflict_error_details,
         }
+        return error_description_functions
 
-        rejected_items = defaultdict(list)
+    def _validate_ckan_item(self, item: ItemData) -> None:
+        self._ckan_validate_item_license_id(item)
+        self._ckan_validate_item_organization_not_in_trash(item)
+        self._ckan_validate_item_dataset_not_in_trash(item)
+        self._ckan_validate_item_dataset_org_ec_conflict(item)
+        self._ckan_validate_item_dataset_hvd_conflict(item)
+        self._ckan_validate_item_resources_org_ec_conflict(item)
+        self._ckan_validate_item_resources_hvd_conflict(item)
+
+    def _ckan_items_partial_validation(self, items: List[ItemData]) -> Tuple[List[ItemData], int, str]:
+        """
+        Performs CKAN partial validation on a list of items.
+
+        Checks each item against various criteria such as license ID validity,
+        organization and dataset are not in trash, high-value data (HVD)
+        conflicts, etc.
+
+        Args:
+            items: List of items to validate.
+
+        Returns:
+            A tuple containing:
+            - List of accepted items.
+            - Number of rejected items.
+            - Aggregated error description as HTML string which be displayed in
+              Admin Panel DataSourceImport details.
+        """
+        # Process and validate each item in the input list.
+        # Items that pass all validations are added to the accepted_items list.
+        # For items that fail validation, the specific error and item data
+        # (necessary for error description formatter) are recorded in items_errors.
+        accepted_items: List[ItemData] = []
+        items_errors: Dict[CKANPartialImportError, List[ItemData]] = defaultdict(list)
         for item in items:
-            if item.get("license_id") not in settings.CKAN_LICENSES_WHITELIST:
-                rejected_items[CKANImportError.INVALID_LICENSE_ID].append(item)
-                ds_rejected += 1
-                continue
+            try:
+                self._validate_ckan_item(item)
+            except CKANPartialValidationException as exc:
+                items_errors[exc.error_code].append(exc.error_data)
+            else:
+                accepted_items.append(item)
 
-            organization = self.organization_model.raw.filter(title=item.get("organization", {}).get("title")).first()
-            if organization and organization.is_removed:
-                rejected_items[CKANImportError.ORGANIZATION_IN_TRASH].append(item)
-                ds_rejected += 1
-                continue
+        error_description_functions = self._get_error_description_formatters()
+        # Generate error descriptions for each encountered error type.
+        # Iterate through the error_description_functions dictionary:
+        #   - For each error code that has associated error data.
+        #   - Call the corresponding formatting function with the error data.
+        #   - Append the resulting error description to the list.
+        # This process creates a comprehensive list of all error descriptions.
+        # TODO: Are they XSS safe?
+        error_descriptions: List[str] = []
+        for code, get_error_desc in error_description_functions.items():
+            items_error_data: List[ItemData] = items_errors[code]
+            if items_error_data:
+                error_desc: str = get_error_desc(items_error_data)
+                error_descriptions.append(error_desc)
 
-            dataset = self.dataset_model.raw.filter(ext_ident=item.get("ext_ident"), source=self).first()
-            if dataset and dataset.is_removed:
-                rejected_items[CKANImportError.DATASET_IN_TRASH].append(item)
-                ds_rejected += 1
-                continue
+        # Combine all error descriptions into a single string and calculate
+        # the total number of rejected items.
+        error_desc: str = "<br>".join(str(error) for error in error_descriptions)
+        rejected_items_count: int = sum([len(errors) for errors in items_errors.values()])
 
-            accepted_items.append(item)
-
-        for code, error_class in code_to_error_class.items():
-            if rejected_items[code]:
-                import_errors.append(error_class(rejected_items=rejected_items[code]))
-
-        error_desc = str(error_desc)
-        if error_desc:
-            error_desc += "<br>"
-        error_desc += "<br>".join(str(error) for error in import_errors)
-
-        return accepted_items, ds_rejected, error_desc
+        return accepted_items, rejected_items_count, error_desc
 
     def import_data(self):
         if not self.is_active:
@@ -665,16 +852,18 @@ class DataSource(AdminMixin, LogMixin, SoftDeletableModel, TimeStampedModel):
         try:
             schema = schema_class(many=True)
             schema.context["organization"] = self.organization
+            if self.is_ckan:
+                schema.context["new_institution_type"] = self.institution_type
             items = schema.load(data) if data else []
         except SchemaValidationError as err:
             items = []
             error_desc = err.messages
             if isinstance(error_desc, dict):
-                error_desc = pprint.pformat(error_desc)
+                error_desc = repr(error_desc)
 
         ds_rejected = 0
-        if self.is_ckan:
-            items, ds_rejected, error_desc = self._items_partial_validation(items, error_desc)
+        if items and self.is_ckan:
+            items, ds_rejected, error_desc = self._ckan_items_partial_validation(items)
 
         dsi = DataSourceImport.objects.create(
             datasource=self,

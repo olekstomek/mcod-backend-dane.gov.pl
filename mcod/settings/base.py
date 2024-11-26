@@ -51,7 +51,7 @@ NOTEBOOKS_DIR = env("NOTEBOOKS_DIR", default=str(ROOT_DIR.path("notebooks/notebo
 
 NOTEBOOK_ARGUMENTS = ["--config", "mcod/settings/jupyter_config.py"]
 
-DEBUG = env("DEBUG", default="no") in ("yes", 1, "true") or env("TEST_DEBUG", default="no") in ("yes", 1, "true")
+DEBUG = env.bool("DEBUG", False) or env.bool("TEST_DEBUG", False)
 
 SECRET_KEY = env("DJANGO_SECRET_KEY", default="xb2rTZ57yOY9iCdqR7W+UAWnU")
 
@@ -257,6 +257,7 @@ HARVESTER_XML_VERSION_TO_SCHEMA_PATH = {
     "1.8": HARVESTER_DATA_DIR.path("xml_import_otwarte_dane_1_8.xsd").root,
     "1.9": HARVESTER_DATA_DIR.path("xml_import_otwarte_dane_1_9.xsd").root,
     "1.10": HARVESTER_DATA_DIR.path("xml_import_otwarte_dane_1_10.xsd").root,
+    "1.11": HARVESTER_DATA_DIR.path("xml_import_otwarte_dane_1_11.xsd").root,
 }
 
 HARVESTER_IMPORTERS = {
@@ -1503,6 +1504,10 @@ CONSTANCE_CONFIG = {
     ),  # noqa: E501
 }
 
+# Recipients of email containing DB and ElasticSearch inconsistency information
+# Multiple email addresses can be provided (separated by commas)
+DB_ES_CONSISTENCY_EMAIL_RECIPIENTS: str = env("DB_ES_CONSISTENCY_EMAIL_RECIPIENTS", default="")
+
 METABASE_DASHBOARDS_FIELDSET = []
 if METABASE_DASHBOARDS_ENABLED:
     CONSTANCE_CONFIG["METABASE_DASHBOARDS"] = (
@@ -1567,6 +1572,10 @@ DYNAMIC_DATA_MANUAL_URL = env(
 HIGH_VALUE_DATA_MANUAL_URL = env(
     "HIGH_VALUE_DATA_MANUAL_URL",
     default="/pl/knowledgebase/useful-materials/dane-o-wysokiej-wartosci",
+)
+HIGH_VALUE_DATA_FROM_EC_LIST_MANUAL_URL = env(
+    "HIGH_VALUE_DATA_FROM_EC_LIST_MANUAL_URL",
+    default="/pl/knowledgebase/useful-materials/dane-wysokiej-wartosci-z-wykazu-ke",
 )
 RESEARCH_DATA_MANUAL_URL = env(
     "RESEARCH_DATA_MANUAL_URL",
@@ -1877,7 +1886,7 @@ youtube = {
 
 OD_EMBED = {
     "urls": [
-        "^https?://cms\.(?:(?:dev|int|szkolenia)\.)?dane\.gov\.pl/admin/videos/\d+/?$",
+        r"^https?://cms\.(?:(?:dev|int|szkolenia)\.)?dane\.gov\.pl/admin/videos/\d+/?$",
     ]
 }
 

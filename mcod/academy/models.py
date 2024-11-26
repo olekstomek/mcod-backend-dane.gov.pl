@@ -14,6 +14,7 @@ from mcod.core import storages
 from mcod.core.db.managers import TrashManager
 from mcod.core.db.models import ExtendedModel, TrashModelBase
 from mcod.core.managers import SoftDeletableManager
+from mcod.lib.model_sanitization import SanitizedCharField, SanitizedTextField
 
 
 class Course(ExtendedModel):
@@ -22,9 +23,9 @@ class Course(ExtendedModel):
         "current": "W trakcie",
         "finished": "Zakończone",
     }
-    title = models.CharField(max_length=300, verbose_name=_("title"))
-    notes = models.TextField(verbose_name=_("description"))
-    venue = models.CharField(max_length=300, verbose_name=_("venue"))
+    title = SanitizedCharField(max_length=300, verbose_name=_("title"))
+    notes = SanitizedTextField(verbose_name=_("description"))
+    venue = SanitizedCharField(max_length=300, verbose_name=_("venue"))
     participants_number = models.PositiveIntegerField(verbose_name=_("number of participants"))
     file = models.FileField(
         verbose_name=_("schedule file"),

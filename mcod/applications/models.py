@@ -33,7 +33,6 @@ from mcod.core.managers import SoftDeletableManager
 
 User = get_user_model()
 
-
 MAIN_PAGE_ORDERING_CHOICES = [
     (1, _("First")),
     (2, _("Second")),
@@ -513,7 +512,6 @@ class ApplicationProposal(ApplicationMixin):
 
 
 class ApplicationProposalTrash(ApplicationProposal, metaclass=TrashModelBase):
-
     class Meta(ApplicationProposal.Meta):
         proxy = True
         verbose_name = _("Application Proposal Trash")
@@ -521,7 +519,6 @@ class ApplicationProposalTrash(ApplicationProposal, metaclass=TrashModelBase):
 
 
 class Application(ApplicationMixin):
-
     image = models.ImageField(
         max_length=200,
         storage=storages.get_storage("applications"),

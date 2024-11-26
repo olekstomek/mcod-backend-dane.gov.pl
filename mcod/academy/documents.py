@@ -9,10 +9,10 @@ from mcod.core.db.elastic import Document
 @registry.register_document
 class CourseDoc(Document):
     id = fields.IntegerField()
-    title = fields.StringField()
+    title = fields.TextField()
     notes = fields.TextField()
     participants_number = fields.IntegerField()
-    venue = fields.StringField()
+    venue = fields.TextField()
     start = fields.DateField()
     end = fields.DateField()
     file_type = fields.KeywordField()

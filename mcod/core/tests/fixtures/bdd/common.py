@@ -237,6 +237,7 @@ def get_data(resource):
     data["dataset"] = resource.dataset_id
     data["has_dynamic_data"] = False
     data["has_high_value_data"] = False
+    data["has_high_value_data_from_ec_list"] = False
     data["has_research_data"] = False
     return data
 
@@ -259,6 +260,7 @@ def form_data_is(
             "customfields": None,
             "has_dynamic_data": False,
             "has_high_value_data": False,
+            "has_high_value_data_from_ec_list": False,
             "has_research_data": False,
             "license_condition_db_or_copyrighted": None,
             "license_condition_modification": None,
@@ -382,6 +384,7 @@ def api_request_post_data(admin_context, data_type, req_post_data):
             "organization": [],
             "tags": [],
             "has_high_value_data": False,
+            "has_high_value_data_from_ec_list": False,
             "has_dynamic_data": False,
             "has_research_data": False,
             "resources-TOTAL_FORMS": "0",
@@ -397,6 +400,7 @@ def api_request_post_data(admin_context, data_type, req_post_data):
             "resources-2-MIN_NUM_FORMS": "0",
             "resources-2-MAX_NUM_FORMS": "1000",
             "resources-2-0-has_high_value_data": False,
+            "resources-2-0-has_high_value_data_from_ec_list": False,
             "resources-2-0-has_dynamic_data": False,
             "resources-2-0-language": "pl",
             "resources-2-0-has_research_data": False,
@@ -516,6 +520,7 @@ def api_request_post_data(admin_context, data_type, req_post_data):
             "datasets-2-0-id": "",
             "datasets-2-0-organization": "",
             "datasets-2-0-has_high_value_data": False,
+            "datasets-2-0-has_high_value_data_from_ec_list": False,
             "datasets-2-0-has_dynamic_data": False,
             "datasets-2-0-has_research_data": False,
             "datasets-2-0-supplements-TOTAL_FORMS": "0",
@@ -566,6 +571,7 @@ def api_request_post_data(admin_context, data_type, req_post_data):
             "description_en": "",
             "slug_en": "",
             "has_high_value_data": False,
+            "has_high_value_data_from_ec_list": False,
             "has_dynamic_data": False,
             "has_research_data": False,
             "contains_protected_data": False,
@@ -737,7 +743,7 @@ def admin_response_page_not_editable(admin_context):
 @then(parsers.parse("admin's response page contains {contained_value}"))
 def admin_response_page_contains(admin_context, contained_value):
     content = admin_context.response.content.decode()
-    assert contained_value in content, f'Page content should contain phrase: "{contained_value}"'
+    assert contained_value in content, f'Page content should contain phrase: "{contained_value}". Actual content is: {content}'
 
 
 @then(parsers.parse("admin's response body field {field} is {value}"))

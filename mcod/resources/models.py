@@ -42,7 +42,6 @@ from django_celery_results.models import TaskResult as TaskResultOrig
 from elasticsearch_dsl.connections import Connections
 from mimeparse import parse_mime_type
 from model_utils import FieldTracker
-from modeltrans.fields import TranslationField
 
 from mcod.core import signals as core_signals, storages
 from mcod.core.api.rdf import signals as rdf_signals
@@ -63,6 +62,11 @@ from mcod.core.db.models import (
 from mcod.counters.models import ResourceDownloadCounter, ResourceViewCounter
 from mcod.datasets.models import BaseSupplement, Dataset
 from mcod.lib.data_rules import painless_body
+from mcod.lib.model_sanitization import (
+    SanitizedCharField,
+    SanitizedTextField,
+    SanitizedTranslationField,
+)
 from mcod.regions.models import Region, RegionManyToManyField
 from mcod.resources import model_validators
 from mcod.resources.archives import ArchiveReader, is_archive_file
@@ -75,6 +79,7 @@ from mcod.resources.managers import (
     ResourceFileManager,
     ResourceManager,
     ResourceRawManager,
+    ResourceTrashManager,
     SupplementManager,
 )
 from mcod.resources.score_computation import get_score
@@ -85,6 +90,7 @@ from mcod.resources.signals import (
     update_dataset_file_archive,
 )
 from mcod.resources.tasks import (
+    delete_es_resource_tabular_data_index,
     process_resource_file_data_task,
     process_resource_from_url_task,
     process_resource_res_file_task,
@@ -425,12 +431,12 @@ class Resource(ExtendedModel):
         verbose_name=_("File encoding"),
     )
     link = models.URLField(verbose_name=_("Resource Link"), max_length=2000, blank=True, null=True)
-    title = models.CharField(
+    title = SanitizedCharField(
         max_length=500,
         verbose_name=_("title"),
         validators=[model_validators.illegal_character_validator],
     )
-    description = models.TextField(
+    description = SanitizedTextField(
         blank=True,
         null=True,
         verbose_name=_("Description"),
@@ -524,6 +530,7 @@ class Resource(ExtendedModel):
     has_chart = models.BooleanField(verbose_name=_("has chart?"), default=False)
     has_dynamic_data = models.NullBooleanField(verbose_name=_("dynamic data"))
     has_high_value_data = models.NullBooleanField(verbose_name=_("has high value data"))
+    has_high_value_data_from_ec_list = models.NullBooleanField(verbose_name=_("has high value data from the EC list"))
     has_map = models.BooleanField(verbose_name=_("has map?"), default=False)
     has_research_data = models.NullBooleanField(verbose_name=_("has research data"))
     has_table = models.BooleanField(verbose_name=_("has table?"), default=False)
@@ -1091,12 +1098,12 @@ class Resource(ExtendedModel):
 
     _data = None
 
-    i18n = TranslationField(fields=("title", "description"))
+    i18n = SanitizedTranslationField(fields=("title", "description"))
     tracker = FieldTracker()
     slugify_field = "title"
 
     objects = ResourceManager()
-    trash = TrashManager()
+    trash = ResourceTrashManager()
     raw = ResourceRawManager()
 
     class Meta:
@@ -1535,6 +1542,13 @@ class Resource(ExtendedModel):
             or (self.is_linked and self.type == RESOURCE_TYPE_FILE)
             or self.type == RESOURCE_TYPE_WEBSITE
         )
+
+    def delete(self, using=None, soft=True, permanent=False, *args, **kwargs):
+        super().delete(using, soft=soft, permanent=permanent, *args, **kwargs)
+
+        # delete tabular data index connected with permanently removed resource
+        if self.is_permanently_removed:
+            delete_es_resource_tabular_data_index.s(self.id).apply_async_on_commit()
 
 
 class AggregatedDGAInfo(models.Model):

@@ -9,9 +9,9 @@ from mcod.users.models import Meeting, MeetingFile
 @registry.register_document
 class MeetingDoc(Document):
     id = fields.IntegerField()
-    title = fields.StringField()
+    title = fields.TextField()
     description = fields.TextField()
-    venue = fields.StringField()
+    venue = fields.TextField()
     start_date = fields.DateField()
     start_time = fields.KeywordField(attr="start_time_str")
     end_time = fields.KeywordField(attr="end_time_str")

@@ -752,6 +752,9 @@ msgstr "Zawiera dane dynamiczne"
 msgid "has high value data"
 msgstr "zawiera dane o wysokiej wartości"
 
+msgid "has high value data from the EC list"
+msgstr "zawiera dane o wysokiej wartości z wykazu KE"
+
 msgid "has research data"
 msgstr "zawiera dane badawcze"
 
@@ -1183,6 +1186,9 @@ msgstr "Liczba obserwujących"
 
 msgid "Dataset has high value data"
 msgstr "Zbiór zawiera dane o wysokiej wartości"
+
+msgid "Dataset has high value data from the EC list"
+msgstr "Zbiór zawiera dane o wysokiej wartości z wykazu KE"
 
 msgid "Dataset has dynamic data"
 msgstr "Zbiór zawiera dane dynamiczne"
@@ -3347,8 +3353,14 @@ msgstr "Wybierz zbiór instytucji rządowej lub samorządowej, jeśli poniżej o
 msgid "To select YES here, above select the dataset of a government or local government institution."
 msgstr "Aby tu wybrać TAK, powyżej wybierz zbiór danych instytucji rządowej lub samorządowej."
 
-msgid "To select YES here, select NO in the fields for dynamic, high-value and research data."
-msgstr "Aby tu wybrać TAK, w polach dotyczących danych dynamicznych, o wysokiej wartości i badawczych zaznacz NIE."
+msgid "To select YES here, select NO in the fields for dynamic, high-value, high-value from the EC list and research data."
+msgstr "Aby tu wybrać TAK, w polach dotyczących danych dynamicznych, o wysokiej wartości, o wysokiej wartości z wykazu KE i badawczych zaznacz NIE."
+
+msgid "Check YES, because high-value data from the EC list is a special subcategory of high-value data."
+msgstr "Zaznacz TAK, ponieważ dane o wysokiej wartości z wykazu KE są szczególną podkategorią danych o wysokiej wartości."
+
+msgid "Data of private institutions are not high-value data from EC list."
+msgstr "Dane instytucji prywatnych nie są danymi o wysokiej wartości z wykazu KE."
 
 msgid "deleted"
 msgstr "usunięty"
@@ -3418,6 +3430,25 @@ msgstr "licznik pobrań"
 
 msgid "Resource has high value data"
 msgstr "Zasób zawiera dane o wysokiej wartości"
+
+msgid "Resource has high value data from the EC list"
+msgstr "Zasób zawiera dane o wysokiej wartości z wykazu KE"
+
+#, python-format
+msgid "Dataset field '%(first_field)s' must have value true if field '%(second_field)s' has value true."
+msgstr "Pole zbioru danych '%(first_field)s' musi mieć wartość równą true, jeżeli pole '%(second_field)s' ma wartość true."
+
+#, python-format
+msgid "Resource field '%(first_field)s' must have value true if field '%(second_field)s' has value true."
+msgstr "Pole zasobu '%(first_field)s' musi mieć wartość równą true, jeżeli pole '%(second_field)s' ma wartość true."
+
+#, python-format
+msgid "Institution with type 'private' can not use field '%(field_name)s' with value true for resource."
+msgstr "Instytucja typu 'prywatna' nie może wybrać wartości true w polu '%(field_name)s' zasobu."
+
+#, python-format
+msgid "Institution with type 'private' can not use field '%(field_name)s' with value true for dataset."
+msgstr "Instytucja typu 'prywatna' nie może wybrać wartości true w polu '%(field_name)s' zbioru danych."
 
 msgid "Resource has dynamic data"
 msgstr "Zasób zawiera dane dynamiczne"

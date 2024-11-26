@@ -10,6 +10,7 @@ from mcod import settings
 from mcod.core.api.rdf import signals as rdf_signals
 from mcod.core.api.search import signals as search_signals
 from mcod.core.db.models import BaseExtendedModel
+from mcod.lib.model_sanitization import SanitizedCharField
 from mcod.tags.signals import update_related_datasets, update_related_showcases
 
 User = get_user_model()
@@ -27,7 +28,7 @@ class Tag(BaseExtendedModel):
         "restored": (update_related_datasets, update_related_showcases),
         "removed": (update_related_datasets, update_related_showcases),
     }
-    name = models.CharField(max_length=100, verbose_name=_("name"))
+    name = SanitizedCharField(max_length=100, verbose_name=_("name"))
     language = models.CharField(
         max_length=2,
         choices=settings.LANGUAGES,

@@ -71,6 +71,10 @@
                   $('input[name="has_high_value_data"]').prop('checked', false);
                   $(this).prop('checked', true);
                 });
+                $('input[name="has_high_value_data_from_ec_list"]').click(function(){
+                  $('input[name="has_high_value_data_from_ec_list"]').prop('checked', false);
+                  $(this).prop('checked', true);
+                });
                 $('input[name="has_dynamic_data"]').click(function(){
                   $('input[name="has_dynamic_data"]').prop('checked', false);
                   $(this).prop('checked', true);
@@ -153,6 +157,15 @@
                                   } else if (data.has_high_value_data == false) {
                                       $('#id_has_high_value_data_0').prop('checked', false);
                                       $('#id_has_high_value_data_1').prop('checked', true);
+                                  }
+                              }
+                              if ('has_high_value_data_from_ec_list' in data) {
+                                  if (data.has_high_value_data_from_ec_list == true){
+                                      $('#id_has_high_value_data_from_ec_list_0').prop('checked', true);
+                                      $('#id_has_high_value_data_from_ec_list_1').prop('checked', false);
+                                  } else if (data.has_high_value_data_from_ec_list == false) {
+                                      $('#id_has_high_value_data_from_ec_list_0').prop('checked', false);
+                                      $('#id_has_high_value_data_from_ec_list_1').prop('checked', true);
                                   }
                               }
                               if ('has_dynamic_data' in data) {

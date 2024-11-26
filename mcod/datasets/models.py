@@ -22,7 +22,6 @@ from django.utils.safestring import mark_safe
 from django.utils.timezone import now
 from django.utils.translation import get_language, gettext_lazy as _, override
 from model_utils import FieldTracker
-from modeltrans.fields import TranslationField
 
 from mcod import settings
 from mcod.core import signals as core_signals
@@ -36,6 +35,12 @@ from mcod.counters.models import ResourceDownloadCounter, ResourceViewCounter
 from mcod.datasets.managers import DatasetManager, SupplementManager
 from mcod.datasets.signals import remove_related_resources
 from mcod.datasets.tasks import archive_resources_files, change_archive_symlink_name
+from mcod.lib.model_sanitization import (
+    SanitizedCharField,
+    SanitizedJSONField,
+    SanitizedTextField,
+    SanitizedTranslationField,
+)
 from mcod.regions.models import Region
 from mcod.unleash import is_enabled
 from mcod.watchers.tasks import update_model_watcher_task
@@ -224,10 +229,10 @@ class Dataset(ExtendedModel):
         verbose_name=_("external identifier"),
         help_text=_("external identifier of dataset taken during import process (optional)"),
     )
-    title = models.CharField(max_length=300, null=True, verbose_name=_("Title"))
+    title = SanitizedCharField(max_length=300, null=True, verbose_name=_("Title"))
     version = models.CharField(max_length=100, blank=True, null=True, verbose_name=_("Version"))
     url = models.CharField(max_length=1000, blank=True, null=True, verbose_name=_("Url"))
-    notes = models.TextField(verbose_name=_("Notes"), null=True, blank=False)
+    notes = SanitizedTextField(verbose_name=_("Notes"), null=True, blank=False)
 
     license_chosen = models.PositiveSmallIntegerField(blank=True, null=True, default=None, verbose_name="", choices=LICENSES)
 
@@ -240,12 +245,12 @@ class Dataset(ExtendedModel):
         verbose_name=_("License ID"),
     )
 
-    license_condition_db_or_copyrighted = models.TextField(
+    license_condition_db_or_copyrighted = SanitizedTextField(
         blank=True,
         null=True,
         verbose_name=_("Condition for data with features of work with copy rights or database"),
     )
-    license_condition_personal_data = models.CharField(
+    license_condition_personal_data = SanitizedCharField(
         max_length=300,
         blank=True,
         null=True,
@@ -258,7 +263,7 @@ class Dataset(ExtendedModel):
         verbose_name=_("Condition for possible processing of data"),
     )
     license_condition_original = models.NullBooleanField(null=True, blank=True, default=None)
-    license_condition_responsibilities = models.TextField(
+    license_condition_responsibilities = SanitizedTextField(
         blank=True,
         null=True,
         verbose_name=_("Condition for scope of responsibilities for data"),
@@ -277,11 +282,12 @@ class Dataset(ExtendedModel):
         related_name="datasets",
         verbose_name=_("Institution"),
     )
-    customfields = JSONField(blank=True, null=True, verbose_name=_("Customfields"))
+    customfields = SanitizedJSONField(blank=True, null=True, verbose_name=_("Customfields"))
     update_frequency = models.CharField(max_length=50, blank=True, null=True, verbose_name=_("Update frequency"))
     is_update_notification_enabled = models.BooleanField(default=True, verbose_name=_("turn on notification"))
     has_dynamic_data = models.NullBooleanField(verbose_name=_("dynamic data"))
     has_high_value_data = models.NullBooleanField(verbose_name=_("has high value data"))
+    has_high_value_data_from_ec_list = models.NullBooleanField(verbose_name=_("has high value data from the EC list"))
     has_research_data = models.NullBooleanField(verbose_name=_("has research data"))
     update_notification_frequency = models.PositiveSmallIntegerField(
         null=True, blank=True, verbose_name=_("set notifications frequency")
@@ -353,7 +359,7 @@ class Dataset(ExtendedModel):
         null=True,
         verbose_name=_("Image URL"),
     )
-    image_alt = models.CharField(max_length=255, blank=True, verbose_name=_("Alternative text"))
+    image_alt = SanitizedCharField(max_length=255, blank=True, verbose_name=_("Alternative text"))
     dcat_vocabularies = JSONField(blank=True, null=True, verbose_name=_("Controlled Vocabularies"))
     archived_resources_files = models.FileField(
         storage=get_storage("datasets_archives"),
@@ -364,11 +370,12 @@ class Dataset(ExtendedModel):
         verbose_name=_("Archived resources files"),
     )
     license_condition_default_cc40 = models.NullBooleanField(null=True, blank=True, default=None, verbose_name="")
-    license_condition_custom_description = models.TextField(blank=True, null=True, verbose_name=_("Custom CC BY 40 conditions"))
+    license_condition_custom_description = SanitizedTextField(blank=True, null=True, verbose_name=_("Custom CC BY 40 conditions"))
     is_promoted = models.BooleanField(verbose_name=_("promoting the dataset"), default=False)
 
     def __str__(self):
-        return self.title
+        # need to use str func because title CharField was set with null=True
+        return str(self.title)
 
     @property
     def archive_folder_name(self) -> str:
@@ -824,7 +831,7 @@ class Dataset(ExtendedModel):
             terms.append(condition_text)
         return conditions + "\n".join([term for term in terms if term]) if terms else ""
 
-    i18n = TranslationField(fields=("title", "notes", "image_alt"))
+    i18n = SanitizedTranslationField(fields=("title", "notes", "image_alt"))
     objects = DatasetManager()
     trash = TrashManager()
     tracker = FieldTracker()
@@ -845,6 +852,7 @@ class Dataset(ExtendedModel):
         If the title is modified, method triggers an asynchronous task to update the
         archive symlink name associated with the dataset.
         """
+
         if is_enabled("S61_fix_for_dataset_rename_symlink_archive_problem.be"):
             if self.pk and self.tracker.has_changed("title"):
                 # if the title is modified,trigger an asynchronous task to update the
@@ -852,12 +860,12 @@ class Dataset(ExtendedModel):
                 change_archive_symlink_name.apply_async_on_commit(
                     kwargs=dict(dataset_id=self.pk, old_name=self.tracker.previous("title"))
                 )
-        return super().save(*args, **kwargs)
+            return super().save(*args, **kwargs)
 
 
 class BaseSupplement(ExtendedModel):
-    name = models.CharField(max_length=200, verbose_name=_("name"))
-    language = models.CharField(
+    name = SanitizedCharField(max_length=200, verbose_name=_("name"))
+    language = SanitizedCharField(
         max_length=2,
         choices=settings.LANGUAGES,
         default=settings.LANGUAGES[0][0],
@@ -882,7 +890,7 @@ class BaseSupplement(ExtendedModel):
         verbose_name=_("modified by"),
         related_name="%(app_label)s_%(class)s_modified",
     )
-    i18n = TranslationField(fields=("name",))
+    i18n = SanitizedTranslationField(fields=("name",))
 
     class Meta:
         abstract = True

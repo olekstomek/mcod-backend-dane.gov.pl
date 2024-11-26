@@ -2,6 +2,8 @@ from pydoc import locate
 
 from django.conf import settings
 
+from mcod.organizations.models import Organization
+
 
 def test_xml_schema_deserialization(harvester_decoded_xml_1_2_data, harvester_xml_expected_data, institution):
     schema_path = settings.HARVESTER_IMPORTERS["xml"]["SCHEMA"]
@@ -16,6 +18,7 @@ def test_ckan_schema_deserialization(harvester_ckan_data, harvester_ckan_expecte
     schema_path = settings.HARVESTER_IMPORTERS["ckan"]["SCHEMA"]
     schema_class = locate(schema_path)
     schema = schema_class(many=True)
+    schema.context["new_institution_type"] = Organization.INSTITUTION_TYPE_STATE
     items = schema.load(harvester_ckan_data)
     item = items[0]
     orig_organization_values = item.pop("organization").values()

@@ -13,6 +13,7 @@
 		<license>CC0 1.0</license>
         <published_resources_count>2</published_resources_count>
 		<has_high_value_data>True</has_high_value_data>
+		<has_high_value_data_from_ec_list>False</has_high_value_data_from_ec_list>
 		<has_dynamic_data>False</has_dynamic_data>
         <has_research_data>False</has_research_data>
 		<resources>
@@ -32,8 +33,10 @@
 				<file_size>39.0B</file_size>
 				<data_date/>
 				<has_high_value_data>True</has_high_value_data>
+				<has_high_value_data_from_ec_list>False</has_high_value_data_from_ec_list>
 				<has_dynamic_data>False</has_dynamic_data>
                 <has_research_data>False</has_research_data>
+				<contains_protected_data>False</contains_protected_data>
 				<id>16635</id>
 				<regions>
 					<region>
@@ -60,8 +63,10 @@
 				<file_size>39.0B</file_size>
 				<data_date/>
 				<has_high_value_data>False</has_high_value_data>
+				<has_high_value_data_from_ec_list>False</has_high_value_data_from_ec_list>
 				<has_dynamic_data>False</has_dynamic_data>
                 <has_research_data>False</has_research_data>
+				<contains_protected_data>False</contains_protected_data>
 				<id>16634</id>
 				<regions>
 					<region>
@@ -121,6 +126,7 @@
 		<license>CC0 1.0</license>
         <published_resources_count>2</published_resources_count>
 		<has_high_value_data>False</has_high_value_data>
+		<has_high_value_data_from_ec_list>False</has_high_value_data_from_ec_list>
 		<has_dynamic_data>True</has_dynamic_data>
         <has_research_data>False</has_research_data>
 		<resources>
@@ -140,8 +146,10 @@
 				<file_size>39.0B</file_size>
 				<data_date/>
 				<has_high_value_data>False</has_high_value_data>
+				<has_high_value_data_from_ec_list>False</has_high_value_data_from_ec_list>
 				<has_dynamic_data/>
                 <has_research_data>False</has_research_data>
+				<contains_protected_data>False</contains_protected_data>
 				<id>16637</id>
 				<regions>
 					<region>
@@ -168,8 +176,10 @@
 				<file_size>39.0B</file_size>
 				<data_date/>
 				<has_high_value_data>False</has_high_value_data>
+				<has_high_value_data_from_ec_list>False</has_high_value_data_from_ec_list>
 				<has_dynamic_data>False</has_dynamic_data>
                 <has_research_data>False</has_research_data>
+				<contains_protected_data>False</contains_protected_data>
 				<id>16636</id>
 				<regions>
 					<region>

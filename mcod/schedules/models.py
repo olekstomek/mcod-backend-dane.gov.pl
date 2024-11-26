@@ -13,6 +13,7 @@ from notifications.base.models import AbstractNotification
 from notifications.signals import notify
 
 from mcod.core.db.models import ExtendedModel
+from mcod.lib.model_sanitization import SanitizedCharField, SanitizedTextField
 from mcod.schedules.managers import (
     CommentManager,
     CommentTrashManager,
@@ -40,8 +41,9 @@ NOTIFICATION_TYPES = {
 
 
 class Notification(AbstractNotification):
-
     objects = NotificationQuerySet.as_manager()
+    verb = SanitizedCharField(max_length=255)
+    description = SanitizedTextField(blank=True, null=True)
 
     @property
     def schedule_id(self):

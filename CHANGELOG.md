@@ -14,6 +14,24 @@
 ### Breaks
 
 
+## 2.38.0 - (2024-10-30)
+---
+
+### New
+* Dodanie w metadanej `Zawiera dane o wysokiej wartości z wykazu KE` dla zasobu oraz zbioru danych (OTD-496)
+* Dodanie reguł sanityzacji do formularzy - BEZP Cross-Site Scripting (OTD-397)
+* Dodanie cyklicznego tasku generującego raport spójności stanu BD oraz indeksów ES (OTD-824)
+* Dodanie usuwania indeksów ES danych tabelarycznych zasobów, przy usuwaniu zasobu z kosza (OTD-881)
+
+### Changes
+* Zmiana w skrypcie start-api.sh umożliwiająca parametryzację czasu timeoutu gunicorna, w celu umożliwienia downloadu plików powyżej 1 GB (OTD-820)
+* Wyłączenie w CI testów na środowisku DEV (gałąź pre-devel) (OTD-846)
+* Zmiana typów pól w ES fields.StringField() na fields.TextField(), w celu wyeliminowania DeprecationWarning dot. typów danych (OTD-891)
+
+### Fixes
+* Poprawa obsługi zmiennej środowiskowej DEBUG (OTD-391)
+
+
 ## 2.37.1 - (2024-10-22)
 ---
 
