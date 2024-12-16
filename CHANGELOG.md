@@ -14,6 +14,13 @@
 ### Breaks
 
 
+## 2.38.1 - (2024-11-28)
+---
+
+### Fixes
+* Poprawki w angielskich tłumaczeniach w pliku `translations/system/en/LC_MESSAGES/django.po` (OTD-1037)
+
+
 ## 2.38.0 - (2024-10-30)
 ---
 

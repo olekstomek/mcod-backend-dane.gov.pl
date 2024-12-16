@@ -768,10 +768,10 @@ msgid ""
 msgstr ""
 
 msgid "Yes"
-msgstr "Tak"
+msgstr ""
 
 msgid "No"
-msgstr "Nie"
+msgstr ""
 
 msgid ""
 "Allowed file extensions: jpg, gif, png. For better readability, we "
