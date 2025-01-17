@@ -1,8 +1,10 @@
 import datetime
 import enum
-from typing import Any, Dict, Optional
+from io import BytesIO
+from typing import Any, Dict, List as ListType, Optional, Tuple
 
-from django.core.exceptions import ValidationError as DjangoValidationError
+import requests
+from django.core.exceptions import MultipleObjectsReturned, ValidationError as DjangoValidationError
 from django.utils.timezone import is_naive, make_aware
 from django.utils.translation import gettext_lazy as _, override
 from marshmallow import (
@@ -25,6 +27,16 @@ from mcod.lib.metadata_validators import (
 )
 from mcod.regions.api import PeliasApi
 from mcod.regions.exceptions import MalformedTerytCodeError
+from mcod.resources.dga_constants import DGA_COLUMNS
+from mcod.resources.dga_utils import (
+    get_dga_resource_for_institution,
+    get_dga_resources_info_from_xml_harvester_file,
+    get_remote_extension_if_correct_dga_content_type,
+    request_remote_dga,
+    validate_contains_protected_data_with_other_metadata,
+    validate_dga_file_columns,
+    validate_institution_type_for_contains_protected_data,
+)
 from mcod.resources.link_validation import download_file
 from mcod.resources.models import RESOURCE_DATA_DATE_PERIODS, Resource, supported_formats_choices
 
@@ -238,6 +250,7 @@ class ResourceSchema(ResourceMixin, CKANPreProcessedSchema):
         data_key="has_high_value_data_from_european_commission_list", allow_none=True, missing=None
     )
     has_research_data = Bool(allow_none=True, missing=None)
+    contains_protected_data = Bool(allow_none=True, missing=False)
     package_id = UUID()
     position = Int()
     resource_type = Str(allow_none=True)
@@ -259,6 +272,7 @@ class ResourceSchema(ResourceMixin, CKANPreProcessedSchema):
             "has_high_value_data",
             "has_high_value_data_from_ec_list",
             "has_research_data",
+            "contains_protected_data",
         )
         unknown = EXCLUDE
 
@@ -393,10 +407,11 @@ class XMLResourceSchema(ResourceMixin, XMLPreProcessedSchema):
     created = DateTime(data_key="created", allow_none=True)
     modified = DateTime(data_key="lastUpdateDate", allow_none=True)
     special_signs = List(Str())
-    has_dynamic_data = Bool(data_key="hasDynamicData", allow_none=True)
-    has_high_value_data = Bool(data_key="hasHighValueData", allow_none=True)
+    has_dynamic_data = Bool(data_key="hasDynamicData", allow_none=True, missing=None)
+    has_high_value_data = Bool(data_key="hasHighValueData", allow_none=True, missing=None)
     has_high_value_data_from_ec_list = Bool(data_key="hasHighValueDataFromEuropeanCommissionList", allow_none=True, missing=None)
-    has_research_data = Bool(data_key="hasResearchData", allow_none=True)
+    has_research_data = Bool(data_key="hasResearchData", allow_none=True, missing=None)
+    contains_protected_data = Bool(data_key="containsProtectedData", missing=False)
     supplements = Nested(XMLSupplementSchema, many=True)
     is_auto_data_date = Bool(data_key="isAutoDataDate")
     data_date_update_period = Str(
@@ -522,6 +537,116 @@ class XMLResourceSchema(ResourceMixin, XMLPreProcessedSchema):
         elif result == HighValueDataFromEcValidationResult.HIGH_VALUE_DATA_CONFLICT:
             raise ValidationError(message=msg_high_value_data_flags_conflict, field_name=serializer_field_name)
 
+    @validates_schema
+    def validate_contains_protected_data(self, data, **kwargs):  # noqa: C901
+        contains_protected_data: bool = data["contains_protected_data"]
+
+        if contains_protected_data:
+            field_name = "contains_protected_data"
+            has_dynamic_data: Optional[bool] = data.get("has_dynamic_data")
+            has_high_value_data: Optional[bool] = data.get("has_high_value_data")
+            has_research_data: Optional[bool] = data.get("has_research_data")
+            has_high_value_data_from_ec_list: Optional[bool] = data.get("has_high_value_data_from_ec_list")
+
+            # institution type validation
+            institution_type: str = self.context["organization"].institution_type
+
+            result_ok: bool = validate_institution_type_for_contains_protected_data(contains_protected_data, institution_type)
+            if not result_ok:
+                msg_institution_type_conflict = _(
+                    "A 'private' or 'other' institution cannot use true in the 'containsProtectedData' field of a resource."
+                )
+                raise ValidationError(message=msg_institution_type_conflict, field_name=field_name)
+
+            # other metadata conflict validation
+            result_ok: bool = validate_contains_protected_data_with_other_metadata(
+                contains_protected_data,
+                has_dynamic_data,
+                has_research_data,
+                has_high_value_data,
+                has_high_value_data_from_ec_list,
+            )
+
+            if not result_ok:
+                msg_other_metadata_conflict = _(
+                    "If the resource has a value of the 'containsProtectedData' field equal to true, then the fields"
+                    " 'hasDynamicData', 'hasResearchData', 'hasHighValueData', 'hasHighValueDataFromEuropeanCommissionList'"
+                    " must be false or not present at all."
+                )
+                raise ValidationError(message=msg_other_metadata_conflict, field_name=field_name)
+
+            # url accessibility validation
+            msg_url_not_accessible = _(
+                "An address in the 'url' field of a resource that contains a 'containsProtectedData' field with"
+                " a value equal to true is not responding."
+            )
+            url: str = data["link"]
+            try:
+                response = request_remote_dga(url)
+            except requests.exceptions.RequestException:
+                raise ValidationError(message=msg_url_not_accessible, field_name=field_name)
+
+            result_ok: bool = response.status_code == 200
+            if not result_ok:
+                raise ValidationError(message=msg_url_not_accessible, field_name=field_name)
+
+            # file format validation
+            extension_for_remote: Optional[str] = get_remote_extension_if_correct_dga_content_type(response)
+            if extension_for_remote is None:
+                msg_file_format_not_dga = _(
+                    "If the resource has the value of the 'containsProtectedData' field equal to true, it must point to"
+                    " a file in the xls, xlsx or csv format in the 'url' field."
+                )
+                raise ValidationError(message=msg_file_format_not_dga, field_name=field_name)
+
+            # DGA file columns validation
+            file_data = BytesIO(response.content)
+            result_ok: bool = validate_dga_file_columns(file_data, extension_for_remote)
+            if not result_ok:
+                msg_dga_columns_error = _(
+                    "If the resource has a 'containsProtectedData' value of true, then the resource file must contain exactly "
+                    "%(col_quantity)s of columns, arranged and named exactly: %(col_names)s."
+                ) % {
+                    "col_quantity": len(DGA_COLUMNS),
+                    "col_names": ", ".join(DGA_COLUMNS),
+                }
+                raise ValidationError(message=msg_dga_columns_error, field_name=field_name)
+
+            # more than 1 DGA resource in xml file validation
+            dga_resources_info: ListType[Tuple] = get_dga_resources_info_from_xml_harvester_file(
+                loaded_data=self.context["loaded_data"]
+            )
+            result_ok: bool = len(dga_resources_info) < 2
+            if not result_ok:
+                msg_many_dga_in_xml_file = _(
+                    "There is more than 1 resource in the harvester file containing the '%(field_name)s' field with "
+                    "a value equal to true."
+                ) % {"field_name": "containsProtectedData"}
+                conflicting_dga_details: str = ", ".join(
+                    [
+                        f"Zasób {i}: 'title' = {item[1]}, 'ext_ident' = {item[0]}"
+                        for i, item in enumerate(dga_resources_info, start=1)
+                    ]
+                )
+                msg_many_dga_in_xml_file = msg_many_dga_in_xml_file + " " + conflicting_dga_details
+                raise ValidationError(message=msg_many_dga_in_xml_file, field_name=field_name)
+
+            # institution DGA resource possession validation
+            try:
+                resource_dga_db: Optional[Resource] = get_dga_resource_for_institution(self.context["organization"].pk)
+            except MultipleObjectsReturned as e:
+                msg_multiple_dga_for_institution = str(e)
+                raise ValidationError(message=msg_multiple_dga_for_institution, field_name=field_name)
+            else:
+                if resource_dga_db is not None:
+                    result_ok: bool = resource_dga_db.is_added_by_harvester_with_id(self.context["source_id"])
+                    if not result_ok:
+                        msg_institution_owns_dga = _(
+                            "The provider already has a resource in the portal that contains the '%(field_name)s' field "
+                            "with a value equal to true. Resource: 'title' = %(title)s, 'id' = %(id)s."
+                        ) % {"field_name": "containsProtectedData", "title": resource_dga_db.title, "id": resource_dga_db.pk}
+                        raise ValidationError(message=msg_institution_owns_dga, field_name=field_name)
+
 
 class XMLDatasetSchema(XMLPreProcessedSchema):
     ext_ident = Str(data_key="extIdent", validate=validate.Length(max=36), required=True)
@@ -546,10 +671,10 @@ class XMLDatasetSchema(XMLPreProcessedSchema):
     resources = Nested(XMLResourceSchema, many=True)
     supplements = Nested(XMLSupplementSchema, many=True)
     tags = Nested(XMLTagSchema, many=True)
-    has_dynamic_data = Bool(data_key="hasDynamicData", allow_none=True)
-    has_high_value_data = Bool(data_key="hasHighValueData", allow_none=True)
+    has_dynamic_data = Bool(data_key="hasDynamicData", allow_none=True, missing=None)
+    has_high_value_data = Bool(data_key="hasHighValueData", allow_none=True, missing=None)
     has_high_value_data_from_ec_list = Bool(data_key="hasHighValueDataFromEuropeanCommissionList", allow_none=True, missing=None)
-    has_research_data = Bool(data_key="hasResearchData", allow_none=True)
+    has_research_data = Bool(data_key="hasResearchData", allow_none=True, missing=None)
 
     class Meta:
         ordered = True

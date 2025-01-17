@@ -42,6 +42,7 @@ Feature: Datasource import
     Examples:
     | obj_id | version | xml_resource                                |
     | 101    | 1.11    | xml_datasource_owned_by_state_institution   |
+    | 101    | 1.12    | xml_datasource_owned_by_state_institution   |
 
   @periodic_task
   Scenario Outline: XML resources are not imported - version xsd 1.11 and over
@@ -54,6 +55,8 @@ Feature: Datasource import
     | 101    | 1.11_dataset_has_high_values_metadata_conflict    | xml_datasource_owned_by_state_institution   |
     # using tag `hasHighValueDataFromEuropeanCommissionList` by private institution
     | 101    | 1.11                                              | xml_datasource_owned_by_private_institution |
+    # using tag `containsProtectedData` by private institution
+    | 101    | 1.12                                              | xml_datasource_owned_by_private_institution |
 
   Scenario: DCAT resources are properly imported
     Given active dcat_datasource with id 101 for data {"api_url": "http://api.mock-portal.pl/dcat/endpoint"}

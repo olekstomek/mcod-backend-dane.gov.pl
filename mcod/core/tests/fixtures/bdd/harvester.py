@@ -166,6 +166,7 @@ def xml_datasource_finishes_import(
     harvester_decoded_xml_1_9_import_data,
     harvester_decoded_xml_1_11_import_data,
     harvester_decoded_xml_1_11_import_data_dataset_has_high_values_metadata_conflict,
+    harvester_decoded_xml_1_12_import_data,
     mocked_geocoder_responses_for_xml_import,
     **kwargs,
 ):
@@ -178,6 +179,15 @@ def xml_datasource_finishes_import(
             headers={"content-type": "application/csv"},
             content=tmp_file.read(),
         )
+
+    dga_xls_path = os.path.join(settings.TEST_SAMPLES_PATH, "example_dga_xls_file.xls")
+    with open(dga_xls_path, "rb") as tmp_file_dga_xls:
+        mock_request.get(
+            "https://mock-resource.com.pl/remote-dga.xls",
+            headers={"content-type": "application/vnd.ms-excel"},
+            content=tmp_file_dga_xls.read(),
+        )
+
     txt_path = os.path.join(settings.TEST_SAMPLES_PATH, "example.txt")
     with open(txt_path, "rb") as txt:
         mock_request.get(
@@ -216,6 +226,7 @@ def xml_datasource_finishes_import(
         "1.9": harvester_decoded_xml_1_9_import_data,
         "1.11": harvester_decoded_xml_1_11_import_data,
         "1.11_dataset_has_high_values_metadata_conflict": harvester_decoded_xml_1_11_import_data_dataset_has_high_values_metadata_conflict,  # noqa: E501
+        "1.12": harvester_decoded_xml_1_12_import_data,
     }
     for resp in mocked_geocoder_responses_for_xml_import:
         mock_request.get(resp[0], json=resp[1])

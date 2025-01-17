@@ -14,6 +14,20 @@
 ### Breaks
 
 
+## 2.39.0 - (2024-12-13)
+---
+
+### New
+* Dodano nową wersję schematu XSD - xml_import_otwarte_dane_1_12.xsd (OTD-869)
+* Harwestacja metadanej contains_protected_data przez harwester XML wraz z walidacjami (OTD-870, OTD-871, OTD-872, OTD-873, OTD-874)
+* Harwestacja metadanej contains_protected_data przez harwester CKAN wraz z walidacjami (OTD-1026, OTD-1027, OTD-1028, OTD-1029, OTD-1030, OTD-1031)
+* Uwzględnienie w wykazie głównym DGA zasobów harwestowanych przez CKAN (OTD-1032)
+* Wartości domyślne równe None dla pól has_dynamic_data, has_high_value_data, has_research_data w serializerach zasobu i zbioru danych (OTD-870)
+* Wartość domyślną równą False dla pola contains_protected_data serializerach zasobu (OTD-870, OTD-1026)
+* Tłumaczenia komentarzy błędów walidacji
+* Testy rozwiązania
+
+
 ## 2.38.1 - (2024-11-28)
 ---
 

@@ -3,11 +3,14 @@ import datetime
 import logging
 import os
 import uuid
-from mimetypes import guess_type
+from io import BytesIO
+from mimetypes import guess_extension, guess_type
 from pathlib import Path
-from typing import List, Optional, Set, Tuple, Union
+from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
+import numpy as np
 import pandas as pd
+import requests
 import sentry_sdk
 from cache_memoize import cache_memoize
 from celery import states
@@ -25,7 +28,11 @@ from openpyxl.workbook import Workbook
 from openpyxl.worksheet.worksheet import Worksheet
 
 from mcod.core.utils import clean_columns_in_dataframe, save_df_to_xlsx
-from mcod.resources.dga_constants import DGA_COLUMNS
+from mcod.resources.dga_constants import (
+    ALLOWED_DGA_INSTITUTIONS,
+    DGA_COLUMNS,
+    DGA_RESOURCE_EXTENSIONS,
+)
 from mcod.resources.exceptions import FailedValidationException, PendingValidationException
 from mcod.resources.goodtables_checks import ZERO_DATA_ROWS_MSG
 
@@ -46,29 +53,57 @@ def get_main_dga_dataset() -> Optional["Dataset"]:  # noqa: F821
     return dga_info.main_dga_dataset if dga_info else None
 
 
-def validate_dga_file_columns(file: InMemoryUploadedFile, extension: str) -> bool:
+def create_df_from_dga_file(
+    file: Union[InMemoryUploadedFile, BytesIO],
+    extension: Optional[str],
+) -> Optional[pd.DataFrame]:
+    """
+    Function returns DataFrame for given file and extension or returns
+    None if extension is not one of: `csv`, `xls`, `xlsx`.
+    """
+    if extension in ("xls", "xlsx"):
+        return pd.read_excel(file)
+
+    if extension == "csv":
+        raw_data = file.read()
+        file.seek(0)
+        result = detect_encoding(raw_data)
+        encoding = result["encoding"]
+        if encoding is None:
+            logger.error("Could not detect dga file encoding")
+            return None
+
+        content = raw_data.decode(encoding)
+        dialect = csv.Sniffer().sniff(content)
+        return pd.read_csv(file, dialect=dialect)
+
+
+def validate_dga_df_columns(df: pd.DataFrame) -> bool:
+    """Returns True if DataFrame columns are correctly named and ordered, False otherwise."""
+    return df.columns.to_list() == DGA_COLUMNS
+
+
+def validate_dga_file_columns(
+    file: Union[InMemoryUploadedFile, BytesIO],
+    extension: Optional[str],
+) -> bool:
+    """
+    Returns True if file columns are correctly named and ordered (according to DGA file rules),
+    False otherwise.
+    """
+    # Create DataFrame for given file and extension
     try:
-        if extension in ("xls", "xlsx"):
-            df = pd.read_excel(file)
-        elif extension == "csv":
-            raw_data = file.read()
-            file.seek(0)
-            result = detect_encoding(raw_data)
-            encoding = result["encoding"]
-            if encoding is None:
-                logger.error("Could not detect dga file encoding")
-                return False
-
-            content = raw_data.decode(encoding)
-            dialect = csv.Sniffer().sniff(content)
-            df = pd.read_csv(file, dialect=dialect, nrows=1)
-        else:
-            return False
-
-        return df.columns.to_list() == DGA_COLUMNS
+        df: Optional[pd.DataFrame] = create_df_from_dga_file(file, extension)
     except Exception as e:
         logger.exception(f"Error reading dga file: {e}")
         return False
+
+    # Return False if DataFrame could not be created
+    if df is None:
+        return False
+
+    # Return True if DataFrame columns are ok, False otherwise
+    return validate_dga_df_columns(df)
 
 
 def get_dga_resource_for_institution(
@@ -174,35 +209,103 @@ def get_all_dga_resources_sorted_by_organizations() -> QuerySet:
     return dga_resources
 
 
+def get_ckan_dga_resource_df(resource: "Resource") -> Optional[pd.DataFrame]:  # noqa: F821
+    """
+    Creates df (DataFrame) for DGA Resource that is harvested by CKAN.
+    Returns the df based on currently available remote data if DGA compatible
+    or None otherwise.
+    """
+    # Link to remote data where CKAN harvested data should be located
+    url: Optional[str] = resource.link
+    if url is None:
+        logger.error(f"CKAN Resource has no link. Resource id: {resource.pk}")
+        return None
+
+    # Try to fetch the data
+    try:
+        response: requests.models.Response = request_remote_dga(url)
+    except requests.exceptions.RequestException:
+        logger.exception(f"Site not responding. Resource id: {resource.pk}; url: {url}")
+        return None
+
+    # Check response status code
+    status_code: int = response.status_code
+    if not status_code == 200:
+        logger.error(f"Status code not 200: {status_code}. Resource id: {resource.pk}; url: {url}")
+        return None
+
+    # Check if file extension is correct
+    extension_for_remote: Optional[str] = get_remote_extension_if_correct_dga_content_type(response)
+    if extension_for_remote is None:
+        logger.error(f"Incorrect file extension. Resource id: {resource.pk}; url: {url}")
+        return None
+
+    # Convert data to DataFrame
+    file_data = BytesIO(response.content)
+    df: Optional[pd.DataFrame] = create_df_from_dga_file(file_data, extension_for_remote)
+    if df is None:
+        logger.error(f"Cannot parse data to dataframe. Resource id: {resource.pk}; url: {url}")
+        return None
+
+    # Validate DGA file structure
+    is_valid_file_structure: bool = validate_dga_df_columns(df)
+    if not is_valid_file_structure:
+        logger.error(f"Incorrect file structure. Resource id: {resource.pk}; url: {url}")
+        return None
+
+    return df
+
+
 def create_main_dga_df(resources: QuerySet) -> pd.DataFrame:
+    # List of columns from DGA Resource data shared with Main DGA DataFrame
     main_dga_columns: List[str] = [
         "Nazwa dysponenta zasobu",
         "Zasób chronionych danych",
         "Format danych",
         "Rozmiar danych",
     ]
+
+    # Prepare empty Main DGA Resource DataFrame
     main_df: pd.DataFrame = pd.DataFrame(columns=main_dga_columns)
 
+    # Create DataFrame for each Resource and concatenate it with Main DGA DataFrame
     count_dga_resources: int = resources.count()
     successful_resource_reads: int = 0
     for resource in resources:
-        try:
-            data = resource.tabular_data.table.read(keyed=True)
-        except Exception as e:
-            logger.error(f"Cannot read tabular data for for resource {resource.pk}: {e}")
-            continue
+        # Because CKAN resources' data are not stored in OD,
+        # we have to create df based on currently available remote data
+        if resource.is_imported_from_ckan:
+            df: Optional[pd.DataFrame] = get_ckan_dga_resource_df(resource)
+            if df is None:
+                logger.error(f"Cannot read tabular data for CKAN harvested resource {resource.pk}")
+                continue
+            # Adjust DataFrame to Main DGA structure
+            df["Nazwa dysponenta zasobu"] = np.nan  # will be filled later
+            df = df[main_dga_columns]
 
-        try:
-            df: pd.DataFrame = pd.DataFrame(data, columns=main_df.columns)
-            df = clean_columns_in_dataframe(df, "Zasób chronionych danych")
-        except Exception as e:
-            logger.error(f"Cannot create DataFrame for resource {resource.pk}: {e}")
-            sentry_sdk.api.capture_exception(e)
-            continue
+        # Create Resource DataFrame for any other resource type
+        else:
+            # Read tabular data
+            try:
+                data = resource.tabular_data.table.read(keyed=True)
+            except Exception as e:
+                logger.error(f"Cannot read tabular data for for resource {resource.pk}: {e}")
+                continue
 
+            # Create and adjust DataFrame to Main DGA structure
+            try:
+                df: pd.DataFrame = pd.DataFrame(data, columns=main_df.columns)
+            except Exception as e:
+                logger.error(f"Cannot create DataFrame for resource {resource.pk}: {e}")
+                sentry_sdk.api.capture_exception(e)
+                continue
+
+        # Clean and fill the data
+        df = clean_columns_in_dataframe(df, "Zasób chronionych danych")
         institution: str = resource.institution.title
         df["Nazwa dysponenta zasobu"] = institution
 
+        # Concatenate newly created DataFrame with Main DGA DataFrame
         main_df = pd.concat([main_df, df], ignore_index=True)
         successful_resource_reads += 1
 
@@ -615,3 +718,64 @@ def clean_up_after_main_dga_resource_creation(exception_occurred: bool) -> None:
         logger.error(f"An error occurred while deleting the file {file_path}: {e}")
 
     logger.info("Clean up completed.")
+
+
+def validate_contains_protected_data_with_other_metadata(
+    contains_protected_data: bool,
+    has_dynamic_data: Optional[bool],
+    has_research_data: Optional[bool],
+    has_high_value_data: Optional[bool],
+    has_high_value_data_from_ec_list: Optional[bool],
+) -> bool:
+
+    if contains_protected_data and any(
+        [has_dynamic_data, has_research_data, has_high_value_data, has_high_value_data_from_ec_list]
+    ):
+        return False
+    return True
+
+
+def validate_institution_type_for_contains_protected_data(contains_protected_data: bool, institution_type: str) -> bool:
+    if contains_protected_data and institution_type not in ALLOWED_DGA_INSTITUTIONS:
+        return False
+    return True
+
+
+def get_dga_resources_info_from_xml_harvester_file(loaded_data: List[Dict[str, Any]]) -> List[Tuple]:
+    """
+    Returns list of tuples with information about resources `extIdent` and `title`,
+    which have `containsProtectedData` set as true.
+    """
+    dga_resources_info_from_xml: List[Tuple] = []
+    for ds in loaded_data:
+        for rs in ds.get("resources"):
+            if rs.get("containsProtectedData"):
+                resource_info = (rs.get("extIdent"), rs.get("title")["polish"])
+                dga_resources_info_from_xml.append(resource_info)
+    return dga_resources_info_from_xml
+
+
+def request_remote_dga(url: str) -> requests.models.Response:
+    """
+    The function returns the response from the GET request to the remote DGA URL.
+    It will raise requests.exceptions.RequestException when:
+    - timeout will exceed,
+    - other connection error will occur.
+    """
+    response = requests.get(url, verify=False, timeout=(3.0, 5.0))
+    return response
+
+
+def get_remote_extension_if_correct_dga_content_type(response: requests.models.Response) -> Optional[str]:
+    """
+    The function checks if the response corresponds to the content-type of the file with the extension appropriate for DGA
+    and return extension.
+    Otherwise, it will return None.
+    """
+    content_type: str = response.headers.get("Content-Type", "")
+    extension_for_remote: Optional[str] = guess_extension(content_type)
+    if extension_for_remote:
+        extension_for_remote = extension_for_remote[1:]
+        if extension_for_remote in DGA_RESOURCE_EXTENSIONS:
+            return extension_for_remote
+    return None

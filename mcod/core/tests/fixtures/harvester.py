@@ -71,6 +71,11 @@ def harvester_decoded_xml_1_11_import_data_dataset_has_high_values_metadata_conf
 
 
 @pytest.fixture
+def harvester_decoded_xml_1_12_import_data():
+    return get_harvested_xml_as_dict("1.12")
+
+
+@pytest.fixture
 def harvester_xml_expected_data():
     data = [
         OrderedDict(
@@ -115,7 +120,11 @@ def harvester_xml_expected_data():
                                     "modified",
                                     datetime.datetime(2020, 12, 8, 0, 0, tzinfo=pytz.utc),
                                 ),
+                                ("has_dynamic_data", None),
+                                ("has_high_value_data", None),
                                 ("has_high_value_data_from_ec_list", None),
+                                ("has_research_data", None),
+                                ("contains_protected_data", False),
                             ]
                         ),
                         OrderedDict(
@@ -136,13 +145,20 @@ def harvester_xml_expected_data():
                                     "modified",
                                     datetime.datetime(2020, 1, 1, 0, 0, tzinfo=pytz.utc),
                                 ),
+                                ("has_dynamic_data", None),
+                                ("has_high_value_data", None),
                                 ("has_high_value_data_from_ec_list", None),
+                                ("has_research_data", None),
+                                ("contains_protected_data", False),
                             ]
                         ),
                     ],
                 ),
                 ("tags", [OrderedDict([("lang", "pl"), ("name", "2028_tagPL")])]),
+                ("has_dynamic_data", None),
+                ("has_high_value_data", None),
                 ("has_high_value_data_from_ec_list", None),
+                ("has_research_data", None),
             ]
         )
     ]
@@ -218,6 +234,7 @@ def harvester_ckan_expected_data():
                             ("has_high_value_data", None),
                             ("has_high_value_data_from_ec_list", None),
                             ("has_research_data", None),
+                            ("contains_protected_data", False),
                         ]
                     ),
                     OrderedDict(
@@ -242,6 +259,7 @@ def harvester_ckan_expected_data():
                             ("has_high_value_data", None),
                             ("has_high_value_data_from_ec_list", None),
                             ("has_research_data", None),
+                            ("contains_protected_data", False),
                         ]
                     ),
                 ],

@@ -1,12 +1,14 @@
 import logging
 import os
 from collections import defaultdict
+from io import BytesIO
 from typing import Any, Callable, Dict, List, Optional, Tuple
 from urllib.parse import urlencode
 
+import requests
 from dateutil.relativedelta import relativedelta
 from django.apps import apps
-from django.core.exceptions import ImproperlyConfigured, ValidationError
+from django.core.exceptions import ImproperlyConfigured, MultipleObjectsReturned, ValidationError
 from django.core.files import File
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.validators import validate_email
@@ -32,9 +34,18 @@ from mcod.harvester.ckan_utils import (
     format_dataset_in_trash_error_details,
     format_dataset_org_hvd_ec_conflict_error_details,
     format_invalid_license_error_details,
+    format_not_dga_institution_type_error_details,
+    format_org_already_has_dga_resource,
+    format_org_has_more_than_one_dga_resource,
     format_organization_in_trash_error_details,
+    format_res_dga_other_metadata_conflict_error_details,
+    format_res_dga_url_bad_columns_error_details,
+    format_res_dga_url_no_field_error_details,
+    format_res_dga_url_not_accessible_error_details,
+    format_res_dga_url_remote_file_extension_error_details,
     format_res_hvd_conflict_error_details,
     format_res_org_hvd_ec_conflict_error_details,
+    format_too_many_dga_resources_for_organization,
 )
 from mcod.harvester.exceptions import CKANPartialValidationException
 from mcod.harvester.managers import DataSourceManager
@@ -45,6 +56,14 @@ from mcod.lib.metadata_validators import (
 )
 from mcod.lib.model_sanitization import SanitizedCharField, SanitizedTextField
 from mcod.organizations.models import Organization
+from mcod.resources.dga_utils import (
+    get_dga_resource_for_institution,
+    get_remote_extension_if_correct_dga_content_type,
+    request_remote_dga,
+    validate_contains_protected_data_with_other_metadata,
+    validate_dga_file_columns,
+    validate_institution_type_for_contains_protected_data,
+)
 
 logger = logging.getLogger("mcod")
 
@@ -696,7 +715,7 @@ class DataSource(AdminMixin, LogMixin, SoftDeletableModel, TimeStampedModel):
         item_id: str = item["ext_ident"]
         institution_type = self._get_item_institution_type(item)
 
-        resources: Optional[List[Dict[str, Any]]] = item.get("resources")
+        resources: List[Dict[str, Any]] = item.get("resources", [])
         rejected_resources_ids: List[str] = []
         for resource in resources:
             has_hvd_ec: Optional[bool] = resource.get("has_high_value_data_from_ec_list")
@@ -722,7 +741,7 @@ class DataSource(AdminMixin, LogMixin, SoftDeletableModel, TimeStampedModel):
     def _ckan_validate_item_resources_hvd_conflict(item: ItemData) -> None:
         item_id: str = item["ext_ident"]
 
-        resources: Optional[List[Dict[str, Any]]] = item.get("resources")
+        resources: List[Dict[str, Any]] = item.get("resources", [])
         rejected_resources_ids: List[str] = []
         for resource in resources:
             has_hvd: Optional[bool] = resource.get("has_high_value_data")
@@ -739,6 +758,213 @@ class DataSource(AdminMixin, LogMixin, SoftDeletableModel, TimeStampedModel):
             }
             raise CKANPartialValidationException(
                 error_code=CKANPartialImportError.RES_HVD_CONFLICT,
+                error_data=error_data,
+            )
+
+    @staticmethod
+    def _ckan_validate_item_resources_dga_other_metadata_conflict(item: ItemData) -> None:
+        item_id: str = item["ext_ident"]
+
+        resources: List[Dict[str, Any]] = item.get("resources", [])
+        rejected_resources_ids: List[str] = []
+        for resource in resources:
+            contains_protected_data: bool = resource["contains_protected_data"]
+            has_dynamic: Optional[bool] = resource.get("has_dynamic_data")
+            has_research: Optional[bool] = resource.get("has_research_data")
+            has_hvd: Optional[bool] = resource.get("has_high_value_data")
+            has_hvd_ec: Optional[bool] = resource.get("has_high_value_data_from_ec_list")
+
+            result_ok: bool = validate_contains_protected_data_with_other_metadata(
+                contains_protected_data, has_dynamic, has_research, has_hvd, has_hvd_ec
+            )
+            if not result_ok:
+                rejected_resources_ids.append(resource["ext_ident"])
+
+        if rejected_resources_ids:
+            error_data = {
+                "item_id": item_id,
+                "resources_ids": rejected_resources_ids,
+            }
+            raise CKANPartialValidationException(
+                error_code=CKANPartialImportError.RES_DGA_OTHER_METADATA_CONFLICT,
+                error_data=error_data,
+            )
+
+    @staticmethod
+    def _get_ids_of_dga_resources_for_item(item: ItemData) -> List[str]:
+        resources: List[Dict[str, Any]] = item.get("resources", [])
+        dga_resources_ids: List[str] = [resource["ext_ident"] for resource in resources if resource["contains_protected_data"]]
+        return dga_resources_ids
+
+    def _ckan_validate_item_resources_dga_institution_type(self, item: ItemData) -> None:
+        item_id: str = item["ext_ident"]
+        institution_type: str = self._get_item_institution_type(item)
+
+        # get ids list of resources marked as DGA
+        dga_resources_ids: List[str] = self._get_ids_of_dga_resources_for_item(item)
+        # validate if institution is allowed to have DGA resources (if any exists)
+        if dga_resources_ids:
+            is_valid_institution_type: bool = validate_institution_type_for_contains_protected_data(True, institution_type)
+
+            if not is_valid_institution_type:
+                error_data = {
+                    "item_id": item_id,
+                    "resources_ids": dga_resources_ids,
+                }
+                raise CKANPartialValidationException(
+                    error_code=CKANPartialImportError.NOT_DGA_INSTITUTION_TYPE,
+                    error_data=error_data,
+                )
+
+    @staticmethod
+    def _ckan_validate_item_resources_dga_url(item: ItemData) -> None:
+        item_id: str = item["ext_ident"]
+        resources: List[Dict[str, Any]] = item.get("resources", [])
+        dga_resources: List[Dict[str, Any]] = list(filter(lambda x: x["contains_protected_data"] is True, resources))
+        rejected_resources_ids: List[str] = []
+
+        # url field presence validation
+        for dga_resource in dga_resources:
+            url: Optional[str] = dga_resource.get("link")
+
+            if url is None:
+                rejected_resources_ids.append(dga_resource["ext_ident"])
+                error_data = {
+                    "item_id": item_id,
+                    "resources_ids": rejected_resources_ids,
+                }
+                raise CKANPartialValidationException(
+                    error_code=CKANPartialImportError.RES_DGA_URL_NO_FIELD,
+                    error_data=error_data,
+                )
+            # url accessibility validation
+            try:
+                response = request_remote_dga(url)
+            except requests.exceptions.RequestException:
+                rejected_resources_ids.append(dga_resource["ext_ident"])
+                error_data = {
+                    "item_id": item_id,
+                    "resources_ids": rejected_resources_ids,
+                }
+                raise CKANPartialValidationException(
+                    error_code=CKANPartialImportError.RES_DGA_URL_NOT_ACCESSIBLE,
+                    error_data=error_data,
+                )
+
+            result_ok: bool = response.status_code == 200
+            if not result_ok:
+                rejected_resources_ids.append(dga_resource["ext_ident"])
+                error_data = {
+                    "item_id": item_id,
+                    "resources_ids": rejected_resources_ids,
+                }
+                raise CKANPartialValidationException(
+                    error_code=CKANPartialImportError.RES_DGA_URL_NOT_ACCESSIBLE,
+                    error_data=error_data,
+                )
+
+            # file format validation
+            extension_for_remote: Optional[str] = get_remote_extension_if_correct_dga_content_type(response)
+            if extension_for_remote is None:
+                rejected_resources_ids.append(dga_resource["ext_ident"])
+                error_data = {
+                    "item_id": item_id,
+                    "resources_ids": rejected_resources_ids,
+                }
+                raise CKANPartialValidationException(
+                    error_code=CKANPartialImportError.RES_DGA_URL_BAD_REMOTE_FILE_EXTENSION,
+                    error_data=error_data,
+                )
+
+            # DGA file columns validation
+            file_data: BytesIO = BytesIO(response.content)
+            result_ok: bool = validate_dga_file_columns(file_data, extension_for_remote)
+            if not result_ok:
+                rejected_resources_ids.append(dga_resource["ext_ident"])
+                error_data = {
+                    "item_id": item_id,
+                    "resources_ids": rejected_resources_ids,
+                }
+                raise CKANPartialValidationException(
+                    error_code=CKANPartialImportError.RES_DGA_URL_BAD_COLUMNS,
+                    error_data=error_data,
+                )
+
+    @staticmethod
+    def _ckan_validate_item_org_single_dga_json(
+        item: ItemData,
+        dga_resources_per_organization: Dict[str, int],
+    ) -> None:
+        """
+        Validates whether an item has any DGA resources and checks if the total number
+        of DGA resources for the corresponding organization in the entire JSON file is not greater than one.
+        This function raises a validation exception if an item is associated with an organization that has more than
+        one DGA resource across all items.
+        """
+        item_dga_resources: List[Dict[str, Any]] = [
+            {"ext_ident": resource["ext_ident"], "title": resource["title"]}
+            for resource in item.get("resources", [])
+            if resource["contains_protected_data"]
+        ]
+
+        if item_dga_resources:
+            institution_title: str = item["organization"]["title"]
+            dga_resources_for_organization: int = dga_resources_per_organization[institution_title]
+
+            if dga_resources_for_organization > 1:
+                error_data = {
+                    "resources": item_dga_resources,
+                    "item_id": item["ext_ident"],
+                }
+                raise CKANPartialValidationException(
+                    error_code=CKANPartialImportError.TOO_MANY_DGA_RESOURCES_FOR_ORGANIZATION,
+                    error_data=error_data,
+                )
+
+    def _ckan_validate_item_org_does_not_have_dga_resource(
+        self,
+        item: ItemData,
+    ) -> None:
+        """
+        Validates whether an item's Organization does not have any DGA Resources in database.
+        This function raises a validation exception if an item's Organization already has existing
+        DGA Resource in database which is not created by the same DataSource.
+
+        Note: We allow the existence of a DGA Resource for the Organization, which was created
+        by the same DataSource, due to the possibility of replacing Resources that are flagged as "contains_protected_data".
+        A separate validation function (_ckan_validate_item_org_single_dga_json)
+        is responsible for validating the number of resources marked as DGA
+        for an Organization in the entire JSON file.
+        """
+        # Check if Organization exists
+        org = Organization.objects.filter(title=item["organization"]["title"]).first()
+        if org is None:
+            return
+
+        # Get DGA Resource for existing Organization
+        item_id: str = item["ext_ident"]
+        resource_model = apps.get_model("resources", "Resource")
+        try:
+            org_dga_resource: Optional[resource_model] = get_dga_resource_for_institution(org.pk)
+        except MultipleObjectsReturned as e:
+            error_data = {"item_id": item_id, "error_msg": str(e)}
+            raise CKANPartialValidationException(
+                error_code=CKANPartialImportError.ORGANIZATION_HAS_MORE_THAN_ONE_DGA_RES,
+                error_data=error_data,
+            )
+
+        # If Organization's DGA Resource exists and is not created by this DataSource, then raise exception
+        if org_dga_resource and not org_dga_resource.is_added_by_harvester_with_id(self.pk):
+            item_id: str = item["ext_ident"]
+            item_dga_resources_ids: List[str] = self._get_ids_of_dga_resources_for_item(item)
+            error_data = {
+                "item_id": item_id,
+                "item_dga_resources_ids": item_dga_resources_ids,
+                "existing_dga_resource_id": org_dga_resource.pk,
+                "existing_dga_resource_title": org_dga_resource.title,
+            }
+            raise CKANPartialValidationException(
+                error_code=CKANPartialImportError.ORGANIZATION_ALREADY_HAS_DGA_RESOURCE,
                 error_data=error_data,
             )
 
@@ -768,17 +994,59 @@ class DataSource(AdminMixin, LogMixin, SoftDeletableModel, TimeStampedModel):
             CKANPartialImportError.DATASET_HVD_CONFLICT: format_dataset_hvd_conflict_error_details,
             CKANPartialImportError.RES_ORG_EC_CONFLICT: format_res_org_hvd_ec_conflict_error_details,
             CKANPartialImportError.RES_HVD_CONFLICT: format_res_hvd_conflict_error_details,
+            # Contains Protected Data (DGA) error description formatters
+            CKANPartialImportError.RES_DGA_OTHER_METADATA_CONFLICT: format_res_dga_other_metadata_conflict_error_details,
+            CKANPartialImportError.NOT_DGA_INSTITUTION_TYPE: format_not_dga_institution_type_error_details,
+            CKANPartialImportError.RES_DGA_URL_NO_FIELD: format_res_dga_url_no_field_error_details,
+            CKANPartialImportError.RES_DGA_URL_NOT_ACCESSIBLE: format_res_dga_url_not_accessible_error_details,
+            CKANPartialImportError.RES_DGA_URL_BAD_REMOTE_FILE_EXTENSION: format_res_dga_url_remote_file_extension_error_details,
+            CKANPartialImportError.RES_DGA_URL_BAD_COLUMNS: format_res_dga_url_bad_columns_error_details,
+            CKANPartialImportError.TOO_MANY_DGA_RESOURCES_FOR_ORGANIZATION: format_too_many_dga_resources_for_organization,  # noqa: E501
+            CKANPartialImportError.ORGANIZATION_ALREADY_HAS_DGA_RESOURCE: format_org_already_has_dga_resource,
+            CKANPartialImportError.ORGANIZATION_HAS_MORE_THAN_ONE_DGA_RES: format_org_has_more_than_one_dga_resource,
         }
         return error_description_functions
 
-    def _validate_ckan_item(self, item: ItemData) -> None:
+    def _get_number_of_dga_resources_per_organization(self, items: List[ItemData]) -> Dict[str, int]:
+        """
+        The function returns information about numbers of dga resources for all organizations mentioned in items.
+
+        Returns:
+        Dict[str, int]: A dictionary where the keys are organization titles (str) and the values are
+                        the accumulated count of DGA resources (int) for each organization.
+        """
+        dga_resources_per_organization: Dict[str, int] = {}
+
+        for item in items:
+            dga_resources_ids: List[str] = self._get_ids_of_dga_resources_for_item(item)
+            count_dga_resources: int = len(dga_resources_ids)
+
+            organization_title: str = item["organization"]["title"]
+            dga_resources_per_organization[organization_title] = (
+                dga_resources_per_organization.get(organization_title, 0) + count_dga_resources
+            )
+
+        return dga_resources_per_organization
+
+    def _validate_ckan_item(
+        self,
+        item: ItemData,
+        dga_per_organization: Dict[str, int],
+    ) -> None:
         self._ckan_validate_item_license_id(item)
         self._ckan_validate_item_organization_not_in_trash(item)
         self._ckan_validate_item_dataset_not_in_trash(item)
+        # HVD validations
         self._ckan_validate_item_dataset_org_ec_conflict(item)
         self._ckan_validate_item_dataset_hvd_conflict(item)
         self._ckan_validate_item_resources_org_ec_conflict(item)
         self._ckan_validate_item_resources_hvd_conflict(item)
+        # DGA validations
+        self._ckan_validate_item_resources_dga_institution_type(item)
+        self._ckan_validate_item_resources_dga_other_metadata_conflict(item)
+        self._ckan_validate_item_org_single_dga_json(item, dga_per_organization)
+        self._ckan_validate_item_org_does_not_have_dga_resource(item)
+        self._ckan_validate_item_resources_dga_url(item)
 
     def _ckan_items_partial_validation(self, items: List[ItemData]) -> Tuple[List[ItemData], int, str]:
         """
@@ -804,9 +1072,16 @@ class DataSource(AdminMixin, LogMixin, SoftDeletableModel, TimeStampedModel):
         # (necessary for error description formatter) are recorded in items_errors.
         accepted_items: List[ItemData] = []
         items_errors: Dict[CKANPartialImportError, List[ItemData]] = defaultdict(list)
+
+        # some validation must be done regarding all items
+        number_of_dga_resources_per_organization: Dict[str, int] = self._get_number_of_dga_resources_per_organization(items)
+
         for item in items:
             try:
-                self._validate_ckan_item(item)
+                self._validate_ckan_item(
+                    item,
+                    dga_per_organization=number_of_dga_resources_per_organization,
+                )
             except CKANPartialValidationException as exc:
                 items_errors[exc.error_code].append(exc.error_data)
             else:
@@ -834,7 +1109,7 @@ class DataSource(AdminMixin, LogMixin, SoftDeletableModel, TimeStampedModel):
 
         return accepted_items, rejected_items_count, error_desc
 
-    def import_data(self):
+    def import_data(self):  # noqa: C901
         if not self.is_active:
             logger.debug(f'Cannot import data. Data source "{self}" is not active!')
             return
@@ -854,6 +1129,10 @@ class DataSource(AdminMixin, LogMixin, SoftDeletableModel, TimeStampedModel):
             schema.context["organization"] = self.organization
             if self.is_ckan:
                 schema.context["new_institution_type"] = self.institution_type
+            if self.is_xml:
+                # to provide data for validation in mcod/harvester/serializers.py
+                schema.context["loaded_data"] = data
+                schema.context["source_id"] = self.pk
             items = schema.load(data) if data else []
         except SchemaValidationError as err:
             items = []

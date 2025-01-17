@@ -1535,6 +1535,11 @@ class Resource(ExtendedModel):
             if f.name == "regions":
                 f.save_form_data(self, regions)
 
+    def is_added_by_harvester_with_id(self, source_id: int) -> bool:
+        if self.is_imported and self.dataset.source.pk == source_id:
+            return True
+        return False
+
     @property
     def is_auto_data_date_allowed(self):
         return (

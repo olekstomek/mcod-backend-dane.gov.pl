@@ -1,3 +1,4 @@
+from typing import List
 from unittest.mock import patch
 
 import pytest
@@ -8,6 +9,8 @@ from django.db.models import QuerySet
 from django.utils import timezone
 
 from mcod.core.tests.helpers.tasks import run_on_commit_events
+from mcod.datasets.factories import DatasetFactory
+from mcod.harvester.factories import DataSourceFactory
 from mcod.resources.factories import AggregatedDGAInfoFactory, ResourceFactory
 from mcod.resources.models import Chart, Resource, TaskResult, update_resource
 
@@ -142,6 +145,33 @@ class TestResourceModel:
         resource_of_type_website.description = "\x02"
         with pytest.raises(ValidationError):
             resource_of_type_website.full_clean()
+
+    def test_is_dga_in_db_added_by_harvester_with_source_id(self):
+        """
+        Tests method is_dga_in_db_added_by_harvester_with_source_id.
+        """
+
+        # 1 case - resource added by Administration Panel
+        resource_dga_in_db: Resource = ResourceFactory.create()
+
+        assert resource_dga_in_db.is_added_by_harvester_with_id(source_id=1000) is False
+
+        # 2 case - resource added by harvester which pk = source_id
+        _source = DataSourceFactory.create(source_type="xml", name="harv_1", portal_url="https://some.url")
+        source_id = _source.pk
+        _dataset = DatasetFactory.create(source=_source)
+        resource_dga_in_db = ResourceFactory.create(dataset=_dataset)
+
+        assert resource_dga_in_db.is_added_by_harvester_with_id(source_id=source_id) is True
+
+        # 3 case - resource added by harvester which pk is not equal source_id
+        _source = DataSourceFactory.create(source_type="xml", name="harv_1", portal_url="https://some.url")
+        _other_source = DataSourceFactory.create(source_type="xml", name="harv_2", portal_url="https://some.other.url")
+        _dataset = DatasetFactory.create(source=_other_source)
+        resource_dga_in_db = ResourceFactory.create(contains_protected_data=True, dataset=_dataset)
+        source_id = _source.pk
+
+        assert resource_dga_in_db.is_added_by_harvester_with_id(source_id=source_id) is False
 
 
 class TestTaskResultModel:
@@ -319,6 +349,9 @@ class TestRemoveTabularDataIndex:
             with patch.object(mock_task, "apply_async_on_commit") as mock_apply_async_on_commit:
                 # delete resources from trash
                 qs.delete()
+                called_arguments: List[int] = sorted(mocked_task_signature.call_args[0][0])
+                expected_called_arguments: List[int] = sorted([resource_1_id, resource_2_id])
 
-                mocked_task_signature.assert_called_with([resource_1_id, resource_2_id])
+                assert called_arguments == expected_called_arguments
+                mocked_task_signature.assert_called_once()
                 mock_apply_async_on_commit.assert_called_once()

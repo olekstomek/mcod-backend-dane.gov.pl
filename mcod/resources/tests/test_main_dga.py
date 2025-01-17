@@ -4,7 +4,7 @@ import tempfile
 from pathlib import Path
 from typing import List, Optional
 from unittest import mock
-from unittest.mock import MagicMock, call
+from unittest.mock import MagicMock, call, patch
 
 import pandas as pd
 import pytest
@@ -136,6 +136,136 @@ def test_get_or_create_main_dga_path(
     expected_file_name = "Wykaz zasobów chronionych DGA – wykaz zbiorczy – " "Ministerstwo Cyfryzacji 20251201.xlsx"
     expected_path: Path = directory / expected_file_name
     assert file_path == expected_path
+
+
+@pytest.mark.feat_main_dga
+def test_create_main_dga_df_with_ckan():
+    # GIVEN
+    # Create CKAN Resource (Mock)
+    ckan_resource_data = [
+        {
+            "Lp.": 1,
+            "Zasób chronionych danych": "zasob ckan 1",
+            "Format danych": "csv",
+            "Rozmiar danych": "110 KB",
+            "Warunki ponownego wykorzystywania": "fooo",
+        },
+        {
+            "Lp.": 2,
+            "Zasób chronionych danych": "zasob ckan 2",
+            "Format danych": "xls",
+            "Rozmiar danych": "112 MB",
+            "Warunki ponownego wykorzystywania": "barr",
+        },
+        {
+            "Lp.": 3,
+            "Zasób chronionych danych": "zasob ckan 3",
+            "Format danych": "xlsx",
+            "Rozmiar danych": "11 MB",
+            "Warunki ponownego wykorzystywania": "bazz",
+        },
+    ]
+    ckan_resource_df = pd.DataFrame(ckan_resource_data)
+    ckan_harvested_resource = MagicMock()
+    ckan_harvested_resource.is_imported_from_ckan = True
+    ckan_harvested_resource.institution.title = "Organization A"
+
+    # Create Resource which is not harvested by CKAN (Mock)
+    other_resource_data = [
+        {
+            "Lp.": 1,
+            "Zasób chronionych danych": "zasob1",
+            "Format danych": "csv",
+            "Rozmiar danych": "10 KB",
+            "Warunki ponownego wykorzystywania": "foo",
+        },
+        {
+            "Lp.": 2,
+            "Zasób chronionych danych": "zasob2",
+            "Format danych": "xls",
+            "Rozmiar danych": "12 MB",
+            "Warunki ponownego wykorzystywania": "bar",
+        },
+        {
+            "Lp.": 3,
+            "Zasób chronionych danych": "zasob3",
+            "Format danych": "xlsx",
+            "Rozmiar danych": "1 MB",
+            "Warunki ponownego wykorzystywania": "baz",
+        },
+    ]
+    other_resource = MagicMock()
+    other_resource.is_imported_from_ckan = False
+    other_resource.institution.title = "Organization B"
+    other_resource.tabular_data.table.read.return_value = other_resource_data
+
+    # Mocked DGA Resources QuerySet
+    resources = [ckan_harvested_resource, other_resource]
+    mock_qs = MagicMock()
+    mock_qs.__iter__.return_value = iter(resources)
+    mock_qs.count.return_value = len(resources)
+
+    with patch("mcod.resources.dga_utils.get_ckan_dga_resource_df") as mock_get_ckan_df:
+        mock_get_ckan_df.return_value = ckan_resource_df
+
+        # WHEN
+        df: pd.DataFrame = create_main_dga_df(mock_qs)
+
+    # THEN
+    expected_df_data = [
+        {
+            "Lp.": 1,
+            "Nazwa dysponenta zasobu": "Organization A",
+            "Zasób chronionych danych": "zasob ckan 1",
+            "Format danych": "csv",
+            "Rozmiar danych": "110 KB",
+            "Warunki ponownego wykorzystywania": "określone w ofercie",
+        },
+        {
+            "Lp.": 2,
+            "Nazwa dysponenta zasobu": "Organization A",
+            "Zasób chronionych danych": "zasob ckan 2",
+            "Format danych": "xls",
+            "Rozmiar danych": "112 MB",
+            "Warunki ponownego wykorzystywania": "określone w ofercie",
+        },
+        {
+            "Lp.": 3,
+            "Nazwa dysponenta zasobu": "Organization A",
+            "Zasób chronionych danych": "zasob ckan 3",
+            "Format danych": "xlsx",
+            "Rozmiar danych": "11 MB",
+            "Warunki ponownego wykorzystywania": "określone w ofercie",
+        },
+        {
+            "Lp.": 4,
+            "Nazwa dysponenta zasobu": "Organization B",
+            "Zasób chronionych danych": "zasob1",
+            "Format danych": "csv",
+            "Rozmiar danych": "10 KB",
+            "Warunki ponownego wykorzystywania": "określone w ofercie",
+        },
+        {
+            "Lp.": 5,
+            "Nazwa dysponenta zasobu": "Organization B",
+            "Zasób chronionych danych": "zasob2",
+            "Format danych": "xls",
+            "Rozmiar danych": "12 MB",
+            "Warunki ponownego wykorzystywania": "określone w ofercie",
+        },
+        {
+            "Lp.": 6,
+            "Nazwa dysponenta zasobu": "Organization B",
+            "Zasób chronionych danych": "zasob3",
+            "Format danych": "xlsx",
+            "Rozmiar danych": "1 MB",
+            "Warunki ponownego wykorzystywania": "określone w ofercie",
+        },
+    ]
+
+    expected_df = pd.DataFrame(expected_df_data)
+
+    assert df.equals(expected_df)
 
 
 @pytest.mark.feat_main_dga

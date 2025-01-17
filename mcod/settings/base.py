@@ -258,6 +258,7 @@ HARVESTER_XML_VERSION_TO_SCHEMA_PATH = {
     "1.9": HARVESTER_DATA_DIR.path("xml_import_otwarte_dane_1_9.xsd").root,
     "1.10": HARVESTER_DATA_DIR.path("xml_import_otwarte_dane_1_10.xsd").root,
     "1.11": HARVESTER_DATA_DIR.path("xml_import_otwarte_dane_1_11.xsd").root,
+    "1.12": HARVESTER_DATA_DIR.path("xml_import_otwarte_dane_1_12.xsd").root,
 }
 
 HARVESTER_IMPORTERS = {

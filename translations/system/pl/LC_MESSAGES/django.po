@@ -3450,6 +3450,48 @@ msgstr "Instytucja typu 'prywatna' nie może wybrać wartości true w polu '%(fi
 msgid "Institution with type 'private' can not use field '%(field_name)s' with value true for dataset."
 msgstr "Instytucja typu 'prywatna' nie może wybrać wartości true w polu '%(field_name)s' zbioru danych."
 
+msgid ""
+"If the resource has a value of the 'containsProtectedData' field equal to true, then the fields 'hasDynamicData', "
+"'hasResearchData', 'hasHighValueData', 'hasHighValueDataFromEuropeanCommissionList' must be false or not present at all."
+msgstr ""
+"Jeśli zasób ma wartość pola 'containsProtectedData' równą true, to pola 'hasDynamicData', 'hasResearchData', "
+"'hasHighValueData', 'hasHighValueDataFromEuropeanCommissionList', muszą mieć wartość false lub nie występować w ogóle."
+
+msgid "A 'private' or 'other' institution cannot use true in the 'containsProtectedData' field of a resource."
+msgstr "Instytucja typu 'prywatna' lub 'inna' nie może używać wartości true w polu 'containsProtectedData' zasobu."
+
+msgid "An address in the 'url' field of a resource that contains a 'containsProtectedData' field with a value equal to true is not responding."
+msgstr "Adres w polu 'url' zasobu, który zawiera pole 'containsProtectedData' z wartością równą true, nie odpowiada."
+
+msgid ""
+"If the resource has the value of the 'containsProtectedData' field equal to true, it must point to a file in the xls, "
+"xlsx or csv format in the 'url' field."
+msgstr ""
+"Jeśli zasób ma wartość pola 'containsProtectedData' równą true, to musi wskazywać w polu 'url' na plik w formacie "
+"xls, xlsx lub csv."
+
+#, python-format
+msgid ""
+"If the resource has a 'containsProtectedData' value of true, then the resource file must contain exactly "
+"%(col_quantity)s of columns, arranged and named exactly: %(col_names)s."
+msgstr ""
+"Jeśli zasób ma wartość pola 'containsProtectedData' równą true, to plik zasobu musi zawierać dokładnie "
+"%(col_quantity)s kolumn ułożonych następująco i nazwanych dokładnie: %(col_names)s."
+
+#, python-format
+msgid ""
+"There is more than 1 resource in the harvester file containing the '%(field_name)s' field with a value equal to true."
+msgstr ""
+"W pliku harvestera znajduje się więcej niż 1 zasób zawierający pole '%(field_name)s' z wartością równą true."
+
+#, python-format
+msgid ""
+"The provider already has a resource in the portal that contains the '%(field_name)s' "
+"field with a value equal to true. Resource: 'title' = %(title)s, 'id' = %(id)s."
+msgstr ""
+"Dostawca posiada już w portalu zasób, zawierający pole '%(field_name)s' z wartością równą true. "
+"Zasób: 'title' = %(title)s, 'id' = %(id)s."
+
 msgid "Resource has dynamic data"
 msgstr "Zasób zawiera dane dynamiczne"
 

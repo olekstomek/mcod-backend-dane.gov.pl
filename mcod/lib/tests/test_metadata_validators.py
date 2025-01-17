@@ -1,3 +1,5 @@
+from typing import Dict, List, Tuple
+
 import pytest
 from django.core.exceptions import ValidationError
 
@@ -6,6 +8,11 @@ from mcod.lib.metadata_validators import (
     validate_high_value_data_from_ec_list_organization,
 )
 from mcod.organizations.models import Organization
+from mcod.resources.dga_utils import (
+    get_dga_resources_info_from_xml_harvester_file,
+    validate_contains_protected_data_with_other_metadata,
+    validate_institution_type_for_contains_protected_data,
+)
 
 
 @pytest.mark.parametrize(
@@ -80,3 +87,131 @@ def test_validate_high_value_data_from_ec_list(
             has_high_value_data_from_ec_list,
             organization_type,
         )
+
+
+@pytest.mark.parametrize(
+    (
+        "contains_protected_data",
+        "has_dynamic_data",
+        "has_research_data",
+        "has_high_value_data",
+        "has_high_value_data_from_ec_list",
+        "validation_result",
+    ),
+    [
+        # Test cases where validation result is not OK (False)
+        (True, True, False, False, False, False),
+        (True, False, True, False, False, False),
+        (True, False, False, True, False, False),
+        (True, False, None, False, True, False),
+        # Test cases where validation result is OK (True)
+        (False, False, False, False, False, True),
+        (True, False, False, False, False, True),
+        (True, None, None, False, False, True),
+        (True, None, None, None, None, True),
+    ],
+)
+def test_validate_contains_protected_data_with_other_metadata(
+    contains_protected_data,
+    has_dynamic_data,
+    has_research_data,
+    has_high_value_data,
+    has_high_value_data_from_ec_list,
+    validation_result,
+):
+    """
+    Tests the validation of `contains_protected_data` with other `Resource` metadata.
+    `contains_protected_data` can be set to True only if any `has_dynamic_data`, `has_research_data`,
+    `has_high_value_data`, `has_high_value_data_from_ec_list` is not set to True.
+    """
+
+    assert validation_result == validate_contains_protected_data_with_other_metadata(
+        contains_protected_data, has_dynamic_data, has_research_data, has_high_value_data, has_high_value_data_from_ec_list
+    )
+
+
+@pytest.mark.parametrize(
+    ("contains_protected_data", "institution_type", "validation_result"),
+    [
+        # Test cases where validation result is not OK (False)
+        (True, "private", False),
+        (True, "other", False),
+        # Test cases where validation result is OK (True)
+        (True, "state", True),
+        (True, "local", True),
+        (False, "private", True),
+        (False, "other", True),
+    ],
+)
+def test_validate_contains_protected_data_with_institution_type(contains_protected_data, institution_type, validation_result):
+    """
+    Tests the validation of `contains_protected_data` eligibility based on organization
+    type. Only `state` and `local` institutions are permitted to use `contains_protected_data`=True.
+    """
+
+    assert validation_result == validate_institution_type_for_contains_protected_data(contains_protected_data, institution_type)
+
+
+@pytest.mark.parametrize(
+    ("loaded_data", "expected_result"),
+    [
+        # 2 resources have `containsProtectedData` set True. Resources in different datasets
+        (
+            [
+                {
+                    "resources": [
+                        {"containsProtectedData": True, "extIdent": 1, "title": {"polish": "First title"}},
+                        {"containsProtectedData": False, "extIdent": 2, "title": {"polish": "Second title"}},
+                    ]
+                },
+                {
+                    "resources": [
+                        {"containsProtectedData": False, "extIdent": 3, "title": {"polish": "Third title"}},
+                        {"containsProtectedData": True, "extIdent": 4, "title": {"polish": "Fourth title"}},
+                    ]
+                },
+            ],
+            [(1, "First title"), (4, "Fourth title")],
+        ),
+        # 2 resources have `containsProtectedData` set True. Resources in the same dataset
+        (
+            [
+                {
+                    "resources": [
+                        {"containsProtectedData": True, "extIdent": 1, "title": {"polish": "First title"}},
+                        {"containsProtectedData": True, "extIdent": 2, "title": {"polish": "Second title"}},
+                    ]
+                },
+                {
+                    "resources": [
+                        {"containsProtectedData": False, "extIdent": 3, "title": {"polish": "Third title"}},
+                        {"containsProtectedData": False, "extIdent": 4, "title": {"polish": "Fourth  title"}},
+                    ]
+                },
+            ],
+            [(1, "First title"), (2, "Second title")],
+        ),
+        # no resources have `containsProtectedData` set True
+        (
+            [
+                {
+                    "resources": [
+                        {"containsProtectedData": False, "extIdent": 1, "title": {"polish": "First title"}},
+                        {"containsProtectedData": False, "extIdent": 2, "title": {"polish": "Second title"}},
+                    ]
+                },
+                {
+                    "resources": [
+                        {"containsProtectedData": False, "extIdent": 3, "title": {"polish": "Third title"}},
+                    ]
+                },
+            ],
+            [],
+        ),
+    ],
+)
+def test_get_dga_resources_info_from_xml_harvester_file(loaded_data: List[Dict], expected_result: List[Tuple]):
+    """
+    Tests getting info about all resources having containsProtectedData set True in XML harvester file.
+    """
+    assert expected_result == get_dga_resources_info_from_xml_harvester_file(loaded_data)
