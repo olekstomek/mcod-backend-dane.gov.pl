@@ -21,6 +21,7 @@ from mcod.core.api.rdf.profiles.common import HYDRAPagedCollection
 from mcod.core.api.rdf.schema_mixins import ProfilesMixin
 from mcod.core.api.rdf.schemas import ResponseSchema as RDFResponseSchema
 from mcod.core.api.schemas import ExtSchema
+from mcod.core.choices import SOURCE_TYPE_CHOICES_FOR_ADMIN
 from mcod.core.serializers import CSVSchemaRegistrator, CSVSerializer, ListWithoutNoneStrElement
 from mcod.datasets.models import UPDATE_FREQUENCY
 from mcod.lib.extended_graph import ExtendedGraph
@@ -487,6 +488,7 @@ class DatasetCSVSchema(CSVSerializer, metaclass=CSVSchemaRegistrator):
     notes = fields.Str(data_key=_("notes"), default="")
     url = fields.Str(data_key=_("url"), default="")
     update_frequency = fields.Str(data_key=_("Update frequency"), default="")
+    method_of_sharing = fields.Method("get_method_of_sharing", data_key=_("Method of sharing"))
     institution = fields.Str(data_key=_("Institution"), attribute="organization.id", default="")
     category = fields.Str(data_key=_("Category"), default="")
     status = fields.Str(data_key=_("Status"), default="")
@@ -504,6 +506,9 @@ class DatasetCSVSchema(CSVSerializer, metaclass=CSVSchemaRegistrator):
     class Meta:
         ordered = True
         model = "datasets.Dataset"
+
+    def get_method_of_sharing(self, obj: Dataset) -> str:
+        return SOURCE_TYPE_CHOICES_FOR_ADMIN.get(obj.source_type, obj.source_type)
 
 
 class DatasetXMLSerializer(ExtSchema):
@@ -532,7 +537,7 @@ class DatasetXMLSerializer(ExtSchema):
     has_research_data = fields.Bool()
     regions = fields.Nested(RegionBaseSchema, many=True)
 
-    def get_organization(self, dataset):
+    def get_organization(self, dataset: Dataset):
         context = {
             "published_datasets_count": dataset.organization_published_datasets__count,
             "published_resources_count": dataset.organization_published_resources__count,
@@ -551,6 +556,11 @@ class DatasetXMLWriterSerializer(DatasetXMLSerializer):
 
 
 class DatasetResourcesCSVSerializer(CSVSerializer):
+    """
+    Serializer for Datasets to CSV as they are included in the Public-facing
+    CSV catalogue
+    """
+
     dataset_url = fields.Url(attribute="frontend_absolute_url", data_key=_("Dataset URL"))
     dataset_title = TranslatedStr(attribute="title", data_key=_("Title"))
     dataset_description = TranslatedStr(attribute="notes", data_key=_("Notes"))

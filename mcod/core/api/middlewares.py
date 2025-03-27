@@ -63,8 +63,8 @@ class ApiVersionMiddleware:
                 raise ValueError
         except ValueError:
             raise falcon.HTTPBadRequest(
-                "Unsupported version",
-                "Version provided in X-API-VERSION header is invalid.",
+                title="Unsupported version",
+                description="Version provided in X-API-VERSION header is invalid.",
             )
 
         req.api_version = version
@@ -77,7 +77,7 @@ class ApiVersionMiddleware:
                 if version not in VERSIONS:
                     raise ValueError
             except ValueError:
-                raise falcon.HTTPBadRequest("Unsupported version", "Version provided in path is invalid.")
+                raise falcon.HTTPBadRequest(title="Unsupported version", description="Version provided in path is invalid.")
 
             req.api_version = version
 

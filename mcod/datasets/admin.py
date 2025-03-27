@@ -12,6 +12,7 @@ from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 from django_celery_results.models import TaskResult
 
+from mcod.core.choices import SOURCE_TYPE_CHOICES_FOR_ADMIN
 from mcod.datasets.forms import DatasetForm, SupplementForm, TrashDatasetForm
 from mcod.datasets.models import (
     UPDATE_NOTIFICATION_FREQUENCY_DEFAULT_VALUES,
@@ -376,6 +377,7 @@ class DatasetAdminMixin(HistoryMixin):
         "modified",
         "verified",
         "dataset_logo",
+        "source_type",
     ]
     search_fields = [
         "title",
@@ -438,7 +440,13 @@ class DatasetAdminMixin(HistoryMixin):
 
     update_frequency_display.short_description = _("Update frequency")
 
+    def source_type(self, obj: Dataset) -> str:
+        return SOURCE_TYPE_CHOICES_FOR_ADMIN.get(obj.source_type, obj.source_type)
+
+    source_type.short_description = _("Method of sharing")
+
     def get_fieldsets(self, request, obj=None):
+        for_admin: bool = request.user.is_superuser
         tags_tab_fields = ("tags_list_pl", "tags_list_en") if obj and obj.is_imported else ("tags_pl", "tags_en")
         update_frequency_field = "update_frequency_display" if obj and obj.is_imported else "update_frequency"
         category_field = "categories_list" if obj and obj.is_imported else "categories"
@@ -462,6 +470,7 @@ class DatasetAdminMixin(HistoryMixin):
             ]
         )
         is_promoted = ["is_promoted"] if show_is_promoted else []
+        source_type = ["source_type"] if (for_admin and obj is not None) else []
         return [
             (
                 None,
@@ -490,6 +499,7 @@ class DatasetAdminMixin(HistoryMixin):
                         *is_promoted,
                         "archived_resources_files_media_url",
                         "status",
+                        *source_type,
                         "created_by",
                         "created",
                         "modified",

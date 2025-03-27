@@ -77,7 +77,7 @@ class DatasetForm(ModelFormWithKeywords, HighValueDataFormValidatorMixin):
     status = forms.ChoiceField(
         choices=STATUS_CHOICES,
         help_text=_(
-            "If you select a draft, the status of all published resources belonging " "to that set will be changed to a draft"
+            "If you select a draft, the status of all published resources belonging to that set will be changed to a draft"
         ),
     )
     has_dynamic_data = forms.ChoiceField(

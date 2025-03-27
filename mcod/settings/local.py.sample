@@ -10,8 +10,8 @@ EMAIL_FILE_PATH = '/tmp/app-messages' # change this to a proper location
 
 NO_REPLY_EMAIL = 'no-reply@mcod.local'
 
-BASE_URL = 'http://mcod.local'
-API_URL = 'http://api.mcod.local'
+BASE_URL = 'https://mcod.local'
+API_URL = 'https://api.mcod.local'
 
 ELASTICSEARCH_DSL_INDEX_SETTINGS = {
     'number_of_shards': 1,

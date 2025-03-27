@@ -426,29 +426,6 @@ class XMLWriter(WriterInterface):
             raise ExpatError from exc
 
 
-def save_as_xml(file, data):
-    def custom_item_func(parent):
-        return {
-            "catalog": "dataset",
-            "tags": "tag",
-            "sources": "source",
-            "formats": "format",
-            "keywords": "keyword",
-            "visualization_types": "visualization_type",
-            "openness_scores": "openness_score",
-            "resources": "resource",
-            "categories": "category",
-            "types": "type",
-            "special_signs": "special_sign",
-            "regions": "region",
-            "supplements": "supplement",
-        }.get(parent, "item")
-
-    xml = dicttoxml(data, attr_type=False, item_func=custom_item_func, custom_root="catalog")
-    dom = parseString(xml)
-    file.write(dom.toprettyxml())
-
-
 def clean_filename(filename, limit=220):
     forbidden_chars_map = dict((ord(char), None) for char in '<>:"/|?*~#%&+{}-^\\')
     cleaned_filename = "".join(ch for ch in filename if unicodedata.category(ch)[0] != "C")

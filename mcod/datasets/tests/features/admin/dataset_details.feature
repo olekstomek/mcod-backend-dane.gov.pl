@@ -5,6 +5,9 @@ Feature: Dataset details
     Given dataset for data {"id": 999} imported from ckan named Test Source with url http://example.com
     When admin's page /datasets/dataset/999/change/ is requested
     Then admin's response page is not editable
+    Then admin's response page contains Obejrzyj zbiór danych
+    Then admin's response page contains Sposób udostępnienia
+    Then admin's response page contains CKAN
 
   Scenario: Imported dataset's history page is available for admin
     Given dataset for data {"id": 999} imported from ckan named Test Source with url http://example.com
@@ -124,10 +127,10 @@ Feature: Dataset details
     When admin's page <page_url> is requested
     Then admin's response page contains dataset resources pagination test
     Examples:
-    | page_url                            |
-    | /datasets/dataset/999/change/?p=X   |
-    | /datasets/dataset/999/change/?p=999 |
-    | /datasets/dataset/999/change/?all=  |
+      | page_url                            |
+      | /datasets/dataset/999/change/?p=X   |
+      | /datasets/dataset/999/change/?p=999 |
+      | /datasets/dataset/999/change/?all=  |
 
   Scenario: Dataset details page contains related resources
     Given logged editor user
@@ -190,3 +193,29 @@ Feature: Dataset details
     When admin's page /datasets/dataset/add/ is requested
     Then admin's response page contains Pliki dokumentów mające na celu uzupełnienie danych znajdujących się w zbiorze.
     And admin's response page contains Dodaj dokument
+
+  Scenario: Method of sharing is visible on dataset edit form
+    Given dataset with id 999 and 2 resources
+    When admin's page /datasets/dataset/999/change/ is requested
+    Then admin's response page contains Sposób udostępnienia
+    Then admin's response page contains Manualnie
+
+  Scenario Outline: Method of sharing is visible on dataset edit form for harvested resources
+    Given dataset for data {"id": 999} imported from <source_type> named Test Source with url http://example.com
+    When admin's page /datasets/dataset/999/change/ is requested
+    Then admin's response page contains Sposób udostępnienia
+    Then admin's response page contains <source_type_label>
+
+    Examples:
+      | source_type | source_type_label |
+      | ckan        | CKAN              |
+      | xml         | XML               |
+      | dcat        | DCAT-AP           |
+
+  Scenario: Method of sharing is hidden for editors on dataset edit form
+    Given institution with id 999
+    And dataset with id 1001 and institution 999
+    And admin's request logged editor user created with params {"id": 1000, "organizations": [999]}
+    When admin's page /datasets/dataset/1001/change/ is requested
+    Then admin's response page contains Zmień zbiór danych
+    Then admin's response page not contains Sposób udostępnienia

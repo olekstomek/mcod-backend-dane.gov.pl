@@ -232,7 +232,7 @@ class TestMetadataFileCreation:
             "Opis danych",
             "Data udostępnienia danych",
             "Dane na dzień",
-            "Ranking otwartości",
+            "Poziom otwartości danych",
             "Typ",
             "Format pliku",
             "Rozmiar pliku",
@@ -257,5 +257,6 @@ class TestMetadataFileCreation:
             create_csv_metadata_files()
             file = Path(tmp_path) / "pl" / f"katalog_{new_today}.csv"
             dataframe_report = pd.read_csv(file, sep=";")
+            actual_columns = set(dataframe_report.columns)
             for column in columns_required:
-                assert column in dataframe_report
+                assert column in dataframe_report, f"{column} not found in {actual_columns}"

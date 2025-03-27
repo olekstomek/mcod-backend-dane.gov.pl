@@ -3,6 +3,7 @@ import factory
 from mcod.core.registries import factories_registry
 from mcod.reports.models import (
     DatasetReport,
+    DataSourceImportReport,
     MonitoringReport,
     OrganizationReport,
     Report,
@@ -59,9 +60,17 @@ class MonitoringReportFactory(ReportFactory):
         model = MonitoringReport
 
 
+class DataSourceImportReportFactory(ReportFactory):
+    model = "harvester.DataSourceImport"
+
+    class Meta:
+        model = DataSourceImportReport
+
+
 factories_registry.register("organizationreport", OrganizationReportFactory)
 factories_registry.register("userreport", UserReportFactory)
 factories_registry.register("resourcereport", ResourceReportFactory)
 factories_registry.register("datasetreport", DatasetReportFactory)
 factories_registry.register("summarydailyreport", SummaryDailyReportFactory)
 factories_registry.register("monitoringreport", MonitoringReportFactory)
+factories_registry.register("datasourceimportreport", DataSourceImportReportFactory)

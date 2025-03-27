@@ -11,6 +11,7 @@ from marshmallow import (
     EXCLUDE,
     Schema as BaseSchema,
     ValidationError,
+    post_dump,
     post_load,
     pre_load,
     validate,
@@ -19,7 +20,9 @@ from marshmallow import (
 from marshmallow.fields import URL, UUID, Bool, Date, DateTime, Int, List, Method, Nested, Raw, Str
 
 from mcod import settings
+from mcod.core.api import fields
 from mcod.core.api.rdf.profiles.dcat_ap import DCATDatasetDeserializer
+from mcod.core.serializers import CSVSerializer
 from mcod.datasets.models import Dataset
 from mcod.lib.metadata_validators import (
     validate_conflicting_high_value_data_flags,
@@ -854,3 +857,110 @@ class DataSourceSerializer(Schema):
             with override(lang):
                 translations[lang] = str(obj.get_frequency_in_days_display())
         return translations
+
+
+class DataSourceCSVSchema(CSVSerializer):
+    # `DataSource` fields
+    datasource_id = fields.Str(attribute="pk", data_key=_("Datasource - id"), default="")
+    datasource_name = fields.Str(attribute="name", data_key=_("Name"), default="")
+    datasource_description = fields.Str(attribute="description", data_key=_("Notes"), default="")
+    datasource_source_type = fields.Str(attribute="source_type", data_key=_("Type"), default="")
+    datasource_created = fields.DateTime(attribute="created", data_key=_("Created at"), default=None)
+    datasource_modified = fields.DateTime(attribute="modified", data_key=_("Modified at"), default=None)
+    datasource_last_activation_date = fields.DateTime(
+        attribute="last_activation_date", data_key=_("Last activation date"), default=None
+    )
+    datasource_portal_url = fields.Str(attribute="portal_url", data_key=_("URL"), default="")
+    datasource_api_url = fields.Str(attribute="api_url", data_key=_("API"), default="")
+    datasource_xml_url = fields.Str(attribute="xml_url", data_key=_("XML url"), default="")
+    datasource_organization = fields.Str(attribute="organization__title", data_key=_("Institution"), default="")
+    datasource_frequency_in_days = fields.Integer(attribute="frequency_in_days", data_key=_("Update frequency"), required=True)
+    datasource_created_by = fields.Int(attribute="created_by", data_key=_("Created by"), default=None)
+    datasource_modified_by = fields.Int(attribute="modified_by", data_key=_("Modified by"), default=None)
+    datasource_status = fields.Str(attribute="status", data_key=_("Status"), default="")
+    datasource_institution_type = fields.Str(
+        attribute="institution_type", data_key=_("Default type for newly created institutions"), default=""
+    )
+
+
+class DataSourceImportsCSVSchema(DataSourceCSVSchema):
+    # `DataSource` fields are attached by inheritance
+
+    # DataSourceImport fields
+    datasource_import_id = fields.Integer(attribute="imports__pk", data_key=_("Import - id"), required=True)
+    datasource_import_start = fields.DateTime(attribute="imports__start", data_key=_("Import - start"), default=None)
+    datasource_import_end = fields.DateTime(attribute="imports__end", data_key=_("Import - end"), default=None)
+    datasource_import_datasets_rejected_count = fields.Integer(
+        attribute="imports__datasets_rejected_count", data_key=_("Import - number of rejected datasets"), default=0
+    )
+    datasource_import_datasets_count = fields.Integer(
+        attribute="imports__datasets_count", data_key=_("Import - number of imported datasets"), default=0
+    )
+    datasource_import_datasets_created_count = fields.Integer(
+        attribute="imports__datasets_created_count", data_key=_("Import - number of created datasets"), default=0
+    )
+    datasource_import_datasets_updated_count = fields.Integer(
+        attribute="imports__datasets_updated_count", data_key=_("Import - number of updated datasets"), default=0
+    )
+    datasource_import_datasets_deleted_count = fields.Integer(
+        attribute="imports__datasets_deleted_count", data_key=_("Import - number of deleted datasets"), default=0
+    )
+    datasource_import_resources_count = fields.Integer(
+        attribute="imports__resources_count", data_key=_("Import - number of imported resources"), default=0
+    )
+    datasource_import_resources_created_count = fields.Integer(
+        attribute="imports__resources_created_count", data_key=_("Import - number of created resources"), default=0
+    )
+    datasource_import_resources_updated_count = fields.Integer(
+        attribute="imports__resources_updated_count", data_key=_("Import - number of updated resources"), default=0
+    )
+    datasource_import_resources_deleted_count = fields.Integer(
+        attribute="imports__resources_deleted_count", data_key=_("Import - number of deleted resources"), default=0
+    )
+    datasource_import_status = fields.Str(attribute="imports__status", data_key=_("Import - result"), default="")
+    datasource_import_error_desc = fields.Str(
+        attribute="imports__error_desc", data_key=_("Import - error description"), default=""
+    )
+
+    @post_dump
+    def modify_datasource_institution_type(self, data, **kwargs):
+        # For harvester XML and DCAT-AP set `datasource_institution_type` as ""
+        if data[_("Type")] in ["xml", "dcat"]:
+            data[_("Default type for newly created institutions")] = ""
+        return data
+
+    class Meta:
+        ordered = True
+        unknown = EXCLUDE
+
+
+class DataSourceLastImportDatasetCSVSchema(DataSourceCSVSchema):
+    # `DataSource` fields are attached by inheritance
+
+    # `DataSourceImport` fields
+    datasource_import_id = fields.Integer(attribute="imports__pk", data_key=_("Import - id"), required=True)
+    datasource_import_start = fields.DateTime(attribute="imports__start", data_key=_("Import - start"), default=None)
+    datasource_import_end = fields.DateTime(attribute="imports__end", data_key=_("Import - end"), default=None)
+    datasource_import_status = fields.Str(attribute="imports__status", data_key=_("Import - result"), default="")
+    datasource_import_error_desc = fields.Str(
+        attribute="imports__error_desc", data_key=_("Import - error description"), default=""
+    )
+
+    # Dataset fields
+    dataset_id = fields.Integer(attribute="datasource_datasets__pk", data_key=_("Dataset - id"), required=True)
+    dataset_title = fields.Str(attribute="datasource_datasets__title", data_key=_("Dataset - title"), default="")
+    dataset_tmodified = fields.DateTime(attribute="datasource_datasets__modified", data_key=_("Dataset - modified"), default=None)
+    dataset_organization = fields.Str(
+        attribute="datasource_datasets__organization__title", data_key=_("Dataset - institution"), default=""
+    )
+
+    @post_dump
+    def modify_datasource_institution_type(self, data, **kwargs):
+        # For harvester XML and DCAT-AP set `datasource_institution_type` as ""
+        if data[_("Type")] in ["xml", "dcat"]:
+            data[_("Default type for newly created institutions")] = ""
+        return data
+
+    class Meta:
+        ordered = True
+        unknown = EXCLUDE

@@ -3023,9 +3023,6 @@ msgstr ""
 msgid "Mark resource as file"
 msgstr ""
 
-msgid "Openness score"
-msgstr ""
-
 msgid "Download Tasks"
 msgstr ""
 
@@ -3126,9 +3123,6 @@ msgid "format"
 msgstr ""
 
 msgid "formats after conversion"
-msgstr ""
-
-msgid "openness_score"
 msgstr ""
 
 msgid "views_count"
@@ -4999,4 +4993,16 @@ msgid "Results incresed"
 msgstr ""
 
 msgid "Results decresed"
+msgstr ""
+
+msgid "Method of sharing"
+msgstr ""
+
+msgid "Manually"
+msgstr ""
+
+msgid "Openness score"
+msgstr ""
+
+msgid "openness_score"
 msgstr ""

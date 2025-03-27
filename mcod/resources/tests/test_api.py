@@ -75,7 +75,7 @@ def test_tabular_data_api14(buzzfeed_fakenews_resource, client14, mocker):
     run_on_commit_events()
     _rid = buzzfeed_fakenews_resource.id
 
-    resp = client14.simulate_get("/resources/{}/data/spec/1.4".format(_rid))
+    resp = client14.simulate_get(f"/resources/{_rid}/data/spec/1.4")
     assert HTTP_OK == resp.status
     spec = create_spec(resp.json)
 
@@ -83,7 +83,7 @@ def test_tabular_data_api14(buzzfeed_fakenews_resource, client14, mocker):
     req = FalconOpenAPIWrapper(
         app,
         method="GET",
-        path="/resources/{}/data".format(_rid),
+        path=f"/resources/{_rid}/data",
         headers={"X-API-VERSION": "1.4", "Accept-Language": "pl"},
     )
 

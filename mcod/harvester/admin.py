@@ -12,7 +12,7 @@ from mcod.harvester.forms import DataSourceAdminForm, DataSourceImportAdminForm
 from mcod.harvester.models import DataSource, DataSourceImport, DataSourceTrash
 from mcod.harvester.tasks import import_data_task
 from mcod.harvester.views import ValidateXMLDataSourceView, get_progress
-from mcod.lib.admin_mixins import HistoryMixin, ModelAdmin, TrashMixin
+from mcod.lib.admin_mixins import ExportHarvestersCsvMixin, HistoryMixin, ModelAdmin, TrashMixin
 from mcod.users.forms import FilteredSelectMultipleCustom
 
 
@@ -128,7 +128,7 @@ class DataSourceImports(PaginationInline):
         return self.get_fields(request, obj=obj)
 
 
-class DataSourceAdmin(HistoryMixin, ModelAdmin):
+class DataSourceAdmin(ExportHarvestersCsvMixin, HistoryMixin, ModelAdmin):
     search_fields = ["name"]
     list_display = [
         "name",
@@ -165,6 +165,9 @@ class DataSourceAdmin(HistoryMixin, ModelAdmin):
         ("imports", _("Imports")),
     ]
 
+    export_selected_to_csv = True
+    export_last_import_to_csv = True
+
     def get_readonly_fields(self, request, obj=None):
         readonly_fields = super().get_readonly_fields(request, obj=obj)
         if obj:
@@ -175,7 +178,7 @@ class DataSourceAdmin(HistoryMixin, ModelAdmin):
         choices_indexes = {status[0]: index for index, status in enumerate(obj.STATUS_CHOICES)}
         return obj.STATUS_CHOICES[choices_indexes[obj.status]][1].capitalize()
 
-    def type_col(self, obj):
+    def type_col(self, obj: DataSource) -> str:
         source_type = obj.get_source_type_display()
         if obj.source_type == "ckan":
             return f"{source_type} API"

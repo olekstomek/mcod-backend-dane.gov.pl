@@ -24,6 +24,7 @@ from mcod.lib.utils import capitalize_first_character
 from mcod.lib.widgets import (
     CheckboxSelect,
     CKEditorWidget,
+    OpennessScoreStars,
     ResourceDataRulesWidget,
     ResourceDataSchemaWidget,
     ResourceMapsAndPlotsWidget,
@@ -533,6 +534,13 @@ class ResourceForm(forms.ModelForm, HighValueDataFormValidatorMixin):
 
 
 class ChangeResourceForm(ResourceForm):
+    openness_score = forms.IntegerField(
+        widget=OpennessScoreStars(),
+        label=_("Openness score"),
+        disabled=True,
+        required=False,
+    )
+
     tabular_data_schema = JSONField(widget=ResourceDataSchemaWidget(), required=False)
 
     data_rules = JSONField(widget=ResourceDataRulesWidget(), required=False)
@@ -541,13 +549,15 @@ class ChangeResourceForm(ResourceForm):
 
     def __init__(self, *args, **kwargs):
         if "instance" in kwargs:
+            _instance: Resource = kwargs["instance"]
             kwargs["initial"] = {
-                "data_rules": kwargs["instance"].tabular_data_schema,
-                "maps_and_plots": kwargs["instance"].tabular_data_schema,
+                "data_rules": _instance.tabular_data_schema,
+                "maps_and_plots": _instance.tabular_data_schema,
             }
 
         super().__init__(*args, **kwargs)
         if hasattr(self, "instance"):
+            self.instance: Resource
             self.fields["tabular_data_schema"].widget.instance = self.instance
             self.fields["data_rules"].widget.instance = self.instance
             self.fields["maps_and_plots"].widget.instance = self.instance

@@ -49,7 +49,7 @@ def _prepare_error(exc, error_data=None):
     )
 
 
-def error_handler(exc, req, resp, params):
+def error_handler(req, resp, exc, params):
     update_content_type(req, resp)
     resp.status = exc.status
     if req.api_version == "1.0":
@@ -64,7 +64,7 @@ def error_handler(exc, req, resp, params):
         resp.text = json.dumps(_prepare_error(exc), cls=LazyEncoder)
 
 
-def error_404_handler(exc, req, resp, params):
+def error_404_handler(req, resp, exc, params):
     update_content_type(req, resp)
     resp.status = exc.status
 
@@ -82,7 +82,7 @@ def error_404_handler(exc, req, resp, params):
         resp.text = json.dumps(_prepare_error(exc, error_data=error_data), cls=LazyEncoder)
 
 
-def error_500_handler(exc, req, resp, params):
+def error_500_handler(req, resp, exc, params):
     update_content_type(req, resp)
     resp.status = getattr(exc, "status", "500 Internal Server Error")
 
@@ -114,7 +114,7 @@ def error_500_handler(exc, req, resp, params):
         logger.exception(exc)
 
 
-def error_422_handler(exc, req, resp, params):
+def error_422_handler(req, resp, exc, params):
     update_content_type(req, resp)
     resp.status = exc.status
 

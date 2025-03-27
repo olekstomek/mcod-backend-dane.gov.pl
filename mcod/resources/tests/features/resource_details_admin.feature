@@ -41,11 +41,13 @@ Feature: Resource details page in admin panel
     Given draft remote file resource of api type with id 998
     When admin's page /resources/resource/998/change/ is requested
     Then admin's response page contains is_auto_data_date
+    Then admin's response page has element label with Aktualizacja automatyczna
 
   Scenario: Auto data date checkbox is not visible on form for resource with type file
     Given resource created with params {"id": 1999, "type": "file"}
-    When admin's page /resources/resource/998/change/ is requested
-    Then admin's response page not contains is_auto_data_date
+    When admin's page /resources/resource/1999/change/ is requested
+    Then admin's response page contains Zmień zasób
+    Then admin's response page doesn't have element label with Aktualizacja automatyczna
 
   Scenario: Admin can add supplements to resource
     When admin's page /resources/resource/add/ is requested
@@ -58,3 +60,21 @@ Feature: Resource details page in admin panel
     When admin's page /resources/resource/add/ is requested
     Then admin's response page contains Pliki dokumentów mające na celu uzupełnienie danych znajdujących się w zasobie.
     And admin's response page contains Dodaj dokument
+
+  Scenario: Openness score is visible on resource edit form
+    Given resource created with params {"id": 1999, "type": "file"}
+    When admin's page /resources/resource/1999/change/ is requested
+    Then admin's response page contains Poziom otwartości danych
+
+  Scenario: Method of sharing is visible on resource edit form
+    Given resource created with params {"id": 1999, "type": "file"}
+    When admin's page /resources/resource/1999/change/ is requested
+    Then admin's response page contains Sposób udostępnienia
+    Then admin's response page contains Manualnie
+
+  Scenario: Method of sharing is hidden for editors on resource edit form
+    Given institution with id 999
+    And admin's request logged editor user created with params {"id": 999, "organizations": [999]}
+    And resource created with params {"id": 1999, "type": "file"}
+    When admin's page /resources/resource/1999/change/ is requested
+    Then admin's response page not contains Sposób udostępnienia

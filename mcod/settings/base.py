@@ -211,28 +211,18 @@ AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
 ]
 
-if env("ENABLE_VAULT_HELPERS", default="yes") in ["yes", "1", "true"]:
-    import vaulthelpers
 
-    INSTALLED_APPS += [
-        "vaulthelpers",
-    ]
-
-    DATABASES = {
-        "default": vaulthelpers.database.get_config({"ATOMIC_REQUESTS": True, "CONN_MAX_AGE": 3600}),
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": env("POSTGRES_DB", default="mcod"),
+        "USER": env("POSTGRES_USER", default="mcod"),
+        "PASSWORD": env("POSTGRES_PASSWORD", default="mcod"),
+        "HOST": env("POSTGRES_HOST", default="mcod-db"),
+        "PORT": env("POSTGRES_PORT", default="5432"),
+        "ATOMIC_REQUESTS": True,
     }
-else:
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.postgresql",
-            "NAME": env("POSTGRES_DB", default="mcod"),
-            "USER": env("POSTGRES_USER", default="mcod"),
-            "PASSWORD": env("POSTGRES_PASSWORD", default="mcod"),
-            "HOST": env("POSTGRES_HOST", default="mcod-db"),
-            "PORT": env("POSTGRES_PORT", default="5432"),
-            "ATOMIC_REQUESTS": True,
-        }
-    }
+}
 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 DEBUG_EMAIL_BACKEND = "django.core.mail.backends.filebased.EmailBackend"
@@ -551,6 +541,7 @@ SUIT_CONFIG = {
                 {"model": "reports.organizationreport", "label": _("Institutions")},
                 {"model": "reports.monitoringreport", "label": _("Monitoring")},
                 {"model": "reports.summarydailyreport", "label": _("Daily Reports")},
+                {"model": "reports.datasourceimportreport", "label": _("Data Sources")},
             ],
             "permissions": "auth.add_user",
             "icon": "icon-tasks",

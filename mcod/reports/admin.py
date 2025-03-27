@@ -18,6 +18,7 @@ from mcod.lib.admin_mixins import ModelAdmin
 from mcod.reports.models import (
     Dashboard,
     DatasetReport,
+    DataSourceImportReport,
     MonitoringReport,
     OrganizationReport,
     Report,
@@ -114,6 +115,14 @@ class MonitoringReportsAdmin(ReportsAdmin):
 @admin.register(UserReport)
 class UserReportsAdmin(ReportsAdmin):
     app_models = ["users.User"]
+
+    class Media:
+        pass
+
+
+@admin.register(DataSourceImportReport)
+class DataSourceImportReportsAdmin(ReportsAdmin):
+    app_models = ["harvester.DataSourceImport"]
 
     class Media:
         pass

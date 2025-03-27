@@ -3,9 +3,8 @@ import io
 import pandas as pd
 from falcon.media import BaseHandler
 
-from mcod.core.utils import XMLWriter, save_as_csv, save_as_xml
+from mcod.core.utils import XMLWriter, save_as_csv
 from mcod.settings import RDF_FORMAT_TO_MIMETYPE
-from mcod.unleash import is_enabled
 
 
 class RDFHandler(BaseHandler):
@@ -48,11 +47,8 @@ class XMLHandler(BaseHandler):
             schema = context.serializer_schema
             xml_data = schema.dump(context.data)
             xml_file = io.StringIO()
-            if is_enabled("S60_fix_for_task_creating_xml_and_csv_metadata_files.be"):
-                writer_class: XMLWriter = XMLWriter()
-                writer_class.save(file_object=xml_file, data=xml_data)
-            else:
-                save_as_xml(xml_file, xml_data)
+            writer_class: XMLWriter = XMLWriter()
+            writer_class.save(file_object=xml_file, data=xml_data)
             output = xml_file.getvalue().encode("utf-8")
         return output
 

@@ -4,7 +4,7 @@ from urllib import parse
 import dpath.util
 import requests_mock
 from falcon.testing import Cookie, TestClient
-from falcon.util.misc import get_http_status
+from falcon.util.misc import code_to_http_status
 from pytest_bdd import parsers, then, when
 
 from mcod import settings
@@ -315,7 +315,7 @@ def api_send_request_with_mocked_url(context, mocker, mocked_url, mocked_data, *
 
 @then(parsers.parse("api's response status code is {status_code:d}"))
 def api_response_status_code(status_code, context):
-    status = get_http_status(status_code)
+    status = code_to_http_status(status_code)
     if status != context.response.status:
         print(context.response.json)
     assert status == context.response.status, 'API response status should be "%s", is "%s"' % (status, context.response.status)

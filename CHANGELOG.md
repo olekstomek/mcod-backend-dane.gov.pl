@@ -14,6 +14,56 @@
 ### Breaks
 
 
+## 2.41.0 - (2025-03-11)
+---
+
+### New
+* Akcja w PA związana z źródłami danych - Eksportuj zaznaczone do CSV - OTD-1169, OTD-1171
+* Akcja w PA związana z źródłami danych - Eksportuj ostatni import do CSV - OTD-1170
+* Zakładka Źródła danych w sekcji Raporty w PA - OTD-1155, OTD-1156, OTD-1157
+* Serializer DataSourceImportsCSVSchema - OTD-1168
+* Serializer DataSourceLastImportDatasetCSVSchema - OTD-1167
+* Task asynchroniczny - generate_harvesters_imports_report przygotowujący dane do raportu i generujący raport w importów - OTD-1167
+* Task asynchroniczny - generate_harvesters_last_imports_report przygotowujący dane do raportu i generujący raport z ostatnich importów - OTD-1168
+* Pole openness_score w widoku edycji Resource - OTD-1140
+* Pole source_type w widoku edycji Resource - OTD-1141
+* Pole source_type w widoku edycji Dataset - OTD-1142
+* Kolumna openness_score w raporcie Zasobów - OTD-1143
+* Kolumna source_type w raporcie Zasobów - OTD-1143
+* Kolumna openness_score w raporcie Zbiory Danych - OTD-1144
+* Kolumna source_type w raporcie Zbiory Danych - OTD-1144
+
+### Changes
+* Zmiana etykiety pola openness_score w raporcie - katalogu wszystkich Zbiorów - OTD-1249
+* Zmiana etykiety pola openness_score w raporcie - katalogu dla pojedynczego Zbioru - OTD-1250
+
+
+## 2.40.2 - (2025-02-20)
+---
+
+### Fixes
+- Zmniejszono wersję biblioteki django-admin-rangefilter do stabilnej i działającej wersji 0.4.0 (OTD-1222)
+
+
+## 2.40.1 - (2025-02-19)
+---
+
+### Fixes
+- Przywrócono bibliotekę goodtables do stabilnej i działającej wersji 2.1.4 (OTD-1215)
+- Naprawa błędu z nieprzechodzącym testem w związku z tłumaczeniami django (OTD-1111)
+
+
+## 2.40.0 - (2025-02-14)
+---
+
+### New
+* Podniesiono wersję Falcona do 4.0.2, co spowodowało aktualizację kodu: Należało dodać argumenty pozycyjne dla Exceptionów (api/handlers.py, watchers/views.py) oraz zmienić metodę get_http_status na code_to_http_status. Należało również zmienić error handlery: nazwa parametrów w funkcji zwracała warningi, Falcon prosił o ich zmianę (przestawienie parametrów w errors.py).
+* Podniesiono wersję django-admin-rangefilter do 0.13.2. Zmiana spowodowała zmianę modułu w pliku reports/admin.py z rangefilter.filter na rangefilter.filters
+* Usunięto bibliotekę django-vault-helpers (nie była używana) co spowodowało zmianę w ustawieniach projektu (settings/base.py).
+* Usunięto bibliotekę wand, co spowodowało zmiany w Dockerfile i gitlab-ci.yml.
+* Przeniesiono hypereditor z gitlaba do projektu (.whl).
+
+
 ## 2.39.0 - (2024-12-13)
 ---
 

@@ -3,7 +3,7 @@ import json
 import logging
 import os
 from types import SimpleNamespace
-from typing import List
+from typing import List, Optional
 from uuid import uuid4
 
 from constance import config
@@ -444,7 +444,7 @@ class Dataset(ExtendedModel):
         return self.source.name if self.source else None
 
     @property
-    def source_type(self):
+    def source_type(self) -> Optional[str]:
         return self.source.source_type if self.source else None
 
     @property

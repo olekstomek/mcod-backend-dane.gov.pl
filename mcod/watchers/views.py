@@ -53,14 +53,14 @@ class SubscriptionsView(JsonAPIView):
             data = cleaned["data"]["attributes"]
             try:
                 _inst = self.database_model.objects.get_from_data(self.request.user, data, headers=self.request.headers)
-                raise falcon.HTTPForbidden("Subscription for this object already exist")
+                raise falcon.HTTPForbidden(title="403 Forbidden", description="Subscription for this object already exist")
             except SubscribedObjectDoesNotExist:
-                raise falcon.HTTPForbidden("Subscribed object does not exist")
+                raise falcon.HTTPForbidden(title="403 Forbidden", description="Subscribed object does not exist")
             except self.database_model.DoesNotExist:
                 try:
                     _inst = self.database_model.objects.create_from_data(self.request.user, data, headers=self.request.headers)
                 except DuplicateSubscriptionName:
-                    raise falcon.HTTPForbidden("Subscription with given name already exist")
+                    raise falcon.HTTPForbidden(title="403 Forbidden", description="Subscription with given name already exist")
 
             return _inst
 
@@ -106,7 +106,7 @@ class SubscriptionView(JsonAPIView):
             except model.DoesNotExist:
                 raise falcon.HTTPNotFound
             except DuplicateSubscriptionName:
-                raise falcon.HTTPForbidden("Subscription with given name already exist")
+                raise falcon.HTTPForbidden(title="403 Forbidden", description="Subscription with given name already exist")
 
         def _get_included(self, result, *args, **kwargs):
             return [result.to_jsonapi(api_version=getattr(self.request, "api_version", None))]

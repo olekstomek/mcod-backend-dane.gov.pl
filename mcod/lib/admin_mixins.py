@@ -1,15 +1,20 @@
 import json
 from collections import defaultdict
+from datetime import datetime, timedelta
+from typing import List, Optional
 from urllib.parse import quote as urlquote
 
 import nested_admin
 from auditlog.admin import LogEntryAdmin as BaseLogEntryAdmin
+from django import forms
 from django.contrib import admin, messages
+from django.contrib.admin.helpers import ActionForm
 from django.contrib.admin.templatetags.admin_urls import add_preserved_filters
 from django.contrib.admin.utils import quote, unquote
 from django.contrib.admin.views.main import ChangeList
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.core.exceptions import PermissionDenied
+from django.db.models import QuerySet
 from django.http import HttpResponseRedirect
 from django.template.defaultfilters import truncatewords
 from django.template.response import TemplateResponse
@@ -28,8 +33,14 @@ from rules.contrib.admin import (
 from suit.admin import SortableStackedInline as BaseSortableStackedInline, SortableStackedInlineBase
 
 from mcod import settings
+from mcod.datasets.models import Dataset
+from mcod.harvester.models import DataSourceImport
 from mcod.histories.models import LogEntry
-from mcod.reports.tasks import generate_csv
+from mcod.reports.tasks import (
+    generate_csv,
+    generate_harvesters_imports_report,
+    generate_harvesters_last_imports_report,
+)
 from mcod.tags.views import TagAutocompleteJsonView
 
 
@@ -778,3 +789,101 @@ class HistoryMixin:
         return html
 
     obj_history.short_description = _("History")
+
+
+def export_imports_to_csv(modeladmin, request, queryset):
+
+    data_from_str: Optional[str] = request.POST.getlist("date_from")[0] or None
+    data_to_str: Optional[str] = request.POST.getlist("date_to")[0] or None
+
+    date_from: Optional[datetime] = datetime.strptime(data_from_str, "%Y-%m-%d") if data_from_str else None
+    date_to: Optional[datetime] = datetime.strptime(data_to_str, "%Y-%m-%d") if data_to_str else None
+
+    datasource_pks: QuerySet = queryset.values_list("pk", flat=True)
+    imports: QuerySet = DataSourceImport.objects.filter(datasource__in=datasource_pks).order_by("datasource_id")
+
+    if date_from is not None:
+        imports = imports.filter(start__gte=date_from)
+    if date_to is not None:
+        imports = imports.filter(start__lt=date_to + timedelta(days=1))
+
+    imports_pks: QuerySet = imports.values_list("pk", flat=True)
+
+    if imports_pks.count() > 0:
+        imports_pks: List[int] = list(imports_pks)
+
+        generate_harvesters_imports_report.s(
+            imports_pks,
+            "harvester.DataSourceImport",
+            request.user.id,
+            now().strftime("%Y%m%d%H%M%S.%s"),
+        ).apply_async_on_commit()
+        messages.add_message(request, messages.SUCCESS, _("Task for CSV generation queued"))
+    else:
+        messages.add_message(request, messages.WARNING, _("No data was found for the report according to the specified criteria"))
+
+
+def export_last_import_to_csv(modeladmin, request, queryset):
+
+    chosen_datasource_pks: List[int] = list(row.id for row in queryset)
+
+    dataset_pks_for_choosen_datasources: QuerySet = Dataset.objects.filter(source__in=chosen_datasource_pks).values_list(
+        "id", flat=True
+    )
+
+    if dataset_pks_for_choosen_datasources.count() > 0:
+        generate_harvesters_last_imports_report.s(
+            chosen_datasource_pks,
+            "harvester.DataSourceImport",
+            request.user.id,
+            now().strftime("%Y%m%d%H%M%S.%s"),
+        ).apply_async_on_commit()
+
+        messages.add_message(request, messages.SUCCESS, _("Task for CSV generation queued"))
+    else:
+        messages.add_message(request, messages.WARNING, _("No data was found for the report according to the specified criteria"))
+
+
+class ExportHarvestersCsvActionForm(ActionForm):
+    date_from = forms.DateField(
+        required=False,
+        help_text="Od daty",
+    )
+
+    date_to = forms.DateField(
+        required=False,
+        help_text="Do daty",
+    )
+
+
+class ExportHarvestersCsvMixin(ExportCsvMixin):
+
+    export_selected_to_csv = False
+    export_last_import_to_csv = False
+
+    action_form = ExportHarvestersCsvActionForm
+
+    def get_actions(self, request):
+        actions = super().get_actions(request)
+        if self.export_selected_to_csv and request.user.is_superuser:
+            actions.update(
+                {
+                    "export_imports_to_csv": (
+                        export_imports_to_csv,
+                        "export_imports_to_csv",
+                        _("Export selected to CSV"),
+                    )
+                }
+            )
+        if self.export_last_import_to_csv and request.user.is_superuser:
+            actions.update(
+                {
+                    "export_last_import_to_csv": (
+                        export_last_import_to_csv,
+                        "export_last_import_to_csv",
+                        _("Export last import to CSV"),
+                    )
+                }
+            )
+
+        return actions

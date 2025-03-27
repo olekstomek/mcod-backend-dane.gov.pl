@@ -1,4 +1,5 @@
 import json
+from typing import Any, Dict, List
 
 import more_itertools as mit
 from ckeditor.widgets import CKEditorWidget as BaseCKEditorWidget
@@ -332,3 +333,30 @@ class ExternalDatasetsWidget(JsonPairDatasetInputs):
     class Media:
         extend = False
         css = {"all": ("admin/css/customfields.css",)}
+
+
+MAX_OPENNESS_SCORE = 5
+
+
+class OpennessScoreStars(Widget):
+    """
+    Renders openness score (int) as stars, analogous to how frontend does in the star-rating-component.
+    Input value is an int (Resource.openness_score). To simplify the template we also pass a list[bool],
+    such that the number of True's in it represents openness score.
+
+    Inspired by https://github.com/ckan/ckanext-qa/blob/master/ckanext/qa/templates/qa/stars.html
+    """
+
+    template_name = "admin/forms/widgets/resources/openness-score-stars.html"
+
+    def get_context(self, name: str, value: int, attrs: Dict[str, Any]) -> Dict[str, str]:
+        context = super().get_context(name, value, attrs)
+        context["openness_score_value"] = value
+        context["stars_list"] = self._score_as_list(value)
+        context["max_stars"] = MAX_OPENNESS_SCORE
+        return context
+
+    @staticmethod
+    def _score_as_list(value: int, max_value: int = MAX_OPENNESS_SCORE) -> List[bool]:
+        v = max(0, min(max_value, value))
+        return [True] * v + [False] * (max_value - v)

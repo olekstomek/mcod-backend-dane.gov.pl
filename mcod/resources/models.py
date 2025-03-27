@@ -635,6 +635,10 @@ class Resource(ExtendedModel):
         return self.dataset.is_imported
 
     @property
+    def source_type(self) -> Optional[str]:
+        return self.dataset.source_type
+
+    @property
     def is_imported_from_ckan(self):
         return self.dataset.is_imported_from_ckan
 

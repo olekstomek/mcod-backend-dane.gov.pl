@@ -2,6 +2,7 @@ import os
 
 from django.conf import settings
 from django.test import override_settings
+from django.utils.translation import override
 
 from mcod.core.tests.helpers.tasks import run_on_commit_events
 from mcod.showcases.models import ShowcaseProposal
@@ -68,9 +69,12 @@ class TestApplicationsTasks:
             ):
                 assert data[key] in plain
                 assert data[key] in html
-            for ds in datasets[:2]:
-                assert ds.frontend_absolute_url in plain
-                assert ds.frontend_absolute_url in html
+
+            with override("pl"):
+                for ds in datasets[:2]:
+                    assert "pl" in ds.frontend_absolute_url
+                    assert ds.frontend_absolute_url in plain, plain
+                    assert ds.frontend_absolute_url in html, html
 
             assert data["notes"] in plain
             assert data["notes"].replace("\n", "<br>") in html

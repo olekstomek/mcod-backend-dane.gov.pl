@@ -7,7 +7,7 @@ import smtplib
 import zipfile
 from io import BytesIO
 from pydoc import locate
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Literal, Optional, Union
 from unittest import mock
 
 import dpath
@@ -764,7 +764,25 @@ def admin_response_page_contains_values(admin_context, contained_value, another_
 @then(parsers.parse("admin's response page not contains {value}"))
 def admin_response_page_not_contains(admin_context, value):
     content = admin_context.response.content.decode()
-    assert value not in content, f'Page content should not contain phrase: "{value}"'
+    assert value not in content, f'Page content should not contain phrase: "{value}". Actual content is: {content}'
+
+
+@then(parsers.parse("admin's response page {condition} element {tag_name} with {text}"))
+def admin_response_page_contains_element(admin_context, condition: Literal["has", "has no"], tag_name: str, text: str):
+    content: str = admin_context.response.content.decode()
+    soup = BeautifulSoup(content, "html.parser")
+    elements = list(soup.find_all(tag_name))
+    expects_elements_to_exist: bool = True if condition == "has" else False
+    found = False
+    for field in elements:
+        if text in field.text:
+            found = True
+            break
+    if expects_elements_to_exist:
+        assert elements, f"Page does not contain any {tag_name}. Actual content is: {content}"
+        assert found, f"No {tag_name} contains {text}. Actual content is: {content}"
+    else:
+        assert not found, f"Found {tag_name} with {text}. Actual content is: {content}"
 
 
 @then(parsers.parse("admin's response resolved url name is {url_name}"))

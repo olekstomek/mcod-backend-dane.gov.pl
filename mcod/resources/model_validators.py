@@ -4,8 +4,6 @@ from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 from pyexpat import ExpatError
 
-from mcod.unleash import is_enabled
-
 
 def illegal_character_validator(value: str) -> None:
     """
@@ -25,8 +23,7 @@ def illegal_character_validator(value: str) -> None:
     raising an exception due to illegal characters.
     """
     data = f"<data>{value}</data>"
-    if is_enabled("S60_fix_for_task_creating_xml_and_csv_metadata_files.be"):
-        try:
-            parseString(data)
-        except ExpatError:
-            raise ValidationError(_("Given text contains illegal character. " "Please revalidate provided data."))
+    try:
+        parseString(data)
+    except ExpatError:
+        raise ValidationError(_("Given text contains illegal character. " "Please revalidate provided data."))

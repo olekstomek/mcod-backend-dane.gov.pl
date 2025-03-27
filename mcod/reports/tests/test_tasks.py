@@ -2,23 +2,40 @@ import csv
 import datetime
 import json
 import os
+import random
 from pathlib import Path
 from time import sleep
 from typing import Dict, List
 from unittest import mock
 
+import factory
 import pandas as pd
 import pytest
 import pytz
+from celery.app.task import Task
 from django.apps import apps
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db.models import Sum
 from django.test import override_settings
+from django.utils.timezone import now
 
 from mcod.counters.models import ResourceDownloadCounter, ResourceViewCounter
+from mcod.datasets.factories import DatasetFactory
+from mcod.harvester.factories import DataSourceImportFactory
+from mcod.harvester.models import DataSourceImport
+from mcod.harvester.serializers import (
+    DataSourceImportsCSVSchema,
+    DataSourceLastImportDatasetCSVSchema,
+)
+from mcod.reports.exceptions import NoDataForReportException
 from mcod.reports.models import SummaryDailyReport
-from mcod.reports.tasks import create_daily_resources_report, generate_csv
+from mcod.reports.tasks import (
+    create_daily_resources_report,
+    generate_csv,
+    generate_harvesters_imports_report,
+    generate_harvesters_last_imports_report,
+)
 from mcod.users.models import User as User_model
 
 User = get_user_model()
@@ -198,3 +215,93 @@ class TestTasks:
             assert "Zbior danych posiada dane wysokiej wartosci z wykazu KE" in dataframe_report
             assert "Zbior danych posiada dane dynamiczne" in dataframe_report
             assert "Zbior danych posiada dane badawcze" in dataframe_report
+
+    class TestHarvesterReportTasks:
+        def test_generate_harvesters_imports_report(self, active_user: User):
+            model_name = "harvester.DataSourceImport"
+            app, _model = model_name.split(".")
+            user_id = active_user.id
+            file_name_postfix = now().strftime("%Y%m%d%H%M%S.%s")
+
+            # GIVEN - some imports
+            imports_count: int = random.randint(1, 20)
+
+            imports: List[DataSourceImport] = DataSourceImportFactory.create_batch(size=imports_count)
+            pks_imports: List[int] = [import_instance.pk for import_instance in imports]
+
+            with mock.patch("mcod.reports.tasks.save_as_csv") as mocked_save_as_csv:
+                # WHEN - call `generate_harvesters_imports_report`
+                result: str = generate_harvesters_imports_report(pks_imports, model_name, user_id, file_name_postfix)
+
+                result_dict: Dict[str, str] = json.loads(result)
+                file_name = f"{_model.lower()}s_{file_name_postfix}.csv"
+
+                mocked_save_as_csv.assert_called_once()
+                args, kwargs = mocked_save_as_csv.call_args
+                col_names = args[1]
+                record_import_count = len(args[2])
+                data_source_import_csv_serializer = DataSourceImportsCSVSchema(many=True)
+
+                # THEN
+                assert col_names == data_source_import_csv_serializer.get_csv_headers()
+                assert record_import_count == imports_count
+                assert result_dict["model"] == model_name
+                assert f"{settings.REPORTS_MEDIA}/{app}/{file_name}" == result_dict["csv_file"]
+                assert result_dict["user_email"] == active_user.email
+
+        def test_generate_harvesters_last_imports_report(self, active_user: User):
+            model_name = "harvester.DataSourceImport"
+            app, _model = model_name.split(".")
+            user_id = active_user.id
+            file_name_postfix = now().strftime("%Y%m%d%H%M%S.%s")
+
+            # GIVEN - some `DataSourceImport`s, `DataSource`s and `Dataset`s
+            imports_count: int = random.randint(1, 20)
+
+            imports: List[DataSourceImport] = DataSourceImportFactory.create_batch(size=imports_count)
+            datasource_pks: List[int] = [import_instance.datasource.pk for import_instance in imports]
+
+            DatasetFactory.create_batch(size=imports_count, source=factory.Iterator([im.datasource for im in imports]))
+
+            # add one more `Dataset` for one `DataSource` - one `Datasource` have two `Dataset`s
+            DatasetFactory.create(source=imports[0].datasource)
+
+            with mock.patch("mcod.reports.tasks.save_as_csv") as mocked_save_as_csv:
+                # WHEN - call `generate_harvesters_last_imports_report`
+                result: str = generate_harvesters_last_imports_report(datasource_pks, model_name, user_id, file_name_postfix)
+
+                result_dict: Dict[str, str] = json.loads(result)
+                file_name = f"datasourcelastimports_{file_name_postfix}.csv"
+
+                mocked_save_as_csv.assert_called_once()
+                args, kwargs = mocked_save_as_csv.call_args
+                col_names = args[1]
+                record_in_report = len(args[2])
+                data_source_import_dataset_csv_serializer = DataSourceLastImportDatasetCSVSchema(many=True)
+
+                # THEN
+                assert col_names == data_source_import_dataset_csv_serializer.get_csv_headers()
+                assert record_in_report == imports_count + 1  # +1 because one `Datasource` have two `Dataset`s
+                assert result_dict["model"] == model_name
+                assert f"{settings.REPORTS_MEDIA}/{app}/{file_name}" == result_dict["csv_file"]
+                assert result_dict["user_email"] == active_user.email
+
+        @pytest.mark.parametrize(
+            "generate_harvesters_imports_raport_task",
+            (generate_harvesters_imports_report, generate_harvesters_last_imports_report),
+        )
+        def test_generate_harvester_import_reports_no_data(
+            self, active_user: User, generate_harvesters_imports_raport_task: Task
+        ):
+            model_name = "harvester.DataSourceImport"
+            user_id = active_user.id
+            file_name_postfix = now().strftime("%Y%m%d%H%M%S.%s")
+
+            # GIVEN - empty ids list
+            pks: List[int] = []
+
+            with mock.patch("mcod.reports.tasks.save_as_csv"):
+                # WHEN - call `generate_harvesters_imports_report` or `generate_harvesters_last_imports_report` task
+                # THEN - exception `NoDataForReportException` is raised
+                with pytest.raises(NoDataForReportException):
+                    generate_harvesters_imports_raport_task(pks, model_name, user_id, file_name_postfix)

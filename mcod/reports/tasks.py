@@ -6,7 +6,7 @@ import os
 from collections import OrderedDict
 from pathlib import Path
 from time import time
-from typing import Dict, List
+from typing import Any, Dict, List
 
 from celery import chord
 from celery.signals import task_failure, task_prerun, task_success
@@ -14,7 +14,7 @@ from django.apps import apps
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import connection
-from django.db.models import Count, F, Q
+from django.db.models import Count, F, OuterRef, Q, QuerySet, Subquery
 from django.utils.timezone import now
 from django.utils.translation import get_language
 from django_celery_results.models import TaskResult
@@ -25,7 +25,13 @@ from mcod.core.serializers import csv_serializers_registry as csr
 from mcod.core.tasks import extended_shared_task
 from mcod.core.utils import save_as_csv
 from mcod.datasets.models import Dataset
+from mcod.harvester.models import DataSource, DataSourceImport
+from mcod.harvester.serializers import (
+    DataSourceImportsCSVSchema,
+    DataSourceLastImportDatasetCSVSchema,
+)
 from mcod.lib.rdf.store import get_sparql_store
+from mcod.reports.exceptions import NoDataForReportException
 from mcod.reports.models import Report, SummaryDailyReport
 from mcod.resources.models import Resource
 from mcod.resources.tasks import validate_link
@@ -36,6 +42,145 @@ from mcod.users.serializers import UserLocalTimeCSVSerializer
 User = get_user_model()
 logger = logging.getLogger("mcod")
 kronika_logger = logging.getLogger("kronika-sparql-performance")
+
+
+@extended_shared_task(name="imports", ignore_result=False)
+def generate_harvesters_imports_report(imports_pks: List[int], model_name: str, user_id: int, file_name_postfix: str) -> str:
+    if len(imports_pks) == 0:
+        raise NoDataForReportException()
+
+    app, _model = model_name.split(".")
+
+    serializer = DataSourceImportsCSVSchema(many=True)
+    queryset_result: QuerySet = (
+        DataSource.objects.filter(imports__in=imports_pks)
+        .prefetch_related("imports")
+        .values(
+            "pk",
+            "name",
+            "description",
+            "source_type",
+            "created",
+            "modified",
+            "last_activation_date",
+            "portal_url",
+            "api_url",
+            "xml_url",
+            "organization__title",
+            "frequency_in_days",
+            "created_by",
+            "modified_by",
+            "status",
+            "institution_type",
+            "imports__pk",
+            "imports__start",
+            "imports__end",
+            "imports__status",
+            "imports__error_desc",
+            "imports__datasets_rejected_count",
+            "imports__datasets_count",
+            "imports__datasets_created_count",
+            "imports__datasets_updated_count",
+            "imports__datasets_deleted_count",
+            "imports__resources_count",
+            "imports__resources_created_count",
+            "imports__resources_updated_count",
+            "imports__resources_deleted_count",
+        )
+    )
+
+    data: OrderedDict[str, Any] = serializer.dump(queryset_result)
+    data = sorted(data, key=lambda x: x["Źródło danych - id"])
+    user = User.objects.get(pk=user_id)
+    file_name = f"{_model.lower()}s_{file_name_postfix}.csv"
+
+    reports_path = os.path.join(settings.REPORTS_MEDIA_ROOT, app)
+    os.makedirs(reports_path, exist_ok=True)
+    file_path = os.path.join(reports_path, file_name)
+    file_url_path = f"{settings.REPORTS_MEDIA}/{app}/{file_name}"
+
+    with open(file_path, "w") as f:
+        save_as_csv(f, serializer.get_csv_headers(), data)
+
+    return json.dumps(
+        {
+            "model": model_name,
+            "csv_file": file_url_path,
+            "date": now().strftime("%Y.%m.%d %H:%M"),
+            "user_email": user.email,
+        }
+    )
+
+
+@extended_shared_task(name="last_imports", ignore_result=False)
+def generate_harvesters_last_imports_report(
+    datasource_pks: List[int], model_name: str, user_id: int, file_name_postfix: str
+) -> str:
+    if len(datasource_pks) == 0:
+        raise NoDataForReportException()
+    app, _model = model_name.split(".")
+
+    serializer = DataSourceLastImportDatasetCSVSchema(many=True)
+
+    latest_imp_subquery: QuerySet = DataSourceImport.objects.filter(datasource=OuterRef("pk")).order_by("-pk").values("pk")[:1]
+    queryset_result: QuerySet = (
+        DataSource.objects.filter(
+            id__in=datasource_pks, datasource_datasets__is_removed=False, datasource_datasets__is_permanently_removed=False
+        )
+        .annotate(latest_imp_id=Subquery(latest_imp_subquery))
+        .filter(imports__id=F("latest_imp_id"))
+        .prefetch_related("imports", "datasource_datasets")
+        .values(
+            "pk",
+            "name",
+            "description",
+            "source_type",
+            "created",
+            "modified",
+            "last_activation_date",
+            "portal_url",
+            "api_url",
+            "xml_url",
+            "organization__title",
+            "frequency_in_days",
+            "created_by",
+            "modified_by",
+            "status",
+            "institution_type",
+            "imports__pk",
+            "imports__start",
+            "imports__end",
+            "imports__status",
+            "imports__error_desc",
+            "datasource_datasets__pk",
+            "datasource_datasets__title",
+            "datasource_datasets__modified",
+            "datasource_datasets__organization__title",
+        )
+    )
+
+    data: OrderedDict[str, Any] = serializer.dump(queryset_result)
+    data = sorted(data, key=lambda x: x["Źródło danych - id"])
+
+    user = User.objects.get(pk=user_id)
+    file_name = f"datasourcelastimports_{file_name_postfix}.csv"
+
+    reports_path = os.path.join(settings.REPORTS_MEDIA_ROOT, app)
+    os.makedirs(reports_path, exist_ok=True)
+    file_path = os.path.join(reports_path, file_name)
+    file_url_path = f"{settings.REPORTS_MEDIA}/{app}/{file_name}"
+
+    with open(file_path, "w") as f:
+        save_as_csv(f, serializer.get_csv_headers(), data)
+
+    return json.dumps(
+        {
+            "model": model_name,
+            "csv_file": file_url_path,
+            "date": now().strftime("%Y.%m.%d %H:%M"),
+            "user_email": user.email,
+        }
+    )
 
 
 @extended_shared_task(name="reports", ignore_result=False)
@@ -148,6 +293,8 @@ def link_validation_error_callback():
 
 
 @task_prerun.connect(sender=generate_csv)
+@task_prerun.connect(sender=generate_harvesters_imports_report)
+@task_prerun.connect(sender=generate_harvesters_last_imports_report)
 def append_report_task(sender, task_id, task, signal, **kwargs):
     try:
         pks, model_name, user_id, d = kwargs["args"]
@@ -215,6 +362,8 @@ def validate_resources_links(ids=None):
 
 
 @task_success.connect(sender=generate_csv)
+@task_success.connect(sender=generate_harvesters_imports_report)
+@task_success.connect(sender=generate_harvesters_last_imports_report)
 def generating_report_success(sender, result, **kwargs):
     try:
         result_dict = json.loads(result)
@@ -237,6 +386,8 @@ def generating_report_success(sender, result, **kwargs):
 @task_failure.connect(sender=create_no_resource_dataset_report)
 @task_failure.connect(sender=validate_resources_links)
 @task_failure.connect(sender=create_resources_report_task)
+@task_failure.connect(sender=generate_harvesters_imports_report)
+@task_failure.connect(sender=generate_harvesters_last_imports_report)
 def generating_report_failure(sender, task_id, exception, args, traceback, einfo, signal, **kwargs):
     logger.debug(f"generating report failed with:\n{exception}")
     try:

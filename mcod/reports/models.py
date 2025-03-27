@@ -88,6 +88,18 @@ class UserReport(Report):
         verbose_name_plural = _("User reports")
 
 
+class DataSourceImportReport(Report):
+
+    @classmethod
+    def accusative_case(cls):
+        return _("acc: Data source imports report")
+
+    class Meta:
+        proxy = True
+        verbose_name = _("Data source")
+        verbose_name_plural = _("Data source reports")
+
+
 class ResourceReport(Report):
 
     @classmethod
@@ -96,7 +108,7 @@ class ResourceReport(Report):
 
     class Meta:
         proxy = True
-        verbose_name = _("Reource report")
+        verbose_name = _("Resource report")
         verbose_name_plural = _("Resource reports")
 
 

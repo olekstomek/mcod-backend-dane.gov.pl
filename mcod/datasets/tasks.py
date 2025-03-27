@@ -14,14 +14,7 @@ from django.utils import translation
 
 from mcod.core import storages
 from mcod.core.tasks import extended_shared_task
-from mcod.core.utils import (
-    CSVWriter,
-    WriterInterface,
-    XMLWriter,
-    clean_filename,
-    save_as_csv,
-    save_as_xml,
-)
+from mcod.core.utils import CSVWriter, WriterInterface, XMLWriter, clean_filename
 from mcod.datasets.utils import create_archive_file_path
 from mcod.unleash import is_enabled
 
@@ -39,98 +32,68 @@ def send_dataset_comment(dataset_id, comment):
     return {"dataset": dataset_id}
 
 
-if is_enabled("S60_fix_for_task_creating_xml_and_csv_metadata_files.be"):  # noqa: C901
+def create_catalog_metadata_file(
+    qs_data: list,
+    schema: Union["DatasetXMLSerializer", "DatasetResourcesCSVSerializer"],
+    extension: str,
+    writer: WriterInterface,
+):
+    """
+    Creates and manages catalog metadata files.
 
-    def create_catalog_metadata_file(
-        qs_data: list,
-        schema: Union["DatasetXMLSerializer", "DatasetResourcesCSVSerializer"],
-        extension: str,
-        writer: WriterInterface,
-    ):
-        """
-        Creates and manages catalog metadata files.
+    Args:
+        qs_data (List): The data to be serialized.
+        schema (DatasetXMLSerializer or DatasetXMLSerializer): The schema used
+        to serialize qs_data.
+        extension (str): The extension for the catalog files.
+        writer (WriterInterface): An instance of a class adhering to
+        WriterInterface.
 
-        Args:
-            qs_data (List): The data to be serialized.
-            schema (DatasetXMLSerializer or DatasetXMLSerializer): The schema used
-            to serialize qs_data.
-            extension (str): The extension for the catalog files.
-            writer (WriterInterface): An instance of a class adhering to
-            WriterInterface.
+    This function creates catalog metadata files for multiple languages, managing
+    the files for the current and previous days. It serializes the provided data
+    using the given schema and writes it to the appropriate files for each language.
+    Additionally, it creates symbolic links and removes old files to manage the
+    catalog history.
 
-        This function creates catalog metadata files for multiple languages, managing
-        the files for the current and previous days. It serializes the provided data
-        using the given schema and writes it to the appropriate files for each language.
-        Additionally, it creates symbolic links and removes old files to manage the
-        catalog history.
+    Note:
+        - Assumes settings.LANGUAGE_CODES contains the language codes.
+        - Requires settings.METADATA_MEDIA_ROOT to define the metadata media
+        root path.
 
-        Note:
-            - Assumes settings.LANGUAGE_CODES contains the language codes.
-            - Requires settings.METADATA_MEDIA_ROOT to define the metadata media
-            root path.
+    Raises:
+        Any exceptions related to file operations or serialization.
 
-        Raises:
-            Any exceptions related to file operations or serialization.
+    """
 
-        """
+    today = datetime.today().date()
+    previous_day = today - relativedelta(days=1)
 
-        today = datetime.today().date()
-        previous_day = today - relativedelta(days=1)
+    for language in settings.LANGUAGE_CODES:
+        lang_catalog_path = f"{settings.METADATA_MEDIA_ROOT}/{language}"
+        previous_day_file = f"{lang_catalog_path}/katalog_{previous_day}.{extension}"
+        new_file = f"{lang_catalog_path}/katalog_{today}.{extension}"
+        symlink_file = f"{lang_catalog_path}/katalog.{extension}"
 
-        for language in settings.LANGUAGE_CODES:
-            lang_catalog_path = f"{settings.METADATA_MEDIA_ROOT}/{language}"
-            previous_day_file = f"{lang_catalog_path}/katalog_{previous_day}.{extension}"
-            new_file = f"{lang_catalog_path}/katalog_{today}.{extension}"
-            symlink_file = f"{lang_catalog_path}/katalog.{extension}"
+        if not os.path.exists(lang_catalog_path):
+            os.makedirs(lang_catalog_path)
 
-            if not os.path.exists(lang_catalog_path):
-                os.makedirs(lang_catalog_path)
+        with translation.override(language):
+            data = schema.dump(qs_data)
+            with open(new_file, "w") as file:
+                writer.save(
+                    file_object=file,
+                    language_catalog_path=lang_catalog_path,
+                    data=data,
+                )
+                logger.info(f"File {new_file} has been created")
 
-            with translation.override(language):
-                data = schema.dump(qs_data)
-                with open(new_file, "w") as file:
-                    writer.save(
-                        file_object=file,
-                        language_catalog_path=lang_catalog_path,
-                        data=data,
-                    )
-                    logger.info(f"File {new_file} has been created")
+        if os.path.exists(previous_day_file):
+            os.remove(previous_day_file)
 
-            if os.path.exists(previous_day_file):
-                os.remove(previous_day_file)
-
-            if os.path.exists(new_file):
-                if os.path.exists(symlink_file) or os.path.islink(symlink_file):
-                    os.remove(symlink_file)
-                os.symlink(new_file, symlink_file)
-
-else:
-
-    def create_catalog_metadata_file(qs_data, schema, extension, save_serialized_data_func):
-        today = datetime.today().date()
-        previous_day = today - relativedelta(days=1)
-
-        for language in settings.LANGUAGE_CODES:
-            lang_catalog_path = f"{settings.METADATA_MEDIA_ROOT}/{language}"
-            previous_day_file = f"{lang_catalog_path}/katalog_{previous_day}.{extension}"
-            new_file = f"{lang_catalog_path}/katalog_{today}.{extension}"
-            symlink_file = f"{lang_catalog_path}/katalog.{extension}"
-
-            if not os.path.exists(lang_catalog_path):
-                os.makedirs(lang_catalog_path)
-
-            with translation.override(language):
-                data = schema.dump(qs_data)
-                with open(new_file, "w") as file:
-                    save_serialized_data_func(file, data)
-
-            if os.path.exists(previous_day_file):
-                os.remove(previous_day_file)
-
-            if os.path.exists(new_file):
-                if os.path.exists(symlink_file) or os.path.islink(symlink_file):
-                    os.remove(symlink_file)
-                os.symlink(new_file, symlink_file)
+        if os.path.exists(new_file):
+            if os.path.exists(symlink_file) or os.path.islink(symlink_file):
+                os.remove(symlink_file)
+            os.symlink(new_file, symlink_file)
 
 
 @extended_shared_task
@@ -174,24 +137,6 @@ def create_xml_metadata_files() -> None:
     xml_writer: XMLWriter = XMLWriter()
 
     create_catalog_metadata_file(qs_data, xml_schema, "xml", writer=xml_writer)
-
-
-@extended_shared_task
-def create_catalog_metadata_files():
-    from mcod.datasets.serializers import DatasetResourcesCSVSerializer, DatasetXMLSerializer
-
-    dataset_model = apps.get_model("datasets", "Dataset")
-    qs_data = dataset_model.objects.with_metadata_fetched_as_list()
-
-    xml_schema = DatasetXMLSerializer(many=True)
-    create_catalog_metadata_file(qs_data, xml_schema, "xml", save_as_xml)
-
-    csv_schema = DatasetResourcesCSVSerializer(many=True)
-
-    def save_serialized_data_func(file, data):
-        save_as_csv(file, csv_schema.get_csv_headers(), data)
-
-    create_catalog_metadata_file(qs_data, csv_schema, "csv", save_serialized_data_func)
 
 
 @extended_shared_task

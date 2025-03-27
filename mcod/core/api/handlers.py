@@ -302,7 +302,7 @@ class ShaclMixin:
         if "shacl" in self.request.params:
             if self.request.params["shacl"] not in settings.SHACL_SHAPES:
                 raise falcon.HTTPBadRequest(
-                    "Invalid shape to validation, accepted values: {allowed_shapes}".format(
+                    description="Invalid shape to validation, accepted values: {allowed_shapes}".format(
                         allowed_shapes=", ".join(settings.SHACL_SHAPES)
                     )
                 )

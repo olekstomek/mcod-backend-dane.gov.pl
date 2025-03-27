@@ -151,7 +151,7 @@ def context():
 
 
 @pytest.fixture
-def admin_context(admin):
+def admin_context(admin: "User") -> Context:  # noqa: F405
     _context = Context()
     _context.obj = {}
     _context.admin = Context()

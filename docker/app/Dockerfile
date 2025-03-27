@@ -12,7 +12,6 @@ RUN apt-get update && apt-get install -y --allow-unauthenticated \
     gettext \
     locales \
     libarchive13 \
-    libmagickwand-dev \
     libmagickcore-6.q16-3-extra \
     curl \
     dirmngr \

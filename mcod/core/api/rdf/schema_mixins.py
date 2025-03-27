@@ -29,11 +29,11 @@ class ProfilesMixin:
         else:
             self.profile = self.DEFAULT_PROFILE
         if self.profile not in self.SUPPORTED_PROFILES:
-            raise falcon.HTTPBadRequest(_("'{}' profile is not supported").format(self.profile))
+            raise falcon.HTTPBadRequest(title="400 Bad Request", description=_(f"'{self.profile}' profile is not supported"))
 
     def get_rdf_class_for_model(self, model):
         if self.profile not in self.SUPPORTED_PROFILES:
-            raise falcon.HTTPBadRequest(_("'{}' profile is not supported").format(self.profile))
+            raise falcon.HTTPBadRequest(title="400 Bad Request", description=_(f"'{self.profile}' profile is not supported"))
 
         return {
             self.DCAT_AP: {

@@ -23,6 +23,7 @@ from django_celery_beat.models import (
     SolarSchedule,
 )
 
+from mcod.core.choices import SOURCE_TYPE_CHOICES_FOR_ADMIN
 from mcod.datasets.admin import OrganizationFilter
 from mcod.datasets.models import Dataset
 from mcod.histories.models import LogEntry
@@ -315,6 +316,11 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):
         ("widgets/resource_maps_and_plots_actions.html", "bottom", "maps_and_plots"),
     )
 
+    def source_type(self, obj: Resource) -> str:
+        return SOURCE_TYPE_CHOICES_FOR_ADMIN.get(obj.source_type, obj.source_type)
+
+    source_type.short_description = _("Method of sharing")
+
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == "dataset":
             kwargs["queryset"] = db_field.remote_field.model._default_manager.filter(source__isnull=True)
@@ -326,6 +332,7 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):
         return super().has_change_permission(request, obj=obj)
 
     def get_fieldsets(self, request, obj=None):
+        for_admin: bool = request.user.is_superuser
         if obj:
             jsonld_file = ["jsonld_converted_file"] if obj.jsonld_converted_file else []
             file = ["main_file"]
@@ -363,6 +370,7 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):
                 else []
             )
             extra_fields = extra_fields if not obj.is_imported else []
+            source_type = ["source_type"] if (for_admin and obj) else []
             fieldsets = [
                 (
                     None,
@@ -395,6 +403,8 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):
                             "status",
                             *special_signs,
                             "show_tabular_view",
+                            "openness_score",
+                            *source_type,
                             "modified",
                             "created",
                             "verified",
@@ -600,6 +610,7 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):
                 "link_tasks",
                 "file_tasks",
                 "data_tasks",
+                "source_type",
             )
             if obj and obj.id
             else ()

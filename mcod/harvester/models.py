@@ -24,6 +24,7 @@ from model_utils.fields import AutoCreatedField
 
 from mcod import settings
 from mcod.categories.models import Category
+from mcod.core import choices
 from mcod.core.db.managers import TrashManager
 from mcod.core.db.mixins import AdminMixin
 from mcod.core.db.models import LogMixin, TimeStampedModel, TrashModelBase
@@ -115,7 +116,7 @@ class DataSource(AdminMixin, LogMixin, SoftDeletableModel, TimeStampedModel):
     """Model of data source."""
 
     INSTITUTION_TYPE_CHOICES = Organization.INSTITUTION_TYPE_CHOICES
-    SOURCE_TYPE_CHOICES = (("ckan", "CKAN"), ("xml", "XML"), ("dcat", "DCAT-AP"))
+    SOURCE_TYPE_CHOICES = choices.SOURCE_TYPE_CHOICES
     STATUS_CHOICES = (
         ("active", _("active")),
         ("inactive", _("inactive")),

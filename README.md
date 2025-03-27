@@ -49,7 +49,7 @@ Więcej: https://www.jetbrains.com/help/pycharm/docker-compose.html#working
 
     $ pip install -I pipenv==2022.10.12
     $ pipenv run pip install setuptools"<58"
-    $ pipenv install --dev
+    $ pipenv install
     $ exit
     $ pipenv shell
 
@@ -123,7 +123,6 @@ Aby to zrobić, należy uruchomić komendę:
 Poza specyficznymi dla każdej usługi zmiennymi środowiskowymi, dla wszystkich usług należy ustawić zmienne środowiskowe:
 
     PYTHONUNBUFFERED=1;
-    ENABLE_VAULT_HELPERS=no;
     ENVIRONMENT=local;
     NO_REPLY_EMAIL=env@test.local;
     ALLOWED_HOSTS=*;
@@ -248,6 +247,9 @@ Pierwsza konfiguracja nie wykonała poprawnie kroku sync_user, bo brakowało utw
 Aby `pre-commit` uruchamiał się przy każdym commicie, trzeba go zainstalować:
 
     (backend) pre-commit install
+
+### Uruchamianie shell_plus z innym plikiem konfiguracyjnym:
+    (backend) python manage.py shell_plus --settings mcod.settings.test
 
 Dodanie pliku/plików jest niezbędne do sprawdzenia ich poprawności:
 

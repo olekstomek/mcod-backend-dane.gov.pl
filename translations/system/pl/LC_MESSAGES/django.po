@@ -2219,6 +2219,9 @@ msgstr "Tworzenie pliku CSV dodane do kolejki zadań"
 msgid "Export selected to CSV"
 msgstr "Eksportuj zaznaczone do CSV"
 
+msgid "Export last import to CSV"
+msgstr "Eksportuj ostatni import do CSV"
+
 #, python-brace-format
 msgid "The {name} \"{obj}\" was added successfully."
 msgstr "{name} \"{obj}\" został pomyślnie dodany."
@@ -2998,6 +3001,9 @@ msgstr "Raport zbioru danych"
 msgid "Dataset reports"
 msgstr "Raporty zbiorów danych"
 
+msgid "Data source reports"
+msgstr "Raporty źródeł danych"
+
 msgid "acc: Institution report"
 msgstr "raport instytucji"
 
@@ -3009,6 +3015,9 @@ msgstr "Raporty Instytucji"
 
 msgid "acc: Daily report"
 msgstr "zbiorczy raport dzienny"
+
+msgid "acc: Data source imports report"
+msgstr "raport źródeł danych"
 
 msgid "Summary daily report"
 msgstr "Zbiorczy raport dzienny"
@@ -3263,9 +3272,6 @@ msgstr "Oznacz zasób jako API"
 msgid "Mark resource as file"
 msgstr "Oznacz zasób jako plik"
 
-msgid "Openness score"
-msgstr "Ranking otwartości"
-
 msgid "Download Tasks"
 msgstr ""
 
@@ -3418,9 +3424,6 @@ msgstr "format"
 
 msgid "formats after conversion"
 msgstr "formaty po konwersji"
-
-msgid "openness_score"
-msgstr "ranking otwartości"
 
 msgid "views_count"
 msgstr "licznik odwiedzin"
@@ -5546,3 +5549,78 @@ msgstr "Liczba wyników zmalała"
 
 msgid "Cannot read the file"
 msgstr "Nie można odczytać pliku"
+
+msgid "No data was found for the report according to the specified criteria"
+msgstr "Nie znaleziono danych do raportu wg wskazanych kryteriów"
+
+msgid "Last activation date"
+msgstr "Data ostatniej aktywacji"
+
+msgid "Datasource - id"
+msgstr "Źródło danych - id"
+
+msgid "Import - id"
+msgstr "Import - id"
+
+msgid "Import - start"
+msgstr "Import - start"
+
+msgid "Import - end"
+msgstr "Import - koniec"
+
+msgid "Import - result"
+msgstr "Import - wynik"
+
+msgid "Import - error description"
+msgstr "Import - opis błędu"
+
+msgid "Import - number of rejected datasets"
+msgstr "Import - liczba odrzuconych zbiorów danych"
+
+msgid "Import - number of imported datasets"
+msgstr "Import - liczba zaimportowanych zbiorów danych"
+
+msgid "Import - number of created datasets"
+msgstr "Import - liczba utworzonych zbiorów danych"
+
+msgid "Import - number of updated datasets"
+msgstr "Import - liczba zmodyfikowanych zbiorów danych"
+
+msgid "Import - number of deleted datasets"
+msgstr "Import - liczba usuniętych zbiorów danych"
+
+msgid "Import - number of imported resources"
+msgstr "Import - liczba zaimportowanych zasobów"
+
+msgid "Import - number of created resources"
+msgstr "Import - liczba utworzonych zasobów"
+
+msgid "Import - number of updated resources"
+msgstr "Import - liczba zmodyfikowanych zasobów"
+
+msgid "Import - number of deleted resources"
+msgstr "Import - liczba usuniętych zasobów"
+
+msgid "Dataset - id"
+msgstr "Zbiór danych - id"
+
+msgid "Dataset - title"
+msgstr "Zbiór danych - tytuł"
+
+msgid "Dataset - modified"
+msgstr "Zbiór danych - zmodyfikowany"
+
+msgid "Dataset - institution"
+msgstr "Zbiór danych - instytucja"
+
+msgid "Method of sharing"
+msgstr "Sposób udostępnienia"
+
+msgid "Manually"
+msgstr "Manualnie"
+
+msgid "Openness score"
+msgstr "Poziom otwartości danych"
+
+msgid "openness_score"
+msgstr "poziom otwartości danych"
