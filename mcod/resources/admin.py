@@ -240,6 +240,7 @@ def process_verification_results(col, results, table_schema, rules):
 
 @admin.register(Resource)
 class ResourceAdmin(HistoryMixin, ModelAdmin):
+
     actions_on_top = True
     check_imported_obj_perms = True
     export_to_csv = True
@@ -548,29 +549,24 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):
 
     def get_form(self, request, obj=None, **kwargs):
         """
-        Use special form during user creation
+        Use special form during resource creation
         """
-        if is_enabled("S62_fix_admin_resource_data_change_type.be"):
-            defaults = dict(kwargs)
-            if obj is None:
-                defaults["form"] = self.add_form
-                return super().get_form(request, obj=obj, **defaults)
-
+        defaults = dict(kwargs)
+        if obj is None:
+            defaults["form"] = self.add_form
+        if is_enabled("S64_fix_for_status_code_500_when_type_change.be"):
+            return super().get_form(request, obj=obj, **defaults)
+        else:
             default_factory = super().get_form(request, obj=obj, **defaults)
-            if obj.is_imported:
+            if obj and obj.is_imported:
                 return self.modify_change_form_for_imported(default_factory)
 
             return default_factory
-        else:
-            defaults = {}
-            if obj is None:
-                defaults["form"] = self.add_form
-            defaults.update(kwargs)
-            return super().get_form(request, obj=obj, **defaults)
 
     @staticmethod
     def modify_change_form_for_imported(modelform_factory):
         """
+        TODO: lremkowicz: has to be removed after flag S64_fix_for_status_code_500_when_type_change deleted
         Return the factory with the modified ChangeResourceForm due to the fact
         that some fields aren't editable for imported resources.
         """
@@ -798,6 +794,7 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):
         if not is_http_post:
             # short circuit getting the form
             return super().change_view(request, object_id, form_url, extra_context)
+
         user_has_confirmed: bool = SAVE_CONFIRMATION_FIELD in request.POST
         user_deselects_dga_designation: bool = request.POST.get("contains_protected_data") == "False"
         user_marks_as_draft: bool = request.POST.get("status") == "draft"
@@ -996,8 +993,7 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):
         if "_verify_rules" in request.POST:
             obj = self.model.objects.get(pk=object_id)
             return self.response_change(request, obj)
-        else:
-            return super()._changeform_view(request, object_id, form_url, extra_context)
+        return super()._changeform_view(request, object_id, form_url, extra_context)
 
 
 @admin.register(ResourceTrash)

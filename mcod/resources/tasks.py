@@ -21,6 +21,7 @@ from elasticsearch.helpers.errors import BulkIndexError
 from urllib3.exceptions import NewConnectionError
 
 from mcod.core.tasks import FIVE_MINUTES, extended_shared_task
+from mcod.lib.date_utils import date_at_midnight
 from mcod.lib.db_utils import IndexConsistency, get_db_and_es_inconsistencies
 from mcod.resources.archives import ArchiveReader, UnsupportedArchiveError
 from mcod.resources.dga_utils import (
@@ -399,6 +400,11 @@ def update_data_date(resource_id):
         logger.debug(f"Updated data date for resource with id {resource_id} with date {current_dt}")
         if res.type in ["api", "website"]:
             res.update_es_and_rdf_db()
+            current_dt_midnight = date_at_midnight(current_dt)
+            res.update_dataset_verified(verified=current_dt_midnight)
+            logger.debug(
+                f"Updated dataset verified for {res.type} resource with id {resource_id} with date {current_dt_midnight}"
+            )
         elif res.is_linked:
             process_resource_from_url_task.s(res.id, update_file_archive=True).apply_async()
         return {"current_date": current_dt}

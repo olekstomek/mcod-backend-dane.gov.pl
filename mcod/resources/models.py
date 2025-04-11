@@ -62,6 +62,7 @@ from mcod.core.db.models import (
 from mcod.counters.models import ResourceDownloadCounter, ResourceViewCounter
 from mcod.datasets.models import BaseSupplement, Dataset
 from mcod.lib.data_rules import painless_body
+from mcod.lib.date_utils import date_at_midnight
 from mcod.lib.model_sanitization import (
     SanitizedCharField,
     SanitizedTextField,
@@ -1383,6 +1384,13 @@ class Resource(ExtendedModel):
             update_with_related_task.s("resources", "Resource", self.pk).apply_async()
             update_graph_task.s("resources", "Resource", self.pk).apply_async_on_commit()
 
+    def update_dataset_verified(self, verified: datetime.datetime) -> None:
+        try:
+            Dataset.objects.filter(pk=self.dataset.id).update(verified=verified)
+        except Exception as exc:
+            logger.error(f"Cannot update dataset verified for the {self.type} resource {self.id}: {exc}")
+            raise
+
     @property
     def regions_to_conceal(self):
         ids = list(self.all_regions.exclude(region_id=settings.DEFAULT_REGION_ID).values_list("pk", flat=True))
@@ -1841,21 +1849,41 @@ def preprocess_resource(sender, instance, *args, **kwargs):
 
 @receiver(post_save, sender=Resource)
 def handle_resource_post_save(sender, instance, *args, **kwargs):
-    max_created = (
-        instance.dataset.resources.filter(status=Dataset.STATUS.published)
-        .only("created")
-        .aggregate(Max("created"))
-        .get("created__max")
-    )
-    if max_created:
-        Dataset.objects.filter(pk=instance.dataset.id).update(verified=max_created)  # we don't want signals here
+    # if dataset contains harvested resources, then dataset.verified is based on the resources
+    # data_date, otherwise it's based on the event date for the events described in OTD-1132
+    if instance.dataset.is_imported:
+        max_data_date_if_auto_true = (
+            instance.dataset.resources.filter(status=Dataset.STATUS.published)
+            .filter(is_auto_data_date=True)
+            .only("data_date")
+            .aggregate(max_data_date=Max("data_date"))
+            .get("max_data_date")
+        )
+        if max_data_date_if_auto_true:
+            instance.update_dataset_verified(verified=date_at_midnight(max_data_date_if_auto_true))
+        else:
+            max_data_date = (
+                instance.dataset.resources.filter(status=Dataset.STATUS.published)
+                .only("data_date")
+                .aggregate(max_data_date=Max("data_date"))
+                .get("max_data_date")
+            )
+            instance.update_dataset_verified(verified=date_at_midnight(max_data_date))
     else:
-        Dataset.objects.filter(pk=instance.dataset.id).update(verified=instance.dataset.created)
+        if instance.state_published or instance.state_removed or instance.state_restored:
+            instance.update_dataset_verified(verified=instance.modified)
+
     if instance.tracker.has_changed("dataset_id"):
         dataset_id = instance.tracker.previous("dataset_id")
         if dataset_id:
             # update related ES documents for previously set dataset, if any.
             update_with_related_task.s("datasets", "Dataset", dataset_id).apply_async_on_commit()
+
+
+@receiver(post_save, sender=ResourceTrash)
+def update_dataset_verified_after_restoring_from_trash(sender, instance: Resource, *args, **kwargs):
+    if instance.state_restored and not instance.dataset.is_imported:
+        instance.update_dataset_verified(verified=instance.modified)
 
 
 @receiver(revalidate_resource, sender=Resource)

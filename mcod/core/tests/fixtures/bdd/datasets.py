@@ -43,8 +43,14 @@ from mcod.tags.factories import TagFactory
 def dataset():
     _dataset = DatasetFactory.create()
     TagFactory.create_batch(2, datasets=(_dataset,))
-    run_on_commit_events()
     return _dataset
+
+
+@pytest.fixture
+def dataset_with_run_events(dataset):
+    """Returns a dataset after executing all pending on_commit hooks."""
+    run_on_commit_events()
+    return dataset
 
 
 @given("dataset")

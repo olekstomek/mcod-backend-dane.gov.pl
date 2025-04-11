@@ -4,7 +4,9 @@ from pytest_bdd import given, parsers, then
 
 from mcod.core.tests.fixtures import *  # noqa
 from mcod.core.tests.fixtures.bdd.common import prepare_file
+from mcod.datasets.factories import DatasetFactory
 from mcod.resources.models import Resource, ResourceFile
+from mcod.tags.factories import TagFactory
 
 
 @pytest.fixture
@@ -44,7 +46,9 @@ def table_resource_with_invalid_schema(dataset):
 
 
 @pytest.fixture
-def no_data_resource(dataset):
+def no_data_resource():
+    dataset = DatasetFactory.create()
+    TagFactory.create_batch(2, datasets=(dataset,))
     resource = Resource()
     resource.title = "No data resource"
     resource.type = "file"

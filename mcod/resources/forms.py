@@ -333,11 +333,7 @@ class ResourceForm(forms.ModelForm, HighValueDataFormValidatorMixin):
             self.add_error(data_date_err.field_name, data_date_err.message)
 
     def _validate_resource_status(self, data: dict) -> None:
-        if is_enabled("S62_fix_admin_resource_data_change_type.be"):
-            s62_data_status = data.get("status")
-        else:
-            s62_data_status = data["status"]
-
+        s62_data_status = data.get("status")
         dataset = data.get("dataset")
         if s62_data_status == "published" and dataset and dataset.status == "draft":
             error_message = _(
@@ -350,17 +346,25 @@ class ResourceForm(forms.ModelForm, HighValueDataFormValidatorMixin):
     def _validate_related_resource(self, data: dict) -> None:
         related_resource = data.get("related_resource")
         dataset = data.get("dataset")
-        if all(
-            (
-                dataset,
-                related_resource,
-                related_resource not in Resource.raw.filter(dataset_id=dataset.id),
-            )
-        ):
-            self.add_error(
-                "related_resource",
-                _("Only resource from related dataset resources is valid!"),
-            )
+
+        if is_enabled("S64_fix_for_status_code_500_when_type_change.be"):
+            if dataset and related_resource and related_resource not in Resource.raw.filter(dataset_id=dataset.id):
+                self.add_error(
+                    "related_resource",
+                    _("Only resource from related dataset resources is valid!"),
+                )
+        else:
+            if all(
+                (
+                    dataset,
+                    related_resource,
+                    related_resource not in Resource.raw.filter(dataset_id=dataset.id),
+                )
+            ):
+                self.add_error(
+                    "related_resource",
+                    _("Only resource from related dataset resources is valid!"),
+                )
 
     @staticmethod
     def _is_main_dga_resource_updated(pk):
@@ -542,9 +546,7 @@ class ChangeResourceForm(ResourceForm):
     )
 
     tabular_data_schema = JSONField(widget=ResourceDataSchemaWidget(), required=False)
-
     data_rules = JSONField(widget=ResourceDataRulesWidget(), required=False)
-
     maps_and_plots = MapsJSONField(widget=ResourceMapsAndPlotsWidget(), required=False)
 
     def __init__(self, *args, **kwargs):
@@ -557,12 +559,55 @@ class ChangeResourceForm(ResourceForm):
 
         super().__init__(*args, **kwargs)
         if hasattr(self, "instance"):
+            if is_enabled("S64_fix_for_status_code_500_when_type_change.be"):
+                if self.instance.is_imported_from_xml:
+                    self._set_fields_required_attribute_to_false()
+
             self.instance: Resource
             self.fields["tabular_data_schema"].widget.instance = self.instance
             self.fields["data_rules"].widget.instance = self.instance
             self.fields["maps_and_plots"].widget.instance = self.instance
             if "regions" in self.fields:
                 self.fields["regions"].choices = self.instance.regions.all().values_list("region_id", "hierarchy_label")
+
+            if is_enabled("S64_fix_for_status_code_500_when_type_change.be"):
+                if self.instance and self.instance.pk and self.instance.is_imported:
+                    self.data = self.data.copy()  # Make self.data mutable
+                    self.data = self._modify_data_for_imported(self.data, self.instance)
+
+    def _set_fields_required_attribute_to_false(self) -> None:
+        """
+        Change fields behavior for resources imported from XML harvester. For example:
+        If resource is imported from XML harvester with schema 1.0, some fields are not required,
+        so we have to change form behavior -> change fields to be not required.
+        Note: this is temporary solution, should be changed in the future -> https://jira.coi.gov.pl/browse/OTD-1259
+        """
+        if self.instance.has_dynamic_data is None:
+            self.fields["has_dynamic_data"].required = False
+        if self.instance.has_high_value_data is None:
+            self.fields["has_high_value_data"].required = False
+        if self.instance.has_high_value_data_from_ec_list is None:
+            self.fields["has_high_value_data_from_ec_list"].required = False
+        if self.instance.has_research_data is None:
+            self.fields["has_research_data"].required = False
+
+    @staticmethod
+    def _modify_data_for_imported(data: Dict, instance: Resource) -> Dict:
+        """
+        Ensure required fields are included in the Django form.
+
+        Imported (harvested) resource form fields are read-only, meaning their required values
+        must be manually added from the instance data. When a new required field is added
+        to this form, Django Admin does not pass it to the form instance automatically.
+        Instead, we retrieve it directly from the associated Resource instance to ensure
+        valid form submission.
+        """
+        data["has_dynamic_data"] = instance.has_dynamic_data
+        data["has_high_value_data"] = instance.has_high_value_data
+        data["has_research_data"] = instance.has_research_data
+        data["contains_protected_data"] = instance.contains_protected_data
+        data["has_high_value_data_from_ec_list"] = instance.has_high_value_data_from_ec_list
+        return data
 
     def clean(self):
         data = super().clean()

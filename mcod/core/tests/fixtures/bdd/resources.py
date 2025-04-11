@@ -28,7 +28,7 @@ from mcod.counters.factories import ResourceDownloadCounterFactory, ResourceView
 from mcod.counters.lib import Counter
 from mcod.counters.tasks import save_counters
 from mcod.datasets.factories import DatasetFactory
-from mcod.harvester.factories import DataSourceFactory
+from mcod.harvester.factories import CKANDataSourceFactory, XMLDataSourceFactory
 from mcod.regions.documents import RegionDocument
 from mcod.resources.archives import ArchiveReader, UnsupportedArchiveError
 from mcod.resources.documents import ResourceDocument
@@ -93,6 +93,11 @@ def create_res(ds, editor, **kwargs):
         "created_by": editor,
         "modified_by": editor,
         "data_date": datetime.today(),
+        "has_dynamic_data": False,
+        "has_high_value_data": False,
+        "has_research_data": False,
+        "contains_protected_data": False,
+        "has_high_value_data_from_ec_list": False,
     }
     _kwargs.update(**kwargs)
 
@@ -379,11 +384,20 @@ def resource_with_counters():
 
 
 @pytest.fixture
-def imported_ckan_resource():
-    _source = DataSourceFactory.create(source_type="CKAN", name="Test name", portal_url="http://example.com")
-    _dataset = DatasetFactory.create(source=_source)
+def imported_ckan_resource(ckan_data_source):
+    _dataset = DatasetFactory.create(source=ckan_data_source)
     _resource = ResourceFactory.create(dataset=_dataset)
     return _resource
+
+
+@pytest.fixture
+def ckan_data_source():
+    return CKANDataSourceFactory.create()
+
+
+@pytest.fixture
+def xml_data_source():
+    return XMLDataSourceFactory.create()
 
 
 def get_html_file():
@@ -489,7 +503,7 @@ def geo_tabular_data_response():
     }
 
 
-def create_website_resource(**kwargs):
+def create_website_resource(**kwargs) -> "Resource":
     obj_kwargs = {
         "type": "website",
         "format": "html",
@@ -517,16 +531,12 @@ def website_resource_with_id(res_id):
 
 @pytest.fixture
 def resource_of_type_api():
-    from mcod.resources.models import Resource
-
-    res = ResourceFactory(
+    return ResourceFactory.create(
         type="api",
         format=None,
         main_file__file=factory.django.FileField(from_func=get_json_file, filename="{}.json".format(str(uuid.uuid4()))),
         main_file__content_type="application/json",
     )
-    res = Resource.objects.get(pk=res.pk)
-    return res
 
 
 @given("resource of type api")

@@ -4,9 +4,10 @@ from typing import Optional
 from mcod.settings.base import *  # noqa: F403, F405
 
 ROOT_DIR = environ.Path(__file__) - 3  # noqa: F405
-DEBUG = True
 
 TEMPLATES[0]["OPTIONS"]["debug"] = DEBUG  # noqa: F405
+INTERNAL_IPS = ("127.0.0.1", "localhost", "172.18.18.100")  # needed to use debug processor in django templates
+
 
 EMAIL_BACKEND = "django.core.mail.backends.filebased.EmailBackend"
 

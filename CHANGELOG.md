@@ -14,6 +14,31 @@
 ### Breaks
 
 
+## 2.41.1 - (2025-03-26)
+---
+
+### Fixes
+* Usunięto błąd 500 w przypadku zmiany typu danych tabelarycznych dla zasobów harvestowanych: OTD-805, OTD-1259
+* Poprawa ustawiania daty aktualizacji zbioru: OTD-1132
+
+### Changes
+* Zmieniono fixture testową (def dataset), w której zlikwidowano run_on_commit_events() dla dataset.
+* Usunięto metodę modify_change_form_for_imported w ResourceAdmin.
+* Naprawiono błąd w metodzie _validate_related_resource (ResourceForm): AttributeError.
+* Zmieniono sposób wyświetlania błędów w change_form.html.
+* Zmieniono handler handle_resource_post_save() o aktualizację w polu dataset.verified zgodnie z OTD-1132
+* Zmieniono task update_data_date() o aktualizację w polu dataset.verified zgodnie z OTD-1132 (dla zasobów api i website)
+
+### New
+* Dodano test sprawdzający, czy istnieje możliwość edycji danych tabelarycznych, w przypadku pól required dla formularza oraz pustych dla resource.
+* Dodano nowe metody dla ChangeResourceForm: _set_fields_required_attribute_to_false, _modify_data_for_imported
+* Dodano zmienna środowiskowa do lokalnego testowania: INTERNAL_IPS
+* Dodano funkcję pomocnicza date_at_midnight() w mcod/lib/date_utils.py (z testem w mcod/lib/tests/test_date_utils.py)
+* Dodano testy w mcod/datasets/tests/test_dataset_verified_date.py
+* Dodano handler update_dataset_verified_after_restoring_from_trash() z aktualizacją dataset.verified zgodnie z OTD-1132
+* Dodano metodę update_dataset_verified() do klasy Resource.
+
+
 ## 2.41.0 - (2025-03-11)
 ---
 

@@ -161,6 +161,21 @@ class ResourceFactory(factory.django.DjangoModelFactory):
         django_get_or_create = ("title",)
 
 
+class IsolatedResourceFactory(factory.django.DjangoModelFactory):
+    title = factory.Faker("text", max_nb_chars=100, locale="pl_PL")
+    dataset = factory.SubFactory(DatasetFactory)
+
+    class Meta:
+        model = models.Resource
+
+
+class ResourceTrashFactory(ResourceFactory):
+    class Meta:
+        model = models.ResourceTrash
+
+    is_removed = True
+
+
 class DGACompliantResourceFactory(ResourceFactory):
     main_file = factory.RelatedFactory(
         ResourceFileDGACompliantFactory,

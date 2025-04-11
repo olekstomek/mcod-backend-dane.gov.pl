@@ -441,6 +441,60 @@ class TestResourceChangeType:
             assert resp.status_code == 200
             assert "#types" in resp.content.decode()
 
+    def test_tabular_data_type_update_for_xml_harvested_res(
+        self,
+        no_data_resource,
+        admin,
+        monkeypatch,
+        mocker,
+        xml_data_source,
+    ):
+        """
+        Test possibility to update tabular data type for resource harvested by XML.
+        Form's required (but also read-only) fields should be passed with values from resource
+        instance on resource update.
+        """
+        # TODO: lremkowicz: both mocker's should be removed when flag
+        # TODO: `S64_fix_for_status_code_500_when_type_change` will be deleted.
+        mocker.patch("mcod.resources.admin.is_enabled", return_value=True)
+        mocker.patch("mcod.resources.forms.is_enabled", return_value=True)
+
+        # GIVEN Resource with source instance
+        no_data_resource.dataset.source = xml_data_source
+        no_data_resource.dataset.save()
+        no_data_resource.save()
+
+        # WHEN admin logins
+        client = Client()
+        client.force_login(admin)
+
+        data = {
+            "Resource_file_tasks-TOTAL_FORMS": 12,
+            "Resource_file_tasks-INITIAL_FORMS": 9,
+            "Resource_file_tasks-MIN_NUM_FORMS": 0,
+            "Resource_file_tasks-MAX_NUM_FORMS": 1000,
+            "Resource_data_tasks-TOTAL_FORMS": 12,
+            "Resource_data_tasks-INITIAL_FORMS": 9,
+            "Resource_data_tasks-MIN_NUM_FORMS": 0,
+            "Resource_data_tasks-MAX_NUM_FORMS": 1000,
+            "Resource_link_tasks-TOTAL_FORMS": 12,
+            "Resource_link_tasks-INITIAL_FORMS": 9,
+            "Resource_link_tasks-MIN_NUM_FORMS": 0,
+            "Resource_link_tasks-MAX_NUM_FORMS": 1000,
+            "supplements-TOTAL_FORMS": 0,
+            "supplements-INITIAL_FORMS": 0,
+            "supplements-MIN_NUM_FORMS": 0,
+            "supplements-MAX_NUM_FORMS": 0,
+            "_change_type": "",
+        }
+        # AND Admin want to change tabular data
+        resp = client.post(no_data_resource.admin_change_url, data=data, follow=True)
+        content = resp.content.decode()
+
+        # THEN response content should not have an error message
+        assert resp.status_code == 200
+        assert "alert alert-error" not in content
+
 
 class TestResourceChangeList:
 

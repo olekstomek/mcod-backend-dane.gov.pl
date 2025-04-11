@@ -22,10 +22,10 @@ scenarios("features/dataset_unified_conditions.feature")
 
 
 @pytest.mark.elasticsearch
-def test_dates_in_list_views_api14(dataset, client14):
+def test_dates_in_list_views_api14(dataset_with_run_events, client14):
     resp = client14.simulate_get("/datasets")
     assert HTTP_OK == resp.status
-    assert dataset.id
+    assert dataset_with_run_events.id
     for d_name in ["created", "modified", "verified"]:
         assert d_name in resp.json["data"][0]["attributes"]
 
@@ -85,7 +85,7 @@ def test_dates_in_detail_views_api14_in_path(dataset, client14):
 
 
 @pytest.mark.elasticsearch
-def test_datasets_dates_in_list_views(dataset, client):
+def test_datasets_dates_in_list_views(dataset_with_run_events, client):
     resp = client.simulate_get("/datasets/")
     assert HTTP_OK == resp.status
     for d_name in ["created", "modified", "verified"]:
@@ -109,7 +109,7 @@ def test_dataset_dates_in_detail_views(dataset, resource, client):
 
 
 @pytest.mark.elasticsearch
-def test_datasets_dates_in_list_views_api_1_0_in_path(dataset, client):
+def test_datasets_dates_in_list_views_api_1_0_in_path(dataset_with_run_events, client):
     resp = client.simulate_get("/1.0/datasets/")
     assert HTTP_OK == resp.status
     for d_name in ["created", "modified", "verified"]:
@@ -147,11 +147,11 @@ def test_dataset_update_frequency_in_detail_views_api_1_4(dataset, client):
 
 
 @pytest.mark.elasticsearch
-def test_slug_in_organization_link_datasets_list(dataset, client):
+def test_slug_in_organization_link_datasets_list(dataset_with_run_events, client):
     resp = client.simulate_get("/1.4/datasets/")
     assert HTTP_OK == resp.status
     assert resp.json["data"][0]["relationships"]["institution"]["links"]["related"].endswith(
-        f"{dataset.institution.id},{dataset.institution.slug}"
+        f"{dataset_with_run_events.institution.id},{dataset_with_run_events.institution.slug}"
     )
 
 
@@ -180,10 +180,10 @@ def test_datasets_routes(dataset, client):
 
 
 @pytest.mark.elasticsearch
-def test_response_datasets_list_slug_in_link(dataset, client14):
+def test_response_datasets_list_slug_in_link(dataset_with_run_events, client14):
     resp = client14.simulate_get("/datasets/")
     assert HTTP_OK == resp.status
-    assert f"{dataset.id},{dataset.slug}" in resp.json["data"][0]["links"]["self"]
+    assert f"{dataset_with_run_events.id},{dataset_with_run_events.slug}" in resp.json["data"][0]["links"]["self"]
 
 
 @pytest.mark.elasticsearch

@@ -1,4 +1,3 @@
-import time
 from pathlib import Path
 
 import pytest
@@ -299,90 +298,6 @@ class TestDatasetsUserRoles:
         assert dataset.followers_count == 1
         UserFollowingDataset(follower=active_editor, dataset=dataset).save()
         assert dataset.followers_count == 2
-
-
-class TestDatasetVerifiedDate:
-    def test_new_dataset_has_verified_same_as_created(self, dataset):
-        assert dataset.verified == dataset.created
-
-    def test_dataset_with_resource_has_verified_same_as_resourve_verified(self, dataset_with_resources):
-        dataset = dataset_with_resources
-        resource = dataset.resources.last()
-        rs = Resource.objects.get(pk=resource.id)
-        ds = Dataset.objects.get(pk=dataset.id)
-        assert rs in ds.resources.all()
-        assert ds.verified == rs.created
-
-    def test_dataset_verified_is_created_after_delete_all_resources(self, dataset_with_resource):
-        dataset = dataset_with_resource
-        resource = dataset.resources.first()
-
-        rs = Resource.objects.get(pk=resource.id)
-        ds = Dataset.objects.get(pk=dataset.id)
-        assert dataset.resources.count() == 1
-        assert ds.verified == rs.created
-        assert ds.verified != ds.created
-        resource.delete()
-        assert ds.resources.count() == 0
-        ds = Dataset.objects.get(pk=dataset.id)
-        assert ds.verified == dataset.created
-
-    def test_dataset_verified_is_same_as_created_when_all_his_resources_are_draft(self, dataset_with_resource):
-        dataset = dataset_with_resource
-        resource = dataset.resources.first()
-
-        rs = Resource.objects.get(pk=resource.id)
-        ds = Dataset.objects.get(pk=dataset.id)
-        assert rs.status == "published"
-        assert ds.verified == rs.created
-        rs.status = "draft"
-        rs.save()
-        ds = Dataset.objects.get(pk=dataset.id)
-        assert ds.verified == dataset.created
-
-    def test_dataset_verified_change_after_resource_revalidate(self, dataset_with_resource):
-        dataset = dataset_with_resource
-        assert dataset.resources.count() == 1
-
-        dataset = Dataset.objects.get(pk=dataset_with_resource.id)
-        resource = Resource.objects.get(pk=dataset.resources.last().id)
-
-        old = resource.created
-        assert dataset.verified == old
-
-        resource.revalidate()
-        time.sleep(1)
-        rs = Resource.objects.get(pk=resource.id)
-        ds = Dataset.objects.get(pk=dataset.id)
-
-        assert rs.created == old
-        assert ds.verified == old
-
-    def test_reval_of_resource_when_dataset_is_in_draft_state_should_not_change_verified(self, dataset_with_resources):
-        dataset = dataset_with_resources
-        resource = dataset.resources.last()
-        rs = Resource.objects.get(pk=resource.id)
-        ds = Dataset.objects.get(pk=dataset.id)
-
-        assert rs.status == "published"
-        assert ds.status == "published"
-        assert ds.verified == rs.created
-
-        ds.status = "draft"
-        ds.save()
-
-        rs = Resource.objects.get(pk=resource.id)
-        ds = Dataset.objects.get(pk=dataset.id)
-
-        assert rs.status == "draft"
-        assert ds.status == "draft"
-        assert ds.verified == ds.created
-
-        rs.revalidate()
-
-        ds = Dataset.objects.get(pk=dataset.id)
-
-        assert ds.verified == ds.created
 
 
 class TestDatasetArchiveFunctionality:
