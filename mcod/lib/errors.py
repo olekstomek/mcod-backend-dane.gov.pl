@@ -2,6 +2,7 @@ import json
 import traceback
 from uuid import uuid4
 
+import falcon.request
 from django.utils.translation import gettext_lazy as _
 from flatdict import FlatDict
 
@@ -11,8 +12,12 @@ from mcod.lib.encoders import LazyEncoder
 from mcod.lib.schemas import ErrorSchema
 
 
-def update_content_type(request, response):
-    if request.api_version == "1.0":
+def _is_version_one(request: falcon.request.Request) -> bool:
+    return getattr(request, "api_version", None) == "1.0"
+
+
+def update_content_type(request: falcon.request.Request, response):
+    if _is_version_one(request):
         response.content_type = "application/json"
     else:
         response.content_type = "application/vnd.api+json"
@@ -49,44 +54,44 @@ def _prepare_error(exc, error_data=None):
     )
 
 
-def error_handler(req, resp, exc, params):
-    update_content_type(req, resp)
-    resp.status = exc.status
-    if req.api_version == "1.0":
+def error_handler(request: falcon.request.Request, response, exc, params):
+    update_content_type(request, response)
+    response.status = exc.status
+    if _is_version_one(request):
         exc_data = {
             "title": exc.title,
             "description": exc.description,
             "code": getattr(exc, "code") or "error",
         }
         result = ErrorSchema().dump(exc_data)
-        resp.text = json.dumps(result, cls=LazyEncoder)
+        response.text = json.dumps(result, cls=LazyEncoder)
     else:
-        resp.text = json.dumps(_prepare_error(exc), cls=LazyEncoder)
+        response.text = json.dumps(_prepare_error(exc), cls=LazyEncoder)
 
 
-def error_404_handler(req, resp, exc, params):
-    update_content_type(req, resp)
-    resp.status = exc.status
+def error_404_handler(request: falcon.request.Request, response, exc, params):
+    update_content_type(request, response)
+    response.status = exc.status
 
-    if req.api_version == "1.0":
+    if _is_version_one(request):
         exc_data = {
             "title": exc.title,
             "description": exc.description,
             "code": getattr(exc, "code") or "error",
         }
         result = ErrorSchema().dump(exc_data)
-        resp.text = json.dumps(result, cls=LazyEncoder)
+        response.text = json.dumps(result, cls=LazyEncoder)
     else:
         error_data = {"detail": _("The requested resource could not be found")}
 
-        resp.text = json.dumps(_prepare_error(exc, error_data=error_data), cls=LazyEncoder)
+        response.text = json.dumps(_prepare_error(exc, error_data=error_data), cls=LazyEncoder)
 
 
-def error_500_handler(req, resp, exc, params):
-    update_content_type(req, resp)
-    resp.status = getattr(exc, "status", "500 Internal Server Error")
+def error_500_handler(request: falcon.request.Request, response, exc, params):
+    update_content_type(request, response)
+    response.status = getattr(exc, "status", "500 Internal Server Error")
 
-    if req.api_version == "1.0":
+    if _is_version_one(request):
         description = getattr(exc, "description", " ".join(a.capitalize() for a in exc.args))
         title = getattr(exc, "title", "Hmm, something goes wrong...")
         code = getattr(exc, "code", None)
@@ -98,27 +103,27 @@ def error_500_handler(req, resp, exc, params):
         if settings.DEBUG:
             exc_data["traceback"] = traceback.format_exc()
         result = ErrorSchema().dump(exc_data)
-        resp.text = json.dumps(result, cls=LazyEncoder)
+        response.text = json.dumps(result, cls=LazyEncoder)
     else:
         error_data = {
-            "status": resp.status,
+            "status": response.status,
             "detail": getattr(exc, "description", " ".join(str(a).capitalize() for a in exc.args)),
             "title": getattr(exc, "title", "Hmm, something goes wrong..."),
         }
         error_data["meta"] = {"traceback": traceback.format_exc()}
 
         body = _prepare_error(exc, error_data)
-        resp.text = json.dumps(body, cls=LazyEncoder)
+        response.text = json.dumps(body, cls=LazyEncoder)
 
     if settings.DEBUG and getattr(settings, "CONSOLE_LOG_ERRORS", False):
         logger.exception(exc)
 
 
-def error_422_handler(req, resp, exc, params):
-    update_content_type(req, resp)
-    resp.status = exc.status
+def error_422_handler(request: falcon.request.Request, response, exc, params):
+    update_content_type(request, response)
+    response.status = exc.status
 
-    if req.api_version == "1.0":
+    if _is_version_one(request):
         exc_data = {
             "title": exc.title,
             "description": _("Field value error"),
@@ -128,7 +133,7 @@ def error_422_handler(req, resp, exc, params):
             exc_data["errors"] = exc.errors
 
         result = ErrorSchema().dump(exc_data)
-        resp.text = json.dumps(result, cls=LazyEncoder)
+        response.text = json.dumps(result, cls=LazyEncoder)
     else:
         _exc_code = exc.status.lower().replace(" ", "_")
         _errors = []
@@ -145,7 +150,7 @@ def error_422_handler(req, resp, exc, params):
                         "id": uuid4(),
                         "title": _("Field error"),
                         "detail": _(title),
-                        "status": resp.status,
+                        "status": response.status,
                         "code": getattr(exc, "code") or _exc_code,
                         "source": {"pointer": "/{}".format(field)},
                     }
@@ -156,10 +161,10 @@ def error_422_handler(req, resp, exc, params):
                 "code": getattr(exc, "code") or _exc_code,
                 "title": exc.title,
                 "detail": _("Field value error"),
-                "status": resp.status,
+                "status": response.status,
             }
             _errors.append(_error)
 
         result = ErrorsSchema().dump({"errors": _errors})
 
-        resp.text = json.dumps(result, cls=LazyEncoder)
+        response.text = json.dumps(result, cls=LazyEncoder)

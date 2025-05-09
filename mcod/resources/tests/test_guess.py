@@ -1,6 +1,9 @@
+import pytest
+
 from mcod.resources import guess
 
 
+@pytest.mark.otd_1152
 class TestGuess:
     def test_csv(self, file_csv):
         assert guess._csv(file_csv.name, "utf-8") == "csv"

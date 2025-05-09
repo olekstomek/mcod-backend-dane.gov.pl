@@ -1,6 +1,9 @@
+import logging
 import os
 import tempfile
 import zipfile
+from pathlib import Path
+from typing import IO, BinaryIO, Iterator, Literal, Tuple, Union
 
 import libarchive
 import magic
@@ -10,16 +13,18 @@ from mimeparse import parse_mime_type
 
 from mcod import settings
 
+logger = logging.getLogger("mcod")
+
 
 class UnsupportedArchiveError(Exception):
     pass
 
 
-def is_archive_file(content_type):
+def is_archive_file(content_type: str) -> bool:
     return content_type in settings.ARCHIVE_CONTENT_TYPES
 
 
-def is_password_protected_7z(source):
+def _is_password_protected_7z(source: BinaryIO) -> bool:
     if not py7zr.is_7zfile(source):
         return False
     try:
@@ -29,7 +34,7 @@ def is_password_protected_7z(source):
         return True
 
 
-def is_password_protected_zip(source):
+def _is_password_protected_zip(source: BinaryIO) -> bool:
     try:
         with zipfile.ZipFile(source) as zip_file:
             for zinfo in zip_file.filelist:
@@ -41,7 +46,7 @@ def is_password_protected_zip(source):
     return False
 
 
-def is_password_protected_rar(source):
+def _is_password_protected_rar(source: BinaryIO) -> bool:
     if not rarfile.is_rarfile(source):
         return False
     try:
@@ -51,110 +56,117 @@ def is_password_protected_rar(source):
         return True
 
 
-def get_memory_file_info(file):
+def get_memory_file_info(file: IO) -> Tuple[str, str, dict]:
     _magic = magic.Magic(mime=True, mime_encoding=True)
     result = _magic.from_buffer(file.read(1024))
     file.seek(0)
     return parse_mime_type(result)
 
 
-def is_password_protected_archive_file(file):
+def is_password_protected_archive_file(file: BinaryIO) -> bool:
     family, content_type, options = get_memory_file_info(file)
     content_type_2_func = {
-        **{ct: is_password_protected_rar for ct in settings.ARCHIVE_RAR_CONTENT_TYPES},
-        **{ct: is_password_protected_7z for ct in settings.ARCHIVE_7Z_CONTENT_TYPES},
-        **{ct: is_password_protected_zip for ct in settings.ARCHIVE_ZIP_CONTENT_TYPES},
+        **{ct: _is_password_protected_rar for ct in settings.ARCHIVE_RAR_CONTENT_TYPES},
+        **{ct: _is_password_protected_7z for ct in settings.ARCHIVE_7Z_CONTENT_TYPES},
+        **{ct: _is_password_protected_zip for ct in settings.ARCHIVE_ZIP_CONTENT_TYPES},
     }
     if content_type not in content_type_2_func:
         return False
 
-    return content_type_2_func[content_type](getattr(file, "file", file))
-
-
-def has_archive_extension(path):
-    ext = path.rsplit(".", 1)[-1]
-    return ext in settings.ARCHIVE_EXTENSIONS
+    return content_type_2_func[content_type](file)
 
 
 class ArchiveReader:
-    _tmp_dir = None
+    format: Literal["rar", "other"]
 
-    def __init__(self, source, destiny_path=None):
-        root_dir = os.path.realpath(destiny_path or self.tmp_dir)
-
-        files = []
-        if rarfile.is_rarfile(source):
-            with rarfile.RarFile(source) as rf:
-                rf.extractall(path=root_dir)
-            for root, dirs, files_ in os.walk(root_dir):
-                for filename in files_:
-                    files.append(os.path.abspath(os.path.join(root, filename)))
-
+    def __init__(self, source: Union[str, Path]):
+        self.files: Tuple[Union[Path, str], ...] = ()
+        self._source_file = Path(source)
+        self._rar = None
+        if not self._source_file.exists():
+            raise ValueError(f"File {self._source_file} does not exist")
+        with open(self._source_file, "rb") as fd:
+            if is_password_protected_archive_file(fd):
+                raise PasswordProtectedArchiveError
+        self.root_dir = tempfile.TemporaryDirectory()
+        if rarfile.is_rarfile(self._source_file):
+            _rar_archive = rarfile.RarFile(self._source_file)
+            self.files = tuple([f.filename for f in _rar_archive.infolist() if f.is_file()])
+            self._rar = _rar_archive
         else:
-            with libarchive.file_reader(source) as arch:
-                for entry in arch:
-                    entry_path = self._get_entry_path(entry)
-                    if entry.isdir:
-                        os.makedirs(os.path.join(root_dir, entry_path), exist_ok=True)
-                    else:
-                        path, extr_file = os.path.split(entry_path)
-                        if path and not os.path.isdir(os.path.join(root_dir, path)):
-                            os.makedirs(os.path.join(root_dir, path), exist_ok=True)
-                        resource_path = os.path.join(root_dir, path, extr_file)
+            files = []
+            with libarchive.file_reader(str(self._source_file)) as archive:
+                for entry in archive:
+                    if entry.isfile:
+                        files.append(entry.path)
+            self.files = tuple(files)
 
-                        with open(resource_path, "wb") as f:
-                            for block in entry.get_blocks():
-                                f.write(block)
-                        files.append(resource_path)
-
-        self.files = tuple(files)
-
-    @staticmethod
-    def _get_entry_path(entry):
-        if isinstance(entry.path, str):
-            return entry.path
-        try:
-            entry_path = entry.path.decode()
-        except UnicodeDecodeError:
-            entry_path = entry.path.decode("iso8859_2")
-        return entry_path
-
-    @property
-    def tmp_dir(self):
-        if not self._tmp_dir:
-            self._tmp_dir = tempfile.mkdtemp()
-        return self._tmp_dir
-
-    def cleanup(self):
-        dirs = set()
-        for f in self.files:
-            dirs.add(os.path.split(f)[0])
-            os.remove(f)
-
-        dirs = sorted(dirs, reverse=True)
-        for d in dirs:
-            try:
-                os.rmdir(d)
-            except OSError:
-                pass
-
-        if self._tmp_dir:
-            try:
-                os.rmdir(self._tmp_dir)
-            except OSError:
-                pass
+    @classmethod
+    def from_bytes(cls, b: bytes) -> "ArchiveReader":
+        _, tmp_file_path = tempfile.mkstemp()
+        with open(tmp_file_path, "wb") as fd:
+            fd.write(b)
+        archive = ArchiveReader(tmp_file_path)
+        return archive
 
     def __len__(self):
         return len(self.files)
 
-    def __getitem__(self, item):
+    def __getitem__(self, item: int) -> str:
         return self.files[item]
 
     def __enter__(self):
         return self
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[str]:
         return iter(self.files)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self.cleanup()
+        self.root_dir.cleanup()
+        if self._rar:
+            self._rar.__exit__(exc_type, exc_val, exc_tb)
+
+    def get_by_extension(self, extension: str) -> Iterator[Path]:
+        extension = extension[1:] if extension.startswith(".") else extension
+        for f in self.files:
+            if f.endswith(f".{extension}"):
+                extracted_path = self.extract(f)
+                yield extracted_path
+
+    def extract(self, path_in_archive: str) -> Path:
+        if path_in_archive not in self.files:
+            raise KeyError(path_in_archive)
+        target = os.path.join(self.root_dir.name, path_in_archive)
+        target_dir = os.path.dirname(target)
+        os.makedirs(target_dir, exist_ok=True)
+        if self._rar:
+            for f in self._rar.infolist():
+                if f.filename == path_in_archive:
+                    self._rar.extract(f, target_dir)
+        else:
+            with libarchive.file_reader(str(self._source_file)) as archive:
+                for entry in archive:
+                    if entry.isfile:
+                        if entry.path == path_in_archive:
+                            with open(target, "wb") as f:
+                                for block in entry.get_blocks():
+                                    f.write(block)
+        return Path(target)
+
+    def extract_single(self) -> Path:
+        if len(self.files) != 1:
+            raise KeyError(0)
+        path_in_archive = self.files[0]
+        return self.extract(path_in_archive)
+
+    def __repr__(self) -> str:
+        files_ = ", ".join(self.files[:4])
+        if len(self.files) > 4:
+            files_ += ", ..."
+        return f"ArchiveReader({self._source_file.name})[{files_}]"
+
+    __str__ = __repr__
+
+
+class PasswordProtectedArchiveError(Exception):
+    pass

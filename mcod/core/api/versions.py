@@ -1,5 +1,7 @@
+import decimal
 from datetime import date
 from decimal import Decimal
+from typing import Tuple
 
 
 class Version:
@@ -23,10 +25,13 @@ class Version:
         return self.__tuple_2_decimal(self.version_tuple)
 
     @staticmethod
-    def __tuple_2_decimal(version_tuple):
+    def __tuple_2_decimal(version_tuple: Tuple[str, str]) -> Decimal:
         if len(version_tuple) != 2:
             raise ValueError("Version tuple must have exactly two items")
-        return Decimal("{}.{:>05}".format(*version_tuple))
+        try:
+            return Decimal("{}.{:>05}".format(*version_tuple))
+        except decimal.DecimalException:
+            raise ValueError("Version tuple must have exactly two numbers")
 
     def __to_decimal(self, value):
         if isinstance(value, str):

@@ -26,10 +26,11 @@ class Command(BaseCommand):
         self.stdout.write("The action will reindex files for {} resource(s)".format(queryset.count()))
         for obj in tqdm(queryset, desc="Indexing"):
             if async_:
-                process_resource_file_data_task.delay(obj.pk, update_verification_date=False)
+                process_resource_file_data_task.delay(obj.pk)
             else:
                 process_resource_file_data_task.apply(
-                    kwargs={"resource_id": obj.pk, "update_verification_date": False}, throw=True
+                    args=(obj.pk,),
+                    throw=True,
                 )
 
         self.stdout.write("Done.")

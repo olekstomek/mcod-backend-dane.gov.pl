@@ -2,6 +2,7 @@ import datetime
 import json
 import os
 from collections import OrderedDict
+from typing import List
 
 import pytest
 import pytz
@@ -416,3 +417,24 @@ def harvester_dcat_expected_data():
             ("license_chosen", "CC_BY_SA_4.0"),
         ]
     )
+
+
+@pytest.fixture
+def harvester_ckan_data_with_no_resource_format() -> List[dict]:
+    return [
+        {
+            "id": "10000000-202b-402d-92a5-445d8ba6fd7z",
+            "title": "MM - Dataset Title 2.1",
+            "license_id": "cc-by",
+            "organization": {"title": "MM Organization", "image_url": "some_image.png"},
+            "name": "some name",
+            "resources": [
+                {
+                    "id": "10000001-mmmm-402d-92a5-445d8ba6fd7a",
+                    "name": "MM - Resource Title 2.1",
+                    "contains_protected_data": False,
+                    "url": "https://mock-endpoint.local",
+                }
+            ],
+        }
+    ]

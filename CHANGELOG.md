@@ -14,20 +14,61 @@
 ### Breaks
 
 
-## 2.41.1 - (2025-03-26)
+## 2.42.2 - (2025-04-28)
 ---
 
 ### Fixes
-* Usunięto błąd 500 w przypadku zmiany typu danych tabelarycznych dla zasobów harvestowanych: OTD-805, OTD-1259
-* Poprawa ustawiania daty aktualizacji zbioru: OTD-1132
+* Naprawiono problem uruchamiania tasków periodycznych celery z modułu mcod/resources/tasks OTD-1446
+
+
+## 2.42.1 - (2025-04-18)
+---
+
+### New
+* Dodano blokowanie niechcianych plików podczas harvestowania zasobów CKAN i XML. OTD-1203 OTD-1204
+  * zmiana kontrolowana feature flagą `harvester_file_validation.be`
+* Dodano testy procesu harvestowania, moduł schema_utils.py, wyjątki ResourceFormatValidation, NoResponseException
 
 ### Changes
-* Zmieniono fixture testową (def dataset), w której zlikwidowano run_on_commit_events() dla dataset.
-* Usunięto metodę modify_change_form_for_imported w ResourceAdmin.
-* Naprawiono błąd w metodzie _validate_related_resource (ResourceForm): AttributeError.
-* Zmieniono sposób wyświetlania błędów w change_form.html.
-* Zmieniono handler handle_resource_post_save() o aktualizację w polu dataset.verified zgodnie z OTD-1132
-* Zmieniono task update_data_date() o aktualizację w polu dataset.verified zgodnie z OTD-1132 (dla zasobów api i website)
+* Przeniesiono generowanie formatu plików harvestowanych do modułu `schema_utils.py`.
+* Refaktoring i poprawa funkcji w module `file_format_from_response.py`.
+* Przeniesiono zmienne związane z "supported_formats" do base.py.
+* Aktualizacja testów w module `mcod/datasets/tests/test_dataset_verified_date.py`
+
+### Fixes
+* Poprawa wyliczania daty aktualizacji zbioru dla zasobów importowanych: usunięcie Zasobu nie zmienia daty aktualizacji. OTD-1352
+  * poprawa funkcji `handle_resource_post_save`
+* Obsługa błędnej wersji oraz braku wersji w kodzie error handlera API. OTD-1351
+
+
+## 2.42.0 - (2025-04-15)
+---
+
+### New
+* Dodano format `rdfa` do mapowania STO z domyślną wartością 4 oraz do kalkulatora dla rozszerzeń RDF OTD-1323
+* Komenda uzupełniająca pole `format` dla zasobów importowanych z CKAN, które nie mają ustawionego formatu OTD-1341
+  * `set_format_for_ckan_resources`
+* Komenda przeliczająca ponownie stopnie otwartości wg zaktualizowanych reguł OTD-1166
+  * `calculate_openness_score`
+
+### Changes
+* Zmieniono reguły przypisania stopni otwartości dla archiwów OTD-1152
+* Zmieniono zachowanie importera CKAN, tak by uzupełniał pole `format` oraz nadawał stopien otwartości zaimportowanych danych OTD-1193
+* Usunięto nadmiarowe informacje o pozostałych możliwych Stopniach Otwartości z mapowania `SUPPORTED_CONTENT_TYPES` (pozostawiono tylko domyślne) OTD-1323, OTD-1324
+* Aktualizacja informacji kontaktowych na stronach portalu niedostępnych w CMS OTD-1279
+
+### Fixes
+ * Refactor (decoupling) tasków `process_resource_from_url_task`, `process_resource_res_file_task`, `process_resource_file_data_task` OTD-1199. Kluczowe zmiany:
+  * utworzenie dwóch entrypointów będących procesami, które zarządzają przepływem i uruchamianiem w/w tasków (nie wywołują już siebie wzajemnie),
+  * pozbycie się niepotrzebnych handlerów dla w/w tasków
+  * ustawienie zmiennej `CELERY_TASK_STORE_EAGER_RESULT` w settings na `True`
+  * rozbicie na osobne moduły pliku mcod/resources/tasks.py
+* Refactor pakietu liczącego Stopnie otwartości danych (STO) OTD-1162
+* Oznaczenie pola "Poziom otwartości danych" jako nieklikalne w Panelu Administracyjnym OTD-1311
+
+
+## 2.41.1 - (2025-03-26)
+---
 
 ### New
 * Dodano test sprawdzający, czy istnieje możliwość edycji danych tabelarycznych, w przypadku pól required dla formularza oraz pustych dla resource.
@@ -37,6 +78,18 @@
 * Dodano testy w mcod/datasets/tests/test_dataset_verified_date.py
 * Dodano handler update_dataset_verified_after_restoring_from_trash() z aktualizacją dataset.verified zgodnie z OTD-1132
 * Dodano metodę update_dataset_verified() do klasy Resource.
+
+### Changes
+* Zmieniono fixture testową (def dataset), w której zlikwidowano run_on_commit_events() dla dataset.
+* Usunięto metodę modify_change_form_for_imported w ResourceAdmin.
+* Naprawiono błąd w metodzie _validate_related_resource (ResourceForm): AttributeError.
+* Zmieniono sposób wyświetlania błędów w change_form.html.
+* Zmieniono handler handle_resource_post_save() o aktualizację w polu dataset.verified zgodnie z OTD-1132
+* Zmieniono task update_data_date() o aktualizację w polu dataset.verified zgodnie z OTD-1132 (dla zasobów api i website)
+
+### Fixes
+* Usunięto błąd 500 w przypadku zmiany typu danych tabelarycznych dla zasobów harvestowanych: OTD-805, OTD-1259
+* Poprawa ustawiania daty aktualizacji zbioru: OTD-1132
 
 
 ## 2.41.0 - (2025-03-11)

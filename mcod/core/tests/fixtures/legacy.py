@@ -62,12 +62,12 @@ def constance_config():
 
 
 @pytest.fixture
-def client():
+def client() -> testing.TestClient:
     return testing.TestClient(app, headers={"X-API-VERSION": "1.0"})
 
 
 @pytest.fixture
-def client14():
+def client14() -> testing.TestClient:
     return testing.TestClient(app, headers={"X-API-VERSION": "1.4", "Accept-Language": "pl"})
 
 

@@ -1,5 +1,6 @@
 import datetime
 import enum
+import logging
 from io import BytesIO
 from typing import Any, Dict, List as ListType, Optional, Tuple
 
@@ -24,6 +25,7 @@ from mcod.core.api import fields
 from mcod.core.api.rdf.profiles.dcat_ap import DCATDatasetDeserializer
 from mcod.core.serializers import CSVSerializer
 from mcod.datasets.models import Dataset
+from mcod.harvester.schema_utils import get_and_validate_resource_format_from_response
 from mcod.lib.metadata_validators import (
     validate_conflicting_high_value_data_flags,
     validate_high_value_data_from_ec_list_organization,
@@ -41,11 +43,9 @@ from mcod.resources.dga_utils import (
     validate_institution_type_for_contains_protected_data,
 )
 from mcod.resources.link_validation import download_file
-from mcod.resources.models import RESOURCE_DATA_DATE_PERIODS, Resource, supported_formats_choices
+from mcod.resources.models import RESOURCE_DATA_DATE_PERIODS, Resource
 
-SUPPORTED_RESOURCE_FORMATS = [i[0] for i in supported_formats_choices()]
-SUPPORTED_RESOURCE_FORMATS.extend(settings.ARCHIVE_EXTENSIONS)
-SUPPORTED_RESOURCE_FORMATS.append("api")
+logger = logging.getLogger("mcod")
 
 
 class Schema(BaseSchema):
@@ -234,6 +234,8 @@ def _validate_has_high_value_data_from_ec_list(
 
 
 class ResourceSchema(ResourceMixin, CKANPreProcessedSchema):
+    """Resource schema only for CKAN harvester"""
+
     mimetype = Str(allow_none=True)
     cache_last_updated = Str(allow_none=True)
     cache_url = Str(allow_none=True)
@@ -279,24 +281,41 @@ class ResourceSchema(ResourceMixin, CKANPreProcessedSchema):
         )
         unknown = EXCLUDE
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # TODO: Does it makes sense to validate format here? Disabled for now.
-        self.format_validation = False
-
-    @validates_schema
-    def validate_format(self, data, **kwargs):
-        value = data.get("format")
-        if self.format_validation and value and value not in SUPPORTED_RESOURCE_FORMATS:
-            error = _("Unsupported format: %(format)s.") % {"format": value}
-            raise ValidationError(error, field_name="format")
-
     def prepare_data(self, data, **kwargs):
         if "format" in data:
             value = data["format"].lower()
-            if value not in SUPPORTED_RESOURCE_FORMATS:
-                value = ""
             data["format"] = value
+        return data
+
+    @validates_schema
+    def get_resource_format(self, data: dict, **kwargs) -> None:
+        """
+        Automatically detects and sets the file format based on a remote resource.
+
+        If the 'format' field is missing from the input data, this method attempts
+        to fetch the file from the provided 'link' field and determine its format
+        using `get_resource_format(response)`. The detected format is stored in the
+        schema's context for later use (e.g., during `post_load`).
+        """
+        if data.get("format"):
+            return
+        url = data.get("link")
+        if not url:
+            raise ValidationError("Link cannot be empty")
+        extension = get_and_validate_resource_format_from_response(url)
+        self.context["format"] = extension
+
+    @post_load
+    def pass_format(self, data, **kwargs):
+        """
+        Injects the previously detected file format into the loaded data.
+
+        If the format was detected earlier and stored in the schema context
+        (e.g., by `get_resource_format`), this method assigns it to the 'format'
+        field before returning the deserialized data.
+        """
+        if "format" in self.context:
+            data["format"] = self.context["format"]
         return data
 
 
@@ -429,6 +448,12 @@ class XMLResourceSchema(ResourceMixin, XMLPreProcessedSchema):
     class Meta:
         ordered = True
         unknown = EXCLUDE
+
+    @validates_schema
+    def validate_resource_format(self, data: dict, **kwargs) -> None:
+        url = data.get("link")
+        if url:
+            get_and_validate_resource_format_from_response(url)
 
     def prepare_data(self, data, **kwargs):
         if "title" in data and isinstance(data.get("title"), dict):

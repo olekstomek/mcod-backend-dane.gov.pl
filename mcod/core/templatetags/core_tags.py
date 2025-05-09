@@ -1,3 +1,4 @@
+from django.contrib.admin.helpers import AdminReadonlyField
 from django import template
 from django.apps import apps
 from django.conf import settings
@@ -163,7 +164,7 @@ def get_model_extra_data(app_label, object_name):
 
 
 @register.filter()
-def mcod_field_contents_foreign_linked(admin_field):
+def mcod_field_contents_foreign_linked(admin_field: AdminReadonlyField) -> str:
     file_fields = ["main_file", "jsonld_converted_file", "csv_converted_file"]
     field = field_contents_foreign_linked(admin_field)
     field_display = field

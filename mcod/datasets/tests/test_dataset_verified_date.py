@@ -178,18 +178,33 @@ def test_dataset_verified_not_changed_after_periodic_updating_file_resource():
     assert dataset.verified == dataset_verified_before
 
 
-def test_dataset_verified_changed_and_is_max_data_date_after_importing_ckan_resource_without_auto_data_date():
+def test_dataset_verified_changed_and_is_max_created_after_importing_ckan_resource_without_auto_data_date():
     # Given
     dataset = DatasetFactory(source=CKANDataSourceFactory())
     dataset_verified_before = dataset.verified
     # When
-    ResourceFactory(dataset=dataset, created=NOW_TWO_DAYS_AGO, data_date=NOW_A_DAY_AGO.date())
-    ResourceFactory(dataset=dataset, created=NOW_TWO_DAYS_AGO, data_date=NOW.date())
+    ResourceFactory(dataset=dataset, created=NOW_TWO_DAYS_AGO, data_date=NOW_TWO_DAYS_AGO.date())
+    ResourceFactory(dataset=dataset, created=NOW_A_DAY_AGO, data_date=NOW.date())
     dataset.refresh_from_db()
     assert dataset.resources.count() == 2
     # Then
     assert dataset.verified != dataset_verified_before
-    assert dataset.verified == NOW_AT_MIDNIGHT.astimezone(dataset.verified.tzinfo)
+    assert dataset.verified == NOW_A_DAY_AGO.astimezone(dataset.verified.tzinfo)
+
+
+def test_dataset_verified_not_changed_after_deleting_ckan_resource_without_auto_data_date():
+    # Given
+    dataset = DatasetFactory(source=CKANDataSourceFactory())
+    resource = ResourceFactory(dataset=dataset, created=NOW_TWO_DAYS_AGO, data_date=NOW_A_DAY_AGO.date())
+    dataset.refresh_from_db()
+    assert dataset.resources.count() == 1
+    dataset_verified_before = dataset.verified
+    # When
+    resource.delete()
+    dataset.refresh_from_db()
+    assert dataset.resources.count() == 0
+    # Then
+    assert dataset.verified == dataset_verified_before
 
 
 def test_dataset_verified_changed_and_is_max_data_date_of_imported_ckan_resource_with_auto_data_date():
@@ -226,3 +241,26 @@ def test_dataset_verified_changed_and_is_max_data_date_of_imported_ckan_resource
     # Then
     assert dataset.verified != dataset_verified_before
     assert dataset.verified == YESTERDAY_AT_MIDNIGHT.astimezone(dataset.verified.tzinfo)
+
+
+def test_dataset_verified_not_changed_after_deleting_ckan_resource_with_auto_data_date():
+    # Given
+    dataset = DatasetFactory(source=CKANDataSourceFactory())
+    resource = ResourceFactory(
+        dataset=dataset,
+        created=NOW_TWO_DAYS_AGO,
+        data_date=NOW_TWO_DAYS_AGO.date(),
+        is_auto_data_date=True,
+        automatic_data_date_start=NOW.date(),
+        endless_data_date_update=True,
+        data_date_update_period="daily",
+    )
+    dataset.refresh_from_db()
+    assert dataset.resources.count() == 1
+    dataset_verified_before = dataset.verified
+    # When
+    resource.delete()
+    dataset.refresh_from_db()
+    assert dataset.resources.count() == 0
+    # Then
+    assert dataset.verified == dataset_verified_before

@@ -3206,6 +3206,9 @@ msgstr "Dane na dzień"
 msgid "Invalid file extension: %(ext)s."
 msgstr "Niepoprawne rozszerzenie pliku: %(ext)s."
 
+msgid "Format unknown."
+msgstr "Format pliku nieznany."
+
 msgid "Password protected archives are not allowed."
 msgstr "Pliki archiwum zabezpieczone hasłem nie są dozwolone."
 

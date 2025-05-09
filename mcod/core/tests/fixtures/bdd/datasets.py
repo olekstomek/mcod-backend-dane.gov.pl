@@ -541,6 +541,11 @@ def example_regular_zip():
 
 
 @pytest.fixture
+def json_in_zip_zip():
+    return prepare_file("json_in_zip.zip")
+
+
+@pytest.fixture
 def example_encrypted_content_zip():
     return prepare_file("encrypted_content.zip")
 
@@ -611,6 +616,7 @@ def validated_file(
     example_binary_netcdf,
     file_type,
     example_regular_zip,
+    json_in_zip_zip,
     example_encrypted_content_zip,
     example_regular_7z,
     example_encrypted_content_7z,
@@ -653,6 +659,7 @@ def validated_file(
         "hdf_netcdf": example_hdf_netcdf,
         "binary_netcdf": example_binary_netcdf,
         "regular.zip": example_regular_zip,
+        "json_in_zip.zip": json_in_zip_zip,
         "encrypted_content.zip": example_encrypted_content_zip,
         "regular.7z": example_regular_7z,
         "encrypted_content.7z": example_encrypted_content_7z,

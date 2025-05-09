@@ -2,7 +2,6 @@ from typing import List
 from unittest.mock import patch
 
 import pytest
-from celery import states
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db.models import QuerySet
@@ -12,7 +11,7 @@ from mcod.core.tests.helpers.tasks import run_on_commit_events
 from mcod.datasets.factories import DatasetFactory
 from mcod.harvester.factories import DataSourceFactory
 from mcod.resources.factories import AggregatedDGAInfoFactory, ResourceFactory
-from mcod.resources.models import Chart, Resource, TaskResult, update_resource
+from mcod.resources.models import Chart, Resource, TaskResult
 
 
 class TestResourceModel:
@@ -117,22 +116,6 @@ class TestResourceModel:
         resource.revalidate()
         run_on_commit_events()
         assert len(TaskResult.objects.all()) > k
-
-    def test_update_resource_sets_has_map_attribute_if_geo_data_available(self, geo_tabular_data_resource):
-        tr = TaskResult.objects.create(status=states.SUCCESS)
-        geo_tabular_data_resource.tabular_data_schema = {
-            "geo": {"label": "etykieta", "b": 1, "l": 2},
-            "fields": {},
-        }
-        geo_tabular_data_resource.save()
-        kwargs = {
-            "args": [geo_tabular_data_resource.pk],
-            "update_has_map": True,
-            "retval": '{"indexed":8}',
-        }
-        update_resource(tr.task_id, **kwargs)
-        geo_tabular_data_resource.refresh_from_db()
-        assert geo_tabular_data_resource.has_map
 
     def test_title_and_description_content_validation(self, resource_of_type_website: Resource):
         """

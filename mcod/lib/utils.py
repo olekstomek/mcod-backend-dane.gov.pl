@@ -1,5 +1,14 @@
+import logging
+import os
+import os.path
+from pathlib import Path
+from typing import List, Optional
+
 from django import VERSION
+from django.conf import settings
 from django.utils.html import format_html
+
+logger = logging.getLogger("mcod")
 
 
 def is_django_ver_lt(major=2, minor=2):
@@ -31,3 +40,22 @@ def capitalize_first_character(text: str) -> str:
     modified text.
     """
     return text[:1].upper() + text[1:]
+
+
+def get_file_extensions_no_dot(filenames: List[str]) -> List[str]:
+    extensions = []
+    for filename in filenames:
+        _, ext = os.path.splitext(filename)
+        if ext and len(ext) > 1:
+            ext = ext[1:]  # remove leading dot
+            extensions.append(ext)
+    return extensions
+
+
+def get_file_content(filename: Optional[str]) -> bytes:
+    """Load binary content from a sample file stored locally."""
+    if not filename:
+        return b""
+    file_path = Path(settings.TEST_SAMPLES_PATH) / filename
+    with open(file_path, "rb") as f:
+        return f.read()

@@ -15,7 +15,7 @@ from mcod.datasets.models import Dataset
 from mcod.reports.models import Report
 from mcod.resources.models import Resource, ResourceFile
 from mcod.resources.tasks import (
-    process_resource_res_file_task,
+    entrypoint_process_resource_file_validation_task,
     update_resource_has_table_has_map_task,
     update_resource_validation_results_task,
 )
@@ -443,7 +443,7 @@ class Command(BaseCommand):
         objs = ResourceFile.objects.filter(resource_id__in=res_ids)
         for obj in objs:
             print(f"Resource with invalid format found: id:{obj.resource_id} , format:{obj.resource.format}")
-            process_resource_res_file_task.s(obj.id, update_link=False).apply_async_on_commit()
+            entrypoint_process_resource_file_validation_task.s(obj.id, update_link=False).apply_async_on_commit()
         if objs.count():
             print("Done.")
         else:

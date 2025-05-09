@@ -6,6 +6,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 from urllib.parse import urlencode
 
 import requests
+import sentry_sdk
 from dateutil.relativedelta import relativedelta
 from django.apps import apps
 from django.core.exceptions import ImproperlyConfigured, MultipleObjectsReturned, ValidationError
@@ -51,6 +52,7 @@ from mcod.harvester.ckan_utils import (
 from mcod.harvester.exceptions import CKANPartialValidationException
 from mcod.harvester.managers import DataSourceManager
 from mcod.harvester.utils import make_request, retrieve_to_file
+from mcod.lib.exceptions import NoResponseException
 from mcod.lib.metadata_validators import (
     validate_conflicting_high_value_data_flags,
     validate_high_value_data_from_ec_list_organization,
@@ -1111,6 +1113,7 @@ class DataSource(AdminMixin, LogMixin, SoftDeletableModel, TimeStampedModel):
         return accepted_items, rejected_items_count, error_desc
 
     def import_data(self):  # noqa: C901
+        logger.info("Starting import_data method.")
         if not self.is_active:
             logger.debug(f'Cannot import data. Data source "{self}" is not active!')
             return
@@ -1123,6 +1126,9 @@ class DataSource(AdminMixin, LogMixin, SoftDeletableModel, TimeStampedModel):
         schema_class = self._import_from(schema_path)
         try:
             data = import_func(**self.import_func_kwargs)
+        except NoResponseException as exc:
+            sentry_sdk.capture_exception(exc)
+            error_desc = exc
         except Exception as exc:
             error_desc = exc
         try:

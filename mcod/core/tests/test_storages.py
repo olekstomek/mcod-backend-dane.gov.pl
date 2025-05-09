@@ -1,14 +1,18 @@
 import os
 import shutil
+import typing
 from uuid import uuid4
 
 import pytest
+
+if typing.TYPE_CHECKING:
+    from falcon.testing import TestClient
 
 from mcod.core.storages import ApplicationImagesStorage, OrganizationImagesStorage, ResourcesStorage
 
 
 class TestStorages:
-    def _test_storage(self, client, storage):
+    def _test_storage(self, client: "TestClient", storage):
         tmp_name = str(uuid4())
         tmp_path = os.path.join("/", "tmp", str(uuid4()))
         tmp_content = str(uuid4())

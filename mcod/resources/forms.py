@@ -11,7 +11,7 @@ from django.conf import settings as dj_settings
 from django.contrib.admin.widgets import AdminDateWidget, FilteredSelectMultiple
 from django.contrib.postgres.forms.jsonb import JSONField
 from django.core.exceptions import MultipleObjectsReturned, ValidationError
-from django.core.files.uploadedfile import InMemoryUploadedFile, SimpleUploadedFile
+from django.core.files.uploadedfile import InMemoryUploadedFile, SimpleUploadedFile, UploadedFile
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 
@@ -44,7 +44,7 @@ from mcod.resources.dga_utils import (
     get_main_dga_resource,
     validate_dga_file_columns,
 )
-from mcod.resources.models import SUPPORTED_FILE_EXTENSIONS, Resource, ResourceFile, Supplement
+from mcod.resources.models import Resource, ResourceFile, Supplement
 from mcod.special_signs.models import SpecialSign
 from mcod.unleash import is_enabled
 
@@ -705,12 +705,12 @@ class AddResourceForm(ResourceForm, LinkOrFileUploadForm):
         return self.cleaned_data["data_date"]
 
     def clean_file(self):
-        file = self.cleaned_data.get("file")
+        file: Optional[UploadedFile] = self.cleaned_data.get("file")
         if file:
             _name, ext = os.path.splitext(file.name)
-            if ext.lower() not in SUPPORTED_FILE_EXTENSIONS:
+            if ext.lower() not in settings.SUPPORTED_FILE_EXTENSIONS:
                 self.add_error("file", _("Invalid file extension: %(ext)s.") % {"ext": ext or "-"})
-            elif is_password_protected_archive_file(file):
+            elif is_password_protected_archive_file(file.file):
                 self.add_error("file", _("Password protected archives are not allowed."))
         return file
 

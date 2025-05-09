@@ -781,6 +781,7 @@ CELERY_BROKER_URL = "amqp://%s" % str(env("RABBITMQ_HOST", default="mcod-rabbitm
 CELERY_RESULT_BACKEND = "django-db"
 CELERY_TASK_ALWAYS_EAGER = False
 CELERY_TASK_IGNORE_RESULT = True
+CELERY_TASK_STORE_EAGER_RESULT = True
 
 CELERY_TASK_DEFAULT_QUEUE = "default"
 
@@ -812,6 +813,8 @@ CELERY_TASK_ROUTES = {
     "mcod.resources.tasks.process_resource_file_task": {"queue": "resources"},
     "mcod.resources.tasks.process_resource_res_file_task": {"queue": "resources"},
     "mcod.resources.tasks.process_resource_file_data_task": {"queue": "resources"},
+    "mcod.resources.tasks.entrypoint_process_resource_validation_task": {"queue": "resources"},
+    "mcod.resources.tasks.entrypoint_process_resource_file_validation_task": {"queue": "resources"},
     "mcod.resources.tasks.update_resource_has_table_has_map_task": {"queue": "resources"},
     "mcod.resources.tasks.update_resource_validation_results_task": {"queue": "resources"},
     "mcod.resources.tasks.send_resource_comment": {"queue": "notifications"},
@@ -1123,25 +1126,25 @@ if APM_SERVER_URL and COMPONENT in APM_SERVICES:
     ]
 
 SUPPORTED_CONTENT_TYPES = [
-    # (family, type, extensions, default openness score, other possible openness scores)
-    ("application", "atom+xml", ("xml",), 3, {4, 5}),
-    ("application", "csv", ("csv",), 3, {4, 5}),
+    # (family, type, extensions, default openness score)
+    ("application", "atom+xml", ("xml",), 3),
+    ("application", "csv", ("csv",), 3),
     ("application", "epub+zip", ("epub",), 1),
     ("application", "excel", ("xls",), 2),
-    ("application", "geo+json", ("geojson",), 3, {4, 5}),
-    ("application", "gml+xml", ("xml",), 3, {4, 5}),
-    ("application", "gpx+xml", ("gpx",), 3, {4, 5}),
-    ("application", "json", ("json",), 3, {4, 5}),
+    ("application", "geo+json", ("geojson",), 3),
+    ("application", "gml+xml", ("xml",), 3),
+    ("application", "gpx+xml", ("gpx",), 3),
+    ("application", "json", ("json",), 3),
     ("application", "mspowerpoint", ("ppt", "pot", "ppa", "pps", "pwz"), 1),
     ("application", "msword", ("doc", "docx", "dot", "wiz"), 1),
     ("application", "pdf", ("pdf",), 1),
     ("application", "postscript", ("pdf", "ps"), 1),
     ("application", "powerpoint", ("ppt", "pot", "ppa", "pps", "pwz"), 1),
     ("application", "rtf", ("rtf",), 1),
-    ("application", "shapefile", ("shp",), 3, {4, 5}),
-    ("application", "vnd.api+json", ("json",), 3, {4, 5}),
-    ("application", "vnd.geo+json", ("geojson",), 3, {4, 5}),
-    ("application", "vnd.google-earth.kml+xml", ("kml",), 3, {4, 5}),
+    ("application", "shapefile", ("shp",), 3),
+    ("application", "vnd.api+json", ("json",), 3),
+    ("application", "vnd.geo+json", ("geojson",), 3),
+    ("application", "vnd.google-earth.kml+xml", ("kml",), 3),
     ("application", "vnd.google-earth.kmz", ("kmz",), 3),
     ("application", "vnd.ms-excel", ("xls", "xlsx", "xlb"), 2),
     ("application", "vnd.ms-excel.12", ("xls", "xlsx", "xlb"), 2),
@@ -1175,11 +1178,11 @@ SUPPORTED_CONTENT_TYPES = [
     ),
     ("application", "vnd.visio", ("vsd",), 1),
     ("application", "x-abiword", ("abw",), 1),
-    ("application", "x-csv", ("csv",), 3, {4, 5}),
+    ("application", "x-csv", ("csv",), 3),
     ("application", "x-excel", ("xls", "xlsx", "xlb"), 2),
     ("application", "x-rtf", ("rtf",), 1),
     ("application", "xhtml+xml", ("html", "htm"), 3),
-    ("application", "xml", ("xml",), 3, {4, 5}),
+    ("application", "xml", ("xml",), 3),
     ("application", "x-tex", ("tex",), 3),
     (
         "application",
@@ -1208,7 +1211,6 @@ SUPPORTED_CONTENT_TYPES = [
             "wsdl",
         ),
         3,
-        {4, 5},
     ),
     ("application", "netcdf", ("nc",), 2),
     ("image", "bmp", ("bmp",), 1),
@@ -1223,19 +1225,20 @@ SUPPORTED_CONTENT_TYPES = [
     ("image", "x-ms-bmp", ("bmp",), 1),
     ("image", "x-portable-pixmap", ("ppm",), 2),
     ("image", "x-xbitmap", ("xbm",), 2),
-    ("text", "csv", ("csv",), 3, {4, 5}),
+    ("text", "csv", ("csv",), 3),
     ("text", "html", ("html", "htm"), 3),
     ("text", "xhtml+xml", ("html", "htm"), 3),
     ("text", "plain", ("txt", "rd", "md", "bat"), 1),
     ("text", "richtext", ("rtf",), 1),
     ("text", "tab-separated-values", ("tsv",), 3),
-    ("text", "xml", ("xml", "wsdl", "xpdl", "xsl"), 3, {4, 5}),
+    ("text", "xml", ("xml", "wsdl", "xpdl", "xsl"), 3),
     # RDF
-    ("application", "ld+json", ("jsonld",), 4, {5}),
-    ("application", "rdf+xml", ("rdf",), 4, {5}),
-    ("text", "n3", ("n3",), 4, {5}),
-    ("text", "turtle", ("ttl", "turtle"), 4, {5}),
-    ("application", "nt-triples", ("nt", "nt11", "ntriples"), 4, {5}),
+    ("application", "ld+json", ("jsonld",), 4),
+    ("application", "rdf+xml", ("rdf",), 4),
+    ("application", "rdfa+xml", ("rdfa",), 4),
+    ("text", "n3", ("n3",), 4),
+    ("text", "turtle", ("ttl", "turtle"), 4),
+    ("application", "nt-triples", ("nt", "nt11", "ntriples"), 4),
     (
         "application",
         "n-quads",
@@ -1244,10 +1247,9 @@ SUPPORTED_CONTENT_TYPES = [
             "nquads",
         ),
         4,
-        {5},
     ),
-    ("application", "trix", ("trix",), 4, {5}),
-    ("application", "trig", ("trig",), 4, {5}),
+    ("application", "trix", ("trix",), 4),
+    ("application", "trig", ("trig",), 4),
 ]
 
 CONTENT_TYPE_TO_EXTENSION_MAP = [(x[0], x[1], x[2]) for x in SUPPORTED_CONTENT_TYPES]
@@ -1282,6 +1284,23 @@ ARCHIVE_CONTENT_TYPES = {
 }
 
 ARCHIVE_EXTENSIONS = {"bz", "bz2", "gz", "rar", "tar", "zip", "7z"}
+
+ARCHIVE_TYPE_TO_EXTENSIONS = {
+    "gzip": "gz",
+    "x-gzip": "gz",
+    "bzip2": "bz2",
+    "x-bzip2": "bz2",
+    "x-bzip": "bz",
+    "zip": "zip",
+    "x-zip-compressed": "zip",
+    "vnd.rar": "rar",
+    "x-rar-compressed": "rar",
+    "x-rar": "rar",
+    "rar": "rar",
+    "x-7z-compressed": "7z",
+    "x-tar": "tar",
+}
+
 ALLOWED_CONTENT_TYPES = [x[1] for x in SUPPORTED_CONTENT_TYPES] + list(ARCHIVE_CONTENT_TYPES)
 ALLOWED_SUPPLEMENT_MIMETYPES = env.list(
     "ALLOWED_SUPPLEMENT_MIMETYPES",
@@ -1311,6 +1330,29 @@ RESTRICTED_FILE_TYPES = env.list(
         "php",
     ],
 )
+
+
+def _supported_formats(with_archives=False):
+    data = []
+    for item in SUPPORTED_CONTENT_TYPES:
+        data.extend(item[2])
+    if with_archives:
+        data.extend(ARCHIVE_EXTENSIONS)
+    return sorted(list(set(data)))
+
+
+def _supported_formats_choices(with_archives=False):
+    return [(i, i.upper()) for i in _supported_formats(with_archives=with_archives)]
+
+
+SUPPORTED_FORMATS = _supported_formats()
+SUPPORTED_FORMATS_WITH_ARCHIVES = _supported_formats(with_archives=True)
+SUPPORTED_FORMATS_CHOICES = _supported_formats_choices()
+SUPPORTED_FORMATS_CHOICES_WITH_ARCHIVES = _supported_formats_choices(with_archives=True)
+
+SUPPORTED_FILE_EXTENSIONS = [x[0] for x in _supported_formats_choices()]
+SUPPORTED_FILE_EXTENSIONS.extend(ARCHIVE_EXTENSIONS)
+SUPPORTED_FILE_EXTENSIONS = [f".{x}" for x in SUPPORTED_FILE_EXTENSIONS if x not in RESTRICTED_FILE_TYPES]
 
 FILE_UPLOAD_MAX_MEMORY_SIZE = 1073741824  # 1Gb
 FILE_UPLOAD_PERMISSIONS = 0o644
@@ -1833,6 +1875,7 @@ RDF_FORMAT_TO_MIMETYPE = {
     "jsonld": "application/ld+json",
     "xml": "application/rdf+xml",
     "rdf": "application/rdf+xml",
+    "rdfa": "application/rdfa+xml",
     "n3": "text/n3",
     "ttl": "text/turtle",
     "turtle": "text/turtle",

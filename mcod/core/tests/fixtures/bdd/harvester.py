@@ -89,8 +89,8 @@ def datasource_finishes_import(obj_id, json_file, **kwargs):
 def datasource_imported_resources(obj_id):
     dataset = Dataset.objects.get(source_id=obj_id)
     resources = Resource.objects.filter(dataset__source_id=obj_id).order_by("ext_ident")
-    res = resources[0]
-    second_res = resources[1]
+    res: Resource = resources[0]
+    second_res: Resource = resources[1]
     org = dataset.organization
     source_import = DataSourceImport.objects.get(datasource_id=obj_id)
     assert source_import.error_desc == ""
@@ -108,8 +108,10 @@ def datasource_imported_resources(obj_id):
     assert res.ext_ident == "6db2e083-72b8-4f92-a6ab-678fc8461865"
     assert res.description == "##Sektory:"
     assert res.format == "csv"
+    assert res.openness_score == 3
     assert second_res.title == "Ilości odebranych odpadów z podziałem na sektory ze spacja"
     assert second_res.ext_ident == "6db2e083-72b8-4f92-a6ab-678fc8461866"
+    assert second_res.openness_score == 3
 
 
 @then(parsers.parse("ckan datasource with id {obj_id:d} created all data in db with has metadata"))

@@ -562,15 +562,17 @@ class TestMainDGAResourceCreationTask:
         self.resource_objects_get_mock = MagicMock()
         self.resource_mock.objects = MagicMock(get=self.resource_objects_get_mock)
         with mock.patch(
-            "mcod.resources.tasks.apps.get_model", return_value=self.resource_mock
-        ) as self.mock_get_model, mock.patch("mcod.resources.tasks.create_main_dga_file") as self.mock_create_file, mock.patch(
-            "mcod.resources.tasks.create_main_dga_resource_with_dataset"
+            "mcod.resources.tasks.dga.apps.get_model", return_value=self.resource_mock
+        ) as self.mock_get_model, mock.patch(
+            "mcod.resources.tasks.dga.create_main_dga_file"
+        ) as self.mock_create_file, mock.patch(
+            "mcod.resources.tasks.dga.create_main_dga_resource_with_dataset"
         ) as self.mock_create_resource, mock.patch(
-            "mcod.resources.tasks.check_all_resource_validations_status"
+            "mcod.resources.tasks.dga.check_all_resource_validations_status"
         ) as self.mock_check_status, mock.patch(
-            "mcod.resources.tasks.update_or_create_aggr_dga_info_and_delete_old_main_dga"
+            "mcod.resources.tasks.dga.update_or_create_aggr_dga_info_and_delete_old_main_dga"
         ) as self.mock_update_aggr_dga_info, mock.patch(
-            "mcod.resources.tasks.clean_up_after_main_dga_resource_creation"
+            "mcod.resources.tasks.dga.clean_up_after_main_dga_resource_creation"
         ) as self.mock_clean_up:  # noqa: E501
             yield
 

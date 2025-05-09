@@ -2,6 +2,7 @@ import io
 import json
 import os
 import xml
+from typing import Optional, Union
 from zipfile import BadZipFile
 
 import cchardet
@@ -57,7 +58,7 @@ def file_encoding(path):
     return encoding, backup_encoding
 
 
-def spreadsheet_file_format(path, encoding):  # noqa: C901
+def spreadsheet_file_format(path: os.PathLike, encoding: Optional[str]) -> Optional[str]:
     encoding = encoding or "utf-8"
     _s = Stream(path, encoding=encoding)
     _s.open()
@@ -65,8 +66,8 @@ def spreadsheet_file_format(path, encoding):  # noqa: C901
     return _s.format if _s.format != "inline" else None
 
 
-def _csv(path, encoding):
-    path = os.path.realpath(path.name) if isinstance(path, io.IOBase) else path
+def _csv(path: Union[str, bytes, io.BytesIO], encoding: Optional[str]) -> Optional[str]:
+    path = os.path.realpath(path.name) if hasattr(path, "name") else path
     try:
         return spreadsheet_file_format(path, encoding)
     except (
@@ -79,7 +80,7 @@ def _csv(path, encoding):
         return None
 
 
-def _json(source, encoding):
+def _json(source: Union[str, bytes, io.BytesIO], encoding: Optional[str]) -> Optional[str]:
     try:
         if isinstance(source, str):
             with open(source, encoding=encoding) as f:
@@ -104,7 +105,7 @@ def _json(source, encoding):
         return None
 
 
-def _xml(source, encoding):
+def _xml(source: Union[str, bytes, io.BytesIO], encoding: Optional[str]) -> Optional[str]:
     try:
         if isinstance(source, bytes):
             source = io.BytesIO(source)
@@ -115,7 +116,7 @@ def _xml(source, encoding):
         return None
 
 
-def _html(source, encoding):
+def _html(source: Union[str, bytes, io.BytesIO], encoding: Optional[str]) -> Optional[str]:
     try:
         if isinstance(source, str):
             source = open(os.path.realpath(source), "rb")
@@ -131,8 +132,8 @@ def _html(source, encoding):
 
 
 def _rdf(
-    source,
-    encoding,
+    source: Union[str, io.BytesIO],
+    encoding: Optional[str],
     extensions=(
         "rdf",
         "n3",
@@ -145,7 +146,11 @@ def _rdf(
         "ttl",
         "jsonld",
     ),
-):
+) -> Optional[str]:
+    """
+    Try to parse source using rdflib. If the source is a file-like object, assume content-type=application/rdf+xml.
+    Returns a matching extension, or None.
+    """
     ext = None
     if isinstance(source, str):
         ext = source.split(".")[-1]
@@ -206,10 +211,10 @@ def web_format(source):
     return _html(source, None)
 
 
-def text_file_format(path, encoding):  # noqa: C901
+def text_file_format(source: Union[str, bytes, io.BytesIO], encoding: Optional[str]) -> Optional[str]:
     encoding = encoding or "utf-8"
     for func in (_rdf, _json, _html, _xml, _csv):
-        res = func(path, encoding)
-        if res:
-            return res
+        matching_file_format = func(source, encoding)
+        if matching_file_format:
+            return matching_file_format
     return None

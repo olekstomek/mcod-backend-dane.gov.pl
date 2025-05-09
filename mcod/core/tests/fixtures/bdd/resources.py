@@ -30,7 +30,7 @@ from mcod.counters.tasks import save_counters
 from mcod.datasets.factories import DatasetFactory
 from mcod.harvester.factories import CKANDataSourceFactory, XMLDataSourceFactory
 from mcod.regions.documents import RegionDocument
-from mcod.resources.archives import ArchiveReader, UnsupportedArchiveError
+from mcod.resources.archives import PasswordProtectedArchiveError, UnsupportedArchiveError
 from mcod.resources.documents import ResourceDocument
 from mcod.resources.factories import (
     ChartFactory,
@@ -41,12 +41,7 @@ from mcod.resources.factories import (
     SupplementFactory,
     TaskResultFactory,
 )
-from mcod.resources.file_validation import (
-    PasswordProtectedArchiveError,
-    analyze_file,
-    check_support,
-    file_format_from_content_type,
-)
+from mcod.resources.file_validation import analyze_file, check_support
 from mcod.resources.link_validation import DangerousContentError, _get_resource_type, download_file
 from mcod.resources.tasks import update_data_date
 
@@ -622,7 +617,7 @@ def _resource_with_date_and_datetime(csv_with_date_and_datetime):
     parsers.parse("resource with id {res_id} and xls file converted to csv"),
     target_fixture="resource_with_xls_file_converted_to_csv",
 )
-def resource_with_xls_file_converted_to_csv(res_id, example_xls_file, buzzfeed_dataset, buzzfeed_editor):
+def resource_with_xls_file_converted_to_csv(res_id, example_xls_file, buzzfeed_dataset, buzzfeed_editor) -> "Resource":
     from mcod.resources.models import Resource
 
     params = {
@@ -835,7 +830,7 @@ def given_unpublished_resource_views_count_is(resource_id, counter_type, val):
 
 
 @then(parsers.parse("resource csv file has {columns} as headers"))
-def resource_csv_file_has_headers(resource_with_xls_file_converted_to_csv, columns):
+def resource_csv_file_has_headers(resource_with_xls_file_converted_to_csv: "Resource", columns: str):
     res = resource_with_xls_file_converted_to_csv
     with open(res.csv_converted_file.path, "r") as outfile:
         first_line = outfile.readline().rstrip("\n")
@@ -884,16 +879,6 @@ def json_resource_response(file_json, **kwargs):
 def jsonstat_resource_response(file_jsonstat, **kwargs):
     headers = {"Content-Type": "application/json"}
     return get_mock_response(kwargs["mock_request"], file_jsonstat.name, headers)
-
-
-@pytest.fixture
-def shapefile_world():
-    return [prepare_file("TM_WORLD_BORDERS-0.3.%s" % ext) for ext in ("shp", "shx", "prj", "dbf")]
-
-
-@pytest.fixture
-def shapefile_trees():
-    return [prepare_file("iglaste.tar.xz"), prepare_file("iglaste_other.tar.xz")]
 
 
 @given(parsers.parse("resource with {filename} file and id {obj_id}"))
@@ -978,18 +963,7 @@ def file_format(validated_file, file_format):
 @then(parsers.parse("extracted file is validated and result is {file_format}"))
 def extracted_file_format(validated_file, file_format):
     ext, _, _, _, _, _, extracted_ext, *other = analyze_file(validated_file)
-    assert extracted_ext == file_format, f'Analyzed {validated_file} file format is not: "{file_format}", but: "{ext}"'
-
-
-@then(parsers.parse("archive file is successfully unpacked and has {files_number} files"))
-def file_archive(validated_file, files_number):
-    with ArchiveReader(validated_file) as extracted:
-        assert os.path.exists(extracted.tmp_dir)
-        assert extracted
-        assert len(extracted) == int(files_number)
-        for path in extracted:
-            assert os.path.isfile(path)
-    assert not os.path.exists(extracted.tmp_dir)
+    assert extracted_ext == file_format, f'Analyzed {validated_file} file format is not: "{file_format}", but: "{extracted_ext}"'
 
 
 @then(parsers.parse("file is validated and result mimetype is {mimetypes}"))
@@ -1019,7 +993,7 @@ def archive_file_validation_exception(validated_file):
         extracted_mimetype,
         extracted_encoding,
     ) = analyze_file(validated_file)
-    assert analyze_exc.__class__ == PasswordProtectedArchiveError
+    assert isinstance(analyze_exc, PasswordProtectedArchiveError)
 
 
 @given(parsers.parse("resource with id {res_id} is viewed and counter incrementing task is executed"))
@@ -1051,13 +1025,6 @@ def draft_resource_with_region(res_id, dataset_id, main_region, additional_regio
 def resource_with_supplement(res_id, dataset_id, supplement_id):
     resource = ResourceFactory.create(id=res_id, dataset_id=dataset_id)
     SupplementFactory.create(id=supplement_id, resource_id=resource.id)
-
-
-@given(parsers.parse("function file_format_from_content_type works properly for all supported content types"))
-def file_format_from_content_type_works_properly():
-    for family, content_type, extensions, *other in settings.SUPPORTED_CONTENT_TYPES:
-        assert file_format_from_content_type(content_type, family) == extensions[0]
-    assert file_format_from_content_type("zip", "application") == "zip"
 
 
 @when(parsers.parse("resource with id {obj_id} is revalidated"))

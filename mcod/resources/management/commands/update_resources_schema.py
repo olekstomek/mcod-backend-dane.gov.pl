@@ -75,9 +75,7 @@ class Command(BaseCommand):
                 tabular_data_schema = update_schema(obj.tabular_data_schema, date_format, datetime_format)
                 Resource.objects.filter(pk=obj.id).update(tabular_data_schema=tabular_data_schema)
             if async_:
-                process_resource_file_data_task.delay(obj.pk, update_verification_date=False)
+                process_resource_file_data_task.delay(obj.pk)
             else:
-                process_resource_file_data_task.apply(
-                    kwargs={"resource_id": obj.pk, "update_verification_date": False}, throw=True
-                )
+                process_resource_file_data_task.apply(args=(obj.pk,), throw=True)
         self.stdout.write("Done.")

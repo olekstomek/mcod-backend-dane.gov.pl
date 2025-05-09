@@ -1,8 +1,8 @@
 1. The data controller is the Minister of Digital Affairs, with registered office in Warsaw (00-060) at Królewska 27.
 
-2. The data controller can be contacted via e-mail at mc@mc.gov.pl, by using the ePUAP or in writing to the address of the controller’s registered office.
+2. The data controller can be contacted via e-mail at iod.mc@cyfra.gov.pl, by using the ePUAP or in writing to the address of the controller’s registered office.
 
-3. The controller has appointed a Data Protection Officer who can be contacted by e-mail at iod@mc.gov.pl. The Data Protection Officer may be contacted on all matters relating to the processing of personal data and the exercise of data processing rights.
+3. The controller has appointed a Data Protection Officer who can be contacted by e-mail at iod.mc@cyfra.gov.pl. The Data Protection Officer may be contacted on all matters relating to the processing of personal data and the exercise of data processing rights.
 
 4.Your data will be processed for the purpose of sending the newsletter of the dane.gov.pl website containing an overview of news on the dane.gov.pl website and up-to-date information concerning the opening of data. Legal basis: Article. 6 par. 1 letter a of the GDPR.
 

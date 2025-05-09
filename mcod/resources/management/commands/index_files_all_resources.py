@@ -65,11 +65,12 @@ class Command(BaseCommand):
                 continue
 
             if async_:
-                process_resource_file_data_task.delay(resource.pk, update_verification_date=False)
+                process_resource_file_data_task.delay(resource.pk)
                 continue
             try:
                 process_resource_file_data_task.apply(
-                    kwargs={"resource_id": resource.pk, "update_verification_date": False}, throw=True
+                    args=(resource.pk,),
+                    throw=True,
                 )
             except Exception as e:
                 # For 'eager' runs we can get meaningful errors here

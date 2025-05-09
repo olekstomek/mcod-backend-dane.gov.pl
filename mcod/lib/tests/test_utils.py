@@ -12,7 +12,11 @@ from mcod.lib.model_sanitization import (
     SanitizedTranslationField,
     sanitize_html,
 )
-from mcod.lib.utils import capitalize_first_character, escape_braces_and_format_html
+from mcod.lib.utils import (
+    capitalize_first_character,
+    escape_braces_and_format_html,
+    get_file_extensions_no_dot,
+)
 
 
 class TestFormatHTML:
@@ -316,3 +320,14 @@ def test_sanitize_translation_field(input_value: Dict[str, str], expected_output
     if isinstance(sanitized_value, JsonAdapter):
         sanitized_value = sanitized_value.adapted
     assert sanitized_value == expected_output
+
+
+@pytest.mark.parametrize(
+    "filenames, expected_extensions",
+    (
+        (["1.csv", "1.", "1"], ["csv"]),
+        (["1.csv", "1.xml", "1.xml.gpg"], ["csv", "xml", "gpg"]),
+    ),
+)
+def test_get_file_extensions_no_dot(filenames: List[str], expected_extensions: List[str]) -> None:
+    assert get_file_extensions_no_dot(filenames) == expected_extensions

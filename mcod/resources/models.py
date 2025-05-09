@@ -10,12 +10,12 @@ import tempfile
 from calendar import monthrange
 from collections import namedtuple
 from io import BytesIO
-from typing import Optional
+from pathlib import Path
+from typing import BinaryIO, Literal, Optional, Union
 
 import magic
 import pytz
 import unicodecsv
-from celery.signals import task_failure, task_postrun, task_prerun, task_success
 from constance import config
 from csvwlib import CSVWConverter
 from dateutil import rrule
@@ -72,7 +72,7 @@ from mcod.regions.models import Region, RegionManyToManyField
 from mcod.resources import model_validators
 from mcod.resources.archives import ArchiveReader, is_archive_file
 from mcod.resources.error_mappings import messages, recommendations
-from mcod.resources.file_validation import analyze_file, check_support, get_file_info
+from mcod.resources.file_validation import check_support, get_file_info
 from mcod.resources.indexed_data import ShpData, TabularData
 from mcod.resources.link_validation import check_link_status, download_file
 from mcod.resources.managers import (
@@ -92,11 +92,9 @@ from mcod.resources.signals import (
 )
 from mcod.resources.tasks import (
     delete_es_resource_tabular_data_index,
+    entrypoint_process_resource_file_validation_task,
+    entrypoint_process_resource_validation_task,
     process_resource_file_data_task,
-    process_resource_from_url_task,
-    process_resource_res_file_task,
-    update_last_day_data_date,
-    validate_link,
 )
 from mcod.watchers.tasks import update_model_watcher_task
 
@@ -112,24 +110,6 @@ logger = logging.getLogger("mcod")
 
 class ResourceDataValidationError(Exception):
     pass
-
-
-def supported_formats(with_archives=False):
-    data = []
-    for item in settings.SUPPORTED_CONTENT_TYPES:
-        data.extend(item[2])
-    if with_archives:
-        data.extend(settings.ARCHIVE_EXTENSIONS)
-    return sorted(list(set(data)))
-
-
-def supported_formats_choices(with_archives=False):
-    return [(i, i.upper()) for i in supported_formats(with_archives=with_archives)]
-
-
-SUPPORTED_FILE_EXTENSIONS = [x[0] for x in supported_formats_choices()]
-SUPPORTED_FILE_EXTENSIONS.extend(settings.ARCHIVE_EXTENSIONS)
-SUPPORTED_FILE_EXTENSIONS = [f".{x}" for x in SUPPORTED_FILE_EXTENSIONS if x not in settings.RESTRICTED_FILE_TYPES]
 
 
 def get_coltype(col, table_schema):
@@ -190,6 +170,7 @@ RESOURCE_TYPE = (
     (RESOURCE_TYPE_WEBSITE, _("Web Site")),
     (RESOURCE_TYPE_API, _("API")),
 )
+ResourceType = Literal["website", "api", "file"]
 
 RESOURCE_TYPE_API_CHANGE = "api-change"
 RESOURCE_TYPE_API_CHANGE_LABEL = _("API - change")
@@ -456,7 +437,7 @@ class Resource(ExtendedModel):
         blank=True,
         null=True,
         verbose_name=_("Format"),
-        choices=supported_formats_choices(),
+        choices=settings.SUPPORTED_FORMATS_CHOICES_WITH_ARCHIVES,
     )
     type = models.CharField(
         max_length=10,
@@ -680,10 +661,16 @@ class Resource(ExtendedModel):
         return self._get_api_url(self.csv_converted_file.url) if self.csv_converted_file else None
 
     @property
-    def file_data_path(self):
+    def file_data_path(self) -> Union[Path, str]:
         if self.is_archived_file:
-            extracted = ArchiveReader(self.main_file.path)
-            return extracted[0] if len(extracted) == 1 else self.main_file.path
+            _, tmp_file_path = tempfile.mkstemp()
+            with ArchiveReader(self.main_file.path) as archive:
+                try:
+                    path = archive.extract_single()
+                    shutil.move(path, tmp_file_path)
+                    return tmp_file_path
+                except KeyError:
+                    logger.debug(f"{self.main_file.path} contains n>1 files")
         return self.main_file.path
 
     @property
@@ -980,12 +967,17 @@ class Resource(ExtendedModel):
             f.write(content.read())
         return "%s/%s" % (subdir, filename)
 
-    def revalidate(self, **kwargs):
+    def revalidate(self, update_verification_date: bool = True):
         if not self.link or self.is_link_internal:
             if self._main_file:
-                process_resource_res_file_task.s(self._main_file.pk, **kwargs).apply_async_on_commit()
+                entrypoint_process_resource_file_validation_task.s(
+                    self._main_file.pk,
+                    update_verification_date=update_verification_date,
+                ).apply_async_on_commit()
         else:
-            process_resource_from_url_task.s(self.id, **kwargs).apply_async_on_commit()
+            entrypoint_process_resource_validation_task.s(
+                self.id, update_verification_date=update_verification_date
+            ).apply_async_on_commit()
 
     def revalidate_tabular_data(self):
         process_resource_file_data_task.s(self.id).apply_async_on_commit()
@@ -1193,9 +1185,6 @@ class Resource(ExtendedModel):
         obj = ResourceRDF(self)
         return _schema(many=False).dump(obj)
 
-    def analyze_file(self):
-        return self._main_file.analyze()
-
     def as_sparql_create_query(self):
         g = self.to_rdf_graph()
         data = "".join([f"{s.n3()} {p.n3()} {o.n3()} . " for s, p, o in g.triples((None, None, None))])
@@ -1334,7 +1323,7 @@ class Resource(ExtendedModel):
         new_files.append(new_file)
         self._other_files = new_files
 
-    def get_other_file_by_format(self, file_format):
+    def get_other_file_by_format(self, file_format: str):
         resource_files = [file for file in self.other_files if file.format == file_format]
         resource_file = next(iter(resource_files), None)
         return resource_file.file if resource_file else ""
@@ -1708,14 +1697,14 @@ class ResourceFile(models.Model):
         blank=True,
         null=True,
         verbose_name=_("Format"),
-        choices=supported_formats_choices(),
+        choices=settings.SUPPORTED_FORMATS_CHOICES_WITH_ARCHIVES,
     )
     compressed_file_format = models.CharField(
         max_length=150,
         blank=True,
         null=True,
         verbose_name=_("Compressed file format"),
-        choices=supported_formats_choices(),
+        choices=settings.SUPPORTED_FORMATS_CHOICES_WITH_ARCHIVES,
     )
     compressed_file_mime_type = models.TextField(
         blank=True,
@@ -1769,23 +1758,22 @@ class ResourceFile(models.Model):
     def file_basename(self):
         return os.path.basename(self.file.name) if self.file else None
 
-    def analyze(self):
-        return analyze_file(self.file.file.name)
-
     def check_support(self):
         format_ = self.format if not self.compressed_file_format else self.compressed_file_format
         mimetype = self.mimetype if not self.compressed_file_mime_type else self.compressed_file_mime_type
         return check_support(format_, mimetype)
 
-    def save_file(self, content, filename):
-        dt = self.resource.created.date() if self.resource.created else now().date()
-        subdir = dt.isoformat().replace("-", "")
-        dest_dir = os.path.join(self.file.storage.location, subdir)
+    def save_file(self, content: BinaryIO, filename: str) -> str:
+        dt: datetime.date = self.resource.created.date() if self.resource.created else now().date()
+        subdir: str = dt.isoformat().replace("-", "")
+        dest_dir: str = os.path.join(self.file.storage.location, subdir)
+
         os.makedirs(dest_dir, exist_ok=True)
-        file_path = os.path.join(dest_dir, filename)
+
+        file_path: str = os.path.join(dest_dir, filename)
         with open(file_path, "wb") as f:
             f.write(content.read())
-        return "%s/%s" % (subdir, filename)
+        return f"{subdir}/{filename}"
 
     def get_openness_score(self, format_=None):
         format_ = format_ or self.compressed_file_format or self.format
@@ -1849,8 +1837,8 @@ def preprocess_resource(sender, instance, *args, **kwargs):
 
 @receiver(post_save, sender=Resource)
 def handle_resource_post_save(sender, instance, *args, **kwargs):
-    # if dataset contains harvested resources, then dataset.verified is based on the resources
-    # data_date, otherwise it's based on the event date for the events described in OTD-1132
+    # if dataset contains harvested resources, then dataset.verified is based on the resources'
+    # data_date or created, otherwise it's based on the event date for the events described in OTD-1132
     if instance.dataset.is_imported:
         max_data_date_if_auto_true = (
             instance.dataset.resources.filter(status=Dataset.STATUS.published)
@@ -1860,15 +1848,17 @@ def handle_resource_post_save(sender, instance, *args, **kwargs):
             .get("max_data_date")
         )
         if max_data_date_if_auto_true:
-            instance.update_dataset_verified(verified=date_at_midnight(max_data_date_if_auto_true))
+            new_verified = date_at_midnight(max_data_date_if_auto_true)
         else:
-            max_data_date = (
+            max_created = (
                 instance.dataset.resources.filter(status=Dataset.STATUS.published)
-                .only("data_date")
-                .aggregate(max_data_date=Max("data_date"))
-                .get("max_data_date")
+                .only("created")
+                .aggregate(created=Max("created"))
+                .get("created")
             )
-            instance.update_dataset_verified(verified=date_at_midnight(max_data_date))
+            new_verified = max_created
+        if new_verified:
+            instance.update_dataset_verified(verified=new_verified)
     else:
         if instance.state_published or instance.state_removed or instance.state_restored:
             instance.update_dataset_verified(verified=instance.modified)
@@ -1906,15 +1896,16 @@ def process_resource(sender, instance, *args, **kwargs):
     elif cancel_auto_data_date_update:
         instance.cancel_data_date_update()
     if instance.is_link_updated:
-        process_resource_from_url_task.s(
+        entrypoint_process_resource_validation_task.s(
             instance.id,
             update_file_archive=True,
             forced_file_changed=instance.has_forced_file_changed,
-            schedule_auto_data_date=schedule_auto_data_date_update,
-            cancel_auto_data_date=cancel_auto_data_date_update,
         ).apply_async_on_commit()
+
     elif instance.state_restored:
-        process_resource_res_file_task.s(instance._main_file.pk, update_file_archive=True).apply_async_on_commit()
+        entrypoint_process_resource_file_validation_task.s(
+            instance._main_file.pk, update_file_archive=True
+        ).apply_async_on_commit()
     elif instance.tracker.has_changed("dataset_id") and instance.tracker.previous("dataset_id") is not None:
         instance.dataset.archive_files()
         previous_ds = instance.tracker.previous("dataset_id")
@@ -1961,7 +1952,7 @@ def cancel_data_date_update_schedule(sender, instance, *args, **kwargs):
 @receiver(post_save, sender=ResourceFile)
 def process_created_file(sender, instance, created, *args, **kwargs):
     if instance.file and instance.is_main and created and instance.resource.is_published:
-        process_resource_res_file_task.s(instance.id, update_file_archive=True).apply_async_on_commit()
+        entrypoint_process_resource_file_validation_task.s(instance.id, update_file_archive=True).apply_async_on_commit()
 
 
 @receiver(core_signals.notify_removed, sender=Resource)
@@ -1994,249 +1985,3 @@ core_signals.notify_published.connect(update_dataset_watcher, sender=ResourceTra
 core_signals.notify_restored.connect(update_dataset_watcher, sender=ResourceTrash)
 core_signals.notify_updated.connect(update_dataset_watcher, sender=ResourceTrash)
 core_signals.notify_removed.connect(update_dataset_watcher, sender=ResourceTrash)
-
-
-@task_prerun.connect(sender=validate_link)
-@task_prerun.connect(sender=process_resource_from_url_task)
-def process_resource_from_url_task_prerun_handler(sender, task_id, task, signal, **kwargs):
-    try:
-        resource_id = int(kwargs["args"][0])
-        resource = Resource.objects.get(pk=resource_id)
-        result_task = TaskResult.objects.get_task(task_id)
-        result_task.save()
-        resource.link_tasks.add(result_task)
-        Resource.raw.filter(pk=resource_id).update(link_tasks_last_status=result_task.status)
-    except Exception:
-        pass
-
-
-@task_prerun.connect(sender=process_resource_res_file_task)
-def process_resource_res_file_task_prerun_handler(sender, task_id, task, signal, **kwargs):
-    try:
-        resource_file_id = int(kwargs["args"][0])
-        resource_id = ResourceFile.objects.get(pk=resource_file_id).resource_id
-        resource = Resource.objects.get(pk=resource_id)
-        result_task = TaskResult.objects.get_task(task_id)
-        result_task.save()
-        resource.file_tasks.add(result_task)
-        Resource.raw.filter(pk=resource_id).update(file_tasks_last_status=result_task.status)
-    except Exception:
-        pass
-
-
-@task_prerun.connect(sender=process_resource_file_data_task)
-def process_resource_file_data_task_prerun_handler(sender, task_id, task, signal, **kwargs):
-    try:
-        resource_id = int(kwargs["args"][0])
-        resource = Resource.objects.get(pk=resource_id)
-        if resource.is_data_processable:
-            result_task = TaskResult.objects.get_task(task_id)
-            result_task.save()
-            resource.data_tasks.add(result_task)
-            Resource.raw.filter(pk=resource_id).update(data_tasks_last_status=result_task.status)
-    except Exception:
-        pass
-
-
-def update_resource(task_id, **kwargs):  # noqa: C901
-    update_data_tasks_last_status = kwargs.get("update_data_tasks_last_status", False)
-    update_file_tasks_last_status = kwargs.get("update_file_tasks_last_status", False)
-    update_link_tasks_last_status = kwargs.get("update_link_tasks_last_status", False)
-    update_revalidated_data = kwargs.get("update_revalidated_data", False)
-    update_has_map = kwargs.get("update_has_map", False)
-    update_has_table = kwargs.get("update_has_table", False)
-    update_verification_date = kwargs.get("kwargs", {}).get("update_verification_date", True)
-    try:
-        resource_id = int(kwargs["args"][0])
-        resource = Resource.raw.get(pk=resource_id)
-        task_result = TaskResult.objects.get_task(task_id)
-        data = {}
-        if update_data_tasks_last_status:
-            data["data_tasks_last_status"] = task_result.status
-        if update_file_tasks_last_status:
-            data["file_tasks_last_status"] = task_result.status
-        if update_link_tasks_last_status:
-            data["link_tasks_last_status"] = task_result.status
-        if update_verification_date and resource.verified < task_result.date_done:
-            data["verified"] = task_result.date_done
-        if update_has_map or update_has_table:
-            try:
-                retval = json.loads(kwargs["retval"]) if isinstance(kwargs["retval"], str) else {}
-            except json.JSONDecodeError:
-                retval = {}
-            indexed = retval.get("indexed")
-            if update_has_map:
-                data["has_map"] = bool(resource.data and resource.data.has_geo_data and indexed)
-            if update_has_table:
-                data["has_table"] = bool(resource.has_tabular_format(["shp"]) and indexed)
-        if data:
-            Resource.raw.filter(pk=resource_id).update(**data)  # we don't want signals here - just updates.
-        if update_revalidated_data:
-            resource.update_es_and_rdf_db()
-    except Exception:
-        pass
-
-
-@task_postrun.connect(sender=validate_link)
-def validate_link_task_postrun_handler(sender, task_id, task, signal, **kwargs):
-    update_resource(task_id, update_link_tasks_last_status=True, **kwargs)
-
-
-@task_postrun.connect(sender=process_resource_from_url_task)
-def process_resource_from_url_task_postrun_handler(sender, task_id, task, signal, **kwargs):
-    update_resource(
-        task_id,
-        update_link_tasks_last_status=True,
-        update_revalidated_data=True,
-        **kwargs,
-    )
-
-
-@task_postrun.connect(sender=process_resource_res_file_task)
-def process_resource_res_file_task_postrun_handler(sender, task_id, task, signal, **kwargs):
-    resource_file_id = int(kwargs["args"][0])
-    resource_id = ResourceFile.objects.get(pk=resource_file_id).resource_id
-    kwargs["args"] = [resource_id]
-    update_resource(
-        task_id,
-        update_file_tasks_last_status=True,
-        update_revalidated_data=True,
-        **kwargs,
-    )
-
-
-@task_postrun.connect(sender=process_resource_file_data_task)
-def process_resource_file_data_task_postrun_handler(sender, task_id, task, signal, **kwargs):
-    kwargs.update(
-        {
-            "update_has_map": True,
-            "update_has_table": True,
-            "update_revalidated_data": True,
-        }
-    )
-    update_resource(task_id, **kwargs)
-
-
-@task_postrun.connect(sender=update_last_day_data_date)
-def reschedule_last_day_of_month_dd_update(sender, task_id, task, signal, **kwargs):
-    resource_id = int(kwargs["args"][0])
-    resource = Resource.objects.get(pk=resource_id)
-    result = kwargs["result"]
-    current_date = result.get("current_date")
-    if current_date:
-        new_schedule_date = current_date + relativedelta(months=1)
-        new_schedule_date = resource.correct_last_moth_day(new_schedule_date)
-        resource.schedule_crontab_data_date_update(new_schedule_date)
-
-
-@task_success.connect(sender=validate_link)
-@task_success.connect(sender=process_resource_from_url_task)
-def process_resource_from_url_task_success_handler(sender, result, **kwargs):
-    if sender.request.is_eager:
-        result_task = TaskResult.objects.get_task(sender.request.id)
-        result_task.result = json.dumps(result)
-        result_task.status = "SUCCESS"
-        result_task.save()
-
-
-@task_failure.connect(sender=validate_link)
-@task_failure.connect(sender=process_resource_from_url_task)
-def process_resource_from_url_task_failure_handler(sender, task_id, exception, args, traceback, einfo, signal, **kwargs):
-    resource_id = int(args[0])
-    resource = Resource.objects.get(pk=resource_id)
-    result = {
-        "exc_type": exception.__class__.__name__,
-        "exc_message": str(exception),
-        "uuid": str(resource.uuid),
-        "link": resource.link,
-        "format": resource.format,
-        "type": resource.type,
-    }
-
-    result_task = TaskResult.objects.get_task(task_id)
-    if sender.request.is_eager:
-        result_task.status = "FAILURE"
-    result_task.result = json.dumps(result)
-    result_task.save()
-    update_resource(task_id, **kwargs)
-
-
-@task_success.connect(sender=process_resource_res_file_task)
-def process_resource_file_task_success_handler(sender, result, *args, **kwargs):
-    if sender.request.is_eager:
-        result_task = TaskResult.objects.get_task(sender.request.id)
-        result_task.result = json.dumps(result)
-        result_task.status = "SUCCESS"
-        result_task.save()
-
-
-@task_failure.connect(sender=process_resource_res_file_task)
-def process_resource_res_file_task_failure_handler(sender, task_id, exception, args, traceback, einfo, signal, **kwargs):
-    resource_file_id = int(args[0])
-    resource_id = ResourceFile.objects.get(pk=resource_file_id).resource_id
-    resource = Resource.objects.get(pk=resource_id)
-    result = {
-        "exc_type": exception.__class__.__name__,
-        "exc_message": str(exception),
-        "uuid": str(resource.uuid),
-        "link": resource.link,
-        "format": resource.format,
-        "type": resource.type,
-    }
-
-    result_task = TaskResult.objects.get_task(task_id)
-    if sender.request.is_eager:
-        result_task.status = "FAILURE"
-    result_task.result = json.dumps(result)
-    result_task.save()
-    kwargs["args"] = [resource_id]
-    update_resource(task_id, **kwargs)
-
-
-@task_success.connect(sender=process_resource_file_data_task)
-def process_resource_file_data_task_success_handler(sender, result, *args, **kwargs):
-    if sender.request.is_eager:
-        result_task = TaskResult.objects.get_task(sender.request.id)
-        result_task.result = json.dumps(result)
-        result_task.status = "SUCCESS"
-        result_task.save()
-    try:
-        data = json.loads(result)
-    except json.JSONDecodeError:
-        data = {}
-    indexed = data.get("indexed")
-    resource_id = data.get("resource_id")
-    kwargs.update({"args": [resource_id], "update_data_tasks_last_status": True})
-    update_resource(sender.request.id, **kwargs)
-    if indexed and resource_id:
-        resource = Resource.raw.filter(id=resource_id).first()
-        if resource:
-            resource.increase_openness_score()
-            resource.dataset.archive_files()
-            resource_score, files_score = resource.get_openness_score()
-            Resource.raw.filter(pk=resource_id).update(openness_score=resource_score)
-            for rf in files_score:
-                ResourceFile.objects.filter(pk=rf["file_pk"]).update(openness_score=rf["score"])
-
-
-@task_failure.connect(sender=process_resource_file_data_task)
-def process_resource_file_data_task_failure_handler(sender, task_id, exception, args, traceback, einfo, signal, **kwargs):
-    resource_id = int(args[0])
-    resource = Resource.objects.get(pk=resource_id)
-    result = {
-        "exc_type": exception.__class__.__name__,
-        "exc_message": str(exception),
-        "uuid": str(resource.uuid),
-        "link": resource.link,
-        "format": resource.format,
-        "type": resource.type,
-    }
-
-    result_task = TaskResult.objects.get_task(task_id)
-    if sender.request.is_eager:
-        result_task.status = "FAILURE"
-    result_task.result = json.dumps(result)
-    result_task.save()
-    kwargs["update_data_tasks_last_status"] = True
-    kwargs["args"] = [resource_id]
-    update_resource(task_id, **kwargs)

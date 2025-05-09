@@ -33,20 +33,13 @@ def get_spec(version=None):
 
 
     ## Information concerning GDPR
-    1. The data controller is the Minister of Digital Affairs, with registered office
-    in Warsaw (00-060) at Królewska 27. The data controller can be contacted
-    via e-mail at <mc@mc.gov.pl>, by using the contact form
-    at [https://www.gov.pl/cyfryzacja/kontakt](https://www.gov.pl/cyfryzacja/kontakt) – the
-    link will open in a new window,
+    1. The data controller can be contacted by post, sending correspondence
+    to the address of the Administrator's office: ul. Królewska 27, 00-060 Warsaw or,
+    via ePUAP, the address of which is available
+    at https://www.gov.pl/web/cyfryzacja/dane-kontaktowe - the link will open in a new window,
     or by sending a letter to the address of the controller’s registered office.
-    Your personal data may be made available to authorities or institutions which
-    make their resources available for the operation of the website.
-    Your personal data may also be transferred to the Centre for Informatics Technology
-    with its registered office in Warsaw (02-305) at Al. Jerozolimskie 132-136 as a
-    processor, carrying out tasks in the scope of maintenance and development of
-    the website for the data controller.
     2. The controller has appointed a Data Protection Officer who can be contacted
-    by e-mail at <iod@mc.gov.pl>. The Data Protection Officer may be contacted on
+    by e-mail at <iod.mc@cyfra.gov.pl>. The Data Protection Officer may be contacted on
     all matters concerning the processing of personal data and the exercise
     of data processing rights.
     3. Your personal data will be processed in order to operate the data.gov.pl website.

@@ -1,43 +1,86 @@
+import os
+from pathlib import Path
+from typing import List, Union
+
 import pytest
 import requests_mock
 import shapefile
 from django.conf import settings
 
+from mcod.core.tests.fixtures.bdd.common import prepare_file
 from mcod.resources.archives import ArchiveReader
 from mcod.resources.geo import (
     ExtractUAddressError,
     ShapeTransformer,
+    _has_geotiff_with_world_file,
     analyze_shapefile,
     are_shapefiles,
     clean_house_number,
     extract_coords_from_uaddress,
     geocode,
+    is_geotiff,
     median_point,
 )
 
 
-def test_are_shapefiles_all_shape_files_available():
-    shp_filenames = ["test.shp", "test.dbf", "test.prj", "test.shx", "test.cst"]
-    assert are_shapefiles(shp_filenames)
+@pytest.fixture
+def shapefile_world() -> List[Union[Path, str]]:
+    return [prepare_file("TM_WORLD_BORDERS-0.3.%s" % ext) for ext in ("shp", "shx", "prj", "dbf")]
 
 
-def test_are_shapefiles_required_shx_file_missing():
-    shp_filenames = ["test.shp", "test.dbf", "test.txt", "other_test.csv"]
-    assert not are_shapefiles(shp_filenames)
+@pytest.mark.parametrize(
+    "shapefiles_candidate, expected_are_shapefiles",
+    (
+        (["minimal.shp", "minimal.dbf", "minimal.shx"], True),
+        (["minimal.shx", "minimal.dbf", "minimal.shp"], True),
+        (["extra_files.shx", "extra_files.dbf", "extra_files.shp", "test.xd", "test.xe"], True),
+        (["test.shp", "test.dbf", "test.prj", "test.shx", "test.cst"], True),
+        (["test.shp", "test.dbf", "test.txt", "other_test.csv"], False),
+        (["a.shp", "b.dbf", "c.shx"], False),
+        (["test.shp", "test.dbf", "test.txt", "other_test.csv", "other.shp"], False),
+    ),
+)
+def test_are_shapefiles(shapefiles_candidate: List[str], expected_are_shapefiles: bool):
+    assert are_shapefiles(shapefiles_candidate) is expected_are_shapefiles
 
 
-def test_analyze_files(shapefile_world):
-    shp, options = analyze_shapefile(shapefile_world)
+@pytest.mark.parametrize(
+    "geotiff_candidate, expected_has_tif, expected_has_geotiff_with_world_file",
+    (
+        (["minimal.tif", "minimal.tfw"], True, True),
+        (["minimal.tiff", "minimal.tfw"], True, True),
+        (["minimal.tif", "other_name.tfw"], True, True),
+        (["minimal.tiff", "other_name.tfw"], True, True),
+        (["just_not_tif.csv"], False, False),
+        (["just_not_tif.csv", "other_name.tfw"], False, False),
+        (["minimal.tif", "not-a-world-file.csv"], True, False),
+        (["minimal.tiff", "not-a-world-file.csv"], True, False),
+    ),
+)
+def test_has_geotiff_files(geotiff_candidate: List[str], expected_has_tif: bool, expected_has_geotiff_with_world_file: bool):
+    assert _has_geotiff_with_world_file(geotiff_candidate) is expected_has_geotiff_with_world_file
+
+
+def test_has_geotiff_files_with_real_file():
+    # Special case - the .tif file needs to exist here
+    expected_has_geotiff_files = True
+    tiff_sample = os.path.join(settings.TEST_SAMPLES_PATH, "cea.tif")
+    assert is_geotiff(tiff_sample) is expected_has_geotiff_files
+
+
+def test_analyze_files():
+    shp_file = prepare_file("TM_WORLD_BORDERS-0.3.shp")
+    shp, options = analyze_shapefile(shp_file)
     assert shp == "POLYGON"
     assert options == {"charset": "utf-8"}
 
 
 class TestTransformShpFiles:
-
-    def test_transform_shp_files_wgs_1984_to_geojson(self, shapefile_world):
+    def test_transform_shp_files_wgs_1984_to_geojson(self, shapefile_world: List[str]):
         shp_path = next(iter(f for f in shapefile_world if f.endswith(".shp")))
+        prj_path = next(iter(f for f in shapefile_world if f.endswith(".prj")))
         source = shapefile.Reader(shp_path)
-        transformer = ShapeTransformer(shapefile_world)
+        transformer = ShapeTransformer(prj_path)
         geojson_data = []
         for row_no, sr in enumerate(source.shapeRecords(), 1):
             geojson = transformer.transform(sr.shape)
@@ -47,11 +90,12 @@ class TestTransformShpFiles:
         assert "coordinates" in geojson_data[0]
         assert {"Polygon", "MultiPolygon"} == geo_types
 
-    def test_transform_shp_files_no_prj_file(self, shapefile_world):
+    def test_transform_shp_files_no_prj_file(self, shapefile_world: List[str]):
         new_file_list = [f for f in shapefile_world if not f.endswith(".prj")]
         shp_path = next(iter(f for f in new_file_list if f.endswith(".shp")))
+        prj_path = next(iter(f for f in shapefile_world if f.endswith(".prj")))
         source = shapefile.Reader(shp_path)
-        transformer = ShapeTransformer(new_file_list)
+        transformer = ShapeTransformer(prj_path)
         geojson_data = []
         for row_no, sr in enumerate(source.shapeRecords(), 1):
             geojson = transformer.transform(sr.shape)
@@ -61,25 +105,25 @@ class TestTransformShpFiles:
         assert "coordinates" in geojson_data[0]
         assert {"Polygon", "MultiPolygon"} == geo_types
 
-    def test_transform_shp_files_non_wgs_1984_to_geojson(self, shapefile_trees):
-        with ArchiveReader(shapefile_trees[0]) as extracted_dbf:
-            with ArchiveReader(shapefile_trees[1]) as extracted_other:
-                shp_path = next(iter(f for f in extracted_other if f.endswith(".shp")))
-                shx_path = next(iter(f for f in extracted_other if f.endswith(".shx")))
-                dbf_path = extracted_dbf[0]
-                with open(dbf_path, "rb") as dbf:
-                    with open(shp_path, "rb") as shp:
-                        with open(shx_path, "rb") as shx:
-                            source = shapefile.Reader(dbf=dbf, shp=shp, shx=shx)
-                            transformer = ShapeTransformer(extracted_other)
-                            geojson_data = []
-                            for row_no, sr in enumerate(source.shapeRecords(), 1):
-                                geojson = transformer.transform(sr.shape)
-                                geojson_data.append(geojson)
-                            geo_types = set([geodata["type"] for geodata in geojson_data])
-                            assert len(geojson_data) == 48378
-                            assert "coordinates" in geojson_data[0]
-                            assert {"Point"} == geo_types
+    def test_transform_shp_files_non_wgs_1984_to_geojson(self):
+        media = Path(__file__).parent / "media" / "test_geo"
+        shp_path = media / "iglaste.shp"
+        shx_path = media / "iglaste.shx"
+        dbf_path = media / "iglaste.dbf"
+        other = (media / "iglaste_other.tar.xz").as_posix()
+        with ArchiveReader(other) as archive_other:
+            prj_path = next(archive_other.get_by_extension("prj"))
+            with open(dbf_path, "rb") as dbf, open(shp_path, "rb") as shp, open(shx_path, "rb") as shx:
+                source = shapefile.Reader(dbf=dbf, shp=shp, shx=shx)
+                transformer = ShapeTransformer(prj_path)
+                geojson_data = []
+                for row_no, sr in enumerate(source.shapeRecords(), 1):
+                    geojson = transformer.transform(sr.shape)
+                    geojson_data.append(geojson)
+                geo_types = set([geodata["type"] for geodata in geojson_data])
+                assert len(geojson_data) == 48378
+                assert "coordinates" in geojson_data[0]
+                assert {"Point"} == geo_types
 
 
 @pytest.mark.parametrize(

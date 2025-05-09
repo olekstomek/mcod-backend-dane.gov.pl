@@ -1,7 +1,9 @@
 from pydoc import locate
 
+import requests_mock
 from django.conf import settings
 
+from mcod.lib.utils import get_file_content
 from mcod.organizations.models import Organization
 
 
@@ -10,7 +12,21 @@ def test_xml_schema_deserialization(harvester_decoded_xml_1_2_data, harvester_xm
     schema_class = locate(schema_path)
     schema = schema_class(many=True)
     schema.context["organization"] = institution
+
+    from mcod.resources.link_validation import session
+
+    adapter = requests_mock.Adapter()
+    adapter.register_uri(
+        "GET",
+        url="https://mock-resource.com.pl/simple.csv",
+        content=get_file_content("csv2jsonld.csv"),
+        headers={
+            "Content-Type": "text/csv",
+        },
+    )
+    session.mount("https://mock-resource.com.pl/simple.csv", adapter)
     items = schema.load(harvester_decoded_xml_1_2_data)
+
     assert items == harvester_xml_expected_data
 
 

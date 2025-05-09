@@ -50,7 +50,6 @@ from mcod.resources.models import (
     ResourceFile,
     ResourceTrash,
     Supplement,
-    supported_formats_choices,
 )
 from mcod.unleash import is_enabled
 
@@ -77,7 +76,7 @@ class FormatFilter(admin.SimpleListFilter):
     title = "Format"
 
     def lookups(self, request, model_admin):
-        return supported_formats_choices(with_archives=True)
+        return settings.SUPPORTED_FORMATS_CHOICES_WITH_ARCHIVES
 
     def queryset(self, request, queryset):
         val = self.value()

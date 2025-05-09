@@ -7,7 +7,7 @@ from django.db import migrations
 from django.db.models import Q
 
 from mcod.resources.link_validation import _get_resource_type
-from mcod.resources.tasks import process_resource_from_url_task
+from mcod.resources.tasks import entrypoint_process_resource_validation_task
 
 logger = logging.getLogger("mcod")
 
@@ -30,7 +30,7 @@ def change_resource_api_type_to_file(apps, schema_editor):
                 computed_res_type = _get_resource_type(response)
                 if computed_res_type != res.type and computed_res_type == "file":
                     logger.debug(f"Found type change for resource: {res}, revalidating.")
-                    process_resource_from_url_task.s(res.id).apply_async(countdown=2)
+                    entrypoint_process_resource_validation_task.s(res.id).apply_async(countdown=2)
         except requests.exceptions.ReadTimeout:
             logger.debug(f"Timeout occurred while fetching response for resource {res}, couldn't check type.")
         except requests.exceptions.ConnectionError as err:

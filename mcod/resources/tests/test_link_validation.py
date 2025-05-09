@@ -2,6 +2,7 @@ import pytest
 import requests_mock
 from pytest_bdd import scenarios
 
+from mcod.lib.file_format_from_response import get_extension_from_mime_type
 from mcod.resources.link_validation import (
     InvalidContentType,
     InvalidResponseCode,
@@ -9,10 +10,10 @@ from mcod.resources.link_validation import (
     InvalidUrl,
     MissingContentType,
     UnsupportedContentType,
+    _filename_from_url,
     check_link_status,
     content_type_from_file_format,
     download_file,
-    filename_from_url,
 )
 
 scenarios(
@@ -159,7 +160,7 @@ class TestDownloadFile:
             download_file(self.url)
             raise pytest.fail("No exception occurred. Expected: MissingContentType")
         except MissingContentType as err:
-            assert err.args == ()
+            assert err.args[0] == "Missing content-type header"
 
     @requests_mock.Mocker(kw="mock_request")
     def test_download_file_filename_from_content_disposition(self, **kwargs):
@@ -218,7 +219,19 @@ def test_content_type_from_zip_format():
     assert content_type == "zip"
 
 
-def test_filename_from_url_extension_from_content_type():
-    filename, extension = filename_from_url("http://mocker-test.com/test-file", "video/mp4")
-    assert filename == "test-file"
+def test_extension_from_content_type():
+    extension = get_extension_from_mime_type("video/mp4")
     assert extension == "mp4"
+
+
+@pytest.mark.parametrize(
+    "url, expected_filename, expected_extension",
+    [
+        ("http://mocker-test.com/test-file", "test-file", ""),
+        ("http://mocker-test.com/test-file.mp4", "test-file", "mp4"),
+    ],
+)
+def test_filename_from_url(url: str, expected_filename: str, expected_extension: str):
+    filename, extension = _filename_from_url(url)
+    assert filename == expected_filename
+    assert extension == expected_extension

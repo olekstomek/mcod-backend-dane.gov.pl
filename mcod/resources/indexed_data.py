@@ -273,9 +273,10 @@ class ShpData(IndexedData):
     def source(self):
         if not self._source:
             with ArchiveReader(self.resource.main_file.path) as extracted:
-                shp_path = next(iter(f for f in extracted if f.endswith(".shp")))
+                shp_path = next(extracted.get_by_extension("shp"))
                 self._source = shapefile.Reader(shp_path)
-                self._transformer = ShapeTransformer(extracted)
+                prj_path = next(extracted.get_by_extension("prj"))
+                self._transformer = ShapeTransformer(prj_path)
         return self._source
 
     def get_schema(self, **kwargs):

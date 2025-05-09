@@ -434,6 +434,13 @@ p.irreversible-deletion-warning {
 .od2021 .control-label.readonly-control-label > label {
 	cursor: text;
 }
+.od2021 label[for="id_openness_score"] {
+	cursor: text;
+	/* Default by Bootstrap for labels is pointer. Setting readonly on a field makes Django admin render the field without using the widget
+	 See: mcod_field_contents_foreign_linked and django.contrib.admin.helpers.AdminReadonlyField.contents
+	 */
+}
+
 .od2021 .error .control-label > label.required span {
 	color: inherit;
 }
