@@ -493,7 +493,7 @@ def api_request_post_data(admin_context, data_type, req_post_data):
             "datasets-2-__prefix__-title": "",
             "datasets-2-__prefix__-notes": "",
             "datasets-2-__prefix__-url": "",
-            "datasets-2-__prefix__-update_frequency": "notApplicable",
+            "datasets-2-__prefix__-update_frequency": "weekly",
             "datasets-2-__prefix__-category": "",
             "datasets-2-__prefix__-status": "published",
             "datasets-2-__prefix__-license_condition_responsibilities": "",
@@ -510,7 +510,7 @@ def api_request_post_data(admin_context, data_type, req_post_data):
             "datasets-2-0-url": "",
             "json_key[datasets-2-0-customfields]": "key",
             "json_value[datasets-2-0-customfields]": "value",
-            "datasets-2-0-update_frequency": "notApplicable",
+            "datasets-2-0-update_frequency": "weekly",
             "datasets-2-0-category": "",
             "datasets-2-0-status": "published",
             "datasets-2-0-license_condition_responsibilities": "",
@@ -614,6 +614,19 @@ def api_request_post_data(admin_context, data_type, req_post_data):
     data = default_post_data.get(data_type, {}).copy()
     data.update(post_data)
     admin_context.obj = data
+
+
+@when(parsers.parse("admin's request posted data with {update_frequency}"))
+def api_request_post_data_with_update_frequency_param(admin_context, request, update_frequency):
+    post_data: Dict[str, Any] = request.getfixturevalue("post_data_to_create_dataset")
+
+    post_data["title"] = "Dataset for update_frequency test"
+    post_data["update_frequency"] = update_frequency
+    post_data["organization"] = 999
+    post_data["categories"] = [999]
+    post_data["tags"] = [999]
+    post_data["tags_pl"] = [999]
+    admin_context.obj = post_data
 
 
 @when(parsers.parse("admin requests to delete selected resources with ids {obj_ids}"))

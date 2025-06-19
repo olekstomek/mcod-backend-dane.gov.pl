@@ -402,7 +402,7 @@
         "license_condition_timestamp": null,
         "organization": 2838,
         "customfields": {},
-        "update_frequency": "notApplicable",
+        "update_frequency": "weekly",
         "is_update_notification_enabled": true,
         "has_dynamic_data": false,
         "has_high_value_data": true,

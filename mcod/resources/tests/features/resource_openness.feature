@@ -19,7 +19,7 @@ Feature: Resources openness scores are set properly
     | 1000   | resources.Resource |linked_rdf.rdf                         | {"openness_score": 5, "format": "rdf"}                                                             |
     | 1000   | resources.Resource |linked_rdf_packed.zip                  | {"openness_score": 5, "format": "zip"}                                                             |
     | 1000   | resources.Resource |linked_jsonld.jsonld                   | {"openness_score": 5, "format": "jsonld"}                                                          |
-    | 1000   | resources.Resource |linked_nt.nt                           | {"openness_score": 5, "format": "nt"}                                                              |
+    | 1000   | resources.Resource |linked_nt.nt                           | {"openness_score": 5, "format": "n3"}                                                              |
     | 1000   | resources.Resource |csv2jsonld.jsonld                      | {"openness_score": 4, "format": "jsonld"}                                                          |
     | 1000   | resources.Resource |plik_nq.nq                             | {"openness_score": 4, "format": "nq"}                                                              |
     | 1000   | resources.Resource |zlinkowany_plik_nq.nq                  | {"openness_score": 5, "format": "nq"}                                                              |

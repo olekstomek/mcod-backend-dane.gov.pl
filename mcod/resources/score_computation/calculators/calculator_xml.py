@@ -13,6 +13,9 @@ from mcod.resources.score_computation.common import OpennessScoreValue, SourceDa
 logger = logging.getLogger("mcod")
 
 
+RDF_EXTENSIONS = {extension: mime_type for extension, mime_type in settings.RDF_FORMAT_TO_MIMETYPE.items()}
+
+
 def _validate_score_4(source_data: SourceData) -> bool:
     try:
         namespaces = dict([node for _, node in ElementTree.iterparse(BytesIO(source_data.data), events=["start-ns"])])
@@ -36,14 +39,15 @@ def _validate_score_4(source_data: SourceData) -> bool:
 
 def _validate_score_5(source_data: SourceData) -> bool:
     graph = ConjunctiveGraph()
+    extension = source_data.extension
     try:
-        graph: Graph = graph.parse(data=source_data.data)
+        parse_format = RDF_EXTENSIONS[extension]
+        graph: Graph = graph.parse(data=source_data.data, format=parse_format)
         if not len(graph) or not graph_contains_linked_data(graph):
             return False
     except Exception:
         logger.exception("Handled exception in calculate_score_for_xml._validate_score_5")
         return False
-
     return True
 
 
@@ -66,9 +70,6 @@ def calculate_score_for_xml(source_data: SourceData) -> OpennessScoreValue:
     return 5
 
 
-RDF_EXTENSIONS = {extension: mime_type for extension, mime_type in settings.RDF_FORMAT_TO_MIMETYPE.items() if extension != "xml"}
-
-
 def calculate_score_for_rdf(source_data: SourceData) -> OpennessScoreValue:
     default_score: OpennessScoreValue = 4
     extension = source_data.extension
@@ -76,7 +77,8 @@ def calculate_score_for_rdf(source_data: SourceData) -> OpennessScoreValue:
     try:
         parse_format = RDF_EXTENSIONS[extension]
         graph: Graph = graph.parse(data=source_data.data, format=parse_format)
-        has_triples = any([len(g) for g in graph.store.contexts()])
+        # len(Graph()) returns the number of triples
+        has_triples = any([len(g) for g in graph.store.contexts()])  # graph_contains_linked_data?
         if not has_triples or not graph_contains_linked_data(graph):
             return default_score
     except Exception as e:

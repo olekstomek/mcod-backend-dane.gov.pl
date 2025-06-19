@@ -43,6 +43,7 @@ Feature: Datasource import
     | obj_id | version | xml_resource                                |
     | 101    | 1.11    | xml_datasource_owned_by_state_institution   |
     | 101    | 1.12    | xml_datasource_owned_by_state_institution   |
+    | 101    | 1.13    | xml_datasource_owned_by_state_institution   |
 
   @periodic_task
   Scenario Outline: XML resources are not imported - version xsd 1.11 and over

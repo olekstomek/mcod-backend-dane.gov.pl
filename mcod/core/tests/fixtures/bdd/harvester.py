@@ -169,6 +169,7 @@ def xml_datasource_finishes_import(
     harvester_decoded_xml_1_11_import_data,
     harvester_decoded_xml_1_11_import_data_dataset_has_high_values_metadata_conflict,
     harvester_decoded_xml_1_12_import_data,
+    harvester_decoded_xml_1_13_import_data,
     mocked_geocoder_responses_for_xml_import,
     **kwargs,
 ):
@@ -229,6 +230,7 @@ def xml_datasource_finishes_import(
         "1.11": harvester_decoded_xml_1_11_import_data,
         "1.11_dataset_has_high_values_metadata_conflict": harvester_decoded_xml_1_11_import_data_dataset_has_high_values_metadata_conflict,  # noqa: E501
         "1.12": harvester_decoded_xml_1_12_import_data,
+        "1.13": harvester_decoded_xml_1_13_import_data,
     }
     for resp in mocked_geocoder_responses_for_xml_import:
         mock_request.get(resp[0], json=resp[1])

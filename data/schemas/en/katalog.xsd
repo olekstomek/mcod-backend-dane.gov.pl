@@ -251,12 +251,14 @@
     <xs:simpleType name="datasetUpdateFrequencyType">
         <xs:restriction base="xs:string">
             <xs:enumeration value="Not applicable"/>
-            <xs:enumeration value="yearly"/>
-            <xs:enumeration value="every half year"/>
-            <xs:enumeration value="quarterly"/>
-            <xs:enumeration value="monthly"/>
-            <xs:enumeration value="weekly"/>
-            <xs:enumeration value="daily"/>
+            <xs:enumeration value="Not planned"/>
+            <xs:enumeration value="Irregular"/>
+            <xs:enumeration value="Yearly"/>
+            <xs:enumeration value="Every half year"/>
+            <xs:enumeration value="Quarterly"/>
+            <xs:enumeration value="Monthly"/>
+            <xs:enumeration value="Weekly"/>
+            <xs:enumeration value="Daily"/>
             <xs:enumeration value=""/>
         </xs:restriction>
     </xs:simpleType>

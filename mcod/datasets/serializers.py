@@ -56,6 +56,8 @@ UPDATE_FREQUENCY_TO_DCAT = {
     "monthly": "MONTHLY",
     "weekly": "WEEKLY",
     "daily": "DAILY",
+    "irregular": "IRREG",
+    "notPlanned": "NOT_PLANNED",
 }
 
 

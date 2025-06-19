@@ -50,13 +50,15 @@ logger = logging.getLogger("mcod")
 User = get_user_model()
 
 UPDATE_FREQUENCY = (
-    ("notApplicable", _("Not applicable")),
-    ("yearly", _("yearly")),
-    ("everyHalfYear", _("every half year")),
-    ("quarterly", _("quarterly")),
-    ("monthly", _("monthly")),
-    ("weekly", _("weekly")),
-    ("daily", _("daily")),
+    ("daily", _("Daily")),
+    ("weekly", _("Weekly")),
+    ("monthly", _("Monthly")),
+    ("quarterly", _("Quarterly")),
+    ("everyHalfYear", _("Every half year")),
+    ("yearly", _("Yearly")),
+    ("irregular", _("Irregular")),
+    ("notPlanned", _("Not planned")),
+    ("notApplicable", _("Not applicable")),  # deprecated value of update_frequency - OTD-1231
 )
 UPDATE_FREQUENCY_NOTIFICATION_RANGES = {
     "yearly": (1, 365),

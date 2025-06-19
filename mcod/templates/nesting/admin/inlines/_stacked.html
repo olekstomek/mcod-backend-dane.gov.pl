@@ -156,6 +156,16 @@
             });
         };
 
+        var presentRows = $("div[id^='datasets-2-']").filter(function() {
+            var lastChar = $(this).attr("id").slice(-1)
+            return typeof lastChar==="string" && /^[0-9]$/.test(lastChar)
+        });
+        if (presentRows){
+            for (const row of presentRows){
+                $(document).trigger('formset:added', [$(row), "datasets-2"]);
+            }
+        }
+
         // https://docs.djangoproject.com/en/2.2/ref/contrib/admin/javascript/
         $(document).on('formset:added', function(event, $row, formsetName) {
             initPrepopulatedFields($row);

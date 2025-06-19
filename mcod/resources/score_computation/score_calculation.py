@@ -74,7 +74,7 @@ def get_source_data(source: Source, extension: str) -> SourceData:
                 stream=True,
                 allow_redirects=True,
                 verify=False,
-                timeout=180,
+                timeout=settings.HTTP_REQUEST_DEFAULT_TIMEOUT,
             )
             source_data.res_link = source
             source_data.link_header = response.headers.get("Link")

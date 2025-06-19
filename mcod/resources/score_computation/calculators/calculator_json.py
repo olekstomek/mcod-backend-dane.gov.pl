@@ -8,11 +8,7 @@ from rdflib import ConjunctiveGraph
 from mcod.resources.score_computation.calculators.contains_linked_data import (
     graph_contains_linked_data,
 )
-from mcod.resources.score_computation.common import (
-    OpennessScoreCalculator,
-    OpennessScoreValue,
-    SourceData,
-)
+from mcod.resources.score_computation.common import OpennessScoreValue, SourceData
 
 logger = logging.getLogger("mcod")
 
@@ -54,9 +50,6 @@ def _get_graph(source_data: SourceData) -> ConjunctiveGraph:
         json_str = source_data.data
     graph.parse(data=json_str, format="json-ld")
     return graph
-
-
-calculate_score: OpennessScoreCalculator
 
 
 def calculate_score_for_json(source_data: SourceData) -> OpennessScoreValue:

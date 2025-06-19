@@ -352,7 +352,7 @@ def get_ckan_resource_format_from_url_task(resource_pk: int) -> Tuple[bool, int,
             stream=True,
             allow_redirects=True,
             verify=False,
-            timeout=180,
+            timeout=settings.HTTP_REQUEST_DEFAULT_TIMEOUT,
         )
     except Exception as exc:
         return success, resource_pk, url, None, str(exc)

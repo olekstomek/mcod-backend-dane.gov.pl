@@ -20,6 +20,11 @@ from mcod.organizations.models import Organization
 from mcod.resources.forms import SupplementForm as ResourceSupplementForm
 from mcod.tags.forms import ModelFormWithKeywords
 
+UPDATE_FREQUENCY_FOR_CREATE = ((None, ""),) + tuple(
+    item for item in UPDATE_FREQUENCY if item != ("notApplicable", _("Not applicable"))
+)
+UPDATE_FREQUENCY_FOR_UPDATE = UPDATE_FREQUENCY
+
 
 class DatasetForm(ModelFormWithKeywords, HighValueDataFormValidatorMixin):
     title = forms.CharField(
@@ -60,7 +65,10 @@ class DatasetForm(ModelFormWithKeywords, HighValueDataFormValidatorMixin):
         label=_("Notes") + " (EN)",
         validators=[ContainsLetterValidator()],
     )
-    update_frequency = forms.ChoiceField(choices=UPDATE_FREQUENCY, label=_("Update frequency"))
+
+    # choices for update_frequency are added in the form __init__ method,
+    # depending on whether the form is used to add or edit an instance
+    update_frequency = forms.ChoiceField(label=_("Update frequency"))
     url = forms.URLField(
         required=False,
         widget=forms.TextInput(attrs={"size": 85}),
@@ -160,6 +168,13 @@ class DatasetForm(ModelFormWithKeywords, HighValueDataFormValidatorMixin):
                 condition_field = self.fields.get(f"license_condition_{label_name}")
                 if condition_field:
                     condition_field.label = label_value
+
+        if self.instance and self.instance.pk:
+            # Dataset edition
+            self.fields["update_frequency"].choices = UPDATE_FREQUENCY_FOR_UPDATE
+        else:
+            # Dataset creation
+            self.fields["update_frequency"].choices = UPDATE_FREQUENCY_FOR_CREATE
 
     class Meta:
         model = Dataset
@@ -275,6 +290,16 @@ class DatasetForm(ModelFormWithKeywords, HighValueDataFormValidatorMixin):
                 raise forms.ValidationError(mark_safe(error_message))
 
         return self.cleaned_data["status"]
+
+    def clean_update_frequency(self):
+        update_frequency = self.cleaned_data.get("update_frequency")
+
+        if update_frequency == "notApplicable":
+            # No longer supported value of update_frequency - OTD-1231
+            raise forms.ValidationError(
+                _("The 'Not Applicable' value is no longer supported by the portal. Change it to another one.")
+            )
+        return update_frequency
 
     def _validate_high_value_data_from_ec_list_organization(self, data: Dict[str, Any]):
         organization: Optional[Organization] = data.get("organization")

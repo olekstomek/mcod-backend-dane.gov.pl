@@ -78,7 +78,7 @@ def download_file(url, forced_file_type=False) -> Tuple[str, dict]:  # noqa: C90
         stream=True,
         allow_redirects=True,
         verify=False,
-        timeout=180,
+        timeout=settings.HTTP_REQUEST_DEFAULT_TIMEOUT,
         headers=headers,
     )
 

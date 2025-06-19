@@ -1,8 +1,10 @@
 import logging
+from contextlib import suppress
 from pathlib import Path
-from typing import Dict, Tuple, Union
+from typing import Dict, Optional, Tuple, Union
 
 import magic
+import rdflib
 from mimeparse import parse_mime_type
 
 from mcod import settings
@@ -197,13 +199,50 @@ def analyze_file(path: Union[Path, str]):  # noqa: C901
     )
 
 
+def check_rdf(path: Union[Path, str], family: str, sub_type: str) -> Tuple[str, str]:
+    """Since RDF files can arrive in many different formats we need to proactively try to parse
+    them.
+    See the function at mcod.resources.guess._rdf, which may or may not be in use. (TODO).
+    Returns a tuple of family, content_type, for example
+    ("application", "rdf+xml")
+    """
+    for extension, content_type in settings.RDF_FORMAT_TO_MIMETYPE.items():
+        with suppress(Exception):
+            graph = rdflib.ConjunctiveGraph()
+            graph.parse(path, format=content_type)
+            has_triples = any([len(g) for g in graph.store.contexts()])
+            if has_triples:
+                family, sub_type = content_type.split("/")
+                return family, sub_type
+    return family, sub_type
+
+
 def evaluate_file_details(content_type: str, family: str, options: Dict[str, str], path: Union[Path, str], is_extracted: bool):
+    """
+    Second level of file type inference - we parse the file here and try to assign an extension.
+    Args:
+        content_type: Mime sub-type, e.g. html
+        family: Mime family, e.g. text
+        options: Additional info from magic content-type, known keys: charset, q
+        path: actual filesystem path to the file under evaluation
+        is_extracted: flag, true if the file was a part of an archive (zip, tar, etc.)
+
+    Returns:
+        6-tuple of:
+        extension: Guessed extension
+        file_info: String describing the file's content from magic
+        encoding: File encoding (e.g. utf-8)
+        path: Same as the arg
+        file_mimetype: Full mimetype
+        analyze_exception: Optional Exception, if worth passing up (not every exception is - for example parsing errors
+            are caught and logged.
+    """
     path = str(path)
-    analyze_exc = None
+    analyze_exception: Optional[Exception] = None
     try:
         content_type, family = check_geodata(path, content_type, family, is_extracted=is_extracted)
     except Exception as exc:
-        analyze_exc = Exception(
+        analyze_exception = Exception(
             [
                 {
                     "code": "geodata-error",
@@ -212,7 +251,10 @@ def evaluate_file_details(content_type: str, family: str, options: Dict[str, str
             ]
         )
     file_info = magic.from_file(path)
-    content_type = check_meteo_data(content_type, path, file_info)
+    content_type = check_meteo_data(content_type, path, file_info)  # returns a content type family
+    if content_type not in ("html", "xhtml"):
+        family, content_type = check_rdf(path, family, content_type)
+
     file_mimetype = f"{family}/{content_type}"
     logger.debug(f"  parsed mimetype: {file_mimetype});{options}")
     logger.debug(f"  file info: {file_info}")
@@ -228,4 +270,4 @@ def evaluate_file_details(content_type: str, family: str, options: Dict[str, str
 
     if _is_office_file(extension, content_type):
         extension, encoding = _analyze_office_file(path, encoding, content_type, extension)
-    return extension, file_info, encoding, path, file_mimetype, analyze_exc
+    return extension, file_info, encoding, path, file_mimetype, analyze_exception

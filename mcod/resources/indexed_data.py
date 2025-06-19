@@ -619,6 +619,17 @@ class TabularData(IndexedData):
         )
         if self.resource.tabular_data_schema:
             kwargs["schema"] = self.get_schema()
+            try:
+                # set separator to semicolon to enable detection of CSV validation error
+                # when in a CSV file semicolon is used for separation - OTD-1282
+                if (
+                    self.resource_format == "csv"
+                    and len(kwargs["schema"]["fields"]) == 1
+                    and ";" in kwargs["schema"]["fields"][0]["name"]
+                ):
+                    kwargs["delimiter"] = ";"
+            except (KeyError, TypeError):
+                pass
         else:
             kwargs["infer_schema"] = True
 

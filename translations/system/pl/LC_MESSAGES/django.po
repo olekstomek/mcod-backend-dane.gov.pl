@@ -892,23 +892,38 @@ msgstr ""
 "Nie można przywrócić tego zbioru, ponieważ organizacja do której przynależy "
 "jest nadal w koszu. Przywróć najpierw organizację: "
 
-msgid "yearly"
-msgstr "rocznie"
+msgid "Yearly"
+msgstr "Rocznie"
 
-msgid "every half year"
-msgstr "co pół roku"
+msgid "Every half year"
+msgstr "Co pół roku"
 
-msgid "quarterly"
-msgstr "kwartalnie"
+msgid "Quarterly"
+msgstr "Kwartalnie"
 
 msgid "monthly"
 msgstr "miesięcznie"
 
+msgid "Monthly"
+msgstr "Miesięcznie"
+
 msgid "weekly"
 msgstr "co tydzień"
 
+msgid "Weekly"
+msgstr "Co tydzień"
+
 msgid "daily"
 msgstr "codziennie"
+
+msgid "Daily"
+msgstr "Codziennie"
+
+msgid "Irregular"
+msgstr "Nieregularnie"
+
+msgid "Not planned"
+msgstr "Jednorazowe udostępnienie"
 
 msgid "dataset"
 msgstr "zbiór danych"
@@ -5627,3 +5642,6 @@ msgstr "Poziom otwartości danych"
 
 msgid "openness_score"
 msgstr "poziom otwartości danych"
+
+msgid "The 'Not Applicable' value is no longer supported by the portal. Change it to another one."
+msgstr "Wartość 'Nie dotyczy' nie jest już obsługiwana przez portal. Zmień ją na inną."

@@ -45,6 +45,8 @@ def test_get_score_archives(
         ("test_samples/unique_simple.csv", "csv", 3),
         ("test_samples/plik_nq.nq", "nq", 4),
         ("test_samples/plik_nq.nq", "none", 1),
+        ("test_samples/linked_rdf.rdf", "xml", 5),
+        ("test_samples/linked_rdf.rdf", "rdf", 5),
     ),
 )
 def test_get_score_plain_files(

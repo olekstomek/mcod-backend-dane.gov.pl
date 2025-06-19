@@ -834,22 +834,37 @@ msgid ""
 "Please first restore organization: "
 msgstr ""
 
-msgid "yearly"
+msgid "Yearly"
 msgstr ""
 
-msgid "every half year"
+msgid "Every half year"
 msgstr ""
 
-msgid "quarterly"
+msgid "Quarterly"
 msgstr ""
 
 msgid "monthly"
 msgstr ""
 
+msgid "Monthly"
+msgstr ""
+
 msgid "weekly"
 msgstr ""
 
+msgid "Weekly"
+msgstr ""
+
 msgid "daily"
+msgstr ""
+
+msgid "Daily"
+msgstr ""
+
+msgid "Irregular"
+msgstr ""
+
+msgid "Not planned"
 msgstr ""
 
 msgid "dataset"
@@ -5005,4 +5020,7 @@ msgid "Openness score"
 msgstr ""
 
 msgid "openness_score"
+msgstr ""
+
+msgid "The 'Not Applicable' value is no longer supported by the portal. Change it to another one."
 msgstr ""

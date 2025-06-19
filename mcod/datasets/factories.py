@@ -15,6 +15,9 @@ from mcod.organizations.factories import OrganizationFactory
 
 _UPDATE_FREQUENCY = [i[0] for i in models.UPDATE_FREQUENCY]
 
+# `notApplicable` - deprecated value of update_frequency - OTD-1231
+_UPDATE_FREQUENCY.remove("notApplicable")
+
 
 class DatasetFactory(factory.django.DjangoModelFactory):
     title = factory.Faker("text", max_nb_chars=100, locale="pl_PL")

@@ -251,12 +251,14 @@
     <xs:simpleType name="datasetUpdateFrequencyType">
         <xs:restriction base="xs:string">
             <xs:enumeration value="Nie dotyczy"/>
-            <xs:enumeration value="rocznie"/>
-            <xs:enumeration value="co pół roku"/>
-            <xs:enumeration value="kwartalnie"/>
-            <xs:enumeration value="miesięcznie"/>
-            <xs:enumeration value="co tydzień"/>
-            <xs:enumeration value="codziennie"/>
+            <xs:enumeration value="Jednorazowe udostępnienie"/>
+            <xs:enumeration value="Nieregularnie"/>
+            <xs:enumeration value="Rocznie"/>
+            <xs:enumeration value="Co pół roku"/>
+            <xs:enumeration value="Kwartalnie"/>
+            <xs:enumeration value="Miesięcznie"/>
+            <xs:enumeration value="Co tydzień"/>
+            <xs:enumeration value="Codziennie"/>
             <xs:enumeration value=""/>
         </xs:restriction>
     </xs:simpleType>

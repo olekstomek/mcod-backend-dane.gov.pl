@@ -77,6 +77,11 @@ def harvester_decoded_xml_1_12_import_data():
 
 
 @pytest.fixture
+def harvester_decoded_xml_1_13_import_data():
+    return get_harvested_xml_as_dict("1.13")
+
+
+@pytest.fixture
 def harvester_xml_expected_data():
     data = [
         OrderedDict(
@@ -427,7 +432,7 @@ def harvester_ckan_data_with_no_resource_format() -> List[dict]:
             "title": "MM - Dataset Title 2.1",
             "license_id": "cc-by",
             "organization": {"title": "MM Organization", "image_url": "some_image.png"},
-            "name": "some name",
+            "name": "some_name",
             "resources": [
                 {
                     "id": "10000001-mmmm-402d-92a5-445d8ba6fd7a",

@@ -191,3 +191,8 @@ if worker_id:
 HARVESTER_XML_VERSION_TO_SCHEMA_PATH.update(
     {"1.11_dataset_has_high_values_metadata_conflict": HARVESTER_DATA_DIR.path("xml_import_otwarte_dane_1_11.xsd").root}
 )
+HTTP_REQUEST_DEFAULT_TIMEOUT = 3
+
+import socket
+
+socket.setdefaulttimeout(HTTP_REQUEST_DEFAULT_TIMEOUT)

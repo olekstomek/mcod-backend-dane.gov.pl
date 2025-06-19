@@ -249,6 +249,7 @@ HARVESTER_XML_VERSION_TO_SCHEMA_PATH = {
     "1.10": HARVESTER_DATA_DIR.path("xml_import_otwarte_dane_1_10.xsd").root,
     "1.11": HARVESTER_DATA_DIR.path("xml_import_otwarte_dane_1_11.xsd").root,
     "1.12": HARVESTER_DATA_DIR.path("xml_import_otwarte_dane_1_12.xsd").root,
+    "1.13": HARVESTER_DATA_DIR.path("xml_import_otwarte_dane_1_13.xsd").root,
 }
 
 HARVESTER_IMPORTERS = {
@@ -270,12 +271,13 @@ HARVESTER_IMPORTERS = {
 HTTP_REQUEST_DEFAULT_HEADERS = {
     "User-Agent": "Otwarte Dane",
 }
+HTTP_REQUEST_DEFAULT_TIMEOUT = 180
 
 HTTP_REQUEST_DEFAULT_PARAMS = {
     "stream": True,
     "allow_redirects": True,
     "verify": False,
-    "timeout": 180,
+    "timeout": HTTP_REQUEST_DEFAULT_TIMEOUT,
     "headers": HTTP_REQUEST_DEFAULT_HEADERS,
 }
 

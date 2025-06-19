@@ -14,10 +14,12 @@ https://git-scm.com/book/en/v2/Getting-Started-Installing-Git
 
 ## Pobranie repozytoriów projektu: `backend`, `frontend`, `test-data`.
 
-    $ git clone https://gitlab.dane.gov.pl/mcod/backend.git
-    $ cd backend
-    $ git clone https://gitlab.dane.gov.pl/mcod/frontend.git
-    $ git clone https://gitlab.dane.gov.pl/mcod/test-data.git
+```
+$ git clone https://gitlab.dane.gov.pl/mcod/backend.git
+$ cd backend
+$ git clone https://gitlab.dane.gov.pl/mcod/frontend.git
+$ git clone https://gitlab.dane.gov.pl/mcod/test-data.git
+```
 
 ## Konfiguracja zmiennych środowiskowych:
 
@@ -34,10 +36,12 @@ Konfiguracja Django realizowana jest na podstawie ustawień z pliku `mcod/settin
 
 Proces budowania środowiska może trwać nawet kilkadziesiąt minut w zależności od hosta.
 
-    $ docker compose up -d mcod-db
-    $ docker compose exec mcod-db dropdb mcod --username=mcod
-    $ docker compose exec mcod-db createdb mcod -O mcod --username=mcod
-    $ docker compose up -d mcod-db mcod-elasticsearch mcod-nginx mcod-rabbitmq mcod-rdfdb mcod-redis
+```
+$ docker compose up -d mcod-db
+$ docker compose exec mcod-db dropdb mcod --username=mcod
+$ docker compose exec mcod-db createdb mcod -O mcod --username=mcod
+$ docker compose up -d mcod-db mcod-elasticsearch mcod-nginx mcod-rabbitmq mcod-rdfdb mcod-redis
+```
 
 **Uwaga:** Aby kontenery uruchomiły się poprawnie, należy dodać zmienną środowiskową do pliku .env: PWD określającą ścieżkę absolutną do projektu.
 
@@ -47,23 +51,31 @@ Więcej: https://www.jetbrains.com/help/pycharm/docker-compose.html#working
 
 ## Przygotowanie i uruchomienie wirtualnego środowiska
 
-    $ pip install -I pipenv==2022.10.12
-    $ pipenv run pip install setuptools"<58"
-    $ pipenv install
-    $ exit
-    $ pipenv shell
+```
+$ pip install -I pipenv==2022.10.12
+$ pipenv run pip install setuptools"<58"
+$ pipenv install
+$ exit
+$ pipenv shell
+```
 
 ## Zaaplikowanie migracji i inicjalnych danych
 
-    (backend) $ python manage.py init_mcod_db
+```
+(backend) $ python manage.py init_mcod_db
+```
 
 ## Utworzenie indeksów w ES
 
-    (backend) $ python manage.py search_index --rebuild -f
+```
+(backend) $ python manage.py search_index --rebuild -f
+```
 
 ## Rewalidacja zasobów
 
-    (backend) $ python manage.py validate_resources --async
+```
+(backend) $ python manage.py validate_resources --async
+```
 
 W przypadku użycia flagi `async` należy najpierw uruchomić Celery (instrukcja niżej), gdyż rewalidacja będzie odbywać się w ramach tasków Celery.
 
@@ -71,111 +83,150 @@ W przypadku użycia flagi `async` należy najpierw uruchomić Celery (instrukcja
 
 Aby uruchomić wszystkie usługi w katalogu projektu `backend` wykonaj:
 
-    $ docker compose up -d
+```
+$ docker compose up -d
+```
 
 Opcjonalnie można uruchamiać tylko wybrane usługi wyspecyfikowane jako parametr polecenia:
 
-    $ docker compose up -d mcod-db mcod-elasticsearch
+```
+$ docker compose up -d mcod-db mcod-elasticsearch
+```
 
 Aby zatrzymać wybraną usługę, w katalogu projektu `backend` wykonaj:
 
-    $ docker compose stop mcod-elasticsearch
+```
+$ docker compose stop mcod-elasticsearch
+```
 
 Aby zatrzymać usługę łącznie z usunięciem kontenera, w katalogu `backend` wykonaj:
 
-    $ docker compose down mcod-db
+```
+$ docker compose down mcod-db
+```
 
 Aby zatrzymać usługę łącznie z usunięciem kontenera oraz powiązanych z nim wolumenów (całkowite usunięcie usługi), w katalogu `backend` wykonaj:
 
-    $ docker compose down -v mcod-db
+```
+$ docker compose down -v mcod-db
+```
 
 ## Ustawienia lokalne - przypisanie nazw maszyn do kontenera mcod-nginx.
 
 Dodaj mapowanie adresu IP:
 
-    Adres IP: 172.18.18.100
+```
+Adres IP: 172.18.18.100
+```
 
 Do nazw maszyn:
 
-    mcod.local
-    api.mcod.local
-    admin.mcod.local
-    cms.mcod.local
+```
+mcod.local
+api.mcod.local
+admin.mcod.local
+cms.mcod.local
+```
 
 Oraz dodaj mapowanie adresu IP:
 
-    Adres IP: 172.18.18.23
+```
+Adres IP: 172.18.18.23
+```
 
 Do maszyny:
 
-    mcod-rdfdb
+```
+mcod-rdfdb
+```
 
 ## Ustawienia certyfikatów mcod-nginx.
 
 Aby biblioteka certifi poprawnie używała certyfikatów nginx, należy dodać odpowiedni wpis do pliku cacert.pem.
 Aby to zrobić, należy uruchomić komendę:
 
-    (backend) $ python manage.py configure_nginx_certs
-
+```
+(backend) $ python manage.py configure_nginx_certs
+```
 
 ## Ręcznie uruchamianie usług
 
 Poza specyficznymi dla każdej usługi zmiennymi środowiskowymi, dla wszystkich usług należy ustawić zmienne środowiskowe:
 
-    PYTHONUNBUFFERED=1;
-    ENVIRONMENT=local;
-    NO_REPLY_EMAIL=env@test.local;
-    ALLOWED_HOSTS=*;
-    BASE_URL=https://mcod.local;
-    API_URL=https://api.mcod.local;
-    ADMIN_URL=https://admin.mcod.local;
-    CMS_URL=https://cms.mcod.local;
-    API_URL_INTERNAL=https://api.mcod.local;
-    DEBUG=yes;
+```
+PYTHONUNBUFFERED=1;
+ENVIRONMENT=local;
+NO_REPLY_EMAIL=env@test.local;
+ALLOWED_HOSTS=*;
+BASE_URL=https://mcod.local;
+API_URL=https://api.mcod.local;
+ADMIN_URL=https://admin.mcod.local;
+CMS_URL=https://cms.mcod.local;
+API_URL_INTERNAL=https://api.mcod.local;
+DEBUG=yes;
+```
 
 ### Panel administracyjny (admin.mcod.local)
 
 #### Dodatkowe zmienne środowiskowe
 
-    COMPONENT=admin;
-    BOKEH_DEV=True;
-    BOKEH_RESOURCES=cdn;
-    BOKEH_ALLOW_WS_ORIGIN=mcod.local;
-    BOKEH_LOG_LEVEL=debug;
-    BOKEH_PY_LOG_LEVEL=debug;
-    BOKEH_MINIFIED=False;
-    BOKEH_VALIDATE_DOC=False;
-    BOKEH_PRETTY=True;
-    STATS_LOG_LEVEL=DEBUG;
-    DJANGO_ADMINS=Jon Doe:jond@test.com,Jane Smith:jane.smith@example.com.pl;
-    DATASET_ARCHIVE_FILES_TASK_DELAY=1;
+```
+COMPONENT=admin;
+BOKEH_DEV=True;
+BOKEH_RESOURCES=cdn;
+BOKEH_ALLOW_WS_ORIGIN=mcod.local;
+BOKEH_LOG_LEVEL=debug;
+BOKEH_PY_LOG_LEVEL=debug;
+BOKEH_MINIFIED=False;
+BOKEH_VALIDATE_DOC=False;
+BOKEH_PRETTY=True;
+STATS_LOG_LEVEL=DEBUG;
+DJANGO_ADMINS=Jon Doe:jond@test.com,Jane Smith:jane.smith@example.com.pl;
+DATASET_ARCHIVE_FILES_TASK_DELAY=1;
+```
+
+#### Kompilacja tłumaczeń (lokalnie)
+
+Po zmianie tłumaczeń w pliku `.../backend/translations/system/pl/LC_MESSAGES/django.po` należy przejść do katalogu projektu,
+w którym znajduje się plik `manage.py`. Następnie uruchomić polecenie:
+
+```
+(backend) $ python manage.py compilemessages
+```
 
 #### Uruchamianie
 
-    (backend) $ python manage.py runserver 0:8001
+```
+(backend) $ python manage.py runserver 0:8001
+```
 
 Po uruchomieniu usługi, pod adresem https://admin.mcod.local będzie dostępny panel administracyjny.
 Możliwe jest zalogowanie się na konta 2 użytkowników:
-* login: admin@mcod.local, hasło:testadmin123!
-* login: pelnomocnik@mcod.local, hasło: User123!
 
+- login: admin@mcod.local, hasło:testadmin123!
+- login: pelnomocnik@mcod.local, hasło: User123!
 
 ### Usługa API (api.mcod.local)
 
-    (backend) $ python -m werkzeug.serving --bind 0:8000 --reload --debug mcod.api:app
+```
+(backend) $ python -m werkzeug.serving --bind 0:8000 --reload --debug mcod.api:app
+```
 
 ### Usługa CMS (cms.mcod.local)
 
 #### Dodatkowe zmienne środowiskowe
 
-    COMPONENT=cms;
+```
+COMPONENT=cms;
+```
 
 #### Uruchamianie
 
-    (backend) $ python manage.py runserver 0:8002
+```
+(backend) $ python manage.py runserver 0:8002
+```
 
 Po uruchomieniu usługi będzie ona dostępna pod adresem https://cms.mcod.local/admin/
-
 
 ### Aplikacja WWW - frontend (mcod.local)
 
@@ -187,26 +238,33 @@ Do prawidłowego funkcjonowania niezbędne jest uruchomienie usługi API.
 
 #### Dodatkowe zmienne środowiskowe
 
-    COMPONENT=celery;
+```
+COMPONENT=celery;
+```
 
 #### Uruchamianie
 
 Uruchomienie usługi jest niezbędne, jeżeli zamierzamy korzystać z zadań asynchronicznych, takich jak wysyłanie maili czy walidacja plików zasobów.
 
-    (backend) $ python -m celery --app=mcod.celeryapp:app worker -l DEBUG -E -Q default,resources,indexing,periodic,newsletter,notifications,search_history,watchers,harvester,indexing_data
+```
+(backend) $ python -m celery --app=mcod.celeryapp:app worker -l DEBUG -E -Q default,resources,indexing,periodic,newsletter,notifications,search_history,watchers,harvester,indexing_data
+```
 
 #### Taski periodyczne
 
 - Tworzenie wykazu głównego: dla zadania realizującego tworzenie wykazu głównego DGA niezbędne jest ustawienie zmiennej środowiskowej określającej id Instytucji będącej jego właścicielem:
 
-
-    MAIN_DGA_DATASET_OWNER_ORGANIZATION_PK=<organization_pk>
+```
+  MAIN_DGA_DATASET_OWNER_ORGANIZATION_PK=\<organization_pk>
+```
 
 ### Usługa discourse
 
 #### Pierwsza konfiguracja
 
-    (backend) python manage.py set_up_forum --file /.../backend/data/discourse/settings.json --theme_path /.../backend/data/discourse/discourse-otwarte-dane-theme.zip --password bitnami123 --username user
+```
+(backend) python manage.py set_up_forum --file /.../backend/data/discourse/settings.json --theme_path /.../backend/data/discourse/discourse-otwarte-dane-theme.zip --password bitnami123 --username user
+```
 
 #### Ustawienie API_KEY
 
@@ -216,48 +274,61 @@ Po wykonaniu powyższej komendy utworzy się plik api_key.txt w folderze mcod/. 
 
 Pierwsza konfiguracja nie wykonała poprawnie kroku sync_user, bo brakowało utworzonego klucza API_KEY, stąd trzeba wykonać ten krok ponownie.
 
-
-    (backend) python manage.py set_up_forum --step_name sync_users
-
+```
+(backend) python manage.py set_up_forum --step_name sync_users
+```
 
 ## Inne przydatne polecenia.
 
 ### Uruchamianie testów jednostkowych
 
-    (backend) $ tox
+```
+(backend) $ tox
+```
 
 ### Re-indeksacja wszystkich danych
 
-    (backend) $ python manage.py search_index --rebuild
+```
+(backend) $ python manage.py search_index --rebuild
+```
 
-### Ponowna walidacja zasobów o danych identyfikatorach <id_1,..., id_N>
+### Ponowna walidacja zasobów o danych identyfikatorach \<id_1,..., id_N>
 
-    (backend) $ python manage.py validate_resources --where 'id in (<id_1,...,id_N>)'
+```
+(backend) $ python manage.py validate_resources --where 'id in (<id_1,...,id_N>)'
+```
 
 ### Ponowna walidacja zasobu o danym identyfikatorze <id>
 
-    (backend) $ python manage.py validate_resources --where id=<id>
+```
+(backend) $ python manage.py validate_resources --where id=<id>
+```
 
 ### Zaindeksowanie pliku zasobu (wygenerowanie danych tabelarycznych)
 
-    (backend) $ python manage.py index_file --pks <id_1,...,id_N>
+```
+(backend) $ python manage.py index_file --pks <id_1,...,id_N>
+```
 
 ### Uruchomienie narzędzia pre-commit (lokalnie)
 
 Aby `pre-commit` uruchamiał się przy każdym commicie, trzeba go zainstalować:
 
-    (backend) pre-commit install
-
-### Uruchamianie shell_plus z innym plikiem konfiguracyjnym:
-    (backend) python manage.py shell_plus --settings mcod.settings.test
+```
+(backend) pre-commit install
+```
 
 Dodanie pliku/plików jest niezbędne do sprawdzenia ich poprawności:
 
-    $ git add <filename>
+```
+$ git add <filename>
+```
 
 Uruchomienie pre-commit sprawdzającego m.in. poprawność stylu i importów.
 
-    (backend) $ pre-commit run
+```
+(backend) $ pre-commit run
+```
 
 #### Black
 
@@ -266,9 +337,16 @@ Konfiguracja jest obecna tylko w `.pre-commit-config.yaml`, ponieważ nie używa
 
 `git blame` może ignorować commit z masowym reformatowaniem kodu, zobacz opcję `--ignore-revs-file .git-blame-ignore-revs`
 
-### Kompilacja tłumaczeń (lokalnie)
+### Uruchamianie rozszerzonej konsoli Django - shell_plus ze wskazanym plikiem konfiguracyjnym:
 
-Po zmianie tłumaczeń w pliku `django.po` należy przejść do katalogu projektu,
-w którym znajduje się plik `manage.py`. Następnie należy uruchomić polecenie:
+#### z domyślnym plikiem konfiguracyjnym - mcod/settings/base.py
 
-    (venv) $ python manage.py compilemessages
+```
+(backend) python manage.py shell_plus
+```
+
+#### z innym wskazanym plikiem konfiguracyjnym - np. mcod/settings/test.py
+
+```
+(backend) python manage.py shell_plus --settings mcod.settings.test
+```

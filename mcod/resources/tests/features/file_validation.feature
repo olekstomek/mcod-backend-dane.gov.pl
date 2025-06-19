@@ -36,10 +36,10 @@ Feature: File validation
       | dbase_f5.dbf                     | dbf         |
       | kml                              | kml         |
       | n3                               | n3          |
-      | n_triples                        | nt          |
+      | n_triples                        | n3          |
       | n_quads                          | nq          |
       | rdf                              | rdf         |
-      | turtle                           | ttl         |
+      | turtle                           | n3         |
       | trig                             | trig        |
       | trix                             | trix        |
       | regular.zip                      | zip         |

@@ -127,10 +127,10 @@ Feature: Dataset details
     When admin's page <page_url> is requested
     Then admin's response page contains dataset resources pagination test
     Examples:
-      | page_url                            |
-      | /datasets/dataset/999/change/?p=X   |
-      | /datasets/dataset/999/change/?p=999 |
-      | /datasets/dataset/999/change/?all=  |
+    | page_url                            |
+    | /datasets/dataset/999/change/?p=X   |
+    | /datasets/dataset/999/change/?p=999 |
+    | /datasets/dataset/999/change/?all=  |
 
   Scenario: Dataset details page contains related resources
     Given logged editor user
