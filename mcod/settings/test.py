@@ -136,8 +136,6 @@ LOGGING["loggers"]["celery.app.trace"]["handlers"] = ["console"]
 LOGGING["loggers"]["mcod"]["handlers"] = ["console"]
 LOGGING["loggers"]["resource_file_processing"]["handlers"] = ["console"]
 
-CONSOLE_LOG_ERRORS = True
-
 SUIT_CONFIG["LIST_PER_PAGE"] = 100
 
 # Makes tests faster (https://brobin.me/blog/2016/08/7-ways-to-speed-up-your-django-test-suite/)

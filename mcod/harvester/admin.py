@@ -6,6 +6,7 @@ from django.utils import timezone
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 
+from mcod.core.decorators import prometheus_monitoring
 from mcod.datasets.admin import PaginationInline
 from mcod.datasets.models import Dataset
 from mcod.harvester.forms import DataSourceAdminForm, DataSourceImportAdminForm
@@ -128,6 +129,7 @@ class DataSourceImports(PaginationInline):
         return self.get_fields(request, obj=obj)
 
 
+@prometheus_monitoring
 class DataSourceAdmin(ExportHarvestersCsvMixin, HistoryMixin, ModelAdmin):
     search_fields = ["name"]
     list_display = [
@@ -362,6 +364,7 @@ class DataSourceAdmin(ExportHarvestersCsvMixin, HistoryMixin, ModelAdmin):
         return formfield
 
 
+@prometheus_monitoring
 class DataSourceImportAdmin(ModelAdmin):
 
     exclude = ["is_report_email_sent"]  # email reports aren't implemented.

@@ -1,15 +1,18 @@
 import json
 import logging
 import re
+import time
 from datetime import datetime
-from typing import Optional
+from typing import Any, Optional
 from urllib.parse import urlparse
 
 import elasticapm
 import elasticapm.instrumentation.control
 import falcon
+import sentry_sdk
 from accept_types import get_best_match
 from django.apps import apps
+from django.db import OperationalError, ProgrammingError, connection
 from django.utils.http import is_same_domain
 from django.utils.translation import activate, gettext_lazy as _
 from django.utils.translation.trans_real import (
@@ -28,13 +31,19 @@ from mcod import settings
 from mcod.core.api.apm import get_data_from_request, get_data_from_response
 from mcod.core.api.versions import VERSIONS
 from mcod.core.csrf import _sanitize_token, compare_salted_tokens, generate_csrf_token
+from mcod.core.db.managers import QueryLogger
+from mcod.core.metrics import (
+    API_DB_QUERY_TIME_HISTOGRAM,
+    API_ERROR_COUNT,
+    API_REQUEST_COUNT,
+    API_REQUEST_LATENCY_HISTOGRAM,
+)
 from mcod.core.utils import falcon_set_cookie, jsonapi_validator, route_to_name
 from mcod.counters.lib import Counter
 from mcod.lib.encoders import DateTimeToISOEncoder
 from mcod.unleash import is_enabled
 
-logger = logging.getLogger(__name__)
-
+logger = logging.getLogger("mcod-api")
 
 _DECORABLE_METHOD_NAME = re.compile(r"^on_({})(_\w+)?$".format("|".join(method.lower() for method in falcon.COMBINED_METHODS)))
 
@@ -44,6 +53,60 @@ REASON_NO_REFERER = _("Referer checking failed - no Referer.")
 REASON_BAD_REFERER = _("Referer checking failed - %s does not match any trusted origins.")
 REASON_MALFORMED_REFERER = _("Referer checking failed - Referer is malformed.")
 REASON_INSECURE_REFERER = _("Referer checking failed - Referer is insecure while host is secure.")
+
+
+class PrometheusMiddleware:
+    """
+    Falcon middleware for collecting Prometheus metrics on request latency,
+    request count, error count, and DB query time.
+    """
+
+    def process_request(self, req: Request, resp: Response) -> None:
+        """Records the start time of the request to calculate latency later."""
+        req.context["start_time"] = time.perf_counter()
+        ql = QueryLogger()
+        req.context["query_logger"] = ql
+        connection.execute_wrapper(ql)
+
+    def process_response(self, req: Request, resp: Response, resource: Any, req_succeeded: bool) -> None:
+        """Records various Prometheus metrics after the request is processed."""
+        method = req.method
+        endpoint = req.path
+        status_code = str(resp.status_code)
+
+        # Record request latency
+        try:
+            end = time.perf_counter()
+            start = req.context["start_time"]
+            latency = end - start
+            API_REQUEST_LATENCY_HISTOGRAM.labels(method, endpoint).observe(latency)
+        except KeyError as err:
+            logger.error(f"start_time couldn't be fetched from context {err}")
+            sentry_sdk.api.capture_exception(err)
+
+        # Record request count
+        API_REQUEST_COUNT.labels(method, endpoint, status_code).inc()
+
+        # Count 5xx errors or failed requests
+        if not req_succeeded or resp.status_code >= 500:
+            API_ERROR_COUNT.labels(method, endpoint, status_code).inc()
+
+        ql: QueryLogger = req.context.get("query_logger")
+        if ql is not None:
+            try:
+                duration = sum(float(q["duration"]) for q in ql.queries)
+                API_DB_QUERY_TIME_HISTOGRAM.labels(path=endpoint or "unknown").observe(duration)
+            except KeyError as err:
+                logger.error(f"Couldn't get `duration` attribute from ql.queries. {err}")
+                sentry_sdk.api.capture_exception(err)
+            except (ProgrammingError, OperationalError, AttributeError) as err:
+                logger.error(err)
+                sentry_sdk.api.capture_exception(err)
+
+            try:
+                connection.execute_wrappers.remove(ql)
+            except ValueError:
+                logger.warning("QueryLogger was not found in execute_wrappers during cleanup.")
 
 
 class SearchHistoryMiddleware:

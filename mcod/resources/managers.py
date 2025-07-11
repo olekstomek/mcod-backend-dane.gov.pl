@@ -6,7 +6,7 @@ from django.db.models import Count, Manager, Prefetch, Q
 from django.db.models.query import QuerySet
 
 from mcod.core.db.managers import TrashManager
-from mcod.core.managers import RawManager, SoftDeletableManager, SoftDeletableQuerySet
+from mcod.core.managers import RawDBManager, RawManager, SoftDeletableManager, SoftDeletableQuerySet
 from mcod.resources.tasks import delete_es_resource_tabular_data_index
 
 
@@ -212,6 +212,10 @@ class ResourceRawManager(AutocompleteManagerMixin, PrefetchResourceFilesMixin, R
     def get_queryset(self):
         main_file, other_files = self.get_files_prefetch()
         return super().get_queryset().prefetch_related(main_file, other_files)
+
+
+class ResourceRawDBManager(RawDBManager):
+    _queryset_class = ResourceQuerySet
 
 
 class ResourceFileManager(Manager):

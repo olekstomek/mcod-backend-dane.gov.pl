@@ -250,7 +250,7 @@ def api_send_request(context, mocker):
         skip_validation = True
     if not skip_validation:
         valid, validated, errors = jsonapi_validator(resp.json)
-        assert valid is True
+        assert valid is True, errors
     # TODO: this does not work on gitlab...
     # Counter().save_counters()
     # TODO: check pagination
@@ -368,7 +368,9 @@ def api_response_body_field_not(resp_body_field, resp_body_value, context):
 def api_response_body_field_in(field, value, context):
     values = [x.strip() for x in value.split(",")]
     for value in values:
-        assert [str(v) for v in dpath.util.values(context.response.json, field) if str(v) == value]
+        assert [
+            str(v) for v in dpath.util.values(context.response.json, field) if str(v) == value
+        ], f"{value} not found in {context.response.json}"
 
 
 @then(parsers.parse("api's response body included types contains {value}"))

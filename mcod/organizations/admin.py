@@ -3,6 +3,7 @@ from django.utils.html import format_html
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 
+from mcod.core.decorators import prometheus_monitoring
 from mcod.datasets.forms import (
     DatasetForm,
     DatasetFormSet,
@@ -229,6 +230,7 @@ class AddDatasetNestedStacked(AddDatasetStacked):
     verbose_name_plural = ""
 
 
+@prometheus_monitoring
 @admin.register(Organization)
 class OrganizationAdmin(HistoryMixin, ObjectPermissionsModelAdmin):
     actions_on_top = True

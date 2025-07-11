@@ -1,6 +1,8 @@
 from datetime import datetime
 
 import falcon
+from falcon import Request, Response
+from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 
 from mcod import settings
 from mcod.core.api.handlers import RetrieveOneHdlr
@@ -108,3 +110,11 @@ class VocabEntryRDFView(VocabRDFView):
         def _get_data(self, cleaned, *args, **kwargs):
             entry_name = kwargs.get("entry_name")
             return self.vocab_class().entries[entry_name]
+
+
+class MetricsResource:
+    def on_get(self, req: Request, resp: Response):
+        """Handle /metrics endpoint."""
+        resp.status = falcon.HTTP_200
+        resp.content_type = CONTENT_TYPE_LATEST
+        resp.text = generate_latest().decode("utf-8")

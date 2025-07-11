@@ -101,6 +101,24 @@ class TestResourceModel:
         with pytest.raises(ObjectDoesNotExist):
             Resource.trash.get(id=resource.id)
 
+    @pytest.mark.parametrize(
+        "resource_to_delete, expected_is_permanently_removed",
+        [("imported_xml_resource", True), ("imported_ckan_resource", True), ("another_resource", False)],
+    )
+    def test_imported_and_not_imported_resource_delete(
+        self, request, resource_to_delete: Resource, expected_is_permanently_removed: bool
+    ):
+        """Checks if deleting only the harvested resource results in permanent deletion."""
+
+        # GIVEN
+        resource: Resource = request.getfixturevalue(resource_to_delete)
+        # WHEN
+        resource.delete()
+        # THEN
+        assert resource.is_removed
+        # AND THEN
+        assert resource.is_permanently_removed is expected_is_permanently_removed
+
     def test_file_url_and_path(self, resource, mocker):
         mocker.patch("mcod.resources.link_validation.download_file", return_value=("file", {}))
         resource = Resource.objects.get(pk=resource.pk)

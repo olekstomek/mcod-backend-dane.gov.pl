@@ -28,6 +28,7 @@ prepare-images:
     - tags
     - master
     - schedules
+    - /^release_.*$/
   tags:
     - shell
 
@@ -116,6 +117,7 @@ test:
     - master
     - pre-devel
     - schedules
+    - /^release_.*$/
   tags:
     - docker
 
@@ -141,6 +143,7 @@ check-docker-build:
     - tags
     - master
     - schedules
+    - /^release_.*$/
   script:
     - docker build --add-host $CI_LOCAL_GITLAB_ADDRESS -f docker/app/Dockerfile -t backend:${CI_COMMIT_REF_SLUG} .
     - docker rmi backend:${CI_COMMIT_REF_SLUG}
@@ -151,6 +154,23 @@ build-pre-devel:
   stage: build
   only:
     - pre-devel
+  script:
+    - docker build --add-host $CI_LOCAL_GITLAB_ADDRESS -f docker/app/Dockerfile -t $REGISTRY_PATH/backend:pre-devel .
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $REGISTRY_HOST
+    - docker push $REGISTRY_PATH/backend:pre-devel
+  tags:
+    - shell
+
+build-pre-devel-on-branch:
+  stage: build
+  when: manual
+  except:
+    - pre-devel
+    - devel
+    - tags
+    - master
+    - schedules
+    - /^release_.*$/
   script:
     - docker build --add-host $CI_LOCAL_GITLAB_ADDRESS -f docker/app/Dockerfile -t $REGISTRY_PATH/backend:pre-devel .
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $REGISTRY_HOST

@@ -1,5 +1,6 @@
 from mcod.academy import views as academy_views
 from mcod.core.api.utils import views as core_views
+from mcod.core.api.views import MetricsResource
 from mcod.datasets import views as dataset_views
 from mcod.guides import views as guides_views
 from mcod.histories.api import views as history_views
@@ -321,6 +322,7 @@ routes = [
     ("/showcases/{id:int}/datasets", showcases_views.ShowcaseDatasetsView()),
     ("/showcases/{id:int},{slug}/datasets", showcases_views.ShowcaseDatasetsView()),
     ("/showcases/suggest", showcases_views.ShowcaseProposalView()),
+    ("/metrics", MetricsResource()),
 ]
 
 

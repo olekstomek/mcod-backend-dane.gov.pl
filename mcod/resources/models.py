@@ -79,6 +79,7 @@ from mcod.resources.managers import (
     ChartManager,
     ResourceFileManager,
     ResourceManager,
+    ResourceRawDBManager,
     ResourceRawManager,
     ResourceTrashManager,
     SupplementManager,
@@ -1102,6 +1103,7 @@ class Resource(ExtendedModel):
     objects = ResourceManager()
     trash = ResourceTrashManager()
     raw = ResourceRawManager()
+    raw_db = ResourceRawDBManager()
 
     class Meta:
         verbose_name = _("Resource")
@@ -1550,6 +1552,9 @@ class Resource(ExtendedModel):
         )
 
     def delete(self, using=None, soft=True, permanent=False, *args, **kwargs):
+        if self.is_imported:
+            permanent = True
+            logger.debug(f"Permanent removing imported resource: {self.pk}")
         super().delete(using, soft=soft, permanent=permanent, *args, **kwargs)
 
         # delete tabular data index connected with permanently removed resource

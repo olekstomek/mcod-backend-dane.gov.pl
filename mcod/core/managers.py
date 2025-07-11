@@ -30,3 +30,9 @@ class TrashQuerySet(QuerySet):
 class RawManager(models.Manager):
     def get_queryset(self):
         return super().get_queryset().filter(is_permanently_removed=False)
+
+
+class RawDBManager(models.Manager):
+    """Returns all objects from DB"""
+
+    ...

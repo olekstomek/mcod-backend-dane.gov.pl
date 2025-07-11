@@ -13,6 +13,7 @@ from django.utils.translation import gettext_lazy as _
 from django_celery_results.models import TaskResult
 
 from mcod.core.choices import SOURCE_TYPE_CHOICES_FOR_ADMIN
+from mcod.core.decorators import prometheus_monitoring
 from mcod.datasets.forms import DatasetForm, SupplementForm, TrashDatasetForm
 from mcod.datasets.models import (
     UPDATE_NOTIFICATION_FREQUENCY_DEFAULT_VALUES,
@@ -720,6 +721,7 @@ class SupplementInline(SortableStackedInline):
         return super().has_delete_permission(request, obj=obj)
 
 
+# TODO: lremkowicz: not used, check if can be deleted
 class DatasetAdmin(DatasetAdminMixin, ModelAdmin):
     inlines = [
         ChangeResourceStacked,
@@ -728,6 +730,8 @@ class DatasetAdmin(DatasetAdminMixin, ModelAdmin):
     ]
 
 
+@prometheus_monitoring
+@admin.register(Dataset)
 class NestedDatasetAdmin(DatasetAdminMixin, NestedModelAdmin):
     inlines = [
         ChangeResourceNestedStacked,
@@ -813,6 +817,3 @@ class DatasetTrashAdmin(HistoryMixin, TrashMixin):
         return instance.tags_as_str(lang="en")
 
     tags_list_en.short_description = _("Tags") + " (EN)"
-
-
-admin.site.register(Dataset, NestedDatasetAdmin)

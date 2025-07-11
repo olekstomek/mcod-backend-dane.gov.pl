@@ -24,6 +24,7 @@ from django_celery_beat.models import (
 )
 
 from mcod.core.choices import SOURCE_TYPE_CHOICES_FOR_ADMIN
+from mcod.core.decorators import prometheus_monitoring
 from mcod.datasets.admin import OrganizationFilter
 from mcod.datasets.models import Dataset
 from mcod.histories.models import LogEntry
@@ -237,6 +238,7 @@ def process_verification_results(col, results, table_schema, rules):
     return mark_safe(output), msg_class
 
 
+@prometheus_monitoring
 @admin.register(Resource)
 class ResourceAdmin(HistoryMixin, ModelAdmin):
 
@@ -785,7 +787,6 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):
             )
             confirmation_response = self.render_save_confirmation_page(request, extra_context=extra_context)
             return confirmation_response
-
         return super().add_view(request, form_url, extra_context)
 
     def change_view(self, request, object_id, form_url="", extra_context=None) -> Union[TemplateResponse, HttpResponseRedirect]:
@@ -927,25 +928,28 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):
         Get the initial form data from the request's GET params.
         """
 
-        obj_id = request.GET.get("from_id")
+        copy_from_resource_id = request.GET.get("from_id")
         initial = {}
-        if obj_id:
+        if copy_from_resource_id:
             try:
-                origin = Resource.objects.get(pk=obj_id)
+                copy_from_resource = Resource.objects.get(pk=copy_from_resource_id)
             except Resource.DoesNotExist:
-                origin = None
-            if origin and not origin.is_imported:  # making a copy of resource is disabled for imported resources.
-                data = model_to_dict(origin)
+                copy_from_resource = None
+            if (
+                copy_from_resource and not copy_from_resource.is_imported
+            ):  # making a copy of resource is disabled for imported resources.
+                data = model_to_dict(copy_from_resource)
                 initial["title"] = data.get("title")
                 initial["description"] = data.get("description")
                 initial["status"] = data.get("status")
                 initial["dataset"] = data.get("dataset")
-                initial["from_resource"] = origin
+                initial["from_resource"] = copy_from_resource
                 initial["title_en"] = data.get("title_en")
                 initial["description_en"] = data.get("description_en")
                 initial["slug_en"] = data.get("slug_en")
                 initial["has_dynamic_data"] = data.get("has_dynamic_data")
                 initial["has_high_value_data"] = data.get("has_high_value_data")
+                initial["has_high_value_data_from_ec_list"] = data.get("has_high_value_data_from_ec_list")
                 initial["has_research_data"] = data.get("has_research_data")
                 initial["contains_protected_data"] = data.get("contains_protected_data")
         return initial

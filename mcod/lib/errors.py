@@ -1,9 +1,11 @@
 import json
 import traceback
+from typing import Any, Dict
 from uuid import uuid4
 
 import falcon.request
 from django.utils.translation import gettext_lazy as _
+from falcon import HTTP_500, HTTPError, Response
 from flatdict import FlatDict
 
 from mcod import logger, settings
@@ -16,7 +18,7 @@ def _is_version_one(request: falcon.request.Request) -> bool:
     return getattr(request, "api_version", None) == "1.0"
 
 
-def update_content_type(request: falcon.request.Request, response):
+def update_content_type(request: falcon.request.Request, response: Response):
     if _is_version_one(request):
         response.content_type = "application/json"
     else:
@@ -29,97 +31,122 @@ def error_serializer(req, resp, exc):
     resp.append_header("Vary", "Accept")
 
 
-def _prepare_error(exc, error_data=None):
-    error_data = error_data or {}
-    _status = getattr(exc, "status", None) or error_data.get("status") or ""
-    _title = getattr(exc, "title", None) or error_data.get("title") or ""
-    _description = getattr(exc, "description", None) or error_data.get("description") or ""
+def error_handler(request: falcon.request.Request, response: Response, exc: HTTPError, params: Dict[str, Any]) -> None:
+    update_content_type(request, response)
+    response.status = exc.status
+    if _is_version_one(request):
+        exc_data = {
+            "title": exc.title,
+            "description": exc.description,
+            "code": getattr(exc, "code") or "error",
+        }
+        result = ErrorSchema().dump(exc_data)
+        response.text = json.dumps(result, cls=LazyEncoder)
+    else:
+        response.text = json.dumps(_prepare_exception_for_14(request, response, exc), cls=LazyEncoder)
+
+
+def error_404_handler(
+    request: falcon.request.Request, response: Response, exc: falcon.HTTPNotFound, params: Dict[str, Any]
+) -> None:
+    update_content_type(request, response)
+    response.status = exc.status
+
+    if _is_version_one(request):
+        exc_data = {
+            "title": exc.title,
+            "description": exc.description,
+            "code": getattr(exc, "code") or "error",
+        }
+        result = ErrorSchema().dump(exc_data)
+        response.text = json.dumps(result, cls=LazyEncoder)
+    else:
+        _title = _("The requested resource could not be found")
+        _code = exc.status.lower().replace(" ", "_")
+        error_body = {
+            "id": uuid4(),
+            "status": exc.status,
+            "code": _code,
+            "title": _title,
+            "detail": _title,
+        }
+        if exc.title:
+            error_body["title"] = exc.title
+        if exc.description:
+            error_body["detail"] = exc.description
+        result = ErrorsSchema().dump(
+            {
+                "jsonapi": {"version": "1.4"},
+                "errors": [
+                    error_body,
+                ],
+            }
+        )
+        response.text = json.dumps(result, cls=LazyEncoder)
+
+
+def _prepare_exception_for_14(
+    request: falcon.request.Request, response: Response, exc: Exception, **override_fields: str
+) -> dict:
+    _api_version = getattr(request, "api_version", "1.4")
+    _status = getattr(exc, "status", HTTP_500)
     _code = _status.lower().replace(" ", "_")
-    _error_data = {}
-
-    if error_data:
-        _error_data.update(error_data)
-
-    _error_data.update({"id": uuid4(), "title": _title or _status, "code": _code, "status": _status})
-
-    if _description:
-        _error_data["detail"] = _description
-
+    error_body = {
+        "id": uuid4(),
+        "status": _status,
+        "code": _code,
+        "title": _("An unexpected error occurred. Please try again later."),
+        "detail": _("An unexpected error occurred. Please try again later."),
+    }
+    if settings.DEBUG:
+        title = getattr(exc, "title", None)
+        if title:
+            error_body["title"] = title
+        description = getattr(exc, "description", " ".join(str(a).capitalize() for a in exc.args))
+        if description:
+            error_body["detail"] = description
+        error_body["meta"] = {"traceback": traceback.format_exc()}
+    error_body.update(override_fields)
     return ErrorsSchema().dump(
         {
+            "jsonapi": {"version": _api_version},
             "errors": [
-                _error_data,
-            ]
+                error_body,
+            ],
         }
     )
 
 
-def error_handler(request: falcon.request.Request, response, exc, params):
+def error_500_handler(request: falcon.request.Request, response: Response, exc: Exception, params):
     update_content_type(request, response)
-    response.status = exc.status
-    if _is_version_one(request):
-        exc_data = {
-            "title": exc.title,
-            "description": exc.description,
-            "code": getattr(exc, "code") or "error",
-        }
-        result = ErrorSchema().dump(exc_data)
-        response.text = json.dumps(result, cls=LazyEncoder)
-    else:
-        response.text = json.dumps(_prepare_error(exc), cls=LazyEncoder)
-
-
-def error_404_handler(request: falcon.request.Request, response, exc, params):
-    update_content_type(request, response)
-    response.status = exc.status
+    response.status = getattr(exc, "status", HTTP_500)
 
     if _is_version_one(request):
-        exc_data = {
-            "title": exc.title,
-            "description": exc.description,
-            "code": getattr(exc, "code") or "error",
-        }
-        result = ErrorSchema().dump(exc_data)
-        response.text = json.dumps(result, cls=LazyEncoder)
-    else:
-        error_data = {"detail": _("The requested resource could not be found")}
-
-        response.text = json.dumps(_prepare_error(exc, error_data=error_data), cls=LazyEncoder)
-
-
-def error_500_handler(request: falcon.request.Request, response, exc, params):
-    update_content_type(request, response)
-    response.status = getattr(exc, "status", "500 Internal Server Error")
-
-    if _is_version_one(request):
-        description = getattr(exc, "description", " ".join(a.capitalize() for a in exc.args))
-        title = getattr(exc, "title", "Hmm, something goes wrong...")
         code = getattr(exc, "code", None)
         exc_data = {
-            "title": title,
-            "description": description or "There was an unexpected error. Please try again later.",
+            "title": _("An unexpected error occurred. Please try again later."),
+            "description": _("An unexpected error occurred. Please try again later."),
             "code": code or "server_error",
+            "traceback": None,
         }
         if settings.DEBUG:
+            title = getattr(exc, "title", None)
+            if title:
+                exc_data["title"] = title
+            description = getattr(exc, "description", " ".join(str(a).capitalize() for a in exc.args))
+            exc_data["description"] = description
             exc_data["traceback"] = traceback.format_exc()
         result = ErrorSchema().dump(exc_data)
         response.text = json.dumps(result, cls=LazyEncoder)
     else:
-        error_data = {
-            "status": response.status,
-            "detail": getattr(exc, "description", " ".join(str(a).capitalize() for a in exc.args)),
-            "title": getattr(exc, "title", "Hmm, something goes wrong..."),
-        }
-        error_data["meta"] = {"traceback": traceback.format_exc()}
-
-        body = _prepare_error(exc, error_data)
+        body = _prepare_exception_for_14(request, response, exc)
         response.text = json.dumps(body, cls=LazyEncoder)
 
-    if settings.DEBUG and getattr(settings, "CONSOLE_LOG_ERRORS", False):
+    if settings.DEBUG:
         logger.exception(exc)
 
 
-def error_422_handler(request: falcon.request.Request, response, exc, params):
+def error_422_handler(request: falcon.request.Request, response: Response, exc: HTTPError, params):
     update_content_type(request, response)
     response.status = exc.status
 
@@ -164,7 +191,5 @@ def error_422_handler(request: falcon.request.Request, response, exc, params):
                 "status": response.status,
             }
             _errors.append(_error)
-
         result = ErrorsSchema().dump({"errors": _errors})
-
         response.text = json.dumps(result, cls=LazyEncoder)

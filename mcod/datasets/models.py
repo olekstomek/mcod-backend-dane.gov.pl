@@ -385,6 +385,9 @@ class Dataset(ExtendedModel):
         return f"dataset_{self.pk}"
 
     def delete(self, using=None, soft=True, permanent=False, *args, **kwargs):
+        if self.is_imported:
+            permanent = True
+            logger.debug(f"Permanent removing imported dataset: {self.pk}")
         if self.is_promoted:
             self.is_promoted = False
         super().delete(using=using, soft=soft, permanent=permanent, *args, **kwargs)

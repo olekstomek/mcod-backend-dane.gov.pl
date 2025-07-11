@@ -1004,6 +1004,11 @@ LOGGING = {
         },
     },
     "loggers": {
+        "mcod-api": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
         "django.db.backends": {
             "level": "ERROR",
             "handlers": ["mail-admins", "logstash-admin"],
@@ -2138,3 +2143,5 @@ LOGINGOVPL_SL_URL = env(
 
 FIELD_ENCRYPTION_KEYS = env.list("FIELD_ENCRYPTION_KEYS", default=list())
 FRONTEND_BASE_URL = env("FRONTEND_BASE_URL", default="https://dane.gov.pl")
+
+HEALTH_STATUS_SLEEP_TIME = env.int("HEALTH_STATUS_SLEEP_TIME", default=600)  # default 10min

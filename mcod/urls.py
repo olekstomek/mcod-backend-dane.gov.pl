@@ -5,6 +5,7 @@ from django.conf.urls import include
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
+from django.http import JsonResponse
 from django.urls import path, re_path
 from django.views.generic.base import TemplateView
 from wagtail.admin import urls as wagtailadmin_urls
@@ -16,6 +17,7 @@ from mcod.cms.api.router import CmsApiRouter
 from mcod.cms.api.views import CmsPagesViewSet, ImagesViewSet
 from mcod.cms.views import revisions_view
 from mcod.core.admin import AdminAutocomplete, ResourceAutocomplete
+from mcod.core.admin_metrics_view import prometheus_metrics_view
 from mcod.datasets.views import ConditionLabelsAdminView
 from mcod.organizations.views import InstitutionTypeAdminView
 from mcod.regions.views import RegionsAutocomplete
@@ -23,7 +25,7 @@ from mcod.users.views import CustomAdminLoginView
 
 panel_app_config = apps.get_app_config("mcod.pn_apps")
 
-urlpatterns = []
+urlpatterns = [path("health/", lambda r: JsonResponse({"status": "ok"}))]
 
 if settings.COMPONENT == "cms":
     api_router = CmsApiRouter("cmsapi")
@@ -50,6 +52,7 @@ if settings.COMPONENT == "cms":
     urlpatterns += static(settings.IMAGES_URL, document_root=settings.IMAGES_MEDIA_ROOT)
 else:
     urlpatterns += [
+        path("metrics/", prometheus_metrics_view),
         path("nested_admin/", include("nested_admin.urls")),
         path("ckeditor/", include("ckeditor_uploader.urls")),
         path(

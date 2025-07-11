@@ -1,5 +1,6 @@
 import json
 import logging
+import logging.config as logging_config
 import os
 from functools import partial
 
@@ -21,6 +22,7 @@ from mcod import settings
 from mcod.core.api import middlewares
 from mcod.core.api.apm import get_client, get_data_from_request
 from mcod.core.api.converters import ExportFormatConverter, RDFFormatConverter
+from mcod.core.api.health_check import start_health_monitoring
 from mcod.core.api.media import ExportHandler, RDFHandler, SparqlHandler, XMLHandler, ZipHandler
 from mcod.core.api.utils.json_encoders import APIEncoder
 from mcod.core.utils import get_limiter_key
@@ -32,6 +34,7 @@ from mcod.lib.errors import (
     error_serializer,
 )
 
+logging_config.dictConfig(settings.LOGGING)
 logger = logging.getLogger("elasticapm.errors.client")
 
 jsonapi_handler = JSONHandler(dumps=partial(json.dumps, cls=APIEncoder))
@@ -154,6 +157,7 @@ def get_api_app():
         middlewares.ApiVersionMiddleware(),
         middlewares.CounterMiddleware(),
         middlewares.SearchHistoryMiddleware(),
+        middlewares.PrometheusMiddleware(),
     ]
 
     if settings.ENABLE_CSRF:
@@ -186,6 +190,7 @@ def get_api_app():
 
 django.setup()
 app = get_api_app()
+start_health_monitoring()
 
 if __name__ == "__main__":
     from werkzeug.serving import run_simple

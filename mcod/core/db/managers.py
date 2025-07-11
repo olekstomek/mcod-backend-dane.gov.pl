@@ -1,3 +1,5 @@
+import time
+
 from django.core.paginator import Paginator
 from django.db import models
 from django.db.models import QuerySet
@@ -57,3 +59,34 @@ class TrashManager(models.Manager):
 class PermanentlyRemovedManager(models.Manager):
     def get_queryset(self):
         return super().get_queryset().filter(is_permanently_removed=True)
+
+
+class QueryLogger:
+    """
+    A database execution wrapper for collecting detailed information about SQL queries.
+
+    This class can be passed to Django's `connection.execute_wrapper()` to intercept and log
+    each SQL query executed during a request or operation. It records metadata such as:
+    - The SQL statement
+    - Parameters
+    - Execution duration
+    - Query status (success or error)
+    - Exception details (if any)
+    """
+
+    def __init__(self):
+        self.queries = []
+
+    def __call__(self, execute, sql, params, many, context):
+        current_query = {"sql": sql, "params": params, "many": many}
+        start = time.perf_counter()
+        try:
+            result = execute(sql, params, many, context)
+        except Exception:
+            raise
+        else:
+            return result
+        finally:
+            duration = time.perf_counter() - start
+            current_query["duration"] = duration
+            self.queries.append(current_query)

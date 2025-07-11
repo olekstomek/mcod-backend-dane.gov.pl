@@ -29,6 +29,7 @@ from mcod.datasets.factories import DatasetFactory, SupplementFactory as Dataset
 from mcod.datasets.models import Dataset
 from mcod.datasets.tasks import send_dataset_update_reminder
 from mcod.harvester.factories import DataSourceFactory
+from mcod.harvester.models import DataSource
 from mcod.resources.factories import (
     ChartFactory,
     ResourceFactory,
@@ -43,6 +44,18 @@ from mcod.tags.factories import TagFactory
 def dataset():
     _dataset = DatasetFactory.create()
     TagFactory.create_batch(2, datasets=(_dataset,))
+    return _dataset
+
+
+@pytest.fixture
+def imported_ckan_dataset(ckan_data_source: DataSource) -> Dataset:
+    _dataset = DatasetFactory.create(source=ckan_data_source)
+    return _dataset
+
+
+@pytest.fixture
+def imported_xml_dataset(xml_data_source: DataSource) -> Dataset:
+    _dataset = DatasetFactory.create(source=xml_data_source)
     return _dataset
 
 

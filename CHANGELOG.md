@@ -12,6 +12,31 @@ ______________________________________________________________________
 
 ### Breaks
 
+## 2.44.0 - (2025-07-03)
+
+______________________________________________________________________
+
+### New:
+
+- Dodano bibliotekę do zbierania metryk: prometheus_client - OTD-1475
+- Dodano metryki dla Prometheusa - OTD-1475
+- Dodano middleware dla FalconAPI zbierający metryki dla Prometheusa - OTD-1475
+- Dodano health check systemów CMS i admin - OTD-1475
+- Dodano nowe endpointy dla CMS (/health), API (/metrics), admin (/health, /metrics) - OTD-1475
+
+### Changes
+
+- Zmieniono usuwanie w Panelu Administracyjnym harvestowanych zasobów oraz zbiorów danych na usuwanie trwałe - OTD-1427
+- Dodano "Zawiera dane o wysokiej wartości z wykazu KE" do pól wypełnianych przy kopiowaniu Zasobu - OTD-1573
+- Zmieniono CI/CD - na gałęziach release'owych uruchamia się tylko linter - OTD-1513
+  - Umożliwiono deploy na `pre-devel` z MR manualnie
+- Usztywnienie wersji biblioteki xmlsec z powodu błędu `xmlsec.Error: (100, 'lxml & xmlsec libxml2 library version mismatch')` - OTD-1475
+
+### Fixes
+
+- Poprawiono serializację błędów w API - OTD-1584
+- Naprawiono błąd 500 występujący przy dodawaniu zbioru z zasobem bez wybranej instytucji - OTD-1548
+
 ## 2.43.0 - (2025-05-20)
 
 ______________________________________________________________________

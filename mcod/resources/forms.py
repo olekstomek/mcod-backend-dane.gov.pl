@@ -10,7 +10,7 @@ from django import forms
 from django.conf import settings as dj_settings
 from django.contrib.admin.widgets import AdminDateWidget, FilteredSelectMultiple
 from django.contrib.postgres.forms.jsonb import JSONField
-from django.core.exceptions import MultipleObjectsReturned, ValidationError
+from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist, ValidationError
 from django.core.files.uploadedfile import InMemoryUploadedFile, SimpleUploadedFile, UploadedFile
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
@@ -308,6 +308,16 @@ class ResourceForm(forms.ModelForm, HighValueDataFormValidatorMixin):
         # Check if updating Main DGA Resource
         is_main_dga_resource: bool = self._is_main_dga_resource_updated(instance_pk)
 
+        dataset: Optional[Dataset] = data.get("dataset")
+        organization: Optional[Organization]
+        # Retrieve organization from dataset object if exists.
+        # There is a possibility to pass resource form with dataset with no organization.
+        # This leads to an internal server error - see more OTD-1548
+        try:
+            organization = dataset.organization if dataset else None
+        except ObjectDoesNotExist:
+            organization = None
+
         if contains_protected_data:
             self._validate_data_flags_when_contains_protected_data(data)
 
@@ -316,15 +326,17 @@ class ResourceForm(forms.ModelForm, HighValueDataFormValidatorMixin):
             if not is_main_dga_resource:
                 self._validate_dga_file(creating_resource=creating_resource)
 
-            self._validate_institution_when_contains_protected_data(data)
+            if organization:
+                self._validate_institution_when_contains_protected_data(organization)
 
             # Don't remove DGA flag from other Resource when updating main
             # DGA Resource.
-            if not is_main_dga_resource:
-                self._remove_dga_flag_from_current_dga_resource_if_needed(data)
+            if not is_main_dga_resource and organization:
+                self._remove_dga_flag_from_current_dga_resource_if_needed(data, organization)
 
         self.validate_high_value_data_flags_conflict(data)
-        self._validate_high_value_data_from_ec_list_organization(data)
+        if organization:
+            self._validate_high_value_data_from_ec_list_organization(data, organization)
         return data
 
     def _validate_data_date(self, data: dict) -> None:
@@ -387,9 +399,8 @@ class ResourceForm(forms.ModelForm, HighValueDataFormValidatorMixin):
                 ),
             )
 
-    def _validate_institution_when_contains_protected_data(self, data: dict) -> None:
-        dataset = data.get("dataset")
-        if dataset and dataset.organization.institution_type not in ALLOWED_DGA_INSTITUTIONS:
+    def _validate_institution_when_contains_protected_data(self, organization: Organization) -> None:
+        if organization.institution_type not in ALLOWED_DGA_INSTITUTIONS:
             self.add_error(
                 "dataset",
                 _(
@@ -459,13 +470,13 @@ class ResourceForm(forms.ModelForm, HighValueDataFormValidatorMixin):
                     _("The saved file has a different structure than that " "required for the list of protected data."),
                 )
 
-    def _remove_dga_flag_from_current_dga_resource_if_needed(self, data):
-        dataset = data.get("dataset")
-        if not dataset:
-            return
-
-        organization_id = dataset.organization.pk
-        exclude_object_id = self.instance.pk if self.instance else None
+    def _remove_dga_flag_from_current_dga_resource_if_needed(
+        self,
+        data: dict,
+        organization: Organization,
+    ) -> None:
+        organization_id: int = organization.pk
+        exclude_object_id: Optional[int] = self.instance.pk if self.instance else None
         try:
             current_dga_resource = get_dga_resource_for_institution(organization_id, exclude_object_id)
         except MultipleObjectsReturned:
@@ -521,11 +532,11 @@ class ResourceForm(forms.ModelForm, HighValueDataFormValidatorMixin):
                 _("Cannot read existing file") + f": {file.name}.",
             )
 
-    def _validate_high_value_data_from_ec_list_organization(self, data: Dict[str, Any]) -> None:
-        dataset: Optional[Dataset] = data.get("dataset")
-        if dataset is None:
-            return
-        organization: Organization = dataset.organization
+    def _validate_high_value_data_from_ec_list_organization(
+        self,
+        data: Dict[str, Any],
+        organization: Organization,
+    ) -> None:
         has_high_value_data_from_ec_list: bool = data.get("has_high_value_data_from_ec_list") == "True"
 
         try:

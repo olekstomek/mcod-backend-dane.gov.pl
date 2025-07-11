@@ -27,7 +27,7 @@ from mcod.core.tests.helpers.tasks import run_on_commit_events
 from mcod.counters.factories import ResourceDownloadCounterFactory, ResourceViewCounterFactory
 from mcod.counters.lib import Counter
 from mcod.counters.tasks import save_counters
-from mcod.datasets.factories import DatasetFactory
+from mcod.datasets.models import Dataset
 from mcod.harvester.factories import CKANDataSourceFactory, XMLDataSourceFactory
 from mcod.regions.documents import RegionDocument
 from mcod.resources.archives import PasswordProtectedArchiveError, UnsupportedArchiveError
@@ -379,9 +379,14 @@ def resource_with_counters():
 
 
 @pytest.fixture
-def imported_ckan_resource(ckan_data_source):
-    _dataset = DatasetFactory.create(source=ckan_data_source)
-    _resource = ResourceFactory.create(dataset=_dataset)
+def imported_ckan_resource(imported_ckan_dataset: Dataset) -> "Resource":
+    _resource = ResourceFactory.create(dataset=imported_ckan_dataset)
+    return _resource
+
+
+@pytest.fixture
+def imported_xml_resource(imported_xml_dataset: Dataset) -> "Resource":
+    _resource = ResourceFactory.create(dataset=imported_xml_dataset)
     return _resource
 
 

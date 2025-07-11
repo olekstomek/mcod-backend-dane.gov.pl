@@ -167,6 +167,26 @@ class TestDatasetModel:
         with pytest.raises(ObjectDoesNotExist):
             Resource.objects.get(id=r_id)
 
+    @pytest.mark.parametrize(
+        "dataset_to_delete, expected_dataset_is_permanently_removed",
+        [("imported_xml_dataset", True), ("imported_ckan_dataset", True), ("dataset", False)],
+    )
+    def test_imported_and_not_imported_dataset_delete(
+        self, request, dataset_to_delete: Dataset, expected_dataset_is_permanently_removed: bool
+    ):
+        """
+        Checks if deleting only the harvested dataset results in permanent deletion dataset.
+        """
+
+        # GIVEN
+        dataset: Dataset = request.getfixturevalue(dataset_to_delete)
+        # WHEN
+        dataset.delete()
+        # THEN
+        assert dataset.is_removed
+        # AND THEN
+        assert dataset.is_permanently_removed is expected_dataset_is_permanently_removed
+
     def test_restore_dataset_is_not_restoring_its_resources(self, dataset_with_resources):
         dataset = dataset_with_resources
         resource = dataset_with_resources.resources.first()
