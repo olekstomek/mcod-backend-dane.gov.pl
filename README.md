@@ -21,11 +21,30 @@ $ git clone https://gitlab.dane.gov.pl/mcod/frontend.git
 $ git clone https://gitlab.dane.gov.pl/mcod/test-data.git
 ```
 
-## Konfiguracja zmiennych środowiskowych:
+## Konfiguracja zmiennych środowiskowych
 
-Aby projekt działał prawidłowo, należy skopiować zawartość pliku env.sample do nowo utworzonego pliku .env.
+Aby projekt działał prawidłowo, należy skopiować zawartość pliku `env.sample` do nowo utworzonego pliku `.env`.
 
-**Uwaga:** Do poprawnego dzialania biblioteki django-searchable-encrypted-fields, należy wygenerować samodzielnie `encryption key` biblioteką secrets  `secrets.token_hex(32)`. Jest to konieczne, ponieważ biblioteka szyfruje i odszyfrowuje pola z bazy danych (działa w dwie strony). Klucz należy dodać do pliku env zmiennej FIELD_ENCRYPTION_KEYS. Zmienna odczytywana jest jako lista, dlatego kolejne klucze dodaje sie przecinkiem na początku stringa. (https://pypi.org/project/django-searchable-encrypted-fields/). Przykład: FIELD_ENCRYPTION_KEYS=new_key,some_old_key
+**Uwaga:**
+Do poprawnego działania biblioteki `django-searchable-encrypted-fields` należy wygenerować klucz szyfrowania
+(`encryption key`) za pomocą biblioteki `secrets`, np.:
+
+```
+python -c "import secrets; print(secrets.token_hex(32))"
+```
+
+Klucz ten jest niezbędny, ponieważ biblioteka szyfruje i odszyfrowuje dane zapisane w bazie – działa w obie strony.
+Wygenerowany klucz należy przypisać do zmiennej `FIELD_ENCRYPTION_KEYS` w pliku `.env`.
+
+Zmiennej tej należy przypisać listę kluczy, oddzielonych przecinkami. Nowe klucze dodaje się na początku listy (czyli
+przed starymi).
+Więcej informacji: [https://pypi.org/project/django-searchable-encrypted-fields/](https://pypi.org/project/django-searchable-encrypted-fields/)
+
+**Przykład:**
+
+```
+FIELD_ENCRYPTION_KEYS=new_key,some_old_key
+```
 
 ## Konfiguracja Django:
 

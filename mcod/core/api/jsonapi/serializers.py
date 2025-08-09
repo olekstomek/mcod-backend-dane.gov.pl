@@ -1,19 +1,22 @@
 from collections.abc import Sequence
+from typing import Any, Optional, Union
 
 from django.apps import apps
 from django.core import paginator
 from django.db.models import Manager, Q, QuerySet
 from django.utils.timezone import now
 from django.utils.translation import get_language
-from elasticsearch_dsl import AttrDict, AttrList, response as es_response
+from elasticsearch_dsl import AttrDict, AttrList, response as es_response, utils as es_utils
 from marshmallow import pre_dump
 from marshmallow.schema import SchemaOpts
+from modeltrans.manager import MultilingualQuerySet
 from querystring_parser import builder
 
 from mcod import settings
 from mcod.core.api import fields, schemas
 from mcod.core.registries import object_attrs_registry
 from mcod.core.utils import complete_invalid_xml, setpathattr
+from mcod.unleash import is_enabled
 
 
 class ErrorSource(schemas.ExtSchema):
@@ -71,11 +74,16 @@ class Relationship(schemas.ExtSchema):
         object_url = self.context.get("object_url", None) or self.api_url
         url_template = self.context.get("url_template") or None
         res = {}
-        if isinstance(data, (Sequence, QuerySet, AttrList)):
+        if isinstance(data, (Sequence, AttrList)):
             if url_template:
                 related_url = url_template.format(api_url=self.api_url, object_url=object_url)
                 res["links"] = {"related": related_url}
             res["meta"] = {"count": len(data)}
+        elif isinstance(data, QuerySet):
+            if url_template:
+                related_url = url_template.format(api_url=self.api_url, object_url=object_url)
+                res["links"] = {"related": related_url}
+            res["meta"] = {"count": data.count()}
         else:
             id = getattr(data, "id", None) or getattr(data.meta, "id")
             slug = getattr(data, "slug", None)
@@ -238,40 +246,59 @@ class Object(schemas.ExtSchema):
             unknown=unknown,
         )
 
-    @pre_dump(pass_many=False)
-    def prepare_data(self, data, **kwargs):
-        id = getattr(data, "id", None) or getattr(data.meta, "id")
+    def _get_data_id_or_none(self, data: Any) -> Optional[int]:
+        return getattr(data, "id", None) or getattr(data.meta, "id")
+
+    def _get_slug_or_none(self, data: Any) -> Optional[str]:
         slug = getattr(data, "slug", None)
         if isinstance(slug, AttrDict):
             lang = get_language()
             slug = slug[lang]
+        return slug
 
-        ident = "{},{}".format(id, slug) if slug else str(id)
-
-        res = dict(attributes=data, id=str(id), _type=self.opts.attrs_schema.opts.object_type)
+    def _get_object_url(self, data: Any) -> str:
         if hasattr(self.opts.attrs_schema, "self_api_url"):
-            object_url = self.opts.attrs_schema.self_api_url(data)
+            return self.opts.attrs_schema.self_api_url(data)
         else:
-            object_url = self.opts.attrs_schema.opts.url_template.format(api_url=self.api_url, ident=ident, data=data)
+            data_id = self._get_data_id_or_none(data)
+            slug = self._get_slug_or_none(data)
+            ident = "{},{}".format(data_id, slug) if slug else str(data_id)
+            return self.opts.attrs_schema.opts.url_template.format(api_url=self.api_url, ident=ident, data=data)
+
+    def _get_relationships(self, data: Any) -> dict:
+        relationships = {}
+        object_url = self._get_object_url(data)
+        if "relationships" in self.fields:
+            for name, field in self.fields["relationships"].schema.fields.items():
+                _name = field.attribute or name
+                field.schema.context.update(object_url=object_url)
+                value = getattr(data, _name, None)
+                if is_enabled("S65_fix_long_api_response.be"):
+                    if isinstance(value, Manager) or isinstance(value, MultilingualQuerySet):
+                        value = value.values()
+                else:
+                    if isinstance(value, Manager):
+                        value = value.values()
+                if value or field.required:
+                    relationships[_name] = value
+                    relationships["object_url"] = object_url
+        return relationships
+
+    @pre_dump(pass_many=False)
+    def prepare_data(self, data: Any, **kwargs) -> dict:
+        data_id = self._get_data_id_or_none(data)
+        res = dict(attributes=data, id=str(data_id), _type=self.opts.attrs_schema.opts.object_type)
+
+        object_url = self._get_object_url(data)
         if object_url:
             res["links"] = {"self": object_url}
 
         if "meta" in self._declared_fields:
             res["meta"] = data
 
-        if "relationships" in self.fields:
-            relationships = {}
-            for name, field in self.fields["relationships"].schema.fields.items():
-                _name = field.attribute or name
-                field.schema.context.update(object_url=object_url)
-                value = getattr(data, _name, None)
-                if isinstance(value, Manager):
-                    value = value.values()
-                if value or field.required:
-                    relationships[_name] = value
-                    relationships["object_url"] = object_url
-            if relationships:
-                res["relationships"] = relationships
+        relationships = self._get_relationships(data)
+        if relationships:
+            res["relationships"] = relationships
         return res
 
 
@@ -473,12 +500,17 @@ class TopLevel(schemas.ExtSchema):
         return c
 
     @staticmethod
-    def _get_items_count(data):
+    def _get_items_count(data: Union[paginator.Page, list, es_response.Response]) -> int:
         if isinstance(data, paginator.Page):
             return data.paginator.count
         elif isinstance(data, list):
             return len(data)
-        return data.hits.total if hasattr(data, "hits") else 0
+        hits: "es_utils.AttrList" = getattr(data, "hits", None)
+        if isinstance(hits.total, dict):
+            return hits.total.get("value", 0)
+        elif isinstance(hits.total, int):
+            return hits.total
+        return 0
 
     def get_aggregations(self, data):
         return getattr(data, "aggregations", {}) or {}

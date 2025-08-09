@@ -73,8 +73,9 @@ class OrganizationForm(forms.ModelForm):
             self.fields["epuap"].required = False
         if self.instance.pk:
             self.fields["users"].initial = self.instance.users.all()
-
-        self.fields["electronic_delivery_address"].widget = forms.TextInput(attrs={"oninput": "handleInputToUpperCase(this)"})
+        if "electronic_delivery_address" in self.fields:
+            # EDA is readonly for non-superusers, thus isn't rendered in the form
+            self.fields["electronic_delivery_address"].widget = forms.TextInput(attrs={"oninput": "handleInputToUpperCase(this)"})
 
     def clean_fax_internal(self):
         if "fax" not in self.cleaned_data:

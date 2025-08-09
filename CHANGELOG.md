@@ -12,6 +12,20 @@ ______________________________________________________________________
 
 ### Breaks
 
+
+## 2.44.1 - (2025-07-30)
+
+______________________________________________________________________
+
+### Fixes
+
+- Poprawiono błąd w CI przy instalacji zależności. Pakiety z repozytoriów Debian Buster nie istnieją w standardowej lokalizacji. - OTD-1651
+- Zwiększono dopuszczalną długość z 5 do 13 znaków TLD dla adresu URL źródła XML po stronie frontendowej w PA. - OTD-1630
+- Naprawiono błędy w odczycie wersji z API. - OTD-1351
+- Poprawka obsługi z len(queryset) vs bool(queryset). - OTD-1570
+- Naprawiono błąd formularza Instytucji w Panelu Administracyjnym dla Edytorów. - OTD-1580
+- Zoptymalizowano zbyt długie czasy odpowiedzi dla żądań API. - OTD-1551
+
 ## 2.44.0 - (2025-07-03)
 
 ______________________________________________________________________

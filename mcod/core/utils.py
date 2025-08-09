@@ -8,10 +8,12 @@ import shutil
 import unicodedata
 from abc import ABC, abstractmethod
 from collections import OrderedDict
+from contextlib import contextmanager
 from http.cookies import SimpleCookie
 from io import StringIO, TextIOWrapper
 from pathlib import Path
 from typing import List, Optional, TextIO, Union
+from unittest.mock import patch
 from xml.dom.minidom import parseString
 
 import json_api_doc
@@ -462,3 +464,15 @@ def clean_columns_in_dataframe(df: pd.DataFrame, *columns: str) -> pd.DataFrame:
     # Filter DataFrame based on the condition
     df_cleaned: pd.DataFrame = df[non_empty_conditions]
     return df_cleaned
+
+
+@contextmanager
+def disable_modeltracker():
+    """
+    Helper to disable a time-consuming tracker functionalities if not needed,
+    e.g. in read-only flows.
+    """
+    with patch("model_utils.tracker.FieldTracker.initialize_tracker", lambda *a, **kw: None), patch(
+        "model_utils.tracker.FieldInstanceTracker.set_saved_fields", lambda self: None
+    ):
+        yield

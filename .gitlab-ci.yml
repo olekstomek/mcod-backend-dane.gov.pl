@@ -85,17 +85,12 @@ test:
     - name: $REGISTRY_PATH/postgresql:13-mcod
       alias: postgres
   before_script:
-    - apt-get update && apt-get install -y software-properties-common &&
-        add-apt-repository "deb http://deb.debian.org/debian bullseye main contrib non-free"
-    - gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 0E98404D386FA1D9 6ED0E7B82643E131 605C66F00D6C9793
-    - gpg --armor --export 0E98404D386FA1D9 6ED0E7B82643E131 605C66F00D6C9793 | apt-key add -
-    - apt-get update && apt-get install -y
-        gettext
-        libarchive13
-        libmagickcore-6.q16-3-extra
-        locales
-        unrar
-        libxmlsec1-dev
+    - sed -i 's|http://deb.debian.org/debian|http://archive.debian.org/debian|g' /etc/apt/sources.list
+    - sed -i 's|http://security.debian.org/debian-security|http://archive.debian.org/debian-security|g' /etc/apt/sources.list
+    - sed -i '/^deb http:\/\/archive.debian.org\/debian/ s/$/ contrib non-free/' /etc/apt/sources.list
+    - sed -i '/^deb http:\/\/archive.debian.org\/debian-security/ s/$/ contrib non-free/' /etc/apt/sources.list
+    - echo 'Acquire::Check-Valid-Until "false";' > /etc/apt/apt.conf.d/99no-check-valid-until
+    - apt-get update && apt-get install -y software-properties-common gettext libarchive13 libmagickcore-6.q16-3-extra locales libxmlsec1-dev unrar
     - echo "en_US UTF-8" > /etc/locale.gen
     - echo "en_GB UTF-8" > /etc/locale.gen
     - echo "pl_PL UTF-8" > /etc/locale.gen

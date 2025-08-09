@@ -92,7 +92,7 @@
 
   $(document).on('keyup', '#id_xml_url', function () {
     $('button[type="submit"]').attr('disabled', true);
-    if (/^(http|https|ftp):\/\/[a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,5}(:[0-9]{1,5})?(\/.*)?$/i.test($(this).val())) {
+    if (/^(http|https|ftp):\/\/[a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,13}(:[0-9]{1,5})?(\/.*)?$/i.test($(this).val())) {
       $('.validate-xml-btn').attr('disabled', false);
     } else {
       $('.validate-xml-btn').attr('disabled', true);
