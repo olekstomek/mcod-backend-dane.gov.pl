@@ -7,7 +7,6 @@ import pytest
 from falcon.testing import TestClient
 from pytest_bdd import given, parsers, then
 
-from mcod.api import app
 from mcod.core.api.versions import VERSIONS
 from mcod.core.registries import factories_registry
 from mcod.watchers.factories import (
@@ -166,10 +165,10 @@ def notification_with_id_for_subscription(not_id, sub_id, context):
 
 
 @then("trigger query watcher update")
-def trigger_query_watcher_update():
+def trigger_query_watcher_update(test_api_instance):
     def get(url, headers, allow_redirects=False, verify=True, timeout=1):
         url = urlunsplit(urlsplit(url)._replace(scheme="")._replace(netloc=""))
-        return TestClient(app).simulate_get(url, headers=headers)
+        return TestClient(test_api_instance).simulate_get(url, headers=headers)
 
     with mock.patch("requests.get", get), mock.patch("falcon.testing.client.Result.json", lambda self: json.loads(self.text)):
         update_query_watchers_task()

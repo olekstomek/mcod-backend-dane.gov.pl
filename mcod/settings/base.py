@@ -47,6 +47,8 @@ COMPONENT = env("COMPONENT", default="admin")
 
 ENVIRONMENT = env("ENVIRONMENT", default="prod")
 
+ENABLE_MONTHLY_REPORTS = env.bool("ENABLE_MONTHLY_REPORTS", False)
+
 NOTEBOOKS_DIR = env("NOTEBOOKS_DIR", default=str(ROOT_DIR.path("notebooks/notebooks")))
 
 NOTEBOOK_ARGUMENTS = ["--config", "mcod/settings/jupyter_config.py"]
@@ -221,6 +223,7 @@ DATABASES = {
         "HOST": env("POSTGRES_HOST", default="mcod-db"),
         "PORT": env("POSTGRES_PORT", default="5432"),
         "ATOMIC_REQUESTS": True,
+        "CONN_MAX_AGE": env.int("CONN_MAX_AGE", default=0),
     }
 }
 
@@ -799,119 +802,88 @@ CELERY_TASK_QUEUES = {
     Queue("search_history"),
     Queue("watchers"),
     Queue("history"),
+    Queue("graphs"),
+    Queue("datasets"),
+    Queue("archiving"),
+    Queue("reports"),
+    Queue("discourse"),
+    Queue("showcases"),
 }
 
 CELERY_TASK_ROUTES = {
-    "mcod.core.api.search.tasks.update_document_task": {"queue": "indexing"},
-    "mcod.core.api.search.tasks.update_with_related_task": {"queue": "indexing"},
+    "mcod.core.api.rdf.tasks.update_graph_task": {"queue": "graphs"},
+    "mcod.core.api.rdf.tasks.create_graph_task": {"queue": "graphs"},
+    "mcod.core.api.rdf.tasks.create_graph_with_related_update_task": {"queue": "graphs"},
+    "mcod.core.api.rdf.tasks.update_graph_with_related_task": {"queue": "graphs"},
+    "mcod.core.api.rdf.tasks.update_graph_with_conditional_related_task": {"queue": "graphs"},
+    "mcod.core.api.rdf.tasks.update_related_graph_task": {"queue": "graphs"},
+    "mcod.core.api.rdf.tasks.delete_graph_task": {"queue": "graphs"},
+    "mcod.core.api.rdf.tasks.delete_graph_with_related_update_task": {"queue": "graphs"},
+    "mcod.core.api.rdf.tasks.delete_sub_graphs": {"queue": "graphs"},
+    "mcod.core.api.search.tasks.bulk_delete_documents_task": {"queue": "indexing"},
     "mcod.core.api.search.tasks.delete_document_task": {"queue": "indexing"},
     "mcod.core.api.search.tasks.delete_with_related_task": {"queue": "indexing"},
     "mcod.core.api.search.tasks.delete_related_documents_task": {"queue": "indexing"},
+    "mcod.core.api.search.tasks.null_field_in_related_task": {"queue": "indexing"},
+    "mcod.core.api.search.tasks.update_document_task": {"queue": "indexing"},
     "mcod.core.api.search.tasks.update_related_task": {"queue": "indexing"},
-    "mcod.core.api.search.tasks.bulk_delete_documents_task": {"queue": "indexing"},
-    "mcod.resources.tasks.process_resource_data_indexing_task": {"queue": "indexing_data"},
-    "mcod.resources.tasks.check_link_protocol": {"queue": "periodic"},
-    "mcod.resources.tasks.process_resource_from_url_task": {"queue": "resources"},
-    "mcod.resources.tasks.process_resource_file_task": {"queue": "resources"},
-    "mcod.resources.tasks.process_resource_res_file_task": {"queue": "resources"},
-    "mcod.resources.tasks.process_resource_file_data_task": {"queue": "resources"},
-    "mcod.resources.tasks.entrypoint_process_resource_validation_task": {"queue": "resources"},
-    "mcod.resources.tasks.entrypoint_process_resource_file_validation_task": {"queue": "resources"},
-    "mcod.resources.tasks.update_resource_has_table_has_map_task": {"queue": "resources"},
-    "mcod.resources.tasks.update_resource_validation_results_task": {"queue": "resources"},
-    "mcod.resources.tasks.send_resource_comment": {"queue": "notifications"},
-    "mcod.counters.tasks.save_counters": {"queue": "periodic"},
-    "mcod.harvester.tasks.harvester_supervisor": {"queue": "harvester"},
-    "mcod.harvester.tasks.import_data_task": {"queue": "harvester"},
-    "mcod.harvester.tasks.validate_xml_url_task": {"queue": "harvester"},
+    "mcod.core.api.search.tasks.update_with_related_task": {"queue": "indexing"},
+    "mcod.datasets.tasks.archive_resources_files": {"queue": "archiving"},
+    "mcod.datasets.tasks.change_archive_symlink_name": {"queue": "datasets"},
     "mcod.datasets.tasks.send_dataset_comment": {"queue": "notifications"},
+    "mcod.discourse.tasks.user_sync_task": {"queue": "discourse"},
+    "mcod.discourse.tasks.user_logout_task": {"queue": "discourse"},
+    "mcod.harvester.tasks.import_data_task": {"queue": "harvester"},
+    "mcod.harvester.tasks.harvester_supervisor": {"queue": "harvester"},
+    "mcod.harvester.tasks.validate_xml_url_task": {"queue": "harvester"},
     "mcod.newsletter.tasks.remove_inactive_subscription": {"queue": "newsletter"},
-    "mcod.newsletter.tasks.send_newsletter": {"queue": "newsletter"},
     "mcod.newsletter.tasks.send_newsletter_mail": {"queue": "newsletter"},
     "mcod.newsletter.tasks.send_subscription_confirm_mail": {"queue": "newsletter"},
-    "mcod.reports.tasks.create_resources_report_task": {"queue": "periodic"},
+    "mcod.reports.tasks.create_daily_resources_report": {"queue": "reports"},
+    "mcod.reports.tasks.create_resources_report_task": {"queue": "reports"},
+    "mcod.reports.tasks.generate_csv": {"queue": "reports"},
+    "mcod.reports.tasks.generate_harvesters_imports_report": {"queue": "reports"},
+    "mcod.reports.tasks.generate_harvesters_last_imports_report": {"queue": "reports"},
+    "mcod.reports.tasks.link_validation_success_callback": {"queue": "reports"},
+    "mcod.reports.tasks.link_validation_error_callback": {"queue": "reports"},
+    "mcod.resources.tasks.check_link_protocol": {"queue": "resources"},
+    "mcod.resources.tasks.create_main_dga_resource_task": {"queue": "resources"},
+    "mcod.resources.tasks.delete_es_resource_tabular_data_index": {"queue": "indexing_data"},
+    "mcod.resources.tasks.entrypoint_process_resource_file_validation_task": {"queue": "resources"},
+    "mcod.resources.tasks.entrypoint_process_resource_validation_task": {"queue": "resources"},
+    "mcod.resources.tasks.get_ckan_resource_format_from_url_task": {"queue": "resources"},
+    "mcod.resources.tasks.process_resource_data_indexing_task": {"queue": "indexing_data"},
+    "mcod.resources.tasks.process_resource_file_data_task": {"queue": "resources"},
+    "mcod.resources.tasks.process_resource_file_task": {"queue": "resources"},
+    "mcod.resources.tasks.process_resource_from_url_task": {"queue": "resources"},
+    "mcod.resources.tasks.process_resource_res_file_task": {"queue": "resources"},
+    "mcod.resources.tasks.send_resource_comment": {"queue": "notifications"},
+    "mcod.resources.tasks.update_resource_has_table_has_map_task": {"queue": "resources"},
+    "mcod.resources.tasks.update_resource_validation_results_task": {"queue": "resources"},
+    "mcod.resources.tasks.update_data_date": {"queue": "resources"},
+    "mcod.resources.tasks.update_last_day_data_date": {"queue": "resources"},
+    "mcod.resources.tasks.update_resource_with_archive_format": {"queue": "resources"},
+    "mcod.resources.tasks.validate_link": {"queue": "resources"},
     "mcod.schedules.tasks.send_admin_notification_task": {"queue": "notifications"},
-    "mcod.schedules.tasks.send_schedule_notifications_task": {"queue": "notifications"},
     "mcod.schedules.tasks.update_notifications_task": {"queue": "notifications"},
-    "mcod.searchhistories.tasks.create_search_history": {"queue": "search_history"},
+    "mcod.showcases.tasks.create_showcase_proposal_task": {"queue": "showcases"},
+    "mcod.showcases.tasks.create_showcase_task": {"queue": "showcases"},
+    "mcod.showcases.tasks.generate_logo_thumbnail_task": {"queue": "showcases"},
+    "mcod.showcases.tasks.send_showcase_proposal_mail_task": {"queue": "showcases"},
     "mcod.suggestions.tasks.create_accepted_dataset_suggestion_task": {"queue": "notifications"},
     "mcod.suggestions.tasks.create_data_suggestion": {"queue": "notifications"},
     "mcod.suggestions.tasks.create_dataset_suggestion": {"queue": "notifications"},
-    "mcod.suggestions.tasks.deactivate_accepted_dataset_submissions": {"queue": "notifications"},
     "mcod.suggestions.tasks.send_dataset_suggestion_mail_task": {"queue": "notifications"},
     "mcod.suggestions.tasks.send_data_suggestion": {"queue": "notifications"},
+    "mcod.suggestions.tasks.send_accepted_submission_comment": {"queue": "notifications"},
     "mcod.users.tasks.send_registration_email_task": {"queue": "notifications"},
-    "mcod.watchers.tasks.update_model_watcher_task": {"queue": "watchers"},
-    "mcod.watchers.tasks.remove_user_notifications_task": {"queue": "watchers"},
-    "mcod.watchers.tasks.update_notifications_task": {"queue": "watchers"},
     "mcod.watchers.tasks.model_watcher_updated_task": {"queue": "watchers"},
-    "mcod.watchers.tasks.update_query_watchers_task": {"queue": "watchers"},
+    "mcod.watchers.tasks.remove_user_notifications_task": {"queue": "watchers"},
+    "mcod.watchers.tasks.update_model_watcher_task": {"queue": "watchers"},
+    "mcod.watchers.tasks.update_notifications_status_task": {"queue": "watchers"},
+    "mcod.watchers.tasks.update_notifications_task": {"queue": "watchers"},
     "mcod.watchers.tasks.query_watcher_updated_task": {"queue": "watchers"},
-    "mcod.watchers.tasks.send_report_from_subscriptions": {"queue": "watchers"},
 }
-
-CELERY_BEAT_SCHEDULE = {
-    "every-2-minute": {
-        "task": "mcod.counters.tasks.save_counters",
-        "schedule": 120,
-    },
-    "every-5-minutes": {
-        "task": "mcod.searchhistories.tasks.save_searchhistories_task",
-        "schedule": 300,
-    },
-    "update-query-watchers": {
-        "task": "mcod.watchers.tasks.update_query_watchers_task",
-        "schedule": crontab(minute=0, hour=22),
-    },
-    "send-subscriptions-report": {
-        "task": "mcod.watchers.tasks.send_report_from_subscriptions",
-        "schedule": crontab(minute=0, hour=5),
-    },
-    "send-schedule-notifications": {
-        "task": "mcod.schedules.tasks.send_schedule_notifications_task",
-        "schedule": crontab(minute=0, hour=2),
-    },
-    "send-newsletter": {
-        "task": "mcod.newsletter.tasks.send_newsletter",
-        "schedule": crontab(minute=0, hour=8),
-    },
-    "deactivate-accepted-dataset-submissions": {
-        "task": "mcod.suggestions.tasks.deactivate_accepted_dataset_submissions",
-        "schedule": crontab(minute=0, hour=5),
-    },
-}
-if env("ENABLE_MONTHLY_REPORTS", default="no") in ["yes", "1", "true"]:
-    CELERY_BEAT_SCHEDULE.update(
-        {
-            "monthly_broken_links_report": {
-                "task": "mcod.reports.tasks.validate_resources_links",
-                "schedule": crontab(minute=30, hour=3, day_of_month=1),
-            },
-            "monthly_nodata_datasets_report": {
-                "task": "mcod.reports.tasks.create_no_resource_dataset_report",
-                "schedule": crontab(minute=0, hour=3, day_of_month=1),
-            },
-        }
-    )
-
-if ENVIRONMENT in ["dev", "int"]:
-    CELERY_BEAT_SCHEDULE.update(
-        {
-            "hourly": {
-                "task": "mcod.reports.tasks.create_daily_resources_report",
-                "schedule": 3600,
-            }
-        }
-    )
-else:
-    CELERY_BEAT_SCHEDULE.update(
-        {
-            "every-day-morning": {
-                "task": "mcod.reports.tasks.create_daily_resources_report",
-                "schedule": crontab(minute=0, hour=2),
-            },
-        }
-    )
 
 CELERY_SINGLETON_BACKEND_URL = REDIS_URL
 
@@ -1990,6 +1962,7 @@ SHACL_UNSUPPORTED_MIMETYPES = ["application/n-quads", "application/trix"]
 
 STATS_THEME_COOKIE_NAME = "mcod_stats_theme"
 
+# Falcon settings
 FALCON_CACHING_ENABLED = env("FALCON_CACHING_ENABLED", default="yes") in (
     "yes",
     1,
@@ -2003,6 +1976,17 @@ FALCON_LIMITER_ENABLED = env("FALCON_LIMITER_ENABLED", default="yes") in (
 # https://falcon-limiter.readthedocs.io/en/latest/#rate-limit-string-notation
 FALCON_LIMITER_DEFAULT_LIMITS = env("FALCON_LIMITER_DEFAULT_LIMITS", default="5 per minute,2 per second")
 FALCON_LIMITER_SPARQL_LIMITS = env("FALCON_LIMITER_SPARQL_LIMITS", default="20 per minute,1 per second")
+
+FALCON_MIDDLEWARES = [
+    "mcod.core.api.middlewares.ContentTypeMiddleware",
+    "mcod.core.api.middlewares.DebugMiddleware",
+    "mcod.core.api.middlewares.LocaleMiddleware",
+    "mcod.core.api.middlewares.ApiVersionMiddleware",
+    "mcod.core.api.middlewares.CounterMiddleware",
+    "mcod.core.api.middlewares.SearchHistoryMiddleware",
+    "mcod.core.api.middlewares.PrometheusMiddleware",
+    "mcod.core.api.middlewares.DjangoDBConnectionMiddleware",
+]
 
 DISCOURSE_HOST = env("DISCOURSE_HOST", default="http://forum.mcod.local")
 DISCOURSE_SYNC_HOST = env("DISCOURSE_SYNC_HOST", default="http://forum.mcod.local")
@@ -2145,3 +2129,4 @@ FIELD_ENCRYPTION_KEYS = env.list("FIELD_ENCRYPTION_KEYS", default=list())
 FRONTEND_BASE_URL = env("FRONTEND_BASE_URL", default="https://dane.gov.pl")
 
 HEALTH_STATUS_SLEEP_TIME = env.int("HEALTH_STATUS_SLEEP_TIME", default=600)  # default 10min
+HEALTH_CHECK = env.bool("HEALTH_CHECK", default=True)

@@ -2,6 +2,7 @@ from typing import List
 
 import falcon
 from django.apps import apps
+from django.conf import settings
 from django.contrib.auth.models import AbstractBaseUser
 from django.db.models.query import QuerySet
 from django.utils.translation import gettext_lazy as _
@@ -10,7 +11,6 @@ from elasticsearch_dsl import InnerDoc, Q
 from marshmallow import ValidationError
 from querystring_parser.parser import MalformedQueryStringError
 
-from mcod import settings
 from mcod.core.api.parsers import Parser
 from mcod.core.db.models import BaseExtendedModel
 from mcod.core.utils import disable_modeltracker

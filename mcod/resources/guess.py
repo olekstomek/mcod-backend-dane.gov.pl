@@ -90,14 +90,6 @@ def _json(source: Union[str, bytes, io.BytesIO], encoding: Optional[str]) -> Opt
             data.seek(0)
             json.load(data, encoding=encoding)
         _format = "json"
-        # check if valid json is also json-ld.
-        try:
-            graph = rdflib.Graph()
-            graph.parse(source, format="json-ld")
-            if len(graph):
-                _format = "jsonld"
-        except Exception:
-            pass
         if _format == "json" and is_json_stat(source):
             _format = "jsonstat"
         return _format

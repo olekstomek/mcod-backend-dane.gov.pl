@@ -3,7 +3,7 @@ from dal import autocomplete
 from mcod.regions.api import PeliasApi
 
 
-class RegionsAutocomplete(autocomplete.Select2ListView):
+class RegionsAutocompleteView(autocomplete.Select2ListView):
 
     def autocomplete_results(self, results):
         pelias = PeliasApi()

@@ -1,3 +1,4 @@
+from dal import autocomplete
 from django import forms
 from django.contrib.admin import forms as admin_forms
 from django.contrib.admin.widgets import FilteredSelectMultiple
@@ -88,8 +89,9 @@ class UserForm(forms.ModelForm):
     )
     from_agent = forms.ModelChoiceField(
         queryset=User.objects.agents().order_by("email"),
-        label="",
+        widget=autocomplete.Select2(url="agent-autocomplete"),
         required=False,
+        label="",
         help_text=_("(Select of agent is required)"),
     )
     is_gov_linked = forms.CharField(label=_("WK logging"), required=False, disabled=True, widget=GovLinkedWidget)
@@ -105,6 +107,11 @@ class UserForm(forms.ModelForm):
         labels = {
             "is_superuser": _("Admin"),
         }
+
+    class Media:
+        js = [
+            "admin/js/SelectBoxCustom.js",
+        ]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

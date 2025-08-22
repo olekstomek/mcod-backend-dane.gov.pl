@@ -6,6 +6,7 @@ from typing import Any, Dict
 from celery.signals import task_failure, task_postrun, task_prerun, task_success
 from django.apps import apps
 from elasticsearch.helpers.errors import BulkIndexError
+from sentry_sdk import set_tag
 
 from mcod.core.tasks import extended_shared_task
 from mcod.resources.indexed_data import ResourceDataValidationError
@@ -22,6 +23,7 @@ logger = logging.getLogger("mcod")
     name="mcod.resources.tasks.process_resource_file_data_task",
 )
 def process_resource_file_data_task(resource_id: int, /):
+    set_tag("resource_id", str(resource_id))
     resource_model = apps.get_model("resources", "Resource")
     resource = resource_model.raw.get(id=resource_id)
     logger.info(f"process_resource_file_data_task: Resource {resource_id}")

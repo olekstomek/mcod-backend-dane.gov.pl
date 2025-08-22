@@ -12,7 +12,7 @@ import falcon
 import sentry_sdk
 from accept_types import get_best_match
 from django.apps import apps
-from django.db import OperationalError, ProgrammingError, connection
+from django.db import OperationalError, ProgrammingError, close_old_connections, connection
 from django.utils.http import is_same_domain
 from django.utils.translation import activate, gettext_lazy as _
 from django.utils.translation.trans_real import (
@@ -25,7 +25,7 @@ from elasticapm.conf import constants
 from elasticapm.utils.disttracing import TraceParent
 from falcon import Request, Response
 from falcon_caching.middleware import Middleware as BaseFalconCacheMiddleware
-from falcon_caching.options import CacheEvictionStrategy, HttpMethods
+from falcon_caching.options import HttpMethods
 
 from mcod import settings
 from mcod.core.api.apm import get_data_from_request, get_data_from_response
@@ -53,6 +53,14 @@ REASON_NO_REFERER = _("Referer checking failed - no Referer.")
 REASON_BAD_REFERER = _("Referer checking failed - %s does not match any trusted origins.")
 REASON_MALFORMED_REFERER = _("Referer checking failed - Referer is malformed.")
 REASON_INSECURE_REFERER = _("Referer checking failed - Referer is insecure while host is secure.")
+
+
+class DjangoDBConnectionMiddleware:
+    def process_request(self, req: Request, resp: Response):
+        close_old_connections()
+
+    def process_response(self, req: Request, resp: Response, resource: Any, req_succeeded: bool):
+        close_old_connections()
 
 
 class PrometheusMiddleware:
@@ -110,7 +118,7 @@ class PrometheusMiddleware:
 
 
 class SearchHistoryMiddleware:
-    def process_response(self, req, resp, resource, req_succeeded):
+    def process_response(self, req: Request, resp: Response, resource: Any, req_succeeded: bool):
         if hasattr(req, "user") and req.user.is_authenticated and req.path.endswith(settings.SEARCH_PATH) and req.params.get("q"):
             con = get_redis_connection()
             key = f"search_history_user_{req.user.id}"
@@ -118,7 +126,7 @@ class SearchHistoryMiddleware:
 
 
 class ApiVersionMiddleware:
-    def process_request(self, req, resp):
+    def process_request(self, req: Request, resp: Response):
         current_version = max(VERSIONS)
         version = req.headers.get("X-API-VERSION", str(current_version))
         try:
@@ -144,7 +152,7 @@ class ApiVersionMiddleware:
 
             req.api_version = version
 
-    def process_response(self, req, resp, resource, req_succeeded):
+    def process_response(self, req: Request, resp: Response, resource: Any, req_succeeded: bool):
         version = getattr(req, "api_version", max(VERSIONS))
         resp.append_header("x-api-version", version)
 
@@ -153,35 +161,18 @@ class FalconCacheMiddleware(BaseFalconCacheMiddleware):
 
     def process_resource(self, req, resp, resource, params):
         """Body of the method is almost all moved from parent class."""
-        if self.cache_config["CACHE_EVICTION_STRATEGY"] in [
-            CacheEvictionStrategy.rest_based,
-            CacheEvictionStrategy.rest_and_time_based,
-        ] and req.method.upper() in [
+
+        if not is_enabled("S66_falcon_caching_operate.be"):
+            return
+
+        # do not cache response for methods POST, PATCH, PUT and DELETE - regardless of set caching strategy
+        if req.method.upper() in [
             HttpMethods.POST,
             HttpMethods.PATCH,
             HttpMethods.PUT,
             HttpMethods.DELETE,
         ]:
             return
-
-        responder = None
-        for _method in dir(resource):
-            if _DECORABLE_METHOD_NAME.match(_method) and _method[3:].upper() == req.method.upper():
-                responder = _method
-                break
-
-        if responder:
-            responder_wrapper_name = getattr(getattr(resource, responder), "__name__")
-            if responder_wrapper_name == "cache_wrap":
-                logger.debug(" This endpoint is decorated by 'cache' being the topmost decorator.")
-            else:
-                if hasattr(getattr(resource, responder), "_decorators") and "cache" in [
-                    d._decorator_name for d in getattr(resource, responder)._decorators if hasattr(d, "_decorator_name")
-                ]:
-                    logger.debug(" This endpoint is decorated by 'cache', but it is NOT the topmost decorator.")
-                else:
-                    logger.debug(" No 'cache' was requested for this endpoint.")
-                    return
 
         key = self.generate_cache_key(req)
         data = self.cache.get(key)
@@ -207,11 +198,9 @@ class FalconCacheMiddleware(BaseFalconCacheMiddleware):
         Returns: string to cache response under
         """
         default_key = BaseFalconCacheMiddleware.generate_cache_key(req, method)
-        if is_enabled("S63_fix_for_cache_collision_falcon_api.be"):
-            lang = req.params.get("lang", "pl")
-            return f"{default_key}:{lang}"
-        else:
-            return default_key
+        default_key = f"{default_key}:{req.query_string}"
+        lang = req.params.get("lang", "pl")
+        return f"{default_key}:{lang}"
 
 
 class LocaleMiddleware:
@@ -233,7 +222,7 @@ class LocaleMiddleware:
         except LookupError:
             return settings.LANGUAGE_CODE
 
-    def process_request(self, req, resp):
+    def process_request(self, req: Request, resp: Response):
         lang = req.params.get("lang", None)
         if not lang:
             accept_header = req.headers.get("ACCEPT-LANGUAGE", "")
@@ -247,7 +236,7 @@ class LocaleMiddleware:
 
 class CounterMiddleware:
 
-    def process_response(self, req, resp, resource, req_succeeded):
+    def process_response(self, req: Request, resp: Response, resource: Any, req_succeeded: bool):
         try:
             view, ident = req.relative_uri.split("?")[0].split("/")[-2:]
             obj_id = int(str(ident).split(",", 1)[0])
@@ -265,7 +254,7 @@ class CounterMiddleware:
 
 
 class DebugMiddleware:
-    def process_request(self, request, response):
+    def process_request(self, request: Request, response: Response):
 
         response.context.debug = True if request.params.get("debug") == "yes" else False
         if response.context.debug:
@@ -295,7 +284,7 @@ class DebugMiddleware:
 
 
 class ContentTypeMiddleware:
-    def process_request(self, req, resp):
+    def process_request(self, req: Request, resp: Response):
         allowed_mime_types = [
             "application/vnd.api+json",
             "application/vnd.api+json; ext=bulk",
@@ -307,7 +296,7 @@ class TraceMiddleware:
     def __init__(self, apm_client):
         self.client = apm_client
 
-    def process_request(self, req, resp):
+    def process_request(self, req: Request, resp: Response):
         if self.client and req.user_agent not in ("mcod-heartbeat", "mcod-internal"):
             if constants.TRACEPARENT_HEADER_NAME in req.headers:
                 trace_parent = TraceParent.from_string(req.headers[constants.TRACEPARENT_HEADER_NAME])
@@ -316,7 +305,7 @@ class TraceMiddleware:
 
             self.client.begin_transaction("request", trace_parent=trace_parent)
 
-    def process_response(self, req, resp, resource, req_succeeded=None):
+    def process_response(self, req: Request, resp: Response, resource: Any, req_succeeded: bool):
         if self.client and req.user_agent != "mcod-heartbeat":
             rule = route_to_name(req.uri_template, method=req.method)
             elasticapm.set_context(
@@ -353,7 +342,7 @@ class CsrfMiddleware:
         if request.method not in SAFE_METHODS and not getattr(resource, "csrf_exempt", False):
             self.check_token(request, response)
 
-    def process_response(self, request: Request, response: Response, resource, req_succeeded):
+    def process_response(self, request: Request, response: Response, resource: Any, req_succeeded: bool):
         new_token = generate_csrf_token()
         # Set the CSRF cookie even if it's already set, so we renew
         # the expiry timer.

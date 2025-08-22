@@ -16,12 +16,17 @@ from mcod.cms import urls as cms_urls
 from mcod.cms.api.router import CmsApiRouter
 from mcod.cms.api.views import CmsPagesViewSet, ImagesViewSet
 from mcod.cms.views import revisions_view
-from mcod.core.admin import AdminAutocomplete, ResourceAutocomplete
 from mcod.core.admin_metrics_view import prometheus_metrics_view
-from mcod.datasets.views import ConditionLabelsAdminView
-from mcod.organizations.views import InstitutionTypeAdminView
-from mcod.regions.views import RegionsAutocomplete
-from mcod.users.views import CustomAdminLoginView
+from mcod.datasets.views import ConditionLabelsAdminView, DatasetAutocompleteView
+from mcod.organizations.views import InstitutionTypeAdminView, OrganizationAutocompleteView
+from mcod.regions.views import RegionsAutocompleteView
+from mcod.resources.views import ResourceAutocompleteView
+from mcod.users.views import (
+    AdminAutocompleteView,
+    AgentAutocompleteView,
+    CustomAdminLoginView,
+    StaffAutocompleteView,
+)
 
 panel_app_config = apps.get_app_config("mcod.pn_apps")
 
@@ -62,33 +67,43 @@ else:
         ),
         path(
             "organization-autocomplete/",
-            AdminAutocomplete.as_view(model="organizations.Organization"),
+            OrganizationAutocompleteView.as_view(),
             name="organization-autocomplete",
         ),
         path(
             "dataset-autocomplete/",
-            AdminAutocomplete.as_view(model="datasets.Dataset"),
+            DatasetAutocompleteView.as_view(),
             name="dataset-autocomplete",
         ),
         path(
+            "staff-autocomplete/",
+            StaffAutocompleteView.as_view(),
+            name="staff-autocomplete",
+        ),
+        path(
             "admin-autocomplete/",
-            AdminAutocomplete.as_view(),
+            AdminAutocompleteView.as_view(),
             name="admin-autocomplete",
+        ),
+        path(
+            "agent-autocomplete/",
+            AgentAutocompleteView.as_view(),
+            name="agent-autocomplete",
+        ),
+        path(
+            "regions-autocomplete/",
+            RegionsAutocompleteView.as_view(),
+            name="regions-autocomplete",
+        ),
+        path(
+            "resource-autocomplete/",
+            ResourceAutocompleteView.as_view(),
+            name="resource-autocomplete",
         ),
         path(
             "dataset-license-labels/",
             ConditionLabelsAdminView.as_view(),
             name="dataset-license-labels",
-        ),
-        path(
-            "regions-autocomplete/",
-            RegionsAutocomplete.as_view(),
-            name="regions-autocomplete",
-        ),
-        path(
-            "resource-autocomplete/",
-            ResourceAutocomplete.as_view(),
-            name="resource-autocomplete",
         ),
         path("i18n/", include("django.conf.urls.i18n")),
         path("login/", CustomAdminLoginView.as_view(), name="login"),

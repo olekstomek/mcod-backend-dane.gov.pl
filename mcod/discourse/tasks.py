@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from sentry_sdk import set_tag
 
 from mcod.core.tasks import extended_shared_task
 from mcod.discourse.client import DiscourseClient
@@ -7,6 +8,7 @@ from mcod.discourse.client import DiscourseClient
 
 @extended_shared_task
 def user_sync_task(user_id, created=False):
+    set_tag("user_id", str(user_id))
     User = get_user_model()
     user = User.raw.filter(pk=user_id).first()
 

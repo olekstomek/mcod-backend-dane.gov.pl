@@ -102,10 +102,9 @@ class UserQuerySet(SoftDeletableQuerySet):
     def autocomplete(self, user, query=None):
         if not user.is_superuser:
             return self.none()
-        kwargs = {"is_superuser": True}
         if query:
-            kwargs["email__icontains"] = query
-        return self.filter(**kwargs)
+            return self.filter(email__icontains=query)
+        return self
 
 
 class UserManager(BaseUserManager):

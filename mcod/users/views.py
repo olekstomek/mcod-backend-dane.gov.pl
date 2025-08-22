@@ -5,11 +5,13 @@ from smtplib import SMTPException
 
 import falcon
 import marshmallow as ma
+from dal import autocomplete
 from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model, login, logout
 from django.contrib.auth.password_validation import validate_password as dj_validate_password
 from django.contrib.auth.views import LoginView as DjangoLoginView
 from django.core.exceptions import ValidationError as DjangoValidationError
+from django.db.models import QuerySet
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
@@ -658,3 +660,21 @@ class LogingovplSwitchView(APIView):
             max_age=settings.JWT_EXPIRATION_DELTA,
         )
         return response
+
+
+class StaffAutocompleteView(autocomplete.Select2QuerySetView):
+    def get_queryset(self) -> QuerySet:
+        qs: QuerySet = get_user_model().objects.autocomplete(self.request.user, self.q)
+        return qs.filter(is_staff=True).order_by("email")
+
+
+class AdminAutocompleteView(autocomplete.Select2QuerySetView):
+    def get_queryset(self) -> QuerySet:
+        qs: QuerySet = get_user_model().objects.autocomplete(self.request.user, self.q)
+        return qs.filter(is_superuser=True).order_by("email")
+
+
+class AgentAutocompleteView(autocomplete.Select2QuerySetView):
+    def get_queryset(self) -> QuerySet:
+        qs: QuerySet = get_user_model().objects.agents().autocomplete(self.request.user, self.q)
+        return qs.order_by("email")

@@ -6,6 +6,7 @@ from typing import Any, Dict, Optional, Union
 from celery.signals import task_failure, task_postrun, task_prerun
 from django.apps import apps
 from django.db.models import QuerySet
+from sentry_sdk import set_tag
 
 from mcod.core.tasks import extended_shared_task
 from mcod.resources.tasks.common import (
@@ -34,6 +35,7 @@ def process_resource_from_url_task(
     - If the resource is imported from CKAN, it skips processing
         and returns an empty dictionary.
     """
+    set_tag("resource_id", str(resource_id))
     logger.info("Started process_resource_from_url_task task.")
 
     from mcod.resources.models import (

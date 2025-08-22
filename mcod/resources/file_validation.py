@@ -1,3 +1,4 @@
+import json
 import logging
 from contextlib import suppress
 from pathlib import Path
@@ -199,6 +200,18 @@ def analyze_file(path: Union[Path, str]):  # noqa: C901
     )
 
 
+def _json_suspected_as_jsonld(path: Union[Path, str]) -> bool:
+    """Check if json file contains `@context` key as top-level key. This is characteristic of the json-ld format."""
+    if isinstance(path, Path):
+        path = str(path.absolute())
+    try:
+        with open(path, "r") as f:
+            data = json.load(f)
+            return "@context" in data
+    except (json.JSONDecodeError, Exception):
+        return False
+
+
 def check_rdf(path: Union[Path, str], family: str, sub_type: str) -> Tuple[str, str]:
     """Since RDF files can arrive in many different formats we need to proactively try to parse
     them.
@@ -206,6 +219,12 @@ def check_rdf(path: Union[Path, str], family: str, sub_type: str) -> Tuple[str, 
     Returns a tuple of family, content_type, for example
     ("application", "rdf+xml")
     """
+    if sub_type in ("html", "xhtml"):
+        return family, sub_type
+
+    if sub_type == "json" and not _json_suspected_as_jsonld(path):
+        return family, sub_type
+
     for extension, content_type in settings.RDF_FORMAT_TO_MIMETYPE.items():
         with suppress(Exception):
             graph = rdflib.ConjunctiveGraph()
@@ -252,8 +271,8 @@ def evaluate_file_details(content_type: str, family: str, options: Dict[str, str
         )
     file_info = magic.from_file(path)
     content_type = check_meteo_data(content_type, path, file_info)  # returns a content type family
-    if content_type not in ("html", "xhtml"):
-        family, content_type = check_rdf(path, family, content_type)
+
+    family, content_type = check_rdf(path, family, content_type)
 
     file_mimetype = f"{family}/{content_type}"
     logger.debug(f"  parsed mimetype: {file_mimetype});{options}")

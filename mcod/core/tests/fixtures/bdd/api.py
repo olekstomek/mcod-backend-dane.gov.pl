@@ -5,10 +5,12 @@ import dpath.util
 import requests_mock
 from falcon.testing import Cookie, TestClient
 from falcon.util.misc import code_to_http_status
+from falcon.util.structures import Context
 from pytest_bdd import parsers, then, when
+from requests_mock import MockerCore
 
 from mcod import settings
-from mcod.api import app, get_api_app
+from mcod.api import ApiApp
 from mcod.core.utils import jsonapi_validator
 from mcod.lib.jwt import get_auth_token
 
@@ -20,7 +22,7 @@ def api_request_method(method, context):
 
 
 @when(parsers.parse("api request mcod_csrf_token is {is_valid}"))
-def api_request_csrf_token(is_valid, context, mocker):
+def api_request_csrf_token(is_valid: bool, context: Context, mocker: MockerCore, test_api_instance: ApiApp):
     mocker.patch("mcod.settings.ENABLE_CSRF", True)
     is_valid = True if is_valid == "valid" else False
     csrf_token = None
@@ -34,7 +36,7 @@ def api_request_csrf_token(is_valid, context, mocker):
             "protocol": api_url.scheme,
             "host": api_url.netloc,
         }
-        _app = get_api_app()
+        _app = test_api_instance()
         resp = TestClient(_app).simulate_request(**kwargs)
         csrf_token_cookie: Cookie = resp.cookies.get("mcod_csrf_token")
         assert csrf_token_cookie, "any GET request should return a valid CSRF token in cookie mcod_csrf_token"
@@ -211,7 +213,7 @@ def api_request_object_attribute_p(req_body_field, req_body_value, context):
 
 @when("send api request and fetch the response")
 @then("send api request and fetch the response")
-def api_send_request(context, mocker):
+def api_send_request(context, mocker, test_api_instance):
     if context.user:
         token = get_auth_token(context.user, session_key=str(context.user.id))
         mocker.patch("mcod.core.api.hooks.get_user", return_value=context.user)
@@ -241,7 +243,7 @@ def api_send_request(context, mocker):
     if context.api.method in ("POST", "PUT", "PATCH", "DELETE"):
         kwargs["json"] = context.obj
 
-    resp = TestClient(app).simulate_request(**kwargs)
+    resp = TestClient(test_api_instance).simulate_request(**kwargs)
     skip_validation = getattr(context.api, "skip_validation", False)
     api_version = resp.headers["x-api-version"]
     if api_version == "1.0":
@@ -260,7 +262,7 @@ def api_send_request(context, mocker):
 
 @when(parsers.parse("send api request and fetch the response with mocked_url {mocked_url} and mocked_rdf_data {mocked_data}"))
 @requests_mock.Mocker(kw="mock_request")
-def api_send_request_with_mocked_url(context, mocker, mocked_url, mocked_data, **mock_kwargs):
+def api_send_request_with_mocked_url(context, mocker, mocked_url, mocked_data, test_api_instance, **mock_kwargs):
     if context.user:
         token = get_auth_token(context.user, session_key=str(context.user.id))
         mocker.patch("mcod.core.api.hooks.get_user", return_value=context.user)
@@ -296,7 +298,7 @@ def api_send_request_with_mocked_url(context, mocker, mocked_url, mocked_data, *
         headers={"content-type": "application/rdf+xml"},
         content=mocked_data.encode("utf-8"),
     )
-    resp = TestClient(app).simulate_request(**kwargs)
+    resp = TestClient(test_api_instance).simulate_request(**kwargs)
     skip_validation = False
     api_version = resp.headers["x-api-version"]
     if api_version == "1.0":

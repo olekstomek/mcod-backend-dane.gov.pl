@@ -4,6 +4,7 @@ import time
 from celery_progress.backend import ProgressRecorder
 from django.apps import apps
 from django.utils.translation import gettext_lazy as _
+from sentry_sdk import set_tag
 
 from mcod.core.tasks import extended_shared_task
 from mcod.harvester.utils import (
@@ -20,9 +21,10 @@ logger = logging.getLogger("mcod")
 
 
 @extended_shared_task
-def import_data_task(obj_id, force=False):
-    data_source_model = apps.get_model("harvester.DataSource")
-    obj = data_source_model.objects.active().filter(id=obj_id).first()
+def import_data_task(data_source_id, force=False):
+    set_tag("data_source_id", str(data_source_id))
+    DataSource = apps.get_model("harvester.DataSource")
+    obj = DataSource.objects.active().filter(id=data_source_id).first()
     if obj and (obj.import_needed() or force):
         obj.import_data()
     return {}
@@ -30,8 +32,8 @@ def import_data_task(obj_id, force=False):
 
 @extended_shared_task
 def harvester_supervisor():
-    data_source_model = apps.get_model("harvester.DataSource")
-    for obj in data_source_model.objects.active():
+    DataSource = apps.get_model("harvester.DataSource")
+    for obj in DataSource.objects.active():
         if obj.import_needed():
             logger.debug(f"import from {obj}")
             import_data_task.s(obj.id).apply_async()

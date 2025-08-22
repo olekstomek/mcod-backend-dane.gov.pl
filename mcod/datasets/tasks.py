@@ -11,12 +11,12 @@ from dateutil.relativedelta import relativedelta
 from django.apps import apps
 from django.conf import settings
 from django.utils import translation
+from sentry_sdk import set_tag
 
 from mcod.core import storages
 from mcod.core.tasks import extended_shared_task
 from mcod.core.utils import CSVWriter, WriterInterface, XMLWriter, clean_filename
 from mcod.datasets.utils import create_archive_file_path
-from mcod.unleash import is_enabled
 
 if TYPE_CHECKING:
     from mcod.datasets.serializers import DatasetResourcesCSVSerializer, DatasetXMLSerializer
@@ -26,6 +26,7 @@ logger = logging.getLogger("mcod")
 
 @extended_shared_task
 def send_dataset_comment(dataset_id, comment):
+    set_tag("dataset_id", str(dataset_id))
     model = apps.get_model("datasets", "Dataset")
     dataset = model.objects.get(pk=dataset_id)
     dataset.send_dataset_comment_mail(comment)
@@ -169,6 +170,7 @@ def change_archive_symlink_name(dataset_id: int, old_name: str) -> None:
     field with the new symlink path.
     """
     logger.info("Starting archive symlink name change.")
+    set_tag("dataset_id", str(dataset_id))
     dataset_model = apps.get_model("datasets", "Dataset")
     dataset = dataset_model.raw.get(pk=dataset_id)
     title: str = clean_filename(dataset.title)
@@ -200,6 +202,7 @@ def change_archive_symlink_name(dataset_id: int, old_name: str) -> None:
 @extended_shared_task(base=Singleton)
 def archive_resources_files(dataset_id: int):  # noqa: C901
     logger.info("Starting archive_resources_files task.")
+    set_tag("dataset_id", str(dataset_id))
     free_space = disk_usage(settings.MEDIA_ROOT).free
     if free_space < settings.ALLOWED_MINIMUM_SPACE:
         logger.error("There is not enough free space on disk, archive creation is canceled.")
@@ -250,12 +253,8 @@ def archive_resources_files(dataset_id: int):  # noqa: C901
         os.symlink(full_file_path, full_symlink_path)
         dataset_model.objects.filter(pk=dataset_id).update(archived_resources_files=full_symlink_name)
     elif ds.archived_resources_files and not no_archived_files:
-        if not is_enabled("S61_fix_for_dataset_rename_symlink_archive_problem.be"):
-            old_file_path = os.path.realpath(full_symlink_path)
         os.symlink(full_file_path, full_tmp_symlink_path)
         os.rename(full_tmp_symlink_path, full_symlink_path)
-        if not is_enabled("S61_fix_for_dataset_rename_symlink_archive_problem.be"):
-            os.remove(old_file_path)
     if ds.archived_resources_files and no_archived_files:
         old_file_path = os.path.realpath(full_symlink_path)
         dataset_model.objects.filter(pk=dataset_id).update(archived_resources_files=None)

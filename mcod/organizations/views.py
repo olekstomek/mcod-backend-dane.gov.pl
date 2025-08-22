@@ -3,6 +3,7 @@ from functools import partial
 from urllib.parse import urlparse
 
 import falcon
+from dal import autocomplete
 from django.apps import apps
 from django.contrib.admin.views.autocomplete import AutocompleteJsonView
 from django.contrib.auth.mixins import PermissionRequiredMixin
@@ -128,3 +129,8 @@ class OrganizationAutocompleteJsonView(AutocompleteJsonView):
                     q |= models.Q(id=dataset.organization_id)
 
         return super().get_queryset().filter(q)
+
+
+class OrganizationAutocompleteView(autocomplete.Select2QuerySetView):
+    def get_queryset(self):
+        return Organization.objects.autocomplete(self.request.user, self.q)

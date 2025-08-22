@@ -1,4 +1,6 @@
 from admin_confirm import AdminConfirmMixin
+from dal import autocomplete
+from django import forms
 from django.contrib import admin, messages
 from django.contrib.admin.exceptions import DisallowedModelAdminToField
 from django.contrib.admin.options import TO_FIELD_VAR
@@ -13,6 +15,7 @@ from django.utils.translation import gettext_lazy as _
 from django_admin_multiple_choice_list_filter.list_filters import MultipleChoiceListFilter
 
 from mcod.lib.admin_mixins import HistoryMixin, MCODChangeList, ModelAdmin, TrashMixin, UserAdmin
+from mcod.organizations.models import Organization
 from mcod.users.forms import (
     FilteredSelectMultipleCustom,
     MeetingForm,
@@ -196,23 +199,6 @@ class UserAdmin(HistoryMixin, AdminConfirmMixin, UserAdmin):
 
     def formfield_for_dbfield(self, db_field, request, **kwargs):
         formfield = super().formfield_for_dbfield(db_field, request, **kwargs)
-        organizations_attrs = {
-            "data-from-box-label": _("Available institutions"),
-            "data-to-box-label": _("Selected institutions"),
-        }
-        attrs = {
-            "organizations": organizations_attrs,
-            "agent_organizations": organizations_attrs,
-        }
-        if db_field.name in ["organizations", "agent_organizations"]:
-            formfield.label = ""
-            formfield.help_text = ""
-            formfield.widget = admin.widgets.RelatedFieldWidgetWrapper(
-                FilteredSelectMultipleCustom(formfield.label.lower(), False, attrs=attrs.get(db_field.name)),
-                db_field.remote_field,
-                self.admin_site,
-                can_add_related=False,
-            )
         if db_field.name == "agent_organization_main":
             formfield.widget.attrs["class"] = "ignore-changes"  # prevents showing of confirmExitIfModified popup.
         return formfield
@@ -229,7 +215,29 @@ class UserAdmin(HistoryMixin, AdminConfirmMixin, UserAdmin):
         self._request = request
         form = super().get_form(request, obj=obj, **kwargs)
         form.declared_fields["phone"].required = form.base_fields["fullname"].required = request.user.is_normal_staff
-        form._request_user = request.user
+
+        request_user = request.user
+        form._request_user = request_user
+
+        # attach `agent_organizations` and `organizations` fields to form only for superuser
+        # this is related to `admin/users/user/extra.html` template which attach extra JS scripts
+        #     when those fields exist in the form
+        if request_user.is_superuser:
+            form.base_fields["agent_organizations"] = forms.ModelMultipleChoiceField(
+                queryset=Organization.objects.all(),
+                widget=autocomplete.Select2Multiple(url="organization-autocomplete"),
+                required=False,
+                label="",
+                help_text="",
+            )
+            form.base_fields["organizations"] = forms.ModelMultipleChoiceField(
+                queryset=Organization.objects.all(),
+                widget=autocomplete.Select2Multiple(url="organization-autocomplete"),
+                required=False,
+                label="",
+                help_text="",
+            )
+
         return form
 
     def send_registration_email_view(self, request, object_id, *args, **kwargs):

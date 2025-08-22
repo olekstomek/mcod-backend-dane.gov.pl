@@ -2,7 +2,7 @@ from functools import partial
 
 import falcon
 
-from mcod.api import app_cache as cache
+from mcod.core.api.cache import app_cache as cache
 from mcod.core.api.handlers import (
     IncludeMixin,
     RetrieveManyHdlr as BaseRetrieveManyHdlr,

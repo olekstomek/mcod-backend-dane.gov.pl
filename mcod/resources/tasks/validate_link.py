@@ -2,6 +2,7 @@ import logging
 
 from celery.signals import task_failure, task_postrun, task_prerun
 from django.apps import apps
+from sentry_sdk import set_tag
 
 from mcod.core.tasks import extended_shared_task
 from mcod.resources.tasks.common import save_task_result_for_resource_after_task_failure
@@ -15,6 +16,7 @@ logger = logging.getLogger("mcod")
     name="mcod.resources.tasks.validate_link",
 )
 def validate_link(resource_id: int, /):
+    set_tag("resource_id", str(resource_id))
     Resource = apps.get_model("resources", "Resource")
     resource = Resource.raw.get(id=resource_id)
     logger.debug(f"Validating link of resource with id {resource_id}")

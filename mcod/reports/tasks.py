@@ -44,7 +44,7 @@ logger = logging.getLogger("mcod")
 kronika_logger = logging.getLogger("kronika-sparql-performance")
 
 
-@extended_shared_task(name="imports", ignore_result=False)
+@extended_shared_task(ignore_result=False)
 def generate_harvesters_imports_report(imports_pks: List[int], model_name: str, user_id: int, file_name_postfix: str) -> str:
     if len(imports_pks) == 0:
         raise NoDataForReportException()
@@ -112,7 +112,7 @@ def generate_harvesters_imports_report(imports_pks: List[int], model_name: str, 
     )
 
 
-@extended_shared_task(name="last_imports", ignore_result=False)
+@extended_shared_task(ignore_result=False)
 def generate_harvesters_last_imports_report(
     datasource_pks: List[int], model_name: str, user_id: int, file_name_postfix: str
 ) -> str:
@@ -183,7 +183,7 @@ def generate_harvesters_last_imports_report(
     )
 
 
-@extended_shared_task(name="reports", ignore_result=False)
+@extended_shared_task(ignore_result=False)
 def generate_csv(pks, model_name, user_id, file_name_postfix):
     app, _model = model_name.split(".")
     model = apps.get_model(app, _model)

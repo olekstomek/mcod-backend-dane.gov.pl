@@ -6,6 +6,7 @@ from typing import Any, Dict
 from celery.result import EagerResult
 from celery.states import SUCCESS
 from django.apps import apps
+from sentry_sdk import set_tag
 
 from mcod.core.tasks import extended_shared_task
 from mcod.resources.tasks.common import (
@@ -34,6 +35,7 @@ def entrypoint_process_resource_file_validation_task(
 
     resource_file = ResourceFile.objects.get(pk=resource_file_pk)
     resource_id = resource_file.resource_id
+    set_tag("resource_id", str(resource_id))
 
     try:
         # 1. Run file validation task

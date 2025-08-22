@@ -3,6 +3,7 @@ import logging
 from celery.result import EagerResult
 from celery.states import SUCCESS
 from django.apps import apps
+from sentry_sdk import set_tag
 
 from mcod.core.tasks import extended_shared_task
 from mcod.resources.tasks.common import (
@@ -27,11 +28,11 @@ def entrypoint_process_resource_validation_task(
     update_file_archive: bool = False,
     forced_file_changed: bool = False,
 ) -> None:
+    set_tag("resource_id", str(resource_pk))
     from mcod.resources.models import RESOURCE_TYPE_API, RESOURCE_TYPE_FILE, ResourceType
 
     Resource = apps.get_model("resources", "Resource")
     ResourceFile = apps.get_model("resources", "ResourceFile")
-
     try:
         # 1. Run url validation task
         eager_result_res_url: EagerResult = process_resource_from_url_task.s(

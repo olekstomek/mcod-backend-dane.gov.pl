@@ -52,4 +52,5 @@ def start_health_monitoring():
         - Launches `_health_loop` in a daemon thread, allowing it to run continuously in the background.
         - The thread terminates automatically when the main program exits.
     """
-    threading.Thread(target=_health_loop, daemon=True, name="HealthMonitor").start()
+    if settings.HEALTH_CHECK:
+        threading.Thread(target=_health_loop, daemon=True, name="HealthMonitor").start()

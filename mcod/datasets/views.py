@@ -1,6 +1,7 @@
 from functools import partial
 
 import falcon
+from dal import autocomplete
 from django.apps import apps
 from django.conf import settings
 from django.contrib.auth.mixins import PermissionRequiredMixin
@@ -295,3 +296,8 @@ class ConditionLabelsAdminView(PermissionRequiredMixin, View):
             else f"{settings.BASE_URL}{settings.PRIVATE_LICENSES_ARTICLE_URL}"
         )
         return JsonResponse({"condition_labels": labels, "article_url": article_url})
+
+
+class DatasetAutocompleteView(autocomplete.Select2QuerySetView):
+    def get_queryset(self):
+        return Dataset.objects.autocomplete(self.request.user, self.q)

@@ -42,7 +42,6 @@ from mcod.lib.model_sanitization import (
     SanitizedTranslationField,
 )
 from mcod.regions.models import Region
-from mcod.unleash import is_enabled
 from mcod.watchers.tasks import update_model_watcher_task
 
 logger = logging.getLogger("mcod")
@@ -858,14 +857,13 @@ class Dataset(ExtendedModel):
         archive symlink name associated with the dataset.
         """
 
-        if is_enabled("S61_fix_for_dataset_rename_symlink_archive_problem.be"):
-            if self.pk and self.tracker.has_changed("title"):
-                # if the title is modified,trigger an asynchronous task to update the
-                # archive symlink name associated with the dataset.
-                change_archive_symlink_name.apply_async_on_commit(
-                    kwargs=dict(dataset_id=self.pk, old_name=self.tracker.previous("title"))
-                )
-            return super().save(*args, **kwargs)
+        if self.pk and self.tracker.has_changed("title"):
+            # if the title is modified,trigger an asynchronous task to update the
+            # archive symlink name associated with the dataset.
+            change_archive_symlink_name.apply_async_on_commit(
+                kwargs=dict(dataset_id=self.pk, old_name=self.tracker.previous("title"))
+            )
+        return super().save(*args, **kwargs)
 
 
 class BaseSupplement(ExtendedModel):

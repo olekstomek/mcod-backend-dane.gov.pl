@@ -3,11 +3,13 @@ from functools import partial
 
 import falcon
 from apispec import APISpec
+from dal import autocomplete
 from django.apps import apps
 from django.template import loader
 from elasticsearch_dsl import A
 
 from mcod import settings
+from mcod.core.api.cache import documented_cache
 from mcod.core.api.handlers import (
     BaseHdlr,
     CreateOneHdlr,
@@ -162,6 +164,7 @@ class VocabEntryOpennessScoreRDFView(VocabEntryRDFView):
 
 class ResourceTableView(JsonAPIView):
     @versioned
+    @documented_cache(timeout=900)
     def on_get(self, request, response, *args, **kwargs):
         """
         ---
@@ -170,6 +173,7 @@ class ResourceTableView(JsonAPIView):
         self.handle(request, response, self.GET, *args, **kwargs)
 
     @on_get.version("1.0")
+    @documented_cache(timeout=900)
     def on_get(self, request, response, *args, **kwargs):
         self.handle(request, response, self.GET, *args, **kwargs)
 
@@ -731,3 +735,11 @@ class AggregatedDGAInfoView(JsonAPIView):
         def serialize(self, *args, **kwargs):
             self.prepare_context(*args, **kwargs)
             return self.serializer.dump(self.response.context.data)
+
+
+class ResourceAutocompleteView(autocomplete.Select2QuerySetView):
+    def get_result_label(self, result):
+        return result.label_from_instance
+
+    def get_queryset(self):
+        return Resource.raw.autocomplete(self.request.user, self.q, self.forwarded)

@@ -1,5 +1,5 @@
 from collections import namedtuple
-from typing import Dict, Optional
+from typing import Dict, List, Optional, Tuple
 from unittest.mock import MagicMock, patch
 
 import falcon
@@ -288,7 +288,7 @@ class TestAdminPanelAccess:
         assert payload["user"]["roles"] == ["admin"]
 
 
-def test_admin_autocomplete_view_for_superuser(admin):
+def test_admin_autocomplete_view_for_superuser(admin: User):
     client = Client()
     client.force_login(admin)
 
@@ -299,13 +299,88 @@ def test_admin_autocomplete_view_for_superuser(admin):
     assert response.json()["results"][0]["text"] == admin.email
 
 
-def test_admin_autocomplete_view_for_not_superuser(active_editor):
+@pytest.mark.parametrize("autocomplete_endpoint", ["admin-autocomplete", "staff-autocomplete"])
+def test_autocomplete_view_returns_empty_for_not_superuser(
+    active_editor: User,
+    autocomplete_endpoint: str,
+):
+    """Checks if autocomplete user related views returns no results for not superuser."""
     client = Client()
     client.force_login(active_editor)
 
-    response = client.get(reverse("admin-autocomplete"))
+    response = client.get(reverse(autocomplete_endpoint))
 
     assert len(response.json()["results"]) == 0
+
+
+AutocompleteResults = List[Tuple[str, str]]
+
+
+def test_staff_autocomplete_view(admin: User):
+    # GIVEN 17 users: 1 admin (also staff), 15 staff users, 1 not staff user
+    UserFactory.create(is_staff=False)
+    staff_users: List[User] = UserFactory.create_batch(15, is_staff=True)
+    all_staff_users: List[User] = [*staff_users, admin]
+    all_staff_users.sort(key=lambda user: user.email)  # sort staff users by email
+
+    total_users_count: int = User.objects.count()
+    assert total_users_count == 17, f"17 users should exist in DB, got {total_users_count}"
+
+    # WHEN
+    client = Client()
+    client.force_login(admin)
+
+    # 1st page request
+    response_page1 = client.get(reverse("staff-autocomplete"))
+    results_page1 = response_page1.json()["results"]
+    # 2nd page request
+    response_page2 = client.get(reverse("staff-autocomplete"), data={"page": 2})
+    results_page2 = response_page2.json()["results"]
+    # results for both pages
+    results_page1_list: AutocompleteResults = [(result["id"], result["text"]) for result in results_page1]
+    results_page2_list: AutocompleteResults = [(result["id"], result["text"]) for result in results_page2]
+
+    # THEN
+    # # Only admin and staff users should be returned (ORDERED by email)
+    # Prepare expected data for paginated staff results (10 users per page).
+    page1_expected_results: AutocompleteResults = [(str(user.id), user.email) for user in all_staff_users[:10]]
+    page2_expected_results: AutocompleteResults = [(str(user.id), user.email) for user in all_staff_users[10:]]
+    # Check expected results
+    assert results_page1_list == page1_expected_results
+    assert results_page2_list == page2_expected_results
+
+
+def test_agent_autocomplete_view(admin: User):
+    # GIVEN 17 users: 1 admin, 15 agent users, 1 not agent user
+    UserFactory.create(is_agent=False)
+    agents: List[User] = UserFactory.create_batch(15, is_agent=True)
+    agents.sort(key=lambda user: user.email)  # sort created agents by email
+
+    total_users_count: int = User.objects.count()
+    assert total_users_count == 17, f"17 users should exist in DB, got {total_users_count}"
+
+    # WHEN
+    client = Client()
+    client.force_login(admin)
+
+    # 1st page request
+    response_page1 = client.get(reverse("agent-autocomplete"))
+    results_page1 = response_page1.json()["results"]
+    # 2nd page request
+    response_page2 = client.get(reverse("agent-autocomplete"), data={"page": 2})
+    results_page2 = response_page2.json()["results"]
+    # results for both pages
+    results_page1_list: AutocompleteResults = [(result["id"], result["text"]) for result in results_page1]
+    results_page2_list: AutocompleteResults = [(result["id"], result["text"]) for result in results_page2]
+
+    # THEN
+    # Only agent users should be returned (ORDERED by email)
+    # Prepare expected data for paginated agent results (10 users per page).
+    page1_expected_results: AutocompleteResults = [(str(user.id), user.email) for user in agents[:10]]
+    page2_expected_results: AutocompleteResults = [(str(user.id), user.email) for user in agents[10:]]
+    # Check expected results
+    assert results_page1_list == page1_expected_results
+    assert results_page2_list == page2_expected_results
 
 
 class TestLogingovplSSOView(MethodsNotAllowedTestMixin):

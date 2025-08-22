@@ -12,9 +12,10 @@ from django.utils.translation import gettext_lazy as _
 from elasticsearch_dsl import A, Search
 
 from mcod import settings
-from mcod.api import app_cache as cache, limiter
+from mcod.core.api.cache import app_cache as cache
 from mcod.core.api.handlers import BaseHdlr, RetrieveManyHdlr, SearchHdlr, SubscriptionSearchHdlr
 from mcod.core.api.hooks import login_optional
+from mcod.core.api.limiter import limiter
 from mcod.core.api.rdf.namespaces import NAMESPACES
 from mcod.core.api.schemas import ListingSchema
 from mcod.core.api.views import BaseView, JsonAPIView

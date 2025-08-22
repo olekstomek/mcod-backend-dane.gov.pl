@@ -1,5 +1,5 @@
+from dal import autocomplete
 from django import forms
-from django.contrib.admin.widgets import FilteredSelectMultiple
 from django.utils.translation import gettext_lazy as _
 from localflavor.pl.forms import PLPostalCodeField, PLREGONField
 
@@ -40,9 +40,13 @@ class OrganizationForm(forms.ModelForm):
     slug = forms.SlugField(required=False)
 
     users = forms.ModelMultipleChoiceField(
+        # The queryset only validates submitted data, it doesn't affect
+        # which users are displayed in the autocomplete widget.
         queryset=User.objects.filter(is_staff=True),
         required=False,
-        widget=FilteredSelectMultiple(verbose_name=_("Users"), is_stacked=False),
+        # The widget controls which users are listed,
+        # so non-staff users cannot be displayed here.
+        widget=autocomplete.Select2Multiple(url="staff-autocomplete"),
         label=_("Users"),
     )
     postal_code = PLPostalCodeField(label=_("Postal code"))

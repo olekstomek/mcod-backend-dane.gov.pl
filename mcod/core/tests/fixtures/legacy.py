@@ -17,7 +17,6 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from falcon import testing
 
 from mcod import settings
-from mcod.api import app
 
 User = get_user_model()
 
@@ -62,13 +61,13 @@ def constance_config():
 
 
 @pytest.fixture
-def client() -> testing.TestClient:
-    return testing.TestClient(app, headers={"X-API-VERSION": "1.0"})
+def client(test_api_instance) -> testing.TestClient:
+    return testing.TestClient(test_api_instance, headers={"X-API-VERSION": "1.0"})
 
 
 @pytest.fixture
-def client14() -> testing.TestClient:
-    return testing.TestClient(app, headers={"X-API-VERSION": "1.4", "Accept-Language": "pl"})
+def client14(test_api_instance) -> testing.TestClient:
+    return testing.TestClient(test_api_instance, headers={"X-API-VERSION": "1.4", "Accept-Language": "pl"})
 
 
 @pytest.fixture

@@ -4,6 +4,7 @@ from typing import Union
 
 from celery.signals import task_failure, task_postrun, task_prerun
 from django.apps import apps
+from sentry_sdk import set_tag
 
 from mcod.core.tasks import extended_shared_task
 from mcod.resources.archives import PasswordProtectedArchiveError, UnsupportedArchiveError
@@ -37,6 +38,7 @@ def process_resource_res_file_task(
     resource_file = ResourceFile.objects.get(pk=resource_file_id)
     res_file_queryset = ResourceFile.objects.filter(pk=resource_file_id)
     resource_id = resource_file.resource_id
+    set_tag("resource_id", str(resource_id))
     (
         format_,
         file_info,
@@ -117,6 +119,7 @@ def process_resource_res_file_task_prerun_handler(sender, task_id, task, signal,
 
         resource_file_id = int(kwargs["args"][0])
         resource_id = ResourceFile.objects.get(pk=resource_file_id).resource_id
+        set_tag("resource_id", str(resource_id))
         resource = Resource.objects.get(pk=resource_id)
         result_task = TaskResult.objects.get_task(task_id)
         result_task.save()
@@ -134,6 +137,7 @@ def process_resource_res_file_task_postrun_handler(sender, task_id, task, signal
     TaskResult = apps.get_model("resources", "TaskResult")
 
     resource_id = ResourceFile.objects.get(pk=resource_file_id).resource_id
+    set_tag("resource_id", str(resource_id))
     try:
         resource = Resource.raw.get(pk=resource_id)
         task_result = TaskResult.objects.get_task(task_id)

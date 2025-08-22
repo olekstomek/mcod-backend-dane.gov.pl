@@ -12,6 +12,33 @@ ______________________________________________________________________
 
 ### Breaks
 
+## 2.45.0 - (2025-08-08)
+
+______________________________________________________________________
+
+### New
+
+- Dodano cache'owanie endpointa wyciągającego dane tabelaryczne dla Zasobu - OTD-1641
+- Oflagowano mechanizm cache'owania - flaga `S66_falcon_caching_operate.be` - OTD-1641
+- Dodano tagowanie eventów w Sentry emitowanych z tasków Celery - OTD-1671
+- Dodano middleware dla FalconAPI `DjangoDBConnectionMiddleware` zamykający połączenia po zakończeniu odpytywania endpointa - OTD-1658
+- Ustawiono zmienną dla ustawień bazy danych: `CONN_MAX_AGE` - OTD-1658
+
+### Changes
+
+- Uproszczono funkcję middleware cache - usunięto nadmiarową logikę - OTD-1641
+- Zmieniono funkcję generacji klucza redis dla cache - teraz zawiera w sobie informacje o query params - OTD-1641
+- Usunięto historyczne flagi - S61 i S63 - OTD-1641
+- Przeniesiono ładowanie middleware'ów Falcona do osobnego modułu, `middleware_loader.py` - OTD-1658
+- Health check systemów jest uruchamiany na podstawie zmiennej środowiskowej - OTD-1658
+- Przeniesiono Falcon Limiter (api) do osobnego modułu - OTD-1658
+- Uporządkowano przypisanie zadań do kolejek Celery oraz dodano nowe testy pilnujące routingu kolejek - OTD-1653
+
+### Fixes
+
+- Poprawiono walidację plików JSON, tak aby błędnie nie były rozpoznawane jako JSONLD - OTD-1699
+- Naprawa niewydajnych formularzy Użytkownika i Instytucji w Panelu Administracyjnym - OTD-1581
+- Uporządkowano kolejki Celery - OTD-1653
 
 ## 2.44.1 - (2025-07-30)
 

@@ -143,11 +143,6 @@ PASSWORD_HASHERS = [
     "django.contrib.auth.hashers.MD5PasswordHasher",
 ]
 
-CELERY_BEAT_SCHEDULE["send-newsletter"] = {
-    "task": "mcod.newsletter.tasks.send_newsletter",
-    "schedule": 120,
-}
-
 COMPONENT = env("COMPONENT", default="admin")
 ENVIRONMENT = "test"
 ENABLE_CSRF = False
@@ -194,3 +189,15 @@ HTTP_REQUEST_DEFAULT_TIMEOUT = 3
 import socket
 
 socket.setdefaulttimeout(HTTP_REQUEST_DEFAULT_TIMEOUT)
+
+
+FALCON_MIDDLEWARES = [
+    "mcod.core.api.middlewares.ContentTypeMiddleware",
+    "mcod.core.api.middlewares.DebugMiddleware",
+    "mcod.core.api.middlewares.LocaleMiddleware",
+    "mcod.core.api.middlewares.ApiVersionMiddleware",
+    "mcod.core.api.middlewares.CounterMiddleware",
+    "mcod.core.api.middlewares.SearchHistoryMiddleware",
+    "mcod.core.api.middlewares.PrometheusMiddleware",
+]
+HEALTH_CHECK = False

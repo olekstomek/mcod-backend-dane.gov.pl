@@ -15,6 +15,7 @@ from elasticsearch.exceptions import (
     ConnectionError as ElasticsearchConnectionError,
     ElasticsearchException,
 )
+from sentry_sdk import set_tag
 from urllib3.exceptions import NewConnectionError
 
 from mcod.core.tasks import FIVE_MINUTES, extended_shared_task
@@ -34,6 +35,7 @@ logger = logging.getLogger("mcod")
     name="mcod.resources.tasks.send_resource_comment",
 )
 def send_resource_comment(resource_id, comment):
+    set_tag("resource_id", str(resource_id))
     model = apps.get_model("resources", "Resource")
     resource = model.objects.get(pk=resource_id)
     resource.send_resource_comment_mail(comment)
@@ -45,6 +47,7 @@ def send_resource_comment(resource_id, comment):
     name="mcod.resources.tasks.update_resource_has_table_has_map_task",
 )
 def update_resource_has_table_has_map_task(resource_id):
+    set_tag("resource_id", str(resource_id))
     resource_model = apps.get_model("resources", "Resource")
     obj = resource_model.raw.filter(id=resource_id).first()
     result = {"resource_id": resource_id}
@@ -67,6 +70,7 @@ def update_resource_has_table_has_map_task(resource_id):
     name="mcod.resources.tasks.update_resource_validation_results_task",
 )
 def update_resource_validation_results_task(resource_id):
+    set_tag("resource_id", str(resource_id))
     resource_model = apps.get_model("resources", "Resource")
     obj = resource_model.raw.filter(id=resource_id).first()
     result = {"resource_id": resource_id}
@@ -93,6 +97,7 @@ def update_resource_validation_results_task(resource_id):
     name="mcod.resources.tasks.check_link_protocol",
 )
 def check_link_protocol(resource_id, link, title, organization_title, resource_type):
+    set_tag("resource_id", str(resource_id))
     logger.debug(f"Checking link {link} of resource with id {resource_id}")
     returns_https, change_required = check_link_scheme(link)
     https_status = "NIE"
@@ -114,6 +119,7 @@ def check_link_protocol(resource_id, link, title, organization_title, resource_t
     name="mcod.resources.tasks.process_resource_data_indexing_task",
 )
 def process_resource_data_indexing_task(resource_id):
+    set_tag("resource_id", str(resource_id))
     resource_model = apps.get_model("resources", "Resource")
     obj = resource_model.objects.with_tabular_data(pks=[resource_id]).first()
     if obj:
@@ -127,6 +133,7 @@ def process_resource_data_indexing_task(resource_id):
     name="mcod.resources.tasks.update_data_date",
 )
 def update_data_date(resource_id):
+    set_tag("resource_id", str(resource_id))
     Resource = apps.get_model("resources", "Resource")
     res_q = Resource.objects.filter(pk=resource_id)
     res = res_q.first()
@@ -182,6 +189,7 @@ def update_resource_with_archive_format(res_file_id):
         "resource_id": rf.resource_id,
         "resource_file_id": res_file_id,
     }
+    set_tag("resource_id", str(rf.resource_id))
     with ArchiveReader(rf.file.file.name) as archive:
         if len(archive) > 1:
             logger.debug(f"ResourceFile[{res_file_id}] has more than 1 file compressed, skipping.")
@@ -338,6 +346,7 @@ def compare_postgres_and_elasticsearch_consistency_task(
 )
 def get_ckan_resource_format_from_url_task(resource_pk: int) -> Tuple[bool, int, str, Optional[str], Optional[str]]:
     """Returns success, pk, url, resource_format (ie. file extension), error_msg (if an error occurred)"""
+    set_tag("resource_id", str(resource_pk))
     Resource = apps.get_model("resources", "Resource")
     resource = Resource.objects.filter(pk=resource_pk).only("link").first()
     url: str = resource.link

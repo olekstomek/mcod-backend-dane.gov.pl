@@ -8,7 +8,6 @@ from openapi_core.validation.request.validators import RequestValidator
 from openapi_core.validation.response.validators import ResponseValidator
 from pytest_bdd import scenarios, then, when
 
-from mcod.api import app
 from mcod.core.tests.helpers.openapi_wrappers import FalconOpenAPIWrapper
 from mcod.core.tests.helpers.tasks import run_on_commit_events
 from mcod.core.utils import jsonapi_validator
@@ -71,7 +70,7 @@ scenarios(
 
 
 @pytest.mark.elasticsearch
-def test_tabular_data_api14(buzzfeed_fakenews_resource, client14, mocker):
+def test_tabular_data_api14(buzzfeed_fakenews_resource, client14, mocker, test_api_instance):
     run_on_commit_events()
     _rid = buzzfeed_fakenews_resource.id
 
@@ -81,7 +80,7 @@ def test_tabular_data_api14(buzzfeed_fakenews_resource, client14, mocker):
 
     # Test tabular data format
     req = FalconOpenAPIWrapper(
-        app,
+        test_api_instance,
         method="GET",
         path=f"/resources/{_rid}/data",
         headers={"X-API-VERSION": "1.4", "Accept-Language": "pl"},
@@ -126,7 +125,7 @@ def test_tabular_data_api14(buzzfeed_fakenews_resource, client14, mocker):
 
     # Test search
     req = FalconOpenAPIWrapper(
-        app,
+        test_api_instance,
         method="GET",
         path="/resources/{}/data".format(_rid),
         query={"q": "col5:Crime", "per_page": 25},
@@ -154,7 +153,7 @@ def test_tabular_data_api14(buzzfeed_fakenews_resource, client14, mocker):
     assert links["self"] == "http://api.test.mcod/resources/{}/data?per_page=25&q=col5%3ACrime&page=1".format(_rid)
 
     req = FalconOpenAPIWrapper(
-        app,
+        test_api_instance,
         method="GET",
         path="/resources/{}/data".format(_rid),
         query={"q": "col1:President AND col5:Norwegian", "per_page": 5},
@@ -222,7 +221,7 @@ def test_tabular_data_api14(buzzfeed_fakenews_resource, client14, mocker):
     row_id = validated_data[0]["id"]
     # Test single row
     req = FalconOpenAPIWrapper(
-        app,
+        test_api_instance,
         method="GET",
         path="/resources/{}/data/{}".format(_rid, row_id),
         path_params={"id": row_id},
