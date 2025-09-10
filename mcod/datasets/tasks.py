@@ -128,6 +128,7 @@ def create_xml_metadata_files() -> None:
     It fetches dataset objects with metadata fetched as a list, serializes them using an
     XML serializer, and writes the serialized data to XML files using an XMLWriter.
     """
+
     from mcod.datasets.serializers import DatasetXMLWriterSerializer
 
     dataset_model = apps.get_model("datasets", "Dataset")

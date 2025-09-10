@@ -3,15 +3,28 @@ import os
 import tempfile
 from pathlib import Path
 from typing import List
+from unittest.mock import MagicMock, patch
 
 import factory
 import pytest
+from celery import Task
 from django.conf import settings
 
-from mcod.resources.factories import ResourceFactory
+import mcod
+from mcod.resources.factories import (
+    ResourceCsvFactory,
+    ResourceFactory,
+    ResourceJsonFactory,
+    ResourceTxtFactory,
+    ResourceXlsxFactory,
+)
 from mcod.resources.indexed_data import ResourceDataValidationError
 from mcod.resources.models import Resource
 from mcod.resources.tasks import process_resource_file_data_task
+from mcod.resources.tasks.entrypoint_res import entrypoint_process_resource_validation_task
+from mcod.resources.tasks.entrypoint_res_file import (
+    entrypoint_process_resource_file_validation_task,
+)
 
 
 def test_smoke_resource_data_validation():
@@ -73,3 +86,40 @@ def test_process_resource_file_data_task_for_csv_files(
                 process_resource_file_data_task(res.id)
         else:
             assert process_resource_file_data_task(res.id)
+
+
+@pytest.mark.parametrize(
+    "entry_point, resource_factory, data_validation_expected",
+    [
+        (entrypoint_process_resource_file_validation_task, ResourceCsvFactory, True),
+        (entrypoint_process_resource_file_validation_task, ResourceXlsxFactory, True),
+        (entrypoint_process_resource_file_validation_task, ResourceTxtFactory, False),
+        (entrypoint_process_resource_file_validation_task, ResourceJsonFactory, False),
+        (entrypoint_process_resource_validation_task, ResourceCsvFactory, True),
+        (entrypoint_process_resource_validation_task, ResourceXlsxFactory, True),
+        (entrypoint_process_resource_validation_task, ResourceTxtFactory, False),
+        (entrypoint_process_resource_validation_task, ResourceJsonFactory, False),
+    ],
+)
+def test_resource_data_validation_task_call_only_for_processable_resources(
+    entry_point: Task, resource_factory: ResourceFactory, data_validation_expected: bool
+):
+    # GIVEN
+    resource: Resource = resource_factory.create()
+    mock_sig = MagicMock()
+    with patch.object(mcod.resources.models.process_resource_file_data_task, "s", return_value=mock_sig) as mock_s:
+        # WHEN
+        if entry_point is entrypoint_process_resource_file_validation_task:
+            entry_point(resource.files.first().id)
+        elif entry_point is entrypoint_process_resource_validation_task:
+            entry_point(resource.id)
+
+        # THEN
+        if data_validation_expected:
+            args, kwargs = mock_s.call_args
+            assert resource.is_data_processable
+            assert args == (resource.id,)
+            assert mock_s.call_count == 1
+        else:
+            assert not resource.is_data_processable
+            assert mock_s.call_count == 0

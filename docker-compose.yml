@@ -1,8 +1,11 @@
-version: "3"
 services:
   mcod-db:
     container_name: mcod-db
-    image: postgres:13
+    build:
+      context: .
+      dockerfile: docker/postgres/Dockerfile
+      tags:
+        - "postgresql:13-trixie-mcod"
     restart: "no"
     command: postgres -c config_file=/etc/postgresql/postgresql.conf
     volumes:
@@ -121,18 +124,20 @@ services:
       - mcod-redis
     volumes:
       - 'discourse_vol:/bitnami'
-    environment:
-      - POSTGRESQL_HOST=mcod-db
-      - POSTGRESQL_ROOT_USER=${POSTGRES_USER}
-      - POSTGRESQL_ROOT_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRESQL_CLIENT_CREATE_DATABASE_NAME=forum
-      - POSTGRESQL_CLIENT_CREATE_DATABASE_USERNAME=${POSTGRES_USER}
-      - POSTGRESQL_CLIENT_CREATE_DATABASE_PASSWORD=${POSTGRES_PASSWORD}
-      - DISCOURSE_POSTGRESQL_NAME=forum
-      - DISCOURSE_POSTGRESQL_USERNAME=${POSTGRES_USER}
-      - DISCOURSE_POSTGRESQL_PASSWORD=${POSTGRES_PASSWORD}
-      - DISCOURSE_HOSTNAME=forum.mcod.local
-      - REDIS_HOST=mcod-redis
+    environment: &environment-definition
+      POSTGRESQL_HOST: mcod-db
+      POSTGRESQL_ROOT_USER: ${POSTGRES_USER}
+      POSTGRESQL_ROOT_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRESQL_CLIENT_CREATE_DATABASE_NAME: forum
+      POSTGRESQL_CLIENT_CREATE_DATABASE_USERNAME: ${POSTGRES_USER}
+      POSTGRESQL_CLIENT_CREATE_DATABASE_PASSWORD: ${POSTGRES_PASSWORD}
+      DISCOURSE_POSTGRESQL_NAME: forum
+      DISCOURSE_POSTGRESQL_USERNAME: ${POSTGRES_USER}
+      DISCOURSE_POSTGRESQL_PASSWORD: ${POSTGRES_PASSWORD}
+      DISCOURSE_HOSTNAME: forum.mcod.local
+      REDIS_HOST: mcod-redis
+      DISCOURSE_USERNAME: ${DISCOURSE_USERNAME}
+      DISCOURSE_PASSWORD: ${DISCOURSE_PASSWORD}
     networks:
       backend:
         ipv4_address: 172.18.18.140
@@ -148,22 +153,11 @@ services:
     volumes:
       - 'discourse_vol:/bitnami'
     environment:
-      - POSTGRESQL_HOST=mcod-db
-      - POSTGRESQL_ROOT_USER=${POSTGRES_USER}
-      - POSTGRESQL_ROOT_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRESQL_CLIENT_CREATE_DATABASE_NAME=forum
-      - POSTGRESQL_CLIENT_CREATE_DATABASE_USERNAME=${POSTGRES_USER}
-      - POSTGRESQL_CLIENT_CREATE_DATABASE_PASSWORD=${POSTGRES_PASSWORD}
-      - DISCOURSE_POSTGRESQL_NAME=forum
-      - DISCOURSE_POSTGRESQL_USERNAME=${POSTGRES_USER}
-      - DISCOURSE_POSTGRESQL_PASSWORD=${POSTGRES_PASSWORD}
-      - DISCOURSE_HOSTNAME=forum.mcod.local
-      - REDIS_HOST=mcod-redis
-      - DISCOURSE_PORT=3000
+      <<: *environment-definition
+      DISCOURSE_PORT: "3000"
     networks:
       backend:
         ipv4_address: 172.18.18.141
-
 networks:
   backend:
     driver: bridge

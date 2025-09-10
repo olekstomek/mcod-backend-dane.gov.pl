@@ -44,13 +44,14 @@ def get_dga_csv_file() -> BytesIO:
     return BytesIO(b"\n".join([header] + rows))
 
 
-class ResourceFileFactory(factory.django.DjangoModelFactory):
-    file = factory.django.FileField(from_func=get_csv_file, filename="{}.csv".format(str(uuid.uuid4())))
-    format = "csv"
+class BaseResourceFileFactory(factory.django.DjangoModelFactory):
     openness_score = factory.Faker("random_int", min=1, max=5)
     resource = factory.SubFactory("mcod.resources.factories.ResourceFactory")
     is_main = True
-    mimetype = "application/csv"
+
+    class Meta:
+        abstract = True
+        model = models.ResourceFile
 
     @classmethod
     def _create(cls, model, *args, **kwargs):
@@ -79,18 +80,23 @@ class ResourceFileFactory(factory.django.DjangoModelFactory):
             kwargs["format"] = ext
         return super()._create(model, *args, **kwargs)
 
-    class Meta:
-        model = models.ResourceFile
+
+class ResourceFileFactory(BaseResourceFileFactory):
+    file = factory.django.FileField(from_func=get_csv_file, filename="{}.csv".format(str(uuid.uuid4())))
+    format = "csv"
+    mimetype = "application/csv"
 
 
-class ResourceFileDGACompliantFactory(ResourceFileFactory):
+class ResourceFileDGACompliantFactory(BaseResourceFileFactory):
     file = factory.django.FileField(
         from_func=get_dga_csv_file,
         filename="{}.csv".format(str(uuid.uuid4())),
     )
+    format = "csv"
+    mimetype = "application/csv"
 
 
-class MainDGAResourceFileFactory(ResourceFileFactory):
+class MainDGAResourceFileFactory(BaseResourceFileFactory):
     file = factory.django.FileField(
         from_path=f'{os.path.join(settings.TEST_SAMPLES_PATH, "example_main_dga_file.xlsx")}',
         filename=f'{settings.MAIN_DGA_XLSX_FILE_NAME_PREFIX} {datetime.now().strftime("%Y%m%d")}.xlsx',
@@ -273,6 +279,75 @@ class AggregatedDGAInfoFactory(factory.django.DjangoModelFactory):
 
     class Meta:
         model = models.AggregatedDGAInfo
+
+
+class ResourceTxtFileFactory(BaseResourceFileFactory):
+    file = factory.django.FileField(
+        from_func=lambda: BytesIO(b"some text"),
+        filename="{}.txt".format(str(uuid.uuid4())),
+    )
+    format = "txt"
+    mimetype = content_type = "text/plain"
+
+
+class ResourceTxtFactory(ResourceFactory):
+    main_file = factory.RelatedFactory(
+        ResourceTxtFileFactory,
+        factory_related_name="resource",
+    )
+    format = "txt"
+    type = "file"
+
+
+class ResourceJsonFileFactory(BaseResourceFileFactory):
+    file = factory.django.FileField(
+        from_func=lambda: BytesIO(b'{"aaa": "bbb"}'),
+        filename="{}.json".format(str(uuid.uuid4())),
+    )
+    format = "json"
+    mimetype = content_type = "application/json"
+
+
+class ResourceJsonFactory(ResourceFactory):
+    main_file = factory.RelatedFactory(
+        ResourceJsonFileFactory,
+        factory_related_name="resource",
+    )
+    format = "json"
+    type = "file"
+
+
+class ResourceCsvFileFactory(BaseResourceFileFactory):
+    file = factory.django.FileField(from_func=get_csv_file, filename="{}.csv".format(str(uuid.uuid4())))
+    format = "csv"
+    mimetype = content_type = "text/csv"
+
+
+class ResourceCsvFactory(ResourceFactory):
+    main_file = factory.RelatedFactory(
+        ResourceCsvFileFactory,
+        factory_related_name="resource",
+    )
+    format = "csv"
+    type = "file"
+
+
+class ResourceXlsxFileFactory(BaseResourceFileFactory):
+    file = factory.django.FileField(
+        from_path=f'{os.path.join(settings.TEST_SAMPLES_PATH, "plik_testowy.xlsx")}',
+        filename="{}.xlsx".format(str(uuid.uuid4())),
+    )
+    format = "xlsx"
+    mimetype = content_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
+
+class ResourceXlsxFactory(ResourceFactory):
+    main_file = factory.RelatedFactory(
+        ResourceXlsxFileFactory,
+        factory_related_name="resource",
+    )
+    format = "xlsx"
+    type = "file"
 
 
 factories_registry.register("resource", ResourceFactory)

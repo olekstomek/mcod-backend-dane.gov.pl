@@ -11,6 +11,7 @@ from sentry_sdk import set_tag
 from mcod.core.tasks import extended_shared_task
 from mcod.resources.indexed_data import ResourceDataValidationError
 from mcod.resources.tasks.common import save_task_result_for_resource_after_task_failure
+from mcod.unleash import is_enabled
 
 logger = logging.getLogger("mcod")
 
@@ -27,8 +28,6 @@ def process_resource_file_data_task(resource_id: int, /):
     resource_model = apps.get_model("resources", "Resource")
     resource = resource_model.raw.get(id=resource_id)
     logger.info(f"process_resource_file_data_task: Resource {resource_id}")
-    if not resource.is_data_processable:
-        return json.dumps({})
     if not resource.data:
         raise Exception("Nieobsługiwany format danych lub błąd w jego rozpoznaniu.")
     tds = resource.tabular_data_schema
@@ -112,7 +111,9 @@ def process_resource_file_data_task_postrun_handler(sender, task_id, task, signa
         res_update_data["has_table"] = bool(resource.has_tabular_format(["shp"]) and indexed)
 
         Resource.raw.filter(pk=resource_id).update(**res_update_data)  # we don't want signals here - just updates.
-        resource.update_es_and_rdf_db()
+
+        if not is_enabled("S67_less_updates_es_end_rdf_in_resource_processing.be"):
+            resource.update_es_and_rdf_db()
 
     except Exception as exc:
         logger.exception(f"Exception occurred during process_resource_file_data_task_postrun_handler: {exc}")

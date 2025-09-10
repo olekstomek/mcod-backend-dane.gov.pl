@@ -637,7 +637,7 @@ def resource_with_xls_file_converted_to_csv(res_id, example_xls_file, buzzfeed_d
     res.revalidate()
     run_on_commit_events()
     res = Resource.objects.get(pk=res.pk)
-    resource_score, files_score = res.get_openness_score()
+    resource_score, _ = res.get_openness_score()
     Resource.objects.filter(pk=res.pk).update(openness_score=resource_score)
     res = Resource.objects.get(pk=res.pk)
     return res

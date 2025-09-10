@@ -107,6 +107,18 @@ def another_admin():
 
 
 @pytest.fixture
+def admin_with_discourse_credentials() -> User:
+    usr = AdminFactory.create(
+        email="admin@dane.gov.pl",
+        password="12345.Abcde",
+        phone="0048123456789",
+        discourse_user_name="admin",
+        discourse_api_key="1234567",
+    )
+    return usr
+
+
+@pytest.fixture
 def inactive_admin():
     usr = AdminFactory.create(
         email="admin@dane.gov.pl",

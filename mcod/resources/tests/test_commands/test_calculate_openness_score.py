@@ -10,7 +10,7 @@ from mcod.resources.management.commands.calculate_openness_score import (
     OpennessScoreRecalculationResults,
     RecalculatedResourceRecord,
 )
-from mcod.resources.score_computation.common import OpennessScoreValue
+from mcod.resources.score_computation import OpennessScoreValue
 
 
 class DummyQuerySet:

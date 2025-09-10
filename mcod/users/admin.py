@@ -1,6 +1,7 @@
 from admin_confirm import AdminConfirmMixin
-from dal import autocomplete
+from dal_select2.widgets import ModelSelect2Multiple
 from django import forms
+from django.conf import settings
 from django.contrib import admin, messages
 from django.contrib.admin.exceptions import DisallowedModelAdminToField
 from django.contrib.admin.options import TO_FIELD_VAR
@@ -14,6 +15,7 @@ from django.urls import path
 from django.utils.translation import gettext_lazy as _
 from django_admin_multiple_choice_list_filter.list_filters import MultipleChoiceListFilter
 
+from mcod.discourse.tasks import user_sync_task
 from mcod.lib.admin_mixins import HistoryMixin, MCODChangeList, ModelAdmin, TrashMixin, UserAdmin
 from mcod.organizations.models import Organization
 from mcod.users.forms import (
@@ -225,14 +227,14 @@ class UserAdmin(HistoryMixin, AdminConfirmMixin, UserAdmin):
         if request_user.is_superuser:
             form.base_fields["agent_organizations"] = forms.ModelMultipleChoiceField(
                 queryset=Organization.objects.all(),
-                widget=autocomplete.Select2Multiple(url="organization-autocomplete"),
+                widget=ModelSelect2Multiple(url="organization-autocomplete"),
                 required=False,
                 label="",
                 help_text="",
             )
             form.base_fields["organizations"] = forms.ModelMultipleChoiceField(
                 queryset=Organization.objects.all(),
-                widget=autocomplete.Select2Multiple(url="organization-autocomplete"),
+                widget=ModelSelect2Multiple(url="organization-autocomplete"),
                 required=False,
                 label="",
                 help_text="",
@@ -387,6 +389,13 @@ class UserAdmin(HistoryMixin, AdminConfirmMixin, UserAdmin):
             obj.set_academy_perms(data["is_academy_admin"])
         if "is_labs_admin" in data:
             obj.set_labs_perms(data["is_labs_admin"])
+        if settings.DISCOURSE_FORUM_ENABLED:
+            user_sync_task.s(obj.pk).apply_async_on_commit()
+
+    def delete_model(self, request, obj):
+        super().delete_model(request, obj)
+        if settings.DISCOURSE_FORUM_ENABLED:
+            user_sync_task.s(obj.pk).apply_async_on_commit()
 
 
 class MeetingFilesInline(admin.StackedInline):

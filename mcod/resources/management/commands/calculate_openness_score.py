@@ -12,7 +12,7 @@ from tqdm import tqdm
 
 from mcod.resources.management.common import validate_dir_writable, validate_pks
 from mcod.resources.models import Resource
-from mcod.resources.score_computation.common import OpennessScoreValue
+from mcod.resources.score_computation import OpennessScoreValue
 
 RecalculatedResourceRecord = Tuple[int, OpennessScoreValue, OpennessScoreValue]  # pk, score before, score after
 ErrorRecord = Tuple[int, str]  # pk, error message

@@ -3,7 +3,10 @@ from typing import Callable, Literal, Optional, Union
 
 from django.db.models.fields.files import FieldFile
 
+# typing here reflects https://5stardata.info, while adding a missing value
+MissingOpennessScoreValue = Literal[0]
 OpennessScoreValue = Literal[1, 2, 3, 4, 5]
+OptionalOpennessScoreValue = Union[MissingOpennessScoreValue, OpennessScoreValue]
 Source = Union[str, FieldFile]
 
 

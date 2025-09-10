@@ -15,7 +15,7 @@ from mcod.resources.tasks.common import (
     update_resource_verification_date,
 )
 from mcod.resources.tasks.process_resource_file import process_resource_res_file_task
-from mcod.resources.tasks.process_resource_file_data import process_resource_file_data_task
+from mcod.unleash import is_enabled
 
 logger = logging.getLogger("mcod")
 
@@ -32,6 +32,7 @@ def entrypoint_process_resource_file_validation_task(
     update_link: bool = True,
 ):
     ResourceFile = apps.get_model("resources", "ResourceFile")
+    Resource = apps.get_model("resources", "Resource")
 
     resource_file = ResourceFile.objects.get(pk=resource_file_pk)
     resource_id = resource_file.resource_id
@@ -49,7 +50,9 @@ def entrypoint_process_resource_file_validation_task(
             return
 
         # 2. Run file data validation task
-        process_resource_file_data_task.s(resource_id).apply()
+        resource = Resource.objects.get(pk=resource_id)
+        if resource:
+            resource.revalidate_tabular_data(apply_on_commit=False)
 
         if update_link:
             # 3. Create url validation task with SUCCESS status for resource
@@ -69,6 +72,10 @@ def entrypoint_process_resource_file_validation_task(
 
             # update resource with url task status
             Resource.raw.filter(pk=resource_id).update(link_tasks_last_status=url_task_result.status)
+
+        if is_enabled("S67_less_updates_es_end_rdf_in_resource_processing.be"):
+            # 4. Update es and rdf
+            resource.update_es_and_rdf_db()
 
     except Exception as e:
         logger.error(f"Exception occurred during process_resource_file_validation_task: {e}")

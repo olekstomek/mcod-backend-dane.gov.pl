@@ -9,6 +9,7 @@ from django.utils.timezone import now
 
 if TYPE_CHECKING:
     from mcod.resources.models import Resource
+    from mcod.resources.score_computation import OptionalOpennessScoreValue
 
 
 def prepare_url_task_result_for_resource(resource: "Resource") -> Dict[str, Any]:
@@ -93,8 +94,9 @@ def update_resource_openness_score(resource_pk: Union[int, str]) -> None:
     Resource = apps.get_model("resources", "Resource")
     ResourceFile = apps.get_model("resources", "ResourceFile")
 
-    resource = Resource.raw.get(pk=resource_pk)
+    resource: "Resource" = Resource.raw.get(pk=resource_pk)
     resource_score, files_score = resource.get_openness_score()
+    files_score: Dict[int, "OptionalOpennessScoreValue"]
     Resource.raw.filter(pk=resource.pk).update(openness_score=resource_score)
-    for rf in files_score:
-        ResourceFile.objects.filter(pk=rf["file_pk"]).update(openness_score=rf["score"])
+    for file_pk, file_openness_score in files_score.items():
+        ResourceFile.objects.filter(pk=file_pk).update(openness_score=file_openness_score)

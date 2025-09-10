@@ -1,4 +1,4 @@
-from dal import autocomplete
+from dal_select2.widgets import ModelSelect2Multiple
 from django import forms
 from django.utils.translation import gettext_lazy as _
 from localflavor.pl.forms import PLPostalCodeField, PLREGONField
@@ -46,7 +46,7 @@ class OrganizationForm(forms.ModelForm):
         required=False,
         # The widget controls which users are listed,
         # so non-staff users cannot be displayed here.
-        widget=autocomplete.Select2Multiple(url="staff-autocomplete"),
+        widget=ModelSelect2Multiple(url="staff-autocomplete"),
         label=_("Users"),
     )
     postal_code = PLPostalCodeField(label=_("Postal code"))

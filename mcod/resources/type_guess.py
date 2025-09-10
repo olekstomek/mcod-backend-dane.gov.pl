@@ -1,12 +1,26 @@
 from collections import defaultdict
+from typing import Any, Callable, Generator, Literal, Tuple, TypeVar, Union
 
 from tableschema import Table as TablePre, config
 
 import mcod.lib.cast_types as types
 
+TypeName = str
+TypeFormat = Literal["any", "default"]
+TypePriority = int
+TypeGuessCastResult = Tuple[TypeName, TypeFormat, TypePriority]
 
-def _infer_type_order():
-    _INFER_TYPE_ORDER = (
+T = TypeVar("T", bound=Any)
+Error = str
+CastResult = Union[T, Error]
+CastCallable = Callable[[str, T], Union[T, CastResult]]
+
+
+class TypeGuesser:
+    missing_values = []
+
+    _INFER_TYPE_ORDER: Tuple[TypeName, ...] = (
+        "missing",
         "duration",
         "geojson",
         "geopoint",
@@ -22,22 +36,11 @@ def _infer_type_order():
         "any",
     )
 
-    _INFER_TYPE_ORDER = ("missing",) + _INFER_TYPE_ORDER
-
-    return _INFER_TYPE_ORDER
-
-
-class TypeGuesser:
-    """
-    That Guesser change original guesser to better handle date and datetime
-    """
-
-    missing_values = []
-
-    def cast(self, value):
-
-        for priority, name in enumerate(_infer_type_order()):
-            cast = getattr(types, "cast_%s" % name)
+    def cast(self, value: T) -> Generator[TypeGuessCastResult, Any, None]:
+        priority: TypePriority
+        name: TypeName
+        for priority, name in enumerate(self._INFER_TYPE_ORDER):
+            cast: CastCallable = getattr(types, f"cast_{name}")
             if value not in self.missing_values:
                 v = str(value)
                 if name in ["integer", "number"] and " " in v:
@@ -49,16 +52,16 @@ class TypeGuesser:
                         self.check_date_conditions(name, v),
                     )
                 ):
-                    result = cast("any", value)
+                    result: CastResult = cast("any", value)
                     if result != config.ERROR:
-                        yield (name, "any", priority)
+                        yield name, "any", priority
                 else:
-                    result = cast("default", value)
+                    result: CastResult = cast("default", value)
                     if result != config.ERROR:
-                        yield (name, "default", priority)
+                        yield name, "default", priority
 
     @staticmethod
-    def check_time_conditions(name, value):
+    def check_time_conditions(name: str, value: str) -> bool:
         def date_separators_not_in_value(value):
             return all([x not in value for x in "T -/"])
 
@@ -73,11 +76,11 @@ class TypeGuesser:
         return name == "time" and date_separators_not_in_value(value) and dot_should_be_after_collon
 
     @staticmethod
-    def check_date_conditions(name, value):
-        return name == "date" and len(value) == 10 or value.endswith("00:00:00")
+    def check_date_conditions(name: str, value: str) -> bool:
+        return name == "date" and len(value) == 10
 
     @staticmethod
-    def check_datetime_conditions(name, value):
+    def check_datetime_conditions(name: str, value: str) -> bool:
         """Some checks before cast with `any` format."""
         longer_than_date = len(value) > 10  # because we don't won't recognize date (ex: 10-12-2020) as datetime
         if not longer_than_date:

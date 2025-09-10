@@ -56,7 +56,7 @@ def discourse_response_mocker(user):
         mock_request.get(mocked_urls["mock_sso_url"])
         mock_request.post(
             mocked_urls["sync_sso_mock_url"],
-            json={"username": username, "id": forum_user_id},
+            json={"username": username, "id": forum_user_id, "active": user.is_active},
             headers={"Content-Type": "application/json; charset=utf-8"},
         )
         mock_request.post(

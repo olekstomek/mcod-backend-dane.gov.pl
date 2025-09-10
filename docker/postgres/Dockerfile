@@ -1,4 +1,4 @@
-FROM postgres:13
+FROM postgres:13-trixie
 
 RUN mkdir /dumps
 RUN chmod 655 /dumps

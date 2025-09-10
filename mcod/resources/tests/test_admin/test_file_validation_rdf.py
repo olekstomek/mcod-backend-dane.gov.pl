@@ -8,8 +8,7 @@ from rdflib.namespace import FOAF
 from rdflib.term import Literal
 
 from mcod.resources.file_validation import analyze_file
-from mcod.resources.score_computation import get_score
-from mcod.resources.score_computation.common import OpennessScoreValue
+from mcod.resources.score_computation import OpennessScoreValue, get_score
 
 
 @pytest.fixture

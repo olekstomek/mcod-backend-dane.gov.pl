@@ -266,10 +266,17 @@ COMPONENT=celery;
 Uruchomienie usługi jest niezbędne, jeżeli zamierzamy korzystać z zadań asynchronicznych, takich jak wysyłanie maili czy walidacja plików zasobów.
 
 ```
-(backend) $ python -m celery --app=mcod.celeryapp:app worker -l DEBUG -E -Q default,resources,indexing,periodic,newsletter,notifications,search_history,watchers,harvester,indexing_data
+(backend) $ python -m celery --app=mcod.celeryapp:app worker -l DEBUG -E -Q default,resources,indexing,periodic,newsletter,notifications,search_history,watchers,harvester,indexing_data,history,graphs,datasets,archiving,reports,discourse,showcases
 ```
 
 #### Taski periodyczne
+
+- Taski periodyczne są uruchamiane zgodnie z harmonogramem określonym w kodzie, w zmiennej `beat_schedule`. Można jednak zmienić domyślny harmonogram startu dla tasków periodycznych poprzez ustawienie zmiennej środowiskowej UPDATE_TASKS_CELERY_BEAT_TIME.
+  Na przykład - zmiana czasu startu 2 tasków periodycznych:
+
+```
+  UPDATE_TASKS_CELERY_BEAT_TIME='{"kronika_sparql_performance": {"day_of_month":2, "hour": 23, "minute": 20}, "catalog_xml_file_creation":{"hour": 7, "minute": 15}}'
+```
 
 - Tworzenie wykazu głównego: dla zadania realizującego tworzenie wykazu głównego DGA niezbędne jest ustawienie zmiennej środowiskowej określającej id Instytucji będącej jego właścicielem:
 
@@ -277,21 +284,32 @@ Uruchomienie usługi jest niezbędne, jeżeli zamierzamy korzystać z zadań asy
   MAIN_DGA_DATASET_OWNER_ORGANIZATION_PK=\<organization_pk>
 ```
 
+- Tworzenie raportu `katalog.xml` przez task `create_xml_metadata_files` może zostać dezaktywowane przez ustawienie zmiennej środowiskowej
+
+```
+  ENABLE_CREATE_XML_METADATA_REPORT=False
+```
+
 ### Usługa discourse
 
 #### Pierwsza konfiguracja
 
+Komenda umożliwia skonfigurowanie instancji forum Discourse – od wygenerowania systemowego klucza API, przez ustawienia, aż po instalację motywu i synchronizację użytkowników.
+
 ```
-(backend) python manage.py set_up_forum --file /.../backend/data/discourse/settings.json --theme_path /.../backend/data/discourse/discourse-otwarte-dane-theme.zip --password bitnami123 --username user
+(backend) python manage.py set_up_forum --file data/discourse/settings.json --theme_path data/discourse/discourse-otwarte-dane-theme.zip --username user --password bitnami123
 ```
 
 #### Ustawienie API_KEY
 
-Po wykonaniu powyższej komendy utworzy się plik api_key.txt w folderze mcod/. Zawartość pliku należy przekopiować i wkleić do zmiennej DISCOURSE_API_KEY w pliku .env
+Po wykonaniu powyższej komendy utworzy się plik `mcod/api_key.txt`. Zawartość pliku należy przekopiować i wkleić do zmiennej `DISCOURSE_API_KEY` w pliku `.env`
 
-#### Kolejna konfiguracja
+#### Synchronizacja użytkowników
 
-Pierwsza konfiguracja nie wykonała poprawnie kroku sync_user, bo brakowało utworzonego klucza API_KEY, stąd trzeba wykonać ten krok ponownie.
+Każdy użytkownik podczas **dodawania, usuwania i edycji** w Admin Panelu jest automatycznie synchronizowany z bazą forum Discourse, a jego status zostaje zaktualizowany.
+Podobnie przy **wylogowaniu** – użytkownik jest również wylogowywany z forum.
+Istnieje alternatywna komenda, która synchronizuje użytkowników między serwisem **Otwarte Dane** a forum **Discourse**,
+tworząc w bazie forum nowych użytkowników o statusie pełnomocnika lub administratora oraz zapisując ich klucz API w bazie OD.
 
 ```
 (backend) python manage.py set_up_forum --step_name sync_users

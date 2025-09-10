@@ -11,7 +11,7 @@ from calendar import monthrange
 from collections import namedtuple
 from io import BytesIO
 from pathlib import Path
-from typing import BinaryIO, Literal, Optional, Union
+from typing import BinaryIO, Dict, Literal, Optional, Tuple, Union
 
 import magic
 import pytz
@@ -84,7 +84,7 @@ from mcod.resources.managers import (
     ResourceTrashManager,
     SupplementManager,
 )
-from mcod.resources.score_computation import get_score
+from mcod.resources.score_computation import OptionalOpennessScoreValue, get_score
 from mcod.resources.signals import (
     cancel_data_date_update,
     revalidate_resource,
@@ -980,8 +980,14 @@ class Resource(ExtendedModel):
                 self.id, update_verification_date=update_verification_date
             ).apply_async_on_commit()
 
-    def revalidate_tabular_data(self):
-        process_resource_file_data_task.s(self.id).apply_async_on_commit()
+    def revalidate_tabular_data(self, *, apply_on_commit: bool) -> None:
+        if not self.is_data_processable:
+            return
+        signature = process_resource_file_data_task.s(self.id)
+        if apply_on_commit:
+            signature.apply_async_on_commit()
+        else:
+            signature.apply()
 
     @classmethod
     def accusative_case(cls):
@@ -1018,16 +1024,19 @@ class Resource(ExtendedModel):
         removed_file_path = os.path.join(removed_files_dir, file_name)
         return shutil.move(file_path, removed_file_path)
 
-    def get_openness_score(self, format_=None):
+    def get_openness_score(
+        self, format_: Optional[str] = None
+    ) -> Tuple[OptionalOpennessScoreValue, Dict[int, OptionalOpennessScoreValue]]:
         format_ = format_ or self.format
-        files_score = []
+        resource_score: OptionalOpennessScoreValue = 0
+        files_score: Dict[int, OptionalOpennessScoreValue] = dict()
         if format_ is None:
-            return 0, [0]
+            return resource_score, files_score
         if self.link and not self.main_file:
             resource_score = get_score(self.link, format_)
         else:
-            files_score = [{"file_pk": f.pk, "score": f.get_openness_score()} for f in self.all_files]
-            resource_score = max([fs["score"] for fs in files_score])
+            files_score = {f.pk: f.get_openness_score() for f in self.all_files}
+            resource_score = max(files_score.values()) if files_score else resource_score
         return resource_score, files_score
 
     @property
@@ -1780,7 +1789,7 @@ class ResourceFile(models.Model):
             f.write(content.read())
         return f"{subdir}/{filename}"
 
-    def get_openness_score(self, format_=None):
+    def get_openness_score(self, format_: Optional[str] = None) -> OptionalOpennessScoreValue:
         format_ = format_ or self.compressed_file_format or self.format
         if format_ == "jsonstat":
             format_ = "json"

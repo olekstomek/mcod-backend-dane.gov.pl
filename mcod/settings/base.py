@@ -49,6 +49,10 @@ ENVIRONMENT = env("ENVIRONMENT", default="prod")
 
 ENABLE_MONTHLY_REPORTS = env.bool("ENABLE_MONTHLY_REPORTS", False)
 
+ENABLE_CREATE_XML_METADATA_REPORT = env.bool("ENABLE_CREATE_XML_METADATA_REPORT", True)
+
+UPDATE_TASKS_CELERY_BEAT_TIME = env("UPDATE_TASKS_CELERY_BEAT_TIME", default="")
+
 NOTEBOOKS_DIR = env("NOTEBOOKS_DIR", default=str(ROOT_DIR.path("notebooks/notebooks")))
 
 NOTEBOOK_ARGUMENTS = ["--config", "mcod/settings/jupyter_config.py"]

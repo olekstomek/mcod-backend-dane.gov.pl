@@ -12,6 +12,28 @@ ______________________________________________________________________
 
 ### Breaks
 
+## 2.46.0 - (2025-08-27)
+
+______________________________________________________________________
+
+### New
+
+- Dodano flagę, kontrolującą uruchamianie generacji dziennego raportu w formacie XML - OTD-1769
+- Dodano zmienną środowiskową, pozwalającą kontrolować czas startu tasków periodycznych - OTD-1769
+
+### Changes
+
+- Zmniejszono liczbę indeksacji zasobu w Elasticsearch - OTD-1727
+
+### Fixes
+
+- Naprawiono błąd przy kalkulacji openness score - OTD-1678
+- Naprawiono błąd polegający na przypisaniu typu 'date' dla 'datetime' z godziną 00:00:00 - OTD-1715
+- Naprawiono błąd 504 oraz długiego czasu renderowania się formularzy Użytkownika i Organizacji w Panelu Administracyjnym - OTD-1730
+- Naprawiono błąd w pipeline `invalid value for parameter "log_timezone": "Poland"` - OTD-1773
+- Naprawiono problem plików nietabelarycznych fałszywie pozytywnie przechodzących walidacje tabelaryczne - OTD-1722
+- Zmieniono logikę wywoływania funkcji `user_sync_task`, wywołującej się w momencie dodawania, edycji i usuwania użytkownika w celu usunięcia błędów Discourse - OTD-1724
+
 ## 2.45.0 - (2025-08-08)
 
 ______________________________________________________________________

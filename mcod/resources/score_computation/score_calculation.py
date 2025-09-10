@@ -11,12 +11,17 @@ from mcod.resources.score_computation.calculators import (
     OpennessScoreCalculator,
     get_calculator_for_extension,
 )
-from mcod.resources.score_computation.common import OpennessScoreValue, Source, SourceData
+from mcod.resources.score_computation.common import (
+    OpennessScoreValue,
+    OptionalOpennessScoreValue,
+    Source,
+    SourceData,
+)
 
 logger = logging.getLogger("mcod")
 
 
-def calculate_score_for_archive(source_data: SourceData) -> Tuple[Optional[OpennessScoreValue], Optional[SourceData]]:
+def calculate_score_for_archive(source_data: SourceData) -> Tuple[Optional[OptionalOpennessScoreValue], Optional[SourceData]]:
     """Either calculates score for an archive or unpacks a single file from it for further calculations.
     See mcod.resources.file_validation.analyze_file for similar behaviour, and exceptions (geotiff/shapefiles).
     The goal is to treat singular compressed files as if they were outside the archive
@@ -107,7 +112,7 @@ def get_default_openness_score_for_extension(extension: str) -> OpennessScoreVal
     return 1
 
 
-def get_score(source: Source, extension: str) -> OpennessScoreValue:
+def get_score(source: Source, extension: str) -> OptionalOpennessScoreValue:
     """
     Return score for a given source and extension. This function use calculator
     for extensions with registered calculator. Returns openness score based

@@ -607,7 +607,7 @@ class DataSource(AdminMixin, LogMixin, SoftDeletableModel, TimeStampedModel):
         obj.special_signs.set(new_special_signs)
 
         if revalidate:
-            obj.revalidate_tabular_data()
+            obj.revalidate_tabular_data(apply_on_commit=True)
 
         return obj, created
 

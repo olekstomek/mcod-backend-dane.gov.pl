@@ -20,10 +20,10 @@ prepare-images:
   stage: prepare
   script:
     - docker build -f docker/elasticsearch/Dockerfile -t $REGISTRY_PATH/elasticsearch:6.8.23-mcod-1 .
-    - docker build -f docker/postgres/Dockerfile -t $REGISTRY_PATH/postgresql:13-mcod .
+    - docker build -f docker/postgres/Dockerfile -t $REGISTRY_PATH/postgresql:13-trixie-mcod .
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $REGISTRY_HOST
     - docker push $REGISTRY_PATH/elasticsearch:6.8.23-mcod-1
-    - docker push $REGISTRY_PATH/postgresql:13-mcod
+    - docker push $REGISTRY_PATH/postgresql:13-trixie-mcod
   except:
     - tags
     - master
@@ -82,7 +82,7 @@ test:
           "-Eindex.store.type=niofs",
           "-Ebootstrap.memory_lock=true",
         ]
-    - name: $REGISTRY_PATH/postgresql:13-mcod
+    - name: $REGISTRY_PATH/postgresql:13-trixie-mcod
       alias: postgres
   before_script:
     - sed -i 's|http://deb.debian.org/debian|http://archive.debian.org/debian|g' /etc/apt/sources.list

@@ -557,7 +557,7 @@ class Command(BaseCommand):
         for resource in resources:
             try:
                 self.stdout.write("Recomputing openness score for res with id {}".format(resource.pk))
-                resource.openness_score = resource.get_openness_score()
+                resource.openness_score, _ = resource.get_openness_score()
                 res_to_update.append(resource)
             except Exception as err:
                 self.stdout.write("Error while recomputing openness score for res with id {}: {}".format(resource.pk, err))
