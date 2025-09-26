@@ -52,6 +52,7 @@ def test_validate_conflicting_high_value_data_flags(
     [
         # Test cases where ValidationError should be raised
         (True, Organization.INSTITUTION_TYPE_PRIVATE, True),
+        (True, Organization.INSTITUTION_TYPE_DEVELOPER, True),
         # Test cases where ValidationError should not be raised
         (True, Organization.INSTITUTION_TYPE_LOCAL, False),
         (True, Organization.INSTITUTION_TYPE_STATE, False),
@@ -60,10 +61,12 @@ def test_validate_conflicting_high_value_data_flags(
         (False, Organization.INSTITUTION_TYPE_OTHER, False),
         (False, Organization.INSTITUTION_TYPE_LOCAL, False),
         (False, Organization.INSTITUTION_TYPE_STATE, False),
+        (False, Organization.INSTITUTION_TYPE_DEVELOPER, False),
         (None, Organization.INSTITUTION_TYPE_PRIVATE, False),
         (None, Organization.INSTITUTION_TYPE_OTHER, False),
         (None, Organization.INSTITUTION_TYPE_LOCAL, False),
         (None, Organization.INSTITUTION_TYPE_STATE, False),
+        (None, Organization.INSTITUTION_TYPE_DEVELOPER, False),
     ],
 )
 def test_validate_high_value_data_from_ec_list(
@@ -136,11 +139,22 @@ def test_validate_contains_protected_data_with_other_metadata(
         # Test cases where validation result is not OK (False)
         (True, "private", False),
         (True, "other", False),
+        (True, "developer", False),
         # Test cases where validation result is OK (True)
         (True, "state", True),
         (True, "local", True),
+        # Test cases where contains_protected_data is False
+        (False, "state", True),
+        (False, "local", True),
         (False, "private", True),
         (False, "other", True),
+        (False, "developer", True),
+        # Test cases where contains_protected_data is not set
+        (None, "state", True),
+        (None, "local", True),
+        (None, "private", True),
+        (None, "other", True),
+        (None, "developer", True),
     ],
 )
 def test_validate_contains_protected_data_with_institution_type(contains_protected_data, institution_type, validation_result):

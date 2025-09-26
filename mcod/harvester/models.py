@@ -129,7 +129,7 @@ class DataSource(AdminMixin, LogMixin, SoftDeletableModel, TimeStampedModel):
     status = models.CharField(max_length=8, verbose_name=_("status"), choices=STATUS_CHOICES)
     license_condition_db_or_copyrighted = models.TextField(blank=True, verbose_name=_("data use rules"))
     institution_type = models.CharField(
-        max_length=7,
+        max_length=9,
         blank=True,
         choices=INSTITUTION_TYPE_CHOICES,
         default=INSTITUTION_TYPE_CHOICES[2][0],

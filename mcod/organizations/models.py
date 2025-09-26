@@ -30,10 +30,12 @@ class Organization(ExtendedModel):
     INSTITUTION_TYPE_LOCAL = "local"
     INSTITUTION_TYPE_STATE = "state"
     INSTITUTION_TYPE_OTHER = "other"
+    INSTITUTION_TYPE_DEVELOPER = "developer"
     INSTITUTION_TYPE_CHOICES = (
         (INSTITUTION_TYPE_LOCAL, _("Local government")),
         (INSTITUTION_TYPE_STATE, _("Public government")),
         (INSTITUTION_TYPE_PRIVATE, _("Private entities")),
+        (INSTITUTION_TYPE_DEVELOPER, _("Developers")),
         (INSTITUTION_TYPE_OTHER, _("Other")),
     )
     SIGNALS_MAP = {

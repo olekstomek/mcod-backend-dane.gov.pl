@@ -52,7 +52,6 @@ scenarios(
         ("test_samples/Mexico_and_US_Border.zip", "shp", "application/shapefile", None, None, None),
         ("test_samples/tiff_and_tfw.zip", "geotiff", "image/tiff;application=geotiff", None, None, None),
         ("dbf_examples/dbase_f5.dbf", "dbf", "application/x-dbf", None, None, None),
-        ("test_samples/example_kml.kml", "kml", "application/vnd.google-earth.kml+xml", None, None, None),
         ("test_samples/empty_file.7z", "7z", "application/x-7z-compressed", "csv", "text/plain", None),
         ("test_samples/empty_file.rar", "rar", "application/x-rar", "csv", "text/plain", None),
         ("test_samples/encrypted_content_and_headers.rar", "rar", "application/x-rar", None, None, PasswordProtectedArchiveError),

@@ -68,6 +68,7 @@ from mcod.lib.model_sanitization import (
     SanitizedTextField,
     SanitizedTranslationField,
 )
+from mcod.organizations.models import Organization
 from mcod.regions.models import Region, RegionManyToManyField
 from mcod.resources import model_validators
 from mcod.resources.archives import ArchiveReader, is_archive_file
@@ -599,8 +600,10 @@ class Resource(ExtendedModel):
     def is_data_processable(self):
         processable_formats = ("csv", "tsv", "xls", "xlsx", "ods", "shp")
         return (
-            self.format in processable_formats or (self.main_file_compressed_format in processable_formats)
-        ) and self.main_file
+            (self.format in processable_formats or (self.main_file_compressed_format in processable_formats))
+            and self.main_file
+            and self.dataset.organization.institution_type != Organization.INSTITUTION_TYPE_DEVELOPER
+        )
 
     @property
     def is_linked(self):

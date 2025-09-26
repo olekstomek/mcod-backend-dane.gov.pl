@@ -275,6 +275,7 @@
             <xs:enumeration value="Administracja samorządowa"/>
             <xs:enumeration value="Administracja rządowa"/>
             <xs:enumeration value="Podmioty prywatne"/>
+            <xs:enumeration value="Deweloperzy"/>
             <xs:enumeration value="Inne"/>
         </xs:restriction>
     </xs:simpleType>

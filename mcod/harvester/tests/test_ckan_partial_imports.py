@@ -90,7 +90,7 @@ class TestCKANErrorDescriptionFormatters:
         error_data = [{"item_id": "dataset-id-1"}, {"item_id": "dataset-id-2"}]
         result = format_dataset_org_hvd_ec_conflict_error_details(error_data)
         expected_result = (
-            "<p>Instytucja typu 'prywatna' nie może wybrać wartości true w polu "
+            "<p>Instytucja typu 'prywatna' lub 'deweloper' nie może wybrać wartości true w polu "
             "'has_high_value_data_from_european_commission_list' zbioru danych.</p>"
             '<div class="expandable">'
             "<p><strong>id zbioru danych:</strong> dataset-id-1</p><br>"
@@ -117,7 +117,7 @@ class TestCKANErrorDescriptionFormatters:
         ]
         result = format_res_org_hvd_ec_conflict_error_details(error_data)
         expected_result = (
-            "<p>Instytucja typu 'prywatna' nie może wybrać wartości true w polu "
+            "<p>Instytucja typu 'prywatna' lub 'deweloper' nie może wybrać wartości true w polu "
             "'has_high_value_data_from_european_commission_list' zasobu.</p>"
             '<div class="expandable">'
             "<p><strong>id zbioru danych:</strong> dataset-id-1</p>"

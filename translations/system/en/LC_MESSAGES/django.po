@@ -2492,6 +2492,9 @@ msgstr ""
 msgid "Other"
 msgstr ""
 
+msgid "Developers"
+msgstr ""
+
 msgid "City"
 msgstr ""
 

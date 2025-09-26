@@ -137,7 +137,7 @@ def test_add_row_to_dga_report_and_save_report(tmp_path):
 
 @pytest.mark.parametrize(
     "institution_type, public_count, not_public_count",
-    [("local", 1, 0), ("state", 1, 0), ("private", 0, 1), ("other", 0, 1)],
+    [("local", 1, 0), ("state", 1, 0), ("private", 0, 1), ("other", 0, 1), ("developer", 0, 1)],
 )
 def test_dga_migrator_get_public_and_not_public_organizations(
     institution: Organization, institution_type, public_count, not_public_count

@@ -275,6 +275,7 @@
             <xs:enumeration value="Local government"/>
             <xs:enumeration value="Public government"/>
             <xs:enumeration value="Private entities"/>
+            <xs:enumeration value="Developers"/>
             <xs:enumeration value="Other"/>
         </xs:restriction>
     </xs:simpleType>

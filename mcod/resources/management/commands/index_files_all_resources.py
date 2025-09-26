@@ -63,6 +63,9 @@ class Command(BaseCommand):
             if dry_run:
                 self.stdout.write("DRY RUN - skipping")
                 continue
+            if not resource.is_data_processable:
+                self.stdout.write(f"Resource with id={resource.id} not processable - skipping")
+                continue
 
             if async_:
                 process_resource_file_data_task.delay(resource.pk)

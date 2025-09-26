@@ -2709,6 +2709,9 @@ msgstr "Podmioty prywatne"
 msgid "Other"
 msgstr "Inne"
 
+msgid "Developers"
+msgstr "Deweloperzy"
+
 msgid "City"
 msgstr "Miasto"
 
@@ -3383,8 +3386,8 @@ msgstr "Aby tu wybrać TAK, w polach dotyczących danych dynamicznych, o wysokie
 msgid "Check YES, because high-value data from the EC list is a special subcategory of high-value data."
 msgstr "Zaznacz TAK, ponieważ dane o wysokiej wartości z wykazu KE są szczególną podkategorią danych o wysokiej wartości."
 
-msgid "Data of private institutions are not high-value data from EC list."
-msgstr "Dane instytucji prywatnych nie są danymi o wysokiej wartości z wykazu KE."
+msgid "Data of private or developer institutions are not high-value data from EC list."
+msgstr "Dane instytucji prywatnych lub deweloperskich nie są danymi o wysokiej wartości z wykazu KE."
 
 msgid "deleted"
 msgstr "usunięty"
@@ -3464,12 +3467,12 @@ msgid "Resource field '%(first_field)s' must have value true if field '%(second_
 msgstr "Pole zasobu '%(first_field)s' musi mieć wartość równą true, jeżeli pole '%(second_field)s' ma wartość true."
 
 #, python-format
-msgid "Institution with type 'private' can not use field '%(field_name)s' with value true for resource."
-msgstr "Instytucja typu 'prywatna' nie może wybrać wartości true w polu '%(field_name)s' zasobu."
+msgid "Institution with type 'private' or 'developer' can not use field '%(field_name)s' with value true for resource."
+msgstr "Instytucja typu 'prywatna' lub 'deweloper' nie może wybrać wartości true w polu '%(field_name)s' zasobu."
 
 #, python-format
-msgid "Institution with type 'private' can not use field '%(field_name)s' with value true for dataset."
-msgstr "Instytucja typu 'prywatna' nie może wybrać wartości true w polu '%(field_name)s' zbioru danych."
+msgid "Institution with type 'private' or 'developer' can not use field '%(field_name)s' with value true for dataset."
+msgstr "Instytucja typu 'prywatna' lub 'deweloper' nie może wybrać wartości true w polu '%(field_name)s' zbioru danych."
 
 msgid ""
 "If the resource has a value of the 'containsProtectedData' field equal to true, then the fields 'hasDynamicData', "
@@ -3478,8 +3481,8 @@ msgstr ""
 "Jeśli zasób ma wartość pola 'containsProtectedData' równą true, to pola 'hasDynamicData', 'hasResearchData', "
 "'hasHighValueData', 'hasHighValueDataFromEuropeanCommissionList', muszą mieć wartość false lub nie występować w ogóle."
 
-msgid "A 'private' or 'other' institution cannot use true in the 'containsProtectedData' field of a resource."
-msgstr "Instytucja typu 'prywatna' lub 'inna' nie może używać wartości true w polu 'containsProtectedData' zasobu."
+msgid "A 'private', 'other' or 'developer' institution cannot use true in the 'containsProtectedData' field of a resource."
+msgstr "Instytucja typu 'prywatna', 'inna' lub 'deweloper' nie może używać wartości true w polu 'containsProtectedData' zasobu."
 
 msgid "An address in the 'url' field of a resource that contains a 'containsProtectedData' field with a value equal to true is not responding."
 msgstr "Adres w polu 'url' zasobu, który zawiera pole 'containsProtectedData' z wartością równą true, nie odpowiada."

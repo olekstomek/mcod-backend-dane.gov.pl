@@ -545,7 +545,7 @@ class XMLResourceSchema(ResourceMixin, XMLPreProcessedSchema):
     def validate_has_high_value_data_from_ec_list(self, data, **kwargs):
         serializer_field_name = "has_high_value_data_from_ec_list"
         msg_institution_type_conflict = _(
-            "Institution with type 'private' can not use field '%(field_name)s' with value true for resource."
+            "Institution with type 'private' or 'developer' can not use field '%(field_name)s' with value true for resource."
         ) % {
             "field_name": "hasHighValueDataFromEuropeanCommissionList",
         }
@@ -582,7 +582,8 @@ class XMLResourceSchema(ResourceMixin, XMLPreProcessedSchema):
             result_ok: bool = validate_institution_type_for_contains_protected_data(contains_protected_data, institution_type)
             if not result_ok:
                 msg_institution_type_conflict = _(
-                    "A 'private' or 'other' institution cannot use true in the 'containsProtectedData' field of a resource."
+                    "A 'private', 'other' or 'developer' institution cannot use true in the"
+                    " 'containsProtectedData' field of a resource."
                 )
                 raise ValidationError(message=msg_institution_type_conflict, field_name=field_name)
 
@@ -774,7 +775,7 @@ class XMLDatasetSchema(XMLPreProcessedSchema):
     def validate_has_high_value_data_from_ec_list(self, data, **kwargs):
         serializer_field_name = "has_high_value_data_from_ec_list"
         msg_institution_type_conflict = _(
-            "Institution with type 'private' can not use field '%(field_name)s' with value true for dataset."
+            "Institution with type 'private' or 'developer' can not use field '%(field_name)s' with value true for dataset."
         ) % {
             "field_name": "hasHighValueDataFromEuropeanCommissionList",
         }

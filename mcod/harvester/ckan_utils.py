@@ -55,7 +55,7 @@ def format_dataset_in_trash_error_details(errors_data: List[Dict[str, Any]]) -> 
 # DATASET HVD
 def format_dataset_org_hvd_ec_conflict_error_details(errors_data: List[Dict[str, Any]]) -> str:
     error_desc = (
-        "<p>Instytucja typu 'prywatna' nie może wybrać wartości true w polu "
+        "<p>Instytucja typu 'prywatna' lub 'deweloper' nie może wybrać wartości true w polu "
         "'has_high_value_data_from_european_commission_list' zbioru danych.</p>"
     )
     inner_descriptions: List[str] = [f"<p><strong>id zbioru danych:</strong> {error['item_id']}</p>" for error in errors_data]
@@ -76,7 +76,7 @@ def format_dataset_hvd_conflict_error_details(errors_data: List[Dict[str, Any]])
 # RESOURCE HVD
 def format_res_org_hvd_ec_conflict_error_details(errors_data: List[Dict[str, Any]]) -> str:
     error_desc = (
-        "<p>Instytucja typu 'prywatna' nie może wybrać wartości true w polu "
+        "<p>Instytucja typu 'prywatna' lub 'deweloper' nie może wybrać wartości true w polu "
         "'has_high_value_data_from_european_commission_list' zasobu.</p>"
     )
 
@@ -135,7 +135,8 @@ def format_res_dga_other_metadata_conflict_error_details(errors_data: List[Dict[
 
 def format_not_dga_institution_type_error_details(errors_data: List[Dict[str, Any]]) -> str:
     error_desc = (
-        "<p>Instytucja typu 'prywatna' lub 'inna' nie może używać wartości true w polu 'contains_protected_data' zasobu.</p>"
+        "<p>Instytucja typu 'prywatna', 'inna' lub 'deweloper' nie może używać wartości true "
+        "w polu 'contains_protected_data' zasobu.</p>"
     )
     inner_descriptions: List[str] = []
     for error in errors_data:

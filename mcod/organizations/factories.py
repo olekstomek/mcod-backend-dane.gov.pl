@@ -6,6 +6,9 @@ from mcod.resources.dga_constants import ALLOWED_INSTITUTIONS_TO_USE_HIGH_VALUE_
 
 _INSTITUTION_TYPES = [i[0] for i in Organization.INSTITUTION_TYPE_CHOICES]
 
+# TODO remove the line below after restoring the functionality - creating an ES table index for Developers' resources
+_INSTITUTION_TYPES = [i_type for i_type in _INSTITUTION_TYPES if i_type != Organization.INSTITUTION_TYPE_DEVELOPER]
+
 
 class OrganizationFactory(factory.django.DjangoModelFactory):
     title = factory.Faker("company", locale="pl_PL")

@@ -34,7 +34,6 @@ Feature: File validation
       | dbase_83_missing_memo.dbf        | dbf         |
       | dbase_8b.dbf                     | dbf         |
       | dbase_f5.dbf                     | dbf         |
-      | kml                              | kml         |
       | n3                               | n3          |
       | n_triples                        | n3          |
       | n_quads                          | nq          |

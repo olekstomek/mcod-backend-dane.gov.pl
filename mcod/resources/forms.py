@@ -544,7 +544,7 @@ class ResourceForm(forms.ModelForm, HighValueDataFormValidatorMixin):
         except ValidationError:
             self.add_error(
                 "has_high_value_data_from_ec_list",
-                _("Data of private institutions are not high-value data from EC list."),
+                _("Data of private or developer institutions are not high-value data from EC list."),
             )
 
 

@@ -12,6 +12,32 @@ ______________________________________________________________________
 
 ### Breaks
 
+## 2.48.0 - (2025-09-19)
+
+______________________________________________________________________
+
+### New
+
+- Dodano brak walidacji danych, a tym samym tworzenia indeksu danych tabelarycznych, dla zasobów dodawanych przez instytucje typu deweloper - OTD-1888
+
+### Changes
+
+- Usunięto testy dot. walidacji plików kml - OTD-1888
+
+## 2.47.0 - (2025-09-15)
+
+______________________________________________________________________
+
+### New
+
+- Dodano w Panelu Administracyjnym obsługę nowego typu instytucji dedykowanego dla deweloperów budowlanych - OTD-1791
+- Dodano w procesie harwestacji CKAN i XML obsługę nowego typu instytucji dedykowanego dla deweloperów budowlanych - OTD-1792
+- Nowy typ instytucji (deweloper) w raportach w PA oraz generowanych z frontendu - OTD-1791 i OTD-1792
+
+### Changes
+
+- Zmieniono reguły walidacji Zawiera wykaz chronionych danych (zasoby) oraz Zawiera dane wysokiej wartości z wykazu KE (zasoby i zbiory) uwzględniające nowy typ instytucji - OTD-1792
+
 ## 2.46.0 - (2025-08-27)
 
 ______________________________________________________________________
