@@ -1,11 +1,14 @@
+from __future__ import annotations
+
 from dal_admin_filters import AutocompleteFilter
 from django.contrib import admin
 from django.contrib.admin import helpers
 from django.contrib.admin.views.main import ChangeList
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import EmptyPage, InvalidPage, Paginator
+from django.db import models
 from django.db.models import OuterRef, Subquery
-from django.http import JsonResponse
+from django.http import HttpRequest, JsonResponse
 from django.template.defaultfilters import yesno
 from django.urls import path
 from django.utils.html import format_html
@@ -400,8 +403,8 @@ class DatasetAdminMixin(HistoryMixin):
     def suit_row_attributes(self, obj, request):
         return {"class": "info"} if request.user.is_superuser and obj.is_promoted else {}
 
-    def get_history(self, obj):
-        history = super().get_history(obj)
+    def get_history(self, obj: models.Model, request: HttpRequest | None = None):
+        history = super().get_history(obj, request=None)
         supplements = Supplement.raw.filter(dataset=obj)
         supplements_history = LogEntry.objects.get_for_objects(supplements)
         all_history = history.distinct() | supplements_history

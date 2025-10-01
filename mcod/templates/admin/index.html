@@ -35,15 +35,15 @@
                             <caption><a href="{{ app.app_url }}"
                                         class="section">{% trans app.name %} {{ app.skip_dashboard }}</a></caption>
                             {% for model in app.models %}
-                                {% get_model_extra_data app.app_label model.object_name as model_data %}
+                                {% get_model_extra_data app.app_label model as model_data %}
                                 {% if not model_data.is_trash %}
                                 <tr>
 
                                     <th class="col-5" scope="row">{{ model.name }}</th>
 
                                     <td class="col-2">
-                                        {% if model.admin_url %}
-                                            <a href="{{ model_data.admin_url }}" class="changelink icon">
+                                        {% if model.admin_url and model_data.show_change_button %}
+                                            <a id="{% get_main_page_table_change_button_id model.object_name %}" href="{{ model_data.admin_url }}" class="changelink icon">
                                                 {% trans 'Change' %}
                                             </a>
                                         {% endif %}

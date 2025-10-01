@@ -12,6 +12,29 @@ ______________________________________________________________________
 
 ### Breaks
 
+## 2.49.1 - (2025-09-29)
+
+______________________________________________________________________
+
+### Changes
+
+- Przywrócenie ze względów bezpieczeństwa sposobu sanityzacji danych w backendzie – usunięto ponowne enkodowanie encji HTML - OTD-1861
+
+______________________________________________________________________
+
+## 2.49.0 - (2025-09-26)
+
+______________________________________________________________________
+
+### Fixes
+
+- Zmiana zachowania dla Słów Kluczowych na stronie admina, dla użytkowników bez roli admin. Blokada wyświetlania historii i edycji samych tagów. Wyłączenie przycisku "zmiana" na stronie głównej. - OTD-1901
+- Zmieniono sposób sanityzacji danych w backendzie – usunięto ponowne enkodowanie encji HTML - OTD-1861
+
+### Changes
+
+- Umożliwienie ustawienia przeszłej daty data_date (Dane na dzień) dla Zasobów importowanych - OTD-1845
+
 ## 2.48.0 - (2025-09-19)
 
 ______________________________________________________________________

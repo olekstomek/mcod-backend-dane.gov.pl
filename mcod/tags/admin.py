@@ -1,4 +1,11 @@
+from __future__ import annotations
+
+from typing import Dict
+
 from django.contrib import admin
+from django.core.exceptions import PermissionDenied
+from django.db import models
+from django.http import HttpRequest
 from django.utils.translation import gettext_lazy as _
 
 from mcod import settings
@@ -23,7 +30,18 @@ class TagAdmin(TagAutocompleteMixin, HistoryMixin, ModelAdmin):
 
     language_readonly.short_description = _("language")
 
-    def get_form(self, request, obj=None, change=False, **kwargs):
+    def has_change_permission(self, request: HttpRequest, obj: models.Model | None = None):
+        return request.user.is_superuser
+
+    def has_history_permission(self, request: HttpRequest, obj: models.Model | None = None):
+        return request.user.is_superuser
+
+    def history_view(self, request: HttpRequest, object_id: int, extra_context: Dict | None = None):
+        if not request.user.is_superuser:
+            raise PermissionDenied
+        return super().history_view(request, object_id, extra_context=extra_context)
+
+    def get_form(self, request: HttpRequest, obj: models.Model | None = None, change: bool = False, **kwargs):
         self._request = request
         self._lang_code = self.lang_code()
         form = super().get_form(request, obj=obj, change=change, **kwargs)

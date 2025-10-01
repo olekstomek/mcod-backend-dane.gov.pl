@@ -1,9 +1,12 @@
+from __future__ import annotations
+
 from typing import Any, Dict, Optional, Union
 
 from dal_admin_filters import AutocompleteFilter
 from django.conf import settings
 from django.contrib import admin, messages
 from django.core.exceptions import MultipleObjectsReturned, PermissionDenied
+from django.db import models
 from django.db.models import Q
 from django.forms.models import model_to_dict
 from django.http import HttpRequest
@@ -581,7 +584,7 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):
 
         return factory
 
-    def get_history(self, obj):
+    def get_history(self, obj: models.Model, request: HttpRequest | None = None):
         history = super().get_history(obj)
         supplements = Supplement.raw.filter(resource=obj)
         supplements_history = LogEntry.objects.get_for_objects(supplements)

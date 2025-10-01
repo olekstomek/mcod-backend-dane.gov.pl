@@ -2168,6 +2168,9 @@ msgstr "Użytkownik"
 msgid "History"
 msgstr "Historia"
 
+msgid "You don't have permission to view history for this object."
+msgstr "Nie masz uprawnień do przeglądania historii tego obiektu."
+
 msgid "acc: History"
 msgstr "historię"
 

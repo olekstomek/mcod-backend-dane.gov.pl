@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from django.contrib.admin.helpers import AdminReadonlyField
 from django import template
 from django.apps import apps
@@ -135,8 +137,13 @@ def add_required_span_tag(label_tag):
 
 
 @register.simple_tag
-def get_model_extra_data(app_label, object_name):
-    model = apps.get_model(app_label, object_name)
+def get_model_extra_data(app_label: str, model_data: dict) -> dict:
+
+    model_perms = model_data.get("perms", {})  # Permissions managed by has_*_permission methods in ModelAdmin
+    has_change_perm = model_perms.get("change")
+    has_view_perm: bool = model_perms.get("view", False)
+
+    model = apps.get_model(app_label, model_data.get("object_name"))
 
     is_trash = getattr(model, "is_trash", False)
     has_trash = hasattr(model, "trash_class") and is_trash is False
@@ -159,6 +166,7 @@ def get_model_extra_data(app_label, object_name):
         "is_trash": is_trash,
         "trash_url": trash_url,
         "admin_url": admin_url,
+        "show_change_button": has_change_perm and has_view_perm
     }
     return extra_data
 
@@ -203,3 +211,11 @@ def resources_actions_tag(parser, token):
     return InclusionAdminNode(
         parser, token, func=admin_actions, template_name="resources_actions.html"
     )
+
+
+@register.simple_tag
+def get_main_page_table_change_button_id(object_name: str | None) -> str:
+    if object_name:
+        return object_name + "ChangeButton"
+    else:
+        return "ChangeButton"

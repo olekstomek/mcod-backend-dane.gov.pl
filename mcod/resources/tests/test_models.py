@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 from typing import List
 from unittest.mock import patch
 
@@ -173,6 +174,46 @@ class TestResourceModel:
         source_id = _source.pk
 
         assert resource_dga_in_db.is_added_by_harvester_with_id(source_id=source_id) is False
+
+    def test_data_date_is_filled(self):
+        """System ensures that imported resources have data_date set to a not null value."""
+        _today = datetime.now().date()
+        # When Resource is created manually without data_date
+        manual: Resource = ResourceFactory.create(
+            data_date=None,
+        )
+        # Then it stays as none
+        assert manual.data_date is None
+
+        # Given Resource is imported without data_date
+        _source = DataSourceFactory.create()
+        _dataset = DatasetFactory.create(source=_source)
+        imported: Resource = ResourceFactory.create(
+            dataset=_dataset,
+            data_date=None,
+        )
+        # Then we set it to today
+        assert imported.data_date == _today
+
+        # Given Resource is imported with data_date in the past
+        _source = DataSourceFactory.create()
+        _dataset = DatasetFactory.create(source=_source)
+        imported: Resource = ResourceFactory.create(
+            dataset=_dataset,
+            data_date=_today - timedelta(days=100),
+        )
+        # Then we use the upstream value
+        assert imported.data_date == _today - timedelta(days=100)
+
+        # Given Resource is imported with data_date in the future
+        _source = DataSourceFactory.create()
+        _dataset = DatasetFactory.create(source=_source)
+        imported: Resource = ResourceFactory.create(
+            dataset=_dataset,
+            data_date=_today + timedelta(days=100),
+        )
+        # Then we use the upstream value
+        assert imported.data_date == _today + timedelta(days=100)
 
 
 class TestTaskResultModel:

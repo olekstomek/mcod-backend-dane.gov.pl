@@ -1844,10 +1844,8 @@ def update_chart_resource_handler(sender, instance, *args, **kwargs):
 
 @receiver(pre_save, sender=Resource)
 def preprocess_resource(sender, instance, *args, **kwargs):
-    if instance.is_imported and instance.created:
-        creation_date = instance.created.date()
-        if not instance.data_date or instance.data_date < creation_date:
-            instance.data_date = creation_date
+    if instance.is_imported and not instance.data_date and instance.created:
+        instance.data_date = instance.created.date()
     instance.has_chart = instance.charts.filter(is_removed=False, is_permanently_removed=False, is_default=True).exists()
     instance.type = instance.get_resource_type()
 

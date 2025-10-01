@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 import json
 from collections import defaultdict
 from datetime import datetime, timedelta
-from typing import List, Optional
+from typing import Dict, List, Optional
 from urllib.parse import quote as urlquote
 
 import nested_admin
@@ -14,8 +16,9 @@ from django.contrib.admin.utils import quote, unquote
 from django.contrib.admin.views.main import ChangeList
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.core.exceptions import PermissionDenied
+from django.db import models
 from django.db.models import QuerySet
-from django.http import HttpResponseRedirect
+from django.http import HttpRequest, HttpResponseRedirect
 from django.template.defaultfilters import truncatewords
 from django.template.response import TemplateResponse
 from django.urls import NoReverseMatch, reverse
@@ -727,7 +730,19 @@ class HistoryMixin:
     is_history_other = False
     is_history_with_unknown_user_rows = False
 
-    def get_history(self, obj):
+    def render_change_form(
+        self,
+        request: HttpRequest,
+        context: Dict[str],
+        add: bool = False,
+        change: bool = False,
+        form_url: str = "",
+        obj: models.Model | None = None,
+    ) -> TemplateResponse:
+        context["has_history_permission"] = bool(obj and self.has_history_permission(request, obj))
+        return super().render_change_form(request, context, add=add, change=change, form_url=form_url, obj=obj)
+
+    def get_history(self, obj: models.Model, request: HttpRequest | None = None):
         queryset = LogEntry.objects.get_for_object(obj)
         if not self.is_history_with_unknown_user_rows:
             queryset = queryset.exclude(actor_id=1)
@@ -750,7 +765,7 @@ class HistoryMixin:
         # Then get the history for this object.
         opts = model._meta
         app_label = opts.app_label
-        action_list = self.get_history(obj)
+        action_list = self.get_history(obj, request)
         context = dict(
             self.admin_site.each_context(request),
             title=_("Change history: %s") % obj,
@@ -768,8 +783,8 @@ class HistoryMixin:
             request,
             self.object_history_template
             or [
-                "admin/%s/%s/object_history.html" % (app_label, opts.model_name),
-                "admin/%s/object_history.html" % app_label,
+                f"admin/{app_label}/{opts.model_name}/object_history.html",
+                f"admin/{app_label}/object_history.html",
                 "admin/object_history.html",
             ],
             context,
