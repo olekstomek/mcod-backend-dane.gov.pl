@@ -10,6 +10,7 @@ from mcod.resources.tasks.tasks import (
     check_link_protocol,
     compare_postgres_and_elasticsearch_consistency_task,
     delete_es_resource_tabular_data_index,
+    delete_es_resource_tabular_data_indexes_for_organization,
     delete_index,
     get_ckan_resource_format_from_url_task,
     process_resource_data_indexing_task,
@@ -43,4 +44,5 @@ __all__ = (
     "update_resource_with_archive_format",
     "validate_link",
     "get_ckan_resource_format_from_url_task",
+    "delete_es_resource_tabular_data_indexes_for_organization",
 )

@@ -265,6 +265,50 @@ def delete_es_resource_tabular_data_index(self, resource_ids: Union[int, List[in
     logger.info("Finished delete_es_resource_tabular_data_index task.")
 
 
+def _get_resources_ids_for_organization(organization_id: int) -> List[int]:
+    Resource = apps.get_model("resources", "resource")
+
+    organization_resources_ids: List[int] = Resource.raw.filter(dataset__organization_id=organization_id).values_list(
+        "id", flat=True
+    )
+    return organization_resources_ids
+
+
+@extended_shared_task(
+    max_retries=3,
+    atomic=False,
+    retry_countdown=60,
+    retry_on_errors=(ElasticsearchException,),
+    bind=True,
+    name="mcod.resources.tasks.delete_es_resource_tabular_data_indexes_for_organization",
+)
+def delete_es_resource_tabular_data_indexes_for_organization(self, organization_id: int):
+    """
+    Task which removes tabular data indexes for resources belonging to the organization with id `organization_id`.
+    Tabular data indexes are deleted for all not permanently deleted resources.
+    """
+
+    Resource = apps.get_model("resources", "Resource")
+    logger.info(f"Started deleting tabular data indexes for organization id={organization_id}")
+    es_index_deleted: bool = False
+
+    resources_ids: List[int] = _get_resources_ids_for_organization(organization_id)
+
+    for resource_id in resources_ids:
+        index_name = f"resource-{resource_id}"
+        result = delete_index(index_name)
+        if result:
+            logger.info(f"Tabular data index for resource id={resource_id} deleted.")
+            es_index_deleted = True
+            resource: Optional[Resource] = Resource.raw.filter(pk=resource_id).first()
+            if resource:
+                resource.has_table = False
+                resource.save()
+    if not es_index_deleted:
+        logger.info(f"No tabular data index deleted for organization id={organization_id}.")
+    logger.info(f"Finished deleting tabular data indexes for organization id={organization_id}")
+
+
 @extended_shared_task(
     max_retries=5,
     retry_on_errors=(NewConnectionError, ElasticsearchConnectionError),

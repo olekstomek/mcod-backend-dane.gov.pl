@@ -12,6 +12,20 @@ ______________________________________________________________________
 
 ### Breaks
 
+## 2.50.0 - (2025-10-10)
+
+______________________________________________________________________
+
+### New
+
+- Dodano komendę django delete_indexes_for_developers do usuwania indeksów ES danych tabelarycznych zasobów dla instytucji o typie developer - OTD-1890
+- Dodano testy wykonania komendy delete_indexes_for_developers z różną kombinacją parametrów - OTD-1890
+
+### Fixes
+
+- Naprawiono komunikat błędu przy próbie zapisu formularza zagnieżdżonego dla pola updateNotificationRecipientEmailInput - OTD-1910
+- Naprawiono powielanie się komunikatów pomocniczych przy wyborze z listy Częstotliwość aktualizacji - OTD-1910
+
 ## 2.49.1 - (2025-09-29)
 
 ______________________________________________________________________
