@@ -320,7 +320,26 @@ tworząc w bazie forum nowych użytkowników o statusie pełnomocnika lub admini
 ### Uruchamianie testów jednostkowych
 
 ```
-(backend) $ tox
+(backend) $ pytest
+```
+
+#### Docker
+
+`docker-compose.local.yml` zawiera konfigurację pozwalającą uruchomić testy w odizolowanym środowisku Dockerowym, z
+podmontowanym kodem.
+Warto sprawdzić testy w ten sposób szczególnie przy okazji dodawania zależności, również systemowych (takich jak np.
+xmlsec).
+
+Uruchomienie wszystkich testów (analogicznie do wywołania `pytest`):
+
+```shell
+docker compose -f docker-compose.local.yml run mcod-local-tests
+```
+
+Lub z argumentami:
+
+```shell
+docker compose -f docker-compose.local.yml run mcod-local-tests mcod/guides/tests/test_api.py --no-cov
 ```
 
 ### Re-indeksacja wszystkich danych

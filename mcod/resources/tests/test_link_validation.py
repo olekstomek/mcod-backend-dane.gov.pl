@@ -1,3 +1,5 @@
+import re
+
 import pytest
 import requests_mock
 from pytest_bdd import scenarios
@@ -11,6 +13,7 @@ from mcod.resources.link_validation import (
     MissingContentType,
     UnsupportedContentType,
     _filename_from_url,
+    add_unique_suffix_to_filename,
     check_link_status,
     content_type_from_file_format,
     download_file,
@@ -164,14 +167,18 @@ class TestDownloadFile:
 
     @requests_mock.Mocker(kw="mock_request")
     def test_download_file_filename_from_content_disposition(self, **kwargs):
+        # Given
         mock_request = kwargs["mock_request"]
         headers = {
             "Content-Type": "text/html",
             "Content-Disposition": "attachment; filename=example_file.html",
         }
         mock_request.get(self.url, headers=headers, content=b"")
+        # When
         res_type, res_details = download_file(self.url)
-        assert res_details["filename"] == "example_file.html"
+        # Then
+        pattern = r"^example_file_[a-zA-Z0-9]+\.html$"
+        assert re.match(pattern, res_details["filename"])
 
     @requests_mock.Mocker(kw="mock_request")
     def test_download_file_filename_from_content_disposition_with_additional_data(self, **kwargs):
@@ -182,7 +189,26 @@ class TestDownloadFile:
         }
         mock_request.get(self.url, headers=headers, content=b"")
         res_type, res_details = download_file(self.url)
-        assert res_details["filename"] == "example_file.html"
+        pattern = r"^example_file_[a-zA-Z0-9]+\.html$"
+        assert re.match(pattern, res_details["filename"])
+
+    @pytest.mark.parametrize(
+        "url, content_type, expected_pattern",
+        [
+            ("https://mocker-test.com/test-file", "text/csv", r"^test-file_[0-9a-f]{8}.csv$"),
+            ("https://mocker-test.com/test-file", "text/html", r"^test-file_[0-9a-f]{8}.html$"),
+            ("https://mocker-test.com/test-file.mp4", "text/csv", r"^test-file_[0-9a-f]{8}\.mp4$"),
+            ("https://mocker-test.com/test-file.mp4", "text/html", r"^test-file_[0-9a-f]{8}\.mp4$"),
+        ],
+    )
+    def test_download_file_filename_from_url(self, url, content_type, expected_pattern, requests_mock):
+        # Given
+        headers = {"Content-Type": content_type}
+        requests_mock.get(url, headers=headers, content=b"")
+        # When
+        res_type, res_details = download_file(url)
+        # Then
+        assert re.fullmatch(expected_pattern, res_details["filename"])
 
     @requests_mock.Mocker(kw="mock_request")
     def test_download_file_is_octetstream(self, **kwargs):
@@ -235,3 +261,26 @@ def test_filename_from_url(url: str, expected_filename: str, expected_extension:
     filename, extension = _filename_from_url(url)
     assert filename == expected_filename
     assert extension == expected_extension
+
+
+@pytest.mark.parametrize(
+    "filename, expected_pattern",
+    [
+        ("example.txt", r"example_[0-9a-f]{8}\.txt"),
+        ("archive.tar.gz", r"archive\.tar_[0-9a-f]{8}\.gz"),
+        ("noext", r"noext_[0-9a-f]{8}"),
+        ("emptyext.", r"emptyext_[0-9a-f]{8}."),
+        (".hiddenfile", r"\.hiddenfile_[0-9a-f]{8}"),
+        ("", r"_[0-9a-f]{8}"),
+        (".", r"\._[0-9a-f]{8}"),
+    ],
+)
+def test_add_unique_suffix_to_filename(filename, expected_pattern):
+    result = add_unique_suffix_to_filename(filename)
+    assert isinstance(result, str)
+    assert re.fullmatch(expected_pattern, result)
+
+
+def test_add_unique_suffix_to_filename_uniqueness():
+    results = {add_unique_suffix_to_filename("file.txt") for _ in range(10)}
+    assert len(results) == 10

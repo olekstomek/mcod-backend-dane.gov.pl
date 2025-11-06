@@ -9,7 +9,7 @@ from django.dispatch import receiver
 from django.utils.translation import gettext_lazy as _
 from model_utils import FieldTracker
 
-from mcod.core import signals as core_signals, storages
+from mcod.core import model_validators, signals as core_signals, storages
 from mcod.core.api.rdf import signals as rdf_signals
 from mcod.core.api.search import signals as search_signals
 from mcod.core.db.models import ExtendedModel, TrashModelBase, update_watcher
@@ -62,8 +62,17 @@ class Organization(ExtendedModel):
         ),
     }
 
-    title = SanitizedCharField(max_length=200, verbose_name=_("Name"))
-    description = SanitizedTextField(blank=True, null=True, verbose_name=_("Description"))
+    title = SanitizedCharField(
+        max_length=200,
+        verbose_name=_("Name"),
+        validators=[model_validators.illegal_character_validator],
+    )
+    description = SanitizedTextField(
+        blank=True,
+        null=True,
+        verbose_name=_("Description"),
+        validators=[model_validators.illegal_character_validator],
+    )
     image = models.ImageField(
         max_length=254,
         storage=storages.get_storage("organizations"),

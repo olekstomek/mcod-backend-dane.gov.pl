@@ -258,6 +258,7 @@ frontend/
 /venv
 /.venv
 .env
+.python-version
 
 /sandbox/
 requeststest

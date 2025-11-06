@@ -21,7 +21,8 @@ RUN apt-get update && apt-get install -y --allow-unauthenticated \
     firefox-esr \
     ffmpeg \
     unrar \
-    libxmlsec1-dev
+    libxmlsec1-dev \
+    findutils
 
 RUN curl -sL https://deb.nodesource.com/setup_16.x | bash -
 
@@ -38,7 +39,7 @@ ENV LC_ALL=pl_PL.UTF-8
 
 ENV OPENSSL_CONF=/etc/ssl/
 
-RUN npm install -g geckodriver --unsafe-perm
+# RUN npm install -g geckodriver --unsafe-perm
 
 RUN groupadd -g $GID -o $UNAME
 RUN useradd -m -u $UID -g $GID -o -s /bin/bash $UNAME
@@ -52,21 +53,10 @@ ADD Pipfile      /usr/src/mcod_backend/Pipfile
 ADD django_logingovpl-0.0.5-py3-none-any.whl /usr/src/mcod_backend/django_logingovpl-0.0.5-py3-none-any.whl
 ADD django_suit-0.2.28-py3-none-any.whl      /usr/src/mcod_backend/django_suit-0.2.28-py3-none-any.whl
 ADD hypereditor-0.1.0-py3-none-any.whl       /usr/src/mcod_backend/hypereditor-0.1.0-py3-none-any.whl
-RUN pipenv --verbose install --deploy --system
+RUN pipenv --verbose install --deploy --system --dev
 
-COPY ./docker/wait-for-it.sh /usr/local/bin/wait-for-it
-RUN chmod +x /usr/local/bin/wait-for-it
+# not adding mcod project dir - this image is just a base for tests
 
-COPY ./docker/app/start-api.sh /usr/local/bin/start-api
-RUN chmod +x /usr/local/bin/start-api
-
-COPY ./docker/app/start-django.sh /usr/local/bin/start-django
-RUN chmod +x /usr/local/bin/start-django
-
-COPY ./docker/app/start-celery.sh /usr/local/bin/start-celery
-RUN chmod +x /usr/local/bin/start-celery
-
-ADD . /usr/src/mcod_backend
-RUN python manage.py compilemessages --settings mcod.settings.test -v 3
-
-EXPOSE 8001 5678
+# required by pytest-django
+ADD manage.py /usr/src/mcod_backend
+RUN mkdir /usr/src/mcod_backend/logs /usr/src/mcod_backend/data

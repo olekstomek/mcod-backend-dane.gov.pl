@@ -5,25 +5,22 @@ stages:
   - release
 
 variables:
-  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip-${CI_COMMIT_REF_SLUG}"
-  PIP_DEFAULT_TIMEOUT: 1800
   PYTHONDONTWRITEBYTECODE: 1
   FF_NETWORK_PER_BUILD: 1
   REGISTRY_HOST: registry.dane.gov.pl
   REGISTRY_PATH: registry.dane.gov.pl/mcod/backend
-
-cache:
-  paths:
-    - .cache
+  TEST_IMAGE_VERSION: latest
 
 prepare-images:
   stage: prepare
   script:
     - docker build -f docker/elasticsearch/Dockerfile -t $REGISTRY_PATH/elasticsearch:6.8.23-mcod-1 .
     - docker build -f docker/postgres/Dockerfile -t $REGISTRY_PATH/postgresql:13-trixie-mcod .
+    - docker build -f docker/tests/Dockerfile -t $REGISTRY_PATH/mcod-tests:${TEST_IMAGE_VERSION} .
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $REGISTRY_HOST
     - docker push $REGISTRY_PATH/elasticsearch:6.8.23-mcod-1
     - docker push $REGISTRY_PATH/postgresql:13-trixie-mcod
+    - docker push $REGISTRY_PATH/mcod-tests:${TEST_IMAGE_VERSION}
   except:
     - tags
     - master
@@ -34,8 +31,10 @@ prepare-images:
 
 test:
   stage: test
-  image: python:3.8.6
+  image: $REGISTRY_PATH/mcod-tests:${TEST_IMAGE_VERSION}
   variables:
+    PYTHONUNBUFFERED: 1
+    PYTHONDONTWRITEBYTECODE: 1
     ENVIRONMENT: test
     TEST_DEBUG: "yes"
     ALLOWED_HOSTS: "*"
@@ -43,6 +42,10 @@ test:
     API_URL: http://api.test.mcod
     ADMIN_URL: http://admin.test.mcod
     CMS_URL: http://cms.test.mcod
+    API_URL_INTERNAL: https://api.test.mcod
+    NO_REPLY_EMAIL: env@test.local
+    DEBUG: yes
+    # services
     POSTGRES_PASSWORD: mcod
     POSTGRES_USER: mcod
     POSTGRES_DB: mcod
@@ -52,7 +55,6 @@ test:
     REDIS_URL: redis://redis:6379
     ELASTICSEARCH_HOSTS: elasticsearch:9200
     RABBITMQ_HOST: rabbitmq:5672
-    PYTEST_ADDOPTS: "--reuse-db --ds=mcod.settings.test -n5"
     ES_JAVA_OPTS: "-Xms2048m -Xmx2048m"
     EMAIL_HOST: example.com
     EMAIL_PORT: 25
@@ -64,6 +66,10 @@ test:
     FUSEKI_DATASET_1: ds
     FUSEKI_URL: http://fuseki:3030
     ALLOWED_MINIMUM_FREE_GB: 1
+    DISCOURSE_FORUM_ENABLED: false
+    DISCOURSE_USERNAME: user
+    DISCOURSE_PASSWORD: bitnami123
+    # tests specific
     DATASET_ARCHIVE_FILES_TASK_DELAY: 1
   services:
     - name: redis:6.2
@@ -84,24 +90,10 @@ test:
         ]
     - name: $REGISTRY_PATH/postgresql:13-trixie-mcod
       alias: postgres
-  before_script:
-    - sed -i 's|http://deb.debian.org/debian|http://archive.debian.org/debian|g' /etc/apt/sources.list
-    - sed -i 's|http://security.debian.org/debian-security|http://archive.debian.org/debian-security|g' /etc/apt/sources.list
-    - sed -i '/^deb http:\/\/archive.debian.org\/debian/ s/$/ contrib non-free/' /etc/apt/sources.list
-    - sed -i '/^deb http:\/\/archive.debian.org\/debian-security/ s/$/ contrib non-free/' /etc/apt/sources.list
-    - echo 'Acquire::Check-Valid-Until "false";' > /etc/apt/apt.conf.d/99no-check-valid-until
-    - apt-get update && apt-get install -y software-properties-common gettext libarchive13 libmagickcore-6.q16-3-extra locales libxmlsec1-dev unrar
-    - echo "en_US UTF-8" > /etc/locale.gen
-    - echo "en_GB UTF-8" > /etc/locale.gen
-    - echo "pl_PL UTF-8" > /etc/locale.gen
-    - locale-gen
-    - export LANG=pl_PL.UTF-8
-    - export LANGUAGE=pl_PL:pl
-    - export LC_ALL=pl_PL.UTF-8
-    - find . | grep -E "(__pycache__|\.pyc|\.pyo$)" | xargs rm -rf || true
-    - pip install --upgrade pip tox
   script:
-    - tox
+    - python manage.py compilemessages --settings mcod.settings.test -v 3
+    - python manage.py makemigrations --check --settings mcod.settings.test
+    - pytest --cov-report term --cov-report xml:coverage.xml --cov -v -n5 mcod
   artifacts:
     reports:
       coverage_report:
@@ -119,8 +111,9 @@ test:
 lint:
   stage: test
   image: python:3.8.6
-  script:
+  before_script:
     - pip install pre-commit
+  script:
     - pre-commit run --all-files
   except:
     - tags

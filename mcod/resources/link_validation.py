@@ -1,8 +1,10 @@
 import logging
+import os
 import re
 from io import BytesIO
 from mimetypes import MimeTypes
 from typing import Tuple
+from uuid import uuid4
 
 import requests
 from django.core.exceptions import ValidationError
@@ -134,7 +136,13 @@ def download_file(url, forced_file_type=False) -> Tuple[str, dict]:  # noqa: C90
 
         _format = file_format_from_content_type_extension_map(content_type, family=family, extension=_format)
         logger.debug(f"  format:{_format} - from content type (file)")
-        options.update({"filename": filename, "format": _format, "content": content})
+        options.update(
+            {
+                "filename": add_unique_suffix_to_filename(filename),
+                "format": _format,
+                "content": content,
+            }
+        )
     else:
         _format = file_format_from_content_type_extension_map(content_type, family)
         logger.debug(f"  format: {_format} - from content type (web/api)")
@@ -169,6 +177,15 @@ def get_filename_from_content_disposition(content_disposition: str) -> Tuple[str
             _format,
         )
     return filename, ""
+
+
+def add_unique_suffix_to_filename(filename: str) -> str:
+    """Create a new filename with added a unique suffix."""
+    unique_suffix = uuid4().hex[:8]
+    name, ext = os.path.splitext(filename)
+    final_filename = f"{name}_{unique_suffix}" + ext
+    logger.debug(f"  final unique filename with added suffix: {final_filename}")
+    return final_filename
 
 
 def check_link_scheme(link):

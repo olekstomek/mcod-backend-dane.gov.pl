@@ -1,8 +1,7 @@
-from xml.dom.minidom import parseString
-
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
-from pyexpat import ExpatError
+
+from mcod.core.utils import XmlTextInvalid, validate_xml10_text
 
 
 def illegal_character_validator(value: str) -> None:
@@ -20,10 +19,10 @@ def illegal_character_validator(value: str) -> None:
     Note:
     This function wraps the input string in a specified format
     (for example "<description>...</description>") and checks if it can be parsed without
-    raising an exception due to illegal characters.
+    raising an exception due to illegal characters. If you want to make a tests on website, use this
+    value: 
     """
-    data = f"<data>{value}</data>"
     try:
-        parseString(data)
-    except ExpatError:
-        raise ValidationError(_("Given text contains illegal character. " "Please revalidate provided data."))
+        validate_xml10_text(value)
+    except XmlTextInvalid as e:
+        raise ValidationError(_("Given text contains illegal character. Please revalidate provided data.")) from e

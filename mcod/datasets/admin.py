@@ -746,7 +746,7 @@ class NestedDatasetAdmin(DatasetAdminMixin, NestedModelAdmin):
 @admin.register(DatasetTrash)
 class DatasetTrashAdmin(HistoryMixin, TrashMixin):
     search_fields = ["title", "organization__title"]
-    list_display = ["title", "organization"]
+    list_display = ["title", "organization", "modified"]
     related_objects_query = "organization"
     cant_restore_msg = _("Couldn't restore following datasets, because their related organizations are still removed: {}")
     fields = [

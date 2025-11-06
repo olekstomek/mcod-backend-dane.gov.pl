@@ -3,6 +3,7 @@ from typing import Optional
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 
+from mcod.core.widgets import UnescapeTextInput
 from mcod.lib.metadata_validators import validate_conflicting_high_value_data_flags
 
 
@@ -26,3 +27,12 @@ class HighValueDataFormValidatorMixin:
                 "has_high_value_data",
                 _("Check YES, because high-value data from the EC list is a special subcategory of high-value data."),
             )
+
+
+class UnEscapeWidgetMixin:
+    def _add_unescape_widget_for_fields_or_not(self):
+        """
+        Manually unescape fields. CKEditorWidget doing it automatically for fields like `description`.
+        """
+        if "title" in self.fields:
+            self.fields["title"].widget = UnescapeTextInput()

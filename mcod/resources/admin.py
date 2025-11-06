@@ -243,7 +243,7 @@ def process_verification_results(col, results, table_schema, rules):
 
 @prometheus_monitoring
 @admin.register(Resource)
-class ResourceAdmin(HistoryMixin, ModelAdmin):
+class ResourceAdmin(HistoryMixin, ModelAdmin):  # MRO matters here for unescape
 
     actions_on_top = True
     check_imported_obj_perms = True
@@ -1003,7 +1003,7 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):
 
 
 @admin.register(ResourceTrash)
-class TrashAdmin(HistoryMixin, TrashMixin):
+class ResourceTrashAdmin(HistoryMixin, TrashMixin):
     list_display = ["title_short", "dataset", "modified"]
     search_fields = ["title", "dataset__title"]
     form = TrashResourceForm

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import collections
 import csv
 import datetime
@@ -15,6 +17,7 @@ from pathlib import Path
 from typing import List, Optional, TextIO, Union
 from unittest.mock import patch
 from xml.dom.minidom import parseString
+from xml.sax.saxutils import escape
 
 import json_api_doc
 import jsonschema
@@ -37,6 +40,30 @@ _iso8601_datetime_re = re.compile(
     r"(?::(?P<second>\d{1,2})(?:\.(?P<microsecond>\d{1,6})\d{0,6})?)?"
     r"(?P<tzinfo>|[+-]\d{2}(?::?\d{2})?)?$",
 )
+
+
+class XmlTextInvalid(ValueError):
+    """Text contains characters that are not allowed by XML 1.0, or cannot be embedded safely."""
+
+
+def validate_xml10_text(value: str) -> None:
+    """
+    Validate that a value can be safely embedded as XML 1.0 character data.
+
+    This function first coerces non-string inputs to string, rejects `None` and
+    empty strings, and then escapes several XML-significant characters (such as
+    `&`, `<`, and `>`) before attempting to parse the result with `xml.dom.minidom.parseString`.
+    Characters that remain illegal in XML 1.0 even after escaping (e.g., control
+    characters, invalid Unicode code points, or other disallowed code units) will
+    still cause `parseString` to fail; in such cases the value is considered invalid.
+    """
+    if value is None or value == "":
+        raise XmlTextInvalid("Empty strings are not allowed.")
+    text = value if isinstance(value, str) else str(value)
+    try:
+        parseString(f"<data>{escape(text)}</data>")
+    except (ExpatError, UnicodeEncodeError) as e:
+        raise XmlTextInvalid("Value contains characters illegal for the configured XML 1.0 safe set.") from e
 
 
 def anonymize_email(value):
@@ -406,17 +433,16 @@ class XMLWriter(WriterInterface):
         language_catalog_path: Optional[str] = None,
     ):
 
-        xml = dicttoxml(
-            data,
-            attr_type=False,
-            item_func=self.custom_item_func,
-            custom_root="catalog",
-        )
-
         try:
+            xml = dicttoxml(
+                data,
+                attr_type=False,
+                item_func=self.custom_item_func,
+                custom_root="catalog",
+            )
             dom = parseString(xml)
             file_object.write(dom.toprettyxml())
-        except ExpatError as exc:
+        except (UnicodeError, ExpatError) as exc:
             logger.error(f"XML parsing failed: {exc}")
             if language_catalog_path:
                 error_path: str = prepare_error_folder(language_catalog_path)

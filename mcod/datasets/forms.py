@@ -8,6 +8,7 @@ from django.utils.translation import gettext_lazy as _
 
 from mcod import settings
 from mcod.core.db.models import STATUS_CHOICES
+from mcod.core.widgets import UnescapeTextarea
 from mcod.datasets.field_validators import validate_dataset_image_file_extension
 from mcod.datasets.models import LICENSE_CONDITION_LABELS, UPDATE_FREQUENCY, Dataset, Supplement
 from mcod.datasets.widgets import CheckboxInputWithLabel
@@ -28,7 +29,7 @@ UPDATE_FREQUENCY_FOR_UPDATE = UPDATE_FREQUENCY
 
 class DatasetForm(ModelFormWithKeywords, HighValueDataFormValidatorMixin):
     title = forms.CharField(
-        widget=forms.Textarea(
+        widget=UnescapeTextarea(
             attrs={
                 "placeholder": _("e.g. the name of the data set"),
                 "style": "width: 99%",

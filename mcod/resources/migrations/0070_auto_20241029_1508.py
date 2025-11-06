@@ -2,7 +2,7 @@
 
 from django.db import migrations
 import mcod.lib.model_sanitization
-import mcod.resources.model_validators
+import mcod.core.model_validators
 
 
 class Migration(migrations.Migration):
@@ -18,7 +18,7 @@ class Migration(migrations.Migration):
             field=mcod.lib.model_sanitization.SanitizedTextField(
                 blank=True,
                 null=True,
-                validators=[mcod.resources.model_validators.illegal_character_validator],
+                validators=[mcod.core.model_validators.illegal_character_validator],
                 verbose_name="Description",
             ),
         ),
@@ -33,7 +33,7 @@ class Migration(migrations.Migration):
             model_name="resource",
             name="title",
             field=mcod.lib.model_sanitization.SanitizedCharField(
-                max_length=500, validators=[mcod.resources.model_validators.illegal_character_validator], verbose_name="title"
+                max_length=500, validators=[mcod.core.model_validators.illegal_character_validator], verbose_name="title"
             ),
         ),
         migrations.AlterField(

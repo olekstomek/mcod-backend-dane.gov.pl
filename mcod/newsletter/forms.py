@@ -2,6 +2,7 @@ from django import forms
 from django.contrib.admin.widgets import AdminDateWidget
 from django.utils.translation import gettext_lazy as _
 
+from mcod.core.widgets import UnescapeTextInput
 from mcod.newsletter.models import Newsletter
 
 
@@ -17,6 +18,4 @@ class NewsletterAdminForm(forms.ModelForm):
         labels = {
             "title": _("Title of newsletter"),
         }
-        widgets = {
-            "planned_sending_date": PlannedSendingDateWidget,
-        }
+        widgets = {"planned_sending_date": PlannedSendingDateWidget, "title": UnescapeTextInput()}

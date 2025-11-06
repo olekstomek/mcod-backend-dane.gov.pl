@@ -1,13 +1,13 @@
 from django.contrib import admin
 from django.db.models import Case, CharField, Value, When
 from django.forms import ModelForm, ValidationError
-from django.forms.widgets import Textarea
 from django.utils import timezone
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 from suit.widgets import SuitSplitDateTimeWidget
 
 from mcod.alerts.models import DISPLAY_STATUS, Alert
+from mcod.core.widgets import UnescapeTextarea
 from mcod.lib.admin_mixins import ModelAdmin
 from mcod.lib.widgets import CKEditorWidget
 
@@ -40,8 +40,8 @@ class AlertForm(ModelForm):
         )
 
         widgets = {
-            "title_pl": Textarea(attrs={"style": "width: 99%", "rows": 2}),
-            "title_en": Textarea(attrs={"style": "width: 99%", "rows": 2}),
+            "title_pl": UnescapeTextarea(attrs={"style": "width: 99%", "rows": 2}),
+            "title_en": UnescapeTextarea(attrs={"style": "width: 99%", "rows": 2}),
             "description_pl": CKEditorWidget(config_name="alert_description"),
             "description_en": CKEditorWidget(config_name="alert_description"),
             "start_date": SuitSplitDateTimeWidget(),

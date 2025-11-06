@@ -24,7 +24,7 @@ from django.utils.translation import get_language, gettext_lazy as _, override
 from model_utils import FieldTracker
 
 from mcod import settings
-from mcod.core import signals as core_signals
+from mcod.core import model_validators, signals as core_signals
 from mcod.core.api.rdf import signals as rdf_signals
 from mcod.core.api.search import signals as search_signals
 from mcod.core.api.search.tasks import update_document_task
@@ -230,10 +230,17 @@ class Dataset(ExtendedModel):
         verbose_name=_("external identifier"),
         help_text=_("external identifier of dataset taken during import process (optional)"),
     )
-    title = SanitizedCharField(max_length=300, null=True, verbose_name=_("Title"))
+    title = SanitizedCharField(
+        max_length=300,
+        null=True,
+        verbose_name=_("Title"),
+        validators=[model_validators.illegal_character_validator],
+    )
     version = models.CharField(max_length=100, blank=True, null=True, verbose_name=_("Version"))
     url = models.CharField(max_length=1000, blank=True, null=True, verbose_name=_("Url"))
-    notes = SanitizedTextField(verbose_name=_("Notes"), null=True, blank=False)
+    notes = SanitizedTextField(
+        verbose_name=_("Notes"), null=True, blank=False, validators=[model_validators.illegal_character_validator]
+    )
 
     license_chosen = models.PositiveSmallIntegerField(blank=True, null=True, default=None, verbose_name="", choices=LICENSES)
 
@@ -991,6 +998,7 @@ class DatasetTrash(Dataset, metaclass=TrashModelBase):
         proxy = True
         verbose_name = _("Trash")
         verbose_name_plural = _("Trash")
+        ordering = ("-modified",)
 
 
 def update_related_watchers(sender, instance, *args, state=None, **kwargs):

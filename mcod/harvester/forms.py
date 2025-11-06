@@ -4,6 +4,7 @@ from django import forms
 from django.contrib.admin.widgets import AdminURLFieldWidget
 from django.utils.translation import gettext_lazy as _
 
+from mcod.core.widgets import UnescapeTextInput
 from mcod.harvester.models import DataSource, DataSourceImport
 from mcod.lib.widgets import CKEditorWidget
 
@@ -34,7 +35,7 @@ class DataSourceAdminForm(forms.ModelForm):
             "api_url": forms.TextInput(attrs={"class": "span6"}),
             "description": CKEditorWidget(config_name="data_source_description"),
             "license_condition_db_or_copyrighted": forms.Textarea(attrs={"cols": "80", "class": "input-block-level"}),
-            "name": forms.TextInput(attrs={"class": "span6"}),
+            "name": UnescapeTextInput(attrs={"class": "span6"}),
             "portal_url": forms.TextInput(attrs={"class": "span6"}),
             "source_hash": forms.HiddenInput(),
             "xml_url": XMLUrlWidget(attrs={"class": "vURLField span6"}),

@@ -391,7 +391,7 @@ class DataSourceImportAdmin(ModelAdmin):
 
 class DataSourceTrashAdmin(HistoryMixin, TrashMixin):
     search_fields = ["name"]
-    list_display = ("name", "created_by_label")
+    list_display = ("name", "created_by_label", "modified")
     readonly_fields = (
         "name",
         "description",

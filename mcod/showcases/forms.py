@@ -8,6 +8,7 @@ from django.utils.translation import gettext_lazy as _
 from mcod.core.db.models import STATUS_CHOICES
 from mcod.core.widgets import ExtendedSelect
 from mcod.datasets.models import Dataset
+from mcod.lib.forms.mixins import UnEscapeWidgetMixin
 from mcod.lib.widgets import CKEditorUploadingWidget, ExternalDatasetsWidget
 from mcod.showcases.models import Showcase, ShowcaseProposal
 from mcod.tags.forms import ModelFormWithKeywords
@@ -19,7 +20,7 @@ def get_link_label(icon, name):
     return mark_safe(f'<img src="{icon}" alt="logo" /> {name} - {text}')
 
 
-class ShowcaseForm(ModelFormWithKeywords):
+class ShowcaseForm(ModelFormWithKeywords, UnEscapeWidgetMixin):
     title = forms.CharField(
         required=True,
         label=_("Title"),
@@ -73,6 +74,7 @@ class ShowcaseForm(ModelFormWithKeywords):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self._add_unescape_widget_for_fields_or_not()
         url_field_names = [
             "mobile_apple_url",
             "mobile_google_url",

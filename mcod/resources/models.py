@@ -43,7 +43,7 @@ from elasticsearch_dsl.connections import Connections
 from mimeparse import parse_mime_type
 from model_utils import FieldTracker
 
-from mcod.core import signals as core_signals, storages
+from mcod.core import model_validators, signals as core_signals, storages
 from mcod.core.api.rdf import signals as rdf_signals
 from mcod.core.api.rdf.tasks import update_graph_task
 from mcod.core.api.search import signals as search_signals
@@ -70,7 +70,6 @@ from mcod.lib.model_sanitization import (
 )
 from mcod.organizations.models import Organization
 from mcod.regions.models import Region, RegionManyToManyField
-from mcod.resources import model_validators
 from mcod.resources.archives import ArchiveReader, is_archive_file
 from mcod.resources.error_mappings import messages, recommendations
 from mcod.resources.file_validation import check_support, get_file_info

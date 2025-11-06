@@ -18,7 +18,7 @@ from django.utils.translation import gettext_lazy as _
 from mcod import settings
 from mcod.datasets.models import Dataset
 from mcod.lib.field_validators import ContainsLetterValidator
-from mcod.lib.forms.mixins import HighValueDataFormValidatorMixin
+from mcod.lib.forms.mixins import HighValueDataFormValidatorMixin, UnEscapeWidgetMixin
 from mcod.lib.metadata_validators import validate_high_value_data_from_ec_list_organization
 from mcod.lib.utils import capitalize_first_character
 from mcod.lib.widgets import (
@@ -548,7 +548,7 @@ class ResourceForm(forms.ModelForm, HighValueDataFormValidatorMixin):
             )
 
 
-class ChangeResourceForm(ResourceForm):
+class ChangeResourceForm(ResourceForm, UnEscapeWidgetMixin):
     openness_score = forms.IntegerField(
         widget=OpennessScoreStars(),
         label=_("Openness score"),
@@ -570,6 +570,7 @@ class ChangeResourceForm(ResourceForm):
 
         super().__init__(*args, **kwargs)
         if hasattr(self, "instance"):
+            self._add_unescape_widget_for_fields_or_not()
             if is_enabled("S64_fix_for_status_code_500_when_type_change.be"):
                 if self.instance.is_imported_from_xml:
                     self._set_fields_required_attribute_to_false()

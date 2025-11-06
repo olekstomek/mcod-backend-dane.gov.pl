@@ -12,6 +12,31 @@ ______________________________________________________________________
 
 ### Breaks
 
+## 2.51.0 - (2025-10-29)
+
+______________________________________________________________________
+
+### New
+
+- Dodana walidacja niezgodnych znaków dla pól title i description dla modeli Organisation i Dataset - OTD-1687
+- Dodanie kolumny "utworzono" do widoku Kosza dla Zbiorów danych - OTD-1981
+- Dodanie kolumny "utworzono" do widoku Kosza dla Źródeł danych - OTD-1981
+- Dodano Dockerfile zbliżony do produkcyjnego, ale dedykowany do uruchamiania testów automatycznych - OTD-947
+- Dodano plik docker-compose pozwalający na uruchomienie testów w sposób zbliżony do uruchomienia na CI/CID - OTD-947
+
+### Changes
+
+- Umożliwienie dodawania znaku specjalnego "&" dla pól title i description dla modeli Organisation, Dataset i Resource - OTD-1687
+- Usunięto tox w ramach usprawnień lokalnego środowiska - OTD-1063
+- Zmieniono konfigurację CI/CD tak, by re-używać customowy obraz przy testach - OTD-947
+- Wprowadzenie wewnętrznego oznaczania zarchiwizowanych zasobów, aby uniezależnić się od nazw zasobów wystawianych w źródłach Dostawców - OTD-1853
+- Aktualizacja i dodanie nowych testów, dotyczących powyższej zmiany - OTD-1853
+
+### Fixes
+
+- Usunięcie słów typu "amp;" dla widoku obiektu modeli: Resource, Dataset, Organisation, Alerts, Harvester, Newsletter oraz Showcases - OTD-1687
+- Dodanie domyślnego sortowania po czasie dla Kosza dla Zbiorów Danych - OTD-1981
+
 ## 2.50.0 - (2025-10-10)
 
 ______________________________________________________________________
