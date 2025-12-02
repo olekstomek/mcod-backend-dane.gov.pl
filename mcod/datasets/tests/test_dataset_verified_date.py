@@ -1,6 +1,9 @@
 from datetime import datetime, time, timedelta
+from unittest.mock import patch
 
 import pytest
+import pytz
+from django.utils import timezone
 
 from mcod.datasets.factories import DatasetFactory
 from mcod.datasets.models import Dataset
@@ -138,44 +141,28 @@ def test_dataset_verified_not_changed_after_revalidate_resource(dataset):
     assert dataset.verified == dataset_verified_before
 
 
-@pytest.mark.parametrize("resource_type", ["api", "website"])
-def test_dataset_verified_changed_after_periodic_updating_api_or_website_resource(resource_type: str):
+@pytest.mark.parametrize("resource_type", ["api", "website", "file"])
+def test_dataset_verified_changed_after_periodic_updating_resource(resource_type: str):
+    """Test 1.a and 2.a.7 from OTD-867"""
     # Given
-    resource = ResourceFactory(
-        type=resource_type,
-        is_auto_data_date=True,
-        automatic_data_date_start=NOW.date(),
-        endless_data_date_update=True,
-        data_date_update_period="daily",
-    )
-    dataset = Dataset.objects.get(pk=resource.dataset.id)
-    dataset_verified_before = dataset.verified
-    # When
-    update_data_date.s(resource.id).apply_async()
-    resource.refresh_from_db()
-    dataset.refresh_from_db()
-    data_date_at_midnight = datetime.combine(resource.data_date, time(0, 0)).astimezone(dataset.verified.tzinfo)
-    # Then
-    assert dataset.verified != dataset_verified_before
-    assert dataset.verified == data_date_at_midnight
-
-
-def test_dataset_verified_not_changed_after_periodic_updating_file_resource():
-    # Given
-    resource = ResourceFactory(
-        type="file",
-        is_auto_data_date=True,
-        automatic_data_date_start=NOW.date(),
-        endless_data_date_update=True,
-        data_date_update_period="daily",
-    )
-    dataset = Dataset.objects.get(pk=resource.dataset.id)
-    dataset_verified_before = dataset.verified
-    # When
-    update_data_date.s(resource.id).apply_async()
-    dataset.refresh_from_db()
-    # Then
-    assert dataset.verified == dataset_verified_before
+    mocked_now = timezone.datetime(2025, 11, 14, 12, 34, 56, tzinfo=pytz.UTC)
+    with patch("mcod.resources.tasks.tasks.now", return_value=mocked_now):
+        resource = ResourceFactory(
+            type=resource_type,
+            is_auto_data_date=True,
+            automatic_data_date_start=NOW.date(),
+            endless_data_date_update=True,
+            data_date_update_period="daily",
+        )
+        dataset = Dataset.objects.get(pk=resource.dataset.id)
+        dataset_verified_before = dataset.verified
+        # When
+        update_data_date.s(resource.id).apply()
+        resource.refresh_from_db()
+        dataset.refresh_from_db()
+        # Then
+        assert dataset.verified != dataset_verified_before
+        assert dataset.verified == mocked_now
 
 
 def test_dataset_verified_changed_and_is_max_created_after_importing_ckan_resource_without_auto_data_date():

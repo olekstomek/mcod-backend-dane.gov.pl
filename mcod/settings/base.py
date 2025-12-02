@@ -5,7 +5,6 @@ from datetime import date
 import environ
 import sentry_sdk
 from bokeh.util.paths import bokehjsdir
-from celery.schedules import crontab
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import pgettext_lazy
 from kombu import Queue
@@ -368,6 +367,7 @@ RESOURCES_FILES_TO_REMOVE_ROOT = str(ROOT_DIR.path(MEDIA_ROOT, "to_be_removed", 
 DCAT_VOCABULARIES_MEDIA_ROOT = str(ROOT_DIR.path(MEDIA_ROOT, "dcat", "vocabularies"))
 METADATA_MEDIA_ROOT = str(ROOT_DIR.path(MEDIA_ROOT, "datasets", "catalog"))
 DGA_RESOURCE_CREATION_STAGING_ROOT = str(ROOT_DIR.path(MEDIA_ROOT, "dga_temp"))
+BROKEN_LINKS_CREATION_STAGING_ROOT = str(ROOT_DIR.path(MEDIA_ROOT, "broken_links_temp"))
 MAIN_DGA_RESOURCE_XLSX_CREATION_ROOT = str(ROOT_DIR.path(MEDIA_ROOT, "main_dga"))
 
 MEDIA_URL = "/media/"
@@ -850,6 +850,9 @@ CELERY_TASK_ROUTES = {
     "mcod.reports.tasks.generate_harvesters_last_imports_report": {"queue": "reports"},
     "mcod.reports.tasks.link_validation_success_callback": {"queue": "reports"},
     "mcod.reports.tasks.link_validation_error_callback": {"queue": "reports"},
+    "mcod.reports.tasks.generate_broken_links_reports_task": {"queue": "reports"},
+    "mcod.reports.tasks.generate_admin_broken_links_report_task": {"queue": "reports"},
+    "mcod.reports.tasks.generate_public_broken_links_reports_task": {"queue": "reports"},
     "mcod.resources.tasks.check_link_protocol": {"queue": "resources"},
     "mcod.resources.tasks.create_main_dga_resource_task": {"queue": "resources"},
     "mcod.resources.tasks.delete_es_resource_tabular_data_index": {"queue": "indexing_data"},
@@ -2135,3 +2138,5 @@ FRONTEND_BASE_URL = env("FRONTEND_BASE_URL", default="https://dane.gov.pl")
 
 HEALTH_STATUS_SLEEP_TIME = env.int("HEALTH_STATUS_SLEEP_TIME", default=600)  # default 10min
 HEALTH_CHECK = env.bool("HEALTH_CHECK", default=True)
+
+BROKEN_LINKS_EXCLUDE_DEVELOPERS = env.bool("BROKEN_LINKS_EXCLUDE_DEVELOPERS", True)

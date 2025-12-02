@@ -52,6 +52,7 @@ from mcod.core.api.search.tasks import (
     update_related_task,
     update_with_related_task,
 )
+from mcod.core.choices import SOURCE_TYPE_CHOICES_FOR_ADMIN
 from mcod.core.db.managers import TrashManager
 from mcod.core.db.models import (
     CustomManagerForeignKey,
@@ -246,6 +247,12 @@ class TaskResult(TaskResultOrig):
         return [messages.get(error_code, "Nierozpoznany błąd walidacji").format(exc_message)]
 
     @property
+    def message_error_str(self) -> str:
+        """Return plain message error text."""
+        last_message: Optional[list] = self.message[-1]
+        return str(self.message[-1]) if last_message else ""
+
+    @property
     def recommendation(self):
         result = json.loads(self.result) if self.result else {}
 
@@ -320,6 +327,7 @@ class TaskResult(TaskResultOrig):
 
     class Meta:
         proxy = True
+        get_latest_by = "date_done"
 
 
 class Resource(ExtendedModel):
@@ -778,6 +786,17 @@ class Resource(ExtendedModel):
         return self.link_tasks_last_status == "SUCCESS"
 
     @property
+    def last_link_validation_error_message(self) -> str:
+        """
+        Returns last link validation task error message if failed.
+        Returns empty string otherwise.
+        """
+        newest_link_task: Optional[TaskResult] = self.link_tasks.latest()
+        if newest_link_task and newest_link_task.status == "FAILURE":
+            return newest_link_task.message_error_str
+        return ""
+
+    @property
     def file_is_valid(self):
         return self.file_tasks_last_status == "SUCCESS"
 
@@ -1083,6 +1102,10 @@ class Resource(ExtendedModel):
         if self.has_table:
             result.append("table")
         return result
+
+    @property
+    def method_of_sharing(self) -> Optional[str]:
+        return SOURCE_TYPE_CHOICES_FOR_ADMIN.get(self.source_type, self.source_type)
 
     def verify_rules(self, rules):
 

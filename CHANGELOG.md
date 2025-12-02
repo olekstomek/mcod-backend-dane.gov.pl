@@ -12,6 +12,53 @@ ______________________________________________________________________
 
 ### Breaks
 
+## 2.52.2 - (2025-11-28)
+
+______________________________________________________________________
+
+### Changes
+
+- Wykorzystanie biblioteki elasticsearch_dsl do komunikacji z ES podczas generacji raportu uszkodzonych linków - OTD-2171
+
+## 2.52.1 - (2025-11-25)
+
+______________________________________________________________________
+
+### Fixes
+
+- Poprawiono angielskie tłumaczenie pola nagłówka tabeli z uszkodzonymi linkami - zmiana w pliku /translations/system/en/LC_MESSAGES/django.po - OTD-2091
+
+## 2.52.0 - (2025-11-20)
+
+______________________________________________________________________
+
+### New
+
+- Dodano tworzenie indeksu Elasticsearch o nazwie broken-links, w który zawarte są dane z raportu publicznego uszkodzonych linków - OTD-1802
+- Dodano testy funkcji pomocniczych i funkcji głównej tworzącej indeks broken-links - OTD-1802
+- Dodano nowe typy stron do CMS-a: ReportRootPage,ReportAbstractSubpage, BrokenLinksInfo - OTD-1803
+- Dodano endpointy API do pobierania ostatnich plików raportów broken links - OTD-1804
+- Dodano testy automatyczne do widoku pobierania plików raportów - OTD-1804
+- Dodanie do API endpointu reports/brokenlinks, odpowiedzialnego za zwracanie informacji o ostatnim utworzonym raporcie brokenlinks (wraz z testami endpointu) - OTD-1805
+- Dodanie (wraz z testami) pomocniczych funkcji umożliwiających: pobieranie z Elasticsearch liczby wszystkich zaindeksowanych dokumentów oraz pobieranie podstawowych metadanych dla wskazanego pliku (funkcje pomocnicze w osbłudze endpointu reports/brokenlinks) - OTD-1805
+- Dodanie do API endpointu reports/brokenlinks/data, odpowiedzialnego za zwracanie informacji o danych z raportu brokenlinks (z obsługą paginacji, sortowania i wyszukiwania), wraz z testami endpointu - OTD-1806, OTD-2067, OTD-2079
+- Dodanie (wraz z testami) pomocniczych funkcji umożliwiających: pobieranie z Elasticsearch dokumentów dot. raportu brokenlinks, do wyświetlenia w GUI. - OTD-1806
+- Dodano nowe kolumny do raportu broken links w Panelu Administracyjnym - OTD-1809
+- Dodano generowanie raportów broken links na potrzeby frontendu - OTD-1810
+- Dodano testy automatyczne do procesu generacji raportów o uszkodzonych linkach - OTD-1809, OTD-1810
+- Dodano możliwość nieuwzględniania zasobów deweloperów budowlanych w sprawdzeniach uszkodzonych linków (zmienna środowiskowa BROKEN_LINKS_EXCLUDE_DEVELOPERS) - OTD-2055, OTD-2090
+
+### Changes
+
+- Uzupełniono test Check every CMS API's endpoint response for valid status_code o nowe typy stron związane z brokenlinks - OTD-1803
+- Zmieniono task update_data_date() o aktualizację w polu dataset.verified (dodatkowo dla zasobu typu plik) - OTD-1831
+
+### Fixes
+
+- Poprawa ikony widgetu kalendarza w widokach Akademia i Laboratorium, Spotkania pełnomocników, Newsletter, Komunikaty - OTD-1550
+- Naprawiono API lajkowania propozycji nowych danych (uniemożliwiono lajkowania propozycji nieaktywnych oraz naprawiono obsługę lajkowania propozycji w różnych stanach - kosz, draft itp.) - OTD-1734
+- Zmieniono task validate_link, aby usunąć zjawisko wyścigu podczas generacji danych do raportu brokenlinks - OTD-1808
+
 ## 2.51.0 - (2025-10-29)
 
 ______________________________________________________________________

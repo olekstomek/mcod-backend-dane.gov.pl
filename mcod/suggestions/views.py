@@ -1,6 +1,7 @@
 from collections import namedtuple
 from datetime import date
 from functools import partial
+from typing import Optional
 from uuid import uuid4
 
 import falcon
@@ -20,6 +21,7 @@ from mcod.suggestions.handlers import (
     AcceptedSubmissionRetrieveOneHdlr,
     AcceptedSubmissionSearchHdlr,
 )
+from mcod.suggestions.models import AcceptedDatasetSubmission
 from mcod.suggestions.serializers import (
     AcceptedSubmissionApiResponse,
     AcceptedSubmissionCommentApiResponse,
@@ -128,7 +130,14 @@ class FeedbackDatasetSubmission(JsonAPIView):
 
         def _get_data(self, cleaned, id, *args, **kwargs):
             data = cleaned["data"]["attributes"]
-            submission = self.submission_model.objects.get(pk=id)
+            submission: Optional[AcceptedDatasetSubmission] = self.submission_model.objects.filter(pk=id).first()
+            if not submission:
+                raise falcon.HTTPNotFound
+            if submission.status != "published":
+                raise falcon.HTTPConflict(description="Not published Submission")
+            if not submission.is_active:
+                raise falcon.HTTPConflict(description="Not active Submission")
+
             obj = self.database_model.objects.update_or_create(user=self.request.user, submission=submission, defaults=data)[0]
             self.response.context.data = obj
 

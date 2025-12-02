@@ -1,3 +1,4 @@
+import datetime
 import io
 import json
 import tempfile
@@ -12,9 +13,11 @@ from pytest_mock import MockerFixture
 
 from mcod.core.utils import (
     CSVWriter,
+    FileMeta,
     XmlTextInvalid,
     XMLWriter,
     clean_columns_in_dataframe,
+    get_file_metadata,
     prepare_error_folder,
     save_df_to_xlsx,
 )
@@ -55,6 +58,48 @@ def test_save_df_to_xlsx_smoke():
         save_df_to_xlsx(df, temp_file_path)
         # Then
         assert temp_file_path.exists()
+
+
+def test_get_file_metadata_with_existing_file_returns_expected_size_and_tzinfo(tmp_path):
+    file = tmp_path / "sample.txt"
+    content = "hello world"
+    file.write_text(content)
+    meta = get_file_metadata(file)
+
+    assert isinstance(meta, FileMeta)
+    assert meta.size == len(content)
+    assert isinstance(meta.created, datetime.datetime)
+    assert isinstance(meta.modified, datetime.datetime)
+    assert isinstance(meta.accessed, datetime.datetime)
+    assert meta.created.tzinfo == datetime.timezone.utc
+    assert meta.modified.tzinfo == datetime.timezone.utc
+    assert meta.accessed.tzinfo == datetime.timezone.utc
+
+
+def test_get_file_metadata_respects_custom_timezone(tmp_path):
+    file = tmp_path / "sample.txt"
+    file.write_text("abc")
+    tz = datetime.timezone(datetime.timedelta(hours=2))
+    meta = get_file_metadata(file, tz_info=tz)
+
+    assert meta.created.tzinfo == tz
+    assert meta.modified.tzinfo == tz
+    assert meta.accessed.tzinfo == tz
+
+
+def test_get_file_metadata_empty_file_has_zero_size(tmp_path):
+    file = tmp_path / "empty.txt"
+    file.touch()
+    meta = get_file_metadata(file)
+
+    assert meta.size == 0
+
+
+def test_get_file_metadata_raises_for_missing_file(tmp_path):
+    file = tmp_path / "missing.txt"
+
+    with pytest.raises(FileNotFoundError):
+        get_file_metadata(file)
 
 
 def test_csv_writer():

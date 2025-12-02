@@ -19,7 +19,6 @@ from sentry_sdk import set_tag
 from urllib3.exceptions import NewConnectionError
 
 from mcod.core.tasks import FIVE_MINUTES, extended_shared_task
-from mcod.lib.date_utils import date_at_midnight
 from mcod.lib.db_utils import IndexConsistency, get_db_and_es_inconsistencies
 from mcod.lib.file_format_from_response import get_resource_format_from_response
 from mcod.resources.archives import ArchiveReader
@@ -133,22 +132,21 @@ def process_resource_data_indexing_task(resource_id):
     name="mcod.resources.tasks.update_data_date",
 )
 def update_data_date(resource_id):
+    """See also mcod.resources.models.handle_resource_post_save()"""
     set_tag("resource_id", str(resource_id))
     Resource = apps.get_model("resources", "Resource")
     res_q = Resource.objects.filter(pk=resource_id)
     res = res_q.first()
     if res.is_auto_data_date and res.is_auto_data_date_allowed:
         warsaw_tz = pytz.timezone(settings.TIME_ZONE)
-        current_dt = now().astimezone(warsaw_tz).date()
+        current_now = now().astimezone(warsaw_tz)
+        current_dt = current_now.date()
         res_q.update(data_date=current_dt)
         logger.debug(f"Updated data date for resource with id {resource_id} with date {current_dt}")
+        res.update_dataset_verified(verified=current_now)
+        logger.debug(f"Updated dataset verified for {res.type} resource with id {resource_id} with date {current_now}")
         if res.type in ["api", "website"]:
             res.update_es_and_rdf_db()
-            current_dt_midnight = date_at_midnight(current_dt)
-            res.update_dataset_verified(verified=current_dt_midnight)
-            logger.debug(
-                f"Updated dataset verified for {res.type} resource with id {resource_id} with date {current_dt_midnight}"
-            )
         elif res.is_linked:
             entrypoint_process_resource_validation_task.s(res.id, update_file_archive=True).apply_async()
         return {"current_date": current_dt}

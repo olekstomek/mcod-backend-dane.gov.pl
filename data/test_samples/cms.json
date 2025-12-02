@@ -270,5 +270,29 @@
       "fields": "[{\"type\": \"multilinetextinput\", \"value\": {\"label\": \"\", \"help_text\": \"\", \"value\": \"\", \"placeholder\": \"\"}, \"id\": \"65f43cab-a498-4a8a-b9e2-1b70533e0ae6\"}]",
       "page_id": 1008
     }
+  },
+  {
+    "model": "cms.ReportRootPage",
+    "pk": 1018,
+    "fields": {
+      "path": "000100020006",
+      "depth": 3,
+      "numchild": 1,
+      "title": "Raporty",
+      "title_en": "Reports"
+    }
+  },
+  {
+    "model": "cms.BrokenLinksInfo",
+    "pk": 1019,
+    "fields": {
+      "path": "0001000200060001",
+      "depth": 4,
+      "numchild": 0,
+      "title": "Informacje o raporcie Uszkodzone linki",
+      "title_en": "Information about Broken links report",
+      "body": "[{\"type\": \"text\", \"value\": \"<p>Jakiś tekst.</p>\"}]",
+      "body_en": "[{\"type\": \"text\", \"value\": \"<p>Some text.</p>\"}]"
+    }
   }
 ]

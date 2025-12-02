@@ -21,7 +21,6 @@ from mcod.core.api.rdf.schema_mixins import ProfilesMixin
 from mcod.core.api.rdf.schemas import ResponseSchema as RDFResponseSchema
 from mcod.core.api.rdf.vocabs.common import VocabSKOSConcept, VocabSKOSConceptScheme
 from mcod.core.api.schemas import ExtSchema
-from mcod.core.choices import SOURCE_TYPE_CHOICES_FOR_ADMIN
 from mcod.core.serializers import CSVSchemaRegistrator, CSVSerializer, ListWithoutNoneStrElement
 from mcod.lib.extended_graph import ExtendedGraph
 from mcod.lib.serializers import TranslatedStr
@@ -524,7 +523,7 @@ class ResourceCSVSchema(CSVSerializer, metaclass=CSVSchemaRegistrator):
     modified = fields.DateTime(data_key=_("modified"), default=None)
     resource_type = fields.Str(attribute="type", data_key=_("type"), default="")
     openness_score = fields.Int(data_key=_("Openness score"), default=None)
-    method_of_sharing = fields.Method("get_method_of_sharing", data_key=_("Method of sharing"))
+    method_of_sharing = fields.Str(data_key=_("Method of sharing"))
     views_count = fields.Int(attribute="computed_views_count", data_key=_("views_count"), default=None)
     downloads_count = fields.Int(
         attribute="computed_downloads_count",
@@ -540,9 +539,6 @@ class ResourceCSVSchema(CSVSerializer, metaclass=CSVSchemaRegistrator):
     class Meta:
         ordered = True
         model = "resources.Resource"
-
-    def get_method_of_sharing(self, obj: Resource) -> str:
-        return SOURCE_TYPE_CHOICES_FOR_ADMIN.get(obj.source_type, obj.source_type)
 
 
 class ChartApiRelationships(Relationships):

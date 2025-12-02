@@ -14,6 +14,11 @@ from mcod.histories.serializers import LogEntryApiResponse
 from mcod.lib.encoders import DateTimeToISOEncoder
 from mcod.organizations import views as org_views
 from mcod.organizations.serializers import InstitutionApiResponse
+from mcod.reports import views as reports_views
+from mcod.reports.broken_links.serializers import (
+    BrokenlinksReportApiResponse,
+    BrokenlinksReportDataApiResponse,
+)
 from mcod.resources import serializers as res_responses, views as res_views
 from mcod.search import views as search_views
 from mcod.search.serializers import CommonObjectResponse
@@ -103,6 +108,8 @@ class OpenApiSpec:
         spec.components.schema("Showcase", schema=ShowcaseApiResponse, many=False)
         spec.components.schema("Histories", schema=LogEntryApiResponse, many=True)
         spec.components.schema("History", schema=LogEntryApiResponse, many=False)
+        spec.components.schema("BrokenlinksReport", schema=BrokenlinksReportApiResponse, many=False)
+        spec.components.schema("BrokenlinksReportData", schema=BrokenlinksReportDataApiResponse, many=True)
         spec.path(resource=org_views.InstitutionSearchView)
         spec.path(resource=org_views.InstitutionApiView)
         spec.path(resource=org_views.InstitutionDatasetSearchApiView)
@@ -120,6 +127,9 @@ class OpenApiSpec:
         spec.path(resource=showcases_views.ShowcaseApiView)
         spec.path(resource=his_views.HistoriesView)
         spec.path(resource=his_views.HistoryView)
+        spec.path(resource=reports_views.BrokenLinksReportView)
+        spec.path(resource=reports_views.BrokenLinksReportDataView)
+        spec.path(resource=reports_views.PublicBrokenLinksReportDownloadView)
 
         resp.text = json.dumps(spec.to_dict(), cls=DateTimeToISOEncoder)
         resp.status = falcon.HTTP_200

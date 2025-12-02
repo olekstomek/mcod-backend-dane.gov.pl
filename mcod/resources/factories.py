@@ -167,6 +167,19 @@ class ResourceFactory(factory.django.DjangoModelFactory):
         django_get_or_create = ("title",)
 
 
+class BrokenLinksResourceFactory(ResourceFactory):
+
+    link_tasks_last_status = "FAILURE"
+
+    @factory.post_generation
+    def create_failed_link_task(self, create, extracted, **kwargs):
+        if not create:
+            return
+
+        failed_task = TaskResultFactory(status="FAILURE", result="{}")
+        self.link_tasks.add(failed_task)
+
+
 class IsolatedResourceFactory(factory.django.DjangoModelFactory):
     title = factory.Faker("text", max_nb_chars=100, locale="pl_PL")
     dataset = factory.SubFactory(DatasetFactory)
@@ -348,6 +361,18 @@ class ResourceXlsxFactory(ResourceFactory):
     )
     format = "xlsx"
     type = "file"
+
+
+class ApiResourceFactory(ResourceFactory):
+    type = "api"
+    format = "json"
+    link = "https://someapi.com"
+
+
+class WebResourceFactory(ResourceFactory):
+    type = "website"
+    format = "html"
+    link = "https://someweb.com"
 
 
 factories_registry.register("resource", ResourceFactory)

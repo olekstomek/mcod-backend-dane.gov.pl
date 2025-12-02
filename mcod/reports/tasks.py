@@ -31,6 +31,12 @@ from mcod.harvester.serializers import (
     DataSourceLastImportDatasetCSVSchema,
 )
 from mcod.lib.rdf.store import get_sparql_store
+from mcod.organizations.models import Organization
+from mcod.reports.broken_links import (
+    generate_admin_broken_links_report,
+    generate_public_broken_links_reports,
+)
+from mcod.reports.broken_links.tasks_helpers import BrokenLinksIntermediaryJSON
 from mcod.reports.exceptions import NoDataForReportException
 from mcod.reports.models import Report, SummaryDailyReport
 from mcod.resources.models import Resource
@@ -252,46 +258,6 @@ def create_no_resource_dataset_report():
     return json.dumps({"file": file_url_path, "model": "datasets.Dataset"})
 
 
-def create_resource_link_validation_report():
-    app = "resources"
-    file_name_postfix = now().strftime("%Y%m%d%H%M%S.%s")
-    queryset = Resource.objects.filter(status="published", link__isnull=False, link_tasks_last_status="FAILURE").exclude(
-        Q(link__startswith=settings.API_URL) | Q(link__startswith=settings.BASE_URL)
-    )
-    serializer_cls = csr.get_serializer(Resource)
-    excluded_fields = [
-        "link_is_valid",
-        "file_is_valid",
-        "data_is_valid",
-        "format",
-        "status",
-        "openness_score",
-        "views_count",
-        "downloads_count",
-    ]
-    serializer = serializer_cls(many=True, exclude=excluded_fields)
-    data = serializer.dump(queryset)
-    file_name = f"brokenlinks_resources_{file_name_postfix}.csv"
-    reports_path = os.path.join(settings.REPORTS_MEDIA_ROOT, app)
-    os.makedirs(reports_path, exist_ok=True)
-
-    file_path = os.path.join(reports_path, file_name)
-    file_url_path = f"{settings.REPORTS_MEDIA}/{app}/{file_name}"
-    with open(file_path, "w") as f:
-        save_as_csv(f, serializer.get_csv_headers(), data)
-    return json.dumps({"file": file_url_path, "model": "resources.Resource"})
-
-
-@extended_shared_task(ignore_result=False)
-def link_validation_success_callback():
-    return create_resource_link_validation_report()
-
-
-@extended_shared_task(ignore_result=False)
-def link_validation_error_callback():
-    return create_resource_link_validation_report()
-
-
 @task_prerun.connect(sender=generate_csv)
 @task_prerun.connect(sender=generate_harvesters_imports_report)
 @task_prerun.connect(sender=generate_harvesters_last_imports_report)
@@ -327,8 +293,6 @@ def create_resources_report_task(data, headers, report_name):
     return json.dumps({"file": file_url_path, "model": "resources.Resource"})
 
 
-@task_success.connect(sender=link_validation_success_callback)
-@task_success.connect(sender=link_validation_error_callback)
 @task_success.connect(sender=create_no_resource_dataset_report)
 @task_success.connect(sender=create_resources_report_task)
 def generating_monthly_report_success(sender, result, **kwargs):
@@ -344,21 +308,6 @@ def generating_monthly_report_success(sender, result, **kwargs):
         Report.objects.create(**result_dict)
     except Exception as e:
         logger.error(f"reports.task: exception on generating_monthly_report_success:\n{e}")
-
-
-@extended_shared_task(ignore_result=False)
-def validate_resources_links(ids=None):
-    if ids:
-        resources_ids = ids
-    else:
-        resources_ids = list(
-            Resource.objects.filter(status="published", link__isnull=False)
-            .exclude(Q(link__startswith=settings.API_URL) | Q(link__startswith=settings.BASE_URL))
-            .values_list("pk", flat=True)
-        )
-    subtasks = [validate_link.s(res_id) for res_id in resources_ids]
-    callback = link_validation_success_callback.si().on_error(link_validation_error_callback.si())
-    chord(subtasks, callback).apply_async()
 
 
 @task_success.connect(sender=generate_csv)
@@ -380,22 +329,6 @@ def generating_report_success(sender, result, **kwargs):
         report.save()
     except Exception as e:
         logger.error(f"reports.task: exception on generating_report_success:\n{e}")
-
-
-@task_failure.connect(sender=generate_csv)
-@task_failure.connect(sender=create_no_resource_dataset_report)
-@task_failure.connect(sender=validate_resources_links)
-@task_failure.connect(sender=create_resources_report_task)
-@task_failure.connect(sender=generate_harvesters_imports_report)
-@task_failure.connect(sender=generate_harvesters_last_imports_report)
-def generating_report_failure(sender, task_id, exception, args, traceback, einfo, signal, **kwargs):
-    logger.debug(f"generating report failed with:\n{exception}")
-    try:
-        result_task = TaskResult.objects.get_task(task_id)
-        result_task.status = "FAILURE"
-        result_task.save()
-    except Exception as e:
-        logger.error(f"reports.task: exception on generating_report_failure:\n{e}")
 
 
 def dict_fetch_all(cursor):
@@ -522,3 +455,121 @@ def check_kronika_connection_performance():
         kronika_logger.info(log_msg)
     except Exception as err:
         kronika_logger.error(f"{log_msg} Exception occurred while sending request to kronika api: {err};")
+
+
+@extended_shared_task(ignore_result=False)
+def generate_admin_broken_links_report_task(json_file_id: str):
+    """Fetches broken links data from JSON file and generates Admin Broken Links reports."""
+    intermediary_json = BrokenLinksIntermediaryJSON(json_file_id)
+    base_json_data: List[Dict[str, Any]] = intermediary_json.load()
+    report_file_path_url: str = generate_admin_broken_links_report(base_json_data)
+    return json.dumps({"file": report_file_path_url, "model": "resources.Resource"})
+
+
+@task_success.connect(sender=generate_admin_broken_links_report_task)
+def admin_broken_links_report_generation_success_handler(sender, result, **kwargs):
+    """
+    Set task result object on success and creates `Report` object for generated
+    Admin Broken Links report - this makes it visible in PA.
+    """
+    try:
+        result_dict = json.loads(result)
+        logger.info("Admin Broken Links report generated.")
+
+        result_task = TaskResult.objects.get_task(sender.request.id)
+        result_task.result = result
+        result_task.status = "SUCCESS"
+        result_task.save()
+        result_dict["task"] = result_task
+        Report.objects.create(**result_dict)
+    except Exception as e:
+        logger.error(f"reports.task: exception on generating_monthly_report_success:\n{e}")
+
+
+@extended_shared_task
+def generate_public_broken_links_reports_task(json_file_id: str):
+    """Fetches broken links data from JSON file and generates Public Broken Links reports."""
+    intermediary_json = BrokenLinksIntermediaryJSON(json_file_id)
+    base_json_data: List[Dict[str, Any]] = intermediary_json.load()
+    generate_public_broken_links_reports(base_json_data)
+
+
+@extended_shared_task(ignore_result=False)
+def generate_broken_links_reports_task():
+    """
+    Fetches resources with broken links and triggers the report generation process.
+
+    This task serves as the entry point for creating broken links reports. It queries
+    the database for all resources with known broken links, exports this data to a
+    temporary JSON file, and then initiates a Celery chain to generate the admin
+    and public-facing reports based on that file.
+    """
+    # Create intermediary JSON file containing resources broken links data for reports
+    intermediary_json = BrokenLinksIntermediaryJSON()
+    intermediary_json.delete_old_json_files()
+    intermediary_json.dump()
+    file_id: str = intermediary_json.id
+
+    # Define a Celery chain: generate the admin report first, then the public reports
+    # The path to the JSON file is passed as an argument to the tasks
+    abl_task_sig = generate_admin_broken_links_report_task.si(file_id)
+    pbl_task_sig = generate_public_broken_links_reports_task.si(file_id)
+    workflow = abl_task_sig | pbl_task_sig
+
+    # Asynchronously execute the report generation workflow
+    workflow.apply_async()
+
+
+@extended_shared_task(ignore_result=False)
+def validate_resources_links():
+    """
+    Triggers the validation of external links for all published resources.
+
+    This task gathers all published resources containing external links and creates
+    a separate validation task for each one. These tasks are executed in parallel
+    using a Celery chord. After all validation tasks have completed, a callback
+    triggers the generation of broken links reports:
+    - Admin Broken Links report (visible via PA)
+    - Public Broken Links report (visible via OD frontend site)
+
+    This ensures that the reports are always generated,
+    even if some of the validation subtasks fail.
+    """
+
+    # Fetch all published resources that have external links to be validated.
+    qs: QuerySet = Resource.objects.published_with_ext_links_only()
+
+    if settings.BROKEN_LINKS_EXCLUDE_DEVELOPERS:
+        qs = qs.exclude(dataset__organization__institution_type=Organization.INSTITUTION_TYPE_DEVELOPER)
+
+    resources_ids: List[int] = list(qs.values_list("pk", flat=True))
+
+    # Prepare a list of individual validation subtasks, one for each resource.
+    subtasks = [validate_link.s(res_id) for res_id in resources_ids]
+
+    # Define the callback task to be executed after all validations are finished.
+    # The .on_error handler ensures that the report generation task runs even if
+    # some of the link validation subtasks fail.
+    # https://docs.celeryq.dev/en/v5.3.0/userguide/canvas.html#:~:text=You%20can%20also%20add%20error%20callbacks%20using%20the%20on_error%20method%3A
+
+    callback = generate_broken_links_reports_task.si().on_error(generate_broken_links_reports_task.si())
+
+    # Execute the validation tasks in parallel. The callback will be triggered
+    # once all subtasks are complete.
+    chord(subtasks, callback).apply_async()
+
+
+@task_failure.connect(sender=generate_csv)
+@task_failure.connect(sender=create_no_resource_dataset_report)
+@task_failure.connect(sender=validate_resources_links)
+@task_failure.connect(sender=create_resources_report_task)
+@task_failure.connect(sender=generate_harvesters_imports_report)
+@task_failure.connect(sender=generate_harvesters_last_imports_report)
+def generating_report_failure(sender, task_id, exception, args, traceback, einfo, signal, **kwargs):
+    logger.debug(f"generating report failed with:\n{exception}")
+    try:
+        result_task = TaskResult.objects.get_task(task_id)
+        result_task.status = "FAILURE"
+        result_task.save()
+    except Exception as e:
+        logger.error(f"reports.task: exception on generating_report_failure:\n{e}")

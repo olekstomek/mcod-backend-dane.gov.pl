@@ -1,3 +1,4 @@
+import warnings
 from collections import OrderedDict, defaultdict
 
 from django.apps import apps
@@ -41,6 +42,11 @@ class SerializerRegistry:
         if _name:
             _app, _model = _name.split(".")
             model = apps.get_model(_app, _model)
+            if model in self._serializers:
+                warnings.warn(
+                    f"Overriding existing registry serializer "
+                    f"`{self._serializers[model]}` by `{serializer_cls}` for model `{model}`."
+                )
             self._serializers[model] = serializer_cls
 
     def get_serializer(self, model):

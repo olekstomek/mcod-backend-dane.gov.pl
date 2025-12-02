@@ -9,7 +9,7 @@ import re
 import shutil
 import unicodedata
 from abc import ABC, abstractmethod
-from collections import OrderedDict
+from collections import OrderedDict, namedtuple
 from contextlib import contextmanager
 from http.cookies import SimpleCookie
 from io import StringIO, TextIOWrapper
@@ -147,6 +147,38 @@ def sizeof_fmt(num, suffix="B"):
             return "%3.1f%s%s" % (num, unit, suffix)
         num /= 1024.0
     return "%.1f%s%s" % (num, "Yi", suffix)
+
+
+FileMeta = namedtuple("FileMeta", ["created", "modified", "accessed", "size"])
+
+
+def get_file_metadata(path: Union[str, Path], tz_info: datetime.tzinfo = datetime.timezone.utc) -> FileMeta:
+    """
+    Get basic file metadata.
+
+    Args:
+        path (str): Path to the file.
+        tz_info (datetime.tzinfo, optional): Timezone to apply to all datetime fields.
+            Defaults to UTC. Can be set to local timezone or any tzinfo object.
+
+    Returns:
+        FileMeta: Named tuple with attributes:
+            created (datetime): File creation time in specified timezone,
+                - On Linux: change time (ctime),
+                - On Windows: creation time.
+            modified (datetime): Last modification time in specified timezone.
+            accessed (datetime): Last access time in specified timezone.
+            size (int): File size in bytes.
+    """
+    file_path = Path(path)
+    stat = file_path.stat()
+
+    return FileMeta(
+        created=datetime.datetime.fromtimestamp(stat.st_ctime, tz=tz_info),
+        modified=datetime.datetime.fromtimestamp(stat.st_mtime, tz=tz_info),
+        accessed=datetime.datetime.fromtimestamp(stat.st_atime, tz=tz_info),
+        size=stat.st_size,
+    )
 
 
 def route_to_name(route, method="GET"):

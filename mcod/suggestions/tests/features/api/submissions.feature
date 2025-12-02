@@ -34,7 +34,7 @@ Feature: Submissions
 
   Scenario Outline: Accepted dataset submission feedback endpoint is accessible for some user types
     Given logged <user_type>
-    And accepteddatasetsubmission created with params {"id": 999, "title": "Testowa zaakceptowana propozycja nowych danych"}
+    And accepteddatasetsubmission created with params {"id": 999, "title": "Testowa zaakceptowana propozycja nowych danych", "is_active": "True"}
     When api request method is POST
     And api request posted data is {"data": {"type": "feedback", "attributes": {"opinion": "plus"}}}
     And api request path is /submissions/accepted/999/feedback

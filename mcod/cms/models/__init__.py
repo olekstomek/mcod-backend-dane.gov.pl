@@ -10,6 +10,7 @@ from mcod.cms.models.dga import (
 from mcod.cms.models.formpage import FormPage, FormPageIndex, FormPageSubmission
 from mcod.cms.models.knowledgebase import KBCategoryPage, KBPage, KBQAPage, KBRootPage
 from mcod.cms.models.landingpage import LandingPage, LandingPageIndex
+from mcod.cms.models.reports import BrokenLinksInfo, ReportRootPage
 from mcod.cms.models.rootpage import RootPage
 from mcod.cms.models.simplepages import ExtraSimplePage, SimplePage, SimplePageIndex
 from mcod.cms.models.videos import (
@@ -47,4 +48,6 @@ __all__ = [
     "DGAProtectedDataList",
     "DGAAccessApplication",
     "DGANewSubPage",
+    "ReportRootPage",
+    "BrokenLinksInfo",
 ]

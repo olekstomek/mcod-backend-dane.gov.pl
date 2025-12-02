@@ -8,6 +8,7 @@ from datetime import datetime
 from functools import partial
 
 import markdown2
+from dateutil.parser import parse
 from django.template import loader
 from django.utils.translation import gettext_lazy as _
 from marshmallow import ValidationError, fields, missing, utils
@@ -613,6 +614,7 @@ class DateTime(ExtendedFieldMixin, fields.DateTime):
         "iso": utils.isoformat,
         "iso8601": utils.isoformat,
         "iso8601T": api_utils.isoformat_with_z,
+        "symmetric_iso8601T": api_utils.isoformat_with_z,
         "rfc": utils.rfcformat,
         "rfc822": utils.rfcformat,
     }
@@ -621,6 +623,7 @@ class DateTime(ExtendedFieldMixin, fields.DateTime):
         "iso": utils.from_iso_datetime,
         "iso8601": utils.from_iso_datetime,
         "iso8601T": api_utils.from_iso_with_z_datetime,
+        "symmetric_iso8601T": parse,
         "rfc": utils.from_rfc,
         "rfc822": utils.from_rfc,
     }

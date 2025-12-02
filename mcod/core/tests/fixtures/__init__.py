@@ -11,6 +11,7 @@ from mcod.core.tests.fixtures.beat_schedule import *  # noqa
 from mcod.core.tests.fixtures.categories import *  # noqa
 from mcod.core.tests.fixtures.datasets_fixtures import *  # noqa
 from mcod.core.tests.fixtures.dga import *  # noqa
+from mcod.core.tests.fixtures.elasticsearch import *  # noqa
 from mcod.core.tests.fixtures.harvester import *  # noqa
 from mcod.core.tests.fixtures.legacy import *  # noqa
 from mcod.core.tests.fixtures.licenses import *  # noqa

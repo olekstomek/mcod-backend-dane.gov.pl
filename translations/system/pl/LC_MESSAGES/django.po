@@ -3992,6 +3992,24 @@ msgstr "treść uwagi"
 msgid "Data provider"
 msgstr "Dostawca danych"
 
+msgid "Publisher"
+msgstr "Dostawca"
+
+msgid "Cause"
+msgstr "Przyczyna"
+
+msgid "Link to data on the portal"
+msgstr "Link do danych na portalu"
+
+msgid "Data"
+msgstr "Dane"
+
+msgid "Broken link to provider data"
+msgstr "Uszkodzony link do danych dostawcy"
+
+msgid "Broken link"
+msgstr "Uszkodzony link"
+
 msgid "editor e-mail"
 msgstr "e-mail edytora"
 
@@ -5654,3 +5672,6 @@ msgstr "Wartość 'Nie dotyczy' nie jest już obsługiwana przez portal. Zmień 
 
 msgid "An unexpected error occurred. Please try again later."
 msgstr "Wystąpił nieoczekiwany błąd. Proszę, spróbuj później."
+
+msgid "portal_data_link"
+msgstr "Podgląd danych na portalu"

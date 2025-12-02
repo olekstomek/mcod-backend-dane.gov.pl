@@ -4,7 +4,7 @@ from mcod.suggestions.models import AcceptedDatasetSubmission, Suggestion
 
 
 @pytest.fixture
-def accepted_dataset_submission():
+def accepted_dataset_submission() -> AcceptedDatasetSubmission:
     return AcceptedDatasetSubmission.objects.create(
         decision="accepted",
         status="published",
@@ -16,7 +16,7 @@ def accepted_dataset_submission():
 
 
 @pytest.fixture
-def public_accepted_dataset_submission():
+def public_accepted_dataset_submission() -> AcceptedDatasetSubmission:
     return AcceptedDatasetSubmission.objects.create(
         decision="accepted",
         status="published",
@@ -29,5 +29,5 @@ def public_accepted_dataset_submission():
 
 
 @pytest.fixture
-def suggestion():
+def suggestion() -> Suggestion:
     return Suggestion.objects.create(notes="test suggestion notes")

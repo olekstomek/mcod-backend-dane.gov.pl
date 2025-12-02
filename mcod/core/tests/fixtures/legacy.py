@@ -11,12 +11,15 @@ import elasticsearch_dsl
 import factory
 import falcon
 import pytest
-from django.contrib.auth import get_user_model
+from django.contrib.auth import BACKEND_SESSION_KEY, HASH_SESSION_KEY, SESSION_KEY, get_user_model
+from django.contrib.sessions.backends.base import SessionBase
 from django.core.cache import caches
 from django.core.files.uploadedfile import SimpleUploadedFile
 from falcon import testing
 
 from mcod import settings
+from mcod.lib.jwt import get_auth_token
+from mcod.lib.triggers import session_store as session_store_create
 
 User = get_user_model()
 
@@ -68,6 +71,25 @@ def client(test_api_instance) -> testing.TestClient:
 @pytest.fixture
 def client14(test_api_instance) -> testing.TestClient:
     return testing.TestClient(test_api_instance, headers={"X-API-VERSION": "1.4", "Accept-Language": "pl"})
+
+
+@pytest.fixture
+def client14_logged_admin(admin, client14, test_api_instance) -> testing.TestClient:
+    """
+    session_store is used to create backend session for admin user. During login process a JWT token
+    is generated which includes also information about session key. Generated token must be consistent with user session.
+    Next token is used in request header.
+    """
+    session_auth_hash = admin.get_session_auth_hash()
+    session_store: SessionBase = session_store_create()
+    session_store[SESSION_KEY] = str(admin.id)
+    session_store[BACKEND_SESSION_KEY] = "django.contrib.auth.backends.ModelBackend"
+    session_store[HASH_SESSION_KEY] = session_auth_hash
+    session_store.save()
+    token: str = get_auth_token(admin, session_key=session_store.session_key)
+    return testing.TestClient(
+        test_api_instance, headers={"X-API-VERSION": "1.4", "Accept-Language": "pl", "Authorization": f"Bearer {token}"}
+    )
 
 
 @pytest.fixture

@@ -7,6 +7,7 @@ from mcod.histories.api import views as history_views
 from mcod.laboratory import views as laboratory_views
 from mcod.newsletter import views as newsletter_views
 from mcod.organizations import views as org_views
+from mcod.reports import views as reports_views
 from mcod.resources import views as res_views
 from mcod.schedules import views as schedules_views
 from mcod.search import views as search_views
@@ -323,6 +324,10 @@ routes = [
     ("/showcases/{id:int},{slug}/datasets", showcases_views.ShowcaseDatasetsView()),
     ("/showcases/suggest", showcases_views.ShowcaseProposalView()),
     ("/metrics", MetricsResource()),
+    # Reports
+    ("/reports/brokenlinks", reports_views.BrokenLinksReportView()),
+    ("/reports/brokenlinks/data", reports_views.BrokenLinksReportDataView()),
+    ("/reports/brokenlinks/{extension}", reports_views.PublicBrokenLinksReportDownloadView()),
 ]
 
 

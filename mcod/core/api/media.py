@@ -59,6 +59,8 @@ class ExportHandler(BaseHandler):
         return stream
 
     def serialize(self, context, content_type):
+        if isinstance(context, bytes):
+            return context  # no conversion is required when raw data
         if content_type == "application/vnd.ms-excel":
             return self.to_xlsx(context)
         return self.to_csv(context)

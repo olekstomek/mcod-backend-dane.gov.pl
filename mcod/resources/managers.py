@@ -75,7 +75,7 @@ class ResourceQuerySet(AutocompleteMixin, QuerySet):
     pass
 
 
-class SoftDeletableMetadataQuerySet(AutocompleteMixin, PrefetchResourceFilesMixin, SoftDeletableQuerySet):
+class ResourceSoftDeletableMetadataQuerySet(AutocompleteMixin, PrefetchResourceFilesMixin, SoftDeletableQuerySet):
 
     def confirm_delete_items(self, limit=10):
         return self.order_by("title")[:limit]
@@ -164,6 +164,9 @@ class SoftDeletableMetadataQuerySet(AutocompleteMixin, PrefetchResourceFilesMixi
             files_details.extend(res_files)
         return files_details
 
+    def exclude_internal_links(self):
+        return self.exclude(Q(link__startswith=settings.API_URL) | Q(link__startswith=settings.BASE_URL))
+
 
 class AutocompleteManagerMixin:
 
@@ -172,7 +175,7 @@ class AutocompleteManagerMixin:
 
 
 class ResourceManager(AutocompleteManagerMixin, SoftDeletableManager):
-    _queryset_class = SoftDeletableMetadataQuerySet
+    _queryset_class = ResourceSoftDeletableMetadataQuerySet
 
     def get_queryset(self):
         return super().get_queryset().with_prefetched_files()
@@ -183,12 +186,14 @@ class ResourceManager(AutocompleteManagerMixin, SoftDeletableManager):
     def with_tabular_data(self, **kwargs):
         return self.get_queryset().with_tabular_data(**kwargs)
 
-    def with_ext_http_links_only(self):
-        return (
-            self.get_queryset()
-            .filter(link__startswith="http://")
-            .exclude(Q(link__startswith=settings.API_URL) | Q(link__startswith=settings.BASE_URL))
-        )
+    def with_ext_http_links_only(self) -> QuerySet:
+        return self.get_queryset().filter(link__startswith="http://").exclude_internal_links()
+
+    def published_with_ext_links_only(self) -> QuerySet:
+        return self.get_queryset().filter(status="published", link__isnull=False).exclude_internal_links()
+
+    def with_broken_links(self) -> QuerySet:
+        return self.published_with_ext_links_only().filter(link_tasks_last_status="FAILURE")
 
     def by_formats(self, formats):
         return self.get_queryset().by_formats(formats)

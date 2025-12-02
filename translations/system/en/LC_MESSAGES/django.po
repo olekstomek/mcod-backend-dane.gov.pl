@@ -3617,6 +3617,9 @@ msgstr ""
 msgid "Data provider"
 msgstr ""
 
+msgid "Publisher"
+msgstr ""
+
 msgid "editor e-mail"
 msgstr ""
 
@@ -5030,3 +5033,12 @@ msgstr ""
 
 msgid "There was an unexpected error. Please try again later."
 msgstr ""
+
+msgid "portal_data_link"
+msgstr "Data preview on the portal"
+
+msgid "Broken link"
+msgstr ""
+
+msgid "Broken link to provider data"
+msgstr "Broken link to publisher data"
