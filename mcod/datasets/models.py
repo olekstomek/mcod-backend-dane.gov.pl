@@ -28,11 +28,10 @@ from mcod.core import model_validators, signals as core_signals
 from mcod.core.api.rdf import signals as rdf_signals
 from mcod.core.api.search import signals as search_signals
 from mcod.core.api.search.tasks import update_document_task
-from mcod.core.db.managers import TrashManager
 from mcod.core.db.models import ExtendedModel, TrashModelBase, update_watcher
 from mcod.core.storages import get_storage
 from mcod.counters.models import ResourceDownloadCounter, ResourceViewCounter
-from mcod.datasets.managers import DatasetManager, SupplementManager
+from mcod.datasets.managers import DatasetManager, DatasetTrashManager, SupplementManager
 from mcod.datasets.signals import remove_related_resources
 from mcod.datasets.tasks import archive_resources_files, change_archive_symlink_name
 from mcod.lib.model_sanitization import (
@@ -844,7 +843,7 @@ class Dataset(ExtendedModel):
 
     i18n = SanitizedTranslationField(fields=("title", "notes", "image_alt"))
     objects = DatasetManager()
-    trash = TrashManager()
+    trash = DatasetTrashManager()
     tracker = FieldTracker()
     slugify_field = "title"
     last_modified_resource.fget.short_description = _("modified")

@@ -1,19 +1,20 @@
 import datetime
 import re
+from typing import TYPE_CHECKING, List
 
 import pytest
-from django.contrib.auth import get_user_model
-from django.test import Client
+from django.test import Client, override_settings
 from django.urls import reverse
 from django.utils.encoding import smart_str
 from django.utils.translation import gettext as _
 
 import mcod.unleash
 from mcod.core.tests.helpers.tasks import run_on_commit_events
-from mcod.datasets.documents import Resource
 from mcod.resources.factories import ResourceFactory
+from mcod.resources.models import Resource
 
-User = get_user_model()
+if TYPE_CHECKING:
+    from mcod.users.models import User
 
 
 class TestEditorAccess:
@@ -437,7 +438,7 @@ class TestResourceChangeList:
         assert resource_with_success_tasks_statuses.title not in content
 
     @pytest.mark.parametrize("last_link_status", ["SUCCESS", "FAILURE", "PENDING"])
-    def test_list_link_status_na_filter(self, admin: User, last_link_status: str):
+    def test_list_link_status_na_filter(self, admin: "User", last_link_status: str):
         # GIVEN
         resource_with_link_status = ResourceFactory.create(title="Res link", link_tasks_last_status=last_link_status)
         resource_with_no_link_status = ResourceFactory.create(title="Res no link", link_tasks_last_status="")
@@ -501,3 +502,45 @@ class TestResourceForm:
         resp = client.get(resource_of_type_api.admin_change_url)
         content = resp.content.decode()
         assert "forced_file_type" not in content
+
+
+class TestExportToCSV:
+    @pytest.fixture
+    def logged_in_as_admin(self, admin: "User") -> Client:
+        client = Client()
+        client.force_login(admin)
+        return client
+
+    @pytest.fixture
+    def some_4_resources(self) -> List[int]:
+        resources = [ResourceFactory() for _ in range(4)]
+        return [r.pk for r in resources]
+
+    def test_admin_can_export_resources_as_a_csv(self, logged_in_as_admin: Client, some_4_resources: List[int]) -> None:
+        # When
+        _url = "/resources/resource/"
+        resp = logged_in_as_admin.post(
+            _url,
+            data={
+                "action": "export_to_csv",
+                "_selected_action": some_4_resources,
+            },
+            follow=True,
+        )
+        # Then
+        assert "Tworzenie pliku CSV dodane do kolejki zadań" in resp.content.decode()
+
+    @override_settings(RESOURCE_MAX_REPORT_SIZE=1)
+    def test_export_count_is_limited(self, logged_in_as_admin: Client, some_4_resources: List[int]) -> None:
+        # When
+        _url = "/resources/resource/"
+        resp = logged_in_as_admin.post(
+            _url,
+            data={
+                "action": "export_to_csv",
+                "_selected_action": some_4_resources,
+            },
+            follow=True,
+        )
+        # Then
+        assert "Zażądano zbyt wielu rekordów, 4. Maksymalna liczba wynosi 1." in resp.content.decode()

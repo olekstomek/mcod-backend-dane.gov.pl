@@ -44,8 +44,8 @@ Feature: Sparql API endpoint
     And api request path is /sparql/
     And api request sparql data has {"q": "INVALID SYNTAX"}
     And send api request and fetch the response
-    Then api's response status code is 400
-    And api's response body field title is 400 Bad Request
+    Then api's response status code is 422
+    And api's response body field title is 422 Unprocessable Entity
 
   Scenario Outline: Test that response is ok for various requests
     Given dataset created with params {"id": 999, "slug": "sparql", "tags": ["test"]}

@@ -6,7 +6,6 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 from urllib.parse import urlencode
 
 import requests
-import sentry_sdk
 from dateutil.relativedelta import relativedelta
 from django.apps import apps
 from django.core.exceptions import ImproperlyConfigured, MultipleObjectsReturned, ValidationError
@@ -52,7 +51,6 @@ from mcod.harvester.ckan_utils import (
 from mcod.harvester.exceptions import CKANPartialValidationException
 from mcod.harvester.managers import DataSourceManager
 from mcod.harvester.utils import make_request, retrieve_to_file
-from mcod.lib.exceptions import NoResponseException
 from mcod.lib.metadata_validators import (
     validate_conflicting_high_value_data_flags,
     validate_high_value_data_from_ec_list_organization,
@@ -1126,9 +1124,6 @@ class DataSource(AdminMixin, LogMixin, SoftDeletableModel, TimeStampedModel):
         schema_class = self._import_from(schema_path)
         try:
             data = import_func(**self.import_func_kwargs)
-        except NoResponseException as exc:
-            sentry_sdk.capture_exception(exc)
-            error_desc = exc
         except Exception as exc:
             error_desc = exc
         try:
@@ -1146,6 +1141,10 @@ class DataSource(AdminMixin, LogMixin, SoftDeletableModel, TimeStampedModel):
             error_desc = err.messages
             if isinstance(error_desc, dict):
                 error_desc = repr(error_desc)
+        except Exception as err:  # Catch other exceptions to display import error in Admin Panel
+            logger.error(f"Unexpected schema validation error while import data: {err}")
+            items = []
+            error_desc = _("Unexpected schema validation error while import data.")
 
         ds_rejected = 0
         if items and self.is_ckan:

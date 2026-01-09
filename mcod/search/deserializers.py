@@ -1,6 +1,12 @@
+import re
+from typing import List
+from urllib.parse import urlparse
+
+from django.conf import settings as django_settings
 from django.utils.translation import get_language, gettext_lazy as _
 from elasticsearch_dsl import MultiSearch, Search
 from marshmallow import ValidationError, validate, validates
+from rdflib.plugins.sparql.parser import parseQuery
 
 from mcod import settings
 from mcod.core.api import fields as core_fields
@@ -330,6 +336,35 @@ class SparqlRequestAttrs(ObjectAttrs):
         ),
         allow_none=True,
     )
+
+    @validates("q")
+    def validate_q(self, q: str):
+        # 1. Ensure the query is a safe, read-only type by attempting to parse it.
+        # rdflib's parseQuery will fail for update queries or malformed syntax.
+        try:
+            parseQuery(q)
+        except Exception:
+            raise ValidationError("Invalid or disallowed query: Only SELECT, ASK, DESCRIBE, and CONSTRUCT queries are permitted.")
+
+        # Regex to find "SERVICE" (optionally "SILENT"), then capture the URL in <...>.
+        pattern = re.compile(r"SERVICE\s+(?:SILENT\s+)?<([^>]+)>", re.IGNORECASE)
+        external_services: List[str] = pattern.findall(q)
+
+        # 2. Check for external service endpoints against the allowed domain list.
+        if not external_services:
+            return  # No external services, so this check passes.
+
+        # Normalize the allowed list to only contain netlocs for consistent comparison.
+        allowed_external_domains: List[str] = django_settings.ALLOWED_SPARQL_EXTERNAL_DOMAINS
+        allowed_netlocs_set = {urlparse(d).netloc or d for d in allowed_external_domains}
+
+        for service_url in external_services:
+            try:
+                domain: str = urlparse(service_url).netloc
+                if domain not in allowed_netlocs_set:
+                    raise ValidationError(f"Query references a disallowed external site: {service_url}")
+            except ValueError:
+                raise ValidationError(f"Invalid URL found in SERVICE clause: {service_url}")
 
     class Meta:
         strict = True

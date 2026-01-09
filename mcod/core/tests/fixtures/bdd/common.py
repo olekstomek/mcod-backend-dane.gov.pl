@@ -873,6 +873,11 @@ def dataset_with_dga_resource(dataset_id):
     create_dataset_with_dga_resource(dataset_id)
 
 
+@given(parsers.parse("dataset with pk {dataset_id:d} containing dga resource with title {resource_title}"))
+def dataset_with_dga_resource_with_title(dataset_id: int, resource_title: str):
+    create_dataset_with_dga_resource(dataset_id=dataset_id, resource_title=resource_title)
+
+
 @given(parsers.parse("dataset with pk {dataset_id:d} containing dga resource with pk {resource_id:d}"))
 def dataset_with_dga_resource_with_given_id(dataset_id, resource_id):
     create_dataset_with_dga_resource(dataset_id, resource_id=resource_id)

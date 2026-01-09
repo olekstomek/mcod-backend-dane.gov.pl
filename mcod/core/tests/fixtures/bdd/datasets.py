@@ -5,7 +5,7 @@ import os
 import xml.etree.ElementTree as ET
 import zipfile
 from datetime import date
-from typing import Union
+from typing import Callable, List, Tuple, Union
 
 import pytest
 import xmlschema
@@ -35,6 +35,7 @@ from mcod.resources.factories import (
     ResourceFactory,
     SupplementFactory as ResourceSupplementFactory,
 )
+from mcod.resources.models import Resource
 from mcod.showcases.factories import ShowcaseFactory
 from mcod.special_signs.factories import SpecialSignFactory
 from mcod.tags.factories import TagFactory
@@ -83,6 +84,20 @@ def dataset_with_resources():
     ResourceFactory.create_batch(2, dataset=_dataset)
     run_on_commit_events()
     return _dataset
+
+
+@pytest.fixture
+def datasets_with_resources_int_trash_factory() -> Callable:
+    def _generate_dataset_with_resources_int_trash(number_of_datasets: int = 1) -> List[Tuple[Dataset, List[Resource]]]:
+        datasets_in_trash: List[Tuple[Dataset, List[Resource]]] = []
+        for _ in range(number_of_datasets):
+            _dataset = DatasetFactory.create(is_removed=True)
+            _resources: List[Resource] = ResourceFactory.create_batch(2, dataset=_dataset, is_removed=True)
+            run_on_commit_events()
+            datasets_in_trash.append((_dataset, _resources))
+        return datasets_in_trash
+
+    return _generate_dataset_with_resources_int_trash
 
 
 @pytest.fixture

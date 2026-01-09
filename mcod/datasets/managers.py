@@ -2,8 +2,11 @@ from datetime import datetime
 
 from dateutil.relativedelta import relativedelta
 from django.apps import apps
+from django.db import transaction
 from django.db.models import Count, Max, Prefetch, Q
+from django.db.models.query import QuerySet
 
+from mcod.core.db.managers import TrashManager
 from mcod.core.managers import SoftDeletableManager, SoftDeletableQuerySet
 from mcod.datasets.utils import _batch_qs
 
@@ -186,3 +189,16 @@ class DatasetManager(SoftDeletableManager):
 
 class SupplementManager(SoftDeletableManager):
     pass
+
+
+class DatasetTrashQuerySet(QuerySet):
+    def delete(self):
+        Resource = apps.get_model("resources", "Resource")
+        with transaction.atomic():
+            resources_to_delete = Resource.trash.filter(dataset__in=self)
+            resources_to_delete.delete()
+            self.update(is_permanently_removed=True)
+
+
+class DatasetTrashManager(TrashManager):
+    _queryset_class = DatasetTrashQuerySet

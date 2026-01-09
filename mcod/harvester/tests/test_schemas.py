@@ -1,7 +1,8 @@
 import os
 from pathlib import Path
 from pydoc import locate
-from typing import Optional
+from typing import Optional, Type
+from unittest.mock import patch
 from xml.etree import ElementTree as et
 from xml.etree.ElementTree import Element, ElementTree
 
@@ -9,9 +10,24 @@ import pytest
 import requests_mock
 import xmlschema
 from django.conf import settings
+from django.utils.translation import override
+from marshmallow import ValidationError
+from mimeparse import MimeTypeParseException
+from requests.exceptions import ConnectionError
 from xmlschema.validators.schemas import XMLSchema
 
+from mcod.harvester.schema_utils import get_and_validate_resource_format_from_response
 from mcod.harvester.utils import get_xml_schema_path
+from mcod.lib.exceptions import (
+    DangerousContentError,
+    EmptyDocument,
+    InvalidContentType,
+    InvalidResponseCode,
+    InvalidSchema,
+    InvalidUrl,
+    MissingContentType,
+    UnsupportedContentType,
+)
 from mcod.lib.utils import get_file_content
 from mcod.organizations.models import Organization
 
@@ -127,3 +143,49 @@ def test_xml_schema_deserialization_dataset_update_frequency(
 
     # THEN
     assert result is expected_validation_success
+
+
+class TestSchemaUtils:
+
+    @pytest.mark.parametrize(
+        "download_file_exception_class",
+        (
+            InvalidUrl,
+            InvalidSchema,
+            InvalidResponseCode,
+            MissingContentType,
+            InvalidContentType,
+            UnsupportedContentType,
+            MimeTypeParseException,
+            EmptyDocument,
+            DangerousContentError,
+            ConnectionError,
+        ),
+    )
+    def test_get_and_validate_resource_format_from_response_raises_validation_error_for_known_download_exceptions(
+        self, download_file_exception_class: Type[Exception]
+    ):
+        # GIVEN
+        with patch("mcod.harvester.schema_utils.download_file") as mock_download_file:
+            exception_message = "This is exception message"
+            mock_download_file.side_effect = download_file_exception_class(exception_message)
+
+            with pytest.raises(ValidationError) as exc_info:
+                # WHEN
+                with override("en"):
+                    get_and_validate_resource_format_from_response("https://example.com")
+            # THEN
+            assert exc_info.value.args[0] == exception_message
+
+    def test_get_and_validate_resource_format_from_response_raises_validation_error_for_unexpected_download_exception(self):
+        # GIVEN
+        with patch("mcod.harvester.schema_utils.download_file") as mock_download_file:
+            mock_download_file.side_effect = Exception("This is exception message")
+            sample_url = "https://example.com"
+
+            with pytest.raises(ValidationError) as exc_info:
+                # WHEN
+                with override("en"):
+                    get_and_validate_resource_format_from_response(sample_url)
+            # THEN
+            assert exc_info.value.args[0] == f"Error while download file from: {sample_url}."

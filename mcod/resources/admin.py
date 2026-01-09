@@ -25,6 +25,7 @@ from django_celery_beat.models import (
     PeriodicTask,
     SolarSchedule,
 )
+from rangefilter.filter import DateRangeFilter
 
 from mcod.core.choices import SOURCE_TYPE_CHOICES_FOR_ADMIN
 from mcod.core.decorators import prometheus_monitoring
@@ -303,6 +304,7 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):  # MRO matters here for unescape
         LinkStatusFilter,
         FileStatusFilter,
         TabularViewFilter,
+        ("created", DateRangeFilter),
     ]
     search_fields = ["title", "uuid"]
     autocomplete_fields = ["dataset"]

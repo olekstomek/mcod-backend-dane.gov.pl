@@ -1,4 +1,5 @@
 import pytest  # noqa
+from django.apps import apps
 from django.core.files import File  # noqa
 from django.test import Client  # noqa
 from pytest_bdd import given, parsers, then  # noqa
@@ -125,3 +126,18 @@ def create_resource_for_link(
         client.force_login(admin)
         response = client.post("/resources/resource/add/", data=data, follow=True)
         admin_context.response = response
+
+
+@then(parsers.parse("resource with title {resource_title} has a file"))
+def resource_has_a_file(resource_title: str):
+    Resource = apps.get_model("resources.Resource")
+    resource = Resource.objects.get(title=resource_title)
+    assert resource.files.count(), f"Resource `{resource_title}` has no file"
+
+
+@then(parsers.parse("resource with title {resource_title} has DGA flag set on {flag}"))
+def resource_with_title_has_dga_flag_set_to_value(resource_title: str, flag: str):
+    Resource = apps.get_model("resources.Resource")
+    resource = Resource.objects.get(title=resource_title)
+    flag: bool = True if flag.lower() == "true" else False
+    assert resource.contains_protected_data == flag, f"Resource `{resource_title}` has DGA flag set on {flag}"

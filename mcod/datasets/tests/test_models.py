@@ -1,9 +1,10 @@
 from pathlib import Path
+from typing import List
 
 import pytest
 from bs4 import BeautifulSoup
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
-from django.db.models import FileField
+from django.db.models import FileField, QuerySet
 from django.test import Client
 from django.utils.encoding import smart_str
 from pytest_bdd import scenarios
@@ -166,6 +167,39 @@ class TestDatasetModel:
             Dataset.objects.get(id=ds_id)
         with pytest.raises(ObjectDoesNotExist):
             Resource.objects.get(id=r_id)
+
+    def test_delete_dataset_from_trash_by_object_deletes_belonging_resources(self, datasets_with_resources_int_trash_factory):
+        # GIVEN
+        dataset_and_its_resources_in_trash = datasets_with_resources_int_trash_factory(number_of_datasets=1)
+        dataset: Dataset = dataset_and_its_resources_in_trash[0][0]
+        dataset_resources: List[Resource] = dataset_and_its_resources_in_trash[0][1]
+        # WHEN
+        dataset.delete()
+        # THEN
+        assert dataset.is_permanently_removed is True
+        for resource in dataset_resources:
+            resource.refresh_from_db()
+            assert resource.is_permanently_removed is True
+
+    def test_delete_two_datasets_from_trash_by_query_deletes_belonging_resources(self, datasets_with_resources_int_trash_factory):
+        two_datasets_and_its_resources_in_trash = datasets_with_resources_int_trash_factory(number_of_datasets=2)
+        # GIVEN
+        dataset_1: Dataset = two_datasets_and_its_resources_in_trash[0][0]
+        dataset_2: Dataset = two_datasets_and_its_resources_in_trash[1][0]
+        dataset_1_resources: List[Resource] = two_datasets_and_its_resources_in_trash[0][1]
+        dataset_2_resources: List[Resource] = two_datasets_and_its_resources_in_trash[1][1]
+        dataset_resources = dataset_1_resources + dataset_2_resources
+        # WHEN
+        qs: QuerySet = Dataset.trash.filter(id__in=[dataset_1.id, dataset_2.id])
+        qs.delete()
+        # THEN
+        dataset_1.refresh_from_db()
+        dataset_2.refresh_from_db()
+        assert dataset_1.is_permanently_removed is True
+        assert dataset_2.is_permanently_removed is True
+        for resource in dataset_resources:
+            resource.refresh_from_db()
+            assert resource.is_permanently_removed is True
 
     @pytest.mark.parametrize(
         "dataset_to_delete, expected_dataset_is_permanently_removed",

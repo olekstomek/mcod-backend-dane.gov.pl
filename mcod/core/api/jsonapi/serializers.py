@@ -466,6 +466,11 @@ class TopLevel(schemas.ExtSchema):
         request = self.context["request"]
         c.meta = getattr(c, "meta", {})
         c.links = getattr(c, "links", {})
+
+        api_version = getattr(request, "api_version", None)
+        if api_version:
+            c.jsonapi = {"version": api_version}
+
         cleaned_data = dict(getattr(request.context, "cleaned_data", {}))
 
         c.meta.update(

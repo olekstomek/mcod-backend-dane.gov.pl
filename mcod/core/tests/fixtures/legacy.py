@@ -6,6 +6,7 @@ import os
 import random
 from collections import namedtuple
 from textwrap import dedent
+from typing import Dict
 
 import elasticsearch_dsl
 import factory
@@ -65,12 +66,37 @@ def constance_config():
 
 @pytest.fixture
 def client(test_api_instance) -> testing.TestClient:
+    """
+    Returns client with `X-API-VERSION` header set to "1.0".
+
+    Note: using this client does not guarantee that the request will be sent
+    to the endpoint marked with version “1.0” due to version overwriting in `ApiVersionMiddleware`
+    when the URL path contains a defined API version.
+    """
     return testing.TestClient(test_api_instance, headers={"X-API-VERSION": "1.0"})
 
 
 @pytest.fixture
 def client14(test_api_instance) -> testing.TestClient:
+    """
+    Returns client with `X-API-VERSION` header set to "1.4".
+
+    Note: using this client does not guarantee that the request will be sent
+    to the endpoint marked with version “1.4” due to version overwriting in `ApiVersionMiddleware`
+    when the URL path contains a defined API version.
+    """
     return testing.TestClient(test_api_instance, headers={"X-API-VERSION": "1.4", "Accept-Language": "pl"})
+
+
+@pytest.fixture
+def client_no_version(test_api_instance) -> testing.TestClient:
+    """
+    Returns client with no `X-API-VERSION` header.
+
+    It is recommended to use the client by specifying the API version in the URL path.
+    Otherwise, the request will be sent to the default version endpoint.
+    """
+    return testing.TestClient(test_api_instance)
 
 
 @pytest.fixture
@@ -90,6 +116,14 @@ def client14_logged_admin(admin, client14, test_api_instance) -> testing.TestCli
     return testing.TestClient(
         test_api_instance, headers={"X-API-VERSION": "1.4", "Accept-Language": "pl", "Authorization": f"Bearer {token}"}
     )
+
+
+@pytest.fixture
+def api_clients(client, client14) -> Dict[str, testing.TestClient]:
+    return {
+        "1.0": client,
+        "1.4": client14,
+    }
 
 
 @pytest.fixture

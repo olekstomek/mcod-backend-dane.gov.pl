@@ -374,22 +374,14 @@ class ResendActivationEmailAttrs(ObjectAttrs):
 
 
 class ResetPasswordAttrs(ObjectAttrs):
-    is_password_reset_email_sent = fields.Bool(required=True)
-
     class Meta:
         object_type = "user"
         url_template = "{api_url}/auth/password/reset"
 
 
-class RegistrationAttrs(UserSchemaMixin, ObjectAttrs):
-    class Meta:
-        object_type = "user"
-        url_template = "{api_url}/auth/registration"
-
-
 class RegistrationApiResponse(TopLevel):
     class Meta:
-        attrs_schema = RegistrationAttrs
+        attrs_schema = ObjectAttrs
 
 
 class ResendActivationEmailApiResponse(TopLevel):

@@ -5042,3 +5042,10 @@ msgstr ""
 
 msgid "Broken link to provider data"
 msgstr "Broken link to publisher data"
+
+msgid "Unexpected schema validation error while import data."
+msgstr ""
+
+#, python-format
+msgid "Error while download file from: %(url)s."
+msgstr ""

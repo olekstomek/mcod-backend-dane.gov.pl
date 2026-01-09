@@ -325,7 +325,7 @@ Scenario Outline: Password protected archives are not allowed in file widget
 
   @feat_dga
   Scenario: Confirm addition of DGA Resource in the presence of an existing DGA Resource
-    Given dataset with pk 9000 containing dga resource
+    Given dataset with pk 9000 containing dga resource with title DGA resource
     When admin's request method is POST
     And admin's request posted resource data is {"title": "new dga", "description": "more than 20 characters", "switcher": "file", "dataset": 9000, "data_date": "22.05.2020", "status": "published", "contains_protected_data": "True"}
     And admin's request posted files {"file": "example_dga_comma_separated_csv_file.csv"}
@@ -334,3 +334,6 @@ Scenario Outline: Password protected archives are not allowed in file widget
     When admin confirms saving the resource with posted data
     Then admin's response status code is 200
     And admin's response page contains /change/">new dga</a>" został pomyślnie dodany.
+    And resource with title new dga has a file
+    And resource with title DGA resource has DGA flag set on False
+    And resource with title new dga has DGA flag set on True

@@ -1,19 +1,24 @@
 from collections import namedtuple
+from smtplib import SMTPException
 from typing import Dict, List, Optional, Tuple
 from unittest.mock import MagicMock, patch
 
 import falcon
 import pytest
+from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.core import mail
 from django.test import Client, override_settings
 from django.urls import reverse
 from django.utils import timezone
+from falcon.testing import Result, TestClient
 from logingovpl.objects import LoginGovPlUser
 from rest_framework import status
 from rest_framework.test import APIClient, APIRequestFactory
 
-from mcod import settings
+from mcod.core.api.versions import VERSIONS
 from mcod.core.caches import flush_sessions
+from mcod.core.tests.helpers.helpers import AnyDateTimeTestVariable
 from mcod.core.tests.test_mixins import MethodsNotAllowedTestMixin
 from mcod.lib.jwt import decode_jwt_token, get_auth_header
 from mcod.lib.triggers import session_store
@@ -138,6 +143,362 @@ class TestProfile:
         resp = client.simulate_get(path="/auth/user", headers={"Authorization": "Bearer %s" % token})
         assert resp.status == falcon.HTTP_401
         assert resp.json["code"] == "authentication_error"
+
+
+class TestRegisterView:
+    @pytest.mark.parametrize("user_exists", [True, False])
+    @pytest.mark.parametrize("api_version", (ver.as_string for ver in VERSIONS))
+    def test_registration_view_doesnt_enumerate_users(
+        self,
+        client_no_version: TestClient,
+        user_exists: bool,
+        api_version: str,
+    ):
+        """
+        Tests that user cannot be enumerated on registration:
+        - despite user existence or lack thereof status code should be 201
+        - no user data should be returned
+        """
+        # GIVEN
+        email = "testing@email.com"
+        if user_exists:
+            UserFactory.create(email=email)
+
+        url = f"/{api_version}/auth/registration"
+        data = {
+            "data": {
+                "type": "user",
+                "attributes": {
+                    "email": email,
+                    "password1": "123!@#qweQWE",
+                    "password2": "123!@#qweQWE",
+                },
+            }
+        }
+
+        # WHEN request registration
+        with patch("mcod.users.models.User.send_registration_email"):
+            response: Result = client_no_version.simulate_post(url, json=data)
+
+        # THEN
+        # Users should not be enumerated
+        assert response.status == falcon.HTTP_201, "Response status varies depending on if the user exists"
+        expected_response = {
+            "jsonapi": {"version": api_version},
+            "links": {"self": f"{settings.API_URL}{url}"},
+            "meta": {
+                "language": "pl",
+                "params": {},
+                "path": url,
+                "relative_uri": url,
+                "server_time": AnyDateTimeTestVariable(),
+            },
+        }
+        assert response.json == expected_response
+
+    @pytest.mark.parametrize("user_exists", [True, False])
+    @pytest.mark.parametrize("api_version", (ver.as_string for ver in VERSIONS))
+    def test_registration_ok(
+        self,
+        client_no_version: TestClient,
+        user_exists: bool,
+        api_version: str,
+    ):
+        email = "testing@email.com"
+        if user_exists:
+            UserFactory.create(email=email)
+
+        url = f"/{api_version}/auth/registration"
+        data = {
+            "data": {
+                "type": "user",
+                "attributes": {
+                    "email": email,
+                    "password1": "123!@#qweQWE",
+                    "password2": "123!@#qweQWE",
+                },
+            }
+        }
+        # WHEN request registration
+        with patch("mcod.users.models.User.send_registration_email") as mock_send_email:
+            client_no_version.simulate_post(url, json=data)
+
+        # Email should be sent only if new user created
+        if not user_exists:
+            mock_send_email.assert_called_once()
+        else:
+            mock_send_email.assert_not_called()
+
+    @pytest.mark.parametrize(
+        "weak_password",
+        (
+            "123.aBc",
+            "abcd1234",
+            "abcdefghi",
+            "123456789",
+            "alpha101",
+            "92541001101",
+            "9dragons",
+            "@@@@@@@@",
+            "12@@@@@@@",
+            "admin@mc.gov.pl",
+            "1vdsA532A66",
+        ),
+    )
+    @pytest.mark.parametrize("api_version", (ver.as_string for ver in VERSIONS))
+    def test_registration_with_too_weak_password_returns_error(
+        self,
+        client_no_version: TestClient,
+        weak_password: str,
+        api_version: str,
+    ):
+        # GIVEN
+        url = f"/{api_version}/auth/registration"
+        data = {
+            "data": {
+                "type": "user",
+                "attributes": {
+                    "email": "testing@email.com",
+                    "password1": weak_password,
+                    "password2": weak_password,
+                },
+            }
+        }
+        # WHEN request registration
+        response: Result = client_no_version.simulate_post(url, json=data)
+
+        # THEN
+        assert response.status == falcon.HTTP_422
+
+    @pytest.mark.parametrize("api_version", (ver.as_string for ver in VERSIONS))
+    def test_cannot_register_same_user_twice_with_different_case_of_letter(
+        self,
+        client_no_version: TestClient,
+        api_version: str,
+    ):
+        # GIVEN
+        email = "testing@email.com"
+        UserFactory.create(email=email)
+        url = f"/{api_version}/auth/registration"
+        data = {
+            "data": {
+                "type": "user",
+                "attributes": {
+                    "email": email.upper(),
+                    "password1": "123!@#qweQWE",
+                    "password2": "123!@#qweQWE",
+                },
+            }
+        }
+
+        # WHEN request registration with upper case letters in email
+        with patch("mcod.users.models.User.send_registration_email") as mock_send_email:
+            response: Result = client_no_version.simulate_post(url, json=data)
+
+        # Email should not be sent
+        assert response.status == falcon.HTTP_201
+        mock_send_email.assert_not_called()
+
+    @pytest.mark.parametrize(
+        "invalid_attr",
+        (
+            {"password1": "123!@#qweQWE", "password2": "123!@#qweQWe"},  # different passwords
+            {"email": "invalid@email"},  # invalid email address
+            {"state": "active"},  # state parameter passed
+        ),
+    )
+    @pytest.mark.parametrize("api_version", (ver.as_string for ver in VERSIONS))
+    def test_cannot_register_with_invalid_data(
+        self,
+        client_no_version: TestClient,
+        invalid_attr: dict,
+        api_version: str,
+    ):
+        # GIVEN
+        url = f"/{api_version}/auth/registration"
+        data = {
+            "data": {
+                "type": "user",
+                "attributes": {
+                    "email": "testing@email.com",
+                    "password1": "123!@#qweQWE",
+                    "password2": "123!@#qweQWE",
+                    "fullname": "Test User",
+                },
+            }
+        }
+        data["data"]["attributes"].update(**invalid_attr)
+
+        # WHEN request registration
+        response: Result = client_no_version.simulate_post(url, json=data)
+
+        # THEN
+        assert response.status == falcon.HTTP_422
+
+    @pytest.mark.parametrize("required_param", ("email", "password1", "password2"))
+    @pytest.mark.parametrize("api_version", (ver.as_string for ver in VERSIONS))
+    def test_cannot_register_without_required_field(
+        self,
+        client_no_version: TestClient,
+        required_param: str,
+        api_version: str,
+    ):
+        # GIVEN
+        url = f"/{api_version}/auth/registration"
+        data = {
+            "data": {
+                "type": "user",
+                "attributes": {
+                    "email": "testing@email.com",
+                    "password1": "123!@#qweQWE",
+                    "password2": "123!@#qweQWE",
+                    "fullname": "Test User",
+                },
+            }
+        }
+        del data["data"]["attributes"][required_param]
+
+        # WHEN request registration
+        response: Result = client_no_version.simulate_post(url, json=data)
+
+        # THEN
+        assert response.status == falcon.HTTP_422
+
+
+class TestResetPasswordView:
+
+    @pytest.mark.parametrize("user_exists", [True, False])
+    @pytest.mark.parametrize("api_version", (ver.as_string for ver in VERSIONS))
+    def test_password_reset_view_doesnt_enumerate_users(
+        self,
+        client_no_version: TestClient,
+        user_exists: bool,
+        api_version: str,
+    ):
+        """
+        Tests that user cannot be enumerated on password reset:
+        - despite user existence or lack thereof status code should be 200
+        - no user data should be returned
+        """
+        # GIVEN
+        email = "testing@email.com"
+        if user_exists:
+            UserFactory.create(email=email)
+
+        url = f"/{api_version}/auth/password/reset"
+        data = {
+            "data": {
+                "type": "user",
+                "attributes": {"email": email},
+            }
+        }
+
+        # WHEN request password reset
+        with patch("mcod.users.models.User.send_password_reset_email"):
+            response: Result = client_no_version.simulate_post(url, json=data)
+
+        # THEN
+        # Users should not be enumerated
+        assert response.status == falcon.HTTP_200, "Response status varies depending on if the user exists"
+        expected_response = {
+            "jsonapi": {"version": api_version},
+            "links": {"self": f"{settings.API_URL}{url}"},
+            "meta": {
+                "language": "pl",
+                "params": {},
+                "path": url,
+                "relative_uri": url,
+                "server_time": AnyDateTimeTestVariable(),
+            },
+        }
+        assert response.json == expected_response
+
+    @pytest.mark.parametrize("user_exists", [True, False])
+    @pytest.mark.parametrize("api_version", (ver.as_string for ver in VERSIONS))
+    def test_password_reset_email_sent(
+        self,
+        client_no_version: TestClient,
+        user_exists: bool,
+        api_version: str,
+    ):
+        email = "testing@email.com"
+        if user_exists:
+            UserFactory.create(email=email)
+
+        url = f"/{api_version}/auth/password/reset"
+        data = {
+            "data": {
+                "type": "user",
+                "attributes": {"email": email},
+            }
+        }
+        # WHEN request password reset
+        with patch("mcod.users.models.User.send_password_reset_email") as mock_send_email:
+            client_no_version.simulate_post(url, json=data)
+
+        # Email should be sent only if user exists
+        if user_exists:
+            mock_send_email.assert_called_once()
+        else:
+            mock_send_email.assert_not_called()
+
+    @pytest.mark.parametrize("api_version", (ver.as_string for ver in VERSIONS))
+    def test_password_reset_wrong_email_format(
+        self,
+        client_no_version: TestClient,
+        api_version: str,
+    ):
+        url = f"/{api_version}/auth/password/reset"
+        data = {
+            "data": {
+                "type": "user",
+                "attributes": {"email": "wrongemail.formatwrong_email_address"},
+            }
+        }
+        with patch("mcod.users.models.User.send_password_reset_email") as mock_send_email:
+            response: Result = client_no_version.simulate_post(url, json=data)
+
+        assert response.status == falcon.HTTP_422
+        mock_send_email.assert_not_called()
+
+    @pytest.mark.parametrize("api_version", (ver.as_string for ver in VERSIONS))
+    def test_password_reset_failed_when_smtp_error_occurred(
+        self,
+        client_no_version: TestClient,
+        api_version: str,
+    ):
+        email = "good@email.com"
+        UserFactory.create(email=email)
+        url = f"/{api_version}/auth/password/reset"
+        data = {
+            "data": {
+                "type": "user",
+                "attributes": {"email": email},
+            }
+        }
+        with patch("mcod.users.models.User.send_password_reset_email") as mock_send_email:
+            mock_send_email.side_effect = SMTPException()
+            response: Result = client_no_version.simulate_post(url, json=data)
+
+        assert response.status == falcon.HTTP_500
+        mock_send_email.assert_called_once()
+
+    def test_user_send_password_reset_email(self):
+        user_email = "good@email.com"
+        user = UserFactory.create(email=user_email)
+
+        user.send_password_reset_email()
+
+        assert len(mail.outbox) == 1
+        received_mail = mail.outbox[0]
+        assert received_mail.subject == "Reset hasła"
+        assert user.password_reset_absolute_url in received_mail.body
+        assert received_mail.to == [
+            user_email,
+        ]
+        assert received_mail.cc == []
+        assert received_mail.bcc == []
+        assert received_mail.from_email == settings.CONSTANCE_CONFIG["ACCOUNTS_EMAIL"][0]
 
 
 class TestResetPasswordConfirm:

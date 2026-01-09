@@ -181,6 +181,11 @@ def user_organization_is(context, email, organization_id):
     assert user in organization.users.all()
 
 
+@then("email box is empty")
+def email_box_is_empty(context):
+    assert len(mail.outbox) == 0
+
+
 @then(parsers.parse("sent email contains {text}"))
 def sent_email_contains_text(context, text):
     assert len(mail.outbox) == 1

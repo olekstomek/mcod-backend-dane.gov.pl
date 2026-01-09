@@ -127,7 +127,9 @@ def download_file(url, forced_file_type=False) -> Tuple[str, dict]:  # noqa: C90
             filename = ".".join([name, _format])
 
         if content_disposition and "attachment" in content_disposition and _format in settings.RESTRICTED_FILE_TYPES:
-            raise DangerousContentError()  # https://cwe.mitre.org/data/definitions/434.html
+            raise DangerousContentError(
+                f"Dangerous content: restricted file type: {_format}"
+            )  # https://cwe.mitre.org/data/definitions/434.html
         filename = filename.strip(".")
 
         if guess.is_octetstream(content_type):

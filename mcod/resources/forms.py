@@ -296,10 +296,10 @@ class ResourceForm(forms.ModelForm, HighValueDataFormValidatorMixin):
         if contains_protected_data:
             if creating_resource:
                 # get temporary saved file on resource creation
-                self._replace_file_on_resource_creation()
+                self._replace_file_on_resource_creation(data)
             else:
                 # use existing file on resource update
-                self._replace_file_on_resource_update()
+                self._replace_file_on_resource_update(data)
 
         self._validate_data_date(data)
         self._validate_resource_status(data)
@@ -494,12 +494,12 @@ class ResourceForm(forms.ModelForm, HighValueDataFormValidatorMixin):
             current_dga_resource.contains_protected_data = False
             current_dga_resource.save()
 
-    def _replace_file_on_resource_creation(self):
+    def _replace_file_on_resource_creation(self, data: Dict[str, Any]) -> None:
         """
         Updates cleaned_data with path to temporarily created file.
         """
         # link is not allowed for dga resource
-        if self.cleaned_data.get("link"):
+        if data.get("link"):
             self.add_error(
                 "link",
                 _(
@@ -510,11 +510,11 @@ class ResourceForm(forms.ModelForm, HighValueDataFormValidatorMixin):
             )
             return
         # after dga save confirmation we get file_ref instead of file
-        file_ref: SimpleUploadedFile = self.cleaned_data.get("file_ref")
+        file_ref: SimpleUploadedFile = data.get("file_ref")
         if file_ref:
-            self.cleaned_data["file"] = file_ref
+            data["file"] = file_ref
 
-    def _replace_file_on_resource_update(self):
+    def _replace_file_on_resource_update(self, data: Dict[str, Any]) -> None:
         file = self.instance.main_file
         if not file:
             self.add_error(
@@ -525,7 +525,7 @@ class ResourceForm(forms.ModelForm, HighValueDataFormValidatorMixin):
 
         existing_file = create_uploaded_file_from_path(file.path)
         if existing_file:
-            self.cleaned_data["file"] = existing_file
+            data["file"] = existing_file
         else:
             self.add_error(
                 "contains_protected_data",

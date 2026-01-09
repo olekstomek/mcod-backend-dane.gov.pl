@@ -2,6 +2,7 @@ import copy
 from collections import namedtuple
 from functools import partial
 from smtplib import SMTPException
+from typing import Any, Dict, Optional, Type
 
 import falcon
 import marshmallow as ma
@@ -147,23 +148,21 @@ class RegistrationView(JsonAPIView):
     class POST(CreateOneHdlr):
         database_model = get_user_model()
         deserializer_schema = RegistrationApiRequest
-        serializer_schema = RegistrationApiResponse
+        serializer_schema = partial(
+            RegistrationApiResponse, many=False, exclude=("data",)  # Exclude 'data' to prevent user enumeration attacks.
+        )
 
-        def _get_data(self, cleaned, *args, **kwargs):
-            data = cleaned["data"]["attributes"]
+        def _get_data(self, cleaned: Dict[str, Any], *args, **kwargs) -> None:
+            data: Dict[str, Any] = cleaned["data"]["attributes"]
             if User.objects.filter(email__iexact=data["email"]):
-                raise falcon.HTTPForbidden(
-                    title="403 Forbidden",
-                    description=_("This e-mail is already used"),
-                    code="email_already_used",
-                )
+                # Silently return to prevent user enumeration.
+                return
             data["email"] = data["email"].lower()
             user = User.objects.create_user(**data)
             try:
                 user.send_registration_email()
             except SMTPException:
                 raise falcon.HTTPInternalServerError(description=_("Email cannot be sent"), code="email_send_error")
-            return user
 
 
 class AccountView(JsonAPIView):
@@ -350,20 +349,24 @@ class ResetPasswordView(JsonAPIView):
 
     class POST(CreateOneHdlr):
         deserializer_schema = partial(ResetPasswordApiRequest, many=False)
-        serializer_schema = partial(ResetPasswordApiResponse, many=False)
-        database_model = get_user_model()
+        serializer_schema = partial(
+            ResetPasswordApiResponse, many=False, exclude=("data",)  # Exclude 'data' to prevent user enumeration attacks.
+        )
+        database_model: Type[User] = get_user_model()
 
-        def _get_data(self, cleaned, *args, **kwargs):
-            data = cleaned["data"]["attributes"]
+        def _get_data(self, cleaned: Dict[str, Any], *args, **kwargs) -> Optional[User]:
+            data: Dict[str, Any] = cleaned["data"]["attributes"]
             try:
-                user = self.database_model.objects.get(email=data["email"])
+                user: User = self.database_model.objects.get(email=data["email"])
             except self.database_model.DoesNotExist:
-                raise falcon.HTTPNotFound(description=_("Account not found"), code="account_not_found")
+                # To prevent user enumeration attacks, we do not raise an exception
+                # if the user does not exist. The function will instead return None,
+                # ensuring a consistent response is sent to the client later.
+                return None
             try:
-                msgs_count = user.send_password_reset_email()
+                user.send_password_reset_email()
             except SMTPException:
                 raise falcon.HTTPInternalServerError(description=_("Email cannot be sent"), code="email_send_error")
-            user.is_password_reset_email_sent = bool(msgs_count)
             return user
 
 

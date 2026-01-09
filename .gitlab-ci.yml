@@ -9,10 +9,23 @@ variables:
   FF_NETWORK_PER_BUILD: 1
   REGISTRY_HOST: registry.dane.gov.pl
   REGISTRY_PATH: registry.dane.gov.pl/mcod/backend
+  # versions
   TEST_IMAGE_VERSION: latest
+  PYTHON_VERSION: "3.8.6"
+  DOCKER_VERSION: "28-dind"
+
+# prevent running branch pipelines for open MRs
+# https://docs.gitlab.com/ci/yaml/workflow/#switch-between-branch-pipelines-and-merge-request-pipelines
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS
+      when: never
+    - if: $CI_COMMIT_BRANCH
 
 prepare-images:
   stage: prepare
+  image: docker:${DOCKER_VERSION}
   script:
     - docker build -f docker/elasticsearch/Dockerfile -t $REGISTRY_PATH/elasticsearch:6.8.23-mcod-1 .
     - docker build -f docker/postgres/Dockerfile -t $REGISTRY_PATH/postgresql:13-trixie-mcod .
@@ -71,6 +84,8 @@ test:
     DISCOURSE_PASSWORD: bitnami123
     # tests specific
     DATASET_ARCHIVE_FILES_TASK_DELAY: 1
+    PYTEST_FAIL_FAST: "0"  # 0 means don't stop
+    PYTEST_NUMBER_OF_XDIST_WORKERS: 5
   services:
     - name: redis:6.2
       alias: redis
@@ -93,38 +108,86 @@ test:
   script:
     - python manage.py compilemessages --settings mcod.settings.test -v 3
     - python manage.py makemigrations --check --settings mcod.settings.test
-    - pytest --cov-report term --cov-report xml:coverage.xml --cov -v -n5 mcod
+    - pytest --cov --cov-report term --cov-report xml:coverage.xml --junitxml=report.xml -v -n${PYTEST_NUMBER_OF_XDIST_WORKERS} --maxfail=${PYTEST_FAIL_FAST} mcod
   artifacts:
+    when: always
     reports:
       coverage_report:
         coverage_format: cobertura
         path: coverage.xml
-  except:
-    - tags
-    - master
-    - pre-devel
-    - schedules
-    - /^release_.*$/
+      junit: report.xml
+  rules:
+    # do not run for tagged build
+    - if: $CI_COMMIT_TAG
+      when: never
+    # do not run on release'able branches
+    - if: $CI_COMMIT_BRANCH == 'master' || $CI_COMMIT_BRANCH == 'pre-devel'
+      when: never
+    # do not run on merge requests during release: devel -> master or devel -> pre-devel
+    - if: $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME == 'devel'
+      when: never
+    # do not run on schedule
+    - if: $CI_PIPELINE_SOURCE == 'schedule'
+      when: never
+    # run on devel if anything has changed in mcod (e.g. do not run after merging release_nnn branch)
+    - if: $CI_COMMIT_BRANCH == 'devel'
+      changes:
+        - 'mcod/**/*'
+      when: on_success
+      variables:
+        PYTEST_FAIL_FAST: "1"
+    # run on merge requests with the changelog but only if there are extra changes
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event' && $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME =~ /^release_.*$/
+      changes:
+        - 'mcod/**/*'
+      when: on_success
+    # run on merge requests
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event' && $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME !~ /^release_.*$/
+      when: on_success
   tags:
     - docker
 
 lint:
   stage: test
-  image: python:3.8.6
+  image: python:${PYTHON_VERSION}
   before_script:
     - pip install pre-commit
   script:
     - pre-commit run --all-files
-  except:
-    - tags
-    - master
-    - pre-devel
-    - schedules
+  rules:
+    # do not run for tagged build
+    - if: $CI_COMMIT_TAG
+      when: never
+    # do not run on release'able branches
+    - if: $CI_COMMIT_BRANCH == 'master' || $CI_COMMIT_BRANCH == 'pre-devel'
+      when: never
+    # do not run on merge requests during release: devel -> master or devel -> pre-devel
+    - if: $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME == 'devel'
+      when: never
+    # do not run on schedule
+    - if: $CI_PIPELINE_SOURCE == 'schedule'
+      when: never
+    # run on devel if anything has changed in mcod
+    - if: $CI_COMMIT_BRANCH == 'devel'
+      changes:
+        - 'mcod/**/*'
+        - '*.md'
+      when: on_success
+    # run on merge requests with the changelog but only if there are extra changes
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event' && $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME =~ /^release_.*$/
+      changes:
+        - 'mcod/**/*'
+        - '*.md'
+      when: on_success
+    # run on merge requests
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event' && $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME !~ /^release_.*$/
+      when: on_success
   tags:
     - docker
 
 check-docker-build:
   stage: test
+  image: docker:${DOCKER_VERSION}
   except:
     - pre-devel
     - devel
@@ -140,34 +203,31 @@ check-docker-build:
 
 build-pre-devel:
   stage: build
-  only:
-    - pre-devel
+  image: docker:${DOCKER_VERSION}
   script:
     - docker build --add-host $CI_LOCAL_GITLAB_ADDRESS -f docker/app/Dockerfile -t $REGISTRY_PATH/backend:pre-devel .
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $REGISTRY_HOST
     - docker push $REGISTRY_PATH/backend:pre-devel
   tags:
     - shell
+  rules:
+    # run on push to pre-devel
+    - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == 'pre-devel'
+      when: on_success
+    # allow to deploy from devel but only manually
+    - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == 'devel'
+      when: manual
+    # do not run on push pipelines otherwise
+    - if: $CI_PIPELINE_SOURCE == "push"
+      when: never
+    # run on merge requests otherwise, but ask for confirmation
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+      when: manual
 
-build-pre-devel-on-branch:
-  stage: build
-  when: manual
-  except:
-    - pre-devel
-    - devel
-    - tags
-    - master
-    - schedules
-    - /^release_.*$/
-  script:
-    - docker build --add-host $CI_LOCAL_GITLAB_ADDRESS -f docker/app/Dockerfile -t $REGISTRY_PATH/backend:pre-devel .
-    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $REGISTRY_HOST
-    - docker push $REGISTRY_PATH/backend:pre-devel
-  tags:
-    - shell
 
 build-devel:
   stage: build
+  image: docker:${DOCKER_VERSION}
   only:
     - devel
   script:
@@ -179,6 +239,7 @@ build-devel:
 
 build-master:
   stage: build
+  image: docker:${DOCKER_VERSION}
   only:
     - master
   script:
@@ -190,6 +251,7 @@ build-master:
 
 release-prod:
   stage: release
+  image: docker:${DOCKER_VERSION}
   before_script:
     - export API_VERSION=$(changelog current)
     - cat CHANGELOG.md
@@ -211,14 +273,6 @@ release-prod:
   tags:
     - shell
 
-merge-to-master:on-schedule:
-  stage: release
-  script:
-    - merge-backend
-  only:
-    - schedules
-  tags:
-    - schedules
 
 publish-code:
   stage: release

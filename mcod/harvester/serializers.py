@@ -713,7 +713,7 @@ class XMLDatasetSchema(XMLPreProcessedSchema):
         if "title" in data and isinstance(data.get("title"), dict):
             data["title_en"] = data["title"].get("english", "")
             data["title_pl"] = data["title"].get("polish", "")
-        if "conditions" in data:
+        if "conditions" in data and isinstance(data["conditions"], dict):
             data["license_condition_source"] = data["conditions"].get("source", False)
             data["license_condition_modification"] = data["conditions"].get("modification", False)
             data["license_condition_responsibilities"] = data["conditions"].get("responsibilities")
@@ -725,17 +725,17 @@ class XMLDatasetSchema(XMLPreProcessedSchema):
         if "description" in data and isinstance(data.get("description"), dict):
             data["notes_en"] = data["description"].get("english", "")
             data["notes_pl"] = data["description"].get("polish", "")
-        if "tags" in data:
+        if "tags" in data and isinstance(data["tags"], dict):
             data["tags"] = data["tags"].get("tag", [])
-        if "categories" in data:
+        if "categories" in data and isinstance(data["categories"], dict):
             if "category" in data["categories"]:  # XSD SCHEMA >= 1.1
                 data["categories"] = data["categories"]["category"]
             else:
                 data["categories"] = [str(row) for row in data["categories"]]
-        if "resources" in data:
+        if "resources" in data and isinstance(data["resources"], dict):
             data["resources"] = data["resources"].get("resource", [])
         supplements = data.pop("supplements", {})
-        if "supplement" in supplements:
+        if isinstance(supplements, dict) and "supplement" in supplements:
             data["supplements"] = supplements["supplement"]
         int_ident = data.get("intIdent")
         if int_ident:

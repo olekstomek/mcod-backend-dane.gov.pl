@@ -57,23 +57,15 @@ scenarios(
         ("test_samples/encrypted_content_and_headers.rar", "rar", "application/x-rar", None, None, PasswordProtectedArchiveError),
         ("test_samples/encrypted_content.zip", "zip", "application/zip", None, None, PasswordProtectedArchiveError),
         ("test_samples/encrypted_content.7z", "7z", "application/x-7z-compressed", None, None, PasswordProtectedArchiveError),
+        ("test_samples/regular.zip", "zip", "application/zip", "csv", "application/csv", None),
+        ("test_samples/regular.rar", "rar", "application/x-rar", "csv", "application/csv", None),
         # fmt: off
         pytest.param(
-            "test_samples/empty_file.rar", "rar", "application/x-rar", "csv", "text/plain", None,
+            "test_samples/example_kml.kml", "kml", "application/vnd.google-earth.kml+xml", None, None, None,
             marks=pytest.mark.xfail(
-                reason="Assignment of mime-type to CSV varies between Debian (our Docker) and Ubuntu (Gitlab)."
-            ),
-        ),
-        pytest.param(
-            "test_samples/regular.zip", "zip", "application/zip", "csv", "application/csv", None,
-            marks=pytest.mark.xfail(
-                reason="Assignment of mime-type to CSV varies between Debian (our Docker) and Ubuntu (Gitlab)."
-            ),
-        ),
-        pytest.param(
-            "test_samples/regular.rar", "rar", "application/x-rar", "csv", "application/csv", None,
-            marks=pytest.mark.xfail(
-                reason="Assignment of mime-type to CSV varies between Debian (our Docker) and Ubuntu (Gitlab)."
+                reason="Unknown source of failure, probably connectivity on schema validation. OTD-1895.",
+                strict=False,
+                run=True,
             ),
         ),
         # fmt: on

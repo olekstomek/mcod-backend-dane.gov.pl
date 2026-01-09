@@ -9,6 +9,7 @@ from urllib.parse import quote as urlquote
 import nested_admin
 from auditlog.admin import LogEntryAdmin as BaseLogEntryAdmin
 from django import forms
+from django.conf import settings
 from django.contrib import admin, messages
 from django.contrib.admin.helpers import ActionForm
 from django.contrib.admin.templatetags.admin_urls import add_preserved_filters
@@ -35,7 +36,6 @@ from rules.contrib.admin import (
 )
 from suit.admin import SortableStackedInline as BaseSortableStackedInline, SortableStackedInlineBase
 
-from mcod import settings
 from mcod.datasets.models import Dataset
 from mcod.harvester.models import DataSourceImport
 from mcod.histories.models import LogEntry
@@ -93,7 +93,17 @@ class DecisionFilter(admin.SimpleListFilter):
         return queryset
 
 
-def export_to_csv(self, request, queryset):
+def export_to_csv(self, request: HttpRequest, queryset: QuerySet):
+    requested_count = queryset.count()
+    if requested_count > settings.RESOURCE_MAX_REPORT_SIZE:
+        messages.add_message(
+            request,
+            messages.ERROR,
+            _("Requested too many records, %(requested)d. Maximum count is %(max)d.")
+            % {"requested": requested_count, "max": settings.RESOURCE_MAX_REPORT_SIZE},
+        )
+        return
+
     generate_csv.s(
         tuple(obj.id for obj in queryset),
         self.model._meta.label,

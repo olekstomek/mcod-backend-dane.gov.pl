@@ -3,7 +3,7 @@ from typing import List, Optional
 import pytest
 from pytest_mock import MockerFixture
 
-from mcod.harvester.serializers import DatasetSchema
+from mcod.harvester.serializers import DatasetSchema, XMLDatasetSchema
 from mcod.harvester.tests.utils import mocked_response
 from mcod.lib.utils import get_file_content
 
@@ -50,3 +50,25 @@ def test_valid_format_extraction_from_ckan_url(
 
     # THEN calculated resource format is as expected
     assert resource_format == expected_format
+
+
+def test_dataset_xml_prepare_data_handles_top_level_none():
+    """
+    Tests that `XMLDatasetSchema` serializer method `prepare_data`
+    gracefully handles None for top-level keys.
+
+    This simulates a common XML parsing scenario where an empty tag
+    (e.g., <conditions/>) is passed as a None value instead of an
+    expected dictionary, ensuring no TypeErrors occur.
+    """
+    none_data = {
+        "title": None,
+        "conditions": None,
+        "description": None,
+        "tags": None,
+        "categories": None,
+        "resources": None,
+        "supplements": None,
+    }
+    schema = XMLDatasetSchema()
+    schema.prepare_data(none_data)

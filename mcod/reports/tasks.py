@@ -6,7 +6,7 @@ import os
 from collections import OrderedDict
 from pathlib import Path
 from time import time
-from typing import Any, Dict, List
+from typing import Any, Collection, Dict, List
 
 from celery import chord
 from celery.signals import task_failure, task_prerun, task_success
@@ -190,7 +190,15 @@ def generate_harvesters_last_imports_report(
 
 
 @extended_shared_task(ignore_result=False)
-def generate_csv(pks, model_name, user_id, file_name_postfix):
+def generate_csv(pks: Collection[int], model_name: str, user_id: int, file_name_postfix: str):
+    requested_count = len(pks)
+    if requested_count > settings.RESOURCE_MAX_REPORT_SIZE:
+        msg = (
+            f"Requested too many records, {requested_count}. "
+            f"Maximum count is {settings.RESOURCE_MAX_REPORT_SIZE}. "
+            f"Report: {model_name}"
+        )
+        raise ValueError(msg)
     app, _model = model_name.split(".")
     model = apps.get_model(app, _model)
     serializer_cls = csr.get_serializer(model)

@@ -12,6 +12,37 @@ ______________________________________________________________________
 
 ### Breaks
 
+## 2.53.0 - (2025-12-17)
+
+______________________________________________________________________
+
+### New
+
+- Dodanie testów usuwania zbiorów z kosza dwiema metodami - z użyciem obiektu oraz przez queryset - OTD-2145
+- Dodanie filtra na datę utworzenia w widoku Zasobów w PA - OTD-2046
+- Dodanie limitu liczności przy generacji raportu CSV w PA - OTD-2046
+
+### Changes
+
+- Dostosowanie testów automatycznych dla widoku rejestracji użytkownika (brak możliwości enumeracji) - OTD-1826
+- Walidacja zapytań SPARQL pod kątem niedozwolonych klauzul - OTD-1732
+- Ograniczenie wykonywania zapytań SPARQL do domen dane.gov.pl oraz kronika.gov.pl - OTD-1732
+- Zmiana reguł gitlab-ci celem przyspieszenia release'u - OTD-1625
+- Przywrócono test dot. walidacji plików kml - OTD-1895
+- Umożliwienie deploy pre-devel z brancha devel - OTD-2211
+- Zmiana sposobu uruchamiana testów na gitlab-ci celem przyspieszenia release'u - OTD-2033
+
+### Fixes
+
+- Uniemożliwienie enumeracji użytkowników w widoku rejestracji - OTD-1826
+- Uniemożliwienie enumeracji użytkowników w widoku resetu hasła - OTD-1786
+- Skrócenie czasu wykonywania taska walidującego url dla źródła danych XML - OTD-1800
+- Naprawa błędu z tworzeniem zasobu DGA, gdy jeden już istnieje (podmiana) - OTD-2133
+- Naprawa braku importu danych przez harvester dla prawidłowego XML z pustymi znacznikami - OTD-1979
+- Naprawa braku informacji o błędzie importu danych podczas harvestacji - OTD-2056
+- Dodanie usuwania zasobów z kosza, przy usuwaniu zbiorów z kosza z pomocą queryset (za pomocą checkbox i akcji Usuń wybrane obiekty) - OTD-2145
+- Zamiana ostatniego shared_task na extended_shared_task - OTD-129
+
 ## 2.52.2 - (2025-11-28)
 
 ______________________________________________________________________

@@ -5675,3 +5675,14 @@ msgstr "Wystąpił nieoczekiwany błąd. Proszę, spróbuj później."
 
 msgid "portal_data_link"
 msgstr "Podgląd danych na portalu"
+
+msgid "Unexpected schema validation error while import data."
+msgstr "Nieoczekiwany błąd walidacji schematu podczas importu danych."
+
+#, python-format
+msgid "Error while download file from: %(url)s."
+msgstr "Błąd podczas pobierania pliku z: %(url)s."
+
+#, python-format
+msgid "Requested too many records, %(requested)d. Maximum count is %(max)d."
+msgstr "Zażądano zbyt wielu rekordów, %(requested)d. Maksymalna liczba wynosi %(max)d."
