@@ -2,7 +2,7 @@ import logging
 import os
 from collections import defaultdict
 from io import BytesIO
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple
 from urllib.parse import urlencode
 
 import requests
@@ -12,7 +12,7 @@ from django.core.exceptions import ImproperlyConfigured, MultipleObjectsReturned
 from django.core.files import File
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.validators import validate_email
-from django.db import models
+from django.db import models, transaction
 from django.db.models import Q
 from django.utils import timezone
 from django.utils.functional import cached_property
@@ -65,8 +65,14 @@ from mcod.resources.dga_utils import (
     validate_dga_file_columns,
     validate_institution_type_for_contains_protected_data,
 )
+from mcod.unleash import is_enabled
 
 logger = logging.getLogger("mcod")
+
+
+if TYPE_CHECKING:
+    from mcod.datasets.models import Dataset
+    from mcod.resources.models import Resource
 
 ItemData = Dict[str, Any]
 
@@ -446,12 +452,34 @@ class DataSource(AdminMixin, LogMixin, SoftDeletableModel, TimeStampedModel):
                     setattr(obj, k, v)
                 obj.save()
         else:
-            obj, created = self.dataset_model.raw.update_or_create(
-                ext_ident=data["ext_ident"], source=data["source"], defaults=data
-            )
+            if is_enabled("S68_harvester_updates_all_datasets_and_resources_as_before.be"):
+                obj, created = self.dataset_model.raw.update_or_create(
+                    ext_ident=data["ext_ident"], source=data["source"], defaults=data
+                )
+            else:
+                obj, created = self._create_or_update_if_changed_dataset(data)
+
         if obj and modified:  # TODO: find a better way to save modification date with value from data.
             self.dataset_model.raw.filter(id=obj.id).update(modified=modified)
         self._update_or_create_supplements(obj, supplements)
+        return obj, created
+
+    def _create_or_update_if_changed_dataset(self, data: Dict) -> Tuple[Optional["Dataset"], bool]:
+        obj = None
+        created = False
+        with transaction.atomic():
+            changed = False
+            obj, created = self.dataset_model.raw.get_or_create(ext_ident=data["ext_ident"], source=data["source"], defaults=data)
+            if not created:
+                for field, value in data.items():  # the data is deserialized so it contains only selected fields
+                    if getattr(obj, field) != value:
+                        setattr(obj, field, value)
+                        changed = True
+                if changed:
+                    obj.save()
+                else:
+                    logger.debug(f"Dataset id={obj.id} was not updated")
+
         return obj, created
 
     def _get_supplement_data(self, idx, data):
@@ -592,7 +620,13 @@ class DataSource(AdminMixin, LogMixin, SoftDeletableModel, TimeStampedModel):
                     setattr(obj, k, v)
                 obj.save()
         else:
-            obj, created = self.resource_model.raw.update_or_create(dataset=dataset, ext_ident=data["ext_ident"], defaults=data)
+            if is_enabled("S68_harvester_updates_all_datasets_and_resources_as_before.be"):
+                obj, created = self.resource_model.raw.update_or_create(
+                    dataset=dataset, ext_ident=data["ext_ident"], defaults=data
+                )
+            else:
+                obj, created = self._create_or_update_if_changed_resource(dataset, data)
+
         if obj and modified:  # TODO: find a better way to save modification date with value from data.
             self.resource_model.raw.filter(id=obj.id).update(modified=modified)
         obj.import_regions_from_harvester(regions)
@@ -607,6 +641,23 @@ class DataSource(AdminMixin, LogMixin, SoftDeletableModel, TimeStampedModel):
         if revalidate:
             obj.revalidate_tabular_data(apply_on_commit=True)
 
+        return obj, created
+
+    def _create_or_update_if_changed_resource(self, dataset: "Dataset", data: Dict) -> Tuple[Optional["Resource"], bool]:
+        obj = None
+        created = False
+        with transaction.atomic():
+            changed = False
+            obj, created = self.resource_model.raw.get_or_create(dataset=dataset, ext_ident=data["ext_ident"], defaults=data)
+            if not created:
+                for field, value in data.items():  # the data is deserialized so it contains only selected fields
+                    if getattr(obj, field) != value:
+                        setattr(obj, field, value)
+                        changed = True
+                if changed:
+                    obj.save()
+                else:
+                    logger.debug(f"Resource id={obj.id} was not updated")
         return obj, created
 
     def _import_from(self, path):
