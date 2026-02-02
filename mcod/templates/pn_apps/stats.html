@@ -118,20 +118,33 @@
            white-space: nowrap !important;
         }
 
+        .bk.accordion {
+            background-color: #fff;
+        }
+
+        .single-chart-accordion {
+            background-color: transparent;
+        }
+
+        .single-chart-accordion .accordion {
+            border-width: 0 !important;
+        }
+
+        .single-chart-accordion .accordion-header {
+            font-size: 1.1em;
+            padding: 10px 15px !important;
+            margin-bottom: 0 !important;
+            background-color: #fff !important;
+            color: #0865c9 !important;
+            flex-direction: row-reverse !important; /* Przenosi ikonę na prawą stronę */
+            justify-content: space-between !important;
+            text-align: left !important;
+            font-weight: bold;
+            box-sizing: border-box !important;
+        }
+
         .card-header h2{
             color:#0865c9;
-        }
-
-        .stats-card-button {
-            position:absolute;
-            right:10px;
-            color:#0865c9;
-        }
-
-        .stat-container{
-            background:#fff;
-            padding-bottom:24px;
-            padding-top:24px;
         }
     </style>
     {% endblock styles %}
@@ -175,26 +188,6 @@
                     var s = document.createElement("script");
                     s.src = "{% static 'pn-apps/js/mcod_bokeh_extensions/mcod_bokeh_extensions.min.js' %}";
                     $("head").append(s);
-                    const targetNode = document.getElementById('main-stats-div');
-                    const config = { childList: true, subtree: true};
-
-                    const callback = function(mutationList, observer) {
-                        for(const mutation of mutationList) {
-                            if (mutation.type === 'childList' && mutation.addedNodes.length && mutation.addedNodes[0].childNodes.length && mutation.addedNodes[0].childNodes[0].classList && mutation.addedNodes[0].childNodes[0].classList.contains('stats-card-button')) {
-                                var cardButton = mutation.addedNodes[0].childNodes[0];
-                                cardButton.style.fontSize = '35px';
-                                if (cardButton.childNodes[0].data == "\u25ba"){
-                                    cardButton.childNodes[0].data = "\u2303";
-                                }
-                                else{
-                                    cardButton.style.top = "-10px";
-                                    cardButton.childNodes[0].data = "\u2304";
-                                }
-                            }
-                        }
-                    };
-                    const observer = new MutationObserver(callback);
-                    observer.observe(targetNode, config);
                 }
                 oldDebug.apply(console, arguments);
             };

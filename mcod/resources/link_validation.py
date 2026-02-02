@@ -1,6 +1,5 @@
 import logging
 import os
-import re
 from io import BytesIO
 from mimetypes import MimeTypes
 from typing import Tuple
@@ -24,7 +23,12 @@ from mcod.lib.exceptions import (
     MissingContentType,
     UnsupportedContentType,
 )
-from mcod.lib.file_format_from_response import _filename_from_url, get_extension_from_mime_type
+from mcod.lib.file_format_from_response import (
+    _filename_from_url,
+    get_extension_from_content_disposition,
+    get_extension_from_mime_type,
+    get_filename_from_content_disposition,
+)
 from mcod.resources import guess
 from mcod.resources.file_validation import file_format_from_content_type_extension_map
 from mcod.resources.geo import is_json_stat
@@ -118,7 +122,8 @@ def download_file(url, forced_file_type=False) -> Tuple[str, dict]:  # noqa: C90
         content_disposition = response.headers.get("Content-Disposition", None)
         logger.debug(f"  content_disposition: {content_disposition}")
         if content_disposition:
-            filename, _format = get_filename_from_content_disposition(content_disposition)
+            filename = get_filename_from_content_disposition(response.headers)
+            _format = get_extension_from_content_disposition(response.headers)
         if not filename:
             name, _format_from_url = _filename_from_url(url)
             _format_from_content_type = get_extension_from_mime_type(content_type)
@@ -163,22 +168,6 @@ def download_file(url, forced_file_type=False) -> Tuple[str, dict]:  # noqa: C90
     if format == "json" and is_json_stat(content):
         options["format"] = "jsonstat"
     return resource_type, options
-
-
-def get_filename_from_content_disposition(content_disposition: str) -> Tuple[str, str]:
-    # Get filename from header
-    res = re.findall("filename=(.+)", content_disposition)
-    filename = res[0][:100] if res else None
-    logger.debug(f"  filename: {filename}")
-    if filename:
-        filename = filename.replace('"', "").split(";")[0]
-        _format = filename.split(".")[-1]
-        logger.debug(f"  filename: {filename}, format: {_format} from content-disposition")
-        return (
-            filename,
-            _format,
-        )
-    return filename, ""
 
 
 def add_unique_suffix_to_filename(filename: str) -> str:

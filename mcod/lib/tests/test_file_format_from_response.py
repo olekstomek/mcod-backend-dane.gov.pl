@@ -7,10 +7,11 @@ from mcod.harvester.tests.utils import mocked_response
 from mcod.lib.file_format_from_response import (
     FormatFromResponse,
     _filename_from_url,
-    _get_mime_type_from_content_disposition,
     _get_mime_type_from_content_type,
     _get_resource_formats_from_response,
     file_format_from_content_type_extension_map,
+    get_extension_from_content_disposition,
+    get_filename_from_content_disposition,
     get_resource_format_from_response,
 )
 from mcod.lib.utils import get_file_content
@@ -105,9 +106,6 @@ def test_get_resource_format_from_response_if_stages_works_as_expected_url():
     assert res == "pdf"
 
 
-@pytest.mark.xfail(
-    reason="Assignment of mime-type to CSV varies between Debian (our Docker) and Ubuntu (Gitlab).",
-)
 def test_get_resource_format_from_response_if_stages_works_as_expected_magic():
     """
     Test that get_resource_format_from_response falls back to magic detection
@@ -147,18 +145,43 @@ def test_get_resource_format_from_response_if_stages_works_as_expected_content_t
 
 
 @pytest.mark.parametrize(
+    "content_disposition_header, expected_filename",
+    [
+        ("filename=some.xml", "some.xml"),
+        ("filename=some.csv", "some.csv"),
+        ("filename=some.blabla", "some.blabla"),
+        (None, None),
+        ("attachment; filename*=UTF-8''file%20name.jpg", "file name.jpg"),
+        ("attachment; filename=zażółć.jpg", "zażółć.jpg"),
+        ('filename="a;b;c.csv"', "a;b;c.csv"),
+        ('filename="../../etc/passwd"', "passwd"),
+        ("attachment", None),
+    ],
+)
+def test_get_filename_from_content_disposition(content_disposition_header: Optional[str], expected_filename: Optional[str]):
+    headers = {"Content-Disposition": content_disposition_header} if content_disposition_header else {}
+    filename = get_filename_from_content_disposition(headers)
+    assert filename == expected_filename
+
+
+@pytest.mark.parametrize(
     "content_disposition_header, expected_file_extension",
     [
         ("filename=some.xml", "xml"),
         ("filename=some.csv", "csv"),
         ("filename=some.blabla", "blabla"),
+        ("filename=some", None),
         (None, None),
         ("attachment; filename*=UTF-8''file%20name.jpg", "jpg"),
         ("attachment; filename=zażółć.jpg", "jpg"),
+        ("attachment; filename=file.coś.md5", "md5"),
+        ("attachment; filename=file.tar.gz", "gz"),
     ],
 )
-def test__get_mime_type_from_content_disposition(content_disposition_header, expected_file_extension):
-    res = _get_mime_type_from_content_disposition({"Content-Disposition": f"attachment; {content_disposition_header}"})
+def test_get_extension_from_content_disposition(
+    content_disposition_header: Optional[str], expected_file_extension: Optional[str]
+):
+    res = get_extension_from_content_disposition({"Content-Disposition": content_disposition_header})
     assert res == expected_file_extension
 
 

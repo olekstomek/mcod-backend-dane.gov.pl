@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from typing import Optional, Type
 
@@ -17,6 +18,7 @@ scenarios(
     "file_name, expected_extension, expected_file_mimetype, expected_extracted_extension, "
     "expected_extracted_mimetype, expected_analyze_exception",
     (
+        ("test_samples/csv_with_quotation_marks.csv", "csv", "text/plain", None, None, None),
         ("test_samples/json_in_zip.zip", "zip", "application/zip", "geojson", "application/geo+json", None),
         # fmt: off
         pytest.param(
@@ -91,16 +93,14 @@ def test_analyze_file(
         actual_extracted_mimetype,
         actual_extracted_encoding,
     ) = analyze_file(file_path)
-    assert (
-        actual_extension,
-        actual_file_mimetype,
-        actual_extracted_extension,
-        actual_extracted_mimetype,
-    ) == (
-        expected_extension,
-        expected_file_mimetype,
-        expected_extracted_extension,
-        expected_extracted_mimetype,
-    )
+
+    assert actual_extension == expected_extension
+    assert actual_extracted_extension == expected_extracted_extension
+    assert actual_file_mimetype == expected_file_mimetype
+
     if expected_analyze_exception:
         assert isinstance(actual_analyze_exc, expected_analyze_exception)
+
+    if "CI" not in os.environ and actual_extracted_mimetype == "text/csv":
+        pytest.xfail("Outside CI libmagic may return text/csv instead of application/csv")
+    assert actual_extracted_mimetype == expected_extracted_mimetype

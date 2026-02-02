@@ -275,7 +275,7 @@ def evaluate_file_details(content_type: str, family: str, options: Dict[str, str
     family, content_type = check_rdf(path, family, content_type)
 
     file_mimetype = f"{family}/{content_type}"
-    logger.debug(f"  parsed mimetype: {file_mimetype});{options}")
+    logger.debug(f"  parsed mimetype: {file_mimetype};{options}")
     logger.debug(f"  file info: {file_info}")
     encoding = options.get("charset", "unknown")
     logger.debug(f"  encoding: {encoding}")

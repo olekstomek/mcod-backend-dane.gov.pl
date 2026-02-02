@@ -5,8 +5,9 @@ import re
 import ssl
 import tempfile
 from hashlib import md5
+from pathlib import Path
+from typing import Dict, Optional, Tuple, Union
 from urllib.parse import unquote
-from urllib.request import Request, urlopen
 from xml.etree import ElementTree
 
 import requests
@@ -14,6 +15,7 @@ import xmlschema
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 from rdflib.plugins.stores.sparqlstore import SPARQLStore
+from requests.structures import CaseInsensitiveDict
 
 from mcod import settings
 from mcod.resources.link_validation import generate_random_user_agent
@@ -26,14 +28,8 @@ logger = logging.getLogger("mcod")
 requests.packages.urllib3.disable_warnings()
 
 
-class ExtendedList(list):
-    pass
-
-
-# https://stackoverflow.com/questions/27835619/urllib-and-ssl-certificate-verify-failed-error/55320961#55320961
-
-
 try:
+    # https://stackoverflow.com/questions/27835619/urllib-and-ssl-certificate-verify-failed-error/55320961#55320961
     _create_unverified_https_context = ssl._create_unverified_context
 except AttributeError:
     # Legacy Python that doesn't verify HTTPS certificates by default
@@ -43,9 +39,12 @@ else:
     ssl._create_default_https_context = _create_unverified_https_context
 
 
-def make_request(url, head_only=False):
-    opts = settings.HTTP_REQUEST_DEFAULT_PARAMS
-    response = requests.head(url, **opts) if head_only else requests.get(url, **opts)
+def make_request(url: str, head_only: bool = False, headers: Optional[dict] = None) -> requests.Response:
+    opts: Dict = settings.HTTP_REQUEST_DEFAULT_PARAMS.copy()
+    if headers:
+        opts["headers"] = headers
+    method = "HEAD" if head_only else "GET"
+    response = requests.request(method, url, **opts)
     if not response.ok:
         msg = _("%(url)s: invalid response code: %(code)s (%(reason)s)")
         raise Exception(msg % {"url": url, "code": response.status_code, "reason": response.reason})
@@ -64,7 +63,9 @@ def fetch_data(url):
 
 def get_xml_schema_version(*, xml_path=None, xml_url=None):
     if xml_url:
-        root = ElementTree.fromstring(requests.get(xml_url, **settings.HTTP_REQUEST_DEFAULT_PARAMS).text)
+        response = make_request(xml_url)
+        xml_payload = response.text
+        root = ElementTree.fromstring(xml_payload)
     else:
         root = ElementTree.parse(xml_path).getroot()
 
@@ -93,7 +94,14 @@ def get_xml_schema(version):
     return xmlschema.XMLSchema(get_xml_schema_path(version))
 
 
-def get_xml_as_dict(source, version):
+def get_xml_as_dict(source: Union[str, Path], version: str) -> Dict:
+    """
+    Args:
+        source: Path, filename (str), remote URL (str)
+        version: one of the supported schema version, e.g. 1.13
+
+    Returns: XML data deserialized to a Dict
+    """
     schema = get_xml_schema(version)
     data = schema.to_dict(source)
     data["xsd_schema_version"] = version
@@ -105,16 +113,30 @@ def decode_xml(url):
     return get_xml_as_dict(url, version)
 
 
-def fetch_xml_data(url):
-    try:
-        validate_xml_url(url)
-        data = decode_xml(url)
-    except Exception as exc:
-        raise Exception(f"XML Validation error!\n{exc}")
+class FetchedDatasets(list):
+    """Wrapper over list to add metadata field
+    Elements are dict.
+    TODO: refactor together with import_data
+    """
 
-    result = ExtendedList(data["dataset"]) if isinstance(data, dict) and "dataset" in data else None
-    result.xsd_schema_version = data["xsd_schema_version"]
-    return result
+    xsd_schema_version: str
+
+    def __init__(self, obj, xsd_schema_version: str):
+        super().__init__(obj)
+        self.xsd_schema_version = xsd_schema_version
+
+
+# see base.py:HARVESTER_IMPORTERS for usages
+def fetch_xml_data(url: str) -> Optional[FetchedDatasets]:
+    try:
+        saved_filename, xml_hash, xml_schema_version = validate_xml_url(url)
+        data = get_xml_as_dict(saved_filename, xml_schema_version)
+    except Exception as exc:
+        raise Exception(f"XML Validation error!\n{exc}") from exc
+    if isinstance(data, dict) and "dataset" in data:
+        return FetchedDatasets(data["dataset"], data["xsd_schema_version"])
+    else:
+        return None
 
 
 def mock_data(url):
@@ -124,14 +146,19 @@ def mock_data(url):
         return data["results"] if "results" in data else data
 
 
-def validate_xml(xml_path, boolean_result=False):
-    xml_schema = get_xml_schema(get_xml_schema_version(xml_path=xml_path))
-    if boolean_result:
-        return xml_schema.is_valid(xml_path)
-    try:
-        xml_schema.validate(xml_path)
-    except Exception as exc:
-        raise Exception(str(exc))
+def validate_xml(xml_path: Union[str, Path]) -> str:
+    """
+    Args:
+        xml_path: Path to file containing the XML content
+
+    Returns: Schema version as a str
+    Raises XMLSchemaValidationError: if the schema isn't met
+    Raises Exception: in case we can't infer schema version
+    """
+    xml_schema_version = get_xml_schema_version(xml_path=xml_path)
+    xml_schema = get_xml_schema(xml_schema_version)
+    xml_schema.validate(xml_path)
+    return xml_schema_version
 
 
 def get_remote_xml_hash(url):
@@ -150,9 +177,10 @@ def get_remote_xml_hash(url):
 
 def get_xml_headers(url):
     try:
-        response = requests.head(url, **settings.HTTP_REQUEST_DEFAULT_PARAMS)
-    except Exception:
-        raise Exception(_("External resource is not available!"))
+        response = make_request(url, head_only=True)
+    except Exception as e:
+        logger.error("Fatal exception in get_xml_headers", exc_info=True)
+        raise Exception(_("External resource is not available!")) from e
     return response.headers
 
 
@@ -172,18 +200,16 @@ def check_xml_filename(url):
             raise Exception(_("Invalid file name: %(filename)s!") % {"filename": filename})
 
 
-def retrieve_to_file(url):
+def retrieve_to_file(url: str) -> Tuple[str, Dict[str, str]]:
     headers = {"User-Agent": generate_random_user_agent()}
-    request = Request(url, headers=headers)
-    tmp_file = tempfile.NamedTemporaryFile(delete=False)
-    with urlopen(request) as response:
-        data = response.read()
-        tmp_file.write(data)
-    tmp_file.close()
+    response = make_request(url, headers=headers)
+    with tempfile.NamedTemporaryFile(mode="wb", delete=False) as tmp_file:
+        for chunk in response.iter_content(chunk_size=512):
+            tmp_file.write(chunk)
     return tmp_file.name, response.headers
 
 
-def validate_md5(filename, remote_xml_hash):
+def validate_md5(filename: str, remote_xml_hash: str) -> str:
     m = md5()
     with open(filename, "rb") as fp:
         for chunk in fp:
@@ -194,19 +220,35 @@ def validate_md5(filename, remote_xml_hash):
     return xml_hash
 
 
-def validate_xml_url(url):
+def validate_xml_url(url: str) -> Tuple[Union[str, Path], str, str]:
+    """
+    Checks performed:
+    - url has to respond to head
+    - filename has to end in `.xml`
+    - sensible content-type header
+    - md5 sum (using a transformed url)
+    - XSD validation
+
+    Args:
+        url: Remote url to the XML file
+
+    Returns: A tuple of
+     1. path to the temporary file containing downloaded content
+     2. md5 digest
+     3. schema version
+    """
     try:
         check_xml_filename(url)
-        headers = get_xml_headers(url)
+        headers: CaseInsensitiveDict = get_xml_headers(url)
         check_content_type(headers)
-        xml_hash_url, remote_hash = get_remote_xml_hash(url)
+        _, remote_hash = get_remote_xml_hash(url)
+        filename: str
         filename, headers = retrieve_to_file(url)
-        xml_hash = validate_md5(filename, remote_hash)
-        validate_xml(filename)
-
+        xml_hash: str = validate_md5(filename, remote_hash)
+        xml_schema_version: str = validate_xml(filename)
     except Exception as exc:
         raise ValidationError({"xml_url": str(exc)})
-    return filename, xml_hash
+    return filename, xml_hash, xml_schema_version
 
 
 def fetch_dcat_data(api_url, query):

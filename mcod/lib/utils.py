@@ -2,7 +2,7 @@ import logging
 import os
 import os.path
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Union
 
 from django import VERSION
 from django.conf import settings
@@ -52,7 +52,7 @@ def get_file_extensions_no_dot(filenames: List[str]) -> List[str]:
     return extensions
 
 
-def get_file_content(filename: Optional[str]) -> bytes:
+def get_file_content(filename: Optional[Union[str, Path]]) -> bytes:
     """Load binary content from a sample file stored locally."""
     if not filename:
         return b""

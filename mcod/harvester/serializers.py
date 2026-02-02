@@ -709,7 +709,7 @@ class XMLDatasetSchema(XMLPreProcessedSchema):
         ordered = True
         unknown = EXCLUDE
 
-    def prepare_data(self, data, **kwargs):
+    def prepare_data(self, data, **kwargs) -> Dict:
         if "title" in data and isinstance(data.get("title"), dict):
             data["title_en"] = data["title"].get("english", "")
             data["title_pl"] = data["title"].get("polish", "")

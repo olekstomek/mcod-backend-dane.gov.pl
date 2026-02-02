@@ -4,6 +4,7 @@ from collections import OrderedDict
 from datetime import date
 from functools import partial
 from time import time
+from typing import Dict, List, Optional
 
 import holoviews as hv
 import hvplot.pandas  # noqa
@@ -1845,6 +1846,9 @@ class ResourcesForInstitutionsGroupByTimePeriod(DataCountByTimePeriodForGroup):
         return val[0]
 
 
+logger = logging.getLogger("mcod")
+
+
 def app(doc):
     app_start = time()
     language = doc.session_context.request.cookies.get("currentLang", settings.LANGUAGE_CODE)
@@ -1866,7 +1870,7 @@ def app(doc):
         if user_agent:
             charts_kwargs["agent_type"] = parse(user_agent)
         chart_init_start = time()
-        charts = [
+        charts: List[StatsPanel] = [
             Top10ProvidersByResourcesCount(name="Ranking instytucji o największej liczbie danych", **charts_kwargs),
             ResourcesCountByTimePeriod(name="Liczba danych", **charts_kwargs),
             NewResourcesCountByTimePeriod(name="Liczba nowych danych", **charts_kwargs),
@@ -1915,24 +1919,36 @@ def app(doc):
         chart_init_end = time()
         charts_init_delta = chart_init_end - chart_init_start
         profile_log.debug("Charts initialization: %.4f" % charts_init_delta)
-        permitted_charts = [chart for chart in charts if chart.has_perm()]
+
+        # Prepare charts list based on permission
+        permitted_charts: List[StatsPanel] = [chart for chart in charts if chart.has_perm()]
+
         widgets_start = time()
         event_widgets = register_event_widgets(permitted_charts, widget_kwargs)
         widgets_end = time()
-        widgets_total = widgets_end - widgets_start
-        profile_log.debug("Widgets Register: %.4f" % widgets_total)
-        chart_panel_start = time()
-        charts_panels = [chart.panel() for chart in permitted_charts]
-        chart_panel_end = time()
-        chart_panel_total = chart_panel_end - chart_panel_start
-        profile_log.debug("All charts panels init: %.4f" % chart_panel_total)
-        all_models = event_widgets + charts_panels
+        profile_log.debug("Widgets Register: %.4f" % (widgets_end - widgets_start))
+
+        # Main container for chart cards
+        charts_layout = pn.Column(
+            sizing_mode="stretch_width",
+            css_classes=["charts-container"],
+        )
+
+        # Loop building the structure: Accordion -> Spacer -> Accordion
+        for i, chart in enumerate(permitted_charts):
+            chart_accordion: pn.Accordion = _create_single_lazy_accordion(chart, i)
+            charts_layout.append(chart_accordion)
+            charts_layout.append(pn.Spacer(height=10))
+
+        # 4. Dashboard
         dashboard = pn.Column(
-            *all_models,
+            *event_widgets,
+            charts_layout,
             sizing_mode="stretch_both",
             width_policy="max",
             height_policy="max",
         )
+
         pre_server_doc_app_end = time()
         pre_server_doc_total_app_time = pre_server_doc_app_end - app_start
         profile_log.debug("APP FUNC TIME BEFORE SERVER DOC: %.4f" % pre_server_doc_total_app_time)
@@ -1944,3 +1960,40 @@ def app(doc):
         app_end = time()
         total_app_time = app_end - app_start
         profile_log.debug("WHOLE APP FUNC TIME: %.4f" % total_app_time)
+
+
+def _create_single_lazy_accordion(chart_instance: StatsPanel, index: int) -> pn.Accordion:
+    """Creates a single, independent accordion with lazy-loading."""
+
+    # Create a small accordion for single chart only
+    single_accordion = pn.Accordion(
+        sizing_mode="stretch_width",
+        active=[],  # closed by default
+        css_classes=["single-chart-accordion"],
+    )
+
+    # Cache state for the chart
+    state: Dict[str, Optional[pn.Column]] = {"cached_view": None}
+
+    # Decorator listens for 'active' state changes of THIS specific accordion
+    @pn.depends(single_accordion.param.active)
+    def load_on_demand(active_indices: List[int]) -> Optional[pn.Column]:
+        # If the list is not empty (i.e., [0]), it means it's open
+        if active_indices:
+            if state["cached_view"] is None:
+                logger.debug(f"Generating content for chart {index} ({chart_instance.name})")
+                full_card: pn.Card = chart_instance.panel()  # here card data is fetched
+
+                state["cached_view"] = pn.Column(
+                    *full_card.objects,
+                    sizing_mode="stretch_width",
+                )
+            else:
+                logger.debug(f"Using CACHE for chart: {chart_instance.name}")
+            return state["cached_view"]
+
+        # If closed
+        return pn.Column(height=0, sizing_mode="stretch_width")
+
+    single_accordion.append((chart_instance.name, load_on_demand))
+    return single_accordion

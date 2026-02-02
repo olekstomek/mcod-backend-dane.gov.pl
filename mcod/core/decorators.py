@@ -1,6 +1,6 @@
 import logging
 from functools import wraps
-from typing import TYPE_CHECKING, Callable, Type
+from typing import TYPE_CHECKING, Callable, Optional, Type
 
 import sentry_sdk
 from django.db import OperationalError, ProgrammingError, connection
@@ -61,7 +61,7 @@ metric_handlers = {
 
 def _wrap_method(original_method: Callable, method_name: str) -> Callable:
     @wraps(original_method)
-    def wrapped(instance, request: HttpRequest, *args, **kwargs) -> HttpResponse:
+    def wrapped(instance, request: HttpRequest, *args, **kwargs) -> Optional[HttpResponse]:
         """
         Wraps an admin view method to measure and record the total database query duration.
 
@@ -70,27 +70,27 @@ def _wrap_method(original_method: Callable, method_name: str) -> Callable:
         ql = QueryLogger()
 
         with connection.execute_wrapper(ql):
-            response = original_method(instance, request, *args, **kwargs)
+            response: Optional[HttpResponse] = original_method(instance, request, *args, **kwargs)
+        if response is not None:
+            try:
+                duration = sum(float(q["duration"]) for q in ql.queries)
+                view_label = f"{instance.__class__.__module__}.{instance.__class__.__name__}.{method_name}"
+                ADMIN_DB_QUERY_TIME_HISTOGRAM.labels(admin_view=view_label).observe(duration)
+            except KeyError as err:
+                logger.error(f"Couldn't get `duration` attribute from ql.queries. {err}")
+                sentry_sdk.api.capture_exception(err)
+            except (ProgrammingError, OperationalError, AttributeError) as err:
+                logger.error(err)
+                sentry_sdk.api.capture_exception(err)
 
-        try:
-            duration = sum(float(q["duration"]) for q in ql.queries)
-            view_label = f"{instance.__class__.__module__}.{instance.__class__.__name__}.{method_name}"
-            ADMIN_DB_QUERY_TIME_HISTOGRAM.labels(admin_view=view_label).observe(duration)
-        except KeyError as err:
-            logger.error(f"Couldn't get `duration` attribute from ql.queries. {err}")
-            sentry_sdk.api.capture_exception(err)
-        except (ProgrammingError, OperationalError, AttributeError) as err:
-            logger.error(err)
-            sentry_sdk.api.capture_exception(err)
+            delete_selected = request.POST.get("action") == "delete_selected"
+            is_bulk_delete = method_name == "response_action" and delete_selected
+            allow_action = request.method == "POST" and response.status_code == 302
 
-        delete_selected = request.POST.get("action") == "delete_selected"
-        is_bulk_delete = method_name == "response_action" and delete_selected
-        allow_action = request.method == "POST" and response.status_code == 302
+            handler = metric_handlers.get(instance.model.__name__)
 
-        handler = metric_handlers.get(instance.model.__name__)
-
-        if handler:
-            handler(method_name, allow_action, is_bulk_delete, instance.model)
+            if handler:
+                handler(method_name, allow_action, is_bulk_delete, instance.model)
 
         return response
 

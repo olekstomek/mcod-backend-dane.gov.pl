@@ -142,7 +142,37 @@ def _get_extension_from_magic(response_content: bytes) -> Optional[Extension]:
     return file_extension
 
 
-def _get_mime_type_from_content_disposition(headers: Dict[str, str]) -> Optional[Extension]:
+def get_filename_from_content_disposition(headers: Dict[str, str]) -> Optional[str]:
+    """
+    Extract the filename from the Content-Disposition header, if present.
+
+    Parses the Content-Disposition header to retrieve the filename (with extension).
+    Any directory components (like ../../) are removed to prevent path traversal attacks,
+    so only the base filename is returned.
+
+    Examples:
+        >>> get_filename_from_content_disposition({"Content-Disposition": "attachment; filename=some.csv"})
+        'some.csv'
+        >>> get_filename_from_content_disposition({"Content-Disposition": "attachment"})
+        None
+        >>> get_filename_from_content_disposition({})
+        None
+
+    :param headers: A dictionary of HTTP headers.
+    :return: The extracted base filename (e.g., 'some.csv'), or None if unavailable.
+    """
+    content_disposition = headers.get("Content-Disposition")
+    if not content_disposition:
+        return None
+
+    parsed = HeaderParser().parsestr(f"Content-Disposition: {content_disposition}")
+    filename = parsed.get_filename()
+    if filename:
+        return os.path.basename(filename)
+    return filename
+
+
+def get_extension_from_content_disposition(headers: Dict[str, str]) -> Optional[Extension]:
     """
     Extract the file extension from the Content-Disposition header, if present.
 
@@ -150,24 +180,20 @@ def _get_mime_type_from_content_disposition(headers: Dict[str, str]) -> Optional
     by extracting the part after the last dot in the filename.
 
     Examples:
-        >>> _get_mime_type_from_content_disposition({"Content-Disposition": "attachment; filename=some.csv"})
+        >>> get_extension_from_content_disposition({"Content-Disposition": "attachment; filename=some.csv"})
         'csv'
-
-        >>> _get_mime_type_from_content_disposition({"Content-Disposition": "attachment"})
+        >>> get_extension_from_content_disposition({"Content-Disposition": "attachment"})
         None
 
     :param headers: A dictionary of HTTP headers.
     :return: The extracted file extension (e.g., 'csv'), or None if unavailable.
     """
-    content_disposition = headers.get("Content-Disposition")
-    extension_from_content_disposition = None
-    if not content_disposition:
-        return extension_from_content_disposition
-    parsed_header = HeaderParser().parsestr(f"Content-disposition: {content_disposition}")
-    filename = parsed_header.get_filename()
-    if filename:
-        extension_from_content_disposition = filename.split(".")[-1]
-    return extension_from_content_disposition
+    full_name = get_filename_from_content_disposition(headers)
+    if not full_name:
+        return None
+
+    _, ext = os.path.splitext(full_name)
+    return ext[1:] or None
 
 
 def _get_mime_type_from_content_type(headers: Dict[str, str]) -> Optional[Extension]:
@@ -180,7 +206,6 @@ def _get_mime_type_from_content_type(headers: Dict[str, str]) -> Optional[Extens
     Examples:
         >>> _get_mime_type_from_content_type({"Content-Type": "text/csv"})
         'csv'
-
         >>> _get_mime_type_from_content_type({"Content-Type": "application/octet-stream"})
         None
 
@@ -263,7 +288,7 @@ def _get_resource_formats_from_response(response: Response) -> FormatFromRespons
     extension_from_url = _get_extension_from_url(response.url)
     extension_from_magic = _get_extension_from_magic(response.content)
     extension_from_content_type = _get_mime_type_from_content_type(dict(response.headers))
-    extension_from_content_disposition = _get_mime_type_from_content_disposition(dict(response.headers))
+    extension_from_content_disposition = get_extension_from_content_disposition(dict(response.headers))
 
     logger.info(
         f"Validated formats from: url - {extension_from_url} "

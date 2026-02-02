@@ -1,0 +1,102 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<ns2:datasets xmlns:ns2="urn:otwarte-dane:harvester:1.13">
+    <dataset status="published">
+        <extIdent>xml-ds-1</extIdent>
+        <title>
+            <polish>Zbiór danych dla data date nr 1</polish>
+        </title>
+        <description>
+            <polish>Opis zbioru danych</polish>
+        </description>
+        <updateFrequency>notPlanned</updateFrequency>
+        <categories>
+            <category>SOCI</category>
+        </categories>
+        <resources>
+            <resource>
+                <extIdent>xml-ds-1-1</extIdent>
+                <dataDate>2026-01-20</dataDate>
+                <url>https://www.liquid-technologies.com</url>
+                <title>
+                    <polish>string</polish>
+                </title>
+                <description>
+                    <polish>string</polish>
+                </description>
+            </resource>
+            <resource>
+                <extIdent>xml-ds-1-2</extIdent>
+                <dataDate>2026-01-19</dataDate>
+                <url>https://www.liquid-technologies.com</url>
+                <title>
+                    <polish>string</polish>
+                </title>
+                <description>
+                    <polish>string</polish>
+                </description>
+            </resource>
+            <resource>
+                <extIdent>xml-ds-1-4</extIdent> <!-- no match in the DB-->
+                <url>https://www.liquid-technologies.com</url>
+                <title>
+                    <polish>string</polish>
+                </title>
+                <description>
+                    <polish>string</polish>
+                </description>
+            </resource>
+        </resources>
+        <tags>
+            <tag lang="pl">string</tag>
+        </tags>
+    </dataset>
+    <dataset status="published">
+        <extIdent>xml-ds-2</extIdent>
+        <title>
+            <polish>Zbiór danych dla data date nr 2</polish>
+        </title>
+        <description>
+            <polish>Opis zbioru danych</polish>
+        </description>
+        <updateFrequency>notPlanned</updateFrequency>
+        <categories>
+            <category>SOCI</category>
+        </categories>
+        <resources>
+            <resource>
+                <extIdent>xml-ds-2-1</extIdent>
+                <url>https://www.liquid-technologies.com</url>
+                <title>
+                    <polish>string</polish>
+                </title>
+                <description>
+                    <polish>string</polish>
+                </description>
+            </resource>
+            <resource>
+                <extIdent>xml-ds-2-2</extIdent>
+                <url>https://www.liquid-technologies.com</url>
+                <title>
+                    <polish>string</polish>
+                </title>
+                <description>
+                    <polish>string</polish>
+                </description>
+            </resource>
+            <resource>
+                <extIdent>xml-ds-2-3</extIdent>
+                <dataDate>2026-01-14</dataDate>
+                <url>https://www.liquid-technologies.com</url>
+                <title>
+                    <polish>string</polish>
+                </title>
+                <description>
+                    <polish>string</polish>
+                </description>
+            </resource>
+        </resources>
+        <tags>
+            <tag lang="pl">string2</tag>
+        </tags>
+    </dataset>
+</ns2:datasets>

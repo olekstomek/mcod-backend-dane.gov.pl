@@ -247,6 +247,9 @@ class DataSource(AdminMixin, LogMixin, SoftDeletableModel, TimeStampedModel):
     @cached_property
     def import_settings(self):
         try:
+            # TODO(ke): For type-specific knobs - just use settings directly, good example is MEDIA_URL_TEMPLATE
+            # It should be sth like: HARVESTER_CKAN_MEDIA_URL_TEMPLATE and read that directly.
+            # For common settings, like schema - create properties with local imports to prevent circular.
             return settings.HARVESTER_IMPORTERS[self.source_type]
         except KeyError:
             raise ImproperlyConfigured(f"settings.HARVESTER_SETTINGS should contain {self.source_type} key!")
@@ -661,6 +664,7 @@ class DataSource(AdminMixin, LogMixin, SoftDeletableModel, TimeStampedModel):
         return obj, created
 
     def _import_from(self, path):
+        # TODO(ke): remove this abomination
         parts = path.split(".")
         module = ".".join(parts[:-1])
         m = __import__(module)

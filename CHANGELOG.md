@@ -12,6 +12,48 @@ ______________________________________________________________________
 
 ### Breaks
 
+## 2.55.1 - (2026-01-22)
+
+______________________________________________________________________
+
+### Fixes
+
+- Wycofanie zmian zaimplementowanych w ramach OTD-2026
+
+## 2.55.0 - (2026-01-20)
+
+______________________________________________________________________
+
+### New
+
+- Dodanie komendy generującej raport porównawczy pola "dane na dzień" dla Zasobów harvestowanych - OTD-2190
+- Wdrożenie i konfiguracja polityki Content Security Policy (CSP) dla Panelu Administratora - OTD-2026
+- Dodanie dedykowanej konfiguracji CSP dla modułu statystyk oraz Matomo - OTD-2026
+- Utworzenie pliku statics/admin/js/custom_admin.js konsolidującego skrypty, które wcześniej były "inline" - OTD-2026
+- Dodany test funkcji get_filename_from_content_disposition() - OTD-2083
+
+### Changes
+
+- Przyspieszenie ładowania się modułu statystyk - opóźnienie wykonywania zapytań o dane ze statystykami - OTD-2075
+- Aktualizacja biblioteki CKEditor z wersji 4.7.3 do 4.18.0 - OTD-2026
+- Zmiana logiki sanityzacji w sanitize_html: dodano html.unescape w celu przywracania oryginalnych znaków specjalnych (np. & zamiast &) - OTD-2026
+- Implementacja atrybutów nonce w plikach szablonów Jinja/HTML oraz konfiguracji CKEditora - OTD-2026
+- Refaktoryzacja widgetów admina (DateFilter, Multiselect, Stacked & Tabular Inlines) w celu wyeliminowania skryptów inline - OTD-2026
+- Zastąpienie skryptów JS ustawiających fokus natywnym atrybutem HTML5 autofocus - OTD-2026
+- Dynamiczny widget "Zewnętrzne zbiory danych" oraz dodawanie kotwicy (hash) do linku po kliknięciu "Pokaż wszystko" - OTD-2026
+- Poprawiona funkcja get_filename_from_content_disposition(), wcześniej obcinała nazwę pliku do pierwszych 100 znaków - OTD-2083
+- Poprawiona funkcja get_extension_from_content_disposition(), aby opierała się na pobranych danych z poprawionej get_filename_from_content_disposition() - OTD-2083
+- Zaktualizowany test_analyze_file() oraz test_get_extension_from_content_disposition() - OTD-2083
+
+### Fixes
+
+- Naprawa działania dekoratora prometheus_monitoring w zakresie prawidłowego obsługi akcji django, gdy nie zostanie wybrany żaden element dla akcji - OTD-2204
+- Zmniejszenie liczby zapytań HTTP w harvestacji XML - OTD-2190
+- Naprawa błędu "TypeError: $ is not a function" w skrypcie forward-fix.js - OTD-2026
+- Usunięcie martwego kodu JS z szablonu autocomplete-filter.html - OTD-2026
+- Automatyczne dostosowanie wysokości pól textarea do zawartości - OTD-2026
+- Poprawa testów jednostkowych dla funkcji sanitize_html uwzględniająca zmiany w dekodowaniu encji - OTD-2026
+
 ## 2.54.0 - (2026-01-13)
 
 ______________________________________________________________________
