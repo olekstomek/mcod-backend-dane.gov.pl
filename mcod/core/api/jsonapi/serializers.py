@@ -2,6 +2,7 @@ from collections.abc import Sequence
 from typing import Any, Optional, Union
 
 from django.apps import apps
+from django.conf import settings
 from django.core import paginator
 from django.db.models import Manager, Q, QuerySet
 from django.utils.timezone import now
@@ -12,7 +13,6 @@ from marshmallow.schema import SchemaOpts
 from modeltrans.manager import MultilingualQuerySet
 from querystring_parser import builder
 
-from mcod import settings
 from mcod.core.api import fields, schemas
 from mcod.core.registries import object_attrs_registry
 from mcod.core.utils import complete_invalid_xml, setpathattr

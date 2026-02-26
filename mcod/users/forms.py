@@ -1,5 +1,6 @@
 from dal import autocomplete
 from django import forms
+from django.conf import settings
 from django.contrib.admin import forms as admin_forms
 from django.contrib.admin.widgets import FilteredSelectMultiple
 from django.contrib.auth import forms as auth_forms
@@ -8,7 +9,6 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 from suit.widgets import SuitDateWidget, SuitTimeWidget
 
-from mcod import settings
 from mcod.lib.forms.fields import InternalPhoneNumberField, PhoneNumberField
 from mcod.lib.widgets import CKEditorWidget
 from mcod.users.models import Meeting, User

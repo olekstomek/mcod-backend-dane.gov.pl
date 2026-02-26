@@ -1,7 +1,7 @@
+from django.conf import settings as django_settings
 from django_elasticsearch_dsl import fields
 from django_elasticsearch_dsl.registries import registry
 
-from mcod import settings as mcs
 from mcod.core.db.elastic import Document
 from mcod.lib.search.fields import TranslatedTextField
 from mcod.suggestions.models import AcceptedDatasetSubmission, SubmissionFeedback
@@ -40,8 +40,8 @@ class AcceptedDatasetSubmissionDoc(Document):
         return instance.feedback_counters
 
     class Index:
-        name = mcs.ELASTICSEARCH_INDEX_NAMES["accepted_dataset_submissions"]
-        settings = mcs.ELASTICSEARCH_DSL_INDEX_SETTINGS
+        name = django_settings.ELASTICSEARCH_INDEX_NAMES["accepted_dataset_submissions"]
+        settings = django_settings.ELASTICSEARCH_DSL_INDEX_SETTINGS
 
     class Django:
         model = AcceptedDatasetSubmission

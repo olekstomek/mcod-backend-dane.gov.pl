@@ -3,6 +3,7 @@ import logging
 import magic
 from bs4 import BeautifulSoup
 from constance import config
+from django.conf import settings
 from django.contrib.auth.hashers import get_hasher
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -10,7 +11,6 @@ from django.template.loader import render_to_string
 from django.utils.timezone import now
 from django.utils.translation import get_language, gettext_lazy as _, override
 
-from mcod import settings
 from mcod.core import storages
 from mcod.core.db.models import TimeStampedModel
 from mcod.lib.model_sanitization import SanitizedCharField, SanitizedTextField

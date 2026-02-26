@@ -56,7 +56,7 @@ class TestErrors:
         result = client.simulate_get(uri)
         assert result.json["code"] == "server_error"
         assert result.status == falcon.HTTP_500
-        assert result.json["title"] == "500 Internal Server Error"
+        assert result.json["title"] == "Wystąpił nieoczekiwany błąd. Proszę, spróbuj później."
 
     @pytest.mark.run(order=0)
     def test_422_10(self, client, uri):

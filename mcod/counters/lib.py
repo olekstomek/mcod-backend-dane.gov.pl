@@ -1,14 +1,13 @@
 import datetime
 
 from django.apps import apps
+from django.conf import settings
 from django.db.models import Sum
 from django.db.transaction import atomic
 from django_elasticsearch_dsl.registries import registry
 from django_redis import get_redis_connection
 from elasticsearch.helpers import bulk as streaming_bulk
 from elasticsearch_dsl.connections import connections
-
-from mcod import settings
 
 VIEWS_COUNT_PREFIX = "views_count"
 DOWNLOADS_COUNT_PREFIX = "downloads_count"

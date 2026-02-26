@@ -4,13 +4,13 @@ from importlib import import_module
 
 import falcon
 from constance import config
+from django.conf import settings
 from django.contrib.auth import get_user
 from django.contrib.auth.models import AnonymousUser
 from django.db import connection
 from django.utils.translation import gettext_lazy as _
 from django_redis import get_redis_connection
 
-from mcod import settings
 from mcod.lib.jwt import decode_jwt_token
 
 session_store = import_module(settings.SESSION_ENGINE).SessionStore

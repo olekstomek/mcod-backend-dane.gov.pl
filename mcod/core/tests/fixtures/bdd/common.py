@@ -15,13 +15,13 @@ import magic
 import requests_mock
 from bs4 import BeautifulSoup
 from django.apps import apps
+from django.conf import settings
 from django.contrib import admin
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client
 from django.utils import translation
 from pytest_bdd import given, parsers, then, when
 
-from mcod import settings
 from mcod.core.api.rdf.namespaces import NAMESPACES
 from mcod.core.registries import factories_registry
 from mcod.core.tests.helpers.tasks import run_on_commit_events

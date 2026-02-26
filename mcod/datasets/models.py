@@ -8,6 +8,7 @@ from uuid import uuid4
 
 from constance import config
 from django.apps import apps
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.postgres.fields import JSONField
 from django.contrib.postgres.indexes import GinIndex
@@ -23,7 +24,6 @@ from django.utils.timezone import now
 from django.utils.translation import get_language, gettext_lazy as _, override
 from model_utils import FieldTracker
 
-from mcod import settings
 from mcod.core import model_validators, signals as core_signals
 from mcod.core.api.rdf import signals as rdf_signals
 from mcod.core.api.search import signals as search_signals

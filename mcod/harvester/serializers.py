@@ -5,6 +5,7 @@ from io import BytesIO
 from typing import Any, Dict, List as ListType, Optional, Tuple
 
 import requests
+from django.conf import settings
 from django.core.exceptions import MultipleObjectsReturned, ValidationError as DjangoValidationError
 from django.utils.timezone import is_naive, make_aware
 from django.utils.translation import gettext_lazy as _, override
@@ -20,7 +21,6 @@ from marshmallow import (
 )
 from marshmallow.fields import URL, UUID, Bool, Date, DateTime, Int, List, Method, Nested, Raw, Str
 
-from mcod import settings
 from mcod.core.api import fields
 from mcod.core.api.rdf.profiles.dcat_ap import DCATDatasetDeserializer
 from mcod.core.serializers import CSVSerializer

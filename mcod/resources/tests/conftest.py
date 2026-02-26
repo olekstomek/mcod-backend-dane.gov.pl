@@ -141,3 +141,10 @@ def resource_with_title_has_dga_flag_set_to_value(resource_title: str, flag: str
     resource = Resource.objects.get(title=resource_title)
     flag: bool = True if flag.lower() == "true" else False
     assert resource.contains_protected_data == flag, f"Resource `{resource_title}` has DGA flag set on {flag}"
+
+
+@pytest.fixture
+def tabular_data_resource(geo_tabular_data_resource) -> Resource:
+    geo_tabular_data_resource.revalidate()
+    geo_tabular_data_resource.refresh_from_db()
+    return geo_tabular_data_resource

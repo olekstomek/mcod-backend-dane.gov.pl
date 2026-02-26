@@ -2,11 +2,11 @@ import hashlib
 from functools import partial
 
 from constance import config
+from django.conf import settings
 from rdflib import RDF, XSD, BNode, Literal, URIRef
 from rdflib.term import _is_valid_uri
 
 import mcod.core.api.rdf.namespaces as ns
-from mcod import settings
 from mcod.core.api.rdf.profiles.common import CATALOG_URL, RDFClass, RDFNestedField
 from mcod.lib.rdf.rdf_field import RDFField
 

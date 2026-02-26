@@ -813,13 +813,13 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):  # MRO matters here for unescape
         extra_context["post_data"] = request.POST  # see mcod/templates/admin/save_confirmation.html
         is_current_dga_resource = instance.is_dga
         dga_resource_to_replace: Optional[Resource] = self._get_current_dga_if_new_requested(request, exclude_object_id=object_id)
-        user_replaces_dga_resource = dga_resource_to_replace is not None
+        user_replaces_dga_resource: bool = dga_resource_to_replace is not None
         if is_current_dga_resource and user_deselects_dga_designation:
             return self.render_deselect_dga_confirmation_page(request, instance=instance, extra_context=extra_context)
 
         elif is_current_dga_resource and user_marks_as_draft:
             return self.render_dga_to_draft_confirmation_page(request, instance=instance, extra_context=extra_context)
-        elif not is_current_dga_resource and user_replaces_dga_resource:
+        elif user_replaces_dga_resource:
             extra_context.update({"current_dga_resource_title": dga_resource_to_replace.title})
             return self.render_save_confirmation_page(request, instance=instance, extra_context=extra_context)
         # fallback

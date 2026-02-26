@@ -1,7 +1,7 @@
 import pytest
+from django.conf import settings
 from falcon import HTTP_OK
 
-from mcod import settings
 from mcod.core.tests.helpers.tasks import run_on_commit_events
 
 

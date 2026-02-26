@@ -1,8 +1,8 @@
 from django.apps import apps
+from django.conf import settings as django_settings
 from django_elasticsearch_dsl import fields
 from django_elasticsearch_dsl.registries import registry
 
-from mcod import settings as mcs
 from mcod.harvester.serializers import DataSourceSerializer
 from mcod.lib.search.fields import TranslatedTextField
 from mcod.regions.documents import regions_field
@@ -129,9 +129,9 @@ class ResourceDocument(ExtendedDocument):
     contains_protected_data = fields.BooleanField()
 
     class Index:
-        name = mcs.ELASTICSEARCH_INDEX_NAMES["resources"]
-        settings = mcs.ELASTICSEARCH_DSL_SEARCH_INDEX_SETTINGS
-        aliases = mcs.ELASTICSEARCH_DSL_SEARCH_INDEX_ALIAS
+        name = django_settings.ELASTICSEARCH_INDEX_NAMES["resources"]
+        settings = django_settings.ELASTICSEARCH_DSL_SEARCH_INDEX_SETTINGS
+        aliases = django_settings.ELASTICSEARCH_DSL_SEARCH_INDEX_ALIAS
 
     class Django:
         model = Resource

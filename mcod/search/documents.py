@@ -1,6 +1,6 @@
+from django.conf import settings
 from django_elasticsearch_dsl import fields
 
-from mcod import settings
 from mcod.core.api.search.analyzers import lang_exact_analyzers, lang_synonyms_analyzers
 from mcod.core.db.elastic import Document, NonIndexableValue
 from mcod.lib.search.fields import TranslatedSuggestField, TranslatedTextField

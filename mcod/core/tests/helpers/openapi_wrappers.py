@@ -1,7 +1,6 @@
+from django.conf import settings
 from falcon.testing import simulate_request
 from openapi_core.wrappers.base import BaseOpenAPIRequest, BaseOpenAPIResponse
-
-from mcod import settings
 
 
 class FalconOpenAPIWrapper(BaseOpenAPIResponse, BaseOpenAPIRequest):

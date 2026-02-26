@@ -1,6 +1,6 @@
+from django.conf import settings
 from django.urls import path
 
-from mcod import settings
 from mcod.discourse.views import DiscourseLoginView, SSOProviderView
 
 urlpatterns = [

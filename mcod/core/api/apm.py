@@ -1,11 +1,10 @@
 import falcon
+from django.conf import settings
 from elasticapm.base import Client
 from elasticapm.conf import constants
 from elasticapm.utils import compat, get_url_dict
 from elasticapm.utils.wsgi import get_environ, get_headers
 from werkzeug.exceptions import ClientDisconnected
-
-from mcod import settings
 
 
 def get_client():

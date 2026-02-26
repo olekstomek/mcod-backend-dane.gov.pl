@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.postgres.indexes import GinIndex
 from django.db import models
@@ -6,7 +7,6 @@ from django.utils.translation import gettext_lazy as _
 from model_utils import FieldTracker
 from modeltrans.fields import TranslationField
 
-from mcod import settings
 from mcod.core.api.rdf import signals as rdf_signals
 from mcod.core.api.search import signals as search_signals
 from mcod.core.db.models import BaseExtendedModel

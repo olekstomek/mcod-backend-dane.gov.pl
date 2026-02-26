@@ -284,18 +284,16 @@ class ResourceMapsAndPlotsWidget(JsonPairInputsWidget):
 
         schema = self.instance.tabular_data_schema or {}
         if schema:
-            schema["geo"] = {}
             for k, v in data.items():
                 if k.startswith("geo_"):
                     index = int(k.replace("geo_", ""))
-
                     if v:
+                        schema.setdefault("geo", {})
                         schema["fields"][index]["geo"] = v
                         schema["geo"][v] = {
                             "col_name": schema["fields"][index]["name"],
                             "col_index": index,
                         }
-
                     else:
                         if "geo" in schema["fields"][index]:
                             del schema["fields"][index]["geo"]

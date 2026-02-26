@@ -2,6 +2,7 @@ import os
 from io import BytesIO
 
 from django.apps import apps
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.postgres.fields import ArrayField
 from django.contrib.postgres.indexes import GinIndex
@@ -18,7 +19,6 @@ from model_utils import FieldTracker
 from modeltrans.fields import TranslationField
 from PIL import Image
 
-from mcod import settings
 from mcod.core import signals as core_signals, storages
 from mcod.core.api.search import signals as search_signals
 from mcod.core.db.models import ExtendedModel, TrashModelBase

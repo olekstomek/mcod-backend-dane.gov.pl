@@ -1,6 +1,6 @@
 import datetime
 import re
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, Dict, List
 
 import pytest
 from django.test import Client, override_settings
@@ -11,6 +11,7 @@ from django.utils.translation import gettext as _
 import mcod.unleash
 from mcod.core.tests.helpers.tasks import run_on_commit_events
 from mcod.resources.factories import ResourceFactory
+from mcod.resources.forms import ChangeResourceForm
 from mcod.resources.models import Resource
 
 if TYPE_CHECKING:
@@ -544,3 +545,41 @@ class TestExportToCSV:
         )
         # Then
         assert "Zażądano zbyt wielu rekordów, 4. Maksymalna liczba wynosi 1." in resp.content.decode()
+
+
+class TestChangeResourceFormWidgets:
+    @pytest.mark.parametrize(
+        "geo_data_in_form, geo_data_in_resource",
+        [
+            ({"geo_0": "", "geo_1": "", "geo_2": "", "geo_3": ""}, False),
+            ({"geo_0": "some_data", "geo_1": "", "geo_2": "", "geo_3": ""}, True),
+            ({"geo_0": "", "geo_1": "some_data", "geo_2": "", "geo_3": ""}, True),
+            ({"geo_0": "", "geo_1": "", "geo_2": "some_data", "geo_3": ""}, True),
+            ({"geo_0": "", "geo_1": "", "geo_2": "", "geo_3": "some_data"}, True),
+            ({"geo_0": "some_data", "geo_1": "some_data", "geo_2": "", "geo_3": ""}, True),
+            ({"geo_0": "some_data", "geo_1": "some_data", "geo_2": "some_data", "geo_3": "some_data"}, True),
+        ],
+    )
+    def test_resource_maps_and_plots_widget(
+        self, tabular_data_resource: Resource, geo_data_in_form: Dict[str, str], geo_data_in_resource: bool
+    ):
+        """
+        Checks whether the presence of a geo_* value in the resource update form data
+        sets the tabular_data_schema with the geo information in the Resource instance
+        """
+
+        form = ChangeResourceForm(data=geo_data_in_form, instance=tabular_data_resource)
+
+        # calls value_from_datadict from ResourceMapsAndPlotsWidget what changes instance tabular_data_schema data
+        form.is_valid()
+
+        if geo_data_in_resource:
+            # check if "geo" info in root of tabular_data_schema
+            assert "geo" in tabular_data_resource.tabular_data_schema
+            for k, v in geo_data_in_form.items():
+                if "geo_" in k and v:
+                    index = int(k.replace("geo_", ""))
+                    # check if "geo" info in particular column info
+                    assert tabular_data_resource.tabular_data_schema["fields"][index]["geo"] == v
+        else:
+            assert "geo" not in tabular_data_resource.tabular_data_schema

@@ -1,6 +1,5 @@
+from django.conf import settings
 from elasticsearch_dsl import analyzer, token_filter
-
-from mcod import settings
 
 __all__ = (
     "standard_analyzer",

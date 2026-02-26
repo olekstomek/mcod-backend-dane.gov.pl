@@ -12,13 +12,13 @@ import elasticsearch_dsl
 import factory
 import falcon
 import pytest
+from django.conf import settings
 from django.contrib.auth import BACKEND_SESSION_KEY, HASH_SESSION_KEY, SESSION_KEY, get_user_model
 from django.contrib.sessions.backends.base import SessionBase
 from django.core.cache import caches
 from django.core.files.uploadedfile import SimpleUploadedFile
 from falcon import testing
 
-from mcod import settings
 from mcod.lib.jwt import get_auth_token
 from mcod.lib.triggers import session_store as session_store_create
 

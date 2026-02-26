@@ -1,8 +1,8 @@
+from django.conf import settings
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 
-from mcod import settings
 from mcod.core.api.jsonapi.serializers import Object, object_attrs_registry as oar
 
 

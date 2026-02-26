@@ -9,6 +9,7 @@ import django
 import elasticapm
 import falcon
 import sentry_sdk
+from django.conf import settings
 from elasticapm.conf import setup_logging
 from elasticapm.handlers.logging import LoggingHandler
 from falcon import DEFAULT_MEDIA_TYPE
@@ -17,7 +18,6 @@ from falcon.request import Request
 from falcon.response import Response
 from webargs import falconparser
 
-from mcod import settings
 from mcod.core.api import middlewares
 from mcod.core.api.apm import get_client, get_data_from_request
 from mcod.core.api.converters import ExportFormatConverter, RDFFormatConverter
@@ -28,9 +28,9 @@ from mcod.core.api.utils.json_encoders import APIEncoder
 from mcod.lib.errors import (
     error_404_handler,
     error_422_handler,
-    error_500_handler,
     error_handler,
     error_serializer,
+    http_error_handler,
 )
 
 logging_config.dictConfig(settings.LOGGING)
@@ -131,12 +131,14 @@ def get_api_app(middleware: Optional[list] = None):
 
     app.router_options.converters["export_format"] = ExportFormatConverter
     app.router_options.converters["rdf_format"] = RDFFormatConverter
-    app.add_error_handler(Exception, error_500_handler)
-    app.add_error_handler(falcon.HTTPError, error_handler)
+
+    app.add_error_handler(Exception, error_handler)
+    app.add_error_handler(falcon.HTTPInternalServerError, error_handler)
+    app.add_error_handler(falcon.HTTPError, http_error_handler)
     app.add_error_handler(falcon.HTTPNotFound, error_404_handler)
-    app.add_error_handler(falcon.HTTPInternalServerError, error_500_handler)
     app.add_error_handler(falconparser.HTTPError, error_422_handler)
     app.add_error_handler(falcon.HTTPUnprocessableEntity, error_422_handler)
+
     app.set_error_serializer(error_serializer)
     app.add_routes(routes)
     app.add_sink(lambda req, resp: setattr(resp, "media", {"data": None}), "/ping")

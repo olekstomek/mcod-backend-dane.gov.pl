@@ -7,11 +7,11 @@ from collections import namedtuple
 from functools import partial
 
 import falcon
+from django.conf import settings
 from django.core.paginator import Paginator
 from django.utils.translation import gettext_lazy as _
 from elasticsearch_dsl import A, Search
 
-from mcod import settings
 from mcod.core.api.cache import app_cache as cache
 from mcod.core.api.handlers import BaseHdlr, RetrieveManyHdlr, SearchHdlr, SubscriptionSearchHdlr
 from mcod.core.api.hooks import login_optional

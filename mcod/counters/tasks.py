@@ -2,9 +2,9 @@ import logging
 import os
 
 from django.apps import apps
+from django.conf import settings
 from django.db.models import Sum
 
-from mcod import settings
 from mcod.core.tasks import extended_shared_task
 from mcod.counters.lib import Counter
 

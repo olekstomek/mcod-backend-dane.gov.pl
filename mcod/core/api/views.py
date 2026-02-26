@@ -1,10 +1,10 @@
 from datetime import datetime
 
 import falcon
+from django.conf import settings
 from falcon import Request, Response
 from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 
-from mcod import settings
 from mcod.core.api.handlers import RetrieveOneHdlr
 
 

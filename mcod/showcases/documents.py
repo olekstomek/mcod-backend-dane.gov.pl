@@ -1,8 +1,8 @@
 from django.apps import apps
+from django.conf import settings as django_settings
 from django_elasticsearch_dsl import fields
 from django_elasticsearch_dsl.registries import registry
 
-from mcod import settings as mcs
 from mcod.lib.search.fields import TranslatedKeywordField, TranslatedTextField
 from mcod.search.documents import ExtendedDocument
 
@@ -54,9 +54,9 @@ class ShowcaseDocument(ExtendedDocument):
     desktop_windows_url = fields.KeywordField()
 
     class Index:
-        name = mcs.ELASTICSEARCH_INDEX_NAMES["showcases"]
-        settings = mcs.ELASTICSEARCH_DSL_SEARCH_INDEX_SETTINGS
-        aliases = mcs.ELASTICSEARCH_DSL_SEARCH_INDEX_ALIAS
+        name = django_settings.ELASTICSEARCH_INDEX_NAMES["showcases"]
+        settings = django_settings.ELASTICSEARCH_DSL_SEARCH_INDEX_SETTINGS
+        aliases = django_settings.ELASTICSEARCH_DSL_SEARCH_INDEX_ALIAS
 
     class Django:
         model = Showcase

@@ -7,7 +7,7 @@ import magic
 from dal import autocomplete, forward
 from dateutil.utils import today
 from django import forms
-from django.conf import settings as dj_settings
+from django.conf import settings, settings as dj_settings
 from django.contrib.admin.widgets import AdminDateWidget, FilteredSelectMultiple
 from django.contrib.postgres.forms.jsonb import JSONField
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist, ValidationError
@@ -15,7 +15,6 @@ from django.core.files.uploadedfile import InMemoryUploadedFile, SimpleUploadedF
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 
-from mcod import settings
 from mcod.datasets.models import Dataset
 from mcod.lib.field_validators import ContainsLetterValidator
 from mcod.lib.forms.mixins import HighValueDataFormValidatorMixin, UnEscapeWidgetMixin

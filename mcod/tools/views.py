@@ -1,11 +1,11 @@
 import falcon
+from django.conf import settings
 from django.utils.translation import get_language
 from elasticsearch import TransportError
 from elasticsearch_dsl import DateHistogramFacet, MultiSearch, Search, TermsFacet
 from elasticsearch_dsl.aggs import Filter, Nested, Terms
 from elasticsearch_dsl.connections import get_connection
 
-from mcod import settings
 from mcod.alerts.utils import get_active_alerts
 from mcod.core.api.search.facets import NestedFacet
 from mcod.core.api.views import JsonAPIView

@@ -1,8 +1,8 @@
+from django.conf import settings
 from django.contrib import admin, messages
 from django.utils.translation import gettext_lazy as _
 from modeltrans.translator import get_i18n_field
 
-from mcod import settings
 from mcod.lib.admin_mixins import DecisionFilter, HistoryMixin, ModelAdmin, TrashMixin
 from mcod.showcases.forms import ShowcaseForm, ShowcaseProposalForm
 from mcod.showcases.models import Showcase, ShowcaseProposal, ShowcaseProposalTrash, ShowcaseTrash

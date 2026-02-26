@@ -8,6 +8,7 @@ from urllib.parse import urlencode
 import requests
 from dateutil.relativedelta import relativedelta
 from django.apps import apps
+from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured, MultipleObjectsReturned, ValidationError
 from django.core.files import File
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -22,7 +23,6 @@ from marshmallow import ValidationError as SchemaValidationError
 from model_utils import FieldTracker
 from model_utils.fields import AutoCreatedField
 
-from mcod import settings
 from mcod.categories.models import Category
 from mcod.core import choices
 from mcod.core.db.managers import TrashManager

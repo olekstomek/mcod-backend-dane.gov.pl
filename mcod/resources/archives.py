@@ -9,9 +9,8 @@ import libarchive
 import magic
 import py7zr
 import rarfile
+from django.conf import settings
 from mimeparse import parse_mime_type
-
-from mcod import settings
 
 logger = logging.getLogger("mcod")
 

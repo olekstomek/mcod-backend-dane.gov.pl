@@ -3,6 +3,7 @@ import time
 
 import magic
 import requests
+from django.conf import settings
 from pydiscourse import DiscourseClient as BaseDiscourseClient
 from pydiscourse.client import POST, log
 from pydiscourse.exceptions import (
@@ -11,8 +12,6 @@ from pydiscourse.exceptions import (
     DiscourseRateLimitedError,
     DiscourseServerError,
 )
-
-from mcod import settings
 
 
 class DiscourseClient(BaseDiscourseClient):

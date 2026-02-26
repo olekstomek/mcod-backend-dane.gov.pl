@@ -1,6 +1,7 @@
 import logging
 
-from mcod import settings
+from django.conf import settings
+
 from mcod.core.unleash.strategies import EnvironmentName
 
 logger = logging.getLogger("mcod")

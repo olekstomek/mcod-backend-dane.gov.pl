@@ -4,11 +4,11 @@ from unittest.mock import Mock
 
 import falcon
 import pytest
+from django.conf import settings
 from django.utils.translation import gettext as _
 from falcon.util import http_cookies
 from pytest_bdd import scenario
 
-from mcod import settings
 from mcod.core.api.middlewares import CsrfMiddleware
 from mcod.core.csrf import (
     _sanitize_token,

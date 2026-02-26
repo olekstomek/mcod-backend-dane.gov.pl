@@ -5,10 +5,10 @@ import falcon
 from apispec import APISpec
 from dal import autocomplete
 from django.apps import apps
+from django.conf import settings
 from django.template import loader
 from elasticsearch_dsl import A
 
-from mcod import settings
 from mcod.core.api.cache import documented_cache
 from mcod.core.api.handlers import (
     BaseHdlr,

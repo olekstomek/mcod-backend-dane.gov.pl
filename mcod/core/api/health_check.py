@@ -4,8 +4,8 @@ import time
 from typing import Literal
 
 import requests
+from django.conf import settings
 
-from mcod import settings
 from mcod.core.metrics import CMS_UP, DJANGO_ADMIN_UP
 
 logger = logging.getLogger("mcod-api")

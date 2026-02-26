@@ -15,13 +15,13 @@ import requests_mock
 from dateutil import parser
 from dateutil.relativedelta import relativedelta
 from django.apps import apps
+from django.conf import settings
 from django.core.files import File
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.utils.timezone import datetime, now
 from django_celery_beat.models import IntervalSchedule, PeriodicTask
 from pytest_bdd import given, parsers, then, when
 
-from mcod import settings
 from mcod.core.tests.fixtures.bdd.common import copyfile, prepare_file
 from mcod.core.tests.helpers.tasks import run_on_commit_events
 from mcod.counters.factories import ResourceDownloadCounterFactory, ResourceViewCounterFactory

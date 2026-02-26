@@ -58,7 +58,7 @@ def validate_xml_url_task(self, url):
     filename, headers = retrieve_to_file(url)
     progress_recorder.set_progress(5, 7, description=_("Downloading of xml file"))
 
-    source_hash = validate_md5(filename, remote_hash)
+    source_hash = validate_md5(filename, remote_hash, remote_hash_url)
     progress_recorder.set_progress(6, 7, description=_("Validation of MD5"))
 
     validate_xml(filename)

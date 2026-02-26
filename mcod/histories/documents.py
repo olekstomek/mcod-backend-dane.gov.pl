@@ -1,7 +1,7 @@
+from django.conf import settings as django_settings
 from django_elasticsearch_dsl import fields
 from django_elasticsearch_dsl.registries import registry
 
-from mcod import settings as mcs
 from mcod.core.db.elastic import Document
 from mcod.histories.models import LogEntry
 
@@ -18,7 +18,7 @@ class LogEntryDoc(Document):
     message = fields.TextField()
 
     class Index:
-        name = mcs.ELASTICSEARCH_INDEX_NAMES["logentries"]
+        name = django_settings.ELASTICSEARCH_INDEX_NAMES["logentries"]
         settings = {"number_of_shards": 3, "number_of_replicas": 1}
 
     class Django:

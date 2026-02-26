@@ -3,11 +3,11 @@ import json
 import os
 from pathlib import Path
 
+from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 from django.db.models import F, Q
 from django_elasticsearch_dsl.registries import registry
 
-from mcod import settings
 from mcod.cms.models import FormPageSubmission
 from mcod.cms.models.formpage import Formset
 from mcod.core.api.search.tasks import update_document_task, update_with_related_task

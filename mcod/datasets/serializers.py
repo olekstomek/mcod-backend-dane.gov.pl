@@ -1,11 +1,11 @@
 import marshmallow as ma
 from django.apps import apps
+from django.conf import settings
 from django.db.models.manager import Manager
 from django.utils.html import strip_tags
 from django.utils.translation import get_language, gettext_lazy as _
 from querystring_parser import builder
 
-from mcod import settings
 from mcod.core.api import fields, schemas
 from mcod.core.api.jsonapi.serializers import (
     Aggregation,

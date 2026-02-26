@@ -2,13 +2,13 @@ import hashlib
 import io
 
 import pytest
+from django.conf import settings
 from falcon import HTTP_BAD_REQUEST, HTTP_OK
 from pyshacl import validate as shacl_validate
 from pytest_bdd import scenarios
 from rdflib import SH, XSD, BNode, Literal, URIRef
 
 import mcod.core.api.rdf.namespaces as ns
-from mcod import settings
 from mcod.core.api.rdf.profiles.common import CATALOG_URL
 from mcod.core.api.rdf.profiles.dcat_ap import VOCABULARIES as DCAT_AP_VOCABULARIES
 from mcod.core.api.rdf.profiles.dcat_ap_pl import VOCABULARIES as DCAT_AP_PL_VOCABULARIES

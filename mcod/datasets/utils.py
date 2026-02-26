@@ -1,7 +1,7 @@
 import os
 from typing import TYPE_CHECKING
 
-from mcod import settings
+from django.conf import settings
 
 if TYPE_CHECKING:
     from mcod.datasets.models import Dataset

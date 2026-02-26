@@ -9,7 +9,6 @@ class ErrorSchema(Schema):
     description = fields.Str()
     code = fields.Str()
     errors = fields.Dict()
-    traceback = fields.Str()
 
 
 class List(Schema):

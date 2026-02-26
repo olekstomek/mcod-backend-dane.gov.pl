@@ -2,13 +2,12 @@ import re
 from typing import List
 from urllib.parse import urlparse
 
-from django.conf import settings as django_settings
+from django.conf import settings, settings as django_settings
 from django.utils.translation import get_language, gettext_lazy as _
 from elasticsearch_dsl import MultiSearch, Search
 from marshmallow import ValidationError, validate, validates
 from rdflib.plugins.sparql.parser import parseQuery
 
-from mcod import settings
 from mcod.core.api import fields as core_fields
 from mcod.core.api.jsonapi.deserializers import ObjectAttrs, TopLevel
 from mcod.core.api.schemas import (

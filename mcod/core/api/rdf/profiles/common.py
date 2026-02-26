@@ -1,9 +1,9 @@
 import abc
 
+from django.conf import settings
 from rdflib import RDF, BNode
 
 import mcod.core.api.rdf.namespaces as ns
-from mcod import settings
 from mcod.lib.rdf.rdf_field import RDFField
 
 RDF_CLASSES = {}

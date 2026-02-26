@@ -3,9 +3,9 @@ import os
 
 import pytest
 from django.apps import apps
+from django.conf import settings
 from pytest_bdd import given, parsers, then, when
 
-from mcod import settings
 from mcod.core.tests.fixtures.bdd.common import copyfile
 from mcod.core.tests.helpers.tasks import run_on_commit_events
 from mcod.datasets.factories import DatasetFactory

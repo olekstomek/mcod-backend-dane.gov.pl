@@ -12,6 +12,7 @@ import falcon
 import sentry_sdk
 from accept_types import get_best_match
 from django.apps import apps
+from django.conf import settings
 from django.db import OperationalError, ProgrammingError, close_old_connections, connection
 from django.utils.http import is_same_domain
 from django.utils.translation import activate, gettext_lazy as _
@@ -27,7 +28,6 @@ from falcon import Request, Response
 from falcon_caching.middleware import Middleware as BaseFalconCacheMiddleware
 from falcon_caching.options import HttpMethods
 
-from mcod import settings
 from mcod.core.api.apm import get_data_from_request, get_data_from_response
 from mcod.core.api.versions import VERSIONS
 from mcod.core.csrf import _sanitize_token, compare_salted_tokens, generate_csrf_token

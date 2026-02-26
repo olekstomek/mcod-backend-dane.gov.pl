@@ -2,9 +2,8 @@ import sentry_sdk
 from channels.auth import AuthMiddlewareStack
 from channels.routing import ProtocolTypeRouter, URLRouter
 from django.apps import apps
+from django.conf import settings
 from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
-
-from mcod import settings
 
 bokeh_app_config = apps.get_app_config("mcod.pn_apps")
 

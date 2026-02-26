@@ -1,7 +1,7 @@
+from django.conf import settings as django_settings
 from django_elasticsearch_dsl import fields
 from django_elasticsearch_dsl.registries import registry
 
-from mcod import settings as mcs
 from mcod.core.db.elastic import Document
 from mcod.searchhistories.models import SearchHistory
 
@@ -21,8 +21,8 @@ class SearchHistoriesDoc(Document):
     modified = fields.DateField()
 
     class Index:
-        name = mcs.ELASTICSEARCH_INDEX_NAMES["searchhistories"]
-        settings = mcs.ELASTICSEARCH_DSL_INDEX_SETTINGS
+        name = django_settings.ELASTICSEARCH_INDEX_NAMES["searchhistories"]
+        settings = django_settings.ELASTICSEARCH_DSL_INDEX_SETTINGS
 
     class Django:
         model = SearchHistory

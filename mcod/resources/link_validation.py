@@ -6,13 +6,13 @@ from typing import Tuple
 from uuid import uuid4
 
 import requests
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import URLValidator
 from fake_useragent import UserAgent
 from mimeparse import MimeTypeParseException, parse_mime_type
 from requests import Session
 
-from mcod import settings
 from mcod.lib.exceptions import (
     DangerousContentError,
     EmptyDocument,

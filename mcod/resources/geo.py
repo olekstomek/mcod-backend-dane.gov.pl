@@ -9,12 +9,12 @@ import ijson
 import requests
 import shapefile
 import xmlschema
+from django.conf import settings
 from lxml import etree
 from pyproj import CRS, Transformer
 from requests.auth import HTTPBasicAuth
 from tifffile import TiffFile
 
-from mcod import settings
 from mcod.lib.jsonstat import validate as jsonstat_validate
 from mcod.lib.utils import get_file_extensions_no_dot
 from mcod.resources.archives import ArchiveReader

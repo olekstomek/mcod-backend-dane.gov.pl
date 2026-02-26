@@ -12,12 +12,17 @@ from xml.etree import ElementTree
 
 import requests
 import xmlschema
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 from rdflib.plugins.stores.sparqlstore import SPARQLStore
 from requests.structures import CaseInsensitiveDict
 
-from mcod import settings
+from mcod.harvester.exceptions import (
+    UnexpectedStatusCode,
+    XMLDoesNotMatchMD5Pattern,
+    XMLMD5DoesNoMatch,
+)
 from mcod.resources.link_validation import generate_random_user_agent
 from mcod.unleash import is_enabled
 
@@ -46,8 +51,7 @@ def make_request(url: str, head_only: bool = False, headers: Optional[dict] = No
     method = "HEAD" if head_only else "GET"
     response = requests.request(method, url, **opts)
     if not response.ok:
-        msg = _("%(url)s: invalid response code: %(code)s (%(reason)s)")
-        raise Exception(msg % {"url": url, "code": response.status_code, "reason": response.reason})
+        raise UnexpectedStatusCode(url=url, response=response)
     return response
 
 
@@ -161,18 +165,18 @@ def validate_xml(xml_path: Union[str, Path]) -> str:
     return xml_schema_version
 
 
-def get_remote_xml_hash(url):
+def get_remote_xml_hash(url: str) -> Tuple[str, str]:
     source_url_prefix, ext = os.path.splitext(url)
     xml_hash_url = f"{source_url_prefix}.md5"
     response = make_request(xml_hash_url)
-    xml_hash = response.content.decode("utf-8").rstrip().lower() if response.content else None
-    matches = re.finditer(r"(?=(\b[A-Fa-f0-9]{32}\b))", xml_hash)
+    response_body = response.content.decode("utf-8").rstrip().lower() if response.content else None
+    if not response_body:
+        raise XMLDoesNotMatchMD5Pattern(url=xml_hash_url, response_body=response_body)
+    matches = re.finditer(r"(?=(\b[A-Fa-f0-9]{32}\b))", response_body)
     result = [match.group(1) for match in matches]
     if not result:
-        msg = _('"%(value)s" is not valid MD5 hash!')
-        value = "{}...".format(xml_hash[:40]) if len(xml_hash) > 32 else xml_hash
-        raise Exception(msg % {"value": value})
-    return xml_hash_url, xml_hash
+        raise XMLDoesNotMatchMD5Pattern(url=xml_hash_url, response_body=response_body)
+    return xml_hash_url, result[0]
 
 
 def get_xml_headers(url):
@@ -209,14 +213,14 @@ def retrieve_to_file(url: str) -> Tuple[str, Dict[str, str]]:
     return tmp_file.name, response.headers
 
 
-def validate_md5(filename: str, remote_xml_hash: str) -> str:
+def validate_md5(filename: Union[str, Path], remote_xml_hash: str, remote_xml_hash_url: str) -> str:
     m = md5()
     with open(filename, "rb") as fp:
         for chunk in fp:
             m.update(chunk)
     xml_hash = m.hexdigest()
     if xml_hash != remote_xml_hash:
-        raise Exception(_("Remote MD5 hash is not valid!"))
+        raise XMLMD5DoesNoMatch(url=remote_xml_hash_url)
     return xml_hash
 
 
@@ -241,10 +245,10 @@ def validate_xml_url(url: str) -> Tuple[Union[str, Path], str, str]:
         check_xml_filename(url)
         headers: CaseInsensitiveDict = get_xml_headers(url)
         check_content_type(headers)
-        _, remote_hash = get_remote_xml_hash(url)
+        remote_hash_url, remote_hash = get_remote_xml_hash(url)
         filename: str
         filename, headers = retrieve_to_file(url)
-        xml_hash: str = validate_md5(filename, remote_hash)
+        xml_hash: str = validate_md5(filename, remote_hash, remote_hash_url)
         xml_schema_version: str = validate_xml(filename)
     except Exception as exc:
         raise ValidationError({"xml_url": str(exc)})

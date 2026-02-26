@@ -1,10 +1,10 @@
 from functools import partial
 
 from django.apps import apps
+from django.conf import settings
 from django.utils.translation import get_language
 from marshmallow import missing, pre_dump
 
-from mcod import settings
 from mcod.core.api import fields
 from mcod.core.api.jsonapi.serializers import (
     Aggregation,

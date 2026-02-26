@@ -5,6 +5,7 @@ from datetime import datetime, time
 
 import shapefile
 from constance import config as constance_config
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 from django_elasticsearch_dsl import Index
@@ -15,7 +16,6 @@ from elasticsearch_dsl.connections import Connections
 from goodtables import validate as validate_table
 from tableschema import config
 
-from mcod import settings
 from mcod.core.api import fields as api_fields
 from mcod.core.api.search.analyzers import polish_analyzer
 from mcod.resources.archives import ArchiveReader

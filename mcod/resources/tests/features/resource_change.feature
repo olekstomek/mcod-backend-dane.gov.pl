@@ -49,6 +49,20 @@ Feature: Change resource in admin panel
     Then admin's response page contains /change/">test</a>" został pomyślnie zmieniony.
     And resource with id 999 is draft
 
+  @feat_dga
+  Scenario: Confirmation pops up when moving a DGA Resource to other Organization which already has a DGA Resource
+    Given dataset with pk 801 containing dga resource with pk 800
+    And dataset with pk 901 containing dga resource with pk 900
+    When admin's request method is POST
+    And admin's request posted resource data is {"dataset": 901, "contains_protected_data": "True", "title": "DGA 1", "description": "more than 20 characters", "data_date": "22.05.2020", "status": "published"}
+    And admin's page /resources/resource/800/change/ is requested
+    Then admin's response status code is 200
+    And admin's response page contains Czy na pewno chcesz, aby to był aktualny wykaz chronionych danych?
+    When admin confirms saving the resource with posted data
+    Then admin's response page contains /change/">DGA 1</a>" został pomyślnie zmieniony.
+    And resource with id 900 is not DGA
+    And resource with id 800 is DGA
+
   @periodic_task
   Scenario: Auto data date with end date can be set on resource with type api
     Given dataset with id 990

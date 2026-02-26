@@ -1,7 +1,6 @@
 import decorator
+from django.conf import settings
 from django.core.cache import caches
-
-from mcod import settings
 
 marker = object()
 

@@ -2,11 +2,10 @@ import json
 import os
 
 from django.apps import apps
+from django.conf import settings
 from django.test import Client
 from pytest_bdd import given, parsers, then, when
 from wagtail.core.models import Page, Site
-
-from mcod import settings
 
 
 @given(parsers.parse("cms structure from file {file_name} is loaded"))

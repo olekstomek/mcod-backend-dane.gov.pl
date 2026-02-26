@@ -3,13 +3,13 @@ from urllib import parse
 
 import dpath.util
 import requests_mock
+from django.conf import settings
 from falcon.testing import Cookie, TestClient
 from falcon.util.misc import code_to_http_status
 from falcon.util.structures import Context
 from pytest_bdd import parsers, then, when
 from requests_mock import MockerCore
 
-from mcod import settings
 from mcod.api import ApiApp
 from mcod.core.utils import jsonapi_validator
 from mcod.lib.jwt import get_auth_token

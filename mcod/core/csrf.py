@@ -8,7 +8,7 @@ against request forgeries from other sites.
 import re
 import secrets
 
-from mcod import settings
+from django.conf import settings
 
 
 def get_new_csrf_string():

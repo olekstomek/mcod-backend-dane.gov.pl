@@ -1,6 +1,6 @@
+from django.conf import settings
 from django_elasticsearch_dsl import fields
 
-from mcod import settings
 from mcod.core.api.search.analyzers import polish_analyzer, polish_asciied, standard_asciied
 from mcod.core.api.search.fields import ICUSortField
 

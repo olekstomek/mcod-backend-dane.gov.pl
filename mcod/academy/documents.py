@@ -1,7 +1,7 @@
+from django.conf import settings as django_settings
 from django_elasticsearch_dsl import fields
 from django_elasticsearch_dsl.registries import registry
 
-from mcod import settings as mcs
 from mcod.academy.models import Course, CourseModule
 from mcod.core.db.elastic import Document
 
@@ -30,8 +30,8 @@ class CourseDoc(Document):
     )
 
     class Index:
-        name = mcs.ELASTICSEARCH_INDEX_NAMES["courses"]
-        settings = mcs.ELASTICSEARCH_DSL_INDEX_SETTINGS
+        name = django_settings.ELASTICSEARCH_INDEX_NAMES["courses"]
+        settings = django_settings.ELASTICSEARCH_DSL_INDEX_SETTINGS
 
     class Django:
         model = Course

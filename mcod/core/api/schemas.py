@@ -1,12 +1,12 @@
 import warnings
 from collections import OrderedDict
 
+from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 from marshmallow import validate
 from marshmallow.schema import BaseSchema, SchemaMeta
 from marshmallow.utils import is_collection
 
-from mcod import settings
 from mcod.core.api.search import fields
 
 

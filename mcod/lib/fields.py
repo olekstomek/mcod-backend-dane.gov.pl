@@ -1,6 +1,7 @@
 import operator
 
 import six
+from django.conf import settings
 from django.utils.translation import get_language, gettext as _
 from elasticsearch_dsl.query import Bool, Q
 from flatdict import FlatDict
@@ -8,7 +9,6 @@ from marshmallow import fields
 from marshmallow.exceptions import ValidationError
 from marshmallow.validate import Validator
 
-from mcod import settings
 from mcod.core.api.search import constants
 from mcod.lib import field_validators
 

@@ -1,12 +1,12 @@
 from typing import Any, Dict, Optional
 
 from django import forms
+from django.conf import settings
 from django.contrib.postgres.forms.jsonb import JSONField
 from django.core.exceptions import ValidationError
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 
-from mcod import settings
 from mcod.core.db.models import STATUS_CHOICES
 from mcod.core.widgets import UnescapeTextarea
 from mcod.datasets.field_validators import validate_dataset_image_file_extension

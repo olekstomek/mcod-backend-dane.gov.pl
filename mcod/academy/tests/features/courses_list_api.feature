@@ -12,7 +12,7 @@ Feature: Courses list API
     Examples:
     | lang_code | resp_body_field   | resp_body_value                      |
     | en        | errors/[0]/detail | Additional permissions are required! |
-    # | pl        | errors/[0]/detail | Wymagane są dodatkowe uprawnienia!   |
+    | pl        | errors/[0]/detail | Wymagane są dodatkowe uprawnienia!   |
 
   Scenario Outline: Test courses list endpoint is accessible by academy admin
     Given logged <user_type>

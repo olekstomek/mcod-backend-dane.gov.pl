@@ -2,8 +2,7 @@ import json
 from collections import OrderedDict
 
 import jsonschema
-
-from mcod import settings
+from django.conf import settings
 
 
 class JsonStatException(Exception):

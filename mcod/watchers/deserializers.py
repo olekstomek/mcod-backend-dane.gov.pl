@@ -1,9 +1,9 @@
 from urllib.parse import urlsplit
 
+from django.conf import settings
 from django.utils.translation import gettext as _
 from marshmallow import ValidationError, post_load, pre_load, validate, validates_schema
 
-from mcod import settings
 from mcod.core.api import fields as core_fields, schemas as core_schemas
 from mcod.core.api.jsonapi.deserializers import ObjectAttrs, ObjectWithId, TopLevel
 from mcod.core.api.search import fields as search_fields

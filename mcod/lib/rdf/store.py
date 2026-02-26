@@ -1,10 +1,10 @@
+from django.conf import settings
 from rdflib import BNode
 from rdflib.plugins.stores.sparqlstore import (
     SPARQLStore as BaseSPARQLStore,
     SPARQLUpdateStore as BaseSPARQLUpdateStore,
 )
 
-from mcod import settings
 from mcod.core.api.rdf.namespaces import NAMESPACES
 from mcod.core.api.rdf.profiles.dcat_ap import DCATCatalog
 from mcod.lib.extended_graph import ExtendedGraph

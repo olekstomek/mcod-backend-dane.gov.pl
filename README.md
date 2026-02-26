@@ -12,13 +12,11 @@ Do zarządzania kodem źródłowym projektu używany jest system kontroli wersji
 Instrukcja instalacji systemu znajduje się pod adresem:
 https://git-scm.com/book/en/v2/Getting-Started-Installing-Git
 
-## Pobranie repozytoriów projektu: `backend`, `frontend`, `test-data`.
+## Pobranie repozytorium projektu
 
 ```
 $ git clone https://gitlab.dane.gov.pl/mcod/backend.git
 $ cd backend
-$ git clone https://gitlab.dane.gov.pl/mcod/frontend.git
-$ git clone https://gitlab.dane.gov.pl/mcod/test-data.git
 ```
 
 ## Konfiguracja zmiennych środowiskowych
@@ -88,6 +86,12 @@ $ pipenv shell
 
 ```
 (backend) $ python manage.py search_index --rebuild -f
+```
+
+### Lub dla wybranego modelu
+
+```shell
+(backend) $ python manage.py search_index --rebuild --models resources.Resource
 ```
 
 ## Rewalidacja zasobów

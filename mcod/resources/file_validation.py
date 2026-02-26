@@ -6,9 +6,9 @@ from typing import Dict, Optional, Tuple, Union
 
 import magic
 import rdflib
+from django.conf import settings
 from mimeparse import parse_mime_type
 
-from mcod import settings
 from mcod.lib.file_format_from_response import file_format_from_content_type_extension_map
 from mcod.resources import guess
 from mcod.resources.archives import (

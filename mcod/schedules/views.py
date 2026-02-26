@@ -3,9 +3,9 @@ from collections import namedtuple
 from functools import partial
 
 import falcon
+from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 
-from mcod import settings
 from mcod.core.api.handlers import (
     BaseHdlr,
     CreateOneHdlr,

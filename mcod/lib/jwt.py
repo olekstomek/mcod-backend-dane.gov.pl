@@ -3,9 +3,9 @@ from datetime import datetime, timedelta
 
 import falcon
 import jwt
+from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 
-from mcod import settings
 from mcod.lib.encoders import DateTimeToISOEncoder
 
 ValidationResult = namedtuple("ValidationResult", "is_valid, data")

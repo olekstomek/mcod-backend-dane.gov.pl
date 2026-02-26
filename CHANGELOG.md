@@ -12,6 +12,21 @@ ______________________________________________________________________
 
 ### Breaks
 
+## 2.56.0 - (2026-02-11)
+
+______________________________________________________________________
+
+### Changes
+
+- Zmiana w widget ResourceMapsAndPlotsWidget, w celu usunięcia nadmiarowej walidacji przy pierwszej edycji zasobu w Panelu Administracyjnym - OTD-2352
+- Refactor handlerów błędów dla API (brak zależności od zmiennej DEBUG) - OTD-2206
+
+### Fixes
+
+- Uniemożliwienie przeniesienia zasobu DGA do zbioru innej instytucji z zasobem DGA - OTD-2236
+- Poprawa komunikatu błędu walidacji md5 - OTD-2223
+- Poprawa sposobu importowania ustawień w kodzie aplikacji - OTD-2206
+
 ## 2.55.1 - (2026-01-22)
 
 ______________________________________________________________________

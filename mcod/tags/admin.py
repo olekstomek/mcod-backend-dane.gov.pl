@@ -2,13 +2,13 @@ from __future__ import annotations
 
 from typing import Dict
 
+from django.conf import settings
 from django.contrib import admin
 from django.core.exceptions import PermissionDenied
 from django.db import models
 from django.http import HttpRequest
 from django.utils.translation import gettext_lazy as _
 
-from mcod import settings
 from mcod.lib.admin_mixins import HistoryMixin, ModelAdmin, TagAutocompleteMixin
 from mcod.tags.forms import TagForm
 from mcod.tags.models import Tag

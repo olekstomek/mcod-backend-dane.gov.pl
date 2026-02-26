@@ -1,11 +1,11 @@
 import os
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.utils.translation import gettext_lazy as _, pgettext_lazy
 from django_celery_results.models import TaskResult
 
-from mcod import settings
 from mcod.core.db.models import TimeStampedModel
 from mcod.core.utils import sizeof_fmt
 

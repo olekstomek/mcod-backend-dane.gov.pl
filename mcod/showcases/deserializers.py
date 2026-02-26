@@ -1,8 +1,8 @@
+from django.conf import settings
 from django.utils.translation import get_language, gettext_lazy as _
 from elasticsearch_dsl.query import Term
 from marshmallow import ValidationError, post_load, pre_load, validate, validates, validates_schema
 
-from mcod import settings
 from mcod.core.api import fields as core_fields
 from mcod.core.api.jsonapi.deserializers import ObjectAttrs, TopLevel
 from mcod.core.api.schemas import (

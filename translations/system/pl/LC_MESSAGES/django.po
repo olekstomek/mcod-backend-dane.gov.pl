@@ -2132,8 +2132,8 @@ msgid "%(url)s: invalid response code: %(code)s (%(reason)s)"
 msgstr "%(url)s: niewłaściwy kod odpowiedzi: %(code)s (%(reason)s)"
 
 #, python-format
-msgid "\"%(value)s\" is not valid MD5 hash!"
-msgstr "\"%(value)s\" nie jest poprawnym skrótem MD5!"
+msgid "%(url)s: \"%(value)s\" is not valid MD5 hash!"
+msgstr "%(url)s: \"%(value)s\" nie jest poprawnym skrótem MD5!"
 
 msgid "External resource is not available!"
 msgstr "Zewnętrzny zasób jest niedostępny!"
@@ -2150,8 +2150,9 @@ msgstr ""
 msgid "Invalid file name: %(filename)s!"
 msgstr "Niepoprawna nazwa pliku: %(filename)s!"
 
-msgid "Remote MD5 hash is not valid!"
-msgstr "Zdalny skrót MD5 nie jest poprawny!"
+#, python-format
+msgid "%(url)s: remote MD5 hash is not valid!"
+msgstr "%(url)s: zdalny skrót MD5 nie jest poprawny!"
 
 msgid "Histories"
 msgstr "Historie"

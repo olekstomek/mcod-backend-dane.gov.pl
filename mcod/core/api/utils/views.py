@@ -1,11 +1,11 @@
 import json
 
 import falcon
+from django.conf import settings
 from django.template import loader
 from elasticsearch import RequestError
 from elasticsearch_dsl.connections import get_connection
 
-from mcod import settings
 from mcod.core.api.openapi.specs import get_spec
 from mcod.core.api.versions import DOC_VERSIONS
 from mcod.datasets import serializers as dat_responses, views as dat_views

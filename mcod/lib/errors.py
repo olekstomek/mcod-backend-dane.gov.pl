@@ -1,14 +1,14 @@
 import json
-import traceback
 from typing import Any, Dict
 from uuid import uuid4
 
 import falcon.request
+from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 from falcon import HTTP_500, HTTPError, Response
 from flatdict import FlatDict
 
-from mcod import logger, settings
+from mcod import logger
 from mcod.core.api.jsonapi.serializers import ErrorsSchema
 from mcod.lib.encoders import LazyEncoder
 from mcod.lib.schemas import ErrorSchema
@@ -31,19 +31,45 @@ def error_serializer(req, resp, exc):
     resp.append_header("Vary", "Accept")
 
 
-def error_handler(request: falcon.request.Request, response: Response, exc: HTTPError, params: Dict[str, Any]) -> None:
+def error_handler(
+    request: falcon.request.Request,
+    response: Response,
+    exc: Exception,
+    params: Any,
+) -> None:
     update_content_type(request, response)
-    response.status = exc.status
+    response_status: str = getattr(exc, "status", HTTP_500)
+
+    default_error_msg = _("An unexpected error occurred. Please try again later.")
+
     if _is_version_one(request):
         exc_data = {
-            "title": exc.title,
-            "description": exc.description,
-            "code": getattr(exc, "code") or "error",
+            "title": default_error_msg,
+            "description": default_error_msg,
+            "code": getattr(exc, "code", None) or "server_error",
         }
-        result = ErrorSchema().dump(exc_data)
-        response.text = json.dumps(result, cls=LazyEncoder)
+        body: Dict = ErrorSchema().dump(exc_data)
+
     else:
-        response.text = json.dumps(_prepare_exception_for_14(request, response, exc), cls=LazyEncoder)
+        exc_data = {
+            "jsonapi": {"version": "1.4"},
+            "errors": [
+                {
+                    "id": uuid4(),
+                    "status": response_status,
+                    "code": response_status.lower().replace(" ", "_"),
+                    "title": default_error_msg,
+                    "detail": default_error_msg,
+                },
+            ],
+        }
+        body: Dict = ErrorsSchema().dump(exc_data)
+
+    response.text = json.dumps(body, cls=LazyEncoder)
+    response.status = response_status
+
+    if settings.DEBUG:
+        logger.exception(exc)
 
 
 def error_404_handler(
@@ -98,14 +124,6 @@ def _prepare_exception_for_14(
         "title": _("An unexpected error occurred. Please try again later."),
         "detail": _("An unexpected error occurred. Please try again later."),
     }
-    if settings.DEBUG:
-        title = getattr(exc, "title", None)
-        if title:
-            error_body["title"] = title
-        description = getattr(exc, "description", " ".join(str(a).capitalize() for a in exc.args))
-        if description:
-            error_body["detail"] = description
-        error_body["meta"] = {"traceback": traceback.format_exc()}
     error_body.update(override_fields)
     return ErrorsSchema().dump(
         {
@@ -115,35 +133,6 @@ def _prepare_exception_for_14(
             ],
         }
     )
-
-
-def error_500_handler(request: falcon.request.Request, response: Response, exc: Exception, params):
-    update_content_type(request, response)
-    response.status = getattr(exc, "status", HTTP_500)
-
-    if _is_version_one(request):
-        code = getattr(exc, "code", None)
-        exc_data = {
-            "title": _("An unexpected error occurred. Please try again later."),
-            "description": _("An unexpected error occurred. Please try again later."),
-            "code": code or "server_error",
-            "traceback": None,
-        }
-        if settings.DEBUG:
-            title = getattr(exc, "title", None)
-            if title:
-                exc_data["title"] = title
-            description = getattr(exc, "description", " ".join(str(a).capitalize() for a in exc.args))
-            exc_data["description"] = description
-            exc_data["traceback"] = traceback.format_exc()
-        result = ErrorSchema().dump(exc_data)
-        response.text = json.dumps(result, cls=LazyEncoder)
-    else:
-        body = _prepare_exception_for_14(request, response, exc)
-        response.text = json.dumps(body, cls=LazyEncoder)
-
-    if settings.DEBUG:
-        logger.exception(exc)
 
 
 def error_422_handler(request: falcon.request.Request, response: Response, exc: HTTPError, params):
@@ -193,3 +182,45 @@ def error_422_handler(request: falcon.request.Request, response: Response, exc: 
             _errors.append(_error)
         result = ErrorsSchema().dump({"errors": _errors})
         response.text = json.dumps(result, cls=LazyEncoder)
+
+
+def http_error_handler(
+    request: falcon.request.Request,
+    response: Response,
+    exc: HTTPError,
+    params: Any,
+) -> None:
+    update_content_type(request, response)
+    response_status: str = exc.status
+
+    default_error_msg = _("An unexpected error occurred. Please try again later.")
+
+    exc_title: str = exc.title or default_error_msg
+    exc_description: str = exc.description or default_error_msg
+    exc_code: str = str(exc.code) if exc.code else "error"
+
+    if _is_version_one(request):
+        exc_data = {
+            "title": exc_title,
+            "description": exc_description,
+            "code": exc_code,
+        }
+        body: Dict = ErrorSchema().dump(exc_data)
+
+    else:
+        exc_data = {
+            "jsonapi": {"version": "1.4"},
+            "errors": [
+                {
+                    "id": uuid4(),
+                    "status": response_status,
+                    "code": response_status.lower().replace(" ", "_"),
+                    "title": exc_title,
+                    "detail": exc_description,
+                },
+            ],
+        }
+        body: Dict = ErrorsSchema().dump(exc_data)
+
+    response.text = json.dumps(body, cls=LazyEncoder)
+    response.status = response_status

@@ -1,6 +1,7 @@
 import logging
 
 from constance import config
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.db.models.signals import post_save, pre_save
@@ -14,7 +15,6 @@ from model_utils import Choices, FieldTracker
 from model_utils.fields import MonitorField
 from modeltrans.fields import TranslationField
 
-from mcod import settings
 from mcod.core.db.models import STATUS_CHOICES, ExtendedModel, Model, TrashModelBase
 from mcod.datasets.tasks import send_dataset_comment
 from mcod.lib.model_sanitization import SanitizedTextField

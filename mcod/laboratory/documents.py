@@ -1,7 +1,7 @@
+from django.conf import settings
 from django_elasticsearch_dsl import fields
 from django_elasticsearch_dsl.registries import registry
 
-from mcod import settings
 from mcod.core.db.elastic import Document
 from mcod.laboratory.models import LabEvent, LabReport
 from mcod.lib.search.fields import TranslatedTextField

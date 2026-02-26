@@ -23,13 +23,12 @@ import json_api_doc
 import jsonschema
 import pandas as pd
 from dicttoxml import dicttoxml
+from django.conf import settings
 from falcon import Response
 from marshmallow import class_registry
 from marshmallow.schema import BaseSchema
 from pyexpat import ExpatError
 from pytz import utc
-
-from mcod import settings
 
 logger = logging.getLogger("mcod")
 

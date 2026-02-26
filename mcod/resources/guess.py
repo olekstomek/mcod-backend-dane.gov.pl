@@ -9,11 +9,11 @@ import cchardet
 import jsonschema
 import rdflib
 from bs4 import BeautifulSoup
+from django.conf import settings
 from lxml import etree
 from tabulator import Stream
 from tabulator.exceptions import EncodingError, FormatError
 
-from mcod import settings
 from mcod.resources.geo import is_json_stat
 
 GUESS_FROM_BUFFER = (

@@ -1956,7 +1956,7 @@ msgid "%(url)s: invalid response code: %(code)s (%(reason)s)"
 msgstr ""
 
 #, python-format
-msgid "\"%(value)s\" is not valid MD5 hash!"
+msgid "%(url)s: \"%(value)s\" is not valid MD5 hash!"
 msgstr ""
 
 msgid "External resource is not available!"
@@ -1972,7 +1972,8 @@ msgstr ""
 msgid "Invalid file name: %(filename)s!"
 msgstr ""
 
-msgid "Remote MD5 hash is not valid!"
+#, python-format
+msgid "%(url)s: remote MD5 hash is not valid!"
 msgstr ""
 
 msgid "Histories"
