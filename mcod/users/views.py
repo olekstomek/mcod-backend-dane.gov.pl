@@ -1,11 +1,15 @@
 import copy
+import logging
 from collections import namedtuple
 from functools import partial
 from smtplib import SMTPException
-from typing import Any, Dict, Optional, Type
+from types import SimpleNamespace
+from typing import Any, Callable, Dict, Optional, Sequence, Type
+from uuid import UUID
 
 import falcon
 import marshmallow as ma
+import sentry_sdk
 from dal import autocomplete
 from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model, login, logout
@@ -18,23 +22,30 @@ from django.shortcuts import render
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
-from logingovpl.views import SSOView as BaseSSOView
 from rest_framework import permissions, renderers
 from rest_framework.views import APIView
 
 from mcod.academy.models import Course
-from mcod.core.api.handlers import CreateOneHdlr, RetrieveOneHdlr, SearchHdlr, UpdateOneHdlr
+from mcod.core.api.handlers import (
+    BaseHdlr,
+    CreateOneHdlr,
+    RetrieveOneHdlr,
+    SearchHdlr,
+    UpdateOneHdlr,
+)
 from mcod.core.api.hooks import (
     get_expired_token_description,
     get_user_pending_description,
     login_required,
 )
+from mcod.core.api.limiter import rate_limiter
 from mcod.core.api.views import JsonAPIView
 from mcod.core.versioning import versioned
 from mcod.laboratory.models import LabEvent
 from mcod.lib.handlers import BaseHandler
 from mcod.lib.jwt import get_auth_token
 from mcod.lib.triggers import session_store
+from mcod.logingovpl.views import SSOView as BaseSSOView
 from mcod.schedules.models import Schedule
 from mcod.suggestions.models import AcceptedDatasetSubmission
 from mcod.tools.api.dashboard import DashboardMetaSerializer, DashboardSerializer
@@ -57,6 +68,7 @@ from mcod.users.serializers import (
     ACSResponse,
     ACSTemplateResponse,
     ChangePasswordApiResponse,
+    CheckTokenApiResponse,
     ConfirmResetPasswordApiResponse,
     LoginApiResponse,
     LogoutApiResponse,
@@ -68,6 +80,8 @@ from mcod.users.serializers import (
     VerifyEmailApiResponse,
 )
 from mcod.users.services import logingovpl_service, user_service
+
+logger = logging.getLogger("mcod")
 
 User = get_user_model()
 
@@ -154,15 +168,36 @@ class RegistrationView(JsonAPIView):
 
         def _get_data(self, cleaned: Dict[str, Any], *args, **kwargs) -> None:
             data: Dict[str, Any] = cleaned["data"]["attributes"]
-            if User.objects.filter(email__iexact=data["email"]):
-                # Silently return to prevent user enumeration.
+            email = data["email"].lower()
+
+            # Attempt to retrieve the user or create a new one atomically.
+            # We use 'defaults' to provide data necessary only during creation.
+            user, created = User.objects.get_or_create(email__iexact=email, defaults={**data, "email": email})
+
+            if not created:
+                # Scenario: User already exists.
+                # Send a password reset notification instead of a registration email
+                # to maintain security and prevent user enumeration.
+                try:
+                    user.send_duplicate_registration_password_reset_email()
+                except SMTPException as err:
+                    logger.error(f"Error when sending email (duplicate registration password reset): {err}")
+                    sentry_sdk.capture_exception(err)
+
+                # Silently return to ensure an attacker cannot distinguish
+                # between a new and an existing email address.
                 return
-            data["email"] = data["email"].lower()
-            user = User.objects.create_user(**data)
+
+            # Scenario: A new user was successfully created.
             try:
                 user.send_registration_email()
             except SMTPException:
-                raise falcon.HTTPInternalServerError(description=_("Email cannot be sent"), code="email_send_error")
+                # Raise an error for new registrations if the email fails to send,
+                # as the user needs the activation link to proceed.
+                raise falcon.HTTPInternalServerError(
+                    description=_("Email cannot be sent"),
+                    code="email_send_error",
+                )
 
 
 class AccountView(JsonAPIView):
@@ -343,6 +378,10 @@ class LogoutView(JsonAPIView):
 
 class ResetPasswordView(JsonAPIView):
     @versioned
+    @rate_limiter(
+        limits=settings.FALCON_LIMITER_PASSWORD_RESET_LIMITS,
+        key_gen=lambda req: req.get_media()["data"]["attributes"]["email"],
+    )
     def on_post(self, request, response, *args, **kwargs):
         self.handle_post(request, response, self.POST, *args, **kwargs)
         response.status = falcon.HTTP_200
@@ -394,6 +433,33 @@ class ConfirmResetPasswordView(JsonAPIView):
             token.invalidate()
             token.user.is_confirmed = True
             return token.user
+
+
+class VerifyPasswordTokenView(JsonAPIView):
+    @versioned
+    def on_get(self, request, response, *args, **kwargs):
+        self.handle(request, response, self.GET, *args, **kwargs)
+
+    class GET(BaseHdlr):
+        serializer_schema = CheckTokenApiResponse
+
+        def clean(
+            self,
+            *args: Any,
+            validators: Optional[Sequence[Callable[..., Any]]] = None,
+            locations: Optional[Sequence[str]] = None,
+            **kwargs: Any,
+        ) -> Dict[str, Any]:
+            token: UUID = kwargs["token"]
+            try:
+                is_valid: bool = Token.objects.get(token=token, token_type=1).is_valid
+            except Token.DoesNotExist:
+                # Do not reveal whether the password token exists or is invalid
+                is_valid = False
+            return {"is_valid": is_valid}
+
+        def _get_data(self, cleaned: Dict[str, Any], *args, **kwargs) -> SimpleNamespace:
+            return SimpleNamespace(id="verify-token", **cleaned)
 
 
 class ChangePasswordView(JsonAPIView):

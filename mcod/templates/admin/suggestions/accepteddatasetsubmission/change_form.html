@@ -11,7 +11,7 @@
 
 {% block extrajs %}
     {{ block.super }}
-    <script type="text/javascript">
+    <script type="text/javascript" nonce="{{ request.csp_nonce }}">
         var $publicationFinishedComment = $("div.field-publication_finished_comment");
         var isPublicationFishedCommentReadonly = $publicationFinishedComment.find('.readonly-control-label').length;
         var $statusSelectParent = $("div.field-status select").parent();

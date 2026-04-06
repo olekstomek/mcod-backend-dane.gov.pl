@@ -2,7 +2,7 @@
 {% load i18n static admin_list admin_urls suit_list suit_tags  core_tags %}
 {% block extrajs %}
     {{ block.super }}
-    <script>
+    <script nonce="{{ request.csp_nonce }}">
         /*
         This script functionality:
         - enable hide/show toggle datepicker controls for `ExportHarvestersCsvActionForm`

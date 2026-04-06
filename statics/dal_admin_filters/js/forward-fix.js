@@ -1,5 +1,6 @@
-(function ($) {
-    $(document).ready(function () {
-        $('#changelist-filter').children().wrapAll('<form></form>'); // required for forward func
-    });
-})(django.jQuery);
+window.addEventListener('load', function() {
+    var $ = (typeof django !== 'undefined' ? django.jQuery : window.jQuery);
+    if ($) {
+        $('#changelist-filter').children().wrapAll('<form></form>');
+    }
+});

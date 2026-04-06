@@ -19,5 +19,5 @@
     </tbody>
   </table>
 {% if paginate %}
-<script>$('#{{table_id}}').bootstrapTable({locale: 'pl-PL'});</script>
+<script nonce="{{ request.csp_nonce }}">$('#{{table_id}}').bootstrapTable({locale: 'pl-PL'});</script>
 {% endif %}

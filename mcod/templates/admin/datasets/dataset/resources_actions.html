@@ -2,7 +2,7 @@
 {% load i18n %}
 {% block actions_button %}
     <a id="resources_actions_btn" type="button" class="btn" title="{% trans "Run the selected action" %}" name="index" value="{{ action_index|default:0 }}">{% trans "Go" %}</a>
-    <script type="text/javascript">
+    <script type="text/javascript" nonce="{{ request.csp_nonce }}">
     $(document).ready(function(){
         $('#resources_actions_btn').click(function(e){
             e.preventDefault();

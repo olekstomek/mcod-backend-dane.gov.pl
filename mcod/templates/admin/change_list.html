@@ -2,7 +2,7 @@
 {% load i18n static admin_list admin_urls suit_list suit_tags  core_tags %}
 {% block extrahead %}
     {{ block.super }}
-    <script>
+    <script nonce="{{ request.csp_nonce }}">
         (function ($) {
             $(function () {
                 $("a > i.fas").each(function() {

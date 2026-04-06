@@ -16,7 +16,7 @@
     <link rel="stylesheet" href="{% static 'cms/css/hyper_editor_extensions.css' %}" />
 </head>
 <body>
-    <script type="text/javascript">
+    <script type="text/javascript" nonce="{{ request.csp_nonce }}">
         const UiTooltip = Quill.import('ui/tooltip');
         const SnowTheme = Quill.import('themes/snow');
         const LinkBlot = Quill.import('formats/link');
@@ -584,7 +584,7 @@
 
     <script type="text/javascript" src="{% static 'hypereditor/hyper_editor.js' %}"></script>
 
-    <script type="text/javascript">
+    <script type="text/javascript" nonce="{{ request.csp_nonce }}">
 
         /**
          * Helper function to get value by key from cookie
@@ -685,7 +685,7 @@
     <!- generate simpler blocks -->
     <script type="text/javascript" src="{% url 'hypereditor:blocks' %}"></script>
 
-    <script type="text/javascript">
+    <script type="text/javascript" nonce="{{ request.csp_nonce }}">
 
         function bindEvent(element, eventName, eventHandler) {
             if (element.addEventListener) {

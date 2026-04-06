@@ -1,3 +1,4 @@
+import html
 from typing import Dict, List, Union
 
 import bleach
@@ -16,13 +17,15 @@ def sanitize_html(html_content: str, strip_comments=False) -> str:
     This function uses the `bleach` library to clean the HTML content based on a predefined set of allowed tags,
     attributes, and styles. It ensures that only the specified HTML elements and attributes are retained, and it
     strips any unwanted content to prevent potential security risks, such as Cross-Site Scripting (XSS) attacks.
+    After cleaning, it applies `html.unescape` to convert HTML entities (like '&amp;') back to their original
+    characters (like '&').
 
     Args:
         html_content (str): The HTML content to be sanitized.
         strip_comments (bool): Removes comments if `strip_comments` is set to `True`.
 
     Returns:
-        str: The sanitized HTML content, where disallowed tags, attributes, and styles have been removed or escaped.
+        str: The sanitized HTML content with unescaped characters.
 
     Allowed Tags:
         - a, abbr, acronym, address, b, br, blockquote, code, div, em, h1, h2, h3, h4, h5, h6, hr, i, img, li, ol, p,
@@ -48,8 +51,9 @@ def sanitize_html(html_content: str, strip_comments=False) -> str:
         - It also ensures that only the allowed CSS properties are retained within the style attributes.
 
     Example:
-        sanitized_content = sanitize_html('<div style="color:red; font-size:20px;">Hello <script>alert("XSS")</script></div>')
-        # Output: '<div style="color:red; font-size:20px;">Hello alert("XSS")</div>'
+        input_str = "'';!--\"<XSS>=&{()}"
+        sanitized_content = sanitize_html(input_str)
+        # html.unescape returns: "'';!--"=&{()}"
     """
     allowed_tags = [
         "a",
@@ -139,7 +143,7 @@ def sanitize_html(html_content: str, strip_comments=False) -> str:
         strip=True,
         strip_comments=strip_comments,
     )
-    return sanitized_html
+    return html.unescape(sanitized_html)
 
 
 class SanitizedCharField(models.CharField):

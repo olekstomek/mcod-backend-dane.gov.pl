@@ -77,7 +77,7 @@
 
 {% endwith %}{# ends {% with inline_admin_formset.formset.is_nested as is_nested %} #}
 
-<script type="text/javascript">
+<script type="text/javascript" nonce="{{ request.csp_nonce }}">
 (function($) {
     $(document).ready(function() {
         $('input[name$="-has_dynamic_data"]').click(function(){

@@ -3,6 +3,7 @@ import os
 from time import time
 
 from bokeh.embed import server_document
+from csp.decorators import csp_exempt
 from django.conf import settings
 from django.http import HttpRequest, HttpResponse, HttpResponseNotFound
 from django.shortcuts import render
@@ -14,9 +15,13 @@ extra_js = os.environ.get("BOKEH_EXTRA_JS")
 profile_log = logging.getLogger("stats-profile")
 
 
+@csp_exempt
 def stats_dashboard(request: HttpRequest) -> HttpResponse:
     start = time()
     script = server_document(request.build_absolute_uri())
+    nonce = getattr(request, "csp_nonce", None)
+    if nonce:
+        script = script.replace("<script", f'<script nonce="{nonce}"')
     if not request.user.is_authenticated:
         return HttpResponse(_("Unauthorized"), status=401)
     stats_event_settings = getattr(settings, "STATS_EVENTS", [])
@@ -51,6 +56,7 @@ def chart_thumbnail(request: HttpRequest, slot: int) -> HttpRequest:
         return HttpResponseNotFound()
 
 
+@csp_exempt
 def short_apps(request, notebook):
     script = server_document(request.build_absolute_uri())
     return render(request, "pn_apps/embed.html", dict(script=script))

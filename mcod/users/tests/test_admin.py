@@ -1,3 +1,4 @@
+import pytest
 from django.test import Client
 from django.urls import reverse
 from django.utils.encoding import smart_str
@@ -108,3 +109,40 @@ class TestUserAdmin:
         u = User.objects.get(id=active_editor.id)
         assert 200 == response.status_code
         assert u.organizations.exists()
+
+    @pytest.mark.parametrize(
+        "weak_password", ["123", "abc", "Aa1Bb2Cc3", "abc123", "abcd1234", "abcdefgh", "12345678", "ABCD1234"]
+    )
+    def test_admin_cannot_create_user_with_weak_password(self, admin, weak_password: str):
+        # GIVEN
+        possible_error_messages = (
+            "To hasło jest za krótkie. Musi zawierać co najmniej 8 znaków.",
+            "Hasło musi zawierać przynajmniej jedną cyfrę.",
+            "Hasło musi zawierać przynajmniej jedną dużą i jedną małą literę.",
+            "Hasło musi zawierać przynajmniej jeden znak specjalny.",
+            "To hasło jest zbyt powszechne.",
+        )
+        client = Client()
+        client.force_login(admin)
+        email = "non_existing_email@test.com"
+
+        # WHEN admin tries to create a user with weak password in Admin Panel
+        response = client.post(
+            admin.get_admin_add_url(),
+            data={
+                "email": email,
+                "fullname": "Best User",
+                "phone": "111111111",
+                "password1": weak_password,
+                "password2": weak_password,
+            },
+        )
+
+        # THEN
+        # User with given name was not created
+        user_exists: bool = User.objects.filter(email=email).exists()
+        assert not user_exists
+
+        # At least one of possible password related error messages was listed
+        str_response_content: str = smart_str(response.content)
+        assert any((err_msg in str_response_content for err_msg in possible_error_messages))

@@ -40,6 +40,7 @@ routes = [
     ("/auth/password/reset", user_views.ResetPasswordView()),
     ("/auth/password/reset/{token:uuid}", user_views.ConfirmResetPasswordView()),
     ("/auth/password/change", user_views.ChangePasswordView()),
+    ("/auth/password/verify-token/{token:uuid}", user_views.VerifyPasswordTokenView()),
     ("/auth/user", user_views.AccountView()),
     ("/auth/user/dashboard", user_views.DashboardView()),
     ("/auth/registration", user_views.RegistrationView()),

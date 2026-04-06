@@ -1,4 +1,4 @@
-from typing import List
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 from django.apps import apps
 from django.conf import settings
@@ -8,6 +8,9 @@ from django.db.models.query import QuerySet
 from mcod.core.db.managers import TrashManager
 from mcod.core.managers import RawDBManager, RawManager, SoftDeletableManager, SoftDeletableQuerySet
 from mcod.resources.tasks import delete_es_resource_tabular_data_index
+
+if TYPE_CHECKING:
+    from mcod.resources.models import ResourceFile
 
 
 class ChartQuerySet(SoftDeletableQuerySet):
@@ -231,6 +234,28 @@ class ResourceFileManager(Manager):
             resource__status="published",
             resource__is_removed=False,
         ).values_list("file", "resource_id", "resource__title")
+
+    def filter_by_path(
+        self,
+        file_path: str,
+        public_resource_filters: Optional[Dict[str, Any]] = None,
+    ) -> Optional["ResourceFile"]:
+        """
+        Example usage:
+        >>> ResourceFile.objects.filter_by_path(
+        ...     '20251203/0f2c5c5d-d96f-4049-b23a-8c9a8b1d9477-2025-08-23_31595dce.csv'
+        ... )
+        <ResourceFile: 20251203/0f2c5c5d-d96f-4049-b23a-8c9a8b1d9477-2025-08-23_31595dce.csv>
+        """
+        resource_model = apps.get_model("resources.Resource")
+
+        if public_resource_filters is None:
+            public_resource_filters = {
+                "resource__status": resource_model.STATUS.published,
+                "resource__is_removed": False,
+            }
+
+        return self.filter(file=file_path, **public_resource_filters).select_related("resource").first()
 
 
 class SupplementManager(SoftDeletableManager):

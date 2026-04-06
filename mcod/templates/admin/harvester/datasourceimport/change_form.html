@@ -20,7 +20,7 @@
 
 {% block extrajs %}
     {{ block.super }}
-    <script type="text/javascript">
+    <script type="text/javascript" nonce="{{ request.csp_nonce }}">
         $(function () {
             $(".expandable").each(function(index) {
                 var $expandable = $(this);

@@ -21,11 +21,6 @@ class FakeMiddleware3:
         pass
 
 
-class FakeMiddleware4:
-    def process_resource(self, req, resp, resource, params):
-        pass
-
-
 def test_user_token_middleware(admin, settings):
     client = Client()
 
@@ -52,7 +47,6 @@ def test_user_token_middleware(admin, settings):
         "mcod.core.tests.test_middlewares.FakeMiddleware2",
     ],
     ENABLE_CSRF=False,
-    FALCON_LIMITER_ENABLED=False,
     FALCON_CACHING_ENABLED=False,
 )
 def test_middleware_loader_middleware_order():
@@ -69,7 +63,6 @@ def test_middleware_loader_middleware_order():
 @override_settings(
     FALCON_MIDDLEWARES=["mcod.core.tests.test_middlewares.FakeMiddleware1"],
     ENABLE_CSRF=True,
-    FALCON_LIMITER_ENABLED=True,
     FALCON_CACHING_ENABLED=True,
 )
 def test_middleware_loader_all_enabled_and_ordered(mocker: MockerFixture):
@@ -79,21 +72,18 @@ def test_middleware_loader_all_enabled_and_ordered(mocker: MockerFixture):
     when all feature flags are enabled.
     """
     mocker.patch("mcod.core.api.middleware_loader.FALCON_CSRF_MIDDLEWARE", "mcod.core.tests.test_middlewares.FakeMiddleware2")
-    mocker.patch("mcod.core.api.middleware_loader.limiter", types.SimpleNamespace(middleware=FakeMiddleware3()))
-    mocker.patch("mcod.core.api.middleware_loader.app_cache", types.SimpleNamespace(middleware=FakeMiddleware4()))
+    mocker.patch("mcod.core.api.middleware_loader.app_cache", types.SimpleNamespace(middleware=FakeMiddleware3()))
     middlewares = middleware_loader.middleware_loader()
 
-    assert len(middlewares) == 4
+    assert len(middlewares) == 3
     assert isinstance(middlewares[0], FakeMiddleware1)
     assert isinstance(middlewares[1], FakeMiddleware2)
     assert isinstance(middlewares[2], FakeMiddleware3)
-    assert isinstance(middlewares[3], FakeMiddleware4)
 
 
 @override_settings(
     FALCON_MIDDLEWARES=["mcod.core.tests.test_middlewares.FakeMiddleware1"],
     ENABLE_CSRF=True,
-    FALCON_LIMITER_ENABLED=False,
     FALCON_CACHING_ENABLED=False,
 )
 def test_middleware_loader_csrf_is_last(mocker: MockerFixture):
@@ -110,25 +100,6 @@ def test_middleware_loader_csrf_is_last(mocker: MockerFixture):
 @override_settings(
     FALCON_MIDDLEWARES=["mcod.core.tests.test_middlewares.FakeMiddleware1"],
     ENABLE_CSRF=False,
-    FALCON_LIMITER_ENABLED=True,
-    FALCON_CACHING_ENABLED=False,
-)
-def test_middleware_loader_limiter_is_last(mocker: MockerFixture):
-    """
-    Test that limiter middleware is appended as the last item
-    when only rate limiting is enabled.
-    """
-    mocker.patch("mcod.core.api.middleware_loader.limiter", types.SimpleNamespace(middleware=FakeMiddleware3()))
-
-    middlewares = middleware_loader.middleware_loader()
-
-    assert isinstance(middlewares[-1], FakeMiddleware3)
-
-
-@override_settings(
-    FALCON_MIDDLEWARES=["mcod.core.tests.test_middlewares.FakeMiddleware1"],
-    ENABLE_CSRF=False,
-    FALCON_LIMITER_ENABLED=False,
     FALCON_CACHING_ENABLED=True,
 )
 def test_middleware_loader_cache_is_last(mocker: MockerFixture):
@@ -136,17 +107,16 @@ def test_middleware_loader_cache_is_last(mocker: MockerFixture):
     Test that caching middleware is appended as the last item
     when only caching is enabled.
     """
-    mocker.patch("mcod.core.api.middleware_loader.app_cache", types.SimpleNamespace(middleware=FakeMiddleware4()))
+    mocker.patch("mcod.core.api.middleware_loader.app_cache", types.SimpleNamespace(middleware=FakeMiddleware3()))
 
     middlewares = middleware_loader.middleware_loader()
 
-    assert isinstance(middlewares[-1], FakeMiddleware4)
+    assert isinstance(middlewares[-1], FakeMiddleware3)
 
 
 @override_settings(
     FALCON_MIDDLEWARES=[],
     ENABLE_CSRF=False,
-    FALCON_LIMITER_ENABLED=False,
     FALCON_CACHING_ENABLED=False,
 )
 def test_middleware_loader_empty_returns_empty_list():

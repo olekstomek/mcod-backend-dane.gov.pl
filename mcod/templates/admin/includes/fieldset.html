@@ -102,7 +102,7 @@
 {% endif %}
 
 {% block admin_change_form_document_ready %}
-    <script>
+    <script nonce="{{ request.csp_nonce }}">
         function handleInputToUpperCase(input) {
           let start = input.selectionStart;
           let end = input.selectionEnd;

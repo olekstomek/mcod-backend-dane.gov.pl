@@ -20,7 +20,7 @@ from mcod.core.admin_metrics_view import prometheus_metrics_view
 from mcod.datasets.views import ConditionLabelsAdminView, DatasetAutocompleteView
 from mcod.organizations.views import InstitutionTypeAdminView, OrganizationAutocompleteView
 from mcod.regions.views import RegionsAutocompleteView
-from mcod.resources.views import ResourceAutocompleteView
+from mcod.resources.views import DownloadResourceFileView, ResourceAutocompleteView
 from mcod.users.views import (
     AdminAutocompleteView,
     AgentAutocompleteView,
@@ -31,6 +31,11 @@ from mcod.users.views import (
 panel_app_config = apps.get_app_config("mcod.pn_apps")
 
 urlpatterns = [path("health/", lambda r: JsonResponse({"status": "ok"}))]
+
+secure_media_patterns = [
+    re_path(r"^media/resources/(?P<file_path>.*)$", DownloadResourceFileView.as_view(), name="secure_resource_download"),
+]
+urlpatterns = secure_media_patterns + urlpatterns
 
 if settings.COMPONENT == "cms":
     api_router = CmsApiRouter("cmsapi")

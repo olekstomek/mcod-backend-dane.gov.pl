@@ -3,7 +3,7 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.forms.models import BaseInlineFormSet
 from django.utils.translation import gettext_lazy as _, ngettext
-from suit.widgets import AutosizedTextarea, NumberInput, SuitDateWidget
+from suit.widgets import NumberInput, SuitDateWidget
 
 from mcod.academy.models import Course, CourseModule
 
@@ -24,12 +24,12 @@ class CourseAdminForm(forms.ModelForm):
             "status",
         )
         widgets = {
-            "notes": AutosizedTextarea,
+            "notes": forms.Textarea(attrs={"rows": "5", "class": "span12 autosize"}),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        for name in ("title", "notes", "venue"):
+        for name in ("title", "venue"):
             if name in self.fields:
                 self.fields[name].widget.attrs.update({"class": "span12"})
 

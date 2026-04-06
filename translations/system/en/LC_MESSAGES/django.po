@@ -4352,12 +4352,12 @@ msgid "Reserved characters"
 msgstr ""
 
 msgid "Sincerely,"
-msgstr ""
+msgstr "Best regards,"
 
 msgid "The Open Data Data Administrators team"
-msgstr ""
+msgstr "The dane.gov.pl administrators team"
 
-msgid "The message was generated automatically, please do not reply to it."
+msgid "This message was generated automatically, please do not reply to it."
 msgstr ""
 
 msgid "A comment was posted on the accepted dataset submission"
@@ -4369,23 +4369,39 @@ msgstr ""
 msgid "Registration confirmation"
 msgstr ""
 
-msgid "Dear user of the open data portal (dane.gov.pl)"
+msgid "Registration on dane.gov.pl portal"
+msgstr ""
+
+msgid "ACCOUNT ALREADY EXISTS ON DANE.GOV.PL PORTAL"
+msgstr ""
+
+msgid "Account already exists on dane.gov.pl portal"
+msgstr ""
+
+msgid "An account associated with this email address already exists on the dane.gov.pl portal."
+msgstr ""
+
+msgid "If you don't remember your password, you can change it. To do this, open the link below or copy it into your browser window:"
+msgstr ""
+
+msgid "Not trying to register? Ignore this message — someone may have accidentally entered your email address."
 msgstr ""
 
 msgid "Thank you for creating an account."
-msgstr ""
-
-msgid "If you did not create an account, please ignore this message. "
-msgstr ""
+msgstr "Thank you for registering on the dane.gov.pl portal."
 
 msgid ""
 "In order to complete the registration process, click (or copy and paste in "
 "the address field of the web browser) into the link below."
 msgstr ""
+"To complete your account setup, please open the link below or copy "
+"and paste it into your web browser:"
 
 #, python-format
-msgid "The link is valid for %(limit)s hours."
+msgid "Confirm registration link is valid for %(limit)s hours."
 msgstr ""
+"The link will be valid for %(limit)s hours from the time this message "
+"was sent."
 
 msgid "A comment was posted on the data set"
 msgstr ""
@@ -4427,29 +4443,34 @@ msgstr ""
 msgid "Password reset"
 msgstr ""
 
-msgid "PASSWORD RESET TO THE SERVICE OPEN DATA"
+msgid "Password change for dane.gov.pl portal"
 msgstr ""
 
 msgid ""
 "We have received a request to reset the password for your Account "
 "established on the Portal."
 msgstr ""
+"We have received a request to change the password for your account "
+"on the dane.gov.pl portal."
 
 msgid ""
 "Click (or copy and paste in the web browser's address field) the link below "
 "to change yours password."
-msgstr ""
+msgstr "To change your password, open the link below or copy it into your browser:"
 
 msgid ""
 "If you do not want to reset your password, simply ignore this message - "
 "probably by accident someone has entered your email address."
 msgstr ""
+"Didn't request a password change? Ignore this message – someone may have "
+"accidentally entered your email address."
 
-msgid ""
-"The link will expire in 48 hours. The password can be reset at any time. "
-"Just go to the site login on the portal and request a new password reset "
-"link."
+#, python-format
+msgid "Reset password link validity in %(limit)s hours"
 msgstr ""
+"The link will be valid for %(limit)s hours from the time this message was sent. "
+"You can request a new link at any time by selecting \"Forgot password?\" "
+"on the login page. In that case, the current link will become inactive."
 
 msgid ""
 "Wiadomość została wygenerowana automatycznie przez oprogramowanie portalu na "
@@ -5049,4 +5070,10 @@ msgstr ""
 
 #, python-format
 msgid "Error while download file from: %(url)s."
+msgstr ""
+
+msgid "Rate limit exceeded"
+msgstr ""
+
+msgid "Too many requests. Please try again later."
 msgstr ""

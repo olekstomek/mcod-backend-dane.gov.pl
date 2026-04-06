@@ -1,14 +1,12 @@
-from UnleashClient.strategies import Strategy
+from typing import List
 
 
-class EnvironmentName(Strategy):
-    def load_provisioning(self) -> list:
-        return [x.strip() for x in self.parameters["envNames"].split(",")]
+class EnvironmentName:
+    def apply(self, parameters: dict, context: dict = None) -> bool:
+        target_envs_str: str = parameters.get("envNames", "")
+        target_envs: List[str] = [stripped for x in target_envs_str.split(",") if (stripped := x.strip())]
 
-    def apply(self, context: dict = None) -> bool:
-        return_value = False
+        if context and "envName" in context:
+            return context["envName"] in target_envs
 
-        if "envName" in context.keys():
-            return_value = context["envName"] in self.parsed_provisioning
-
-        return return_value
+        return False

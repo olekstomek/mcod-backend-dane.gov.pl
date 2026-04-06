@@ -45,7 +45,6 @@ from mcod.resources.dga_utils import (
 )
 from mcod.resources.models import Resource, ResourceFile, Supplement
 from mcod.special_signs.models import SpecialSign
-from mcod.unleash import is_enabled
 
 logger = logging.getLogger("mcod")
 
@@ -357,25 +356,11 @@ class ResourceForm(forms.ModelForm, HighValueDataFormValidatorMixin):
     def _validate_related_resource(self, data: dict) -> None:
         related_resource = data.get("related_resource")
         dataset = data.get("dataset")
-
-        if is_enabled("S64_fix_for_status_code_500_when_type_change.be"):
-            if dataset and related_resource and related_resource not in Resource.raw.filter(dataset_id=dataset.id):
-                self.add_error(
-                    "related_resource",
-                    _("Only resource from related dataset resources is valid!"),
-                )
-        else:
-            if all(
-                (
-                    dataset,
-                    related_resource,
-                    related_resource not in Resource.raw.filter(dataset_id=dataset.id),
-                )
-            ):
-                self.add_error(
-                    "related_resource",
-                    _("Only resource from related dataset resources is valid!"),
-                )
+        if dataset and related_resource and related_resource not in Resource.raw.filter(dataset_id=dataset.id):
+            self.add_error(
+                "related_resource",
+                _("Only resource from related dataset resources is valid!"),
+            )
 
     @staticmethod
     def _is_main_dga_resource_updated(pk):
@@ -570,9 +555,8 @@ class ChangeResourceForm(ResourceForm, UnEscapeWidgetMixin):
         super().__init__(*args, **kwargs)
         if hasattr(self, "instance"):
             self._add_unescape_widget_for_fields_or_not()
-            if is_enabled("S64_fix_for_status_code_500_when_type_change.be"):
-                if self.instance.is_imported_from_xml:
-                    self._set_fields_required_attribute_to_false()
+            if self.instance.is_imported_from_xml:
+                self._set_fields_required_attribute_to_false()
 
             self.instance: Resource
             self.fields["tabular_data_schema"].widget.instance = self.instance
@@ -581,10 +565,9 @@ class ChangeResourceForm(ResourceForm, UnEscapeWidgetMixin):
             if "regions" in self.fields:
                 self.fields["regions"].choices = self.instance.regions.all().values_list("region_id", "hierarchy_label")
 
-            if is_enabled("S64_fix_for_status_code_500_when_type_change.be"):
-                if self.instance and self.instance.pk and self.instance.is_imported:
-                    self.data = self.data.copy()  # Make self.data mutable
-                    self.data = self._modify_data_for_imported(self.data, self.instance)
+            if self.instance and self.instance.pk and self.instance.is_imported:
+                self.data = self.data.copy()  # Make self.data mutable
+                self.data = self._modify_data_for_imported(self.data, self.instance)
 
     def _set_fields_required_attribute_to_false(self) -> None:
         """

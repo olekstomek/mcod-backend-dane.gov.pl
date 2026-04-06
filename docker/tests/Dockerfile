@@ -50,7 +50,6 @@ RUN pip install -I setuptools"<58" "pipenv==2022.10.12"
 
 ADD Pipfile.lock /usr/src/mcod_backend/Pipfile.lock
 ADD Pipfile      /usr/src/mcod_backend/Pipfile
-ADD django_logingovpl-0.0.5-py3-none-any.whl /usr/src/mcod_backend/django_logingovpl-0.0.5-py3-none-any.whl
 ADD django_suit-0.2.28-py3-none-any.whl      /usr/src/mcod_backend/django_suit-0.2.28-py3-none-any.whl
 ADD hypereditor-0.1.0-py3-none-any.whl       /usr/src/mcod_backend/hypereditor-0.1.0-py3-none-any.whl
 RUN pipenv --verbose install --deploy --system --dev

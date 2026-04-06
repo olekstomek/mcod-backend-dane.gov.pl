@@ -19,7 +19,7 @@ Feature: User Admin
   Scenario: User email is saved with small letters
     Given logged admin user
     When admin's request method is POST
-    And admin's request posted user data is {"email": "RTEST2@WP.PL", "password1": "123", "password2": "123", "fullname": "R K", "is_staff": true, "state": "pending", "is_academy_admin": false, "is_labs_admin": false}
+    And admin's request posted user data is {"email": "RTEST2@WP.PL", "password1": "StrongPassword123!", "password2": "StrongPassword123!", "fullname": "R K", "is_staff": true, "state": "pending", "is_academy_admin": false, "is_labs_admin": false}
     And admin's page /users/user/add/ is requested
     Then admin's response status code is 200
     And admin's response page contains >rtest2@wp.pl</a>" został pomyślnie dodany. Poniżej możesz ponownie edytować.
@@ -28,7 +28,7 @@ Feature: User Admin
     Given institution with id 999
     And logged admin user
     When admin's request method is POST
-    And admin's request posted user data is {"email": "rtest1@wp.pl", "password1": "123", "password2": "123", "fullname": "R K", "is_staff": true, "state": "pending", "organizations": [999], "is_academy_admin": false, "is_labs_admin": false}
+    And admin's request posted user data is {"email": "rtest1@wp.pl", "password1": "StrongPassword123!", "password2": "StrongPassword123!", "fullname": "R K", "is_staff": true, "state": "pending", "organizations": [999], "is_academy_admin": false, "is_labs_admin": false}
     And admin's page /users/user/add/ is requested
     Then admin's response status code is 200
     And admin's response page contains został pomyślnie dodany.

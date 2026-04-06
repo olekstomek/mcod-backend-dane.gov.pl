@@ -12,7 +12,6 @@ from mcod.resources.tasks.common import (
 )
 from mcod.resources.tasks.process_resource_file import process_resource_res_file_task
 from mcod.resources.tasks.process_resource_from_url import process_resource_from_url_task
-from mcod.unleash import is_enabled
 
 logger = logging.getLogger("mcod")
 
@@ -68,9 +67,8 @@ def entrypoint_process_resource_validation_task(
             if resource:
                 resource.revalidate_tabular_data(apply_on_commit=False)
 
-        if is_enabled("S67_less_updates_es_end_rdf_in_resource_processing.be"):
-            # 4. Update es and rdf
-            resource.update_es_and_rdf_db()
+        # 4. Update es and rdf
+        resource.update_es_and_rdf_db()
 
     except Exception as e:
         logger.error(f"Exception occurred during process_resource_validation_task: {e}")

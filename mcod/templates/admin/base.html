@@ -4,15 +4,18 @@
 <html lang="{{ LANGUAGE_CODE|default:"en-us" }}" {% if LANGUAGE_BIDI %}dir="rtl"{% endif %}>
 <head>
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <title>{% block title %}{{ title }} | {{ 'ADMIN_NAME'|suit_conf }}{% endblock %}</title>
-  {% block before_suit_styles %}{% endblock %}
-  <link rel="stylesheet" type="text/css" href="{% block stylesheet %}{% endblock %}"/>
-  <link rel="stylesheet" type="text/css" href="{% static 'suit/bootstrap/css/bootstrap.min.css' %}" media="all"/>
-  <link rel="stylesheet" type="text/css" href="{% static 'suit/css/suit.css' %}" media="all">
-  {% block extrastyle %}{% endblock %}
-  {% if LANGUAGE_BIDI %}<link rel="stylesheet" type="text/css" href="{% block stylesheet_rtl %}{% static "admin/css/rtl.css" %}{% endblock %}"/>{% endif %}
-  <link rel="stylesheet" type="text/css" href="{% static 'admin/css/od2021.css' %}" media="all">
-  <script type="text/javascript">window.__admin_media_prefix__ = "{% filter escapejs %}{% static "admin/" %}{% endfilter %}";</script>
+    <title>{% block title %}{{ title }} | {{ 'ADMIN_NAME'|suit_conf }}{% endblock %}</title>
+    {% block before_suit_styles %}{% endblock %}
+    <link rel="stylesheet" type="text/css" href="{% block stylesheet %}{% endblock %}"/>
+    <link rel="stylesheet" type="text/css" href="{% static 'suit/bootstrap/css/bootstrap.min.css' %}" media="all"/>
+    <link rel="stylesheet" type="text/css" href="{% static 'suit/css/suit.css' %}" media="all">
+    {% block extrastyle %}{% endblock %}
+    {% if LANGUAGE_BIDI %}<link rel="stylesheet" type="text/css" href="{% block stylesheet_rtl %}{% static "admin/css/rtl.css" %}{% endblock %}"/>{% endif %}
+    <script type="text/javascript" nonce="{{ request.csp_nonce }}">
+        window.DJANGO_CSP_NONCE = "{{ request.csp_nonce }}";
+    </script>
+    <link rel="stylesheet" type="text/css" href="{% static 'admin/css/od2021.css' %}" media="all">
+    <script type="text/javascript" nonce="{{ request.csp_nonce }}">window.__admin_media_prefix__ = "{% filter escapejs %}{% static "admin/" %}{% endfilter %}";</script>
   {% block suit_jquery %}
       {% if '1.9'|django_version_gte %}
           <script src="{% static 'suit/js/jquery-3.5.0.min.js' %}"></script>
@@ -21,7 +24,7 @@
       {% endif %}
   {% endblock %}
   <script src="https://unpkg.com/@elastic/apm-rum/dist/bundles/elastic-apm-rum.umd.min.js" crossorigin></script>
-  <script type="text/javascript">var Suit = { $: $.noConflict() }; if (!$) $ = Suit.$; </script>
+  <script type="text/javascript" nonce="{{ request.csp_nonce }}">var Suit = { $: $.noConflict() }; if (!$) $ = Suit.$; </script>
   <script src="{% static 'suit/bootstrap/js/bootstrap.min.js' %}"></script>
   {% if 'SHOW_REQUIRED_ASTERISK'|suit_conf %}
   <style type="text/css">.required:after { content: '*'; margin: 0 0 0 5px; position: absolute; color: #ccc;}</style>
@@ -78,7 +81,7 @@
 
             {% if user.is_active and user.is_staff %}
               <div id="user-tools" style="padding: 0 20px 0 0">
-                <div id="user-gov-list-container" onclick="showList()">
+                <div id="user-gov-list-container">
 
                   {% block welcome-msg %}
                     {% trans 'Welcome,' %}
@@ -246,7 +249,7 @@
   <script src="{% static 'suit/js/suit.js' %}"></script>
   {% if apm %}
 
-    <script>
+    <script nonce="{{ request.csp_nonce }}">
     elasticApm.init({
         serverUrl: "{{ SETTINGS.APM_SERVER_URL }}",
         distributedTracingOrigins: ['{{ SETTINGS.ADMIN_URL }}','{{ SETTINGS.CMS_URL }}', '{{ SETTINGS.API_URL }}'],
@@ -259,24 +262,7 @@
     </script>
   {% endif %}
   {% block extrajs %}{% endblock %}
-<script>
-      function showList(){
-        const userList = document.getElementById("user-gov-list")
-        const image = document.getElementById("switch-image")
-        if (image.classList.contains("rotate")) {
-          image.classList.remove("rotate")
-        } else {
-          image.classList.add("rotate")
-        }
-        if (userList.style.display === "flex"){
-          userList.style.display = "none"
-        }
-        else{
-          userList.style.display = "flex";
-          userList.style.flexDirection = "column"
-        }
-    }
-</script>
+<script src="{% static 'admin/js/custom_admin.js' %}"></script>
 <script src="{% static 'admin/js/od2021.js' %}"></script>
 </body>
 </html>

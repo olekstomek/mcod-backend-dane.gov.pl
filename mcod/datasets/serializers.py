@@ -560,7 +560,7 @@ class DatasetXMLWriterSerializer(DatasetXMLSerializer):
 class DatasetResourcesCSVSerializer(CSVSerializer):
     """
     Serializer for Datasets to CSV as they are included in the Public-facing
-    CSV catalogue
+    CSV catalog.
     """
 
     dataset_url = fields.Url(attribute="frontend_absolute_url", data_key=_("Dataset URL"))

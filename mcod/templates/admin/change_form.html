@@ -4,7 +4,7 @@
 
 {% block extrahead %}{{ block.super }}
     {% url 'admin:jsi18n' as jsi18nurl %}
-    <script type="text/javascript" src="{{ jsi18nurl|default:'../../../jsi18n/' }}"></script>
+    <script type="text/javascript" src="{{ jsi18nurl|default:'../../../jsi18n/' }}" nonce="{{ request.csp_nonce }}"></script>
 
     {{ media }}
 
@@ -19,13 +19,13 @@
     {% if 'CONFIRM_UNSAVED_CHANGES'|suit_conf %}
         <!-- Warn on leaving unsaved form -->
         <script src="{% static 'suit/js/suit-form-confirm.js' %}"></script>
-        <script type="text/javascript">
+        <script type="text/javascript" nonce="{{ request.csp_nonce }}">
             confirmExitIfModified('{% firstof opts.model_name opts.module_name %}_form', '{% trans "You have unsaved changes" %}.');
         </script>
     {% endif %}
 
     {% if adminform.model_admin.suit_form_tabs %}
-        <script type="text/javascript">
+        <script type="text/javascript" nonce="{{ request.csp_nonce }}">
             (function ($) {
                 $(function () {
                     $('#suit_form_tabs').suit_form_tabs();
@@ -34,7 +34,7 @@
         </script>
     {% endif %}
 
-    <script>
+    <script nonce="{{ request.csp_nonce }}">
         (function ($) {
             $(function () {
                 $("#{% firstof opts.model_name opts.module_name %}_form").suit_form_debounce();
@@ -182,7 +182,7 @@
                 {% include 'suit/includes/change_form_includes.html' with position='bottom' %}
 
                 {% block admin_change_form_document_ready %}
-                    <script type="text/javascript">
+                    <script type="text/javascript" nonce="{{ request.csp_nonce }}">
                         (function ($) {
                             $(document).ready(function () {
                                 $('.add-another').click(function (e) {

@@ -28,11 +28,11 @@ prepare-images:
   image: docker:${DOCKER_VERSION}
   script:
     - docker build -f docker/elasticsearch/Dockerfile -t $REGISTRY_PATH/elasticsearch:6.8.23-mcod-1 .
-    - docker build -f docker/postgres/Dockerfile -t $REGISTRY_PATH/postgresql:13-trixie-mcod .
+    - docker build -f docker/postgres/Dockerfile -t $REGISTRY_PATH/postgresql:17-trixie-mcod .
     - docker build -f docker/tests/Dockerfile -t $REGISTRY_PATH/mcod-tests:${TEST_IMAGE_VERSION} .
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $REGISTRY_HOST
     - docker push $REGISTRY_PATH/elasticsearch:6.8.23-mcod-1
-    - docker push $REGISTRY_PATH/postgresql:13-trixie-mcod
+    - docker push $REGISTRY_PATH/postgresql:17-trixie-mcod
     - docker push $REGISTRY_PATH/mcod-tests:${TEST_IMAGE_VERSION}
   except:
     - tags
@@ -103,7 +103,7 @@ test:
           "-Eindex.store.type=niofs",
           "-Ebootstrap.memory_lock=true",
         ]
-    - name: $REGISTRY_PATH/postgresql:13-trixie-mcod
+    - name: $REGISTRY_PATH/postgresql:17-trixie-mcod
       alias: postgres
   script:
     - python manage.py compilemessages --settings mcod.settings.test -v 3
@@ -201,13 +201,16 @@ check-docker-build:
   tags:
     - shell
 
-build-pre-devel:
+build-pre-devel: &release-job
   stage: build
   image: docker:${DOCKER_VERSION}
-  script:
-    - docker build --add-host $CI_LOCAL_GITLAB_ADDRESS -f docker/app/Dockerfile -t $REGISTRY_PATH/backend:pre-devel .
+  variables:
+    IMAGE_TAG: pre-devel
+  before_script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $REGISTRY_HOST
-    - docker push $REGISTRY_PATH/backend:pre-devel
+  script:
+    - docker build --add-host $CI_LOCAL_GITLAB_ADDRESS -f docker/app/Dockerfile -t $REGISTRY_PATH/backend:${IMAGE_TAG} .
+    - docker push $REGISTRY_PATH/backend:${IMAGE_TAG}
   tags:
     - shell
   rules:
@@ -226,28 +229,24 @@ build-pre-devel:
 
 
 build-devel:
-  stage: build
-  image: docker:${DOCKER_VERSION}
-  only:
-    - devel
-  script:
-    - docker build --add-host $CI_LOCAL_GITLAB_ADDRESS -f docker/app/Dockerfile -t $REGISTRY_PATH/backend:devel .
-    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $REGISTRY_HOST
-    - docker push $REGISTRY_PATH/backend:devel
-  tags:
-    - shell
+  <<: *release-job
+  variables:
+    IMAGE_TAG: devel
+  rules:
+    # allow to deploy from devel but only manually
+    - if: $CI_COMMIT_BRANCH == 'devel'
+      when: manual
+    # does not run otherwise
 
 build-master:
-  stage: build
-  image: docker:${DOCKER_VERSION}
-  only:
-    - master
-  script:
-    - docker build --add-host $CI_LOCAL_GITLAB_ADDRESS -f docker/app/Dockerfile -t $REGISTRY_PATH/backend:master .
-    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $REGISTRY_HOST
-    - docker push $REGISTRY_PATH/backend:master
-  tags:
-    - shell
+  <<: *release-job
+  variables:
+    IMAGE_TAG: master
+  rules:
+    # deploy from master automatically
+    - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == 'master'
+      when: on_success
+    # does not run otherwise
 
 release-prod:
   stage: release
@@ -255,23 +254,19 @@ release-prod:
   before_script:
     - export API_VERSION=$(changelog current)
     - cat CHANGELOG.md
-  script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $REGISTRY_HOST
+  script:
     - docker pull $REGISTRY_PATH/backend:master
     - docker tag $REGISTRY_PATH/backend:master $REGISTRY_PATH/backend:master-$API_VERSION
     - docker tag $REGISTRY_PATH/backend:master $REGISTRY_PATH/backend:master-prod-latest
     - docker push $REGISTRY_PATH/backend:master-$API_VERSION
     - docker push $REGISTRY_PATH/backend:master-prod-latest
-  except:
-    - pre-devel
-    - devel
-    - schedules
-  only:
-    - master
-    - tags
-  when: manual
   tags:
     - shell
+  rules:
+    # release from master on click
+    - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == 'master'
+      when: manual
 
 
 publish-code:
@@ -282,13 +277,9 @@ publish-code:
     - git archive --output /gluster/mcod/code/backend_$API_VERSION.zip -9 HEAD
     - cd /gluster/mcod/code
     - ln -sf backend_$API_VERSION.zip backend_latest.zip
-  except:
-    - pre-devel
-    - devel
-    - schedules
-  only:
-    - master
-    - tags
-  when: manual
   tags:
     - shell
+  rules:
+    # release from master on click
+    - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == 'master'
+      when: manual

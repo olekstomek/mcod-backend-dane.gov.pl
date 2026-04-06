@@ -15,7 +15,7 @@ try:
         url=settings.UNLEASH_URL,
         app_name=settings.COMPONENT,
         environment=settings.ENVIRONMENT,
-        custom_strategies={"environmentName": EnvironmentName},
+        custom_strategies={"environmentName": EnvironmentName()},
     )
     unleash_client.initialize_client()
 

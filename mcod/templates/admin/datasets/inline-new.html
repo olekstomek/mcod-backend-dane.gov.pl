@@ -21,7 +21,7 @@
 </div>{% endfor %}
 </div>
 
-<script type="text/javascript">
+<script type="text/javascript" nonce="{{ request.csp_nonce }}">
 (function($) {
     $(document).ready(function() {
         $('input[name$="-has_dynamic_data"]').click(function(){

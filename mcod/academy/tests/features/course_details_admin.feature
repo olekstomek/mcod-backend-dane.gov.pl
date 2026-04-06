@@ -71,4 +71,4 @@ Feature: Course details page in admin panel
     And admin's page /academy/course/add/ is requested
     Then admin's response status code is 200
     And admin's response page contains Proszę, popraw poniższe błędy.
-    And admin's response page contains <div class="inline error errors"><textarea name="notes" cols="40" rows="2" class="span12" required id="id_notes"></textarea><script type="text/javascript">Suit.$('#id_notes').autosize();</script><span class="help-inline"><ul class="errorlist"><li>To pole jest obowiązkowe.</li></ul></span></div>
+    And admin's response page contains <div class="inline error errors"><textarea name="notes" cols="40" rows="5" class="span12 autosize" required id="id_notes"></textarea><span class="help-inline"><ul class="errorlist"><li>To pole jest obowiązkowe.</li></ul></span></div>

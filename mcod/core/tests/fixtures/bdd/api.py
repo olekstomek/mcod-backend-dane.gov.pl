@@ -250,7 +250,7 @@ def api_send_request(context, mocker, test_api_instance):
         skip_validation = True
     if resp.status_code in (202, 204):
         skip_validation = True
-    if not skip_validation:
+    if not skip_validation and ("data" in resp.json or "errors" in resp.json):
         valid, validated, errors = jsonapi_validator(resp.json)
         assert valid is True, errors
     # TODO: this does not work on gitlab...

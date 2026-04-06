@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -e
+set -exf
 
 flag=0
 retries=0
@@ -9,6 +9,9 @@ sleep_time=3
 
 workers=${API_WORKERS:-2}
 GUNICORN_CMD_ARGS=${GUNICORN_CMD_ARGS:-"--worker-class gevent --timeout=120"}
+
+echo "Cleaning pyc files"
+find ./mcod -name '*.pyc' -delete
 
 while [ $flag -eq 0 ]; do
     if [ $retries -eq $max_retries ]; then

@@ -16,6 +16,7 @@ from requests import Session
 from mcod.lib.exceptions import (
     DangerousContentError,
     EmptyDocument,
+    HTTPConnectionError,
     InvalidContentType,
     InvalidResponseCode,
     InvalidSchema,
@@ -201,37 +202,51 @@ def check_link_scheme(link):
     return returns_https, change_required
 
 
-def check_link_status(url, resource_type):
+def check_link_status(url, resource_type):  # noqa: C901
     logger.debug(f"check_link_status({url})")
     try:
         URLValidator()(url)
     except ValidationError:
-        raise InvalidUrl("Invalid url address: %s" % url)
+        raise InvalidUrl(f"Invalid url address: {url}")
 
     headers = {"User-Agent": generate_random_user_agent()}
-    response = session.head(url, allow_redirects=True, timeout=30, headers=headers)
-    if response.status_code != 200:
-        response = session.get(url, allow_redirects=True, timeout=30, headers=headers)
-
-    if response.status_code != 200:
-        raise InvalidResponseCode("Invalid response code: %s" % response.status_code)
+    timeout = (5, 15)  # connect 5s, read 15s
 
     try:
-        family, content_type, options = parse_mime_type(response.headers.get("Content-Type"))
+        # HEAD
+        with session.head(url, allow_redirects=True, timeout=timeout, headers=headers) as response:
+            status = response.status_code
+            head_headers = response.headers
+            head_history = response.history
+            head_url = response.url
+        # GET
+        if status != 200:
+            with session.get(url, allow_redirects=True, timeout=timeout, headers=headers, stream=True) as response:
+                status = response.status_code
+                head_headers = response.headers
+                head_history = response.history
+                head_url = response.url
+    except requests.exceptions.Timeout as exc:
+        raise HTTPConnectionError(f"Timeout while fetching: {url}") from exc
+
+    except requests.exceptions.ConnectionError as exc:
+        raise HTTPConnectionError(f"Connection error while fetching: {url}") from exc
+
+    if status != 200:
+        raise InvalidResponseCode(f"Invalid response code: {status}")
+
+    try:
+        family, content_type, options = parse_mime_type(head_headers.get("Content-Type"))
     except MimeTypeParseException:
-        raise InvalidContentType(response.headers.get("Content-Type"))
+        raise InvalidContentType(head_headers.get("Content-Type"))
 
     if not guess.is_octetstream(content_type) and content_type not in settings.ALLOWED_CONTENT_TYPES:
-        raise UnsupportedContentType("Unsupported type: %s" % response.headers.get("Content-Type"))
+        raise UnsupportedContentType(f"Unsupported type: {head_headers.get('Content-Type')}")
 
     if (
         resource_type not in ["file", "api"]
-        and response.history
-        and all(
-            (
-                response.history[-1].status_code == 301,
-                simplified_url(response.url) != simplified_url(url),
-            )
-        )
+        and head_history
+        and head_history[-1].status_code == 301
+        and simplified_url(head_url) != simplified_url(url)
     ):
         raise InvalidResponseCode("Resource location has been moved!")

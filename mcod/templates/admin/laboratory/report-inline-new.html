@@ -71,7 +71,7 @@
 
 {% endwith %}{# ends {% with inline_admin_formset.formset.is_nested as is_nested %} #}
 
-<script type="text/javascript">
+<script type="text/javascript" nonce="{{ request.csp_nonce }}">
 (function($) {
     $(document).ready(function() {
         let rows = "#{{ inline_admin_formset.formset.prefix }}-group .inline-related";

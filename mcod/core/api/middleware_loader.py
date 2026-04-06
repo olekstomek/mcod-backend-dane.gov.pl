@@ -6,7 +6,6 @@ from django.conf import settings
 from django.utils.module_loading import import_string
 
 from mcod.core.api.cache import app_cache
-from mcod.core.api.limiter import limiter
 from mcod.core.api.types import FalconMiddlewareProtocol
 
 logger = logging.getLogger("mcod-api")
@@ -24,7 +23,6 @@ def middleware_loader() -> List[FalconMiddlewareProtocol]:
     Loaded from:
     - `FALCON_MIDDLEWARES` (always included)
     - `FALCON_CSRF_MIDDLEWARE` (included if `ENABLE_CSRF` is True)
-    - `limiter.middleware` (included if `FALCON_LIMITER_ENABLED` is True)
     - `app_cache.middleware` (included if `FALCON_CACHING_ENABLED` is True)
 
     Each item is either directly used or imported and instantiated if it's a string referring to a class.
@@ -39,8 +37,6 @@ def middleware_loader() -> List[FalconMiddlewareProtocol]:
 
     if settings.ENABLE_CSRF:
         base_middlewares.append(FALCON_CSRF_MIDDLEWARE)
-    if settings.FALCON_LIMITER_ENABLED:
-        base_middlewares.append(limiter.middleware)
     if settings.FALCON_CACHING_ENABLED:
         base_middlewares.append(app_cache.middleware)
 

@@ -35,7 +35,7 @@
         </div>
     {% endblock %}
 
-    <script>
+    <script nonce="{{ request.csp_nonce }}">
         $('#cancel_button').click(function() {
             if (document.URL.endsWith('add/')) {
                 window.location.href = "../";

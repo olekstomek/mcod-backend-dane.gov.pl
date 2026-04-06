@@ -1,75 +1,197 @@
 # Usage:
 # docker compose -f docker-compose.local.yml run mcod-local-tests mcod/guides/tests/test_api.py --no-cov
+# docker compose -f docker-compose.local.yml run mcod-local-run python manage.py migrate
+# docker compose -f docker-compose.local.yml up
+# docker compose -f docker-compose.local.yml run mcod-local-admin
+#
 
 include:
   - docker-compose.yml  # services like database, redis
 
 services:
-  mcod-local-tests: &local-container-no-service
+  mcod-local-tests: &local-container-with-tests
     container_name: mcod-tests
     platform: linux/amd64
     build:
       context: .
       dockerfile: docker/tests/Dockerfile
-    environment: &local-container-env
-      PYTHONUNBUFFERED: 1
-      PYTHONDONTWRITEBYTECODE: 1
-      ENVIRONMENT: test
-      TEST_DEBUG: "yes"
-      ALLOWED_HOSTS: "*"
-      BASE_URL: http://mcod.local
-      API_URL: https://api.mcod.local
-      ADMIN_URL: http://admin.mcod.local
-      CMS_URL: http://cms.mcod.local
-      API_URL_INTERNAL: https://api.mcod.local
-      NO_REPLY_EMAIL: env@test.local
-      DEBUG: yes
-      # services
-      POSTGRES_PASSWORD: mcod
-      POSTGRES_USER: mcod
-      POSTGRES_DB: mcod
-      POSTGRES_PORT: 5432
-      POSTGRES_HOST_TYPE: docker
-      POSTGRES_HOST: mcod-db
-      REDIS_URL: redis://mcod-redis:6379
-      ELASTICSEARCH_HOSTS: mcod-elasticsearch:9200
-      RABBITMQ_HOST: mcod-rabbitmq:5672
-      ES_JAVA_OPTS: "-Xms2048m -Xmx2048m"
-      EMAIL_HOST: mcod-smtp
-      EMAIL_PORT: 1025
-      EMAIL_USE_TLS: 0
-      EMAIL_HOST_USER: test@mcod.local
-      EMAIL_HOST_PASSWORD: password
-      SPARQL_USER: admin
-      ADMIN_PASSWORD: Britenet.1
-      FUSEKI_DATASET_1: ds
-      FUSEKI_URL: http://mcod-rdfdb:3030
-      ALLOWED_MINIMUM_FREE_GB: 1
-      DISCOURSE_FORUM_ENABLED: false
-      DISCOURSE_USERNAME: user
-      DISCOURSE_PASSWORD: bitnami123
-      # tests specific
-      DATASET_ARCHIVE_FILES_TASK_DELAY: 1
-    volumes:
-      - ./docker/tests:/usr/src/mcod_backend/tests
-      - ./pytest.ini:/usr/src/mcod_backend/pytest.ini
-      - ./.flake8:/usr/src/mcod_backend/.flake8
-      - ./.coveragerc:/usr/src/mcod_backend/.coveragerc
-      - ./mcod:/usr/src/mcod_backend/mcod
-      - ./translations:/usr/src/mcod_backend/translations
-      - ./data:/usr/src/mcod_backend/data
-      - ./test-data:/usr/src/mcod_backend/test-data
-      - ./database:/usr/src/mcod_backend/database
-    entrypoint:
-      - "/usr/src/mcod_backend/tests/tests-entrypoint.sh"
+      tags:
+        - "mcod-app:local-tests"
     depends_on:
       - mcod-db
+      - mcod-rabbitmq
       - mcod-redis
       - mcod-elasticsearch
       - mcod-rdfdb
       - mcod-smtp
-      - mcod-rabbitmq
+    env_file: .env
+    environment: &local-container-env
+      PYTHONUNBUFFERED: 1
+      PYTHONDONTWRITEBYTECODE: 1
+      DEBUG: yes
+      # services
+      POSTGRES_HOST: mcod-db
+      REDIS_URL: redis://mcod-redis:6379
+      ELASTICSEARCH_HOSTS: mcod-elasticsearch:9200
+      RABBITMQ_HOST: mcod-rabbitmq:5672
+      EMAIL_HOST: mcod-smtp
+      EMAIL_PORT: 1025
+      EMAIL_USE_TLS: 0
+      EMAIL_USE_SSL: 0
+      EMAIL_HOST_USER: test@mcod.local
+      EMAIL_HOST_PASSWORD: password
+      FUSEKI_URL: http://mcod-rdfdb:3030
+      # Default for boolean is required, an empty string is falsy
+      DISCOURSE_FORUM_ENABLED: ${DISCOURSE_FORUM_ENABLED:-true}
+      # tests specific
+      ENVIRONMENT: test
+      TEST_DEBUG: "yes"
+      DATASET_ARCHIVE_FILES_TASK_DELAY: 1
+    volumes:
+      - ./.coveragerc:/usr/src/mcod_backend/.coveragerc
+      - ./.flake8:/usr/src/mcod_backend/.flake8
+      - ./data:/usr/src/mcod_backend/data
+      - ./database:/usr/src/mcod_backend/database
+      - ./docker/tests:/usr/src/mcod_backend/tests
+      - ./manage.py:/usr/src/mcod_backend/manage.py
+      - ./mcod:/usr/src/mcod_backend/mcod
+      - ./pytest.ini:/usr/src/mcod_backend/pytest.ini
+      - ./test-data:/usr/src/mcod_backend/test-data
+      - ./translations:/usr/src/mcod_backend/translations
+    entrypoint:
+      - "/usr/src/mcod_backend/tests/tests-entrypoint.sh"
     networks:
       backend:
     mem_limit: 2000m
     mem_swappiness: 0
+    profiles:
+      - tests
+
+  mcod-local-admin: &local-container-service
+    container_name: mcod-admin
+    platform: linux/amd64
+    build:
+      context: .
+      dockerfile: docker/app/Dockerfile
+      tags:
+        - "mcod-app:local"
+    depends_on:
+      - mcod-db
+      - mcod-rabbitmq
+      - mcod-redis
+      - mcod-elasticsearch
+      - mcod-rdfdb
+      - mcod-smtp
+      - mcod-nginx
+    env_file: .env
+    environment: &local-container-env-app
+      <<: *local-container-env
+      # component specific
+      COMPONENT: admin
+    volumes:
+      - ./data:/usr/src/mcod_backend/data
+      - ./database:/usr/src/mcod_backend/database
+      - ./docker/nginx/certs/mcod.local.pem:/usr/src/mcod_backend/mcod.local.pem
+      - ./manage.py:/usr/src/mcod_backend/manage.py
+      - ./mcod:/usr/src/mcod_backend/mcod
+      - ./media:/usr/src/mcod_backend/media
+      - ./statics:/usr/src/mcod_backend/statics
+      - ./test-data:/usr/src/mcod_backend/test-data
+      - ./translations:/usr/src/mcod_backend/translations
+    command:
+      - "python"
+      - "manage.py"
+      - "runserver"
+      - "0:8001"
+    networks:
+      backend:
+        ipv4_address: 172.18.18.101
+    mem_limit: 2000m
+    mem_swappiness: 0
+    profiles: []
+
+  mcod-local-api:
+    <<: *local-container-service
+    container_name: mcod-api
+    environment:
+      <<: *local-container-env-app
+      ENVIRONMENT: local
+      COMPONENT: api
+    command:
+      - "python"
+      - "-m"
+      - "werkzeug.serving"
+      - "--bind"
+      - "0:8000"
+      - "--reload"
+      - "--debug"
+      - "mcod.api:app"
+    networks:
+      backend:
+        ipv4_address: 172.18.18.102
+
+  mcod-local-cms:
+    <<: *local-container-service
+    container_name: mcod-cms
+    environment:
+      <<: *local-container-env-app
+      ENVIRONMENT: local
+      COMPONENT: cms
+    command:
+      - "python"
+      - "manage.py"
+      - "runserver"
+      - "0:8002"
+    networks:
+      backend:
+        ipv4_address: 172.18.18.103
+
+  mcod-local-ws:
+    <<: *local-container-service
+    container_name: mcod-ws
+    environment:
+      <<: *local-container-env-app
+      ENVIRONMENT: local
+      COMPONENT: ws
+    command:
+      - "hypercorn"
+      - "--workers=1"
+      - "--reload"
+      - "--debug"
+      - "--bind"
+      - "0.0.0.0:8001"
+      - "mcod.asgi:application"
+    networks:
+      backend:
+        ipv4_address: 172.18.18.104
+
+  mcod-local-celery:
+    <<: *local-container-service
+    container_name: mcod-celery
+    environment:
+      <<: *local-container-env-app
+      ENVIRONMENT: local
+      COMPONENT: celery
+      CELERY_INSTALL_CERTIFICATES: 1
+      # no scheduler
+      CELERY_OPTS: "-l DEBUG"
+      # using beat
+      # CELERY_OPTS: "-l DEBUG -B --scheduler django_celery_beat.schedulers:DatabaseScheduler"
+    entrypoint:
+      - /usr/local/bin/start-celery-local
+    networks:
+      backend:
+        ipv4_address: 172.18.18.110 # unused, for clarity
+
+  mcod-local-run:
+    <<: *local-container-with-tests
+    container_name: mcod-managepy
+    depends_on: [] # assume the user has the rest of services running
+    environment:
+      <<: *local-container-env-app
+    entrypoint: []
+    command: []
+    networks:
+      backend:
+    profiles:
+      - manual

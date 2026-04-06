@@ -49,7 +49,6 @@ RUN pip install -I setuptools"<58" "pipenv==2022.10.12"
 
 ADD Pipfile.lock /usr/src/mcod_backend/Pipfile.lock
 ADD Pipfile      /usr/src/mcod_backend/Pipfile
-ADD django_logingovpl-0.0.5-py3-none-any.whl /usr/src/mcod_backend/django_logingovpl-0.0.5-py3-none-any.whl
 ADD django_suit-0.2.28-py3-none-any.whl      /usr/src/mcod_backend/django_suit-0.2.28-py3-none-any.whl
 ADD hypereditor-0.1.0-py3-none-any.whl       /usr/src/mcod_backend/hypereditor-0.1.0-py3-none-any.whl
 RUN pipenv --verbose install --deploy --system
@@ -66,7 +65,14 @@ RUN chmod +x /usr/local/bin/start-django
 COPY ./docker/app/start-celery.sh /usr/local/bin/start-celery
 RUN chmod +x /usr/local/bin/start-celery
 
+COPY ./docker/app/start-celery-local.sh /usr/local/bin/start-celery-local
+RUN chmod +x /usr/local/bin/start-celery-local
+
+# TODO: limit the context here to only the required paths
 ADD . /usr/src/mcod_backend
+
+# Compile translations and cleanup pyc files afterwards
 RUN python manage.py compilemessages --settings mcod.settings.test -v 3
+RUN find /usr/src/mcod_backend -name '*.pyc' -delete
 
 EXPOSE 8001 5678

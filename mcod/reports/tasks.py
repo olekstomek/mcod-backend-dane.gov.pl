@@ -4,11 +4,13 @@ import json
 import logging
 import os
 from collections import OrderedDict
+from itertools import islice
 from pathlib import Path
 from time import time
-from typing import Any, Collection, Dict, List
+from typing import Any, Collection, Dict, Iterable, Iterator, List, TypeVar
 
 from celery import chord
+from celery.canvas import Signature
 from celery.signals import task_failure, task_prerun, task_success
 from django.apps import apps
 from django.conf import settings
@@ -43,11 +45,13 @@ from mcod.resources.models import Resource
 from mcod.resources.tasks import validate_link
 from mcod.showcases.serializers import ShowcaseProposalCSVSerializer
 from mcod.suggestions.serializers import DatasetSubmissionCSVSerializer
+from mcod.unleash import is_enabled
 from mcod.users.serializers import UserLocalTimeCSVSerializer
 
 User = get_user_model()
 logger = logging.getLogger("mcod")
 kronika_logger = logging.getLogger("kronika-sparql-performance")
+T = TypeVar("T")
 
 
 @extended_shared_task(ignore_result=False)
@@ -251,6 +255,7 @@ def create_no_resource_dataset_report():
             status="published",
         )
         .distinct()
+        .iterator(chunk_size=2000)
     )
     serializer_cls = csr.get_serializer(Dataset)
     serializer = serializer_cls(many=True)
@@ -528,43 +533,89 @@ def generate_broken_links_reports_task():
     workflow.apply_async()
 
 
-@extended_shared_task(ignore_result=False)
-def validate_resources_links():
-    """
-    Triggers the validation of external links for all published resources.
+if is_enabled("S69_resource_link_validation_chunk"):
 
-    This task gathers all published resources containing external links and creates
-    a separate validation task for each one. These tasks are executed in parallel
-    using a Celery chord. After all validation tasks have completed, a callback
-    triggers the generation of broken links reports:
-    - Admin Broken Links report (visible via PA)
-    - Public Broken Links report (visible via OD frontend site)
+    from mcod.resources.tasks import validate_links_batch
 
-    This ensures that the reports are always generated,
-    even if some of the validation subtasks fail.
-    """
+    def batch_generator(iterable: Iterable[T], batch_size: int) -> Iterator[List[T]]:
+        it = iter(iterable)
+        while True:
+            batch = list(islice(it, batch_size))
+            if not batch:
+                return
+            yield batch
 
-    # Fetch all published resources that have external links to be validated.
-    qs: QuerySet = Resource.objects.published_with_ext_links_only()
+    @extended_shared_task(ignore_result=False)
+    def validate_resources_links() -> None:
+        """
+        Triggers validation of external links for all published resources.
 
-    if settings.BROKEN_LINKS_EXCLUDE_DEVELOPERS:
-        qs = qs.exclude(dataset__organization__institution_type=Organization.INSTITUTION_TYPE_DEVELOPER)
+        Resources are processed in fixed-size batches and dispatched as Celery tasks
+        to limit task-graph size and avoid excessive chord overhead.
 
-    resources_ids: List[int] = list(qs.values_list("pk", flat=True))
+        Each batch task validates links and persists results to the database.
+        After all batch tasks complete, a final report is generated.
 
-    # Prepare a list of individual validation subtasks, one for each resource.
-    subtasks = [validate_link.s(res_id) for res_id in resources_ids]
+        This task acts only as an orchestrator and does not return a result.
+        """
 
-    # Define the callback task to be executed after all validations are finished.
-    # The .on_error handler ensures that the report generation task runs even if
-    # some of the link validation subtasks fail.
-    # https://docs.celeryq.dev/en/v5.3.0/userguide/canvas.html#:~:text=You%20can%20also%20add%20error%20callbacks%20using%20the%20on_error%20method%3A
+        # Fetch all published resources that have external links to be validated.
+        qs: QuerySet = Resource.objects.published_with_ext_links_only()
+        chunk_size = settings.BROKEN_LINKS_CHUNK_SIZE
 
-    callback = generate_broken_links_reports_task.si().on_error(generate_broken_links_reports_task.si())
+        if settings.BROKEN_LINKS_EXCLUDE_DEVELOPERS:
+            qs = qs.exclude(dataset__organization__institution_type=Organization.INSTITUTION_TYPE_DEVELOPER)
 
-    # Execute the validation tasks in parallel. The callback will be triggered
-    # once all subtasks are complete.
-    chord(subtasks, callback).apply_async()
+        resources_ids: Iterator[int] = qs.values_list("pk", flat=True).iterator(chunk_size=10_000)
+        total_resources_count: int = qs.count()
+
+        logger.info("Starting link validation for %s resources (chunk_size=%s)", total_resources_count, chunk_size)
+
+        subtasks: Iterator[Signature] = (validate_links_batch.s(batch) for batch in batch_generator(resources_ids, chunk_size))
+
+        # Define the callback task to be executed after all validations are finished.
+        callback: Signature = generate_broken_links_reports_task.si().on_error(generate_broken_links_reports_task.si())
+        chord(subtasks, callback).apply_async()
+
+else:
+
+    @extended_shared_task(ignore_result=False)
+    def validate_resources_links():
+        """
+        Triggers the validation of external links for all published resources.
+
+        This task gathers all published resources containing external links and creates
+        a separate validation task for each one. These tasks are executed in parallel
+        using a Celery chord. After all validation tasks have completed, a callback
+        triggers the generation of broken links reports:
+        - Admin Broken Links report (visible via PA)
+        - Public Broken Links report (visible via OD frontend site)
+
+        This ensures that the reports are always generated,
+        even if some of the validation subtasks fail.
+        """
+
+        # Fetch all published resources that have external links to be validated.
+        qs: QuerySet = Resource.objects.published_with_ext_links_only()
+
+        if settings.BROKEN_LINKS_EXCLUDE_DEVELOPERS:
+            qs = qs.exclude(dataset__organization__institution_type=Organization.INSTITUTION_TYPE_DEVELOPER)
+
+        resources_ids: List[int] = list(qs.values_list("pk", flat=True))
+
+        # Prepare a list of individual validation subtasks, one for each resource.
+        subtasks = [validate_link.s(res_id) for res_id in resources_ids]
+
+        # Define the callback task to be executed after all validations are finished.
+        # The .on_error handler ensures that the report generation task runs even if
+        # some of the link validation subtasks fail.
+        # https://docs.celeryq.dev/en/v5.3.0/userguide/canvas.html#:~:text=You%20can%20also%20add%20error%20callbacks%20using%20the%20on_error%20method%3A
+
+        callback = generate_broken_links_reports_task.si().on_error(generate_broken_links_reports_task.si())
+
+        # Execute the validation tasks in parallel. The callback will be triggered
+        # once all subtasks are complete.
+        chord(subtasks, callback).apply_async()
 
 
 @task_failure.connect(sender=generate_csv)

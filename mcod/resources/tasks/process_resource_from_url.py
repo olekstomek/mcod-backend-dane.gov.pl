@@ -13,7 +13,6 @@ from mcod.resources.tasks.common import (
     prepare_url_task_result_for_resource,
     save_task_result_for_resource_after_task_failure,
 )
-from mcod.unleash import is_enabled
 
 logger = logging.getLogger("mcod")
 
@@ -127,9 +126,6 @@ def process_resource_from_url_task_postrun_handler(sender, task_id, task, signal
 
         task_result = TaskResult.objects.get_task(task_id)
         Resource.raw.filter(pk=resource_id).update(link_tasks_last_status=task_result.status)
-        if not is_enabled("S67_less_updates_es_end_rdf_in_resource_processing.be"):
-            resource = Resource.raw.get(pk=resource_id)
-            resource.update_es_and_rdf_db()
     except Exception as exc:
         logger.exception(f"Exception occurred during process_resource_from_url_task_postrun_handler: {exc}")
 

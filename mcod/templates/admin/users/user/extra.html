@@ -1,6 +1,6 @@
 {% load core_tags %}
 {% if 'agent_organizations' in adminform.form.fields %}
-<script type="text/javascript">
+<script type="text/javascript" nonce="{{ request.csp_nonce }}">
     function toggle_is_agent_opts() {
         if ($('input[name=is_agent_opts]:checked').val() == 'new') {
             $('div.field-from_agent').hide();

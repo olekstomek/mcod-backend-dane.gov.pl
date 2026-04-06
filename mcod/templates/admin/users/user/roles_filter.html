@@ -9,21 +9,3 @@
     {% endif %}
   {% endfor %}
 </select>
-
-<script type="text/javascript">
-    $(document).ready(function() {
-        $('#user-roles-filter').attr('name', 'role');
-        // http://davidstutz.github.io/bootstrap-multiselect/index.html#configuration-options
-        $('#user-roles-filter').multiselect({
-            nonSelectedText: "{{ title|capfirst }}",
-            numberDisplayed: 6,
-            onChange: function(option, checked) {
-              if (checked === true){
-                $('#user-roles-filter option[value=' + $(option).val() + ']').attr("selected", "selected");
-              } else {
-                $('#user-roles-filter option[value=' + $(option).val() + ']').removeAttr("selected");
-              }
-            },
-        });
-    });
-</script>

@@ -2477,7 +2477,7 @@ msgid "Password must contain at least one digit."
 msgstr "Hasło musi zawierać przynajmniej jedną cyfrę."
 
 msgid "Password must contain at least one upper and one lower letter."
-msgstr "Hasło musi zawierać przynajmniej jedną dużą i jedną mała literę."
+msgstr "Hasło musi zawierać przynajmniej jedną dużą i jedną małą literę."
 
 msgid "Password must contain at least one special character."
 msgstr "Hasło musi zawierać przynajmniej jeden znak specjalny."
@@ -4867,12 +4867,12 @@ msgid "Reserved characters"
 msgstr ""
 
 msgid "Sincerely,"
-msgstr "Z poważaniem,"
+msgstr "Pozdrawiamy,"
 
 msgid "The Open Data Data Administrators team"
-msgstr "Zespół administratorów portalu Otwarte Dane"
+msgstr "Zespół administratorów portalu dane.gov.pl"
 
-msgid "The message was generated automatically, please do not reply to it."
+msgid "This message was generated automatically, please do not reply to it."
 msgstr ""
 "Wiadomość została wygenerowana automatycznie, prosimy na nią nie odpowiadać."
 
@@ -4885,25 +4885,37 @@ msgstr "ZOSTAŁ DODANY KOMENTARZ DO PROPOZYCJI NOWYCH DANYCH"
 msgid "Registration confirmation"
 msgstr "Potwierdzenie rejestracji"
 
-msgid "Dear user of the open data portal (dane.gov.pl)"
-msgstr "Szanowny użytkowniku portalu Otwarte Dane (dane.gov.pl)"
+msgid "Registration on dane.gov.pl portal"
+msgstr "Rejestracja na portalu dane.gov.pl"
+
+msgid "ACCOUNT ALREADY EXISTS ON DANE.GOV.PL PORTAL"
+msgstr "PRÓBA PONOWNEJ REJESTRACJI NA PORTALU DANE.GOV.PL"
+
+msgid "Account already exists on dane.gov.pl portal"
+msgstr "Próba ponownej rejestracji na portalu dane.gov.pl"
+
+msgid "An account associated with this email address already exists on the dane.gov.pl portal."
+msgstr "Na portalu dane.gov.pl jest już konto powiązane z tym adresem e-mail."
+
+msgid "If you don't remember your password, you can change it. To do so, open the link below or copy and paste it into your web browse:"
+msgstr "Jeśli nie pamiętasz do niego hasła, możesz je zmienić. Aby to zrobić, otwórz poniższy link lub skopiuj go do okna przeglądarki:"
+
+msgid "Not trying to register? Ignore this message — someone may have accidentally entered your email address."
+msgstr "To nie Ty próbujesz się zarejestrować? Zignoruj tę wiadomość – ktoś mógł przypadkowo wpisać Twój adres e-mail."
 
 msgid "Thank you for creating an account."
-msgstr "Dziękujemy za założenie konta."
-
-msgid "If you did not create an account, please ignore this message. "
-msgstr "Jeśli to nie Ty założyłeś konto prosimy o zignorowanie tej wiadomości."
+msgstr "Dziękujemy za rejestrację na portalu dane.gov.pl."
 
 msgid ""
 "In order to complete the registration process, click (or copy and paste in "
 "the address field of the web browser) into the link below."
 msgstr ""
-"W celu dokończenia procesu rejestracji kliknij (lub skopiuj i wklej w pole "
-"adres przeglądarki internetowej) poniższy link."
+"Aby dokończyć zakładanie konta, otwórz poniższy link lub skopiuj go do okna "
+"przeglądarki:"
 
 #, python-format
-msgid "The link is valid for %(limit)s hours."
-msgstr "Link jest ważny przez %(limit)s godziny."
+msgid "Confirm registration link is valid for %(limit)s hours."
+msgstr "Link będzie ważny przez %(limit)s godz. od wysłania tej wiadomości."
 
 msgid "A comment was posted on the data set"
 msgstr "Została zgłoszona uwaga do zbioru"
@@ -4949,38 +4961,33 @@ msgstr ""
 msgid "Password reset"
 msgstr "Reset hasła"
 
-msgid "PASSWORD RESET TO THE SERVICE OPEN DATA"
-msgstr "RESET HASŁA DO SERWISU OTWARTE DANE"
+msgid "Password change for dane.gov.pl portal"
+msgstr "Zmiana hasła na portalu dane.gov.pl"
+
 
 msgid ""
 "We have received a request to reset the password for your Account "
 "established on the Portal."
-msgstr ""
-"Otrzymaliśmy żądanie zresetowania hasła do Twojego Konta założonego w "
-"Portalu."
+msgstr "Otrzymaliśmy prośbę o zmianę hasła do konta na portalu dane.gov.pl."
 
 msgid ""
 "Click (or copy and paste in the web browser's address field) the link below "
 "to change yours password."
-msgstr ""
-"Kliknij (lub skopiuj i wklej w pole adres przeglądarki internetowej) link "
-"poniżej by zmienić swoje hasło."
+msgstr "Aby zmienić hasło, otwórz poniższy link lub skopiuj go do okna przeglądarki:"
 
 msgid ""
 "If you do not want to reset your password, simply ignore this message - "
 "probably by accident someone has entered your email address."
 msgstr ""
-"Jeśli nie chcesz zresetować hasła, po prostu zignoruj tę wiadomość – "
-"prawdopodobnie ktoś przypadkowo wpisał Twój adres e-mail."
+"To nie Ty chcesz zmienić hasło? Zignoruj tę wiadomość – ktoś mógł przypadkowo "
+"wpisać Twój adres e-mail."
 
-msgid ""
-"The link will expire in 48 hours. The password can be reset at any time. "
-"Just go to the site login on the portal and request a new password reset "
-"link."
+#, python-format
+msgid "Reset password link validity in %(limit)s hours"
 msgstr ""
-"Link wygaśnie w ciągu 48 godzin. Hasło może zostać zresetowane w dowolnej "
-"chwili. Proszę skorzystać z funkcji “Reset hasła” dostępnej na portalu "
-"podczas logowania."
+"Link będzie ważny przez %(limit)s godz. od wysłania tej wiadomości. W każdej chwili możesz "
+"otrzymać nowy link, jeśli wybierzesz „Nie pamiętam hasła” na stronie logowania. "
+"Wtedy obecny link stanie się nieaktywny."
 
 msgid ""
 "Wiadomość została wygenerowana automatycznie przez oprogramowanie portalu na "
@@ -5687,3 +5694,9 @@ msgstr "Błąd podczas pobierania pliku z: %(url)s."
 #, python-format
 msgid "Requested too many records, %(requested)d. Maximum count is %(max)d."
 msgstr "Zażądano zbyt wielu rekordów, %(requested)d. Maksymalna liczba wynosi %(max)d."
+
+msgid "Rate limit exceeded"
+msgstr "Przekroczono limit żądań"
+
+msgid "Too many requests. Please try again later."
+msgstr "Zbyt wiele żądań. Spróbuj ponownie później."

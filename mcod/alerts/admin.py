@@ -42,8 +42,8 @@ class AlertForm(ModelForm):
         widgets = {
             "title_pl": UnescapeTextarea(attrs={"style": "width: 99%", "rows": 2}),
             "title_en": UnescapeTextarea(attrs={"style": "width: 99%", "rows": 2}),
-            "description_pl": CKEditorWidget(config_name="alert_description"),
-            "description_en": CKEditorWidget(config_name="alert_description"),
+            "description_pl": CKEditorWidget(config_name="basic_description"),
+            "description_en": CKEditorWidget(config_name="basic_description"),
             "start_date": SuitSplitDateTimeWidget(),
             "finish_date": SuitSplitDateTimeWidget(),
         }

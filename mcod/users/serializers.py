@@ -45,6 +45,19 @@ class ConfirmResetPasswordApiResponse(TopLevel):
         attrs_schema = ConfirmResetPasswordApiAttrs
 
 
+class CheckTokenApiAttrs(ObjectAttrs):
+    is_valid = fields.Bool(required=True)
+
+    class Meta:
+        object_type = "token"
+        url_template = "{api_url}/auth/password/verify-token"
+
+
+class CheckTokenApiResponse(TopLevel):
+    class Meta:
+        attrs_schema = CheckTokenApiAttrs
+
+
 class UserCSVSerializer(CSVSerializer):
     id = fields.Int(data_key=_("id"), required=True, example=77)
     email = fields.Email(data_key=_("Email"), default="", required=True, example="user@example.com")

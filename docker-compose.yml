@@ -5,13 +5,11 @@ services:
       context: .
       dockerfile: docker/postgres/Dockerfile
       tags:
-        - "postgresql:13-trixie-mcod"
+        - "postgresql:17-trixie-mcod"
     restart: "no"
     command: postgres -c config_file=/etc/postgresql/postgresql.conf
     volumes:
-      - $PWD/configs/postgresql:/etc/postgresql
-      - $PWD/test-data/database:/dumps
-      - postgres_vol:/var/lib/postgresql/data
+      - postgres_vol_17:/var/lib/postgresql/data
     env_file:
       - .env
     networks:
@@ -32,6 +30,17 @@ services:
     networks:
       backend:
         ipv4_address: 172.18.18.19
+
+  mcod-flower:
+    image: mher/flower
+    container_name: mcod-flower
+    environment:
+      - CELERY_BROKER_URL=amqp://mcod-rabbitmq:5672
+      - FLOWER_PORT=8888
+    ports:
+      - 8888:8888
+    networks:
+      backend:
 
   mcod-redis:
     container_name: mcod-redis
@@ -80,6 +89,8 @@ services:
     networks:
       backend:
         ipv4_address: 172.18.18.22
+    healthcheck:
+      test: "echo HELO | nc 127.0.0.1 1025"
 
   mcod-rdfdb:
     container_name: mcod-rdfdb
@@ -88,7 +99,7 @@ services:
     ports:
       - "3030:3030"
     environment:
-      - ADMIN_PASSWORD=Britenet.1
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
     volumes:
       - fuseki_vol:/fuseki
     networks:
@@ -97,12 +108,16 @@ services:
 
   mcod-nginx:
     container_name: mcod-nginx
-    image: nginx:1.16
+    image: nginx:1.29.1-bookworm-perl-mcod-1
+    build:
+      dockerfile: docker/nginx/Dockerfile
+      context: .
     restart: "no"
     volumes:
-      - $PWD/statics:/usr/share/nginx/html/statics
-      - $PWD/configs/nginx:/etc/nginx/conf.d:ro
-      - $PWD/media:/usr/share/nginx/html/media
+      - ./docker/nginx/config-templates:/etc/nginx/templates:ro
+      - ./docker/nginx/certs:/etc/nginx/conf.d/certs:ro
+      - ./statics:/usr/share/nginx/html/statics
+      - ./media:/usr/share/nginx/html/media
     ports:
       - "80:80"
       - "443:443"
@@ -111,12 +126,20 @@ services:
     networks:
       backend:
         ipv4_address: 172.18.18.100
+        aliases:
+          # see *_URL environment variables and server_name directives in config files
+          - mcod.local
+          - admin.mcod.local
+          - api.mcod.local
+          - cms.mcod.local
+          - forum.mcod.local
+          - mail.mcod.local
     extra_hosts:
       - host.docker.internal:172.17.0.1
 
   mcod-discourse:
     container_name: mcod-discourse
-    image: 'docker.io/bitnami/discourse:2-debian-10'
+    image: 'registry.dane.gov.pl/mcod/backend/discourse:2-debian-10-mcod-1'
     ports:
       - "3000:3000"
     depends_on:
@@ -124,7 +147,7 @@ services:
       - mcod-redis
     volumes:
       - 'discourse_vol:/bitnami'
-    environment: &environment-definition
+    environment: &discourse-environment-definition
       POSTGRESQL_HOST: mcod-db
       POSTGRESQL_ROOT_USER: ${POSTGRES_USER}
       POSTGRESQL_ROOT_PASSWORD: ${POSTGRES_PASSWORD}
@@ -141,10 +164,12 @@ services:
     networks:
       backend:
         ipv4_address: 172.18.18.140
+    healthcheck:
+      test: "curl -f -s -o /dev/null -w '%{http_code}' http://localhost:3000/"
 
   mcod-discourse-sidekiq:
     container_name: mcod-discourse-sidekiq
-    image: 'docker.io/bitnami/discourse:2-debian-10'
+    image: 'registry.dane.gov.pl/mcod/backend/discourse:2-debian-10-mcod-1'
     ports:
       - "3001:3000"
     depends_on:
@@ -153,11 +178,14 @@ services:
     volumes:
       - 'discourse_vol:/bitnami'
     environment:
-      <<: *environment-definition
+      <<: *discourse-environment-definition
       DISCOURSE_PORT: "3000"
     networks:
       backend:
         ipv4_address: 172.18.18.141
+    healthcheck:
+      test: "curl -f -s -o /dev/null -w '%{http_code}' http://localhost:3000/"
+
 networks:
   backend:
     driver: bridge
@@ -169,9 +197,9 @@ networks:
         - subnet: 172.18.18.0/24
 
 volumes:
-  postgres_vol:
+  postgres_vol_17:
   rabbitmq_vol:
   elastic_vol:
   redis_vol:
-  discourse_vol:
   fuseki_vol:
+  discourse_vol:

@@ -41,7 +41,6 @@ from mcod.core.metrics import (
 from mcod.core.utils import falcon_set_cookie, jsonapi_validator, route_to_name
 from mcod.counters.lib import Counter
 from mcod.lib.encoders import DateTimeToISOEncoder
-from mcod.unleash import is_enabled
 
 logger = logging.getLogger("mcod-api")
 
@@ -161,9 +160,6 @@ class FalconCacheMiddleware(BaseFalconCacheMiddleware):
 
     def process_resource(self, req, resp, resource, params):
         """Body of the method is almost all moved from parent class."""
-
-        if not is_enabled("S66_falcon_caching_operate.be"):
-            return
 
         # do not cache response for methods POST, PATCH, PUT and DELETE - regardless of set caching strategy
         if req.method.upper() in [

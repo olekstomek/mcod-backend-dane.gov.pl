@@ -2,7 +2,7 @@
 
 {% block extrajs %}
     {{ block.super }}
-    <script type="text/javascript">
+    <script type="text/javascript" nonce="{{ request.csp_nonce }}">
      var $appGroups = $('.field-is_mobile_app,.field-is_desktop_app');
      var $UrlInputs = $('#id_mobile_apple_url,#id_mobile_google_url,#id_desktop_macos_url,#id_desktop_linux_url,#id_desktop_windows_url');
      var $appCheckboxes = $('#id_is_mobile_app,#id_is_desktop_app');

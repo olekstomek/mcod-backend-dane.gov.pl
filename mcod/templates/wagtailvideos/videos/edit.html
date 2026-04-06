@@ -11,7 +11,7 @@
 {% block extra_js %}
 {{ block.super }}
 {% url 'wagtailadmin_tag_autocomplete' as autocomplete_url %}
-<script>
+<script nonce="{{ request.csp_nonce }}">
     {{ form.media.css }}
     $(function() {
         $('#id_tags').tagit({

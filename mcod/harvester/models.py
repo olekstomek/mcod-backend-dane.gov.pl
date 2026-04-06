@@ -65,7 +65,6 @@ from mcod.resources.dga_utils import (
     validate_dga_file_columns,
     validate_institution_type_for_contains_protected_data,
 )
-from mcod.unleash import is_enabled
 
 logger = logging.getLogger("mcod")
 
@@ -455,12 +454,7 @@ class DataSource(AdminMixin, LogMixin, SoftDeletableModel, TimeStampedModel):
                     setattr(obj, k, v)
                 obj.save()
         else:
-            if is_enabled("S68_harvester_updates_all_datasets_and_resources_as_before.be"):
-                obj, created = self.dataset_model.raw.update_or_create(
-                    ext_ident=data["ext_ident"], source=data["source"], defaults=data
-                )
-            else:
-                obj, created = self._create_or_update_if_changed_dataset(data)
+            obj, created = self._create_or_update_if_changed_dataset(data)
 
         if obj and modified:  # TODO: find a better way to save modification date with value from data.
             self.dataset_model.raw.filter(id=obj.id).update(modified=modified)
@@ -623,12 +617,7 @@ class DataSource(AdminMixin, LogMixin, SoftDeletableModel, TimeStampedModel):
                     setattr(obj, k, v)
                 obj.save()
         else:
-            if is_enabled("S68_harvester_updates_all_datasets_and_resources_as_before.be"):
-                obj, created = self.resource_model.raw.update_or_create(
-                    dataset=dataset, ext_ident=data["ext_ident"], defaults=data
-                )
-            else:
-                obj, created = self._create_or_update_if_changed_resource(dataset, data)
+            obj, created = self._create_or_update_if_changed_resource(dataset, data)
 
         if obj and modified:  # TODO: find a better way to save modification date with value from data.
             self.resource_model.raw.filter(id=obj.id).update(modified=modified)

@@ -10,13 +10,13 @@ from django.contrib.auth import get_user_model, login
 from django.contrib.sessions.backends.cache import KEY_PREFIX
 from django.core.cache import caches
 from django.urls import reverse
-from logingovpl.mixins import ACSMixin, LogoutMixin
-from logingovpl.objects import LoginGovPlUser
-from logingovpl.services import decode_cipher_value
-from logingovpl.statuses import SUCCESS
-from logingovpl.utils import get_in_response_to, get_name_id, get_session_id, get_user, xml_ns
 
 from mcod.lib.triggers import session_store
+from mcod.logingovpl.mixins import ACSMixin, LogoutMixin
+from mcod.logingovpl.objects import LoginGovPlUser
+from mcod.logingovpl.services import decode_cipher_value
+from mcod.logingovpl.statuses import SUCCESS
+from mcod.logingovpl.utils import get_in_response_to, get_name_id, get_session_id, get_user, xml_ns
 from mcod.users.constants import (
     EMAIL_REGEX,
     LOGINGOVPL_PROCESS,

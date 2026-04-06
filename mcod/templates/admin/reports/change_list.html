@@ -2,7 +2,7 @@
 {% load i18n %}
 {% block object-tools-items %}
     {{ block.super }}
-    {% if SETTINGS.SHOW_GENERATE_RAPORT_BUTTOON and 'summarydailyreport' in request.path %}
+    {% if SETTINGS.SHOW_GENERATE_RAPORT_BUTTON and 'summarydailyreport' in request.path %}
         <a href="{% url 'admin:reports-generate-dailyreport' %}">{% blocktrans %}Generate report{% endblocktrans %}</a>
     {% endif %}
 {% endblock %}

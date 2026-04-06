@@ -330,11 +330,6 @@ class TestResourceChangeType:
         Form's required (but also read-only) fields should be passed with values from resource
         instance on resource update.
         """
-        # TODO: lremkowicz: both mocker's should be removed when flag
-        # TODO: `S64_fix_for_status_code_500_when_type_change` will be deleted.
-        mocker.patch("mcod.resources.admin.is_enabled", return_value=True)
-        mocker.patch("mcod.resources.forms.is_enabled", return_value=True)
-
         # GIVEN Resource with source instance
         no_data_resource.dataset.source = xml_data_source
         no_data_resource.dataset.save()

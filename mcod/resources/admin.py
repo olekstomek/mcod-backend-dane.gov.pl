@@ -56,7 +56,6 @@ from mcod.resources.models import (
     ResourceTrash,
     Supplement,
 )
-from mcod.unleash import is_enabled
 
 rules_names = {x[0]: x[1] for x in settings.VERIFICATION_RULES}
 
@@ -560,31 +559,7 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):  # MRO matters here for unescape
         defaults = dict(kwargs)
         if obj is None:
             defaults["form"] = self.add_form
-        if is_enabled("S64_fix_for_status_code_500_when_type_change.be"):
-            return super().get_form(request, obj=obj, **defaults)
-        else:
-            default_factory = super().get_form(request, obj=obj, **defaults)
-            if obj and obj.is_imported:
-                return self.modify_change_form_for_imported(default_factory)
-
-            return default_factory
-
-    @staticmethod
-    def modify_change_form_for_imported(modelform_factory):
-        """
-        TODO: lremkowicz: has to be removed after flag S64_fix_for_status_code_500_when_type_change deleted
-        Return the factory with the modified ChangeResourceForm due to the fact
-        that some fields aren't editable for imported resources.
-        """
-
-        def factory(*args, **kwargs):
-            form = modelform_factory(*args, **kwargs)
-            form.fields["has_dynamic_data"].required = False
-            form.fields["has_high_value_data"].required = False
-            form.fields["has_research_data"].required = False
-            return form
-
-        return factory
+        return super().get_form(request, obj=obj, **defaults)
 
     def get_history(self, obj: models.Model, request: HttpRequest | None = None):
         history = super().get_history(obj)

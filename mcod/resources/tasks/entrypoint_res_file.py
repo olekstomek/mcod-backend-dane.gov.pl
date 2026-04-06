@@ -15,7 +15,6 @@ from mcod.resources.tasks.common import (
     update_resource_verification_date,
 )
 from mcod.resources.tasks.process_resource_file import process_resource_res_file_task
-from mcod.unleash import is_enabled
 
 logger = logging.getLogger("mcod")
 
@@ -73,9 +72,8 @@ def entrypoint_process_resource_file_validation_task(
             # update resource with url task status
             Resource.raw.filter(pk=resource_id).update(link_tasks_last_status=url_task_result.status)
 
-        if is_enabled("S67_less_updates_es_end_rdf_in_resource_processing.be"):
-            # 4. Update es and rdf
-            resource.update_es_and_rdf_db()
+        # 4. Update es and rdf
+        resource.update_es_and_rdf_db()
 
     except Exception as e:
         logger.error(f"Exception occurred during process_resource_file_validation_task: {e}")

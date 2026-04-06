@@ -16,7 +16,6 @@ from querystring_parser import builder
 from mcod.core.api import fields, schemas
 from mcod.core.registries import object_attrs_registry
 from mcod.core.utils import complete_invalid_xml, setpathattr
-from mcod.unleash import is_enabled
 
 
 class ErrorSource(schemas.ExtSchema):
@@ -273,12 +272,8 @@ class Object(schemas.ExtSchema):
                 _name = field.attribute or name
                 field.schema.context.update(object_url=object_url)
                 value = getattr(data, _name, None)
-                if is_enabled("S65_fix_long_api_response.be"):
-                    if isinstance(value, Manager) or isinstance(value, MultilingualQuerySet):
-                        value = value.values()
-                else:
-                    if isinstance(value, Manager):
-                        value = value.values()
+                if isinstance(value, Manager) or isinstance(value, MultilingualQuerySet):
+                    value = value.values()
                 if value or field.required:
                     relationships[_name] = value
                     relationships["object_url"] = object_url

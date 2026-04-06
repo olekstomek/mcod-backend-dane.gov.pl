@@ -17,7 +17,7 @@
     {% block pagination_js %}
     <!-- Following javaScript is required if you have tabs,
          otherwise you can remove this JS code -->
-    <script type="text/javascript">
+    <script type="text/javascript" nonce="{{ request.csp_nonce }}">
         (function ($) {
             Suit.$('.pagination li a').on('click', function () {
                 if (document.location.hash) {
@@ -110,7 +110,7 @@
 </div>
 
 {% block inline_js %}
-<script type="text/javascript">
+<script type="text/javascript" nonce="{{ request.csp_nonce }}">
 (function($) {
     $(document).ready(function($) {
         var rows = "#{{ inline_admin_formset.formset.prefix }}-group .tabular.inline-related tbody tr";

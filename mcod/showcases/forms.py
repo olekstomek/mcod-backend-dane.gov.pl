@@ -28,8 +28,14 @@ class ShowcaseForm(ModelFormWithKeywords, UnEscapeWidgetMixin):
         widget=forms.Textarea(attrs={"style": "width: 99%", "rows": 2}),
     )
     slug = forms.CharField(required=False)
-    notes = forms.CharField(widget=CKEditorUploadingWidget, required=True, label=_("Notes"))
-    notes_en = forms.CharField(widget=CKEditorUploadingWidget, required=False, label=_("Notes") + " (EN)")
+    notes = forms.CharField(
+        widget=CKEditorUploadingWidget(config_name="default_with_images_button_description"), required=True, label=_("Notes")
+    )
+    notes_en = forms.CharField(
+        widget=CKEditorUploadingWidget(config_name="default_with_images_button_description"),
+        required=False,
+        label=_("Notes") + " (EN)",
+    )
     datasets = forms.ModelMultipleChoiceField(
         queryset=Dataset.objects.filter(status=STATUS_CHOICES[0][0]),
         required=False,

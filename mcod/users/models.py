@@ -1,8 +1,9 @@
 import logging
 import time
+from datetime import timedelta
 from enum import Enum
-from typing import List, Union
-from uuid import uuid4
+from typing import List, Optional, Union
+from uuid import UUID, uuid4
 
 from constance import config
 from django.apps import apps
@@ -349,11 +350,23 @@ class User(
             .first()
         )
 
-    def _get_or_create_token(self, token_type, expiration_delta=None):
-        token = self._get_active_token(token_type)
+    @transaction.atomic
+    def _get_or_create_token(self, token_type: int, expiration_delta: Optional[timedelta] = None) -> UUID:
+        """
+        Get active token or create a new one if not exist. For password reset token
+        (token_type=1) always create a new one and expire the old active one if exists.
+        """
+        token: Optional[Token] = self._get_active_token(token_type)
+
+        # expire an old active password token (OTD-1735)
+        if token and token_type == 1:
+            token.invalidate()
+            token = None
+
         if not token:
             expiration_delta = expiration_delta or timezone.timedelta(hours=settings.TOKEN_EXPIRATION_TIME)
             token = Token.objects.create(user=self, token_type=token_type, expiration_date=timezone.now() + expiration_delta)
+
         return token.token
 
     @property
@@ -699,12 +712,16 @@ class User(
         )
 
     def send_password_reset_email(self):
-        context = {"link": self.password_reset_absolute_url, "host": settings.BASE_URL}
+        context = {
+            "link": self.password_reset_absolute_url,
+            "host": settings.BASE_URL,
+            "limit": settings.TOKEN_EXPIRATION_TIME,
+        }
         msg_plain = render_to_string("mails/password-reset.txt", context)
         msg_html = render_to_string("mails/password-reset.html", context)
 
         return self.send_mail(
-            "Reset hasła",
+            _("Password change for dane.gov.pl portal"),
             msg_plain,
             config.ACCOUNTS_EMAIL,
             [self.email],
@@ -721,7 +738,23 @@ class User(
         msg_html = render_to_string("mails/confirm-registration.html", context)
 
         return self.send_mail(
-            "Aktywacja konta",
+            _("Registration on dane.gov.pl portal"),
+            msg_plain,
+            config.ACCOUNTS_EMAIL,
+            [self.email],
+            html_message=msg_html,
+        )
+
+    def send_duplicate_registration_password_reset_email(self):
+        context = {
+            "link": self.password_reset_absolute_url,
+            "host": settings.BASE_URL,
+        }
+        msg_plain = render_to_string("mails/duplicate_registration_password_reset.txt", context)
+        msg_html = render_to_string("mails/duplicate_registration_password_reset.html", context)
+
+        return self.send_mail(
+            _("Account already exists on dane.gov.pl portal"),
             msg_plain,
             config.ACCOUNTS_EMAIL,
             [self.email],

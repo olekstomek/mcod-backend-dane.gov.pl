@@ -1,6 +1,6 @@
 {% load core_tags %}
 
-<script>
+<script nonce="{{ request.csp_nonce }}">
     const institutionTypePrivate = 'private';
     const privateDescriptionHeader = 'Warunki ponownego wykorzystywania danych prywatnych w tym zbiorze.';
     const privateDescriptionCC0 = 'Dane prywatne są udostępniane w celu ich wykorzystywania bez warunków (licencja CC0).';

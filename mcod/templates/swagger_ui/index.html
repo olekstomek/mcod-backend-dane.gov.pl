@@ -79,7 +79,7 @@
 
     <script src="{% static 'swagger_ui/swagger-ui-bundle.js' %}"></script>
     <script src="{% static 'swagger_ui/swagger-ui-standalone-preset.js' %}"></script>
-    <script>
+    <script nonce="{{ request.csp_nonce }}">
         function replace_tag_name(from_selector, to_tag_name) {
             document.querySelectorAll(from_selector).forEach(function(from_element) {
                 let to_element = document.createElement(to_tag_name);

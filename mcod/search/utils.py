@@ -1,9 +1,11 @@
 import logging
 
+import falcon
+
 logger = logging.getLogger("mcod")
 
 
-def get_sparql_limiter_key(req, resp, resource, params):
+def get_sparql_limiter_key(req: falcon.Request) -> str:
     """Custom function used to generate limiter key for SparqlView."""
     key = f"{req.path}_{req.access_route[-2] if len(req.access_route) > 1 else req.remote_addr}"
     try:

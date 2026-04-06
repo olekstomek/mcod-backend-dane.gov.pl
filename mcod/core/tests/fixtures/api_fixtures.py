@@ -5,11 +5,11 @@ import jwt
 import pytest
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from logingovpl.objects import LoginGovPlUser
 from requests import Request
 
 from mcod.api import ApiApp, get_api_app
 from mcod.core.api.middleware_loader import middleware_loader
+from mcod.logingovpl.objects import LoginGovPlUser
 
 User = get_user_model()
 

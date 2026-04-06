@@ -3,7 +3,7 @@
 <body onload="run()">
 </body>
 </html>
-<script>
+<script nonce="{{ request.csp_nonce }}">
     'use strict';
     function run () {
         var oauth2 = window.opener.swaggerUIRedirectOauth2;

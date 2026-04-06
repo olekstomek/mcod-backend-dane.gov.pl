@@ -15,7 +15,7 @@ from elasticsearch_dsl import A, Search
 from mcod.core.api.cache import app_cache as cache
 from mcod.core.api.handlers import BaseHdlr, RetrieveManyHdlr, SearchHdlr, SubscriptionSearchHdlr
 from mcod.core.api.hooks import login_optional
-from mcod.core.api.limiter import limiter
+from mcod.core.api.limiter import rate_limiter
 from mcod.core.api.rdf.namespaces import NAMESPACES
 from mcod.core.api.schemas import ListingSchema
 from mcod.core.api.views import BaseView, JsonAPIView
@@ -174,7 +174,7 @@ class SparqlView(BaseView):
 
     @falcon.before(login_optional)
     @versioned
-    @limiter.limit(limits=settings.FALCON_LIMITER_SPARQL_LIMITS, key_func=get_sparql_limiter_key)
+    @rate_limiter(limits=settings.FALCON_LIMITER_SPARQL_LIMITS, key_gen=get_sparql_limiter_key)
     def on_post(self, request, response, *args, **kwargs):
         """
         ---

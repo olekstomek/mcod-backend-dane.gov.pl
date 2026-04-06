@@ -1,12 +1,15 @@
 import json
 from functools import partial
+from urllib.parse import quote
 
 import falcon
 from apispec import APISpec
 from dal import autocomplete
 from django.apps import apps
 from django.conf import settings
+from django.http import Http404, HttpResponse
 from django.template import loader
+from django.views import View
 from elasticsearch_dsl import A
 
 from mcod.core.api.cache import documented_cache
@@ -42,7 +45,7 @@ from mcod.resources.deserializers import (
     TableApiSearchRequest,
 )
 from mcod.resources.documents import ResourceDocument
-from mcod.resources.models import AggregatedDGAInfo
+from mcod.resources.models import AggregatedDGAInfo, ResourceFile
 from mcod.resources.serializers import (
     AggregatedDGAInfoApiResponse,
     ChartApiResponse,
@@ -743,3 +746,32 @@ class ResourceAutocompleteView(autocomplete.Select2QuerySetView):
 
     def get_queryset(self):
         return Resource.raw.autocomplete(self.request.user, self.q, self.forwarded)
+
+
+class DownloadResourceFileView(View):
+    """
+    Handles secure file downloads from the 'resources' directory using
+    the Nginx X-Accel-Redirect mechanism.
+
+    This view validates if the requested file exists in the database
+    and if the related resource is published. If validated, it delegates
+    the physical file serving to Nginx via an internal redirect.
+    """
+
+    def get(self, request, file_path):
+        resource_file = ResourceFile.objects.filter_by_path(file_path)
+
+        if not resource_file:
+            raise Http404
+
+        response = HttpResponse()
+
+        content_type = resource_file.mimetype or "application/octet-stream"
+        safe_path = quote(file_path, safe="/")
+        safe_filename = quote(resource_file.file_basename)
+
+        response["Content-Disposition"] = f"attachment; filename*=UTF-8''{safe_filename}"
+        response["Content-Type"] = content_type
+        response["X-Accel-Redirect"] = f"/protected_resources/{safe_path}"
+
+        return response

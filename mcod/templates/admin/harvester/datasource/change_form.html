@@ -9,13 +9,13 @@
 
 {% block extrahead %}
 {{ block.super }}
-  <script src="{% static 'harvester/axios/axios.min.js' %}"></script>
-  <script src="{% static 'celery_progress/celery_progress.js' %}"></script>
+  <script src="{% static 'harvester/axios/axios.min.js' %}" nonce="{{ request.csp_nonce }}"></script>
+  <script src="{% static 'celery_progress/celery_progress.js' %}" nonce="{{ request.csp_nonce }}"></script>
 {% endblock %}
 
 {% block extrajs %}
 {{ block.super }}
-<script type="text/javascript">
+<script type="text/javascript" nonce="{{ request.csp_nonce }}">
   function onError(progressBarElement, progressBarMessageElement) {
     progressBarElement.style.backgroundColor = '#dc4f63';
     progressBarMessageElement.innerHTML = '{% trans "XML validation was unsuccessful!" %}';

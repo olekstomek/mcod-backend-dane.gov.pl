@@ -5,7 +5,7 @@
 {% endcomment %}
 
 {% allow_unicode_slugs as unicode_slugs_enabled %}
-<script>
+<script nonce="{{ request.csp_nonce }}">
     window.chooserUrls = {
         'pageChooser': '{% url "wagtailadmin_choose_titled_page" %}',
         'externalLinkChooser': '{% url "wagtailadmin_choose_page_titled_external_link" %}',

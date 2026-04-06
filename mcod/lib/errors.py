@@ -1,5 +1,5 @@
 import json
-from typing import Any, Dict
+from typing import Any, Dict, Iterable, Mapping, Tuple, Union
 from uuid import uuid4
 
 import falcon.request
@@ -192,6 +192,11 @@ def http_error_handler(
 ) -> None:
     update_content_type(request, response)
     response_status: str = exc.status
+
+    # Extend response headers from exc
+    exc_headers: Union[Mapping[str, str], Iterable[Tuple[str, str]], None] = exc.headers
+    if exc_headers:
+        response.set_headers(exc_headers)
 
     default_error_msg = _("An unexpected error occurred. Please try again later.")
 

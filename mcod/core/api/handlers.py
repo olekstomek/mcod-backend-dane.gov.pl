@@ -15,7 +15,6 @@ from mcod.core.api.parsers import Parser
 from mcod.core.db.models import BaseExtendedModel
 from mcod.core.utils import disable_modeltracker
 from mcod.lib.rdf.store import get_sparql_store
-from mcod.unleash import is_enabled
 
 
 class BaseHdlr:
@@ -67,10 +66,7 @@ class BaseHdlr:
 
     def serialize(self, *args, **kwargs):
         self.prepare_context(*args, **kwargs)
-        if is_enabled("S65_fix_long_api_response.be"):
-            with disable_modeltracker():
-                return self.serializer.dump(self.response.context)
-        else:
+        with disable_modeltracker():
             return self.serializer.dump(self.response.context)
 
     def _get_data(self, cleaned, *args, **kwargs):

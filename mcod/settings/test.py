@@ -9,8 +9,6 @@ TEMPLATES[0]["OPTIONS"]["debug"] = DEBUG  # noqa: F405
 INTERNAL_IPS = ("127.0.0.1", "localhost", "172.18.18.100")  # needed to use debug processor in django templates
 
 
-EMAIL_BACKEND = "django.core.mail.backends.filebased.EmailBackend"
-
 BASE_URL = "http://test.mcod"
 API_URL = "http://api.test.mcod"
 ADMIN_URL = "http://admin.test.mcod"
@@ -78,6 +76,8 @@ def get_email_file_path():
 
 
 EMAIL_FILE_PATH = get_email_file_path()
+EMAIL_BACKEND = "django.core.mail.backends.filebased.EmailBackend"
+
 TEST_SAMPLES_PATH = str(ROOT_DIR("data/test_samples"))
 TEST_CERTS_PATH = str(ROOT_DIR("data/test_certs"))
 TEST_ROOT = str(ROOT_DIR("test"))

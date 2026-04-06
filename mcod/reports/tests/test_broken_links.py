@@ -7,6 +7,7 @@ from unittest.mock import MagicMock, patch
 import numpy as np
 import pandas as pd
 import pytest
+from django.conf import settings
 from django.test import override_settings
 from pytest_mock import MockerFixture
 from typing_extensions import TypeAlias
@@ -508,12 +509,13 @@ class TestReportFolder:
             file.exists()
 
 
-@pytest.mark.parametrize(
-    "env_variable_value_broken_links_exclude_developers, expected_validations_count", ([True, 3], [False, 10])
-)
+@pytest.mark.parametrize("env_variable_value_broken_links_exclude_developers", (True, False))
 def test_developers_resources_included_excluded_from_broken_links(
-    mocker: MockerFixture, env_variable_value_broken_links_exclude_developers: bool, expected_validations_count: int
+    mocker: MockerFixture, env_variable_value_broken_links_exclude_developers: bool
 ):
+    # OTD-2367: Mock is_enabled should be removed with S69_resource_link_validation_chunk
+    mocker.patch("mcod.reports.tasks.is_enabled", return_value=True)
+
     # GIVEN - 10 all resoures (7 developers, 3 non-developers)
     dev_api_resource_ids: List[int] = [
         resource.id
@@ -541,7 +543,7 @@ def test_developers_resources_included_excluded_from_broken_links(
     all_resource_ids: List[int] = sorted(dev_api_resource_ids + dev_web_resource_ids + non_developers_resource_ids)
 
     mocked_chord: MagicMock = mocker.patch("mcod.reports.tasks.chord", return_value=MagicMock())
-    mocked_validate_link: MagicMock = mocker.patch("mcod.reports.tasks.validate_link")
+    mocked_validate_link: MagicMock = mocker.patch("mcod.reports.tasks.validate_links_batch")
 
     with override_settings(BROKEN_LINKS_EXCLUDE_DEVELOPERS=env_variable_value_broken_links_exclude_developers):
         # WHEN
@@ -550,10 +552,15 @@ def test_developers_resources_included_excluded_from_broken_links(
     mocked_chord.assert_called_once()
     args, kwargs = mocked_chord.call_args
     subtask = args[0]
-    assert len(subtask) == expected_validations_count
 
-    validated_resource_ids: List[int] = sorted([args[0] for args, kwargs in mocked_validate_link.s.call_args_list])
+    assert isinstance(subtask, Generator)
 
+    subtask_elements = list(subtask)
+    assert len(subtask_elements) <= settings.BROKEN_LINKS_CHUNK_SIZE
+
+    call_ = mocked_validate_link.s.call_args_list[0]
+    args, kwargs = call_
+    validated_resource_ids = sorted(args[0])
     if env_variable_value_broken_links_exclude_developers:
         assert validated_resource_ids == non_developers_resource_ids
     else:

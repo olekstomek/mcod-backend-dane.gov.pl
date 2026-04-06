@@ -10,13 +10,8 @@ from django.utils.translation import pgettext_lazy
 from kombu import Queue
 from sentry_sdk.integrations.celery import CeleryIntegration
 from sentry_sdk.integrations.django import DjangoIntegration
+from sentry_sdk.integrations.falcon import FalconIntegration
 from wagtail.embeds.oembed_providers import all_providers
-
-from mcod.lib.sentry_falcon import (
-    FalconIntegration,
-)  # Update to Sentry's integration when
-
-# https://github.com/getsentry/sentry-python/pull/1297 will be merged and released
 
 
 env = environ.Env()
@@ -111,7 +106,6 @@ INSTALLED_APPS = [
     "notifications",
     "django_admin_multiple_choice_list_filter",
     "auditlog",
-    "logingovpl",
     # Our apps
     "mcod.core",
     "mcod.organizations",
@@ -142,13 +136,16 @@ INSTALLED_APPS = [
     "mcod.discourse",
     "mcod.regions",
     "mcod.showcases",
+    "mcod.logingovpl",
 ]
 
 CMS_MIDDLEWARE = ["mcod.cms.middleware.CounterMiddleware"] if COMPONENT == "cms" else []
+CSP_MIDDLEWARE = ["csp.middleware.CSPMiddleware"] if COMPONENT in ("admin", "api") else []
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    *CSP_MIDDLEWARE,
     "mcod.cms.middleware.SiteMiddleware",
     *CMS_MIDDLEWARE,
     "wagtail.contrib.redirects.middleware.RedirectMiddleware",
@@ -231,10 +228,10 @@ DATABASES = {
 }
 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-DEBUG_EMAIL_BACKEND = "django.core.mail.backends.filebased.EmailBackend"
 EMAIL_HOST = env("EMAIL_HOST", default="")
 EMAIL_PORT = env("EMAIL_PORT", default=465)
-EMAIL_USE_SSL = env("EMAIL_USE_SSL", default="yes") in ("yes", "1", "true")
+EMAIL_USE_SSL = env.bool("EMAIL_USE_SSL", default=True)
+EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=False)
 EMAIL_HOST_USER = env("EMAIL_HOST_USER", default="")
 EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
 DATA_UPLOAD_MAX_NUMBER_FIELDS = env("DATA_UPLOAD_MAX_NUMBER_FIELDS", default=10000)
@@ -410,7 +407,7 @@ MODELTRANS_FALLBACK = {
     "default": (LANGUAGE_CODE,),
 }
 
-USE_RDF_DB = env("USE_RDF_DB", default="no") in ("yes", "1", "true")
+USE_RDF_DB = env.bool("USE_RDF_DB", default=False)
 FUSEKI_URL = env("FUSEKI_URL", default="http://mcod-rdfdb:3030")
 FUSEKI_DATASET = env("FUSEKI_DATASET_1", default="ds")
 SPARQL_QUERY_ENDPOINT = f"{FUSEKI_URL}/{FUSEKI_DATASET}/query"
@@ -442,6 +439,13 @@ CACHES = {
         "TIMEOUT": 600,
         "OPTIONS": {"MAX_ENTRIES": 1000},
     },
+    "limiter": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "%s/3" % REDIS_URL,
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        },
+    },
 }
 
 CMS_API_CACHE_TIMEOUT = env("CMS_API_CACHE_TIMEOUT", default=3600)  # 1 hour.
@@ -450,11 +454,7 @@ SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 SESSION_CACHE_ALIAS = "sessions"
 SESSION_COOKIE_PREFIX = env("SESSION_COOKIE_PREFIX", default=None)
 SESSION_COOKIE_DOMAIN = env("SESSION_COOKIE_DOMAIN", default="dane.gov.pl")
-SESSION_COOKIE_SECURE = env("SESSION_COOKIE_SECURE", default="yes") in (
-    "yes",
-    "1",
-    "true",
-)
+SESSION_COOKIE_SECURE = env.bool("SESSION_COOKIE_SECURE", default=True)
 SESSION_COOKIE_AGE = env("SESSION_COOKIE_AGE", default=14400)  # 4h
 SESSION_COOKIE_HTTPONLY = False
 SESSION_COOKIE_SAMESITE = "Lax"
@@ -683,10 +683,11 @@ CKEDITOR_CONFIGS = {
             ],
             ["RemoveFormat", "Source"],
         ],
+        "removeButtons": "Image",
         "height": 300,
         "width": "100%",
     },
-    "alert_description": {
+    "basic_description": {
         "toolbar": "Custom",
         "toolbar_Custom": [
             ["Bold", "Italic", "Underline"],
@@ -694,12 +695,28 @@ CKEDITOR_CONFIGS = {
         "height": 300,
         "width": "100%",
     },
-    "data_source_description": {
-        "toolbar": "Custom",
+    "default_with_images_button_description": {
         "toolbar_Custom": [
             ["Bold", "Italic", "Underline"],
+            [
+                "NumberedList",
+                "BulletedList",
+                "-",
+                "Outdent",
+                "Indent",
+                "-",
+                "JustifyLeft",
+                "JustifyCenter",
+                "JustifyRight",
+                "JustifyBlock",
+            ],
+            ["Link", "Unlink"],
+            [
+                "Attachments",
+            ],
+            ["RemoveFormat", "Source"],
         ],
-        "height": 100,
+        "height": 300,
         "width": "100%",
     },
     "licenses": {
@@ -723,6 +740,7 @@ CKEDITOR_CONFIGS = {
             ],
             ["RemoveFormat", "Source"],
         ],
+        "removeButtons": "Image",
         "height": 150,
         "width": "100%",
     },
@@ -872,6 +890,7 @@ CELERY_TASK_ROUTES = {
     "mcod.resources.tasks.update_last_day_data_date": {"queue": "resources"},
     "mcod.resources.tasks.update_resource_with_archive_format": {"queue": "resources"},
     "mcod.resources.tasks.validate_link": {"queue": "resources"},
+    "mcod.resources.tasks.validate_links_batch": {"queue": "resources"},
     "mcod.schedules.tasks.send_admin_notification_task": {"queue": "notifications"},
     "mcod.schedules.tasks.update_notifications_task": {"queue": "notifications"},
     "mcod.showcases.tasks.create_showcase_proposal_task": {"queue": "showcases"},
@@ -894,6 +913,8 @@ CELERY_TASK_ROUTES = {
 }
 
 CELERY_SINGLETON_BACKEND_URL = REDIS_URL
+CELERY_SOFT_TIME_LIMIT = env.int("CELERY_SOFT_TIME_LIMIT", default=240)
+CELERY_TIME_LIMIT = env.int("CELERY_TIME_LIMIT", default=300)
 
 RESOURCE_MIN_FILE_SIZE = 1024
 RESOURCE_MAX_FILE_SIZE = 1024 * 1024 * 1024  # 1024 MB
@@ -1357,7 +1378,7 @@ SEARCH_PATH = "/search"
 
 JSONAPI_SCHEMA_PATH = str(DATA_DIR.path("jsonapi.config.json"))
 JSONSTAT_SCHEMA_PATH = str(DATA_DIR.path("json_stat_schema_2_0.json"))
-JSONSTAT_V1_ALLOWED = env("JSONSTAT_V1_ALLOWED", default="yes") in ("yes", "1", "true")
+JSONSTAT_V1_ALLOWED = env.bool("JSONSTAT_V1_ALLOWED", default=True)
 GPX_11_SCHEMA_PATH = str(DATA_DIR.path("gpx_xsd_1_1.xsd"))
 GPX_10_SCHEMA_PATH = str(DATA_DIR.path("gpx_xsd_1_0.xsd"))
 
@@ -1408,11 +1429,7 @@ DATE_BASE_FORMATS = [
 
 TIME_BASE_FORMATS = ["HH:mm", "HH:mm:ss", "HH:mm:ss.SSSSSS"]
 
-METABASE_DASHBOARDS_ENABLED = env("METABASE_DASHBOARDS_ENABLED", default="no") in (
-    "yes",
-    1,
-    "true",
-)
+METABASE_DASHBOARDS_ENABLED = env.bool("METABASE_DASHBOARDS_ENABLED", default=False)
 
 CONSTANCE_BACKEND = "constance.backends.database.DatabaseBackend"
 CONSTANCE_DATABASE_PREFIX = "constance:mcod:"
@@ -1575,11 +1592,7 @@ CONSTANCE_CONFIG_FIELDSETS = OrderedDict(
     )
 )
 
-SHOW_GENERATE_RAPORT_BUTTOON = env("SHOW_GENERATE_RAPORT_BUTTOON", default="yes") in [
-    "yes",
-    "1",
-    "true",
-]
+SHOW_GENERATE_RAPORT_BUTTON = env.bool("SHOW_GENERATE_RAPORT_BUTTON", default=True)
 
 TEST_RUNNER = "django.test.runner.DiscoverRunner"
 
@@ -1972,19 +1985,11 @@ SHACL_UNSUPPORTED_MIMETYPES = ["application/n-quads", "application/trix"]
 STATS_THEME_COOKIE_NAME = "mcod_stats_theme"
 
 # Falcon settings
-FALCON_CACHING_ENABLED = env("FALCON_CACHING_ENABLED", default="yes") in (
-    "yes",
-    1,
-    "true",
-)
-FALCON_LIMITER_ENABLED = env("FALCON_LIMITER_ENABLED", default="yes") in (
-    "yes",
-    1,
-    "true",
-)
-# https://falcon-limiter.readthedocs.io/en/latest/#rate-limit-string-notation
-FALCON_LIMITER_DEFAULT_LIMITS = env("FALCON_LIMITER_DEFAULT_LIMITS", default="5 per minute,2 per second")
+FALCON_CACHING_ENABLED = env.bool("FALCON_CACHING_ENABLED", default=True)
+FALCON_LIMITER_ENABLED = env.bool("FALCON_LIMITER_ENABLED", default=True)
+
 FALCON_LIMITER_SPARQL_LIMITS = env("FALCON_LIMITER_SPARQL_LIMITS", default="20 per minute,1 per second")
+FALCON_LIMITER_PASSWORD_RESET_LIMITS = env("FALCON_LIMITER_PASSWORD_RESET_LIMITS", default="5 per hour")
 
 FALCON_MIDDLEWARES = [
     "mcod.core.api.middlewares.ContentTypeMiddleware",
@@ -2024,7 +2029,7 @@ CKAN_LICENSES_WHITELIST = {
 
 CSV_CATALOG_BATCH_SIZE = env("CSV_CATALOG_BATCH_SIZE", default=20000)
 
-DISCOURSE_FORUM_ENABLED = env("DISCOURSE_FORUM_ENABLED", default=True)
+DISCOURSE_FORUM_ENABLED = env.bool("DISCOURSE_FORUM_ENABLED", default=True)
 
 SPARQL_ENDPOINTS = {
     "kronika": {
@@ -2078,7 +2083,7 @@ PUBLIC_LICENSES_ARTICLE_URL = env(
 )
 
 
-ENABLE_SENTRY = env("ENABLE_SENTRY", default="no") in ["yes", "1", "true"]
+ENABLE_SENTRY = env.bool("ENABLE_SENTRY", default=False)
 
 SENTRY_SDK_KWARGS = {
     "admin": {
@@ -2119,11 +2124,12 @@ if COMPONENT in ["admin", "cms", "celery"] and ENABLE_SENTRY:
 
 
 USERS_TEST_LOGINGOVPL = env.bool("USERS_TEST_LOGINGOVPL", default=False)
+LOGINGOVPL_TIMEOUT = env.int("LOGINGOVPL_TIMEOUT", default=10)
 LOGINGOVPL_ISSUER = env("LOGINGOVPL_ISSUER", default="CA_INT_LOGIN")
 LOGINGOVPL_SSO_URL = env("LOGINGOVPL_SSO_URL", default="https://int.login.gov.pl/login/SingleSignOnService")
 LOGINGOVPL_ASSERTION_CONSUMER_URL = env("LOGINGOVPL_ASSERTION_CONSUMER_URL", default="http://127.0.0.1/idp")
-LOGINGOVPL_ENC_KEY = env("LOGINGOVPL_ENC_KEY", default="pki/logingovpl_int_enc.key.pem")
-LOGINGOVPL_ENC_CERT = env("LOGINGOVPL_ENC_CERT", default="pki/logingovpl_int_enc.crt.pem")
+LOGINGOVPL_ENC_KEY = env("LOGINGOVPL_ENC_KEY", default="logingovpl_int_enc.key.pem")
+LOGINGOVPL_ENC_CERT = env("LOGINGOVPL_ENC_CERT", default="logingovpl_int_enc.crt.pem")
 
 LOGINGOVPL_ARTIFACT_RESOLVE_URL = env(
     "LOGINGOVPL_ARTIFACT_RESOLVE_URL",
@@ -2146,3 +2152,101 @@ ALLOWED_SPARQL_EXTERNAL_DOMAINS = env.list(
 )
 
 BROKEN_LINKS_EXCLUDE_DEVELOPERS = env.bool("BROKEN_LINKS_EXCLUDE_DEVELOPERS", True)
+BROKEN_LINKS_CHUNK_SIZE = env.int("BROKEN_LINKS_CHUNK_SIZE", default=150)
+
+# ==============================================================================
+# CONTENT SECURITY POLICY (CSP)
+# ==============================================================================
+
+# "Report only" mode. The browser won't block anything, but will show warnings in the console.
+CSP_REPORT_ONLY = env.bool("CSP_REPORT_ONLY", False)
+JSDELIVR_URL = env("JSDELIVR_URL", default="https://cdn.jsdelivr.net")  # Bootstrap Select JS and other dependencies)
+BOOTSTRAPCDN_URL = env("BOOTSTRAPCDN_URL", default="https://stackpath.bootstrapcdn.com")  # Bootstrap JS (version 4.x))
+UNPKG_URL = env("UNPKG_URL", default="https://unpkg.com")  # Bootstrap Table, Panel (UI elements))
+MATOMO_URL = env("MATOMO_URL", default="https://stats.dane.gov.pl")
+
+# SCRIPT POLICY (script-src)
+# Specifies allowed sources for JavaScript files.
+CSP_SCRIPT_SRC = env.list(
+    "CSP_SCRIPT_SRC",
+    default=[
+        "'self'",  # Allow scripts from own domain
+        # --- EXTERNAL LIBRARIES (CDN) ---
+        "https://code.jquery.com",  # jQuery library
+        "https://cdnjs.cloudflare.com",  # Popper.js (required by Bootstrap)
+        BOOTSTRAPCDN_URL,
+        JSDELIVR_URL,
+        UNPKG_URL,
+        MATOMO_URL,
+        # --- APPLICATION EXCEPTIONS ---
+        # CKEditor 4 uses 'eval()', which requires the following exception.
+        # TODO: Remove after migrating to a newer editor version that doesn't require eval.
+        "'unsafe-eval'",
+        # --- HASHES FOR SPECIFIC INLINE SCRIPTS ---
+        # Applies to: block extrahead
+        "'sha256-yR6Tf3b1wcK8ToJtFWsW/9l/TThyJOCTmtPx+dYJpzU='",
+    ],
+)
+
+# FRAME POLICY (frame-src)
+# Allows embedding Metabase dashboards (<iframe> tags)
+CSP_FRAME_SRC = env.list(
+    "CSP_FRAME_SRC",
+    default=[
+        "'self'",
+        METABASE_URL,
+    ],
+)
+
+# Automatically add cryptographic 'nonce' to <script> tags
+# This allows legitimate inline scripts with this token to run,
+# while blocking unauthorized XSS injections.
+CSP_INCLUDE_NONCE_IN = env.list("CSP_INCLUDE_NONCE_IN", default=["script-src"])
+
+# ATTRIBUTE POLICY (script-src-attr)
+# Applies to events inside HTML tags, e.g. onclick="", href="javascript:...".
+# Requires "'unsafe-inline'" for backward compatibility (Legacy Django Admin / Widgets).
+CSP_SCRIPT_SRC_ATTR = env.list("CSP_SCRIPT_SRC_ATTR", default=["'unsafe-inline'"])
+
+# STYLE POLICY (style-src)
+CSP_STYLE_SRC = env.list(
+    "CSP_STYLE_SRC",
+    default=[
+        "'self'",
+        "'unsafe-inline'",  # Required for dynamic styles (e.g. JS libraries modifying CSS)
+        "https://fonts.googleapis.com",  # Google Fonts
+        UNPKG_URL,
+        BOOTSTRAPCDN_URL,
+        JSDELIVR_URL,
+    ],
+)
+
+# IMAGE POLICY (img-src)
+# Specifies where image files can be loaded from (<img> tags).
+CSP_IMG_SRC = env.list(
+    "CSP_IMG_SRC",
+    default=[
+        "'self'",  # Images served directly from the application
+        "data:",  # Base64 encoded images (e.g. dynamic charts, small icons in CSS)
+        MATOMO_URL,  # Matomo Image Tracker (invisible tracking pixel for users without JS)
+        BASE_URL,
+    ],
+)
+
+# CONNECTION POLICY (connect-src)
+# Specifies domains to which background requests can be sent (AJAX, Fetch, WebSocket).
+CSP_CONNECT_SRC = env.list(
+    "CSP_CONNECT_SRC",
+    default=[
+        "'self'",  # API requests to own backend
+        MATOMO_URL,
+        UNPKG_URL,  # Bootstrap Table, Panel (UI elements)
+    ],
+)
+
+# FONT POLICY (font-src)
+CSP_FONT_SRC = env.list("CSP_FONT_SRC", default=["'self'"])
+
+# DEFAULT POLICY (default-src)
+# Fallback for all directives that have not been explicitly defined (e.g. media-src, object-src).
+CSP_DEFAULT_SRC = env.list("CSP_DEFAULT_SRC", default=["'self'"])

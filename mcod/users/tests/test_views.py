@@ -1,3 +1,4 @@
+import re
 from collections import namedtuple
 from smtplib import SMTPException
 from typing import Dict, List, Optional, Tuple
@@ -11,8 +12,8 @@ from django.core import mail
 from django.test import Client, override_settings
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.translation import gettext as _, override
 from falcon.testing import Result, TestClient
-from logingovpl.objects import LoginGovPlUser
 from rest_framework import status
 from rest_framework.test import APIClient, APIRequestFactory
 
@@ -22,6 +23,7 @@ from mcod.core.tests.helpers.helpers import AnyDateTimeTestVariable
 from mcod.core.tests.test_mixins import MethodsNotAllowedTestMixin
 from mcod.lib.jwt import decode_jwt_token, get_auth_header
 from mcod.lib.triggers import session_store
+from mcod.logingovpl.objects import LoginGovPlUser
 from mcod.users.constants import (
     LOGINGOVPL_PROCESS,
     LOGINGOVPL_PROCESS_RESULT,
@@ -30,7 +32,7 @@ from mcod.users.constants import (
     PORTAL_TYPE,
 )
 from mcod.users.factories import AdminFactory, EditorFactory, UserFactory
-from mcod.users.models import User as TypeUser
+from mcod.users.models import Token, User as TypeUser
 from mcod.users.services import LoginGovPlData, logingovpl_service
 from mcod.users.views import ACSView
 
@@ -178,7 +180,8 @@ class TestRegisterView:
 
         # WHEN request registration
         with patch("mcod.users.models.User.send_registration_email"):
-            response: Result = client_no_version.simulate_post(url, json=data)
+            with patch("mcod.users.models.User.send_duplicate_registration_password_reset_email"):
+                response: Result = client_no_version.simulate_post(url, json=data)
 
         # THEN
         # Users should not be enumerated
@@ -221,13 +224,18 @@ class TestRegisterView:
         }
         # WHEN request registration
         with patch("mcod.users.models.User.send_registration_email") as mock_send_email:
-            client_no_version.simulate_post(url, json=data)
+            with patch("mcod.users.models.User.send_duplicate_registration_password_reset_email") as mock_reset_password_email:
+                client_no_version.simulate_post(url, json=data)
 
-        # Email should be sent only if new user created
+        # THEN
+        # - Registration email should be sent only when new user created
+        # - Reset password email should be sent only when user already exists
         if not user_exists:
             mock_send_email.assert_called_once()
+            mock_reset_password_email.assert_not_called()
         else:
             mock_send_email.assert_not_called()
+            mock_reset_password_email.assert_called_once()
 
     @pytest.mark.parametrize(
         "weak_password",
@@ -293,11 +301,15 @@ class TestRegisterView:
 
         # WHEN request registration with upper case letters in email
         with patch("mcod.users.models.User.send_registration_email") as mock_send_email:
-            response: Result = client_no_version.simulate_post(url, json=data)
+            with patch("mcod.users.models.User.send_duplicate_registration_password_reset_email") as mock_reset_password_email:
+                response: Result = client_no_version.simulate_post(url, json=data)
 
-        # Email should not be sent
+        # THEN
         assert response.status == falcon.HTTP_201
+        # Registration email should NOT be sent
         mock_send_email.assert_not_called()
+        # Reset password email should be sent
+        mock_reset_password_email.assert_called()
 
     @pytest.mark.parametrize(
         "invalid_attr",
@@ -483,22 +495,25 @@ class TestResetPasswordView:
         assert response.status == falcon.HTTP_500
         mock_send_email.assert_called_once()
 
-    def test_user_send_password_reset_email(self):
+    @pytest.mark.parametrize("lang", ["pl", "en"])
+    def test_user_send_password_reset_email(self, lang):
         user_email = "good@email.com"
         user = UserFactory.create(email=user_email)
 
-        user.send_password_reset_email()
+        with override(lang):
+            user.send_password_reset_email()
 
-        assert len(mail.outbox) == 1
-        received_mail = mail.outbox[0]
-        assert received_mail.subject == "Reset hasła"
-        assert user.password_reset_absolute_url in received_mail.body
-        assert received_mail.to == [
-            user_email,
-        ]
-        assert received_mail.cc == []
-        assert received_mail.bcc == []
-        assert received_mail.from_email == settings.CONSTANCE_CONFIG["ACCOUNTS_EMAIL"][0]
+            assert len(mail.outbox) == 1
+            received_mail: mail.EmailMessage = mail.outbox[0]
+            mail_line_with_token: Optional[re.Match] = re.search(r"/reset-password/([0-9a-f\-]{36})/", received_mail.body)
+            assert mail_line_with_token is not None
+            token_from_mail: str = mail_line_with_token.group(1)
+            assert Token.objects.filter(token=token_from_mail, user=user).exists()
+            assert received_mail.subject == _("Password change for dane.gov.pl portal")
+            assert received_mail.to == [user_email]
+            assert received_mail.cc == []
+            assert received_mail.bcc == []
+            assert received_mail.from_email == settings.CONSTANCE_CONFIG["ACCOUNTS_EMAIL"][0]
 
 
 class TestResetPasswordConfirm:
@@ -519,7 +534,7 @@ class TestResetPasswordConfirm:
         resp = client.simulate_post(url, json=data)
         assert resp.status == falcon.HTTP_422
         assert resp.json["errors"]["data"]["attributes"]["new_password1"] == [
-            "Hasło musi zawierać przynajmniej jedną dużą i jedną mała literę."
+            "Hasło musi zawierać przynajmniej jedną dużą i jedną małą literę."
         ]
 
         data = {
@@ -783,7 +798,7 @@ class TestLogingovplSSOView(MethodsNotAllowedTestMixin):
         the correct envelope is prepared.
         """
         url = f"{self.url}?portal=admin" if portal_type == "ADMIN" else self.url
-        with patch("logingovpl.views.add_sign", return_value="signed_xml"):
+        with patch("mcod.logingovpl.views.add_sign", return_value="signed_xml"):
             with patch("django.contrib.auth.get_user", return_value=active_user):
                 res = self.client.get(url)
 
@@ -804,7 +819,7 @@ class TestLogingovplSSOView(MethodsNotAllowedTestMixin):
         the correct envelope is prepared.
         """
         url = f"{self.url}?portal=admin" if portal_type == "ADMIN" else self.url
-        with patch("logingovpl.views.add_sign", return_value="signed_xml"):
+        with patch("mcod.logingovpl.views.add_sign", return_value="signed_xml"):
             res = self.client.get(url)
 
         assert res.status_code == 200

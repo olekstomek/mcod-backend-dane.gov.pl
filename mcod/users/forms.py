@@ -1,9 +1,12 @@
+from typing import Optional
+
 from dal import autocomplete
 from django import forms
 from django.conf import settings
 from django.contrib.admin import forms as admin_forms
 from django.contrib.admin.widgets import FilteredSelectMultiple
 from django.contrib.auth import forms as auth_forms
+from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
@@ -228,6 +231,12 @@ class UserCreationForm(UserForm):
         if email and User.objects.filter(email__iexact=email).exists():
             self.add_error("email", _("Account for this email already exist"))
         return self.data.get("email", "").lower()
+
+    def clean_password1(self) -> Optional[str]:
+        password1: Optional[str] = self.cleaned_data.get("password1")
+        if password1:
+            validate_password(password1, self.instance)
+        return password1
 
     def clean_password2(self):
         password1 = self.cleaned_data.get("password1")

@@ -73,17 +73,13 @@ class TestXssSanitizer:
         "dangerous_html_tags, expected_output",
         [
             (
-                "';alert(String.fromCharCode(88,83,83))//';alert(String.fromCharCode(88,83,83))//\";alert"
-                '(String.fromCharCode(88,83,83))//";alert(String.fromCharCode(88,83,83))//--></SCRIPT>">\'>'
-                "<SCRIPT>alert(String.fromCharCode(88,83,83))</SCRIPT>",
-                "';alert(String.fromCharCode(88,83,83))//';alert(String.fromCharCode(88,83,83))//\";"
-                'alert(String.fromCharCode(88,83,83))//";alert(String.fromCharCode(88,83,83))//--&gt;"&gt;'
-                "'&gt;alert(String.fromCharCode(88,83,83))",
+                "';alert(String.fromCharCode(88,83,83))//';alert(String.fromCharCode(88,83,83))//\";alert(String.fromCharCode(88,83,83))//\";alert(String.fromCharCode(88,83,83))//--></SCRIPT>\">'><SCRIPT>alert(String.fromCharCode(88,83,83))</SCRIPT>",  # noqa: E501
+                "';alert(String.fromCharCode(88,83,83))//';alert(String.fromCharCode(88,83,83))//\";alert(String.fromCharCode(88,83,83))//\";alert(String.fromCharCode(88,83,83))//-->\">'>alert(String.fromCharCode(88,83,83))",  # noqa: E501
             ),
-            ("'';!--\"<XSS>=&{()}", "'';!--\"=&amp;{()}"),
+            ("'';!--\"<XSS>=&{()}", "'';!--\"=&{()}"),
             (
                 '0\\"autofocus/onfocus=alert(1)--><video/poster/onerror=prompt(2)>"-confirm(3)-"',
-                '0\\"autofocus/onfocus=alert(1)--&gt;"-confirm(3)-"',
+                '0\\"autofocus/onfocus=alert(1)-->"-confirm(3)-"',
             ),
             ("<script/src=data:,alert()>", ""),
             ("<marquee/onstart=alert()>", ""),
@@ -97,33 +93,28 @@ class TestXssSanitizer:
             ("<IMG SRC=`javascript:alert(\"RSnake says, 'XSS'\")`>", "<img>"),
             ('<a onmouseover="alert(document.cookie)">xxs link</a>', "<a>xxs link</a>"),
             ("<a onmouseover=alert(document.cookie)>xxs link</a>", "<a>xxs link</a>"),
-            ('<IMG """><SCRIPT>alert("XSS")</SCRIPT>">', '<img>alert("XSS")"&gt;'),
+            ('<IMG """><SCRIPT>alert("XSS")</SCRIPT>">', '<img>alert("XSS")">'),
             ("<IMG SRC=javascript:alert(String.fromCharCode(88,83,83))>", "<img>"),
             ("<IMG SRC=# onmouseover=\"alert('xxs')\">", '<img src="#">'),
-            ("<IMG SRC= onmouseover=\"alert('xxs')\">", "<img src=\"onmouseover=&quot;alert('xxs')&quot;\">"),
+            ("<IMG SRC= onmouseover=\"alert('xxs')\">", '<img src="onmouseover="alert(\'xxs\')"">'),
             ("<IMG onmouseover=\"alert('xxs')\">", "<img>"),
             ('<IMG SRC=/ onerror="alert(String.fromCharCode(88,83,83))"></img>', '<img src="/">'),
             (
-                "<IMG SRC=&#106;&#97;&#118;&#97;&#115;&#99;&#114;&#105;&#112;&#116;&#58;&#97;&#108;&#101;&#114;&#116;&#40;",
-                "&lt;IMG SRC=&#106;&#97;&#118;&#97;&#115;&#99;&#114;&#105;&#112;&#116;&#58;&#97;&#108;&#101;&#114;&#116;&#40;",
+                "<IMG SRC=&#106;&#97;&#118;&#97;&#115;&#99;&#114;&#105;&#112;&#116;&#58;&#97;&#108;&#101;&#114;&#116;&#40;",  # noqa: E501
+                "<IMG SRC=javascript:alert(",
             ),
-            ("&#39;&#88;&#83;&#83;&#39;&#41;>", "&#39;&#88;&#83;&#83;&#39;&#41;&gt;"),
+            ("&#39;&#88;&#83;&#83;&#39;&#41;>", "'XSS')>"),
             (
-                "<IMG SRC=&#0000106&#0000097&#0000118&#0000097&#0000115&#0000099&#0000114&#0000105&#"
-                "0000112&#0000116&#0000058&#0000097&",
-                "&lt;IMG SRC=&amp;#0000106&amp;#0000097&amp;#0000118&amp;#0000097&amp;#0000115&amp;#0000099&amp;#0000114&amp;"
-                "#0000105&amp;#0000112&amp;#0000116&amp;#0000058&amp;#0000097&amp;",
+                "<IMG SRC=&#0000106&#0000097&#0000118&#0000097&#0000115&#0000099&#0000114&#0000105&#0000112&#0000116&#0000058&#0000097&",  # noqa: E501
+                "<IMG SRC=&#0000106&#0000097&#0000118&#0000097&#0000115&#0000099&#0000114&#0000105&#0000112&#0000116&#0000058&#0000097&",  # noqa: E501
             ),
             (
                 "#0000108&#0000101&#0000114&#0000116&#0000040&#0000039&#0000088&#0000083&#0000083&#0000039&#0000041>",
-                "#0000108&amp;#0000101&amp;#0000114&amp;#0000116&amp;#0000040&amp;#0000039&amp;#0000088&amp;#0000083&amp;"
-                "#0000083&amp;#0000039&amp;#0000041&gt;",
+                "#0000108&#0000101&#0000114&#0000116&#0000040&#0000039&#0000088&#0000083&#0000083&#0000039&#0000041>",
             ),
             (
-                "<IMG SRC=&#x6A&#x61&#x76&#x61&#x73&#x63&#x72&#x69&#x70&#x74&#x3A&#x61&#x6C&#x65&#x72&#x74&#x28&#x27&#x58&#"
-                "x53&#x53&#x27&#x29>",
-                '<img src="&amp;#x6A&amp;#x61&amp;#x76&amp;#x61&amp;#x73&amp;#x63&amp;#x72&amp;#x69&amp;#x70&amp;#x74&amp;#x3A&'
-                'amp;#x61&amp;#x6C&amp;#x65&amp;#x72&amp;#x74&amp;#x28&amp;#x27&amp;#x58&amp;#x53&amp;#x53&amp;#x27&amp;#x29">',
+                "<IMG SRC=&#x6A&#x61&#x76&#x61&#x73&#x63&#x72&#x69&#x70&#x74&#x3A&#x61&#x6C&#x65&#x72&#x74&#x28&#x27&#x58&#x53&#x53&#x27&#x29>",  # noqa: E501
+                '<img src="&#x6A&#x61&#x76&#x61&#x73&#x63&#x72&#x69&#x70&#x74&#x3A&#x61&#x6C&#x65&#x72&#x74&#x28&#x27&#x58&#x53&#x53&#x27&#x29">',  # noqa: E501
             ),
             ("<IMG SRC=\"jav\tascript:alert('XSS');\">", "<img>"),
             ("<IMG SRC=\"jav&#x09;ascript:alert('XSS');\">", "<img>"),
@@ -133,11 +124,11 @@ class TestXssSanitizer:
             ('<SCRIPT/XSS SRC="http://ha.ckers.org/xss.js"></SCRIPT>', ""),
             ('<BODY onload!#$%&()*~+-_.,:;?@[/|\\]^`=alert("XSS")>', ""),
             ('<SCRIPT/SRC="http://ha.ckers.org/xss.js"></SCRIPT>', ""),
-            ('<<SCRIPT>alert("XSS");//<</SCRIPT>', '&lt;alert("XSS");//&lt;'),
+            ('<<SCRIPT>alert("XSS");//<</SCRIPT>', '<alert("XSS");//<'),
             ("<SCRIPT SRC=http://ha.ckers.org/xss.js?< B >", ""),
             ("<SCRIPT SRC=//ha.ckers.org/.j>", ""),
             ("<IMG SRC=\"javascript:alert('XSS')\"", ""),
-            ("<iframe src=http://ha.ckers.org/scriptlet.html <", "&lt;iframe src=http://ha.ckers.org/scriptlet.html &lt;"),
+            ("<iframe src=http://ha.ckers.org/scriptlet.html <", "<iframe src=http://ha.ckers.org/scriptlet.html <"),
             ("\\\";alert('XSS');//", "\\\";alert('XSS');//"),
             ("</script><script>alert('XSS');</script>", "alert('XSS');"),
             ('</TITLE><SCRIPT>alert("XSS");</SCRIPT>', 'alert("XSS");'),
@@ -162,10 +153,13 @@ class TestXssSanitizer:
                 '<STYLE>BODY{-moz-binding:url("http://ha.ckers.org/xssmoz.xml#xss")}</STYLE>',
                 'BODY{-moz-binding:url("http://ha.ckers.org/xssmoz.xml#xss")}',
             ),
-            ("<STYLE>@im\\port'\\ja\\vasc\\ript:alert(\"XSS\")';</STYLE>", "@im\\port'\\ja\\vasc\\ript:alert(\"XSS\")';"),
+            (
+                "<STYLE>@im\\port'\\ja\\vasc\\ript:alert(\"XSS\")';</STYLE>",
+                "@im\\port'\\ja\\vasc\\ript:alert(\"XSS\")';",
+            ),  # noqa: E501
             ("<IMG STYLE=\"xss:expr/*XSS*/ession(alert('XSS'))\">", '<img style="">'),
             ('exp/*<A STYLE=\'no\\xss:noxss("*//*");', "exp/*"),
-            ('xss:ex/*XSS*//*/*/pression(alert("XSS"))\'>', 'xss:ex/*XSS*//*/*/pression(alert("XSS"))\'&gt;'),
+            ('xss:ex/*XSS*//*/*/pression(alert("XSS"))\'>', 'xss:ex/*XSS*//*/*/pression(alert("XSS"))\'>'),
             ("<STYLE TYPE=\"text/javascript\">alert('XSS');</STYLE>", "alert('XSS');"),
             (
                 "<STYLE>.XSS{background-image:url(\"javascript:alert('XSS')\");}</STYLE><A CLASS=XSS></A>",
@@ -179,7 +173,10 @@ class TestXssSanitizer:
             ('<XSS STYLE="behavior: url(xss.htc);">', ""),
             ("¼script¾alert(¢XSS¢)¼/script¾", "¼script¾alert(¢XSS¢)¼/script¾"),
             ('<META HTTP-EQUIV="refresh" CONTENT="0;url=javascript:alert(\'XSS\');">', ""),
-            ('<META HTTP-EQUIV="refresh" CONTENT="0;url=data:text/html base64,PHNjcmlwdD5hbGVydCgnWFNTJyk8L3NjcmlwdD4K">', ""),
+            (
+                '<META HTTP-EQUIV="refresh" CONTENT="0;url=data:text/html base64,PHNjcmlwdD5hbGVydCgnWFNTJyk8L3NjcmlwdD4K">',
+                "",
+            ),  # noqa: E501
             ('<META HTTP-EQUIV="refresh" CONTENT="0; URL=http://;URL=javascript:alert(\'XSS\');">', ""),
             ("<IFRAME SRC=\"javascript:alert('XSS');\"></IFRAME>", ""),
             ('<IFRAME SRC=# onmouseover="alert(document.cookie)"></IFRAME>', ""),
@@ -188,55 +185,54 @@ class TestXssSanitizer:
             ("<TABLE><TD BACKGROUND=\"javascript:alert('XSS')\">", "<table><tbody><tr><td></td></tr></tbody></table>"),
             ("<DIV STYLE=\"background-image: url(javascript:alert('XSS'))\">", '<div style=""></div>'),
             (
-                "<DIV STYLE=\"background-image:\\0075\\0072\\006C\\0028'\\006a\\0061\\0076\\0061\\0073\\0063\\0072\\0069\\0070"
-                "\\0074\\003a\\0061\\006c\\0065\\0072\\0074\\0028.1027\\0058.1053\\0053\\0027\\0029'\\0029\">",
+                "<DIV STYLE=\"background-image:\\0075\\0072\\006C\\0028'\\006a\\0061\\0076\\0061\\0073\\0063\\0072\\0069\\0070\\0074\\003a\\0061\\006c\\0065\\0072\\0074\\0028.1027\\0058.1053\\0053\\0027\\0029'\\0029\">",  # noqa: E501
                 '<div style=""></div>',
             ),
             ("<DIV STYLE=\"background-image: url(&#1;javascript:alert('XSS'))\">", '<div style=""></div>'),
-            ("<DIV STYLE=\"width: expression(alert('XSS'));\">", "<div style='width: expression(alert(\"XSS\"));'></div>"),
+            (
+                "<DIV STYLE=\"width: expression(alert('XSS'));\">",
+                "<div style='width: expression(alert(\"XSS\"));'></div>",
+            ),  # noqa: E501
             (
                 "<!--[if gte IE 4]><SCRIPT>alert('XSS');</SCRIPT><![endif]-->",
-                "<!--[if gte IE 4]&gt;&lt;SCRIPT&gt;alert(&#x27;XSS&#x27;);&lt;/SCRIPT&gt;&lt;![endif]-->",
+                "<!--[if gte IE 4]><SCRIPT>alert('XSS');</SCRIPT><![endif]-->",
             ),
             ("<BASE HREF=\"javascript:alert('XSS');//\">", ""),
             ('<OBJECT TYPE="text/x-scriptlet" DATA="http://ha.ckers.org/scriptlet.html"></OBJECT>', ""),
             (
-                "<!--#exec cmd=\"/bin/echo '<SCR'\"--><!--#exec cmd=\"/bin/echo 'IPT SRC=http://ha.ckers.org/xss.js></SCRIPT>"
-                "'\"-->",
-                "<!--#exec cmd=&quot;/bin/echo &#x27;&lt;SCR&#x27;&quot;--><!--#exec cmd=&quot;/bin/echo &#x27;IPT SRC=http://"
-                "ha.ckers.org/xss.js&gt;&lt;/SCRIPT&gt;&#x27;&quot;-->",
+                "<!--#exec cmd=\"/bin/echo '<SCR'\"--><!--#exec cmd=\"/bin/echo 'IPT SRC=http://ha.ckers.org/xss.js></SCRIPT>'\"-->",  # noqa: E501
+                "<!--#exec cmd=\"/bin/echo '<SCR'\"--><!--#exec cmd=\"/bin/echo 'IPT SRC=http://ha.ckers.org/xss.js></SCRIPT>'\"-->",  # noqa: E501
             ),
             (
                 "<? echo('<SCR)';echo('IPT>alert(\"XSS\")</SCRIPT>'); ?>",
-                '<!--? echo(&#x27;&lt;SCR)&#x27;;echo(&#x27;IPT-->alert("XSS")\'); ?&gt;',
-            ),
+                "<!--? echo('<SCR)';echo('IPT-->alert(\"XSS\")'); ?>",
+            ),  # noqa: E501
             (
                 '<IMG SRC="http://www.thesiteyouareon.com/somecommand.php?somevariables=maliciouscode">',
                 '<img src="http://www.thesiteyouareon.com/somecommand.php?somevariables=maliciouscode">',
             ),
             ('<META HTTP-EQUIV="Set-Cookie" Content="USERID=<SCRIPT>alert(\'XSS\')</SCRIPT>">', ""),
             (
-                '<HEAD><META HTTP-EQUIV="CONTENT-TYPE" CONTENT="text/html; charset=UTF-7"> </HEAD>+ADw-SCRIPT+AD4-alert(\'XSS\');'
-                "+ADw-/SCRIPT+AD4-",
+                '<HEAD><META HTTP-EQUIV="CONTENT-TYPE" CONTENT="text/html; charset=UTF-7"> </HEAD>+ADw-SCRIPT+AD4-alert(\'XSS\');+ADw-/SCRIPT+AD4-',  # noqa: E501
                 " +ADw-SCRIPT+AD4-alert('XSS');+ADw-/SCRIPT+AD4-",
             ),
             ('<SCRIPT a=">" SRC="http://ha.ckers.org/xss.js"></SCRIPT>', ""),
-            ('<SCRIPT =">" SRC="http://ha.ckers.org/xss.js"></SCRIPT>', '" SRC="http://ha.ckers.org/xss.js"&gt;'),
+            ('<SCRIPT =">" SRC="http://ha.ckers.org/xss.js"></SCRIPT>', '" SRC="http://ha.ckers.org/xss.js">'),
             ('<SCRIPT a=">" \'\' SRC="http://ha.ckers.org/xss.js"></SCRIPT>', ""),
             ('<SCRIPT "a=\'>\'" SRC="http://ha.ckers.org/xss.js"></SCRIPT>', ""),
-            ('<SCRIPT a=`>` SRC="http://ha.ckers.org/xss.js"></SCRIPT>', '` SRC="http://ha.ckers.org/xss.js"&gt;'),
+            ('<SCRIPT a=`>` SRC="http://ha.ckers.org/xss.js"></SCRIPT>', '` SRC="http://ha.ckers.org/xss.js">'),
             ('<SCRIPT a=">\'>" SRC="http://ha.ckers.org/xss.js"></SCRIPT>', ""),
             (
                 '<SCRIPT>document.write("<SCRI");</SCRIPT>PT SRC="http://ha.ckers.org/xss.js"></SCRIPT>',
-                'document.write("PT SRC="http://ha.ckers.org/xss.js"&gt;',
+                'document.write("PT SRC="http://ha.ckers.org/xss.js">',
             ),
             ('<A HREF="http://66.102.7.147/">XSS</A>', '<a href="http://66.102.7.147/">XSS</a>'),
             (
                 '0\\"autofocus/onfocus=alert(1)--><video/poster/ error=prompt(2)>"-confirm(3)-"',
-                '0\\"autofocus/onfocus=alert(1)--&gt;"-confirm(3)-"',
+                '0\\"autofocus/onfocus=alert(1)-->"-confirm(3)-"',
             ),
-            ("veris-->group<svg/onload=alert(/XSS/)//", "veris--&gt;group&lt;svg/onload=alert(/XSS/)//"),
-            ("#\"><img src=M onerror=alert('XSS');>", '#"&gt;<img src="M">'),
+            ("veris-->group<svg/onload=alert(/XSS/)//", "veris-->group<svg/onload=alert(/XSS/)//"),
+            ("#\"><img src=M onerror=alert('XSS');>", '#"><img src="M">'),
             ("element[attribute='<img src=x onerror=alert('XSS');>", 'element[attribute=\'<img src="x">'),
             (
                 '[<blockquote cite="]">[" onmouseover="alert(\'RVRSH3LL_XSS\');" ]',
@@ -250,9 +246,9 @@ class TestXssSanitizer:
             ("<script>for((i)in(self))eval(i)(1)</script>", "for((i)in(self))eval(i)(1)"),
             (
                 "<scr<script>ipt>alert(1)</scr</script>ipt><scr<script>ipt>alert(1)</scr</script>ipt>",
-                "ipt&gt;alert(1)ipt&gt;ipt&gt;alert(1)ipt&gt;",
+                "ipt>alert(1)ipt>ipt>alert(1)ipt>",
             ),
-            ("<sCR<script>iPt>alert(1)</SCr</script>IPt>", "iPt&gt;alert(1)IPt&gt;"),
+            ("<sCR<script>iPt>alert(1)</SCr</script>IPt>", "iPt>alert(1)IPt>"),
             ('<a href="data:text/html;base64,PHNjcmlwdD5hbGVydCgiSGVsbG8iKTs8L3NjcmlwdD4=">test</a>', "<a>test</a>"),
         ],
     )

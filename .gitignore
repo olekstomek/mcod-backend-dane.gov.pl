@@ -246,6 +246,7 @@ requirements.txt
 
 .local.env
 local.py
+docker-compose.override.yml
 
 ansible.cfg
 
@@ -266,6 +267,3 @@ requeststest
 .ipynb_checkpoints/
 
 mcod/api_key.txt
-
-# login.gov.pl certs, keys
-pki/

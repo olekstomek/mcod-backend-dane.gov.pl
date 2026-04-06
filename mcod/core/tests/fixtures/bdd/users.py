@@ -1,7 +1,9 @@
 import json
+from uuid import UUID
 
 from django.core import mail
 from django.test import Client as DjangoClient
+from django.utils import timezone
 from pytest_bdd import given, parsers, then
 
 from mcod.core.caches import flush_sessions
@@ -10,7 +12,7 @@ from mcod.newsletter.models import Subscription
 from mcod.organizations.models import Organization
 from mcod.resources.factories import ResourceFactory
 from mcod.users.factories import EditorFactory, MeetingFactory, MeetingFileFactory, UserFactory
-from mcod.users.models import User
+from mcod.users.models import Token, User
 
 
 @given(parsers.parse("{state} user with email {email_address} and password {password}"))
@@ -232,3 +234,49 @@ def meeting_with_files(meeting_id, number):
     MeetingFileFactory.create_batch(int(number), meeting=obj)
     obj.save()
     return obj
+
+
+@given(parsers.parse("valid password reset token {token} exists for user with email {email}"))
+def password_reset_token_exists(email: str, token: str):
+    user = User.objects.get(email=email)
+    token_uuid = UUID(token)
+    Token.objects.create(
+        user=user,
+        token=token_uuid,
+        token_type=1,
+        expiration_date=timezone.now() + timezone.timedelta(hours=1),
+    )
+
+
+@given(parsers.parse("expired password reset token {token} exists for user with email {email}"))
+def expired_password_reset_token_exists(email: str, token: str):
+    user = User.objects.get(email=email)
+    token_uuid = UUID(token)
+    Token.objects.create(
+        user=user,
+        token=token_uuid,
+        token_type=1,
+        expiration_date=timezone.now() - timezone.timedelta(minutes=1),
+    )
+
+
+@then(parsers.parse("password reset token is created for user with email {email}"))
+def password_reset_token_created_for_user(email: str):
+    user = User.objects.get(email=email)
+    assert Token.objects.filter(user=user, token_type=1).exists(), f"No password reset token found for user {email}"
+
+
+@then(parsers.parse("previous password reset token is invalid for user with email {email}"))
+def previous_password_reset_token_is_invalid_for_user(email: str):
+    user = User.objects.get(email=email)
+    tokens = Token.objects.filter(user=user, token_type=1).order_by("-created")
+    assert tokens.count() >= 2, f"Expected at least two reset tokens for user {email}"
+    assert not tokens[1].is_valid
+
+
+@then(parsers.parse("latest password reset token is valid for user with email {email}"))
+def latest_password_reset_token_is_valid_for_user(email: str):
+    user = User.objects.get(email=email)
+    token = Token.objects.filter(user=user, token_type=1).order_by("-created").first()
+    assert token is not None, f"No password reset token found for user {email}"
+    assert token.is_valid

@@ -1,4 +1,3 @@
-version: "3"
 services:
   mcod-jupyter:
     container_name: mcod-jupyter
@@ -12,7 +11,7 @@ services:
       - JUPYTER_TOKEN=Britenet.1
       - JUPYTER_ALLOW_ORIGIN=*
     volumes:
-      - $PWD/notebooks/notebooks:/home/jovyan/notebooks
+      - ./notebooks/notebooks:/home/jovyan/notebooks
     command: "/usr/local/bin/start-jupyter"
 
   mcod-panel:
@@ -26,7 +25,7 @@ services:
       - BOKEH_BASE_URL=viz
       - BOKEH_ALLOW_WS_ORIG=localhost,mcod.local
     volumes:
-      - $PWD/notebooks/notebooks:/home/jovyan/notebooks:ro
+      - ./notebooks/notebooks:/home/jovyan/notebooks:ro
     command: "/usr/local/bin/start-panel"
 
   mcod-apm:
@@ -47,15 +46,6 @@ services:
        -E output.elasticsearch.hosts=["mcod-elasticsearch:9200"]
        -E apm-server.host=0.0.0.0:8200
 
-  mcod-flower:
-    image: mher/flower
-    container_name: mcod-flower
-    environment:
-      - CELERY_BROKER_URL=amqp://mcod-rabbitmq:5672
-      - FLOWER_PORT=8888
-    ports:
-      - 8888:8888
-
   mcod-kibana:
     image: docker.elastic.co/kibana/kibana:6.7.2
     container_name: mcod-kibana
@@ -65,16 +55,6 @@ services:
       ELASTICSEARCH_HOSTS: http://mcod-elasticsearch:9200
     ports:
       - 5601:5601
-
-  mcod-smtp:
-    container_name: mcod-smtp
-    image: mailhog/mailhog
-    user: root
-    ports:
-      - 8025:8025
-      - 1025:1025
-    healthcheck:
-      test: echo | telnet 127.0.0.1 1025
 
 networks:
   default:

@@ -92,13 +92,6 @@ def flatten_list(list_, split_delimeter=None):
             yield el
 
 
-def get_limiter_key(req, resp, resource, params):
-    """Custom function used to generate limiter key."""
-    key = f"{req.path}_{req.access_route[-2] if len(req.access_route) > 1 else req.remote_addr}"
-    logger.debug(f"Falcon-Limiter key: {key}")
-    return key
-
-
 def jsonapi_validator(data):
     with open(settings.JSONAPI_SCHEMA_PATH, "r") as schemafile:
         schema = json.load(schemafile)

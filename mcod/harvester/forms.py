@@ -33,7 +33,7 @@ class DataSourceAdminForm(forms.ModelForm):
         }
         widgets = {
             "api_url": forms.TextInput(attrs={"class": "span6"}),
-            "description": CKEditorWidget(config_name="data_source_description"),
+            "description": CKEditorWidget(config_name="basic_description"),
             "license_condition_db_or_copyrighted": forms.Textarea(attrs={"cols": "80", "class": "input-block-level"}),
             "name": UnescapeTextInput(attrs={"class": "span6"}),
             "portal_url": forms.TextInput(attrs={"class": "span6"}),

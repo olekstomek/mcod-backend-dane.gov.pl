@@ -12,13 +12,107 @@ ______________________________________________________________________
 
 ### Breaks
 
+## 2.57.4 - (2026-04-02)
+
+______________________________________________________________________
+
+### Fixes
+
+- Zmiana w kasowaniu plików z rozszerzeniem pyc - OTD-2462
+
+## 2.57.3 - (2026-03-24)
+
+______________________________________________________________________
+
+### Fixes
+
+- Zamrożenie wersji hypercorn - OTD-2473
+
+## 2.57.2 - (2026-03-19)
+
+### Fixes
+
+- Umożliwienie release z devel niezależnie od triggera pipeline - OTD-2479
+
+______________________________________________________________________
+
+## 2.57.1 - (2026-03-19)
+
+### Fixes
+
+- Dodano usuwanie plików pyc podczas budowania kontenera - OTD-2462
+
+______________________________________________________________________
+
+## 2.57.0 - (2026-03-09)
+
+### New
+
+- Dodanie logiki biznesowej weryfikującej status zasobu (published) oraz flagę usunięcia (`is_removed`) przed
+  zezwoleniem na pobranie pliku w Panelu Administracyjnym - OTD-1454
+- Nowy endpoint `/auth/password/verify-token/{token:uuid}` do weryfikacji czy token jest aktywny - OTD-1735
+- Dodane testy nowego endpointu w `mcod/users/tests/features/reset_password_confirm.feature` - OTD-1735
+- Dodane testy w klasie `TestPasswordResetView` - OTD-1735
+- Dodano docker-compose opisujący lokalne środowisko (Panel Administracyjny, CMS, Celery) - OTD-2001
+- Wdrożenie i konfiguracja polityki Content Security Policy (CSP) dla Panelu Administratora - OTD-2026
+- Utworzenie pliku `statics/admin/js/custom_admin.js` konsolidującego skrypty, które wcześniej były "inline" - OTD-2026
+- Nowa zmienna środowiskowa "CSP_REPORT_ONLY". Przeglądarka nie zablokuje niczego, ale pokaże w konsoli ostrzeżenia - OTD-2026
+- Nowa zmienna środowiskowa "METABASE_URL" umożliwiająca osadzanie dashboardów Metabase ze wszystkich środowisk - OTD-2026
+- Dodanie powiadomienia e-mail przy próbie rejestracji na istniejący już adres e-mail - OTD-2207
+- Dodanie zmiennej konfiguracyjnej: BROKEN_LINKS_CHUNK_SIZE - OTD-2249
+- Nowy moduł \`mcod/logingovpl z kodem biblioteki (minimalnie zmodyfikowana pod pre-commit) - OTD-2354
+- Własna implementacja limitera dla API falcon - OTD-2366
+
+### Changes
+
+- Zaktualizowana funkcja `_get_or_create_token()`, aby unieważniać tokeny resetu hasła - OTD-1735
+- Zaktualizowane komunikaty po polsku i angielsku - OTD-1735
+- Uzależnienie limitu w treści maila resetu hasła od zmiennej środowiskowej `TOKEN_EXPIRATION_TIME` (tak samo jak do tej
+  pory w procesie rejestracji) - OTD-1735
+- Aktualizacja biblioteki CKEditor z wersji 4.7.3 do 4.18.0 - OTD-2026
+- Zmiana logiki sanityzacji w `sanitize_html`: dodano `html.unescape` w celu przywracania oryginalnych znaków specjalnych - OTD-2026
+- Implementacja atrybutów `nonce` w plikach szablonów Jinja/HTML oraz konfiguracji CKEditora - OTD-2026
+- Zmniejszenie liczby tasków w `chord` dla walidacji linków zasobów - OTD-2249
+- Wprowadzenie iteratora dla `create_no_resource_dataset_report` - OTD-2249
+- Podniesienie zależności w pipfile. Rozluźnienie wymagania wersji za pomocą operatora `~=` - OTD-2282
+- Podbicie wersji `unleashclient` do 6.x - OTD-2285
+- Zdjęcie flag: S64, S65, S66, S67, S68 - OTD-2285
+- Zaktualizowane odwołanie do nowej biblioteki w `settings.INSTALLED_APPS` - OTD-2354
+- Usunięty plik `django_logingovpl-0.0.5-py3-none-any.whl` i jego odwołania z plików Dockerfile - OTD-2354
+- Zmiana stałej `LOGINGOVPL_TIMEOUT` na zmienną środowiskową (z taką samą domyślną wartością `10`) - OTD-2354
+- Zaktualizowane `README` o część dotyczącą logowania przez Węzeł Krajowy - OTD-2354
+- Podbicie wersji `sentry-sdk` - OTD-2355
+- Usunięcie niewspieranej paczki falcon-limiter - OTD-2366
+- Podbicie wersji `rdflib` - OTD-2383
+- Zmiana wersji silnika bazodanowego z PostgreSQL 13 na PostgreSQL 17 w lokalnym środowisku deweloperskim oraz w CI/CD - OTD-2422
+
+### Fixes
+
+- Uspójnienie formularzy w Panelu Administracyjnym - OTD-1733
+- Uniemożliwienie ataku typu DoS na skrzynki mailowe poprzez widok resetu hasła - OTD-1759
+- Naprawa błędu "TypeError: $ is not a function" w skrypcie `forward-fix.js` - OTD-2026
+- Usunięcie martwego kodu JS z szablonu `autocomplete-filter.html` - OTD-2026
+- Poprawa testu `test_developers_resources_included_excluded_from_broken_links` - OTD-2249
+
+### Breaks
+
+- Zmieniono lokalną konfigurację nginx, tak by używało połączeń wewnątrz sieci dockerowej - OTD-2001
+- Poprawiono zmienną środowiskową `CELERY_CONCURENCY -> CELERY_CONCURRENCY` - OTD-2001
+- Poprawiono zmienną środowiskową `WEB_CONCURRENCY -> WEB_CONCURRENCY` - OTD-2001
+- Poprawiono zmienną środowiskową `SHOW_GENERATE_RAPORT_BUTTOON -> SHOW_GENERATE_RAPORT_BUTTON` - OTD-2001
+- Dodano wymaganą zmienną środowiskową `METABASE_URL` - OTD-2026
+- Dodano opcjonalną zmienną środowiskową `CSP_REPORT_ONLY` - OTD-2026
+
+______________________________________________________________________
+
 ## 2.56.0 - (2026-02-11)
 
 ______________________________________________________________________
 
 ### Changes
 
-- Zmiana w widget ResourceMapsAndPlotsWidget, w celu usunięcia nadmiarowej walidacji przy pierwszej edycji zasobu w Panelu Administracyjnym - OTD-2352
+- Zmiana w widget ResourceMapsAndPlotsWidget, w celu usunięcia nadmiarowej walidacji przy pierwszej edycji zasobu w
+  Panelu Administracyjnym - OTD-2352
 - Refactor handlerów błędów dla API (brak zależności od zmiennej DEBUG) - OTD-2206
 
 ### Fixes
@@ -51,18 +145,24 @@ ______________________________________________________________________
 
 - Przyspieszenie ładowania się modułu statystyk - opóźnienie wykonywania zapytań o dane ze statystykami - OTD-2075
 - Aktualizacja biblioteki CKEditor z wersji 4.7.3 do 4.18.0 - OTD-2026
-- Zmiana logiki sanityzacji w sanitize_html: dodano html.unescape w celu przywracania oryginalnych znaków specjalnych (np. & zamiast &) - OTD-2026
+- Zmiana logiki sanityzacji w sanitize_html: dodano html.unescape w celu przywracania oryginalnych znaków specjalnych (
+  np. & zamiast &) - OTD-2026
 - Implementacja atrybutów nonce w plikach szablonów Jinja/HTML oraz konfiguracji CKEditora - OTD-2026
-- Refaktoryzacja widgetów admina (DateFilter, Multiselect, Stacked & Tabular Inlines) w celu wyeliminowania skryptów inline - OTD-2026
+- Refaktoryzacja widgetów admina (DateFilter, Multiselect, Stacked & Tabular Inlines) w celu wyeliminowania skryptów
+  inline - OTD-2026
 - Zastąpienie skryptów JS ustawiających fokus natywnym atrybutem HTML5 autofocus - OTD-2026
-- Dynamiczny widget "Zewnętrzne zbiory danych" oraz dodawanie kotwicy (hash) do linku po kliknięciu "Pokaż wszystko" - OTD-2026
-- Poprawiona funkcja get_filename_from_content_disposition(), wcześniej obcinała nazwę pliku do pierwszych 100 znaków - OTD-2083
-- Poprawiona funkcja get_extension_from_content_disposition(), aby opierała się na pobranych danych z poprawionej get_filename_from_content_disposition() - OTD-2083
+- Dynamiczny widget "Zewnętrzne zbiory danych" oraz dodawanie kotwicy (hash) do linku po kliknięciu "Pokaż wszystko" -
+  OTD-2026
+- Poprawiona funkcja get_filename_from_content_disposition(), wcześniej obcinała nazwę pliku do pierwszych 100 znaków -
+  OTD-2083
+- Poprawiona funkcja get_extension_from_content_disposition(), aby opierała się na pobranych danych z poprawionej
+  get_filename_from_content_disposition() - OTD-2083
 - Zaktualizowany test_analyze_file() oraz test_get_extension_from_content_disposition() - OTD-2083
 
 ### Fixes
 
-- Naprawa działania dekoratora prometheus_monitoring w zakresie prawidłowego obsługi akcji django, gdy nie zostanie wybrany żaden element dla akcji - OTD-2204
+- Naprawa działania dekoratora prometheus_monitoring w zakresie prawidłowego obsługi akcji django, gdy nie zostanie
+  wybrany żaden element dla akcji - OTD-2204
 - Zmniejszenie liczby zapytań HTTP w harvestacji XML - OTD-2190
 - Naprawa błędu "TypeError: $ is not a function" w skrypcie forward-fix.js - OTD-2026
 - Usunięcie martwego kodu JS z szablonu autocomplete-filter.html - OTD-2026
@@ -75,7 +175,8 @@ ______________________________________________________________________
 
 ### Changes
 
-- Zmiana sposobu aktualizacji zbiorów danych i zasobów podczas harwestacji - aktualizacja tylko, gdy nastąpiły zmiany - OTD-2242
+- Zmiana sposobu aktualizacji zbiorów danych i zasobów podczas harwestacji - aktualizacja tylko, gdy nastąpiły zmiany -
+  OTD-2242
 
 ## 2.53.0 - (2025-12-17)
 
@@ -105,7 +206,8 @@ ______________________________________________________________________
 - Naprawa błędu z tworzeniem zasobu DGA, gdy jeden już istnieje (podmiana) - OTD-2133
 - Naprawa braku importu danych przez harvester dla prawidłowego XML z pustymi znacznikami - OTD-1979
 - Naprawa braku informacji o błędzie importu danych podczas harvestacji - OTD-2056
-- Dodanie usuwania zasobów z kosza, przy usuwaniu zbiorów z kosza z pomocą queryset (za pomocą checkbox i akcji Usuń wybrane obiekty) - OTD-2145
+- Dodanie usuwania zasobów z kosza, przy usuwaniu zbiorów z kosza z pomocą queryset (za pomocą checkbox i akcji Usuń
+  wybrane obiekty) - OTD-2145
 - Zamiana ostatniego shared_task na extended_shared_task - OTD-129
 
 ## 2.52.2 - (2025-11-28)
@@ -114,7 +216,8 @@ ______________________________________________________________________
 
 ### Changes
 
-- Wykorzystanie biblioteki elasticsearch_dsl do komunikacji z ES podczas generacji raportu uszkodzonych linków - OTD-2171
+- Wykorzystanie biblioteki elasticsearch_dsl do komunikacji z ES podczas generacji raportu uszkodzonych linków -
+  OTD-2171
 
 ## 2.52.1 - (2025-11-25)
 
@@ -122,7 +225,8 @@ ______________________________________________________________________
 
 ### Fixes
 
-- Poprawiono angielskie tłumaczenie pola nagłówka tabeli z uszkodzonymi linkami - zmiana w pliku /translations/system/en/LC_MESSAGES/django.po - OTD-2091
+- Poprawiono angielskie tłumaczenie pola nagłówka tabeli z uszkodzonymi linkami - zmiana w pliku
+  /translations/system/en/LC_MESSAGES/django.po - OTD-2091
 
 ## 2.52.0 - (2025-11-20)
 
@@ -130,29 +234,39 @@ ______________________________________________________________________
 
 ### New
 
-- Dodano tworzenie indeksu Elasticsearch o nazwie broken-links, w który zawarte są dane z raportu publicznego uszkodzonych linków - OTD-1802
+- Dodano tworzenie indeksu Elasticsearch o nazwie broken-links, w który zawarte są dane z raportu publicznego
+  uszkodzonych linków - OTD-1802
 - Dodano testy funkcji pomocniczych i funkcji głównej tworzącej indeks broken-links - OTD-1802
 - Dodano nowe typy stron do CMS-a: ReportRootPage,ReportAbstractSubpage, BrokenLinksInfo - OTD-1803
 - Dodano endpointy API do pobierania ostatnich plików raportów broken links - OTD-1804
 - Dodano testy automatyczne do widoku pobierania plików raportów - OTD-1804
-- Dodanie do API endpointu reports/brokenlinks, odpowiedzialnego za zwracanie informacji o ostatnim utworzonym raporcie brokenlinks (wraz z testami endpointu) - OTD-1805
-- Dodanie (wraz z testami) pomocniczych funkcji umożliwiających: pobieranie z Elasticsearch liczby wszystkich zaindeksowanych dokumentów oraz pobieranie podstawowych metadanych dla wskazanego pliku (funkcje pomocnicze w osbłudze endpointu reports/brokenlinks) - OTD-1805
-- Dodanie do API endpointu reports/brokenlinks/data, odpowiedzialnego za zwracanie informacji o danych z raportu brokenlinks (z obsługą paginacji, sortowania i wyszukiwania), wraz z testami endpointu - OTD-1806, OTD-2067, OTD-2079
-- Dodanie (wraz z testami) pomocniczych funkcji umożliwiających: pobieranie z Elasticsearch dokumentów dot. raportu brokenlinks, do wyświetlenia w GUI. - OTD-1806
+- Dodanie do API endpointu reports/brokenlinks, odpowiedzialnego za zwracanie informacji o ostatnim utworzonym raporcie
+  brokenlinks (wraz z testami endpointu) - OTD-1805
+- Dodanie (wraz z testami) pomocniczych funkcji umożliwiających: pobieranie z Elasticsearch liczby wszystkich
+  zaindeksowanych dokumentów oraz pobieranie podstawowych metadanych dla wskazanego pliku (funkcje pomocnicze w osbłudze
+  endpointu reports/brokenlinks) - OTD-1805
+- Dodanie do API endpointu reports/brokenlinks/data, odpowiedzialnego za zwracanie informacji o danych z raportu
+  brokenlinks (z obsługą paginacji, sortowania i wyszukiwania), wraz z testami endpointu - OTD-1806, OTD-2067, OTD-2079
+- Dodanie (wraz z testami) pomocniczych funkcji umożliwiających: pobieranie z Elasticsearch dokumentów dot. raportu
+  brokenlinks, do wyświetlenia w GUI. - OTD-1806
 - Dodano nowe kolumny do raportu broken links w Panelu Administracyjnym - OTD-1809
 - Dodano generowanie raportów broken links na potrzeby frontendu - OTD-1810
 - Dodano testy automatyczne do procesu generacji raportów o uszkodzonych linkach - OTD-1809, OTD-1810
-- Dodano możliwość nieuwzględniania zasobów deweloperów budowlanych w sprawdzeniach uszkodzonych linków (zmienna środowiskowa BROKEN_LINKS_EXCLUDE_DEVELOPERS) - OTD-2055, OTD-2090
+- Dodano możliwość nieuwzględniania zasobów deweloperów budowlanych w sprawdzeniach uszkodzonych linków (zmienna
+  środowiskowa BROKEN_LINKS_EXCLUDE_DEVELOPERS) - OTD-2055, OTD-2090
 
 ### Changes
 
-- Uzupełniono test Check every CMS API's endpoint response for valid status_code o nowe typy stron związane z brokenlinks - OTD-1803
+- Uzupełniono test Check every CMS API's endpoint response for valid status_code o nowe typy stron związane z
+  brokenlinks - OTD-1803
 - Zmieniono task update_data_date() o aktualizację w polu dataset.verified (dodatkowo dla zasobu typu plik) - OTD-1831
 
 ### Fixes
 
-- Poprawa ikony widgetu kalendarza w widokach Akademia i Laboratorium, Spotkania pełnomocników, Newsletter, Komunikaty - OTD-1550
-- Naprawiono API lajkowania propozycji nowych danych (uniemożliwiono lajkowania propozycji nieaktywnych oraz naprawiono obsługę lajkowania propozycji w różnych stanach - kosz, draft itp.) - OTD-1734
+- Poprawa ikony widgetu kalendarza w widokach Akademia i Laboratorium, Spotkania pełnomocników, Newsletter, Komunikaty -
+  OTD-1550
+- Naprawiono API lajkowania propozycji nowych danych (uniemożliwiono lajkowania propozycji nieaktywnych oraz naprawiono
+  obsługę lajkowania propozycji w różnych stanach - kosz, draft itp.) - OTD-1734
 - Zmieniono task validate_link, aby usunąć zjawisko wyścigu podczas generacji danych do raportu brokenlinks - OTD-1808
 
 ## 2.51.0 - (2025-10-29)
@@ -169,15 +283,18 @@ ______________________________________________________________________
 
 ### Changes
 
-- Umożliwienie dodawania znaku specjalnego "&" dla pól title i description dla modeli Organisation, Dataset i Resource - OTD-1687
+- Umożliwienie dodawania znaku specjalnego "&" dla pól title i description dla modeli Organisation, Dataset i Resource -
+  OTD-1687
 - Usunięto tox w ramach usprawnień lokalnego środowiska - OTD-1063
 - Zmieniono konfigurację CI/CD tak, by re-używać customowy obraz przy testach - OTD-947
-- Wprowadzenie wewnętrznego oznaczania zarchiwizowanych zasobów, aby uniezależnić się od nazw zasobów wystawianych w źródłach Dostawców - OTD-1853
+- Wprowadzenie wewnętrznego oznaczania zarchiwizowanych zasobów, aby uniezależnić się od nazw zasobów wystawianych w
+  źródłach Dostawców - OTD-1853
 - Aktualizacja i dodanie nowych testów, dotyczących powyższej zmiany - OTD-1853
 
 ### Fixes
 
-- Usunięcie słów typu "amp;" dla widoku obiektu modeli: Resource, Dataset, Organisation, Alerts, Harvester, Newsletter oraz Showcases - OTD-1687
+- Usunięcie słów typu "amp;" dla widoku obiektu modeli: Resource, Dataset, Organisation, Alerts, Harvester, Newsletter
+  oraz Showcases - OTD-1687
 - Dodanie domyślnego sortowania po czasie dla Kosza dla Zbiorów Danych - OTD-1981
 
 ## 2.50.0 - (2025-10-10)
@@ -186,12 +303,14 @@ ______________________________________________________________________
 
 ### New
 
-- Dodano komendę django delete_indexes_for_developers do usuwania indeksów ES danych tabelarycznych zasobów dla instytucji o typie developer - OTD-1890
+- Dodano komendę django delete_indexes_for_developers do usuwania indeksów ES danych tabelarycznych zasobów dla
+  instytucji o typie developer - OTD-1890
 - Dodano testy wykonania komendy delete_indexes_for_developers z różną kombinacją parametrów - OTD-1890
 
 ### Fixes
 
-- Naprawiono komunikat błędu przy próbie zapisu formularza zagnieżdżonego dla pola updateNotificationRecipientEmailInput - OTD-1910
+- Naprawiono komunikat błędu przy próbie zapisu formularza zagnieżdżonego dla pola
+  updateNotificationRecipientEmailInput - OTD-1910
 - Naprawiono powielanie się komunikatów pomocniczych przy wyborze z listy Częstotliwość aktualizacji - OTD-1910
 
 ## 2.49.1 - (2025-09-29)
@@ -200,7 +319,8 @@ ______________________________________________________________________
 
 ### Changes
 
-- Przywrócenie ze względów bezpieczeństwa sposobu sanityzacji danych w backendzie – usunięto ponowne enkodowanie encji HTML - OTD-1861
+- Przywrócenie ze względów bezpieczeństwa sposobu sanityzacji danych w backendzie – usunięto ponowne enkodowanie encji
+  HTML - OTD-1861
 
 ______________________________________________________________________
 
@@ -210,7 +330,8 @@ ______________________________________________________________________
 
 ### Fixes
 
-- Zmiana zachowania dla Słów Kluczowych na stronie admina, dla użytkowników bez roli admin. Blokada wyświetlania historii i edycji samych tagów. Wyłączenie przycisku "zmiana" na stronie głównej. - OTD-1901
+- Zmiana zachowania dla Słów Kluczowych na stronie admina, dla użytkowników bez roli admin. Blokada wyświetlania
+  historii i edycji samych tagów. Wyłączenie przycisku "zmiana" na stronie głównej. - OTD-1901
 - Zmieniono sposób sanityzacji danych w backendzie – usunięto ponowne enkodowanie encji HTML - OTD-1861
 
 ### Changes
@@ -223,7 +344,8 @@ ______________________________________________________________________
 
 ### New
 
-- Dodano brak walidacji danych, a tym samym tworzenia indeksu danych tabelarycznych, dla zasobów dodawanych przez instytucje typu deweloper - OTD-1888
+- Dodano brak walidacji danych, a tym samym tworzenia indeksu danych tabelarycznych, dla zasobów dodawanych przez
+  instytucje typu deweloper - OTD-1888
 
 ### Changes
 
@@ -236,12 +358,14 @@ ______________________________________________________________________
 ### New
 
 - Dodano w Panelu Administracyjnym obsługę nowego typu instytucji dedykowanego dla deweloperów budowlanych - OTD-1791
-- Dodano w procesie harwestacji CKAN i XML obsługę nowego typu instytucji dedykowanego dla deweloperów budowlanych - OTD-1792
+- Dodano w procesie harwestacji CKAN i XML obsługę nowego typu instytucji dedykowanego dla deweloperów budowlanych -
+  OTD-1792
 - Nowy typ instytucji (deweloper) w raportach w PA oraz generowanych z frontendu - OTD-1791 i OTD-1792
 
 ### Changes
 
-- Zmieniono reguły walidacji Zawiera wykaz chronionych danych (zasoby) oraz Zawiera dane wysokiej wartości z wykazu KE (zasoby i zbiory) uwzględniające nowy typ instytucji - OTD-1792
+- Zmieniono reguły walidacji Zawiera wykaz chronionych danych (zasoby) oraz Zawiera dane wysokiej wartości z wykazu KE (
+  zasoby i zbiory) uwzględniające nowy typ instytucji - OTD-1792
 
 ## 2.46.0 - (2025-08-27)
 
@@ -260,10 +384,12 @@ ______________________________________________________________________
 
 - Naprawiono błąd przy kalkulacji openness score - OTD-1678
 - Naprawiono błąd polegający na przypisaniu typu 'date' dla 'datetime' z godziną 00:00:00 - OTD-1715
-- Naprawiono błąd 504 oraz długiego czasu renderowania się formularzy Użytkownika i Organizacji w Panelu Administracyjnym - OTD-1730
+- Naprawiono błąd 504 oraz długiego czasu renderowania się formularzy Użytkownika i Organizacji w Panelu
+  Administracyjnym - OTD-1730
 - Naprawiono błąd w pipeline `invalid value for parameter "log_timezone": "Poland"` - OTD-1773
 - Naprawiono problem plików nietabelarycznych fałszywie pozytywnie przechodzących walidacje tabelaryczne - OTD-1722
-- Zmieniono logikę wywoływania funkcji `user_sync_task`, wywołującej się w momencie dodawania, edycji i usuwania użytkownika w celu usunięcia błędów Discourse - OTD-1724
+- Zmieniono logikę wywoływania funkcji `user_sync_task`, wywołującej się w momencie dodawania, edycji i usuwania
+  użytkownika w celu usunięcia błędów Discourse - OTD-1724
 
 ## 2.45.0 - (2025-08-08)
 
@@ -274,7 +400,8 @@ ______________________________________________________________________
 - Dodano cache'owanie endpointa wyciągającego dane tabelaryczne dla Zasobu - OTD-1641
 - Oflagowano mechanizm cache'owania - flaga `S66_falcon_caching_operate.be` - OTD-1641
 - Dodano tagowanie eventów w Sentry emitowanych z tasków Celery - OTD-1671
-- Dodano middleware dla FalconAPI `DjangoDBConnectionMiddleware` zamykający połączenia po zakończeniu odpytywania endpointa - OTD-1658
+- Dodano middleware dla FalconAPI `DjangoDBConnectionMiddleware` zamykający połączenia po zakończeniu odpytywania
+  endpointa - OTD-1658
 - Ustawiono zmienną dla ustawień bazy danych: `CONN_MAX_AGE` - OTD-1658
 
 ### Changes
@@ -299,8 +426,10 @@ ______________________________________________________________________
 
 ### Fixes
 
-- Poprawiono błąd w CI przy instalacji zależności. Pakiety z repozytoriów Debian Buster nie istnieją w standardowej lokalizacji. - OTD-1651
-- Zwiększono dopuszczalną długość z 5 do 13 znaków TLD dla adresu URL źródła XML po stronie frontendowej w PA. - OTD-1630
+- Poprawiono błąd w CI przy instalacji zależności. Pakiety z repozytoriów Debian Buster nie istnieją w standardowej
+  lokalizacji. - OTD-1651
+- Zwiększono dopuszczalną długość z 5 do 13 znaków TLD dla adresu URL źródła XML po stronie frontendowej w PA. -
+  OTD-1630
 - Naprawiono błędy w odczycie wersji z API. - OTD-1351
 - Poprawka obsługi z len(queryset) vs bool(queryset). - OTD-1570
 - Naprawiono błąd formularza Instytucji w Panelu Administracyjnym dla Edytorów. - OTD-1580
@@ -324,7 +453,8 @@ ______________________________________________________________________
 - Dodano "Zawiera dane o wysokiej wartości z wykazu KE" do pól wypełnianych przy kopiowaniu Zasobu - OTD-1573
 - Zmieniono CI/CD - na gałęziach release'owych uruchamia się tylko linter - OTD-1513
   - Umożliwiono deploy na `pre-devel` z MR manualnie
-- Usztywnienie wersji biblioteki xmlsec z powodu błędu `xmlsec.Error: (100, 'lxml & xmlsec libxml2 library version mismatch')` - OTD-1475
+- Usztywnienie wersji biblioteki xmlsec z powodu błędu
+  `xmlsec.Error: (100, 'lxml & xmlsec libxml2 library version mismatch')` - OTD-1475
 
 ### Fixes
 
@@ -337,16 +467,21 @@ ______________________________________________________________________
 
 ### New
 
-- Nowe wartości `irregular` i `notPlanned` częstotliwości aktualizacji w formularzu tworzenia i edycji Datasetu - OTD-1239, OTD-1240, OTD-1241
+- Nowe wartości `irregular` i `notPlanned` częstotliwości aktualizacji w formularzu tworzenia i edycji Datasetu -
+  OTD-1239, OTD-1240, OTD-1241
 - Usunięto wartość `notApplicable` częstotliwości aktualizacji w formularzu twrozenia Datasetu - OTD-1240
-- Wprowadzono inne zbiory wartości częstotliwości aktualizacji dla formularza tworzenia i edycji Datasetu - UPDATE_FREQUENCY_FOR_CREATE, UPDATE_FREQUENCY_FOR_UPDATE - OTD-1240, OTD-1241
+- Wprowadzono inne zbiory wartości częstotliwości aktualizacji dla formularza tworzenia i edycji Datasetu -
+  UPDATE_FREQUENCY_FOR_CREATE, UPDATE_FREQUENCY_FOR_UPDATE - OTD-1240, OTD-1241
 - Dodano walidację uniemożliwiającą zapis Datasetu z update_fequency równym `notApplicable` - OTD-1241
-- Nowa wersja (1.13) schematu XSD - `xml_import_otwarte_dane_1_13.xsd` oraz jego obsługa w procesie harwestacji XML - OTD-1242
-- Nowe wartości `update_frequency` oraz wszystkie wartości z wielkich liter w raportach CSV generowanych z frontendu i PA - OTD-1244
+- Nowa wersja (1.13) schematu XSD - `xml_import_otwarte_dane_1_13.xsd` oraz jego obsługa w procesie harwestacji XML -
+  OTD-1242
+- Nowe wartości `update_frequency` oraz wszystkie wartości z wielkich liter w raportach CSV generowanych z frontendu i
+  PA - OTD-1244
 - Obsługa nowych wartości `update_frequency` w raporcie RDF - OTD-1251
 - Dodano testy konfiguracji celery, walidacji oraz STO dla plików RDF - OTD-1456
 - Dodano formatter markdown do pre-commit dla plików `README.md` i `CHANGELOG.md` - OTD-1468
-- Dodano ponowne podłączanie funkcji javascript powodujących dynamiczne dodawanie sekcji dot. powiadomień o koniecznej aktualizacji zbioru danych - OTD-1481
+- Dodano ponowne podłączanie funkcji javascript powodujących dynamiczne dodawanie sekcji dot. powiadomień o koniecznej
+  aktualizacji zbioru danych - OTD-1481
 - Dodano testy na proces harwestowania z CKAN - OTD-1473
 
 ### Changes
@@ -383,7 +518,8 @@ ______________________________________________________________________
 
 ### Fixes
 
-- Poprawa wyliczania daty aktualizacji zbioru dla zasobów importowanych: usunięcie Zasobu nie zmienia daty aktualizacji. OTD-1352
+- Poprawa wyliczania daty aktualizacji zbioru dla zasobów importowanych: usunięcie Zasobu nie zmienia daty aktualizacji.
+  OTD-1352
   - poprawa funkcji `handle_resource_post_save`
 - Obsługa błędnej wersji oraz braku wersji w kodzie error handlera API. OTD-1351
 
@@ -402,14 +538,18 @@ ______________________________________________________________________
 ### Changes
 
 - Zmieniono reguły przypisania stopni otwartości dla archiwów OTD-1152
-- Zmieniono zachowanie importera CKAN, tak by uzupełniał pole `format` oraz nadawał stopien otwartości zaimportowanych danych OTD-1193
-- Usunięto nadmiarowe informacje o pozostałych możliwych Stopniach Otwartości z mapowania `SUPPORTED_CONTENT_TYPES` (pozostawiono tylko domyślne) OTD-1323, OTD-1324
+- Zmieniono zachowanie importera CKAN, tak by uzupełniał pole `format` oraz nadawał stopien otwartości zaimportowanych
+  danych OTD-1193
+- Usunięto nadmiarowe informacje o pozostałych możliwych Stopniach Otwartości z mapowania `SUPPORTED_CONTENT_TYPES` (
+  pozostawiono tylko domyślne) OTD-1323, OTD-1324
 - Aktualizacja informacji kontaktowych na stronach portalu niedostępnych w CMS OTD-1279
 
 ### Fixes
 
-- Refactor (decoupling) tasków `process_resource_from_url_task`, `process_resource_res_file_task`, `process_resource_file_data_task` OTD-1199. Kluczowe zmiany:
-- utworzenie dwóch entrypointów będących procesami, które zarządzają przepływem i uruchamianiem w/w tasków (nie wywołują już siebie wzajemnie),
+- Refactor (decoupling) tasków `process_resource_from_url_task`, `process_resource_res_file_task`,
+  `process_resource_file_data_task` OTD-1199. Kluczowe zmiany:
+- utworzenie dwóch entrypointów będących procesami, które zarządzają przepływem i uruchamianiem w/w tasków (nie wywołują
+  już siebie wzajemnie),
 - pozbycie się niepotrzebnych handlerów dla w/w tasków
 - ustawienie zmiennej `CELERY_TASK_STORE_EAGER_RESULT` w settings na `True`
 - rozbicie na osobne moduły pliku mcod/resources/tasks.py
@@ -422,7 +562,8 @@ ______________________________________________________________________
 
 ### New
 
-- Dodano test sprawdzający, czy istnieje możliwość edycji danych tabelarycznych, w przypadku pól required dla formularza oraz pustych dla resource.
+- Dodano test sprawdzający, czy istnieje możliwość edycji danych tabelarycznych, w przypadku pól required dla formularza
+  oraz pustych dla resource.
 - Dodano nowe metody dla ChangeResourceForm: \_set_fields_required_attribute_to_false, \_modify_data_for_imported
 - Dodano zmienna środowiskowa do lokalnego testowania: INTERNAL_IPS
 - Dodano funkcję pomocnicza date_at_midnight() w mcod/lib/date_utils.py (z testem w mcod/lib/tests/test_date_utils.py)
@@ -437,7 +578,8 @@ ______________________________________________________________________
 - Naprawiono błąd w metodzie \_validate_related_resource (ResourceForm): AttributeError.
 - Zmieniono sposób wyświetlania błędów w change_form.html.
 - Zmieniono handler handle_resource_post_save() o aktualizację w polu dataset.verified zgodnie z OTD-1132
-- Zmieniono task update_data_date() o aktualizację w polu dataset.verified zgodnie z OTD-1132 (dla zasobów api i website)
+- Zmieniono task update_data_date() o aktualizację w polu dataset.verified zgodnie z OTD-1132 (dla zasobów api i
+  website)
 
 ### Fixes
 
@@ -455,8 +597,10 @@ ______________________________________________________________________
 - Zakładka Źródła danych w sekcji Raporty w PA - OTD-1155, OTD-1156, OTD-1157
 - Serializer DataSourceImportsCSVSchema - OTD-1168
 - Serializer DataSourceLastImportDatasetCSVSchema - OTD-1167
-- Task asynchroniczny - generate_harvesters_imports_report przygotowujący dane do raportu i generujący raport w importów - OTD-1167
-- Task asynchroniczny - generate_harvesters_last_imports_report przygotowujący dane do raportu i generujący raport z ostatnich importów - OTD-1168
+- Task asynchroniczny - generate_harvesters_imports_report przygotowujący dane do raportu i generujący raport w
+  importów - OTD-1167
+- Task asynchroniczny - generate_harvesters_last_imports_report przygotowujący dane do raportu i generujący raport z
+  ostatnich importów - OTD-1168
 - Pole openness_score w widoku edycji Resource - OTD-1140
 - Pole source_type w widoku edycji Resource - OTD-1141
 - Pole source_type w widoku edycji Dataset - OTD-1142
@@ -493,9 +637,14 @@ ______________________________________________________________________
 
 ### New
 
-- Podniesiono wersję Falcona do 4.0.2, co spowodowało aktualizację kodu: Należało dodać argumenty pozycyjne dla Exceptionów (api/handlers.py, watchers/views.py) oraz zmienić metodę get_http_status na code_to_http_status. Należało również zmienić error handlery: nazwa parametrów w funkcji zwracała warningi, Falcon prosił o ich zmianę (przestawienie parametrów w errors.py).
-- Podniesiono wersję django-admin-rangefilter do 0.13.2. Zmiana spowodowała zmianę modułu w pliku reports/admin.py z rangefilter.filter na rangefilter.filters
-- Usunięto bibliotekę django-vault-helpers (nie była używana) co spowodowało zmianę w ustawieniach projektu (settings/base.py).
+- Podniesiono wersję Falcona do 4.0.2, co spowodowało aktualizację kodu: Należało dodać argumenty pozycyjne dla
+  Exceptionów (api/handlers.py, watchers/views.py) oraz zmienić metodę get_http_status na code_to_http_status. Należało
+  również zmienić error handlery: nazwa parametrów w funkcji zwracała warningi, Falcon prosił o ich zmianę (
+  przestawienie parametrów w errors.py).
+- Podniesiono wersję django-admin-rangefilter do 0.13.2. Zmiana spowodowała zmianę modułu w pliku reports/admin.py z
+  rangefilter.filter na rangefilter.filters
+- Usunięto bibliotekę django-vault-helpers (nie była używana) co spowodowało zmianę w ustawieniach projektu (
+  settings/base.py).
 - Usunięto bibliotekę wand, co spowodowało zmiany w Dockerfile i gitlab-ci.yml.
 - Przeniesiono hypereditor z gitlaba do projektu (.whl).
 
@@ -506,10 +655,13 @@ ______________________________________________________________________
 ### New
 
 - Dodano nową wersję schematu XSD - xml_import_otwarte_dane_1_12.xsd (OTD-869)
-- Harwestacja metadanej contains_protected_data przez harwester XML wraz z walidacjami (OTD-870, OTD-871, OTD-872, OTD-873, OTD-874)
-- Harwestacja metadanej contains_protected_data przez harwester CKAN wraz z walidacjami (OTD-1026, OTD-1027, OTD-1028, OTD-1029, OTD-1030, OTD-1031)
+- Harwestacja metadanej contains_protected_data przez harwester XML wraz z walidacjami (OTD-870, OTD-871, OTD-872,
+  OTD-873, OTD-874)
+- Harwestacja metadanej contains_protected_data przez harwester CKAN wraz z walidacjami (OTD-1026, OTD-1027, OTD-1028,
+  OTD-1029, OTD-1030, OTD-1031)
 - Uwzględnienie w wykazie głównym DGA zasobów harwestowanych przez CKAN (OTD-1032)
-- Wartości domyślne równe None dla pól has_dynamic_data, has_high_value_data, has_research_data w serializerach zasobu i zbioru danych (OTD-870)
+- Wartości domyślne równe None dla pól has_dynamic_data, has_high_value_data, has_research_data w serializerach zasobu i
+  zbioru danych (OTD-870)
 - Wartość domyślną równą False dla pola contains_protected_data serializerach zasobu (OTD-870, OTD-1026)
 - Tłumaczenia komentarzy błędów walidacji
 - Testy rozwiązania
@@ -535,9 +687,11 @@ ______________________________________________________________________
 
 ### Changes
 
-- Zmiana w skrypcie start-api.sh umożliwiająca parametryzację czasu timeoutu gunicorna, w celu umożliwienia downloadu plików powyżej 1 GB (OTD-820)
+- Zmiana w skrypcie start-api.sh umożliwiająca parametryzację czasu timeoutu gunicorna, w celu umożliwienia downloadu
+  plików powyżej 1 GB (OTD-820)
 - Wyłączenie w CI testów na środowisku DEV (gałąź pre-devel) (OTD-846)
-- Zmiana typów pól w ES fields.StringField() na fields.TextField(), w celu wyeliminowania DeprecationWarning dot. typów danych (OTD-891)
+- Zmiana typów pól w ES fields.StringField() na fields.TextField(), w celu wyeliminowania DeprecationWarning dot. typów
+  danych (OTD-891)
 
 ### Fixes
 
@@ -564,7 +718,8 @@ ______________________________________________________________________
 - Nowe pole w bazie dla modelu User: last_logged_method
 - Nowe pola w formularzu użytkowników w panelu admina: is_gov_linked
 - Nowa stałą typu Enum: PORTAL_TYPE definiujący z jakiego portalu został wykonany request związany z Węzłem Krajowym.
-- Nowa metoda dla modelu User update_last_logging_method(), aktualizująca pole w bazie last_logged_method definujące jak użytkownik się zalogował do serwisu (WK, Formularz).
+- Nowa metoda dla modelu User update_last_logging_method(), aktualizująca pole w bazie last_logged_method definujące jak
+  użytkownik się zalogował do serwisu (WK, Formularz).
 - Nowa metoda w modelu User definiująca, czy użytkownik ma dostęp do panelu admina has_access_to_admin_panel().
 - Nowe property dla modelu User connected_gov_users_for_admin_page zwracajace konta użytkowników powiązanych z WK.
 - Nowe pola dla raportu użytkowników: wk_linked, last_logged_method
@@ -586,12 +741,15 @@ ______________________________________________________________________
 
 - Pola pesel, \_pesel, is_gov_auth dla modelu User
 - Bibliotekę django-logingovpl (plik .whl) oraz django-encrypted-model-fields.
-- Zmienne środowiskowe niezbędne do działania funkcjonalności: USERS_TEST_LOGINGOVPL, LOGINGOVPL_ISSUER, LOGINGOVPL_SSO_URL,LOGINGOVPL_ASSERTION_CONSUMER_URL, LOGINGOVPL_ENC_KEY,
+- Zmienne środowiskowe niezbędne do działania funkcjonalności: USERS_TEST_LOGINGOVPL, LOGINGOVPL_ISSUER,
+  LOGINGOVPL_SSO_URL,LOGINGOVPL_ASSERTION_CONSUMER_URL, LOGINGOVPL_ENC_KEY,
   LOGINGOVPL_ENC_CERT, LOGINGOVPL_ARTIFACT_RESOLVE_URL, LOGINGOVPL_SL_URL, FIELD_ENCRYPTION_KEYS, FRONTEND_BASE_URL
-- Interfejs (budowanie adresów URL dla przekierowań - klasa LOGINGOVPL_ACTION) związany z komunikacją backend - frontend.
+- Interfejs (budowanie adresów URL dla przekierowań - klasa LOGINGOVPL_ACTION) związany z komunikacją backend -
+  frontend.
 - Endpointy: /logingovpl, /logingovpl/idp, /logingovpl/switch, /logingovpl/unlink.
 - Uniwersalną klasę (MethodsNotAllowedTestMixin) do testowania metod zezwolonych dla testowanego API.
-- Serwisy odpowiedzialne za wykonywanie różnych zadań dla funkcjonalności Węzła Krajowego (LoginGovPlService) jak i związanych z użytkownikiem (UserService).
+- Serwisy odpowiedzialne za wykonywanie różnych zadań dla funkcjonalności Węzła Krajowego (LoginGovPlService) jak i
+  związanych z użytkownikiem (UserService).
 - Testowy formularz do logowania przez Węzeł Krajowy - Django Template.
 - Dodanie dodatkowego atrybutu (connected_gov_users) do zwrotnego wyniku w formacie JSON w endpoincie /auth/user
 - Nowe właściwości dla modelu User: is_gov_linked, connected_gov_users.
@@ -607,14 +765,18 @@ ______________________________________________________________________
 
 ### Changes
 
-- Sposób organizacji danych Wykazu Głównego - od teraz zasoby będą posortowane po kolumnie "Nazwa dysponenta zasobu" (OTD-688)
+- Sposób organizacji danych Wykazu Głównego - od teraz zasoby będą posortowane po kolumnie "Nazwa dysponenta zasobu" (
+  OTD-688)
 - Stylowanie w pliku xlsx Wykazu Głównego (OTD-689)
-- Zawartość pliku Wykazu Głównego - usunięto wiersze, które nie zawierają informacji w kolumnie "Zasób chronionych danych" (OTD-690)
-- Rozluźnienie polityki sprawdzania certyfikatów "self signed certificate" przy imporcie pliku XML za pomocą Harvestera (OTD-691)
+- Zawartość pliku Wykazu Głównego - usunięto wiersze, które nie zawierają informacji w kolumnie "Zasób chronionych
+  danych" (OTD-690)
+- Rozluźnienie polityki sprawdzania certyfikatów "self signed certificate" przy imporcie pliku XML za pomocą
+  Harvestera (OTD-691)
 
 ### Fixes
 
-- Naprawa błędów spowodowanych umieszczeniem znaków '{', '}' w opisie komunikatów (Alert) oraz opisie instytucji (Organization) (OTD-601)
+- Naprawa błędów spowodowanych umieszczeniem znaków '{', '}' w opisie komunikatów (Alert) oraz opisie instytucji (
+  Organization) (OTD-601)
 
 ## 2.35.1 - (2024-07-01)
 
@@ -626,8 +788,10 @@ ______________________________________________________________________
 
 ### Changes
 
-- Harvester: walidacja URL wysyła żądanie pobrania pliku z nagłówkiem `User-Agent` popularnych przeglądarek zamiast `python-requests` (OTD-560)
-- Dostosowanie kodu do stylu: formatowanie we wszystkich plikach na zgodne z ustawieniami `pre-commit` (black, end-of-lines) (OTD-672)
+- Harvester: walidacja URL wysyła żądanie pobrania pliku z nagłówkiem `User-Agent` popularnych przeglądarek zamiast
+  `python-requests` (OTD-560)
+- Dostosowanie kodu do stylu: formatowanie we wszystkich plikach na zgodne z ustawieniami `pre-commit` (black,
+  end-of-lines) (OTD-672)
 - Dostosowanie kodu do stylu: testy formatowania muszą przejść w CI (`allow_failure: false`) (OTD-672)
 
 ## 2.35.0 - (2024-06-18)
@@ -654,7 +818,8 @@ ______________________________________________________________________
 
 ### New
 
-- Dodano nowy job w CI w celu wydzielenia środowiska DEV do wdrażania dowolnych nieautoryzowanych przez biznes zmian na potrzeby testów (OTD-415-444)
+- Dodano nowy job w CI w celu wydzielenia środowiska DEV do wdrażania dowolnych nieautoryzowanych przez biznes zmian na
+  potrzeby testów (OTD-415-444)
 - Dodano wywołanie black w `pre-commit` (OTD-344)
 - Dodano job w CI, lint, który wywołuje `pre-commit` na wszystkich plikach (OTD-344)
 - Dodano plik `.git-blame-ignore-revs` dokumentujący zmiany masowe (OTD-344)
@@ -690,7 +855,8 @@ ______________________________________________________________________
 - Funkja walidująca ADE pod kątem schematu oraz zgodności z sumą kontrolną - US.01 (OTD-315)
 - Dodanie pola `electronic_delivery_address` do serializera instytucji - US.02 (OTD-316)
 - Dodanie pola `adres do doręczeń elektronicznych` do formularza tworzenia/edycji Instytucji - US.01 (OTD-315)
-- Pole `adres do doręczeń elektronicznych` w zakładce do przeglądania usuniętych Instytucji (OrganizationTrashAdmin) - US.01 (OTD-315)
+- Pole `adres do doręczeń elektronicznych` w zakładce do przeglądania usuniętych Instytucji (OrganizationTrashAdmin) -
+  US.01 (OTD-315)
 - Dodanie pola `Address for electronic delivery` do raportu CSV metadata - US.03 (OTD-317)
 - Dodanie pola `Id Institution` do raportu CSV metadata - US.03 (OTD-317)
 - Dodanie pola `Id Institution` do raportu wywoływanego z PA (raport "Zasoby" sekcji "Raporty") - US.04 (OTD-318)
@@ -702,7 +868,8 @@ ______________________________________________________________________
 
 ### Fixes
 
-- Poprawiono komunikaty błędów oraz obsługę przypadku zwrócenia None przez funkcję zwracającą rozszerzenie pliku (OTD-404, OTD-419)
+- Poprawiono komunikaty błędów oraz obsługę przypadku zwrócenia None przez funkcję zwracającą rozszerzenie pliku (
+  OTD-404, OTD-419)
 - Poprawiono help_text dla pola `contains_protected_data` w formie (OTD-471)
 
 ## 2.33.1 - (2024-03-27)
@@ -711,7 +878,8 @@ ______________________________________________________________________
 
 ### Fixes
 
-- Naprawa błędu związanego z aktualizacją zasobu utworzonego jako szkic z flagą `Zawiera chronione dane` na zasób opublikowany
+- Naprawa błędu związanego z aktualizacją zasobu utworzonego jako szkic z flagą `Zawiera chronione dane` na zasób
+  opublikowany
 - Poprawa tłumaczenia komunikatu o błędnym formacie pliku
 
 ## 2.33.0 - (2024-03-21)
@@ -761,7 +929,8 @@ ______________________________________________________________________
 
 - Przeniesiono fixture dataset'ów z modułu BBD do nowego `datasets_fixtures`. (OTD-140)
 - Zmiana funkcji `archives_upload_to`. (OTD-140)
-- Poprawka umożliwiająca zmiany typów danych w Panelu Admina, dla zasobów importowanych Harvesterem ze źródła typu XML. (OTD-270)
+- Poprawka umożliwiająca zmiany typów danych w Panelu Admina, dla zasobów importowanych Harvesterem ze źródła typu
+  XML. (OTD-270)
 
 ### Removed
 
@@ -773,7 +942,8 @@ ______________________________________________________________________
 
 ### Fixes
 
-- Naprawienie problemu z błędnym generowaniem pliku symlink do archiwum plików zbiorów danych podczas zmiany nazwy zbioru. (OTD-155)
+- Naprawienie problemu z błędnym generowaniem pliku symlink do archiwum plików zbiorów danych podczas zmiany nazwy
+  zbioru. (OTD-155)
 - Poprawiono aktualizowanie archiwum zbioru danych o wszystkie zasoby. (OTD-155, OTD-196)
 - Wprowadzenie walidacji zasobów (tytułu i opisu) pod względem niedozwolonych znaków. (OTD-131)
 - Rozbicie taska odpowiedzialnego za tworzenie raportów CSV oraz XML na dwa osobne taski. (OTD-131)
@@ -1073,7 +1243,7 @@ ______________________________________________________________________
 ### New
 
 - Implementacja w API 1.4 obsługi użytkownika (konto, zmiana hasła, logowanie i tp) (MCOD-1481)
-- Konwersja plików  SHP do GeoJSON (MCOD-1469)
+- Konwersja plików SHP do GeoJSON (MCOD-1469)
 - Indeksowanie danych geograficznych w Elasticsearchu (MCOD-1470)
 
 ### Changes

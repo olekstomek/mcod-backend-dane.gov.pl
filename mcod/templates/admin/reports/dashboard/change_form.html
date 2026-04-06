@@ -23,7 +23,7 @@
 
 {% block extrajs %}
     {{ block.super }}
-    <script src="{% static 'admin/js/iframeResizer.min.js' %}"></script>
+    <script src="{% static 'admin/js/iframeResizer.min.js' %}" nonce="{{ request.csp_nonce }}"></script>
 {% endblock %}
 
 {% block content_title %}
