@@ -3,7 +3,7 @@
     <head>
         <meta charset="utf-8" />
     </head>
-    <body onload="document.forms[0].submit()">
+    <body>
         <noscript>
             <p>
                 <strong>Note:</strong>
@@ -11,12 +11,17 @@
                 you must press the Continue button once to proceed.
             </p>
         </noscript>
-        <form action="{{sso_url|safe}}" method="post">
+
+        <form id="saml-form" action="{{sso_url|safe}}" method="post">
             <input type="hidden" name="SAMLRequest" value="{{envelop|safe}}"/>
             <input type="hidden" name="RelayState" value="{{relay_state|safe}}"/>
             <noscript>
                 <input type="submit" value="Continue"/>
             </noscript>
         </form>
+
+        <script nonce="{{ request.csp_nonce }}">
+            document.getElementById('saml-form').submit();
+        </script>
     </body>
 </html>

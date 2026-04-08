@@ -12,6 +12,15 @@ ______________________________________________________________________
 
 ### Breaks
 
+## 2.57.5 - (2026-04-07)
+
+______________________________________________________________________
+
+### Fixes
+
+- Poprawiona funkcja `mcod.logingovpl.utils.get_user()`, dodane brakujące `f-stringi` - OTD-2573
+- Przeniesienie obsługi zdarzenia onload do bezpiecznego bloku script z wykorzystaniem CSP nonce – OTD-2570
+
 ## 2.57.4 - (2026-04-02)
 
 ______________________________________________________________________

@@ -802,8 +802,10 @@ class TestLogingovplSSOView(MethodsNotAllowedTestMixin):
             with patch("django.contrib.auth.get_user", return_value=active_user):
                 res = self.client.get(url)
 
+        content = res.content.decode()
         assert res.status_code == 200
-        assert 'onload="document.forms[0].submit()"' in res.content.decode()
+        assert "document.getElementById('saml-form').submit();" in content
+        assert re.search(r'<script nonce="[^"]+">', content) is not None, "No nonce attribute in the script tag"
         assert "envelop" in res.context
         assert "relay_state" in res.context
         assert "sso_url" in res.context
@@ -822,8 +824,10 @@ class TestLogingovplSSOView(MethodsNotAllowedTestMixin):
         with patch("mcod.logingovpl.views.add_sign", return_value="signed_xml"):
             res = self.client.get(url)
 
+        content = res.content.decode()
         assert res.status_code == 200
-        assert 'onload="document.forms[0].submit()"' in res.content.decode()
+        assert "document.getElementById('saml-form').submit();" in content
+        assert re.search(r'<script nonce="[^"]+">', content) is not None, "No nonce attribute in the script tag"
         assert "envelop" in res.context
         assert "relay_state" in res.context
         assert "sso_url" in res.context

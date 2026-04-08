@@ -45,8 +45,8 @@ def get_user(content):
     XSI = "{http://www.w3.org/2001/XMLSchema-instance}"
     first_name = tree.find(f'.//{SAML}AttributeValue[@{XSI}type="naturalperson:CurrentGivenNameType"]').text  # noqa
     last_name = tree.find(f'.//{SAML}AttributeValue[@{XSI}type="naturalperson:CurrentFamilyNameType"]').text  # noqa
-    date_of_birth = tree.find('.//{SAML}AttributeValue[@{XSI}type="naturalperson:DateOfBirthType"]').text  # noqa
-    pesel = tree.find('.//{SAML}AttributeValue[@{XSI}type="naturalperson:PersonIdentifierType"]').text  # noqa
+    date_of_birth = tree.find(f'.//{SAML}AttributeValue[@{XSI}type="naturalperson:DateOfBirthType"]').text  # noqa
+    pesel = tree.find(f'.//{SAML}AttributeValue[@{XSI}type="naturalperson:PersonIdentifierType"]').text  # noqa
 
     return LoginGovPlUser(first_name, last_name, date_of_birth, pesel)
 
