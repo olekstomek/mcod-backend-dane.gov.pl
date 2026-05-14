@@ -15,6 +15,7 @@ from mcod.users.models import LoggingMethod, Token, get_token_expiration_date
 from mcod.users.views import ACSView
 
 User = get_user_model()
+admin_login_url = reverse("admin:login")
 
 
 def test_user_create(inactive_user):
@@ -26,9 +27,10 @@ def test_user_create(inactive_user):
 
 def test_last_login(inactive_user):
     now = timezone.now()
-    user_logged_in.send(User, request=None, user=inactive_user)
-    usr = User.objects.get(email=inactive_user.email)
-    assert now < usr.last_login
+    with override_settings(AXES_ENABLED=False):
+        user_logged_in.send(User, request=None, user=inactive_user)
+        usr = User.objects.get(email=inactive_user.email)
+        assert now < usr.last_login
 
 
 def test_email_unique():
@@ -169,30 +171,30 @@ def test_tokens(active_user):
 
 class TestLogin:
 
-    def test_admin_can_login_to_admin_panel(self, admin):
+    def test_admin_can_login_to_admin_panel(self, admin: User, test_password: str):
         client = Client()
         response = client.get("/")
         assert response.status_code == 302
         assert response.url == "/login/?next=/"
-        client.login(email=admin.email, password="12345.Abcde")
+        client.post(admin_login_url, data={"username": admin.email, "password": test_password})
         response = client.get("/")
         assert response.status_code == 200
 
-    def test_editor_can_login_to_admin_panel(self, active_editor):
+    def test_editor_can_login_to_admin_panel(self, active_editor: User, test_password: str):
         client = Client()
         response = client.get("/")
         assert response.status_code == 302
         assert response.url == "/login/?next=/"
-        client.login(email=active_editor.email, password="12345.Abcde")
+        client.post(admin_login_url, data={"username": active_editor.email, "password": test_password})
         response = client.get("/")
         assert response.status_code == 200
 
-    def test_active_user_cant_login_to_admin_panel(self, active_user):
+    def test_active_user_cant_login_to_admin_panel(self, active_user: User, test_password: str):
         client = Client()
         response = client.get("/")
         assert response.status_code == 302
         assert response.url == "/login/?next=/"
-        client.login(email=active_user.email, password="12345.Abcde")
+        client.post(admin_login_url, data={"username": active_user.email, "password": test_password})
         response = client.get("/")
         assert response.status_code == 302
 
@@ -226,21 +228,22 @@ def test__get_absolute_url_with_lang(active_user):
         assert active_user._get_absolute_url(test_url) == f"{settings.BASE_URL}/pl/test/path"
 
 
-def test_last_logged_method_logging_by_form(client: TestClient, active_user: User):
+def test_last_logged_method_logging_by_form(client: TestClient, active_user: User, test_password: str):
     """Test if user has last_logged_method set to `formularz` when logged via form."""
     flush_sessions()
-    client.simulate_post(
-        path="/auth/login",
-        json={
-            "data": {
-                "type": "user",
-                "attributes": {
-                    "email": active_user.email,
-                    "password": "12345.Abcde",
-                },
-            }
-        },
-    )
+    with override_settings(AXES_ENABLED=False):
+        client.simulate_post(
+            path="/auth/login",
+            json={
+                "data": {
+                    "type": "user",
+                    "attributes": {
+                        "email": active_user.email,
+                        "password": test_password,
+                    },
+                }
+            },
+        )
     active_user.refresh_from_db()
     assert active_user.last_logged_method == LoggingMethod.FORM.value
 

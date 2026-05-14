@@ -1,10 +1,13 @@
 import io
+import logging
 
 import pandas as pd
 from falcon.media import BaseHandler
 
 from mcod.core.utils import XMLWriter, save_as_csv
 from mcod.settings import RDF_FORMAT_TO_MIMETYPE
+
+logger = logging.getLogger("mcod")
 
 
 class RDFHandler(BaseHandler):
@@ -74,6 +77,9 @@ class ExportHandler(BaseHandler):
 
     def _as_csv(self, context):
         if not getattr(context, "serializer_schema", None):
+            logger.info(
+                f"[Export Handler] Retrieving serializer schema for model '{context.data.model}' using csv serializer registry."
+            )
             schema_class = context.data.model.get_csv_serializer_schema()
             exclude = ["recommendation_state_name", "recommendation_notes"] if not context.full else []
             if context.state == "planned":

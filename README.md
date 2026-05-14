@@ -735,3 +735,11 @@ bazie OD.
 ```
 (backend) python manage.py set_up_forum --step_name sync_users
 ```
+
+### Resetowanie django axes w przypadku lokalnego zablokowania konta.
+
+Jeżeli pojawia się komunikat z settings.AXES_FAIL_MESSAGE (Too many failed login attempts..) użyj tej komendy.
+
+```cmd
+python manage.py axes_reset
+```

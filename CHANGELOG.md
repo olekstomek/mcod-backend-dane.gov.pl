@@ -12,6 +12,39 @@ ______________________________________________________________________
 
 ### Breaks
 
+## 2.58.0 - (2026-04-28)
+
+______________________________________________________________________
+
+### New
+
+- Usunięcie nieużywanej zależności elastic-apm - OTD-1338
+- Dodanie biblioteki django-axes dla limitera admina i cms - OTD-1739
+- Nowe testy limiterów -  OTD-1739
+- Dodanie limitera dla endpointa `/login/` falcon API. -  OTD-1739
+- Wprowadzenie bezpiecznego mechanizmu pobierania raportów dla zalogowanego użytkownka w roli administratora - OTD-1457
+- Nowy plik Dockerfile budujący lokalny obraz Redis na bazie wersji redis:8.4.2-trixie - OTD-2426
+- Utworzenie nowego mechanizmu generowania raportu katalog.csv - OTD-2373
+- Dodano endpoint pobierania raportu katalog.csv w dzielonym archiwum ZIP - OTD-2373
+
+### Changes
+
+- Dodanie skryptu js bezpośrednio do pliku stats.html bez konieczności robienia obejścia i importowania go z frontendu  - OTD-2466
+- Usunięcie ifa związanego z importowaniem tego pliku oraz ze zmienną środowiskową `BOKEH_EXTRA_JS`  - OTD-2466
+- Usunięcie zmiennej środowiskowej `BOKEH_EXTRA_JS`  - OTD-2466
+- Upgrade wersji Celery z 5.3 do 5.5 (najwyższa dla Python 3.8) - OTD-2428
+- Optymalizacja generowania raportów CSV w Panelu Administracyjnym - OTD-2415
+- Zabezpieczenie `MATOMO_URL` przed podaniem url scheme'y - OTD-2578
+- Aktualizacja gitlab-ci.yml o tworzenie w registry.dane.gov.pl/mcod/redis nowego obrazu redis:8.4.2-trixie-mcod - OTD-2426
+
+### Fixes
+
+- Usunięcie duplikatu zmiennej `MATOMO_URL` z settings - OTD-2578
+- Naprawiona paginacja endpointa /institutions w zakresie przekazywania parametru type w linkach first, prev, next, last - OTD-2457
+- Zaktualizowane angielskie tłumaczenia w plikach django.po oraz odwołania w mcod/templates/mails/duplicate_registration_password_reset.html i mcod/templates/mails/duplicate_registration_password_reset.txt - OTD-2493
+- Naprawa niedeterministycznego testu - OTD-2600
+- Naprawa braku walidacji pliku zasobu DGA podczas edycji zasobu - OTD-2388
+
 ## 2.57.5 - (2026-04-07)
 
 ______________________________________________________________________

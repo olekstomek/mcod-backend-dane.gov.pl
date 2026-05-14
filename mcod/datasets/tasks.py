@@ -15,7 +15,7 @@ from sentry_sdk import set_tag
 
 from mcod.core import storages
 from mcod.core.tasks import extended_shared_task
-from mcod.core.utils import CSVWriter, WriterInterface, XMLWriter, clean_filename
+from mcod.core.utils import WriterInterface, XMLWriter, clean_filename
 from mcod.datasets.utils import create_archive_file_path
 
 if TYPE_CHECKING:
@@ -99,25 +99,9 @@ def create_catalog_metadata_file(
 
 @extended_shared_task
 def create_csv_metadata_files() -> None:
-    """Creates CSV metadata files using dataset information.
+    from mcod.reports.catalog import generate_catalog_csv_report
 
-    This task is responsible for creating CSV metadata files based on dataset information.
-    It fetches dataset objects with metadata fetched as a list,
-    serializes them using a CSV serializer, and writes the serialized data to
-    CSV files using a CSVWriter.
-    """
-    from mcod.datasets.serializers import DatasetResourcesCSVSerializer
-
-    dataset_model = apps.get_model("datasets", "Dataset")
-    qs_data = dataset_model.objects.with_metadata_fetched_as_list()
-
-    logger.info("Started task: create_csv_metadata_files")
-    csv_schema = DatasetResourcesCSVSerializer(many=True)
-    csv_writer: CSVWriter = CSVWriter(
-        headers=csv_schema.get_csv_headers(),
-    )
-
-    create_catalog_metadata_file(qs_data, csv_schema, "csv", writer=csv_writer)
+    generate_catalog_csv_report()
 
 
 @extended_shared_task

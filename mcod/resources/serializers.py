@@ -515,11 +515,11 @@ class ResourceCSVSchema(CSVSerializer, metaclass=CSVSchemaRegistrator):
     converted_formats_str = fields.Str(data_key=_("formats after conversion"))
     institution_id = fields.Str(attribute="institution.id", data_key=_("Id Institution"), default="")
     dataset = fields.Str(attribute="dataset.title", data_key=_("dataset"), default="")
-    dataset_id = fields.Str(attribute="dataset.id", data_key=_("Id dataset"), default="")
+    dataset_id = fields.Str(attribute="dataset_id", data_key=_("Id dataset"), default="")
     status = fields.Str(data_key=_("status"), default="")
-    created_by = fields.Int(attribute="created_by.id", data_key=_("created_by"), default=None)
+    created_by = fields.Int(attribute="created_by_id", data_key=_("created_by"), default=None)
     created = fields.DateTime(data_key=_("created"), default=None)
-    modified_by = fields.Int(attribute="modified_by.id", data_key=_("modified_by"), default=None)
+    modified_by = fields.Int(attribute="modified_by_id", data_key=_("modified_by"), default=None)
     modified = fields.DateTime(data_key=_("modified"), default=None)
     resource_type = fields.Str(attribute="type", data_key=_("type"), default="")
     openness_score = fields.Int(data_key=_("Openness score"), default=None)
@@ -539,6 +539,10 @@ class ResourceCSVSchema(CSVSerializer, metaclass=CSVSchemaRegistrator):
     class Meta:
         ordered = True
         model = "resources.Resource"
+
+    @classmethod
+    def _optimize_queryset(cls, queryset):
+        return queryset.select_related("dataset", "dataset__organization")
 
 
 class ChartApiRelationships(Relationships):

@@ -20,6 +20,7 @@ from mcod.core.admin_metrics_view import prometheus_metrics_view
 from mcod.datasets.views import ConditionLabelsAdminView, DatasetAutocompleteView
 from mcod.organizations.views import InstitutionTypeAdminView, OrganizationAutocompleteView
 from mcod.regions.views import RegionsAutocompleteView
+from mcod.reports.views import DownloadReportFileView
 from mcod.resources.views import DownloadResourceFileView, ResourceAutocompleteView
 from mcod.users.views import (
     AdminAutocompleteView,
@@ -34,6 +35,7 @@ urlpatterns = [path("health/", lambda r: JsonResponse({"status": "ok"}))]
 
 secure_media_patterns = [
     re_path(r"^media/resources/(?P<file_path>.*)$", DownloadResourceFileView.as_view(), name="secure_resource_download"),
+    re_path(r"^media/reports/(?P<file_path>.*)$", DownloadReportFileView.as_view(), name="secure_report_download"),
 ]
 urlpatterns = secure_media_patterns + urlpatterns
 

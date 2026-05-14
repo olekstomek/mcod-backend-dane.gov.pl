@@ -74,9 +74,8 @@ class InstitutionApiSearchRequest(ListingSchema):
         doc_base_url="/institutions",
         doc_field_name="email address",
     )
-    org_type = search_fields.FilterField(
+    type = search_fields.FilterField(
         StringTermSchema,
-        data_key="type",
         query_field="institution_type",
         doc_template="docs/generic/fields/string_term_field.html",
         doc_base_url="/institutions",

@@ -102,6 +102,19 @@ MAIN_DGA_RESOURCE_XLSX_CREATION_CACHE_TIMEOUT = 0
 CACHES.update({"test": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}})
 
 
+# Use Redis DB 10 for tests to isolate test cache from local cache.
+CACHES = {
+    **CACHES,
+    "limiter": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": f"{REDIS_URL}/10",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        },
+    },
+}
+
+
 MEDIA_URL = "/media/"
 IMAGES_URL = "%s%s" % (MEDIA_URL, "images")
 MEETINGS_URL = "%s%s" % (MEDIA_URL, "meetings")
@@ -161,6 +174,7 @@ ES_PL_SYN_FILTER_KWARGS = {
     "synonyms": ["sierściuch, kot"],
 }
 FALCON_LIMITER_ENABLED = False
+FALCON_LIMITER_LOGIN_LIMITS = "3 per minute,10 per hour"
 
 DISCOURSE_FORUM_ENABLED = False
 
@@ -179,6 +193,12 @@ MAIN_DGA_DATASET_OWNER_ORGANIZATION_PK = 99
 # in a shared cache environment, preventing conflicts between workers.
 worker_id: Optional[str] = os.environ.get("PYTEST_XDIST_WORKER")
 if worker_id:
+    worker_num = int(worker_id.replace("gw", ""))
+    CACHES["limiter"].update(
+        {
+            "LOCATION": f"{REDIS_URL}/{(worker_num % 4) + 1}",
+        }
+    )
     CACHES["sessions"].update({"KEY_PREFIX": f"worker_{worker_id}_cache_session_"})
 
 # update `HARVESTER_XML_VERSION_TO_SCHEMA_PATH` for XML harvester tests cases
@@ -202,3 +222,19 @@ FALCON_MIDDLEWARES = [
     "mcod.core.api.middlewares.PrometheusMiddleware",
 ]
 HEALTH_CHECK = False
+
+# AXES_PROXY_COUNT and AXES_IPWARE_PROXY_COUNT are set to 0 specifically for the test environment.
+#
+# Root cause: The django-ipware library (used by django-axes) by default attempts to
+# scan for proxy headers in the 'request' object. In the Django test environment,
+# django.test.Client occasionally generates mock request objects that lack the
+# full '.META' attribute structure expected by ipware's proxy resolution logic.
+#
+# Without these settings, axes triggers an 'AttributeError: dict object has no attribute META',
+# which is then silently caught by the Django Admin login form and reported as
+# a generic "Permission Denied" (status 200) instead of a successful login (status 302).
+#
+# Setting these to 0 forces axes to use simple IP resolution (REMOTE_ADDR),
+# which is sufficient for tests and prevents the internal crash across all 3000+ tests.
+AXES_PROXY_COUNT = 0
+AXES_IPWARE_PROXY_COUNT = 0

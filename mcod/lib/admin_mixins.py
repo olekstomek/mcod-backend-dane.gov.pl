@@ -36,6 +36,7 @@ from rules.contrib.admin import (
 )
 from suit.admin import SortableStackedInline as BaseSortableStackedInline, SortableStackedInlineBase
 
+from mcod.core.db.querysets import QuerySetDTO
 from mcod.datasets.models import Dataset
 from mcod.harvester.models import DataSourceImport
 from mcod.histories.models import LogEntry
@@ -104,11 +105,12 @@ def export_to_csv(self, request: HttpRequest, queryset: QuerySet):
         )
         return
 
+    qs_dto = QuerySetDTO.from_queryset(queryset)
+    qs_data: Dict = qs_dto.asdict()
+
     generate_csv.s(
-        tuple(obj.id for obj in queryset),
-        self.model._meta.label,
-        request.user.id,
-        now().strftime("%Y%m%d%H%M%S.%s"),
+        queryset_data=qs_data,
+        user_id=request.user.id,
     ).apply_async_on_commit()
     messages.add_message(request, messages.SUCCESS, _("Task for CSV generation queued"))
 

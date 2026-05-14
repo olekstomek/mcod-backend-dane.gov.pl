@@ -1,5 +1,4 @@
 import logging
-import os
 from time import time
 
 from bokeh.embed import server_document
@@ -11,7 +10,6 @@ from django.utils.translation import gettext_lazy as _
 
 from mcod.pn_apps.utils import chart_thumb_path
 
-extra_js = os.environ.get("BOKEH_EXTRA_JS")
 profile_log = logging.getLogger("stats-profile")
 
 
@@ -31,7 +29,6 @@ def stats_dashboard(request: HttpRequest) -> HttpResponse:
         "pn_apps/stats.html",
         dict(
             script=script,
-            extra_js=extra_js,
             user=request.user,
             stats_event_settings=stats_event_settings,
             stats_log_level=stats_log_level,

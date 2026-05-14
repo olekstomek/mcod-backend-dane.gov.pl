@@ -14,7 +14,7 @@ from contextlib import contextmanager
 from http.cookies import SimpleCookie
 from io import StringIO, TextIOWrapper
 from pathlib import Path
-from typing import List, Optional, TextIO, Union
+from typing import Any, Dict, Iterable, List, Optional, TextIO, Union
 from unittest.mock import patch
 from xml.dom.minidom import parseString
 from xml.sax.saxutils import escape
@@ -390,17 +390,6 @@ class WriterInterface(ABC):
 
 
 class CSVWriter(WriterInterface):
-    """
-    Concrete class implementing WriterInterface for CSV file writing.
-
-    Methods:
-        __init__(self, delimiter: str = ";", headers: Optional[List[str]]):
-            Constructor method initializing CSVWriter instance with delimiter
-            and headers.
-
-        save(self, file_object, file_path, data):
-            Method to save data to a CSV file.
-    """
 
     def __init__(self, headers: List[str], delimiter: str = ";"):
         self.headers = headers
@@ -409,14 +398,16 @@ class CSVWriter(WriterInterface):
     def save(
         self,
         file_object: Union[StringIO, TextIOWrapper],
-        data: List[dict],
+        data: Iterable[Dict[str, Any]],
         language_catalog_path: Optional[str] = None,
     ):
-        """Save data as csv file."""
-        csv_writer = csv.DictWriter(file_object, fieldnames=self.headers, delimiter=self.delimiter)
+        csv_writer = csv.DictWriter(
+            f=file_object,
+            fieldnames=self.headers,
+            delimiter=self.delimiter,
+        )
         csv_writer.writeheader()
-        for row in data:
-            csv_writer.writerow(row)
+        csv_writer.writerows(data)
 
 
 class XMLWriter(WriterInterface):

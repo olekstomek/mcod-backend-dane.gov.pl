@@ -6,20 +6,15 @@ from functools import partial
 from typing import Optional
 
 import django
-import elasticapm
 import falcon
 import sentry_sdk
 from django.conf import settings
-from elasticapm.conf import setup_logging
-from elasticapm.handlers.logging import LoggingHandler
 from falcon import DEFAULT_MEDIA_TYPE
 from falcon.media import JSONHandler
 from falcon.request import Request
 from falcon.response import Response
 from webargs import falconparser
 
-from mcod.core.api import middlewares
-from mcod.core.api.apm import get_client, get_data_from_request
 from mcod.core.api.converters import ExportFormatConverter, RDFFormatConverter
 from mcod.core.api.health_check import start_health_monitoring
 from mcod.core.api.media import ExportHandler, RDFHandler, SparqlHandler, XMLHandler, ZipHandler
@@ -34,7 +29,7 @@ from mcod.lib.errors import (
 )
 
 logging_config.dictConfig(settings.LOGGING)
-logger = logging.getLogger("elasticapm.errors.client")
+api_logger = logging.getLogger("mcod-api")
 
 jsonapi_handler = JSONHandler(dumps=partial(json.dumps, cls=APIEncoder))
 
@@ -74,15 +69,6 @@ class ApiApp(falcon.App):
         if middleware is None:
             middleware = middleware_loader()
 
-        self.apm_client = get_client()
-        if self.apm_client:
-            logging_level = getattr(settings, "API_LOG_LEVEL", "DEBUG")
-            setup_logging(LoggingHandler(self.apm_client, level=logging_level))
-
-            if self.apm_client.config.instrument:
-                elasticapm.instrumentation.control.instrument()
-                middleware.insert(0, middlewares.TraceMiddleware(self.apm_client))
-
         super().__init__(
             media_type=media_type,
             request_type=request_type,
@@ -106,17 +92,6 @@ class ApiApp(falcon.App):
                 self.add_route(*route, suffix=suffix)
 
     def _handle_exception(self, req, resp, exc, params):
-        if self.apm_client:
-            self.apm_client.capture_exception(
-                exc_info=True,
-                context={
-                    "request": get_data_from_request(
-                        req,
-                        capture_body=self.apm_client.config.capture_body in ("errors", "all"),
-                        capture_headers=self.apm_client.config.capture_headers,
-                    )
-                },
-            )
         return super()._handle_exception(req, resp, exc, params)
 
 
@@ -153,6 +128,8 @@ def get_api_app(middleware: Optional[list] = None):
 django.setup()
 app = get_api_app()
 start_health_monitoring()
+
+api_logger.debug(f"{settings.COMPONENT=}")
 
 if __name__ == "__main__":
     from werkzeug.serving import run_simple

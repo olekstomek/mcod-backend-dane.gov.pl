@@ -4,6 +4,7 @@ from urllib import parse
 import dpath.util
 import requests_mock
 from django.conf import settings
+from django.test import override_settings
 from falcon.testing import Cookie, TestClient
 from falcon.util.misc import code_to_http_status
 from falcon.util.structures import Context
@@ -242,8 +243,8 @@ def api_send_request(context, mocker, test_api_instance):
     }
     if context.api.method in ("POST", "PUT", "PATCH", "DELETE"):
         kwargs["json"] = context.obj
-
-    resp = TestClient(test_api_instance).simulate_request(**kwargs)
+    with override_settings(AXES_ENABLED=False):
+        resp = TestClient(test_api_instance).simulate_request(**kwargs)
     skip_validation = getattr(context.api, "skip_validation", False)
     api_version = resp.headers["x-api-version"]
     if api_version == "1.0":

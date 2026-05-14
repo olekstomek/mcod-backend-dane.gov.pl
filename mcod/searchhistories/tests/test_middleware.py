@@ -1,11 +1,14 @@
 import pytest
+from django.contrib.auth import get_user_model
 from django_redis import get_redis_connection
 from falcon import HTTP_201, HTTP_OK
+
+User = get_user_model()
 
 
 @pytest.mark.redis
 @pytest.mark.elasticsearch
-def test_searchhistories_middleware_set_up_key_in_redis(client, active_editor):
+def test_searchhistories_middleware_set_up_key_in_redis(client, active_editor: User, test_password: str):
     redis_con = get_redis_connection()
     keys = [k.decode() for k in redis_con.keys()]
 
@@ -18,7 +21,7 @@ def test_searchhistories_middleware_set_up_key_in_redis(client, active_editor):
                 "type": "user",
                 "attributes": {
                     "email": active_editor.email,
-                    "password": "12345.Abcde",
+                    "password": test_password,
                 },
             }
         },
@@ -41,7 +44,7 @@ def test_searchhistories_middleware_set_up_key_in_redis(client, active_editor):
 
 @pytest.mark.redis
 @pytest.mark.elasticsearch
-def test_searchhistories_middleware_ignore_search_without_query(client, active_editor):
+def test_searchhistories_middleware_ignore_search_without_query(client, active_editor, test_password: str):
     redis_con = get_redis_connection()
     key = f"search_history_user_{active_editor.id}"
     resp = client.simulate_post(
@@ -51,7 +54,7 @@ def test_searchhistories_middleware_ignore_search_without_query(client, active_e
                 "type": "user",
                 "attributes": {
                     "email": active_editor.email,
-                    "password": "12345.Abcde",
+                    "password": test_password,
                 },
             }
         },
@@ -72,7 +75,7 @@ def test_searchhistories_middleware_ignore_search_without_query(client, active_e
 
 
 @pytest.mark.elasticsearch
-def test_searchhistories_middleware_ignore_suggestion_path(client, active_editor):
+def test_searchhistories_middleware_ignore_suggestion_path(client, active_editor: User, test_password: str):
     key = f"search_history_user_{active_editor.id}"
     resp = client.simulate_post(
         path="/auth/login",
@@ -81,7 +84,7 @@ def test_searchhistories_middleware_ignore_suggestion_path(client, active_editor
                 "type": "user",
                 "attributes": {
                     "email": active_editor.email,
-                    "password": "12345.Abcde",
+                    "password": test_password,
                 },
             }
         },

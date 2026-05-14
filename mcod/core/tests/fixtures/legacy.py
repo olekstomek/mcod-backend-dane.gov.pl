@@ -6,7 +6,7 @@ import os
 import random
 from collections import namedtuple
 from textwrap import dedent
-from typing import Dict
+from typing import Any, Dict, Generator
 
 import elasticsearch_dsl
 import factory
@@ -17,6 +17,7 @@ from django.contrib.auth import BACKEND_SESSION_KEY, HASH_SESSION_KEY, SESSION_K
 from django.contrib.sessions.backends.base import SessionBase
 from django.core.cache import caches
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test import override_settings
 from falcon import testing
 
 from mcod.lib.jwt import get_auth_token
@@ -65,15 +66,37 @@ def constance_config():
 
 
 @pytest.fixture
-def client(test_api_instance) -> testing.TestClient:
+def client(test_api_instance) -> Generator[testing.TestClient, Any, None]:
     """
     Returns client with `X-API-VERSION` header set to "1.0".
 
     Note: using this client does not guarantee that the request will be sent
     to the endpoint marked with version “1.0” due to version overwriting in `ApiVersionMiddleware`
     when the URL path contains a defined API version.
+    Disable django-axes for Falcon client, because of changing request object - missing META.
+
+    Authentication Testing Guidelines for mcod:
+
+    1. client.post(reverse('admin:login'), data=...):
+       - USE FOR: Testing the login process itself (e.g., case-sensitivity, incorrect passwords, lockouts).
+       - WHY: Unlike client.login(), this provides a full 'HttpRequest' object to the auth backends.
+         django-axes REQUIRES this request to track IPs; otherwise, it raises
+         AxesBackendRequestParameterRequired.
+
+    2. client.force_login(user):
+       - USE FOR: 90% of tests where you just need an authenticated session to test
+         logic AFTER login (e.g., checking if an editor can view a specific page).
+       - WHY: It is the fastest method as it bypasses the entire authentication backend
+         stack (and thus Axes), injecting the session directly.
+
+    3. client.login(**credentials):
+       - DO NOT USE: Avoid this method in this project.
+       - WHY: It calls authenticate() without a request object, which is incompatible
+         with django-axes. Use client.post() for real credentials testing instead.
+
     """
-    return testing.TestClient(test_api_instance, headers={"X-API-VERSION": "1.0"})
+    with override_settings(AXES_ENABLED=False):
+        yield testing.TestClient(test_api_instance, headers={"X-API-VERSION": "1.0"})
 
 
 @pytest.fixture

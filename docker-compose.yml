@@ -44,7 +44,10 @@ services:
 
   mcod-redis:
     container_name: mcod-redis
-    image: redis:6.2
+    image: redis:8.4.2-trixie-mcod
+    build:
+      context: .
+      dockerfile: docker/redis/Dockerfile
     restart: "no"
     volumes:
       - redis_vol:/data

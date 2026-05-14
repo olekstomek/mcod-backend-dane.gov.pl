@@ -3,6 +3,8 @@ import io
 import json
 import tempfile
 from pathlib import Path
+from typing import Any, Dict, Iterable
+from unittest.mock import MagicMock
 from xml.dom.minidom import parseString
 
 import pandas as pd
@@ -114,6 +116,51 @@ def test_csv_writer():
     output = xml_file.getvalue()
 
     assert "some value" in output
+
+
+def test_csv_writer_processes_data_lazily():
+    """
+    Verify that CSVWriter does not consume the entire generator into memory.
+    The test tracks the sequence of events to ensure interleaved execution:
+    Generate -> Write -> Generate -> Write.
+    """
+    # 1. Setup metadata and tracking
+    headers = ["first_name", "last_name"]
+    execution_trace = []
+
+    # 2. Setup the "Spy" File
+    # We mock the write method to log every time the CSV writer sends data to the file
+    mock_file = MagicMock()
+
+    def mock_write_side_effect(text: str):
+        clean_text = text.strip()
+        if clean_text:  # Ignore empty writes or just newlines if necessary
+            execution_trace.append(f"DISK_WRITE: {clean_text}")
+
+    mock_file.write.side_effect = mock_write_side_effect
+
+    # 3. Setup the Lazy Generator
+    # This generator logs exactly when a row is produced
+    def data_generator() -> Iterable[Dict[str, Any]]:
+        for i in range(2):
+            execution_trace.append(f"GEN_ROW_{i}")
+            yield {"first_name": f"Name{i}", "last_name": f"Surname{i}"}
+
+    # 4. Execute the save method
+    writer = CSVWriter(headers=headers, delimiter=";")
+    writer.save(mock_file, data_generator())
+
+    # 5. Assert the Interleaved Sequence
+    # If the writer wasn't lazy, all GEN_ROW entries would appear before DISK_WRITE entries
+    expected_sequence = [
+        "DISK_WRITE: first_name;last_name",  # Header written first
+        "GEN_ROW_0",  # Row 0 generated
+        "DISK_WRITE: Name0;Surname0",  # Row 0 written to disk immediately
+        "GEN_ROW_1",  # Row 1 generated
+        "DISK_WRITE: Name1;Surname1",  # Row 1 written to disk immediately
+    ]
+
+    assert execution_trace == expected_sequence, f"Execution was not lazy! Trace received: {execution_trace}"
 
 
 def test_xml_writer(mocker: "MockerFixture"):

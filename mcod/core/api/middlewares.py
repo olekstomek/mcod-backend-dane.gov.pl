@@ -6,8 +6,6 @@ from datetime import datetime
 from typing import Any, Optional
 from urllib.parse import urlparse
 
-import elasticapm
-import elasticapm.instrumentation.control
 import falcon
 import sentry_sdk
 from accept_types import get_best_match
@@ -22,13 +20,10 @@ from django.utils.translation.trans_real import (
     parse_accept_lang_header,
 )
 from django_redis import get_redis_connection
-from elasticapm.conf import constants
-from elasticapm.utils.disttracing import TraceParent
 from falcon import Request, Response
 from falcon_caching.middleware import Middleware as BaseFalconCacheMiddleware
 from falcon_caching.options import HttpMethods
 
-from mcod.core.api.apm import get_data_from_request, get_data_from_response
 from mcod.core.api.versions import VERSIONS
 from mcod.core.csrf import _sanitize_token, compare_salted_tokens, generate_csrf_token
 from mcod.core.db.managers import QueryLogger
@@ -38,7 +33,7 @@ from mcod.core.metrics import (
     API_REQUEST_COUNT,
     API_REQUEST_LATENCY_HISTOGRAM,
 )
-from mcod.core.utils import falcon_set_cookie, jsonapi_validator, route_to_name
+from mcod.core.utils import falcon_set_cookie, jsonapi_validator
 from mcod.counters.lib import Counter
 from mcod.lib.encoders import DateTimeToISOEncoder
 
@@ -286,46 +281,6 @@ class ContentTypeMiddleware:
             "application/vnd.api+json; ext=bulk",
         ] + list(set(settings.RDF_FORMAT_TO_MIMETYPE.values()))
         resp.content_type = get_best_match(req.accept, allowed_mime_types)
-
-
-class TraceMiddleware:
-    def __init__(self, apm_client):
-        self.client = apm_client
-
-    def process_request(self, req: Request, resp: Response):
-        if self.client and req.user_agent not in ("mcod-heartbeat", "mcod-internal"):
-            if constants.TRACEPARENT_HEADER_NAME in req.headers:
-                trace_parent = TraceParent.from_string(req.headers[constants.TRACEPARENT_HEADER_NAME])
-            else:
-                trace_parent = None
-
-            self.client.begin_transaction("request", trace_parent=trace_parent)
-
-    def process_response(self, req: Request, resp: Response, resource: Any, req_succeeded: bool):
-        if self.client and req.user_agent != "mcod-heartbeat":
-            rule = route_to_name(req.uri_template, method=req.method)
-            elasticapm.set_context(
-                lambda: get_data_from_request(
-                    req,
-                    capture_body=self.client.config.capture_body in ("transactions", "all"),
-                    capture_headers=self.client.config.capture_headers,
-                ),
-                "request",
-            )
-            elasticapm.set_context(
-                lambda: get_data_from_response(resp, capture_headers=self.client.config.capture_headers),
-                "response",
-            )
-
-            result = resp.status
-            elasticapm.set_transaction_name(rule, override=False)
-            if hasattr(req, "user") and req.user.is_authenticated:
-                elasticapm.set_user_context(email=req.user.email, user_id=req.user.id)
-
-            elasticapm.set_transaction_result(result, override=False)
-            # Instead of calling end_transaction here, we defer the call until the response is closed.
-            # This ensures that we capture things that happen until the WSGI server closes the response.
-            self.client.end_transaction(rule, result)
 
 
 class CsrfMiddleware:

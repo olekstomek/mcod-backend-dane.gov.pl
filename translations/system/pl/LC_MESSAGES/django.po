@@ -4897,7 +4897,7 @@ msgstr "Próba ponownej rejestracji na portalu dane.gov.pl"
 msgid "An account associated with this email address already exists on the dane.gov.pl portal."
 msgstr "Na portalu dane.gov.pl jest już konto powiązane z tym adresem e-mail."
 
-msgid "If you don't remember your password, you can change it. To do so, open the link below or copy and paste it into your web browse:"
+msgid "If you don't remember your password, you can change it. To do so, open the link below or copy and paste it into your web browser:"
 msgstr "Jeśli nie pamiętasz do niego hasła, możesz je zmienić. Aby to zrobić, otwórz poniższy link lub skopiuj go do okna przeglądarki:"
 
 msgid "Not trying to register? Ignore this message — someone may have accidentally entered your email address."

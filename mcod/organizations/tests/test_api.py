@@ -1,6 +1,11 @@
+from typing import Dict
+
 import pytest
-from falcon import HTTP_OK
+from falcon import HTTP_OK, testing
 from pytest_bdd import scenarios
+
+from mcod.core.tests.helpers.tasks import run_on_commit_events
+from mcod.organizations.factories import OrganizationFactory
 
 scenarios(
     "features/organization_datasets_list_api.feature",
@@ -59,3 +64,29 @@ def test_response_electronic_delivery_address_in_institution_detail(institution,
     resp = client14.simulate_get(f"/institutions/{inst_id}")
     assert HTTP_OK == resp.status
     assert "electronic_delivery_address" in resp.json["data"]["attributes"]
+
+
+@pytest.mark.elasticsearch
+@pytest.mark.parametrize(
+    "api_version",
+    ("1.0", "1.4"),
+)
+def test_pagination(api_clients: Dict[str, testing.TestClient], api_version: str):
+
+    # GIVEN
+    OrganizationFactory.create_batch(size=10, institution_type="developer")
+    run_on_commit_events()
+    client = api_clients[api_version]
+    pagination_links = {"first", "last", "next", "self", "prev"}
+
+    # WHEN
+    resp = client.simulate_get("/institutions?page=3&per_page=2&type[term]=developer")
+
+    # THEN
+    assert resp.status == HTTP_OK
+    assert len(resp.json) == 4  # 4 pages
+    assert len(resp.json["data"]) == 2  # 2 results in current page
+    assert set(resp.json["links"].keys()) == pagination_links  # all required links for pagination
+
+    for link in pagination_links:
+        assert "&type[term]=developer" in resp.json["links"][link]  # filter passed to links

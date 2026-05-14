@@ -63,6 +63,14 @@ Feature: Change resource in admin panel
     And resource with id 900 is not DGA
     And resource with id 800 is DGA
 
+  @feat_dga
+  Scenario: Cannot set existing non DGA compliant Resource as DGA on update
+    Given resource with id 999 and simple csv file
+    When admin's request method is POST
+    And admin's request posted resource data is {"contains_protected_data": "True", "title": "DGA 1", "description": "more than 20 characters", "data_date": "22.05.2020", "status": "published"}
+    And admin's page /resources/resource/999/change/ is requested
+    Then resource with id 999 is not DGA
+
   @periodic_task
   Scenario: Auto data date with end date can be set on resource with type api
     Given dataset with id 990

@@ -124,3 +124,15 @@ msgstr "Brak uprawnień do panelu administratora."
 
 msgid "An error occurred and the account switch failed."
 msgstr "Wystąpił błąd i nie udało się przełączyć konta. Spróbuj ponownie później."
+
+msgid "Too many failed login attempts. Please try again later."
+msgstr "Zbyt wiele nieudanych prób logowania. Spróbuj ponownie później."
+
+msgid "Login attempts"
+msgstr "Próby logowania"
+
+msgid "Login logs"
+msgstr "Dziennik logowania"
+
+msgid "Security"
+msgstr "Bezpieczeństwo"

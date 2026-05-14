@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import re
 from collections import namedtuple
 from smtplib import SMTPException
@@ -13,6 +15,7 @@ from django.test import Client, override_settings
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext as _, override
+from falcon import testing
 from falcon.testing import Result, TestClient
 from rest_framework import status
 from rest_framework.test import APIClient, APIRequestFactory
@@ -49,6 +52,43 @@ def fake_session():
     return namedtuple("Session", "session_key")
 
 
+def prepare_api_data(user_email: str, password: str):
+    return {
+        "path": "/auth/login",
+        "json": {
+            "data": {
+                "type": "user",
+                "attributes": {
+                    "email": user_email,
+                    "password": password,
+                },
+            }
+        },
+    }
+
+
+class TestLogin:
+    def test_login_rate_limiter_blocks_after_exceeding_limit(
+        self, admin: User, client: testing.TestClient, clear_limiter_redis_db: None
+    ):
+        """
+        Business logic test. Test if user gets status code 429.
+        Duplicated in test_limiter_disabled_via_settings.
+        """
+        limit_per_minute = 3
+        limits = f"{limit_per_minute} per minute,10 per hour"
+
+        data: dict = prepare_api_data(user_email=admin.email, password="wrong password")
+
+        with override_settings(FALCON_LIMITER_ENABLED=True, FALCON_LIMITER_LOGIN_LIMITS=limits):
+            for iteration in range(limit_per_minute):
+                resp = client.simulate_post(path=data["path"], json=data["json"])
+                assert resp.status != falcon.HTTP_429
+
+            resp = client.simulate_post(path=data["path"], json=data["json"])
+            assert resp.status == falcon.HTTP_429
+
+
 class TestLogout:
 
     def test_logout_by_not_logged_in(self, client):
@@ -56,20 +96,10 @@ class TestLogout:
         assert resp.status == falcon.HTTP_401
         assert resp.json["code"] == "token_missing"
 
-    def test_logout(self, client, active_user):
+    def test_logout(self, client, active_user: User, test_password: str):
         flush_sessions()
-        resp = client.simulate_post(
-            path="/auth/login",
-            json={
-                "data": {
-                    "type": "user",
-                    "attributes": {
-                        "email": active_user.email,
-                        "password": "12345.Abcde",
-                    },
-                }
-            },
-        )
+        data: dict = prepare_api_data(user_email=active_user.email, password=test_password)
+        resp = client.simulate_post(path=data["path"], json=data["json"])
         assert resp.status == falcon.HTTP_201
 
         active_usr_token = resp.json["data"]["attributes"]["token"]
@@ -81,18 +111,8 @@ class TestLogout:
         active_user2.state = "active"
         active_user2.save()
 
-        resp = client.simulate_post(
-            path="/auth/login",
-            json={
-                "data": {
-                    "type": "user",
-                    "attributes": {
-                        "email": active_user2.email,
-                        "password": "12345.Abcde",
-                    },
-                }
-            },
-        )
+        data2: dict = prepare_api_data(user_email=active_user2.email, password=test_password)
+        resp = client.simulate_post(path=data2["path"], json=data2["json"])
 
         assert resp.status == falcon.HTTP_201
 
@@ -121,19 +141,9 @@ class TestLogout:
 
 class TestProfile:
 
-    def test_get_profile_after_logout(self, client, active_user):
-        resp = client.simulate_post(
-            path="/auth/login",
-            json={
-                "data": {
-                    "type": "user",
-                    "attributes": {
-                        "email": active_user.email,
-                        "password": "12345.Abcde",
-                    },
-                }
-            },
-        )
+    def test_get_profile_after_logout(self, client, active_user: User, test_password: str):
+        data = prepare_api_data(active_user.email, test_password)
+        resp = client.simulate_post(path=data["path"], json=data["json"])
 
         assert resp.status == falcon.HTTP_201
         token = resp.json["data"]["attributes"]["token"]
@@ -695,9 +705,8 @@ AutocompleteResults = List[Tuple[str, str]]
 def test_staff_autocomplete_view(admin: User):
     # GIVEN 17 users: 1 admin (also staff), 15 staff users, 1 not staff user
     UserFactory.create(is_staff=False)
-    staff_users: List[User] = UserFactory.create_batch(15, is_staff=True)
-    all_staff_users: List[User] = [*staff_users, admin]
-    all_staff_users.sort(key=lambda user: user.email)  # sort staff users by email
+    UserFactory.create_batch(15, is_staff=True)
+    all_staff_users = list(User.objects.filter(is_staff=True).order_by("email", "id"))
 
     total_users_count: int = User.objects.count()
     assert total_users_count == 17, f"17 users should exist in DB, got {total_users_count}"

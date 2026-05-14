@@ -19,7 +19,7 @@ pyjwt = "~=1.7"
 querystring-parser = "~=1.2"
 python-magic = "~=0.4"
 rules = "~=3.5"
-celery = "==5.3.0"
+celery = "~=5.5.3"
 goodtables = {version = "~=2.1", extras = ["ods"]}
 passlib = "~=1.7"
 markdown2 = "~=2.5"
@@ -31,7 +31,6 @@ wagtail = "==2.13.5"
 hypereditor = {path = "./hypereditor-0.1.0-py3-none-any.whl"}
 django-suit = {path = "./django_suit-0.2.28-py3-none-any.whl"}
 django = "==2.2.9"
-
 # Django extras
 django-constance = {version = "~=4.1", extras = ["database"]}
 django-elasticsearch-dsl = "==6.4.2"
@@ -69,6 +68,7 @@ apispec = "==1.3.3"
 # xmlschema
 xmlschema = "==3.4.4"  # Check --> deps_update_docs/Dependency constraints.md
 dicttoxml = "==1.7.4"
+
 # logingovpl
 xmlsec = "==1.3.14"  # Check --> deps_update_docs/Dependency constraints.md
 lxml = "==5.3.0"  # Check --> deps_update_docs/Dependency constraints.md
@@ -86,7 +86,6 @@ jsonschema = "~=4.23"
 taskgroup = "~=0.2"
 prometheus-client = "~=0.21"
 libarchive-c = "~=5.3"
-elastic-apm = "~=6.25"
 pyproj = "~=3.5"
 python-logstash = "~=0.4"
 python-mimeparse = "~=2.0"
@@ -127,7 +126,7 @@ channels = "~=2.4"  # Max for django < 3.0
 csvwlib = "~=0.3"
 cython = "~=3.0"
 deepdiff = "~=8.1"
-
+django-axes = "*"
 
 [dev-packages]
 flake8 = "~=7.0"  # last version supporting python 3.8.1
@@ -161,7 +160,7 @@ init_mcod_db = "python manage.py init_mcod_db"
 reindex = "python manage.py search_index --rebuild -f"
 validate_resources = "python manage.py validate_resources --async"
 admin = "python manage.py runserver 0:8001"
-api = "python -m werkzeug.serving --bind 0:8000 --reload --debug mcod.api:app"
+api = "sh -c 'COMPONENT=api python -m werkzeug.serving --bind 0:8000 --reload --debug mcod.api:app'"
 cms = "sh -c 'COMPONENT=cms python manage.py runserver 0:8002'"
 celery = "sh -c 'COMPONENT=celery python -m celery --app=mcod.celeryapp:app worker -l DEBUG -E -Q default,resources,indexing,periodic,newsletter,notifications,search_history,watchers,harvester,indexing_data,history,graphs,datasets,archiving,reports,discourse,showcases'"
 tests = "pytest"

@@ -7,12 +7,11 @@ from collections import OrderedDict
 from itertools import islice
 from pathlib import Path
 from time import time
-from typing import Any, Collection, Dict, Iterable, Iterator, List, TypeVar
+from typing import Any, Dict, Iterable, Iterator, List, Optional, Type, TypeVar
 
 from celery import chord
 from celery.canvas import Signature
 from celery.signals import task_failure, task_prerun, task_success
-from django.apps import apps
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import connection
@@ -23,10 +22,12 @@ from django_celery_results.models import TaskResult
 
 from mcod.celeryapp import app
 from mcod.core.api.rdf.namespaces import NAMESPACES
-from mcod.core.serializers import csv_serializers_registry as csr
+from mcod.core.db.querysets import QuerySetDTO
+from mcod.core.serializers import CSVSerializer, csv_serializers_registry as csr
 from mcod.core.tasks import extended_shared_task
-from mcod.core.utils import save_as_csv
+from mcod.core.utils import CSVWriter, save_as_csv
 from mcod.datasets.models import Dataset
+from mcod.datasets.serializers import DatasetCSVSchema
 from mcod.harvester.models import DataSource, DataSourceImport
 from mcod.harvester.serializers import (
     DataSourceImportsCSVSchema,
@@ -34,6 +35,7 @@ from mcod.harvester.serializers import (
 )
 from mcod.lib.rdf.store import get_sparql_store
 from mcod.organizations.models import Organization
+from mcod.organizations.serializers import InstitutionCSVSchema
 from mcod.reports.broken_links import (
     generate_admin_broken_links_report,
     generate_public_broken_links_reports,
@@ -42,7 +44,9 @@ from mcod.reports.broken_links.tasks_helpers import BrokenLinksIntermediaryJSON
 from mcod.reports.exceptions import NoDataForReportException
 from mcod.reports.models import Report, SummaryDailyReport
 from mcod.resources.models import Resource
+from mcod.resources.serializers import ResourceCSVSchema
 from mcod.resources.tasks import validate_link
+from mcod.schedules.serializers import UserScheduleItemCSVSerializer
 from mcod.showcases.serializers import ShowcaseProposalCSVSerializer
 from mcod.suggestions.serializers import DatasetSubmissionCSVSerializer
 from mcod.unleash import is_enabled
@@ -194,48 +198,57 @@ def generate_harvesters_last_imports_report(
 
 
 @extended_shared_task(ignore_result=False)
-def generate_csv(pks: Collection[int], model_name: str, user_id: int, file_name_postfix: str):
-    requested_count = len(pks)
-    if requested_count > settings.RESOURCE_MAX_REPORT_SIZE:
-        msg = (
-            f"Requested too many records, {requested_count}. "
-            f"Maximum count is {settings.RESOURCE_MAX_REPORT_SIZE}. "
-            f"Report: {model_name}"
+def generate_csv(
+    *,
+    queryset_data: Dict,
+    user_id: int,
+):
+    # Reconstruct the queryset from serialized data
+    qs_dto = QuerySetDTO(**queryset_data)
+    queryset: QuerySet = qs_dto.to_queryset()
+    _model_name: str = qs_dto.model_name
+    _app: str = qs_dto.app
+    _model_label: str = qs_dto.model_label
+
+    # Determine the appropriate CSV serializer for the model
+    model_label_to_serializer_cls_map: Dict[str, Type[CSVSerializer]] = {
+        "users.User": UserLocalTimeCSVSerializer,
+        "resources.Resource": ResourceCSVSchema,
+        "datasets.Dataset": DatasetCSVSchema,
+        "organizations.Organization": InstitutionCSVSchema,
+        "schedules.UserScheduleItem": UserScheduleItemCSVSerializer,
+        "suggestions.DatasetSubmission": DatasetSubmissionCSVSerializer,
+        "showcases.ShowcaseProposal": ShowcaseProposalCSVSerializer,
+    }
+    try:
+        serializer_cls: Type[CSVSerializer] = model_label_to_serializer_cls_map[_model_label]
+    except KeyError:
+        logger.error(f"No CSV serializer found for model {_model_label}.")
+        raise Exception(f"Cound not find serializer for model {_model_label}")
+    serializer: CSVSerializer = serializer_cls(many=True)
+
+    # Initialize file path and ensure the directory exists
+    file_name_postfix: str = now().strftime("%Y%m%d%H%M%S.%s")
+    file_name: str = f"{_model_name.lower()}s_{file_name_postfix}.csv"
+    reports_path: Path = Path(settings.REPORTS_MEDIA_ROOT, _app)
+    reports_path.mkdir(exist_ok=True, parents=True)
+    file_path: Path = reports_path / file_name
+
+    # Stream the serialized queryset directly to the filesystem
+    with file_path.open(mode="w") as file_object:
+        csv_writer = CSVWriter(headers=serializer.get_csv_headers(), delimiter=";")
+        csv_writer.save(
+            file_object=file_object,
+            data=serializer.stream_from_queryset(queryset),
         )
-        raise ValueError(msg)
-    app, _model = model_name.split(".")
-    model = apps.get_model(app, _model)
-    serializer_cls = csr.get_serializer(model)
-    if _model == "DatasetSubmission":  # TODO: how to register it in csr?
-        serializer_cls = DatasetSubmissionCSVSerializer
-    elif _model == "ShowcaseProposal":
-        serializer_cls = ShowcaseProposalCSVSerializer
-    elif _model == "User":
-        serializer_cls = UserLocalTimeCSVSerializer
 
-    if not serializer_cls:
-        raise Exception("Cound not find serializer for model %s" % model_name)
-
-    serializer = serializer_cls(many=True)
-    queryset = model.objects.filter(pk__in=pks)
-    data = serializer_cls(many=True).dump(queryset)
-    user = User.objects.get(pk=user_id)
-    file_name = f"{_model.lower()}s_{file_name_postfix}.csv"
-    reports_path = os.path.join(settings.REPORTS_MEDIA_ROOT, app)
-    os.makedirs(reports_path, exist_ok=True)
-
-    file_path = os.path.join(reports_path, file_name)
-    file_url_path = f"{settings.REPORTS_MEDIA}/{app}/{file_name}"
-
-    with open(file_path, "w") as f:
-        save_as_csv(f, serializer.get_csv_headers(), data)
-
+    # Store task result
     return json.dumps(
         {
-            "model": model_name,
-            "csv_file": file_url_path,
+            "model": _model_label,
+            "csv_file": f"{settings.REPORTS_MEDIA}/{_app}/{file_name}",
             "date": now().strftime("%Y.%m.%d %H:%M"),
-            "user_email": user.email,
+            "user_email": User.objects.get(pk=user_id).email,
         }
     )
 
@@ -272,6 +285,22 @@ def create_no_resource_dataset_report():
 
 
 @task_prerun.connect(sender=generate_csv)
+def append_csv_report_task(sender, task_id, task, signal, **kwargs):
+    try:
+        task_kwargs: Dict = kwargs["kwargs"]
+        queryset_data: Dict = task_kwargs["queryset_data"]
+        user_id: int = task_kwargs["user_id"]
+        qs_dto = QuerySetDTO(**queryset_data)
+        model_label: str = qs_dto.model_label
+        task_obj = TaskResult.objects.get_task(task_id)
+        task_obj.save()
+        user_obj: Optional[User] = User.objects.filter(pk=user_id).first()
+        report = Report(model=model_label, ordered_by=user_obj, task=task_obj)
+        report.save()
+    except Exception as e:
+        logger.error(f"reports.task: exception on append_report_task:\n{e}")
+
+
 @task_prerun.connect(sender=generate_harvesters_imports_report)
 @task_prerun.connect(sender=generate_harvesters_last_imports_report)
 def append_report_task(sender, task_id, task, signal, **kwargs):

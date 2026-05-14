@@ -1,6 +1,7 @@
 import string
 from collections import OrderedDict
 from datetime import date
+from typing import Optional
 
 import environ
 import sentry_sdk
@@ -13,6 +14,7 @@ from sentry_sdk.integrations.django import DjangoIntegration
 from sentry_sdk.integrations.falcon import FalconIntegration
 from wagtail.embeds.oembed_providers import all_providers
 
+from mcod.lib.utils import package_version_is_lower_than
 
 env = environ.Env()
 ROOT_DIR = environ.Path(__file__) - 3
@@ -37,7 +39,9 @@ LOGS_DIR = str(ROOT_DIR.path("logs"))
 
 DATABASE_DIR = str(ROOT_DIR.path("database"))
 
-COMPONENT = env("COMPONENT", default="admin")
+COMPONENT = env("COMPONENT", default="admin").lower()
+COMPONENT_CMS = "cms"
+COMPONENT_ADMIN = "admin"
 
 ENVIRONMENT = env("ENVIRONMENT", default="prod")
 
@@ -56,6 +60,22 @@ DEBUG = env.bool("DEBUG", False) or env.bool("TEST_DEBUG", False)
 SECRET_KEY = env("DJANGO_SECRET_KEY", default="xb2rTZ57yOY9iCdqR7W+UAWnU")
 
 NEWSLETTER_REMOVE_INACTIVE_TIMEOUT = 60 * 60 * 24  # after 24h.
+
+AXES_ENABLED = env.bool("AXES_ENABLED", default=True) if COMPONENT in (COMPONENT_ADMIN, COMPONENT_CMS) else False
+AXES_ENABLE_ADMIN = env.bool("AXES_ENABLE_ADMIN", default=False) if AXES_ENABLED else False
+AXES_FAILURE_LIMIT = env.int("DJANGO_ADMIN_LOGIN_ATTEMPTS", default=5)
+AXES_COOLOFF_TIME = env.int("AXES_COOLOFF_TIME", default=1)  # hours
+AXES_RESET_ON_SUCCESS = env.bool("AXES_RESET_ON_SUCCESS", default=True)
+AXES_LOCKOUT_CALLABLE = "mcod.core.login_security.axes_lockout"
+AXES_USERNAME_FORM_FIELD = "username"
+
+if package_version_is_lower_than("django-axes", 6, 0):
+    AXES_LOCK_OUT_BY_COMBINATION_USER_AND_IP = True
+else:
+    # https://django-axes.readthedocs.io/en/latest/10_changelog.html
+    raise RuntimeError("Use AXES_LOCKOUT_PARAMETERS = [['username', 'ip_address']] " "for django-axes >= 6.0.")
+
+AXES_FAIL_MESSAGE = _("Too many failed login attempts. Please try again later.")
 
 INSTALLED_APPS = [
     "mcod.hacks",
@@ -139,6 +159,9 @@ INSTALLED_APPS = [
     "mcod.logingovpl",
 ]
 
+if AXES_ENABLED:
+    INSTALLED_APPS.append("axes")
+
 CMS_MIDDLEWARE = ["mcod.cms.middleware.CounterMiddleware"] if COMPONENT == "cms" else []
 CSP_MIDDLEWARE = ["csp.middleware.CSPMiddleware"] if COMPONENT in ("admin", "api") else []
 
@@ -159,6 +182,10 @@ MIDDLEWARE = [
     "mcod.lib.middleware.ComplementUserDataMiddleware",
     "auditlog.middleware.AuditlogMiddleware",
 ]
+
+if AXES_ENABLED:
+    # AxesMiddleware should be the last middleware in the MIDDLEWARE list.
+    MIDDLEWARE.append("axes.middleware.AxesMiddleware")
 
 ROOT_URLCONF = "mcod.urls"
 
@@ -212,6 +239,12 @@ AUTHENTICATION_BACKENDS = [
     "rules.permissions.ObjectPermissionBackend",
     "django.contrib.auth.backends.ModelBackend",
 ]
+
+if AXES_ENABLED:
+    if package_version_is_lower_than("django-axes", 6, 0):
+        AUTHENTICATION_BACKENDS.insert(0, "axes.backends.AxesBackend")
+    else:
+        raise RuntimeError("django-axes version 6.0 or higher requires axes.backends.AxesStandaloneBackend")
 
 
 DATABASES = {
@@ -659,6 +692,26 @@ SUIT_CONFIG = {
     ],
 }
 
+if AXES_ENABLE_ADMIN:
+    SUIT_CONFIG["MENU"].append(
+        {
+            "label": _("Security"),
+            "icon": "icon-lock",
+            "permissions": "is_superuser",
+            "models": [
+                {
+                    "model": "axes.accessattempt",
+                    "label": _("Login attempts"),
+                },
+                {
+                    "model": "axes.accesslog",
+                    "label": _("Login logs"),
+                },
+            ],
+        },
+    )
+
+
 SPECIAL_CHARS = " !\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~"
 
 CKEDITOR_CONFIGS = {
@@ -1089,50 +1142,6 @@ LOGGING = {
 }
 
 CELERYD_HIJACK_ROOT_LOGGER = False
-
-APM_SERVER_URL = env("APM_SERVER_URL", default=None)
-
-# Disable APM for ASGI (ws component)
-APM_SERVICES = ["api", "admin", "cms", "celery"]
-
-if APM_SERVER_URL and COMPONENT in APM_SERVICES:
-    INSTALLED_APPS += [
-        "elasticapm.contrib.django",
-    ]
-
-    ELASTIC_APM = {
-        "DEBUG": True,
-        "SERVICE_NAME": f"{ENVIRONMENT}-{COMPONENT}",
-        "SERVER_URL": APM_SERVER_URL,
-        "CAPTURE_BODY": "errors",
-        "FILTER_EXCEPTION_TYPES": [
-            "falcon.errors.HTTPNotFound",
-            "falcon.errors.HTTPMethodNotAllowed",
-            "falcon.errors.HTTPUnauthorized",
-            "falcon.errors.HTTPBadRequest",
-            "falcon.errors.HTTPUnprocessableEntity",
-            "falcon.errors.HTTPForbidden",
-        ],
-        "DJANGO_TRANSACTION_NAME_FROM_ROUTE": True,
-    }
-
-    LOGGING["handlers"]["elasticapm"] = {
-        "level": "WARNING",
-        "class": "elasticapm.contrib.django.handlers.LoggingHandler",
-    }
-
-    LOGGING["loggers"]["elasticapm.errors"] = {
-        "handlers": [
-            "console",
-        ],
-        "level": "DEBUG",
-        "propagate": False,
-    }
-
-    TEMPLATES[0]["OPTIONS"]["context_processors"] += [
-        "mcod.core.contextprocessors.apm",
-        "elasticapm.contrib.django.context_processors.rum_tracing",
-    ]
 
 SUPPORTED_CONTENT_TYPES = [
     # (family, type, extensions, default openness score)
@@ -1990,6 +1999,7 @@ FALCON_LIMITER_ENABLED = env.bool("FALCON_LIMITER_ENABLED", default=True)
 
 FALCON_LIMITER_SPARQL_LIMITS = env("FALCON_LIMITER_SPARQL_LIMITS", default="20 per minute,1 per second")
 FALCON_LIMITER_PASSWORD_RESET_LIMITS = env("FALCON_LIMITER_PASSWORD_RESET_LIMITS", default="5 per hour")
+FALCON_LIMITER_LOGIN_LIMITS = env("FALCON_LIMITER_LOGIN_LIMITS", default="3 per minute,10 per hour")
 
 FALCON_MIDDLEWARES = [
     "mcod.core.api.middlewares.ContentTypeMiddleware",
@@ -2027,7 +2037,8 @@ CKAN_LICENSES_WHITELIST = {
     "cc-nc": "CC BY-NC 4.0",
 }
 
-CSV_CATALOG_BATCH_SIZE = env("CSV_CATALOG_BATCH_SIZE", default=20000)
+CSV_CATALOG_BATCH_SIZE = env("CSV_CATALOG_BATCH_SIZE", default=20_000)
+CSV_CATALOG_REPORT_MAX_ROWS_PER_FILE = env("CSV_CATALOG_REPORT_MAX_ROWS_PER_FILE", default=200_000)
 
 DISCOURSE_FORUM_ENABLED = env.bool("DISCOURSE_FORUM_ENABLED", default=True)
 
@@ -2038,6 +2049,16 @@ SPARQL_ENDPOINTS = {
     }
 }
 
+
+def url_without_schema(var: str, default: Optional[str]) -> str:
+    value = env.url(var, default)
+    if value.scheme:
+        return f"{value.netloc}{value.path}"
+    else:
+        return value.geturl()
+
+
+MATOMO_URL: str = url_without_schema("MATOMO_URL", default="stats.dane.gov.pl")
 MATOMO_SITE_IDS = {
     "dev": "2",
     "int": "3",
@@ -2046,7 +2067,6 @@ MATOMO_SITE_IDS = {
 }
 
 if ENVIRONMENT in MATOMO_SITE_IDS:
-    MATOMO_URL = env("MATOMO_URL", default="stats.dane.gov.pl")
     MATOMO_SITE_ID = env("MATOMO_SITE_ID", default=MATOMO_SITE_IDS[ENVIRONMENT])
 
 METABASE_URL = env("METABASE_URL", default="http://metabase.mcod.local")
@@ -2153,6 +2173,7 @@ ALLOWED_SPARQL_EXTERNAL_DOMAINS = env.list(
 
 BROKEN_LINKS_EXCLUDE_DEVELOPERS = env.bool("BROKEN_LINKS_EXCLUDE_DEVELOPERS", True)
 BROKEN_LINKS_CHUNK_SIZE = env.int("BROKEN_LINKS_CHUNK_SIZE", default=150)
+CATALOG_REPORT_CHUNK_SIZE = env.int("CATALOG_REPORT_CHUNK_SIZE", default=10_000)
 
 # ==============================================================================
 # CONTENT SECURITY POLICY (CSP)
@@ -2163,7 +2184,6 @@ CSP_REPORT_ONLY = env.bool("CSP_REPORT_ONLY", False)
 JSDELIVR_URL = env("JSDELIVR_URL", default="https://cdn.jsdelivr.net")  # Bootstrap Select JS and other dependencies)
 BOOTSTRAPCDN_URL = env("BOOTSTRAPCDN_URL", default="https://stackpath.bootstrapcdn.com")  # Bootstrap JS (version 4.x))
 UNPKG_URL = env("UNPKG_URL", default="https://unpkg.com")  # Bootstrap Table, Panel (UI elements))
-MATOMO_URL = env("MATOMO_URL", default="https://stats.dane.gov.pl")
 
 # SCRIPT POLICY (script-src)
 # Specifies allowed sources for JavaScript files.
@@ -2250,3 +2270,5 @@ CSP_FONT_SRC = env.list("CSP_FONT_SRC", default=["'self'"])
 # DEFAULT POLICY (default-src)
 # Fallback for all directives that have not been explicitly defined (e.g. media-src, object-src).
 CSP_DEFAULT_SRC = env.list("CSP_DEFAULT_SRC", default=["'self'"])
+
+LOGIN_REDIRECT_URL = "/"

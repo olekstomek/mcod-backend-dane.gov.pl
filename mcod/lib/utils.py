@@ -1,6 +1,7 @@
 import logging
 import os
 import os.path
+from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 from typing import List, Optional, Union
 
@@ -11,8 +12,19 @@ from django.utils.html import format_html
 logger = logging.getLogger("mcod")
 
 
-def is_django_ver_lt(major=2, minor=2):
+def is_django_ver_lt(major: int = 2, minor: int = 2):
     return VERSION[0] < major or (VERSION[0] == major and VERSION[1] < minor)
+
+
+def package_version_is_lower_than(package_name: str, major: int, minor: int):
+    try:
+        package_version = version(package_name)
+    except PackageNotFoundError:
+        raise Exception(f"Package '{package_name}' is not installed")
+
+    version_parts = package_version.split(".")
+
+    return int(version_parts[0]) < major or (int(version_parts[0]) == major and int(version_parts[1]) < minor)
 
 
 def escape_braces_and_format_html(text: str) -> str:

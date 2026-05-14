@@ -39,6 +39,11 @@
                 {% endfor %}
             {% endif %}
         {% else %}
+            {% if request.session.axes_lockout_message %}
+                <p class="errornote alert alert-error">
+                    {{ request.session.axes_lockout_message }}
+                </p>
+            {% endif %}
             {% trans "No permissions to the admin panel." as logingovpl_login_error %}
             {% if request.GET.logingovpl == 'login-error' %}
                 <p class="errornote alert alert-error"> {{ logingovpl_login_error }}</p>

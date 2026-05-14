@@ -68,6 +68,9 @@ LOGGING["loggers"]["celery.app.trace"]["level"] = "WARNING"
 LOGGING["loggers"]["celery.app.trace"]["handlers"] = ["console"]
 LOGGING["loggers"]["mcod"]["handlers"] = ["console"]
 LOGGING["loggers"]["resource_file_processing"]["handlers"] = ["console"]
+LOGGING['loggers']['mcod-api']['level'] = 'DEBUG'
 
 COMPONENT = env("COMPONENT", default="admin")
 ENVIRONMENT = "local"
+
+AXES_ENABLED=False

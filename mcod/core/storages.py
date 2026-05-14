@@ -1,5 +1,6 @@
 import os
 from datetime import datetime
+from typing import Final, Mapping, Type
 
 from django.conf import settings
 from django.core.files.storage import FileSystemStorage
@@ -142,7 +143,7 @@ class ShowcasesStorage(BaseFileSystemStorage):
         super().__init__(location=location, base_url=base_url, **kwargs)
 
 
-AVAILABLE_STORAGES = {
+AVAILABLE_STORAGES: Final[Mapping[str, Type[BaseFileSystemStorage]]] = {
     "applications": ApplicationImagesStorage,
     "organizations": OrganizationImagesStorage,
     "resources": ResourcesStorage,

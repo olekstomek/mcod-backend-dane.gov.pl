@@ -148,12 +148,6 @@ class RateLimiter:
         key_gen: Callable[[falcon.Request], str],
     ) -> Callable:
 
-        if not settings.FALCON_LIMITER_ENABLED:
-            # Return an identity function (decorator) that returns the input object unchanged.
-            # This ensures Falcon does NOT register any hook at all, resulting in
-            # absolute zero runtime overhead when the limiter is disabled.
-            return lambda resource_or_method: resource_or_method
-
         parsed_limits: List[LimitConfig] = self._parse_limits(limits)
 
         def internal_hook(
@@ -164,6 +158,15 @@ class RateLimiter:
             *args: Any,
             **kwargs: Any,
         ) -> None:
+
+            if not settings.FALCON_LIMITER_ENABLED:
+                # This check must happen at request time, not at decoration/import time.
+                # The limiter decorator is applied when the resource module is imported,
+                # so checking settings in __call__ would permanently freeze the limiter
+                # in the state seen during import. By checking here, runtime setting
+                # overrides (for example in tests) work correctly and the request is
+                # simply allowed to proceed when the limiter is disabled.
+                return None
 
             resource_name: str = resource.__class__.__name__
 

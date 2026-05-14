@@ -88,6 +88,10 @@ User = get_user_model()
 
 class LoginView(JsonAPIView):
     @versioned
+    @rate_limiter(
+        limits=settings.FALCON_LIMITER_LOGIN_LIMITS,
+        key_gen=lambda req: req.get_media()["data"]["attributes"]["email"],
+    )
     def on_post(self, request, response, *args, **kwargs):
         self.handle_post(request, response, self.POST, *args, **kwargs)
 
@@ -564,10 +568,9 @@ class CustomAdminLoginView(DjangoLoginView):
     def form_valid(self, form):
         """New logic (setting flag last_logging_method) when user form is valid."""
         response = super().form_valid(form)
-        if form.is_valid():
-            user: User = form.get_user()
-            user.update_last_logging_method(LoggingMethod.FORM)
-            user.save()
+        user: User = form.get_user()
+        user.update_last_logging_method(LoggingMethod.FORM)
+        user.save()
         return response
 
 
@@ -734,7 +737,7 @@ class LogingovplSwitchView(APIView):
 class StaffAutocompleteView(autocomplete.Select2QuerySetView):
     def get_queryset(self) -> QuerySet:
         qs: QuerySet = get_user_model().objects.autocomplete(self.request.user, self.q)
-        return qs.filter(is_staff=True).order_by("email")
+        return qs.filter(is_staff=True).order_by("email", "id")
 
 
 class AdminAutocompleteView(autocomplete.Select2QuerySetView):

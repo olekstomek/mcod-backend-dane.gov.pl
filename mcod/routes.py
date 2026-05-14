@@ -313,6 +313,7 @@ routes = [
     ),
     ("/datasets/{id:int}/resources/metadata.csv", dataset_views.CSVMetadataView()),
     ("/datasets/resources/metadata.csv", dataset_views.CSVMetadataView(), "catalog"),
+    ("/datasets/resources/metadata.zip", dataset_views.CSVMetadataView(), "zip_catalog"),
     ("/datasets/{id:int}/resources/metadata.xml", dataset_views.XMLMetadataView()),
     ("/datasets/resources/metadata.xml", dataset_views.XMLMetadataView(), "catalog"),
     # Guides

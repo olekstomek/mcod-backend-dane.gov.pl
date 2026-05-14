@@ -1,4 +1,8 @@
+import zipfile
+from pathlib import Path
+
 import pytest
+from django.test import override_settings
 from django.utils.translation import gettext_lazy as _
 from falcon import HTTP_OK
 from pytest_bdd import scenarios
@@ -200,3 +204,28 @@ def test_response_dataset_image_uri_in_details(dataset, client, small_image):
     resp = client.simulate_get("/1.4/datasets/{}/".format(dataset.id))
     assert HTTP_OK == resp.status
     assert resp.json["data"]["attributes"]["image_url"] == f"/media/images/datasets/{dataset.image.name}"
+
+
+@pytest.mark.parametrize("language", ("en", "pl"))
+def test_zip_catalog_download(client14, tmp_path: str, language: str):
+    with override_settings(METADATA_MEDIA_ROOT=tmp_path):
+        # GIVEN
+        # Create zip file with dummy data
+        catalog_dest = Path(tmp_path) / language
+        catalog_dest.mkdir(exist_ok=True, parents=True)
+        zip_file_path = catalog_dest / "katalog.zip"
+        dummy_content = b"dummy file data"
+        with zipfile.ZipFile(zip_file_path, "w", zipfile.ZIP_DEFLATED) as zip_file:
+            zip_file.writestr("dummy_data.txt", dummy_content)
+
+        # Read the exact bytes of the generated zip to compare with the response
+        expected_zip_data = zip_file_path.read_bytes()
+
+        # WHEN Perform the request
+        response = client14.simulate_get(f"/datasets/resources/metadata.zip?lang={language}")
+
+        # THEN
+        assert response.status == HTTP_OK
+        content_type = response.headers.get("Content-Type", "")
+        assert content_type == "application/zip"
+        assert response.content == expected_zip_data

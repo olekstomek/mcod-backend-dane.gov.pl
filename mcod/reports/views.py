@@ -1,10 +1,17 @@
+import logging
+import os
 from functools import partial
 from types import SimpleNamespace
 from typing import List, Optional
+from urllib.parse import quote
 
 import falcon
 from django.conf import settings
+from django.contrib.auth.views import redirect_to_login
+from django.http import Http404, HttpRequest, HttpResponse, HttpResponseForbidden
+from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
+from django.views import View
 from elasticsearch_dsl.query import Q
 
 from mcod.core.api.handlers import BaseHdlr
@@ -32,6 +39,66 @@ from mcod.reports.broken_links.serializers import (
     BrokenlinksReportApiResponse,
     BrokenlinksReportDataApiResponse,
 )
+
+logger = logging.getLogger(__name__)
+
+
+class DownloadReportFileView(View):
+    """
+    Handles secure file downloads from the 'reports' directory.
+    """
+
+    def get(self, request: HttpRequest, file_path: str) -> HttpResponse:
+        """
+        Handles the GET request for a report file.
+
+        If the user is not authenticated, redirects to the login page with a 'next'
+        parameter pointing to the requested report list.
+
+        If authenticated but not a superuser, returns 403 Forbidden.
+
+        If authorized, serves the file via Nginx's X-Accel-Redirect.
+        """
+        if not request.user.is_authenticated:
+            redirect_url = self._get_redirect_url(request)
+            return redirect_to_login(next=redirect_url, login_url=reverse("login"))
+
+        if not request.user.is_superuser:
+            return HttpResponseForbidden("Access denied")
+
+        file_full_path = os.path.join(settings.MEDIA_ROOT, "reports", file_path)
+
+        if not os.path.exists(file_full_path):
+            raise Http404
+
+        response = HttpResponse()
+        safe_path = quote(file_path)
+        response["Content-Type"] = "application/octet-stream"
+        response["X-Accel-Redirect"] = f"/protected_reports/{safe_path}"
+        return response
+
+    def _get_redirect_url(self, request: HttpRequest) -> str:
+        """Determines the redirect URL based on the report type in the request path."""
+
+        path_to_url_map = {
+            "users/": "admin:reports_userreport_changelist",
+            "resources/": "admin:reports_resourcereport_changelist",
+            "datasets/": "admin:reports_datasetreport_changelist",
+            "organizations/": "admin:reports_organizationreport_changelist",
+            "suggestions/": "admin:reports_monitoringreport_changelist",
+            "showcases/": "admin:reports_monitoringreport_changelist",
+            "applications/": "admin:reports_monitoringreport_changelist",
+            "daily/": "admin:reports_summarydailyreport_changelist",
+            "harvester/": "admin:reports_datasourceimportreport_changelist",
+        }
+
+        file_path = request.resolver_match.kwargs["file_path"]
+
+        for prefix, url_name in path_to_url_map.items():
+            if file_path.startswith(prefix):
+                return reverse(url_name)
+        # Default fallback to the main reports app list
+        return reverse("admin:app_list", args=["reports"])
 
 
 class BrokenLinksReportView(JsonAPIView):

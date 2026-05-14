@@ -32,4 +32,13 @@ class TagFactory(factory.django.DjangoModelFactory):
                 self.showcases.add(showcase)
 
 
+class PolishTagFactory(TagFactory):
+    language = "pl"
+
+
+class EnglishTagFactory(TagFactory):
+    name = factory.Faker("word", locale="en_US")
+    language = "en"
+
+
 factories_registry.register("tag", TagFactory)

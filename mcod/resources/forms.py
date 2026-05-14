@@ -321,8 +321,9 @@ class ResourceForm(forms.ModelForm, HighValueDataFormValidatorMixin):
 
             # Don't validate DGA file for Main DGA Resource due to specific
             # file structure.
-            if not is_main_dga_resource:
-                self._validate_dga_file(creating_resource=creating_resource)
+            file: Optional[InMemoryUploadedFile] = data.get("file")
+            if file and not is_main_dga_resource:
+                self._validate_dga_file(file=file, creating_resource=creating_resource)
 
             if organization:
                 self._validate_institution_when_contains_protected_data(organization)
@@ -395,14 +396,10 @@ class ResourceForm(forms.ModelForm, HighValueDataFormValidatorMixin):
             )
             self.add_error(
                 "contains_protected_data",
-                _("To select YES here, above select the dataset of a " "government or local government institution."),
+                _("To select YES here, above select the dataset of a government or local government institution."),
             )
 
-    def _validate_dga_file(self, creating_resource: bool) -> None:
-        file: InMemoryUploadedFile = self.cleaned_data.get("file")
-        if file is None:
-            return
-
+    def _validate_dga_file(self, file: InMemoryUploadedFile, creating_resource: bool) -> None:
         extension: Optional[str] = guess_extension(file.content_type)
         if extension is None:
             logger.warning(f"Could not find extension for content type: " f"{file.content_type}")
@@ -430,7 +427,7 @@ class ResourceForm(forms.ModelForm, HighValueDataFormValidatorMixin):
             else:
                 self.add_error(
                     "contains_protected_data",
-                    _("The resource has a different type than csv, xls or " "xlsx format."),
+                    _("The resource has a different type than csv, xls or xlsx format."),
                 )
             return
 
@@ -451,7 +448,7 @@ class ResourceForm(forms.ModelForm, HighValueDataFormValidatorMixin):
             else:
                 self.add_error(
                     "contains_protected_data",
-                    _("The saved file has a different structure than that " "required for the list of protected data."),
+                    _("The saved file has a different structure than that required for the list of protected data."),
                 )
 
     def _remove_dga_flag_from_current_dga_resource_if_needed(
@@ -503,7 +500,7 @@ class ResourceForm(forms.ModelForm, HighValueDataFormValidatorMixin):
         if not file:
             self.add_error(
                 "contains_protected_data",
-                _("The resource has a different type than csv, xls or xlsx " "format."),
+                _("The resource has a different type than csv, xls or xlsx format."),
             )
             return
 

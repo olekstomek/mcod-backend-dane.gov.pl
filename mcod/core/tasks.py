@@ -137,9 +137,6 @@ class SharedTask:
         """
         Adds properties to the func, doesn't wrap it in a decorator
         """
-        if hasattr(func, "apply_async_on_commit"):
-            warnings.warn(f"{func.__name__} already has apply_async_on_commit")
-            return func
 
         def apply_async_on_commit(
             task: Union[Signature, Task],

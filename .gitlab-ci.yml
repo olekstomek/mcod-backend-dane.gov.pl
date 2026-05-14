@@ -29,10 +29,12 @@ prepare-images:
   script:
     - docker build -f docker/elasticsearch/Dockerfile -t $REGISTRY_PATH/elasticsearch:6.8.23-mcod-1 .
     - docker build -f docker/postgres/Dockerfile -t $REGISTRY_PATH/postgresql:17-trixie-mcod .
+    - docker build -f docker/redis/Dockerfile -t $REGISTRY_PATH/redis:8.4.2-trixie-mcod .
     - docker build -f docker/tests/Dockerfile -t $REGISTRY_PATH/mcod-tests:${TEST_IMAGE_VERSION} .
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $REGISTRY_HOST
     - docker push $REGISTRY_PATH/elasticsearch:6.8.23-mcod-1
     - docker push $REGISTRY_PATH/postgresql:17-trixie-mcod
+    - docker push $REGISTRY_PATH/redis:8.4.2-trixie-mcod
     - docker push $REGISTRY_PATH/mcod-tests:${TEST_IMAGE_VERSION}
   except:
     - tags
@@ -87,7 +89,7 @@ test:
     PYTEST_FAIL_FAST: "0"  # 0 means don't stop
     PYTEST_NUMBER_OF_XDIST_WORKERS: 5
   services:
-    - name: redis:6.2
+    - name: $REGISTRY_PATH/redis:8.4.2-trixie-mcod
       alias: redis
     - name: rabbitmq:3.9.13-management
       alias: rabbitmq

@@ -1,15 +1,17 @@
 import uuid
-from typing import Any, Callable, Generator, List, Tuple
+from typing import Any, Generator, List, Tuple
 from unittest.mock import MagicMock
 
 import falcon
 import pytest
 from django.test import override_settings
 from django_redis import get_redis_connection
+from falcon import testing
 from redis import Redis
 from redis.commands.core import Script
 
 from mcod.core.api.limiter import LUA_MULTI_RATE_LIMIT, LimitConfig, RateLimiter, rate_limiter
+from mcod.users.models import User
 
 
 class TestLimitParser:
@@ -170,17 +172,60 @@ class TestRateLimiterIntegration:
 
         assert endpoint.call_count == 1
 
-    @override_settings(FALCON_LIMITER_ENABLED=False)
-    def test_limiter_disabled_via_settings(self, unique_key: str):
+    @pytest.mark.parametrize(
+        ("limiter_enabled", "expected_status"),
+        [
+            (False, falcon.HTTP_401),
+            (True, falcon.HTTP_429),
+        ],
+    )
+    def test_limiter_disabled_via_settings(
+        self, client: testing.TestClient, admin: User, limiter_enabled: bool, expected_status: str, clear_limiter_redis_db: None
+    ):
         """
-        Should return the original resource unchanged (identity function)
-        when the setting is disabled.
+        Should allow requests to proceed without applying rate-limit checks
+        when the limiter is disabled via settings.
+
+        The limiter hook is always registered, but when
+        FALCON_LIMITER_ENABLED is False it exits early at runtime.
+        That means repeated failed login attempts should keep returning
+        401 Unauthorized instead of being blocked with 429 Too Many Requests.
+        It's a system logic test.
         """
-        dummy_resource = object()
-        # The key_gen is irrelevant here as it shouldn't be called
-        decorator: Callable = rate_limiter("10/s", key_gen=lambda x: unique_key)
-        # Verify the decorator returns the exact same object passed to it
-        assert decorator(dummy_resource) is dummy_resource
+        limit_per_minute = 3
+        with override_settings(
+            FALCON_LIMITER_ENABLED=limiter_enabled, FALCON_LIMITER_LOGIN_LIMITS=f"{limit_per_minute} per minute,10 per hour"
+        ):
+            for _ in range(limit_per_minute):
+                resp = client.simulate_post(
+                    path="/auth/login",
+                    json={
+                        "data": {
+                            "type": "user",
+                            "attributes": {
+                                "email": admin.email,
+                                "password": "wrong password",
+                            },
+                        }
+                    },
+                )
+
+            assert resp.status == falcon.HTTP_401
+
+            resp = client.simulate_post(
+                path="/auth/login",
+                json={
+                    "data": {
+                        "type": "user",
+                        "attributes": {
+                            "email": admin.email,
+                            "password": "wrong password",
+                        },
+                    }
+                },
+            )
+
+            assert resp.status == expected_status
 
 
 class TestLuaRateLimiter:

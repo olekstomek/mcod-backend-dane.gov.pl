@@ -1,14 +1,167 @@
+from contextlib import suppress
+from importlib import reload
+from typing import Set, Tuple
+
+import axes.admin
 import pytest
+from axes.models import AccessAttempt, AccessLog
+from bs4 import BeautifulSoup
+from django.conf import settings as django_settings
+from django.contrib import admin as django_admin
+from django.contrib.auth import get_user_model
 from django.test import Client
-from django.urls import reverse
-from django.utils.encoding import smart_str
+from django.urls import NoReverseMatch, clear_url_caches, reverse
+from django.utils.encoding import force_str, smart_str
 from pytest_bdd import scenarios
 
-from mcod.datasets.models import User
+import mcod.urls
+from mcod.lib.utils import package_version_is_lower_than
 
 scenarios("features/admin.feature")
 scenarios("features/admin_forms.feature")
 scenarios("features/meetings.feature")
+
+User = get_user_model()
+admin_login_url = reverse("admin:login")
+
+
+class TestDjangoAxes:
+    """Tests Django Axes integration in the admin panel.
+
+    Covers Axes admin visibility, access permissions, and lockout behavior
+    for different user roles and Axes configuration states.
+    """
+
+    @staticmethod
+    def _set_axes_admin_state():
+        """Rebuild Axes admin and URL state based on current settings.
+
+        Clears any existing Axes admin registrations and reloads admin modules
+        and URL configuration so they reflect the current setting.
+        """
+        with suppress(django_admin.sites.NotRegistered):
+            django_admin.site.unregister(AccessAttempt)
+        with suppress(django_admin.sites.NotRegistered):
+            django_admin.site.unregister(AccessLog)
+
+        reload(axes.admin)
+        clear_url_caches()
+        reload(mcod.urls)
+
+    @staticmethod
+    def _login_to_admin(client: Client, user, password: str):
+        response = client.post(
+            admin_login_url,
+            data={
+                "username": user.email,
+                "password": password,
+                "this_is_the_login_form": "1",
+            },
+        )
+        assert response.status_code == 302
+
+    @staticmethod
+    def _get_admin_index_links(client: Client) -> Set[str]:
+        response = client.get(reverse("admin:index"))
+        assert response.status_code == 200
+
+        soup = BeautifulSoup(response.content, "html.parser")
+        return {a.get("href") for a in soup.select("a[href]")}
+
+    @staticmethod
+    def _get_axes_urls() -> Tuple[str, str]:
+        return (
+            reverse("admin:axes_accessattempt_changelist"),
+            reverse("admin:axes_accesslog_changelist"),
+        )
+
+    @pytest.fixture
+    def with_axes_enabled(self, settings):
+        settings.AXES_ENABLE_ADMIN = True
+        self._set_axes_admin_state()
+        yield
+        self._set_axes_admin_state()
+
+    @pytest.fixture
+    def with_axes_disabled(self, settings):
+        settings.AXES_ENABLE_ADMIN = False
+        self._set_axes_admin_state()
+        yield
+        self._set_axes_admin_state()
+
+    @pytest.mark.usefixtures("with_axes_enabled")
+    @pytest.mark.parametrize(
+        "user_fixture, should_see_axes",
+        [
+            ("admin", True),
+            ("active_editor", False),
+        ],
+    )
+    def test_axes_panel_visibility_when_enabled(self, request, user_fixture: str, should_see_axes: bool, test_password: str):
+        user = request.getfixturevalue(user_fixture)
+        client = Client()
+
+        self._login_to_admin(client, user, test_password)
+        links = self._get_admin_index_links(client)
+        accessattempt_url, accesslog_url = self._get_axes_urls()
+
+        assert (accessattempt_url in links) is should_see_axes
+        assert (accesslog_url in links) is should_see_axes
+
+    @pytest.mark.usefixtures("with_axes_disabled")
+    @pytest.mark.parametrize(
+        "user_fixture",
+        [
+            "admin",
+            "active_editor",
+        ],
+    )
+    def test_axes_panel_not_visible_when_disabled(self, request, user_fixture: str, test_password: str):
+        client = Client()
+        user = request.getfixturevalue(user_fixture)
+
+        self._login_to_admin(client, user, test_password)
+
+        links = self._get_admin_index_links(client)
+        assert not any("/axes/accessattempt/" in (link or "") for link in links)
+        assert not any("/axes/accesslog/" in (link or "") for link in links)
+
+    def test_login_axes_block(self, admin):
+        client = Client()
+        payloads = {
+            "username": admin.email,
+            "password": "wrong password",
+            "this_is_the_login_form": "1",
+        }
+        for _ in range(django_settings.AXES_FAILURE_LIMIT):
+            client.post(admin_login_url, data=payloads)
+        assert force_str(django_settings.AXES_FAIL_MESSAGE) in client.session["axes_lockout_message"]
+
+    @pytest.mark.usefixtures("with_axes_enabled")
+    @pytest.mark.parametrize(
+        "user_fixture, status_code",
+        [
+            ("admin", 200),
+            ("active_editor", 403),
+        ],
+    )
+    def test_axes_urls_access_when_enabled(self, request, user_fixture: str, status_code: int, test_password: str):
+        user = request.getfixturevalue(user_fixture)
+        client = Client()
+
+        self._login_to_admin(client, user, test_password)
+        links = self._get_axes_urls()
+
+        for link in links:
+            response = client.get(link)
+            assert response.status_code == status_code
+
+    @pytest.mark.usefixtures("with_axes_disabled")
+    def test_axes_urls_not_available_when_disabled(self):
+        with pytest.raises(NoReverseMatch):
+            reverse("admin:axes_accessattempt_changelist")
+        with pytest.raises(NoReverseMatch):
+            reverse("admin:axes_accesslog_changelist")
 
 
 class TestUserAdmin:
@@ -66,12 +219,52 @@ class TestUserAdmin:
         u = User.objects.get(id=active_editor.id)
         assert not u.is_superuser
 
-    def test_login_email_is_case_insensitive(self, active_editor):
+    def test_login_email_is_case_insensitive(self, active_editor: User, test_password: str):
         client = Client()
-        payloads = {"email": active_editor.email.upper(), "password": "12345.Abcde"}
-        client.login(**payloads)
+        payloads = {"username": active_editor.email.upper(), "password": test_password}
+        client.post(admin_login_url, data=payloads)
         response = client.get(reverse("admin:users_user_changelist"))
         assert 200 == response.status_code
+
+    def test_admin_login_redirects_to_admin_index_without_next(self, admin: User, test_password: str):
+        client = Client()
+        response = client.post(
+            admin_login_url,
+            data={
+                "username": admin.email,
+                "password": test_password,
+                "this_is_the_login_form": "1",
+            },
+        )
+        assert response.status_code == 302
+
+        if package_version_is_lower_than("django", 3, 2):
+            assert response["Location"] == reverse("admin:index")
+        else:
+            # https://docs.djangoproject.com/en/3.2/releases/3.2/   noqa: E265
+            raise Exception("changed it to: response.headers['Location']")
+
+    def test_admin_login_redirects_to_next_when_provided(self, admin: User, test_password: str):
+        client = Client()
+        next_url = reverse("admin:users_user_changelist")
+
+        response = client.post(
+            admin_login_url,
+            data={
+                "username": admin.email,
+                "password": test_password,
+                "this_is_the_login_form": "1",
+                "next": next_url,
+            },
+        )
+
+        assert response.status_code == 302
+
+        if package_version_is_lower_than("django", 3, 2):
+            assert response["Location"] == next_url
+        else:
+            # https://docs.djangoproject.com/en/3.2/releases/3.2/  noqa: E265
+            raise Exception("changed it to: response.headers['Location']")
 
     def test_admin_can_set_user_as_academy_admin_and_labs_admin(self, active_editor, admin):
         assert active_editor.is_academy_admin is False

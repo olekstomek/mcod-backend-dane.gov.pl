@@ -3,10 +3,9 @@ import datetime
 import json
 import os
 import random
-import re
 from pathlib import Path
 from time import sleep
-from typing import Dict, List
+from typing import Any, Dict, List
 from unittest import mock
 
 import factory
@@ -17,10 +16,11 @@ from celery.app.task import Task
 from django.apps import apps
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.db.models import Sum
+from django.db.models import QuerySet, Sum
 from django.test import override_settings
 from django.utils.timezone import now
 
+from mcod.core.db.querysets import QuerySetDTO
 from mcod.counters.models import ResourceDownloadCounter, ResourceViewCounter
 from mcod.datasets.factories import DatasetFactory
 from mcod.harvester.factories import DataSourceImportFactory
@@ -54,12 +54,11 @@ def admin_with_id_1(admin: User_model) -> User_model:
 
 class TestTasks:
     def test_generate_csv(self, active_user_with_last_login: User, admin: User):
-        request_date = datetime.datetime(2018, 12, 4)
+        qs: QuerySet = User.objects.filter(pk__in=[active_user_with_last_login.id, admin.id])
+        qs_dto = QuerySetDTO.from_queryset(qs)
         eager = generate_csv.s(
-            [active_user_with_last_login.id, admin.id],
-            User._meta.label,
-            active_user_with_last_login.id,
-            request_date.strftime("%Y%m%d%H%M%S.%s"),
+            queryset_data=qs_dto.asdict(),
+            user_id=active_user_with_last_login.id,
         ).apply_async(countdown=1)
 
         sleep(1)
@@ -72,7 +71,7 @@ class TestTasks:
         assert "date" in result_dict
         assert result_dict["user_email"] == active_user_with_last_login.email
         assert result_dict["csv_file"].startswith("/media/reports/users/")
-        assert result_dict["csv_file"].endswith(request_date.strftime("%Y%m%d%H%M%S.%s") + ".csv")
+        assert result_dict["csv_file"].endswith(".csv")
 
         r = Report.objects.get(task=result_task)
 
@@ -97,14 +96,10 @@ class TestTasks:
                 assert split_line[16] == expected_active_user_last_login
 
     def test_invalid_user_ordering_report(self, active_user):
-        request_date = datetime.datetime.now()
+        queryset: QuerySet = User.objects.filter(pk__in=[active_user.id])
         eager = generate_csv.delay(
-            [
-                active_user.id,
-            ],
-            User._meta.label,
-            active_user.id + 100,
-            request_date.strftime("%Y%m%d%H%M%S.%s"),
+            queryset_data=QuerySetDTO.from_queryset(queryset).asdict(),
+            user_id=active_user.id + 100,
         )
 
         assert eager
@@ -137,30 +132,15 @@ class TestTasks:
         ]
 
         with override_settings(REPORTS_MEDIA_ROOT=tmp_path):
-            file_name_postfix = "csv_test"
-            user_ids = [user.pk for user in User.objects.all()]
-            generate_csv(user_ids, "users.User", active_user.pk, file_name_postfix)
-            filename = "users_" + file_name_postfix + ".csv"
-            file = Path(tmp_path) / "users" / filename
-            dataframe_report = pd.read_csv(file, sep=";")
+            queryset: QuerySet[User] = User.objects.all()
+            result: str = generate_csv(queryset_data=QuerySetDTO.from_queryset(queryset).asdict(), user_id=active_user.pk)
+            result: Dict[str, Any] = json.loads(result)
+            file_name: str = result["csv_file"].split("/")[-1]
+            file_path: str = f"{tmp_path}/users/{file_name}"
+            dataframe_report = pd.read_csv(file_path, sep=";")
 
             for column in columns_required:
                 assert column in dataframe_report
-
-    def test_wrong_model_report(self, active_user):
-        request_date = datetime.datetime.now()
-        eager = generate_csv.delay(
-            [active_user.id],
-            "users.WrongModel",
-            active_user.id,
-            request_date.strftime("%Y%m%d%H%M%S.%s"),
-        )
-
-        assert eager
-        result_task = TaskResult.objects.get(task_id=eager)
-        r = Report.objects.get(task=result_task)
-        assert r.task == result_task
-        assert r.task.status == "FAILURE"
 
     @pytest.mark.usefixtures("resource")
     def test_create_daily_resources_report(self, admin_with_id_1):
@@ -216,22 +196,6 @@ class TestTasks:
             assert "Zbior danych posiada dane wysokiej wartosci z wykazu KE" in dataframe_report
             assert "Zbior danych posiada dane dynamiczne" in dataframe_report
             assert "Zbior danych posiada dane badawcze" in dataframe_report
-
-    def test_generate_csv_fails_when_too_many_records_are_requested(self, active_user_with_last_login: User, admin: User):
-        request_date = datetime.datetime(2018, 12, 4)
-        with override_settings(RESOURCE_MAX_REPORT_SIZE=0), pytest.raises(ValueError) as exc:
-            generate_csv(
-                [active_user_with_last_login.id, admin.id],
-                User._meta.label,
-                active_user_with_last_login.id,
-                request_date.strftime("%Y%m%d%H%M%S.%s"),
-            )  # Direct call instead of apply_async - we're testing the body directly
-        actual_error_message = repr(exc.value)
-        what_happened = re.findall(r"Requested too many records, (\d+)", actual_error_message)
-        assert what_happened, f"No match found in {actual_error_message}"
-        assert what_happened[0] and int(what_happened[0]) >= 2  # Though we request two users other tests might request more
-        assert "Maximum count is 0." in actual_error_message
-        assert "Report: users.User" in actual_error_message
 
 
 class TestHarvesterReportTasks:

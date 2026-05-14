@@ -173,9 +173,36 @@
         crossorigin="anonymous" nonce="{{ request.csp_nonce }}"></script>
     <script src="https://unpkg.com/bootstrap-table@1.18.0/dist/bootstrap-table.min.js" nonce="{{ request.csp_nonce }}"></script>
     <script src="https://unpkg.com/bootstrap-table@1.18.0/dist/locale/bootstrap-table-pl-PL.min.js" nonce="{{ request.csp_nonce }}"></script>
-    {% if extra_js %}
-    <script src="{{extra_js}}" nonce="{{ request.csp_nonce }}"></script>
-    {% endif %}
+    <script nonce="{{ request.csp_nonce }}">
+      'use strict';
+      (function () {
+        function addRequiredStyles() {
+          var req = new XMLHttpRequest();
+          req.open('GET', document.location.origin + '/version.txt', false);
+          req.send(null);
+          if (req.status === 200) {
+            var link = document.createElement('link');
+            link.setAttribute('rel', 'stylesheet');
+            link.setAttribute('href', document.location.origin + '/styles.' + req.response + '.css');
+            document.head.appendChild(link);
+          }
+        }
+
+        addRequiredStyles();
+        var body;
+        document.addEventListener('DOMContentLoaded', function () {
+          console.log(window.ResizeObserver);
+          body = document.body;
+          var observer = new ResizeObserver((entries) => {
+            for (const entry of entries) {
+              window.parent.postMessage({ width: entry.contentRect.width, height: entry.contentRect.height }, '*');
+            }
+          });
+          observer.observe(body);
+        });
+      })();
+
+    </script>
     <script nonce="{{ request.csp_nonce }}">
         "use strict";
         (function () {

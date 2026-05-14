@@ -1,3 +1,4 @@
+import os
 from functools import partial
 
 import falcon
@@ -202,16 +203,34 @@ class CSVMetadataView(BaseView):
     def on_get_catalog(self, request, response, *args, **kwargs):
         self.handle(request, response, self.GETCatalog, *args, **kwargs)
 
+    def on_get_zip_catalog(self, request, response, *args, **kwargs):
+        self.handle(request, response, self.GETZipCatalog, *args, **kwargs)
+
     class GETCatalog(BaseHdlr):
 
         def serialize(self, *args, **kwargs):
-            try:
-                with open(f"{settings.METADATA_MEDIA_ROOT}/{get_language()}/katalog.csv", "rb") as f:
-                    catalog_file = f.read()
-            except FileNotFoundError:
-                raise falcon.HTTPNotFound
+            file_path = f"{settings.METADATA_MEDIA_ROOT}/{get_language()}/katalog.csv"
+            if not os.path.exists(file_path):
+                raise falcon.HTTPNotFound()
+
             self.response.downloadable_as = "katalog.csv"
-            return catalog_file
+            file_stream = open(file_path, "rb")
+            file_size = os.path.getsize(file_path)
+            self.response.set_stream(file_stream, file_size)
+
+    class GETZipCatalog(BaseHdlr):
+
+        def serialize(self, *args, **kwargs):
+            file_path = f"{settings.METADATA_MEDIA_ROOT}/{get_language()}/katalog.zip"
+
+            if not os.path.exists(file_path):
+                raise falcon.HTTPNotFound()
+
+            self.response.downloadable_as = "katalog.zip"
+            self.response.content_type = "application/zip"
+            file_stream = open(file_path, "rb")
+            file_size = os.path.getsize(file_path)
+            self.response.set_stream(file_stream, file_size)
 
     def set_content_type(self, resp, **kwargs):
         return settings.EXPORT_FORMAT_TO_MIMETYPE["csv"]
