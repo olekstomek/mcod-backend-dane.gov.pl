@@ -7,11 +7,12 @@ import pytest
 from django.test import override_settings
 from django_redis import get_redis_connection
 from falcon import testing
+from pytest_mock import MockerFixture
 from redis import Redis
 from redis.commands.core import Script
 
 from mcod.core.api.limiter import LUA_MULTI_RATE_LIMIT, LimitConfig, RateLimiter, rate_limiter
-from mcod.users.models import User
+from mcod.users.factories import UserFactory
 
 
 class TestLimitParser:
@@ -115,12 +116,10 @@ class TestRateLimiterIntegration:
 
     @override_settings(FALCON_LIMITER_ENABLED=True)
     def test_redis_connection_failure_fails_open(
-        self,
-        unique_key: str,
-        mock_api_objects: Tuple[MagicMock, MagicMock, MagicMock],
+        self, unique_key: str, mock_api_objects: Tuple[MagicMock, MagicMock, MagicMock], mocker: MockerFixture
     ):
         req, resp, endpoint = mock_api_objects
-        rate_limiter.lua_script = MagicMock(side_effect=Exception)
+        mocker.patch.object(rate_limiter, "lua_script", side_effect=Exception)
 
         decorator = rate_limiter("5/m", key_gen=lambda x: unique_key)
         limited_endpoint = decorator(endpoint)
@@ -179,9 +178,7 @@ class TestRateLimiterIntegration:
             (True, falcon.HTTP_429),
         ],
     )
-    def test_limiter_disabled_via_settings(
-        self, client: testing.TestClient, admin: User, limiter_enabled: bool, expected_status: str, clear_limiter_redis_db: None
-    ):
+    def test_limiter_disabled_via_settings(self, client: testing.TestClient, limiter_enabled: bool, expected_status: str):
         """
         Should allow requests to proceed without applying rate-limit checks
         when the limiter is disabled via settings.
@@ -193,8 +190,9 @@ class TestRateLimiterIntegration:
         It's a system logic test.
         """
         limit_per_minute = 3
+        user = UserFactory.build()
         with override_settings(
-            FALCON_LIMITER_ENABLED=limiter_enabled, FALCON_LIMITER_LOGIN_LIMITS=f"{limit_per_minute} per minute,10 per hour"
+            FALCON_LIMITER_ENABLED=limiter_enabled, FALCON_LIMITER_LOGIN_LIMITS=f"{limit_per_minute} per minute"
         ):
             for _ in range(limit_per_minute):
                 resp = client.simulate_post(
@@ -203,7 +201,7 @@ class TestRateLimiterIntegration:
                         "data": {
                             "type": "user",
                             "attributes": {
-                                "email": admin.email,
+                                "email": user.email,
                                 "password": "wrong password",
                             },
                         }
@@ -218,7 +216,7 @@ class TestRateLimiterIntegration:
                     "data": {
                         "type": "user",
                         "attributes": {
-                            "email": admin.email,
+                            "email": user.email,
                             "password": "wrong password",
                         },
                     }

@@ -74,8 +74,8 @@ class DatasetSubmissionMixin(ExtendedModel):
         verbose_name=_("Title, type, domain od propossed data"),
     )
     notes = models.TextField(verbose_name=_("Data description"), blank=False)
-    organization_name = models.CharField(max_length=100, blank=True, verbose_name=_("Institution name"))
-    data_link = models.URLField(verbose_name=_("Link to data"), max_length=2000, blank=True, null=True)
+    organization_name = models.CharField(max_length=300, blank=True, verbose_name=_("Institution name"))
+    data_link = models.URLField(verbose_name=_("Link to data"), max_length=2048, blank=True, null=True)
     potential_possibilities = models.TextField(verbose_name=_("provide potential data use"), blank=True)
     comment = SanitizedTextField(verbose_name=_("Comment"), null=True, blank=True)
     submission_date = models.DateField(null=True, verbose_name=_("Submission date"))

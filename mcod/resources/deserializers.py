@@ -1,5 +1,5 @@
 from django.utils.translation import gettext as _
-from marshmallow import ValidationError, pre_load, validate, validates, validates_schema
+from marshmallow import ValidationError, pre_load, validate, validates_schema
 
 from mcod.core.api import fields
 from mcod.core.api.jsonapi.deserializers import ObjectAttrs, TopLevel
@@ -271,12 +271,11 @@ class GeoApiSearchRequest(ListingSchema):
 
 
 class CreateCommentAttrs(ObjectAttrs):
-    comment = fields.String(required=True, description="Comment body", example="Looks unpretty")
-
-    @validates("comment")
-    def validate_comment(self, comment):
-        if len(comment) < 3:
-            raise ValidationError(_("Comment must be at least 3 characters long"))
+    applicant_full_name = fields.Str(description="Applicant full name", required=False, validate=validate.Length(min=1, max=300))
+    applicant_email = fields.Email(description="Email", required=False, validate=validate.Length(max=254))
+    comment = fields.String(
+        required=True, description="Comment body", example="Looks unpretty", validate=validate.Length(min=1, max=3000)
+    )
 
     class Meta:
         strict = True

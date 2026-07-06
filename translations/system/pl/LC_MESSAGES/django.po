@@ -786,9 +786,6 @@ msgstr ""
 "Nie można przywrócić następujących zbiorów danych, ponieważ organizacje, do "
 "których przynależą wciąż pozostają usunięte: {}"
 
-msgid "Comment must be at least 3 characters long"
-msgstr "Komentarz musi mieć przynajmniej 3 znaki"
-
 msgid "e.g. the name of the data set"
 msgstr "na przykład nazwa zestawu danych"
 

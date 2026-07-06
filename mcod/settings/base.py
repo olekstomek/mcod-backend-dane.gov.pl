@@ -126,6 +126,7 @@ INSTALLED_APPS = [
     "notifications",
     "django_admin_multiple_choice_list_filter",
     "auditlog",
+    "axes",
     # Our apps
     "mcod.core",
     "mcod.organizations",
@@ -158,9 +159,6 @@ INSTALLED_APPS = [
     "mcod.showcases",
     "mcod.logingovpl",
 ]
-
-if AXES_ENABLED:
-    INSTALLED_APPS.append("axes")
 
 CMS_MIDDLEWARE = ["mcod.cms.middleware.CounterMiddleware"] if COMPONENT == "cms" else []
 CSP_MIDDLEWARE = ["csp.middleware.CSPMiddleware"] if COMPONENT in ("admin", "api") else []
@@ -979,6 +977,7 @@ FIXTURE_DIRS = [
 
 LOGSTASH_HOST = env("LOGSTASH_HOST", default="mcod-logstash")
 STATS_LOG_LEVEL = env("STATS_LOG_LEVEL", default="INFO")
+LOG_ALL_API_EXCEPTIONS = env.bool("LOG_ALL_API_EXCEPTIONS", default=False)
 
 LOGGING = {
     "version": 1,

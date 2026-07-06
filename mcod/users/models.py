@@ -2,12 +2,13 @@ import logging
 import time
 from datetime import timedelta
 from enum import Enum
-from typing import List, Optional, Union
+from typing import Dict, List, Optional, Tuple, Union
 from uuid import UUID, uuid4
 
 from constance import config
 from django.apps import apps
 from django.conf import settings
+from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import (
     AbstractBaseUser,
     BaseUserManager,
@@ -99,7 +100,6 @@ logger = logging.getLogger("mcod")
 
 
 class UserQuerySet(SoftDeletableQuerySet):
-
     def autocomplete(self, user, query=None):
         if not user.is_superuser:
             return self.none()
@@ -123,6 +123,22 @@ class UserManager(BaseUserManager):
         extra_fields.setdefault("is_official", email.endswith("gov.pl"))
         extra_fields.setdefault("state", "pending")
         return self._create_user(email, password, **extra_fields)
+
+    def get_or_create(self, defaults: Dict = None, **kwargs) -> Tuple[AbstractBaseUser, bool]:
+        """
+        Wrapper over original get_or_create ensuring defaults for a non-superuser and
+        preventing plaintext password
+        """
+        defaults = defaults if defaults is not None else {}
+        password = defaults.pop("password", None)
+        defaults.setdefault("is_staff", False)
+        defaults.setdefault("state", "pending")
+        defaults["password"] = make_password(None)
+        user, created = super().get_or_create(defaults, **kwargs)
+        if created and password is not None:
+            user.set_password(password)
+            user.save()
+        return user, created
 
     def create_superuser(self, email, password, **extra_fields):
         extra_fields.setdefault("is_staff", True)
@@ -289,7 +305,10 @@ class User(
     )
     is_gov_auth = models.BooleanField(default=False)
     last_logged_method = models.CharField(
-        choices=[(field.value, field.value) for field in LoggingMethod], blank=True, null=True, max_length=50
+        choices=[(field.value, field.value) for field in LoggingMethod],
+        blank=True,
+        null=True,
+        max_length=50,
     )
 
     class Meta:
@@ -365,7 +384,11 @@ class User(
 
         if not token:
             expiration_delta = expiration_delta or timezone.timedelta(hours=settings.TOKEN_EXPIRATION_TIME)
-            token = Token.objects.create(user=self, token_type=token_type, expiration_date=timezone.now() + expiration_delta)
+            token = Token.objects.create(
+                user=self,
+                token_type=token_type,
+                expiration_date=timezone.now() + expiration_delta,
+            )
 
         return token.token
 

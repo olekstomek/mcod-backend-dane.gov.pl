@@ -1,11 +1,10 @@
 from datetime import datetime, timedelta
-from typing import Dict, Iterator, Type
+from typing import Dict, Type
 
 import jwt
 import pytest
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django_redis import get_redis_connection
 from requests import Request
 
 from mcod.api import ApiApp, get_api_app
@@ -80,11 +79,3 @@ def api_with_routes_for_test(test_api_instance) -> test_api_instance:
     routes.extend(list(map(lambda x: ("/{api_version}" + x[0], *x[1:]), routes)))
     test_api_instance.add_routes(routes)
     return test_api_instance
-
-
-@pytest.fixture
-def clear_limiter_redis_db() -> Iterator[None]:
-    redis = get_redis_connection(alias="limiter")
-    redis.flushdb()
-    yield
-    redis.flushdb()

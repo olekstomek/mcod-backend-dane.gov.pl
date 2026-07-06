@@ -19,14 +19,19 @@ services:
       - "5432:5432"
 
   mcod-rabbitmq:
-    image: rabbitmq:3.9.13-management
     container_name: mcod-rabbitmq
+    hostname: mcod-rabbitmq
+    image: rabbitmq:4.2.5-management-alpine-mcod
+    build:
+      context: .
+      dockerfile: docker/rabbitmq/Dockerfile
     restart: "no"
     volumes:
       - rabbitmq_vol:/var/lib/rabbitmq
     ports:
       - "5672:5672"
       - "15672:15672"
+      - "15692:15692"
     networks:
       backend:
         ipv4_address: 172.18.18.19

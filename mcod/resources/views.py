@@ -1,5 +1,7 @@
 import json
+from enum import Enum
 from functools import partial
+from typing import Any, Dict, Optional
 from urllib.parse import quote
 
 import falcon
@@ -45,7 +47,7 @@ from mcod.resources.deserializers import (
     TableApiSearchRequest,
 )
 from mcod.resources.documents import ResourceDocument
-from mcod.resources.models import AggregatedDGAInfo, ResourceFile
+from mcod.resources.models import RESOURCE_TYPE_FILE, AggregatedDGAInfo, ResourceFile
 from mcod.resources.serializers import (
     AggregatedDGAInfoApiResponse,
     ChartApiResponse,
@@ -58,6 +60,13 @@ from mcod.resources.serializers import (
     VocabEntryRDFResponseSchema,
     VocabRDFResponseSchema,
 )
+from mcod.suggestions.models import ResourceComment
+
+
+class FileDownloadType(Enum):
+    CSV = "csv"
+    JSONLD = "jsonld"
+
 
 Resource = apps.get_model("resources", "Resource")
 
@@ -386,7 +395,7 @@ class ResourceGeoView(JsonAPIView):
 
 class ResourceCommentsView(JsonAPIView):
     def on_post(self, request, response, *args, **kwargs):
-        self.handle(request, response, self.POST, *args, **kwargs)
+        self.handle_post(request, response, self.POST, *args, **kwargs)
 
     class POST(CreateOneHdlr):
         deserializer_schema = CreateCommentRequest
@@ -410,8 +419,9 @@ class ResourceCommentsView(JsonAPIView):
 
         def _get_data(self, cleaned, id, *args, **kwargs):
             data = cleaned["data"]["attributes"]
-            model = apps.get_model("suggestions.ResourceComment")
-            self.response.context.data = model.objects.create(resource_id=id, **data)
+            comment: str = data["comment"]
+            res_comment = ResourceComment.objects.create(resource_id=id, comment=comment)
+            self.response.context.data = res_comment
 
 
 class ResourceFileDownloadView:
@@ -420,24 +430,29 @@ class ResourceFileDownloadView:
     Increments download counter for resource.
     """
 
-    def __init__(self, file_type=None):
+    def __init__(self, file_type: Optional[FileDownloadType] = None):
         super().__init__()
         self.file_type = file_type
 
     def on_request(self, request, response, id, *args, **kwargs):
         try:
-            resource = Resource.objects.get(pk=id, status="published")
+            resource = Resource.objects.get(pk=id, status="published", type=RESOURCE_TYPE_FILE)
         except Resource.DoesNotExist:
             raise falcon.HTTPNotFound
 
-        if not resource.type == "file" or (not resource.file_url and not resource.link):
+        if not resource.file_url and not resource.link:
             raise falcon.HTTPNotFound
 
         if request.method == "GET":
             counter = Counter()
             counter.incr_download_count(id)
 
-        response.location = resource.get_location(self.file_type)
+        file_type_to_file_url_map: Dict[FileDownloadType, Any] = {
+            FileDownloadType.CSV: resource.csv_file_url,
+            FileDownloadType.JSONLD: resource.jsonld_file_url,
+        }
+        location: str = file_type_to_file_url_map.get(self.file_type, resource.file_url)
+        response.location = location
         response.status = falcon.HTTP_302
 
     def on_get(self, request, response, id, *args, **kwargs):

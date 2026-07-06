@@ -12,6 +12,69 @@ ______________________________________________________________________
 
 ### Breaks
 
+## 2.59.4 - (2026-06-25)
+
+______________________________________________________________________
+
+### Fixes
+
+- Wycofanie zmian treści maila z powiadomieniem o zgłoszeniu uwagi do zbioru/zasobu - OTD-2817
+
+## 2.59.3 - (2026-06-22)
+
+______________________________________________________________________
+
+### Fixes
+
+- Fix braku hashowania haseł - OTD-2803
+
+## 2.59.2 - (2026-06-15)
+
+______________________________________________________________________
+
+### Changes
+
+- Zmiana treści maila z powiadomieniem o zgłoszeniu uwagi do zbioru/zasobu - OTD-2778
+
+## 2.59.1 - (2026-06-09)
+
+______________________________________________________________________
+
+### Fixes
+
+- Wycofanie zmian dotyczących aktualizacji Fuseki do wersji 6.0.0 - OTD-2429
+
+## 2.59.0 - (2026-06-08)
+
+______________________________________________________________________
+
+### New
+
+- Nowy plik Dockerfile budujący lokalny obraz RabbitMQ na bazie wersji rabbitmq:4.2.5-management-alpine - OTD-2430
+- Dodano nowy plik rabbitmq.conf z ustawieniami kompatybilności dla Celery 5.x po aktualizacji RabbitMQ z 3.9 do 4.2 - OTD-2495
+- Dostosowanie API do nowego schematu danych wejściowych formularza Zgłoś uwagi do danych - OTD-2639
+- Dostosowanie API do nowego schematu danych wejściowych formularza Zaproponuj dane - OTD-2635
+- Dostosowanie API do nowego schematu danych wejściowych formularza PoCoTo - OTD-2406
+- Nowy plik Dockerfile budujący lokalny obraz bazy Fuseki (6.0.0-mcod) na bazie źródłowych plików binarnych (z dodaną konfiguracją w pliku dataset.ttl i skryptem uruchomieniowym init.sh) - OTD-2429
+
+### Changes
+
+- Aktualizacja gitlab-ci.yml o tworzenie w registry.dane.gov.pl/mcod/rabbitmq nowego obrazu 4.2.5-management-alpine-mcod - OTD-2430
+- Ustawienie min. długości 1 dla przekazywanych pól typu str w endpointach PoCoTo, zgłaszania uwag oraz propozycji nowych danych - OTD-2745
+- Aktualizacja gitlab-ci.yml o tworzenie w registry.dane.gov.pl/mcod/fuseki nowego obrazu 6.0.0-mcod - OTD-2429
+- Usunięcie obejścia na serializację BNode'ów w klasie SPARQLUpdateStore (node_to_sparql=my_bnode_ext()) - OTD-2429
+- Usunięcie obejścia na błąd biblioteki RDFLib 6.1.1, polegający na nieaktualizowaniu nagłówka Content-Type w kolejnych zapytaniach SPARQL (oraz dodanie testu SparqlStoreTest.test_update_and_select()) - OTD-2429
+- Poprawa zapytań SPARQL w modułach mcod.core.api.rdf.sparql_graphs.py i mcod.lib.rdf.store.py - OTD-2429
+- Aktualizacja README.txt - OTD-2429
+- Usunięcie hacka register_missing_content_types_rdflib. - OTD-2654
+- Usunięcie hack-a komendy search_index dla biblioteki django-elasticsearch-dsl - OTD-2656
+- Zmieniono sposób wyznaczania ścieżki pobierania pliku dla zasobu plikowego dodawanego przez link - OTD-2019
+- Zmieniono i uzupełniono testy dotyczące endpointu /resources/{id:int},{slug}/file - OTD-2019
+
+### Fixes
+
+- Reset hasła aktywowany niezależnie od wielkości wpisywanego maila - OTD-2409
+
 ## 2.58.0 - (2026-04-28)
 
 ______________________________________________________________________

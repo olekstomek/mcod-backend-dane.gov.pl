@@ -747,9 +747,6 @@ msgid ""
 "still removed: {}"
 msgstr ""
 
-msgid "Comment must be at least 3 characters long"
-msgstr ""
-
 msgid "e.g. the name of the data set"
 msgstr ""
 

@@ -136,6 +136,7 @@ SESSION_COOKIE_DOMAIN = "test.mcod"
 SESSION_COOKIE_SECURE = False
 API_TOKEN_COOKIE_NAME = "test_apiauthtoken"
 
+LOG_ALL_API_EXCEPTIONS = True
 
 LOGGING["loggers"]["django.db.backends"]["level"] = "INFO"
 LOGGING["loggers"]["django.db.backends"]["handlers"] = ["console"]

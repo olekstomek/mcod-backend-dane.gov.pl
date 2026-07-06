@@ -1,6 +1,6 @@
-from django.utils.translation import get_language, gettext_lazy as _
+from django.utils.translation import get_language
 from elasticsearch_dsl.query import Term
-from marshmallow import ValidationError, validates
+from marshmallow import validate
 
 from mcod.core.api import fields as core_fields
 from mcod.core.api.jsonapi.deserializers import ObjectAttrs, TopLevel
@@ -323,12 +323,13 @@ class DatasetRdfApiRequest(DatasetApiRequest, RdfValidationRequest):
 
 
 class CreateCommentAttrs(ObjectAttrs):
-    comment = core_fields.String(required=True, description="Comment body", example="Looks unpretty")
-
-    @validates("comment")
-    def validate_comment(self, comment):
-        if len(comment) < 3:
-            raise ValidationError(_("Comment must be at least 3 characters long"))
+    applicant_full_name = core_fields.Str(
+        description="Applicant full name", required=False, validate=validate.Length(min=1, max=300)
+    )
+    applicant_email = core_fields.Email(description="Email", required=False, validate=validate.Length(max=254))
+    comment = core_fields.String(
+        required=True, description="Comment body", example="Looks unpretty", validate=validate.Length(min=1, max=3000)
+    )
 
     class Meta:
         strict = True

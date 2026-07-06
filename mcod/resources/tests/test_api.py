@@ -1,7 +1,8 @@
 from typing import Any, Dict, Optional
 
+import falcon
 import pytest
-from falcon import HTTP_NOT_FOUND, HTTP_OK
+from falcon import HTTP_NOT_FOUND, HTTP_OK, testing
 from falcon.testing import TestClient
 from openapi_core import create_spec
 from openapi_core.validation.request.validators import RequestValidator
@@ -11,8 +12,9 @@ from pytest_bdd import scenarios, then, when
 from mcod.core.tests.helpers.openapi_wrappers import FalconOpenAPIWrapper
 from mcod.core.tests.helpers.tasks import run_on_commit_events
 from mcod.core.utils import jsonapi_validator
-from mcod.resources.factories import AggregatedDGAInfoFactory, DGAResourceFactory
-from mcod.resources.models import Resource
+from mcod.datasets.models import Dataset
+from mcod.resources.factories import AggregatedDGAInfoFactory, DGAResourceFactory, ResourceFactory
+from mcod.resources.models import RESOURCE_TYPE_FILE, Resource
 from mcod.settings.test import API_URL
 
 
@@ -297,9 +299,39 @@ def test_dates_in_detail_views(buzzfeed_fakenews_resource, client):
     assert resp.json["data"]["attributes"]["data_date"] == rs.data_date.strftime("%Y-%m-%d")
 
 
-def test_remote_file_download_redirection(remote_file_resource, client):
-    response = client.simulate_get(f"/resources/{remote_file_resource.id}/file")
-    assert response.headers["location"].startswith("http://127.0.0.1")
+@pytest.mark.parametrize("resource_adding_way", ["by_file", "by_link"])
+def test_file_download_redirection_for_added_by_link_or_file(client: testing.TestClient, resource_adding_way: str):
+    # GIVEN
+    if resource_adding_way == "by_link":
+        remote_file_resource: Resource = ResourceFactory.create(type=RESOURCE_TYPE_FILE, link="http://some_external_link")
+    else:
+        remote_file_resource: Resource = ResourceFactory.create(type=RESOURCE_TYPE_FILE)
+
+    internal_api_url_to_resource: str = API_URL + remote_file_resource.main_file.url
+    # WHEN
+    response: falcon.testing.client.Result = client.simulate_get(f"/resources/{remote_file_resource.id}/file")
+    # THEN
+    assert response.headers["location"] == internal_api_url_to_resource
+    assert response.status_code == 302
+
+
+@pytest.mark.parametrize("availability", ["local", "remote"])
+def test_file_download_redirection_for_harvester_xml_resources(
+    client: testing.TestClient, imported_xml_dataset: Dataset, availability: str
+):
+    # GIVEN
+    file_resource: Resource = ResourceFactory.create(
+        link="http://some_external_link", type="file", dataset=imported_xml_dataset, availability=availability
+    )
+    internal_api_url_to_resource: str = API_URL + file_resource.main_file.url
+    # WHEN
+    response: falcon.testing.client.Result = client.simulate_get(f"/resources/{file_resource.id}/file")
+    # THEN
+    assert response.status_code == 302
+    if availability == "local":
+        assert response.headers["location"] == internal_api_url_to_resource
+    else:  # availability "remote"
+        assert response.headers["location"] == "http://some_external_link"
 
 
 def test_local_file_download_redirection(local_file_resource, client):

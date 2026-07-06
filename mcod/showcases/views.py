@@ -126,6 +126,7 @@ class ShowcaseProposalView(JsonAPIView):
 
         def _get_data(self, cleaned, *args, **kwargs):
             _data = cleaned["data"]["attributes"]
+            _data.pop("applicant_full_name", None)
             _data.pop("is_personal_data_processing_accepted", None)
             _data.pop("is_terms_of_service_accepted", None)
             create_showcase_proposal_task.s(_data).apply_async()

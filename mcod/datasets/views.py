@@ -45,6 +45,7 @@ from mcod.datasets.serializers import (
 from mcod.resources.deserializers import ResourceApiSearchRequest
 from mcod.resources.documents import ResourceDocument
 from mcod.resources.serializers import ResourceApiResponse
+from mcod.suggestions.models import DatasetComment
 
 
 class DatasetSearchView(JsonAPIView):
@@ -186,8 +187,9 @@ class DatasetCommentsView(JsonAPIView):
 
         def _get_data(self, cleaned, id, *args, **kwargs):
             data = cleaned["data"]["attributes"]
-            model = apps.get_model("suggestions.DatasetComment")
-            self.response.context.data = model.objects.create(dataset_id=id, **data)
+            comment: str = data["comment"]
+            res_comment = DatasetComment.objects.create(dataset_id=id, comment=comment)
+            self.response.context.data = res_comment
 
 
 class CSVMetadataView(BaseView):

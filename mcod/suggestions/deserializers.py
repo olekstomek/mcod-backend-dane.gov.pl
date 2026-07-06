@@ -1,3 +1,5 @@
+from marshmallow import validate
+
 from mcod.core.api import fields as core_fields
 from mcod.core.api.jsonapi.deserializers import ObjectAttrs, TopLevel
 from mcod.core.api.schemas import (
@@ -90,11 +92,23 @@ class CreateSubmissionRequest(TopLevel):
 
 
 class CreateDatasetSubmissionAttrs(ObjectAttrs):
-    title = core_fields.String(description="Name", example="Lorem Ipsum", required=True)
-    notes = core_fields.String(description="Description", example="Lorem Ipsum", required=True)
-    organization_name = core_fields.String(description="Organization", example="ACME", required=False)
-    data_link = core_fields.URL(description="Link to data", example="https://dane.gov.pl", required=False)
-    potential_possibilities = core_fields.String(description="potential possibilities", example="none", required=False)
+    applicant_full_name = core_fields.Str(
+        description="Applicant full name", required=False, validate=validate.Length(min=1, max=300)
+    )
+    applicant_email = core_fields.Email(description="Email", required=False, validate=validate.Length(max=254))
+    title = core_fields.String(description="Name", example="Lorem Ipsum", required=True, validate=validate.Length(min=1, max=300))
+    notes = core_fields.String(
+        description="Description", example="Lorem Ipsum", required=True, validate=validate.Length(min=1, max=3000)
+    )
+    organization_name = core_fields.String(
+        description="Organization", example="ACME", required=False, validate=validate.Length(min=1, max=300)
+    )
+    data_link = core_fields.URL(
+        description="Link to data", example="https://dane.gov.pl", required=False, validate=validate.Length(max=2048)
+    )
+    potential_possibilities = core_fields.String(
+        description="potential possibilities", example="none", required=False, validate=validate.Length(min=1, max=300)
+    )
 
     class Meta:
         strict = True

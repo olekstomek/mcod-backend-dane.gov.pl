@@ -104,6 +104,11 @@ class SubmissionView(JsonAPIView):
             _data["submission_date"] = date.today().strftime("%Y-%m-%d")
             if self.request.user and self.request.user.is_authenticated:
                 _data["submitted_by"] = self.request.user.id
+
+            # Remove non-persistent fields; reserved for future email processing
+            _data.pop("applicant_full_name", None)
+            _data.pop("applicant_email", None)
+
             create_dataset_suggestion.s(_data).apply_async_on_commit()
             fields, values = ["id"], [str(uuid4())]
             result = namedtuple("Submission", fields)(*values)

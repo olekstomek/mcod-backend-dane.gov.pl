@@ -18,15 +18,6 @@ Feature: Dataset Comment
     | Accept-Language | en               |
     | Accept-Language | pl               |
 
-  Scenario: Adding of dataset comment returns error if comment is too short
-    Given dataset with id 999
-    When api request method is POST
-    And api request path is /datasets/999/comments
-    And api request posted data is {"data": {"type": "comment", "attributes": {"comment": "OK"}}}
-    And send api request and fetch the response
-    Then api's response status code is 422
-    And api's response body field errors/[0]/detail is Komentarz musi mieć przynajmniej 3 znaki
-
   Scenario: Dataset comment recipients list contains email from update_notification_recipient_email attribute of related dataset
     Given dataset created with params {"id": 999, "update_notification_recipient_email": "update_notification_recipient_email@example.com"}
     When api request method is POST

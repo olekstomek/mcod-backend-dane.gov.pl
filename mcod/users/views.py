@@ -384,7 +384,7 @@ class ResetPasswordView(JsonAPIView):
     @versioned
     @rate_limiter(
         limits=settings.FALCON_LIMITER_PASSWORD_RESET_LIMITS,
-        key_gen=lambda req: req.get_media()["data"]["attributes"]["email"],
+        key_gen=lambda req: req.get_media()["data"]["attributes"]["email"].lower(),
     )
     def on_post(self, request, response, *args, **kwargs):
         self.handle_post(request, response, self.POST, *args, **kwargs)
@@ -400,7 +400,7 @@ class ResetPasswordView(JsonAPIView):
         def _get_data(self, cleaned: Dict[str, Any], *args, **kwargs) -> Optional[User]:
             data: Dict[str, Any] = cleaned["data"]["attributes"]
             try:
-                user: User = self.database_model.objects.get(email=data["email"])
+                user: User = self.database_model.objects.get(email__iexact=data["email"])
             except self.database_model.DoesNotExist:
                 # To prevent user enumeration attacks, we do not raise an exception
                 # if the user does not exist. The function will instead return None,

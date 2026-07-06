@@ -17,6 +17,7 @@ from mcod.core.tests.fixtures.legacy import *  # noqa
 from mcod.core.tests.fixtures.licenses import *  # noqa
 from mcod.core.tests.fixtures.newsletter import *  # noqa
 from mcod.core.tests.fixtures.rdf import *  # noqa
+from mcod.core.tests.fixtures.showcaseproposals import *  # noqa
 from mcod.core.tests.fixtures.suggestions import *  # noqa
 from mcod.core.tests.fixtures.tags import *  # noqa
 from mcod.core.tests.fixtures.users import *  # noqa

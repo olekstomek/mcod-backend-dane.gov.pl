@@ -5,11 +5,11 @@ from collections import namedtuple
 from smtplib import SMTPException
 from typing import Dict, List, Optional, Tuple
 from unittest.mock import MagicMock, patch
+from uuid import uuid4
 
 import falcon
 import pytest
 from django.conf import settings
-from django.contrib.auth import get_user_model
 from django.core import mail
 from django.test import Client, override_settings
 from django.urls import reverse
@@ -35,11 +35,9 @@ from mcod.users.constants import (
     PORTAL_TYPE,
 )
 from mcod.users.factories import AdminFactory, EditorFactory, UserFactory
-from mcod.users.models import Token, User as TypeUser
+from mcod.users.models import Token, User
 from mcod.users.services import LoginGovPlData, logingovpl_service
 from mcod.users.views import ACSView
-
-User = get_user_model()
 
 
 @pytest.fixture()
@@ -68,19 +66,17 @@ def prepare_api_data(user_email: str, password: str):
 
 
 class TestLogin:
-    def test_login_rate_limiter_blocks_after_exceeding_limit(
-        self, admin: User, client: testing.TestClient, clear_limiter_redis_db: None
-    ):
+    def test_login_rate_limiter_blocks_after_exceeding_limit(self, client: testing.TestClient):
         """
         Business logic test. Test if user gets status code 429.
         Duplicated in test_limiter_disabled_via_settings.
         """
         limit_per_minute = 3
-        limits = f"{limit_per_minute} per minute,10 per hour"
+        user = UserFactory.build()
 
-        data: dict = prepare_api_data(user_email=admin.email, password="wrong password")
+        data: dict = prepare_api_data(user_email=user.email, password="wrong password")
 
-        with override_settings(FALCON_LIMITER_ENABLED=True, FALCON_LIMITER_LOGIN_LIMITS=limits):
+        with override_settings(FALCON_LIMITER_ENABLED=True, FALCON_LIMITER_LOGIN_LIMITS=f"{limit_per_minute} per minute"):
             for iteration in range(limit_per_minute):
                 resp = client.simulate_post(path=data["path"], json=data["json"])
                 assert resp.status != falcon.HTTP_429
@@ -217,7 +213,8 @@ class TestRegisterView:
         user_exists: bool,
         api_version: str,
     ):
-        email = "testing@email.com"
+        email = f"testing+{str(uuid4())}@dane.gov.pl"
+        password = "123!@#qweQWE"
         if user_exists:
             UserFactory.create(email=email)
 
@@ -227,8 +224,8 @@ class TestRegisterView:
                 "type": "user",
                 "attributes": {
                     "email": email,
-                    "password1": "123!@#qweQWE",
-                    "password2": "123!@#qweQWE",
+                    "password1": password,
+                    "password2": password,
                 },
             }
         }
@@ -246,6 +243,53 @@ class TestRegisterView:
         else:
             mock_send_email.assert_not_called()
             mock_reset_password_email.assert_called_once()
+
+        # AND THEN
+        # we don't store plaintext password
+        assert not User.objects.filter(password=password).exists(), "Plaintext password in the database!"
+
+    @pytest.mark.xfail(
+        reason="Some conflict with Axes: AttributeError: 'Request' object has no attribute 'META'",
+        strict=True,
+        run=True,
+    )
+    @pytest.mark.parametrize("api_version", (ver.as_string for ver in VERSIONS))
+    def test_user_can_log_in_after_registration(
+        self,
+        client_no_version: TestClient,
+        api_version: str,
+    ):
+        # GIVEN
+        email = f"testing+{str(uuid4())}@dane.gov.pl"
+        password = "123!@#qweQWE11"
+        # And
+        url = f"/{api_version}/auth/registration"
+        data = {
+            "data": {
+                "type": "user",
+                "attributes": {
+                    "email": email,
+                    "password1": password,
+                    "password2": password,
+                },
+            }
+        }
+        # WHEN request registration
+        with patch("mcod.users.models.User.send_registration_email"), patch(
+            "mcod.users.models.User.send_duplicate_registration_password_reset_email"
+        ):
+            client_no_version.simulate_post(url, json=data)
+        # THEN user exists but is inactive
+        assert User.objects.filter(email=email).exists()
+        assert not User.objects.filter(email=email, state="active").exists()
+        # GIVEN the user gets activated
+        User.objects.filter(email=email).update(state="active")
+        # WHEN they try to log in
+        data = prepare_api_data(email, password)
+        resp = client_no_version.simulate_post(f"/{api_version}/auth/login", json=data["json"])
+        # THEN
+        assert resp.status == falcon.HTTP_201, resp.json
+        assert resp.json["data"]["attributes"]["token"]
 
     @pytest.mark.parametrize(
         "weak_password",
@@ -271,12 +315,13 @@ class TestRegisterView:
         api_version: str,
     ):
         # GIVEN
+        email = f"testing+{str(uuid4())}@dane.gov.pl"
         url = f"/{api_version}/auth/registration"
         data = {
             "data": {
                 "type": "user",
                 "attributes": {
-                    "email": "testing@email.com",
+                    "email": email,
                     "password1": weak_password,
                     "password2": weak_password,
                 },
@@ -295,7 +340,7 @@ class TestRegisterView:
         api_version: str,
     ):
         # GIVEN
-        email = "testing@email.com"
+        email = f"testing+{str(uuid4())}@dane.gov.pl"
         UserFactory.create(email=email)
         url = f"/{api_version}/auth/registration"
         data = {
@@ -403,7 +448,7 @@ class TestResetPasswordView:
         - no user data should be returned
         """
         # GIVEN
-        email = "testing@email.com"
+        email = f"testing+{str(uuid4())}@dane.gov.pl"
         if user_exists:
             UserFactory.create(email=email)
 
@@ -443,7 +488,7 @@ class TestResetPasswordView:
         user_exists: bool,
         api_version: str,
     ):
-        email = "testing@email.com"
+        email = f"testing+{str(uuid4())}@dane.gov.pl"
         if user_exists:
             UserFactory.create(email=email)
 
@@ -463,6 +508,35 @@ class TestResetPasswordView:
             mock_send_email.assert_called_once()
         else:
             mock_send_email.assert_not_called()
+
+    @pytest.mark.parametrize("api_version", (ver.as_string for ver in VERSIONS))
+    def test_password_reset_email_sent_for_mixed_case_email(
+        self,
+        client_no_version: TestClient,
+        api_version: str,
+    ):
+        """Verify that password reset works case-insensitively for an existing email and sends exactly one reset email."""
+        # GIVEN
+        email = "joanna.testerka@example.com"
+        mixed_case_email = "Joanna.Testerka@example.com"
+        UserFactory.create(email=email)
+        url = f"/{api_version}/auth/password/reset"
+        data = {
+            "data": {
+                "type": "user",
+                "attributes": {"email": mixed_case_email},
+            }
+        }
+
+        # WHEN a password reset is requested with the same email written in mixed case.
+        with patch("mcod.users.models.User.send_password_reset_email") as mock_send_email:
+            response: Result = client_no_version.simulate_post(url, json=data)
+
+        # THEN the endpoint should accept the request and treat the email case-insensitively.
+        assert response.status == falcon.HTTP_200
+        # HTTP 200 confirms that the request was processed successfully.
+        mock_send_email.assert_called_once()
+        # the reset email should be sent exactly once for the existing user.
 
     @pytest.mark.parametrize("api_version", (ver.as_string for ver in VERSIONS))
     def test_password_reset_wrong_email_format(
@@ -489,7 +563,7 @@ class TestResetPasswordView:
         client_no_version: TestClient,
         api_version: str,
     ):
-        email = "good@email.com"
+        email = f"good-testing+{str(uuid4())}@dane.gov.pl"
         UserFactory.create(email=email)
         url = f"/{api_version}/auth/password/reset"
         data = {
@@ -507,7 +581,7 @@ class TestResetPasswordView:
 
     @pytest.mark.parametrize("lang", ["pl", "en"])
     def test_user_send_password_reset_email(self, lang):
-        user_email = "good@email.com"
+        user_email = f"good-testing+{str(uuid4())}@dane.gov.pl"
         user = UserFactory.create(email=user_email)
 
         with override(lang):
@@ -929,7 +1003,7 @@ class TestLogingovplACSView(MethodsNotAllowedTestMixin):
         status_code: int,
         redirect_url: str,
         logingovpl_user: LoginGovPlUser,
-        active_user: TypeUser,
+        active_user: User,
         response_data_from_logingovpl: Dict[str, str],
     ):
         """
@@ -1034,7 +1108,7 @@ class TestLogingovplACSView(MethodsNotAllowedTestMixin):
         self,
         mocked_get_logingovpl_data_and_logout,
         portal_type: PORTAL_TYPE,
-        user: TypeUser,
+        user: User,
         pesel: Optional[str],
         is_user_authenticated: bool,
         redirect_url: str,

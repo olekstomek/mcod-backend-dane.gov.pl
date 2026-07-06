@@ -72,8 +72,8 @@ class ShowcaseMixin(ExtendedModel):
     category = models.CharField(max_length=5, verbose_name=_("category"), choices=CATEGORY_CHOICES)
     title = SanitizedCharField(max_length=300, verbose_name=_("title"))
     notes = SanitizedTextField(verbose_name=_("Notes"), null=True)
-    author = SanitizedCharField(max_length=50, blank=True, null=True, verbose_name=_("Author"))
-    url = models.URLField(max_length=300, verbose_name=_("App URL"), null=True)
+    author = SanitizedCharField(max_length=300, blank=True, null=True, verbose_name=_("Author"))
+    url = models.URLField(max_length=2048, verbose_name=_("App URL"), null=True)
     external_datasets = SanitizedJSONField(blank=True, null=True, default=list, verbose_name=_("external datasets"))
     is_mobile_app = models.BooleanField(default=False, verbose_name=_("is mobile app?"))
     is_desktop_app = models.BooleanField(default=False, verbose_name=_("is desktop app?"))
@@ -218,7 +218,7 @@ class ShowcaseProposal(ShowcaseMixin):
         verbose_name=_("datasets"),
         related_name="showcase_proposals",
     )
-    keywords = ArrayField(SanitizedCharField(max_length=100), verbose_name=_("keywords"), default=list)
+    keywords = ArrayField(SanitizedCharField(max_length=300), verbose_name=_("keywords"), default=list)
     report_date = models.DateField(verbose_name=_("report date"))
     decision = models.CharField(max_length=8, verbose_name=_("decision"), choices=DECISION_CHOICES, blank=True)
     decision_date = models.DateField(verbose_name=_("decision date"), null=True, blank=True)

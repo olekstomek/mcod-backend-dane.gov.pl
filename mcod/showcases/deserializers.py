@@ -131,6 +131,7 @@ class ExternalResourceSchema(ExtSchema):
 
 
 class CreateShowcaseProposalAttrs(ObjectAttrs):
+    applicant_full_name = core_fields.Str(required=False, validate=validate.Length(min=1, max=300))
     category = core_fields.Str(
         required=True,
         validate=validate.OneOf(
@@ -139,31 +140,31 @@ class CreateShowcaseProposalAttrs(ObjectAttrs):
         ),
     )
     license_type = core_fields.Str(required=False)
-    applicant_email = core_fields.Email(required=True)
-    author = core_fields.Str(required=True, validate=validate.Length(max=50))
+    applicant_email = core_fields.Email(required=True, validate=validate.Length(max=254))
+    author = core_fields.Str(required=True, validate=validate.Length(min=1, max=300))
     title = core_fields.Str(
         required=True,
         faker_type="showcase title",
         example="Some Showcase",
-        validate=validate.Length(max=300),
+        validate=validate.Length(min=1, max=300),
     )
-    url = core_fields.Url(required=True)
-    notes = core_fields.Str(required=True, validate=validate.Length(max=3000))
+    url = core_fields.Url(required=True, validate=validate.Length(max=2048))
+    notes = core_fields.Str(required=True, validate=validate.Length(min=1, max=3000))
     image = core_fields.Base64String(required=False, default=None, max_size=settings.IMAGE_UPLOAD_MAX_SIZE)
     illustrative_graphics = core_fields.Base64String(required=False, default=None, max_size=settings.IMAGE_UPLOAD_MAX_SIZE)
     image_alt = core_fields.Str(required=False, default=None)
     datasets = core_fields.List(core_fields.Str(), required=False, default=[])
     external_datasets = core_fields.Nested(ExternalResourceSchema, required=False, default={}, many=True)
-    keywords = core_fields.List(core_fields.Str(), default="", required=False)
-    comment = core_fields.String(required=False, description="Comment body", example="Looks unpretty", default="")
+    keywords = core_fields.List(core_fields.Str(validate=validate.Length(max=300)), default="", required=False)
+
     # application specific fields.
     is_mobile_app = core_fields.Boolean()
-    mobile_apple_url = core_fields.Str()
-    mobile_google_url = core_fields.Str()
+    mobile_apple_url = core_fields.Url(validate=validate.Length(max=2048))
+    mobile_google_url = core_fields.Url(validate=validate.Length(max=2048))
     is_desktop_app = core_fields.Boolean()
-    desktop_linux_url = core_fields.Str()
-    desktop_macos_url = core_fields.Str()
-    desktop_windows_url = core_fields.Str()
+    desktop_linux_url = core_fields.Url(validate=validate.Length(max=2048))
+    desktop_macos_url = core_fields.Url(validate=validate.Length(max=2048))
+    desktop_windows_url = core_fields.Url(validate=validate.Length(max=2048))
 
     is_personal_data_processing_accepted = core_fields.Boolean(required=True)
     is_terms_of_service_accepted = core_fields.Boolean(required=True)
@@ -183,31 +184,6 @@ class CreateShowcaseProposalAttrs(ObjectAttrs):
     def prepare_data(self, data, **kwargs):
         data["datasets"] = [x.replace("dataset-", "") for x in data.get("datasets", []) if x]
         return data
-
-    @validates("mobile_apple_url")
-    def validate_mobile_apple_url(self, value):
-        if value:
-            validate.URL()(value)
-
-    @validates("mobile_google_url")
-    def validate_mobile_google_url(self, value):
-        if value:
-            validate.URL()(value)
-
-    @validates("desktop_linux_url")
-    def validate_desktop_linux_url(self, value):
-        if value:
-            validate.URL()(value)
-
-    @validates("desktop_macos_url")
-    def validate_desktop_macos_url(self, value):
-        if value:
-            validate.URL()(value)
-
-    @validates("desktop_windows_url")
-    def validate_desktop_windows_url(self, value):
-        if value:
-            validate.URL()(value)
 
     @validates("is_personal_data_processing_accepted")
     def validate_is_personal_data_processing_accepted(self, value):

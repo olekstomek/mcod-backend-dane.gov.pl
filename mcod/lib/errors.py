@@ -1,4 +1,5 @@
 import json
+import logging
 from typing import Any, Dict, Iterable, Mapping, Tuple, Union
 from uuid import uuid4
 
@@ -8,10 +9,11 @@ from django.utils.translation import gettext_lazy as _
 from falcon import HTTP_500, HTTPError, Response
 from flatdict import FlatDict
 
-from mcod import logger
 from mcod.core.api.jsonapi.serializers import ErrorsSchema
 from mcod.lib.encoders import LazyEncoder
 from mcod.lib.schemas import ErrorSchema
+
+logger = logging.getLogger("mcod")
 
 
 def _is_version_one(request: falcon.request.Request) -> bool:
@@ -68,7 +70,7 @@ def error_handler(
     response.text = json.dumps(body, cls=LazyEncoder)
     response.status = response_status
 
-    if settings.DEBUG:
+    if settings.DEBUG or settings.LOG_ALL_API_EXCEPTIONS:
         logger.exception(exc)
 
 

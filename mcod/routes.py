@@ -151,19 +151,19 @@ routes = [
         res_views.ResourceDownloadCounter(),
     ),
     ("/resources/{id:int}/comments", res_views.ResourceCommentsView()),
-    ("/resources/{id:int}/csv", res_views.ResourceFileDownloadView(file_type="csv")),
+    ("/resources/{id:int}/csv", res_views.ResourceFileDownloadView(file_type=res_views.FileDownloadType.CSV)),
     (
         "/resources/{id:int}/jsonld",
-        res_views.ResourceFileDownloadView(file_type="jsonld"),
+        res_views.ResourceFileDownloadView(file_type=res_views.FileDownloadType.JSONLD),
     ),
     ("/resources/{id:int}/file", res_views.ResourceFileDownloadView()),
     (
         "/resources/{id:int},{slug}/csv",
-        res_views.ResourceFileDownloadView(file_type="csv"),
+        res_views.ResourceFileDownloadView(file_type=res_views.FileDownloadType.CSV),
     ),
     (
         "/resources/{id:int},{slug}/jsonld",
-        res_views.ResourceFileDownloadView(file_type="jsonld"),
+        res_views.ResourceFileDownloadView(file_type=res_views.FileDownloadType.JSONLD),
     ),
     ("/resources/{id:int},{slug}/file", res_views.ResourceFileDownloadView()),
     # Histories

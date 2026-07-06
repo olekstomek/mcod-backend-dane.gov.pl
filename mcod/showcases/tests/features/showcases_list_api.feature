@@ -123,28 +123,6 @@ Feature: Showcases list API
     And api's response body field errors/[0]/detail is To pole jest obowiązkowe
     And api's response body field errors/[0]/source/pointer is /data/attributes/is_terms_of_service_accepted
 
-  Scenario: Suggest showcaseproposal mobile app without any mobile url
-    Given dataset with id 999
-    When api request method is POST
-    And api request path is /showcases/suggest
-    And api request showcaseproposal data has {"is_mobile_app": true, "mobile_apple_url": "", "mobile_google_url": ""}
-    And send api request and fetch the response
-    Then api's response status code is 422
-    And api's response body field errors/[0]/title is Błąd pola
-    And api's response body field errors/[0]/detail is Przekazanie co najmniej jednego z: mobile_apple_url, mobile_google_url jest wymagane!
-    And api's response body field errors/[0]/source/pointer is /data/attributes/is_mobile_app
-
-  Scenario: Suggest showcaseproposal desktop app without any desktop url
-    Given dataset with id 999
-    When api request method is POST
-    And api request path is /showcases/suggest
-    And api request showcaseproposal data has {"is_desktop_app": true, "desktop_linux_url": "", "desktop_macos_url": "", "desktop_windows_url": ""}
-    And send api request and fetch the response
-    Then api's response status code is 422
-    And api's response body field errors/[0]/title is Błąd pola
-    And api's response body field errors/[0]/detail is Przekazanie co najmniej jednego z: desktop_linux_url, desktop_macos_url, desktop_windows_url jest wymagane!
-    And api's response body field errors/[0]/source/pointer is /data/attributes/is_desktop_app
-
   Scenario: Showcase is visible in search with aggregations
     Given dataset with id 999
     And showcase created with params {"id": 999, "title": "Ponowne wykorzystanie - test", "datasets": [999], "is_mobile_app": true, "mobile_apple_url": "https://example.com", "mobile_google_url": "https://example.com", "is_desktop_app": true, "desktop_linux_url": "https://example.com", "desktop_macos_url": "https://example.com", "desktop_windows_url": "https://example.com"}

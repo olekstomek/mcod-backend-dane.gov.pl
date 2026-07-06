@@ -733,17 +733,6 @@ class Resource(ExtendedModel):
             url = _file.url if _file else self.csv_converted_file.url if self.csv_converted_file else None
         return self._get_internal_url(url) if url else None
 
-    def get_location(self, file_type):
-        if self.is_linked:
-            location = self.link
-        elif file_type == "csv":
-            location = self.csv_file_url
-        elif file_type == "jsonld":
-            location = self.jsonld_file_url
-        else:
-            location = self.file_url
-        return location
-
     @property
     def jsonld_file_url(self):
         return self._get_api_url(self.jsonld_converted_file.url) if self.jsonld_converted_file else None

@@ -87,7 +87,7 @@ class TestApplicationFormValidity:
             #   author too long
             change_namedlist(
                 minimal,
-                {"title": "to long author", "author": "a" * 51, "validity": False},
+                {"title": "to long author", "author": "a" * 301, "validity": False},
             ),
             # status               *   choices
             #   No status choice
