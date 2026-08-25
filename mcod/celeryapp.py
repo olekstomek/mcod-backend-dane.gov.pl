@@ -98,7 +98,7 @@ def get_beat_schedule(
         "catalog_csv_file_creation": {
             "task": "mcod.datasets.tasks.create_csv_metadata_files",
             "options": default_options,
-            "schedule": crontab(minute=30, hour=4),
+            "schedule": crontab(minute=30, hour=4, day_of_week="mon"),
         },
         "send-subscriptions-report": {
             "task": "mcod.watchers.tasks.send_report_from_subscriptions",
@@ -160,7 +160,7 @@ def get_beat_schedule(
                 "catalog_xml_file_creation": {
                     "task": "mcod.datasets.tasks.create_xml_metadata_files",
                     "options": default_options,
-                    "schedule": crontab(minute=30, hour=0),
+                    "schedule": crontab(minute=30, hour=0, day_of_week=1),
                 },
             }
         )

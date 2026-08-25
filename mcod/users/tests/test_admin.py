@@ -304,17 +304,54 @@ class TestUserAdmin:
         assert u.organizations.exists()
 
     @pytest.mark.parametrize(
-        "weak_password", ["123", "abc", "Aa1Bb2Cc3", "abc123", "abcd1234", "abcdefgh", "12345678", "ABCD1234"]
+        "weak_password, expected_error_messages",
+        [
+            (
+                "123",
+                (
+                    "To hasło jest za krótkie. Musi zawierać co najmniej 14 znaków.",
+                    "Hasło musi zawierać przynajmniej jedną dużą i jedną małą literę.",
+                ),
+            ),
+            (
+                "abc",
+                (
+                    "To hasło jest za krótkie. Musi zawierać co najmniej 14 znaków.",
+                    "Hasło musi zawierać przynajmniej jedną cyfrę.",
+                ),
+            ),
+            (
+                "Aa1Bb2Cc3",
+                (
+                    "To hasło jest za krótkie. Musi zawierać co najmniej 14 znaków.",
+                    "Hasło musi zawierać przynajmniej jeden znak specjalny.",
+                ),
+            ),
+            (
+                "Aa1Bb2Cc3Aa1Bb2Cc3",
+                ("Hasło musi zawierać przynajmniej jeden znak specjalny.",),
+            ),
+            (
+                "abc123",
+                (
+                    "To hasło jest za krótkie. Musi zawierać co najmniej 14 znaków.",
+                    "Hasło musi zawierać przynajmniej jedną dużą i jedną małą literę.",
+                ),
+            ),
+            (
+                "abcdefghdfadfaf",
+                ("Hasło musi zawierać przynajmniej jedną cyfrę.",),
+            ),
+            (
+                "!@#!#@!#!@#!@#!@#!@#!@#!@#!@#!@",
+                ("Hasło musi zawierać przynajmniej jedną cyfrę.",),
+            ),
+        ],
     )
-    def test_admin_cannot_create_user_with_weak_password(self, admin, weak_password: str):
+    def test_admin_cannot_create_user_with_weak_password(
+        self, admin, weak_password: str, expected_error_messages: Tuple[str, ...]
+    ):
         # GIVEN
-        possible_error_messages = (
-            "To hasło jest za krótkie. Musi zawierać co najmniej 8 znaków.",
-            "Hasło musi zawierać przynajmniej jedną cyfrę.",
-            "Hasło musi zawierać przynajmniej jedną dużą i jedną małą literę.",
-            "Hasło musi zawierać przynajmniej jeden znak specjalny.",
-            "To hasło jest zbyt powszechne.",
-        )
         client = Client()
         client.force_login(admin)
         email = "non_existing_email@test.com"
@@ -336,6 +373,7 @@ class TestUserAdmin:
         user_exists: bool = User.objects.filter(email=email).exists()
         assert not user_exists
 
-        # At least one of possible password related error messages was listed
+        # All expected password related error messages were listed
         str_response_content: str = smart_str(response.content)
-        assert any((err_msg in str_response_content for err_msg in possible_error_messages))
+        for err_msg in expected_error_messages:
+            assert err_msg in str_response_content

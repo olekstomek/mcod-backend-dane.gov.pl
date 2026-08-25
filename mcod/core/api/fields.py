@@ -6,9 +6,11 @@ import operator
 from collections import defaultdict, namedtuple
 from datetime import datetime
 from functools import partial
+from logging import getLogger
 
 import markdown2
 from dateutil.parser import parse
+from django.conf import settings
 from django.template import loader
 from django.utils.translation import gettext_lazy as _
 from marshmallow import ValidationError, fields, missing, utils
@@ -16,6 +18,15 @@ from marshmallow.orderedset import OrderedSet
 from tzlocal import get_localzone
 
 from mcod.core import utils as api_utils
+from mcod.core.image_validation import (
+    INVALID_BASE64,
+    INVALID_IMAGE,
+    INVALID_MIME_TYPE,
+    MIME_TYPE_MISMATCH,
+    TOO_LONG,
+    ImageValidationError,
+    validate_image,
+)
 
 BEFORE_DESERIALIZE = "before_deserialize"
 BEFORE_SERIALIZE = "before_serialize"
@@ -27,6 +38,8 @@ common_error_messages = {
     "null": _("Field may not be null."),
     "validator_failed": _("Invalid value."),
 }
+
+logger = getLogger("mcod-api")
 
 
 def set_hook(fn, key, **kwargs):
@@ -493,6 +506,31 @@ class Base64String(ExtendedFieldMixin, fields.String):
         if max_size:
             if len(data) > max_size:
                 self.make_error("too_long")
+        return value, attr, data
+
+
+class Base64ImageString(Base64String):
+    """Validate image payloads sent as ``data:<mime>;base64,<payload>`` strings."""
+
+    default_error_messages = {
+        INVALID_BASE64: _("Invalid data format for base64 encoding."),
+        INVALID_IMAGE: _("Invalid image file."),
+        INVALID_MIME_TYPE: _("Unsupported image MIME type."),
+        MIME_TYPE_MISMATCH: _("Declared image MIME type does not match file content."),
+        TOO_LONG: _("Image too big, max size is %(max_image_size)s bytes"),
+    }
+
+    @before_deserialize
+    def validate_data(self, value=None, attr=None, data=None):
+        if not value:
+            return value, attr, data
+        try:
+            validate_image(value)
+        except ImageValidationError as exc:
+            logger.error(exc)
+            if str(exc) == TOO_LONG:
+                self.error_messages[TOO_LONG] = self.error_messages[TOO_LONG] % {"max_image_size": settings.IMAGE_UPLOAD_MAX_SIZE}
+            raise self.make_error(str(exc))
         return value, attr, data
 
 

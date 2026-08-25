@@ -1,5 +1,4 @@
 from django.conf import settings
-from rdflib import BNode
 from rdflib.plugins.stores.sparqlstore import (
     SPARQLStore as BaseSPARQLStore,
     SPARQLUpdateStore as BaseSPARQLUpdateStore,
@@ -17,28 +16,19 @@ class SPARQLStore(BaseSPARQLStore):
 
 class SPARQLUpdateStore(BaseSPARQLUpdateStore):
 
-    def query(self, *args, **kwargs):
-        # very ugly temporary fix for bug in rdflib 6.1.1. Update query overwrites store instance request
-        # headers for all subsequent queries(also not updates).
-        # Bug in rdflib.plugins.stores.sparqlconnector in update method
-        kwargs_headers = self.kwargs.get("headers")
-        if (
-            kwargs_headers
-            and kwargs_headers.get("Content-Type")
-            and kwargs_headers.get("Content-Type") == "application/sparql-update"
-        ):
-            kwargs_headers.pop("Content-Type")
-        return super().query(*args, **kwargs)
-
     def add_object(self, obj):
         query, ns = obj.as_sparql_create_query()
         self.update(query, initNs=ns)
 
     def get_catalog_metadata_create_query(self, context):
         catalog = DCATCatalog()
-        catalog_triples = catalog.to_triples(context)
-        catalog_metadata = "".join([f"{triple[0].n3()} {triple[1].n3()} {triple[2].n3()} . " for triple in catalog_triples])
-        return "INSERT DATA { %(data)s }" % {"data": catalog_metadata}
+        triples = catalog.to_triples(context)
+        triples_str = "\n".join(f"{s.n3()} {p.n3()} {o.n3()} ." for s, p, o in triples)
+        return f"""
+            INSERT DATA {{
+                {triples_str}
+            }}
+        """
 
     def add_catalog_metadata(self, context):
         self.update(self.get_catalog_metadata_create_query(context))
@@ -48,11 +38,21 @@ class SPARQLUpdateStore(BaseSPARQLUpdateStore):
 
     def get_catalog_metadata_delete_query(self):
         catalog = DCATCatalog()
-        catalog_subject = catalog.get_subject({})
-        return (
-            "DELETE {{?s  ?p   ?o . ?o  ?p1  ?o1 .}} WHERE {{ ?s  ?p  ?o . FILTER (?s = {}) ."
-            " OPTIONAL {{?o  ?p1  ?o1  . FILTER (isBlank(?o)) }} }}".format(catalog_subject.n3())
-        )
+        catalog_subject = catalog.get_subject({}).n3()
+        return f"""
+            DELETE {{
+                ?s ?p ?o .
+                ?o ?p1 ?o1 .
+            }}
+            WHERE {{
+                ?s ?p ?o .
+                FILTER (?s = {catalog_subject}) .
+                OPTIONAL {{
+                    ?o ?p1 ?o1 .
+                    FILTER (isBlank(?o))
+                }}
+            }}
+        """
 
     def get_object_graph(self, query):
         g = ExtendedGraph(ordered=True)
@@ -65,14 +65,19 @@ class SPARQLUpdateStore(BaseSPARQLUpdateStore):
 
     def get_catalog(self, **kwargs):
         limit = kwargs.get("per_page", 1000)
-        query = """CONSTRUCT {?s ?p ?o . ?o ?p1 ?o1} WHERE
-        { ?s ?p ?o . OPTIONAL{ ?o ?p1 ?o1}
-        FILTER(REGEX(str(?s), "%(rdf_url_pattern)s"))
-        }
-        LIMIT %(limit)s""" % {
-            "rdf_url_pattern": f"^{settings.BASE_URL}/pl/dataset/[0-9]+,([a-z]|-)+$",
-            "limit": limit,
-        }
+        rdf_url_pattern = f"^{settings.BASE_URL}/pl/dataset/[0-9]+,([a-z]|-)+$"
+        query = f"""
+            CONSTRUCT {{
+                ?s ?p ?o .
+                ?o ?p1 ?o1 .
+            }}
+            WHERE {{
+                ?s ?p ?o .
+                OPTIONAL {{ ?o ?p1 ?o1 }}
+                FILTER(REGEX(str(?s), "{rdf_url_pattern}"))
+            }}
+            LIMIT {limit}
+        """
         g = self.get_object_graph(query)
         if len(g):
             for triple in extra_triples.EXTRA_DATASET_TRIPLES:
@@ -84,14 +89,17 @@ class SPARQLUpdateStore(BaseSPARQLUpdateStore):
         dataset_slug = kwargs.get("slug")
         suffix = f",{dataset_slug}" if dataset_slug else ""
         url = f"{settings.BASE_URL}/pl/dataset/{dataset_id}{suffix}"
-        query = """
-        CONSTRUCT {?s ?p ?o . ?o ?p1 ?o1} WHERE
-        { ?s ?p ?o . OPTIONAL{ ?o ?p1 ?o1}
-        FILTER (strstarts(str(?s), '%(rdf_url)s'))
-        }
-        """ % {
-            "rdf_url": url
-        }
+        query = f"""
+            CONSTRUCT {{
+                ?s ?p ?o .
+                ?o ?p1 ?o1 .
+            }}
+            WHERE {{
+                ?s ?p ?o .
+                OPTIONAL {{ ?o ?p1 ?o1 }}
+                FILTER (strstarts(str(?s), '{url}'))
+            }}
+        """
         g = self.get_object_graph(query)
         if len(g):
             for triple in extra_triples.EXTRA_DATASET_TRIPLES:
@@ -102,23 +110,21 @@ class SPARQLUpdateStore(BaseSPARQLUpdateStore):
         dataset_id = kwargs["id"]
         resource_id = kwargs["res_id"]
         url = f"{settings.BASE_URL}/pl/dataset/{dataset_id}/resource/{resource_id}"
-        query = """
-        CONSTRUCT {<%(rdf_url)s> ?p ?o . ?o ?p1 ?o1} WHERE {
-        <%(rdf_url)s> ?p ?o . OPTIONAL{ ?o ?p1 ?o1}}
-        """ % {
-            "rdf_url": url
-        }
+        query = f"""
+            CONSTRUCT {{
+                <{url}> ?p ?o .
+                ?o ?p1 ?o1 .
+            }}
+            WHERE {{
+                <{url}> ?p ?o .
+                OPTIONAL {{ ?o ?p1 ?o1 }}
+            }}
+        """
         g = self.get_object_graph(query)
         if len(g):
             for triple in extra_triples.EXTRA_RESOURCE_TRIPLES:
                 g.add(triple)
         return g
-
-
-def my_bnode_ext(node):
-    # https://rdflib.readthedocs.io/en/stable/apidocs/rdflib.plugins.stores.html#rdflib.plugins.stores.sparqlstore.SPARQLStore  # noqa
-    if isinstance(node, BNode):
-        return "<bnode:b%s>" % node
 
 
 def get_sparql_store(readonly=False, return_format="xml", external_sparql_endpoint=None):
@@ -129,20 +135,14 @@ def get_sparql_store(readonly=False, return_format="xml", external_sparql_endpoi
             "method": "POST_FORM",
             "returnFormat": return_format,
         }
-        external_endpoint_details = (
-            settings.SPARQL_ENDPOINTS[external_sparql_endpoint]
-            if external_sparql_endpoint and settings.SPARQL_ENDPOINTS.get(external_sparql_endpoint)
-            else None
-        )
-        if external_endpoint_details:
-            params.pop("auth")
-            params.update(**external_endpoint_details)
+        if external_sparql_endpoint == "kronika":
+            params["query_endpoint"] = settings.KRONIKA_SPARQL_URL
+            params["returnFormat"] = "json"
         return SPARQLStore(**params)
 
     params = {
         "auth": (settings.SPARQL_USER, settings.SPARQL_PASSWORD),
         "query_endpoint": settings.SPARQL_QUERY_ENDPOINT,
         "update_endpoint": settings.SPARQL_UPDATE_ENDPOINT,
-        "node_to_sparql": my_bnode_ext,
     }
     return SPARQLUpdateStore(**params)

@@ -390,12 +390,12 @@ class UserAdmin(HistoryMixin, AdminConfirmMixin, UserAdmin):
         if "is_labs_admin" in data:
             obj.set_labs_perms(data["is_labs_admin"])
         if settings.DISCOURSE_FORUM_ENABLED:
-            user_sync_task.s(obj.pk).apply_async_on_commit()
+            user_sync_task.apply_async_on_commit(args=(obj.pk,))
 
     def delete_model(self, request, obj):
         super().delete_model(request, obj)
         if settings.DISCOURSE_FORUM_ENABLED:
-            user_sync_task.s(obj.pk).apply_async_on_commit()
+            user_sync_task.apply_async_on_commit(args=(obj.pk,))
 
 
 class MeetingFilesInline(admin.StackedInline):

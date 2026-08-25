@@ -1,13 +1,12 @@
 import json
 import logging
-from typing import Any, Dict, Iterable, Mapping, Tuple, Union
+from typing import Any, Dict, Iterable, List, Mapping, Tuple, Union
 from uuid import uuid4
 
 import falcon.request
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 from falcon import HTTP_500, HTTPError, Response
-from flatdict import FlatDict
 
 from mcod.core.api.jsonapi.serializers import ErrorsSchema
 from mcod.lib.encoders import LazyEncoder
@@ -137,6 +136,18 @@ def _prepare_exception_for_14(
     )
 
 
+def _flatten_errors(data: Dict[Any, Any], prefix: str = "") -> List[Tuple[str, Any]]:
+    """Recursively flattens a nested dictionary of errors into a flat list of paths and values."""
+    items: List[Tuple[str, Any]] = []
+    for key, value in data.items():
+        new_prefix = f"{prefix}/{key}" if prefix else str(key)
+        if isinstance(value, dict):
+            items.extend(_flatten_errors(value, new_prefix))
+        else:
+            items.append((new_prefix, value))
+    return items
+
+
 def error_422_handler(request: falcon.request.Request, response: Response, exc: HTTPError, params):
     update_content_type(request, response)
     response.status = exc.status
@@ -155,9 +166,8 @@ def error_422_handler(request: falcon.request.Request, response: Response, exc: 
     else:
         _exc_code = exc.status.lower().replace(" ", "_")
         _errors = []
-        if hasattr(exc, "errors"):
-            flat = FlatDict(exc.errors, delimiter="/")
-            for field, errors in flat.items():
+        if hasattr(exc, "errors") and isinstance(exc.errors, dict):
+            for field, errors in _flatten_errors(exc.errors):
                 if not isinstance(errors, list):
                     errors = [
                         str(errors),

@@ -1,5 +1,6 @@
 import os
 from functools import partial
+from pathlib import Path
 
 import falcon
 from dal import autocomplete
@@ -223,12 +224,19 @@ class CSVMetadataView(BaseView):
     class GETZipCatalog(BaseHdlr):
 
         def serialize(self, *args, **kwargs):
-            file_path = f"{settings.METADATA_MEDIA_ROOT}/{get_language()}/katalog.zip"
+            file_path = Path(f"{settings.METADATA_MEDIA_ROOT}/{get_language()}/katalog.zip")
 
-            if not os.path.exists(file_path):
+            if not file_path.exists():
                 raise falcon.HTTPNotFound()
 
-            self.response.downloadable_as = "katalog.zip"
+            if file_path.is_symlink():
+                # OTD-2773: file name override due to lower frequency
+                # if/when we restore the daily generation schedule
+                # remove this code branch
+                target = file_path.resolve()
+                self.response.downloadable_as = target.name
+            else:
+                self.response.downloadable_as = "katalog.zip"
             self.response.content_type = "application/zip"
             file_stream = open(file_path, "rb")
             file_size = os.path.getsize(file_path)

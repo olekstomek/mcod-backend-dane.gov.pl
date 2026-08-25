@@ -1,13 +1,17 @@
 from datetime import date
+from unittest.mock import patch
 
 import pytest
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import IntegrityError
 from django.db.models.query import QuerySet
+from django.test import override_settings
 
 from mcod.core.tests.helpers.tasks import run_on_commit_events
+from mcod.showcases.factories import ShowcaseProposalFactory
 from mcod.showcases.models import Showcase, ShowcaseProposal
+from mcod.submissions.models import Category, Subject
 
 
 class TestShowcaseModel:
@@ -97,6 +101,20 @@ class TestShowcaseModel:
         assert date_folder in showcase.image.url
         assert date_folder in showcase.image.path
 
+    def test_image_links_point_to_image(self, showcase: Showcase):
+        img_url = showcase.image_absolute_url
+        alt = f"Logo aplikacji {showcase.title}"
+        assert (
+            showcase.application_logo
+            == f'<a href="{img_url}" target="_blank"><img src="{img_url}" width="100" alt="{alt}" /></a>'
+        )
+
+        graphics_url = showcase.illustrative_graphics_url
+        assert (
+            showcase.illustrative_graphics_img
+            == f'<a href="{graphics_url}" target="_blank"><img src="{graphics_url}" width="100" alt="" /></a>'
+        )
+
     def test_main_page_position_on_create(self):
         showcase1 = Showcase.objects.create(title="test showcase 1", notes="test description 1")
         assert showcase1.main_page_position is None, "main page position should be None if not specified"
@@ -149,3 +167,60 @@ class TestShowcaseModel:
             showcase=showcase,
         )
         assert not obj.convert_to_showcase()
+
+    def test_proposal_image_links_point_to_image(self):
+        obj = ShowcaseProposalFactory.create()
+
+        img_url = obj.image_absolute_url
+        assert obj.application_logo == f'<a href="{img_url}" target="_blank"><img src="{img_url}" width="100" alt="" /></a>'
+
+        graphics_url = obj.illustrative_graphics_url
+        assert (
+            obj.illustrative_graphics_img
+            == f'<a href="{graphics_url}" target="_blank"><img src="{graphics_url}" width="100" alt="" /></a>'
+        )
+
+    def test_showcaseproposal_decode_b64_image_returns_content_file_for_valid_image(self, valid_jpeg_data_uri):
+        image = ShowcaseProposal.decode_b64_image(valid_jpeg_data_uri, "example")
+
+        assert image.name == "example.jpeg"
+        assert image.read()
+
+    @pytest.mark.parametrize(
+        "image_value",
+        (
+            "not-a-data-uri",
+            "data:text/html;base64,PGh0bWw+PC9odG1sPg==",
+            "data:image/png;base64,not valid base64",
+            "data:image/png;base64,bm90LWFuLWltYWdl",
+        ),
+    )
+    def test_showcaseproposal_decode_b64_image_returns_none_for_invalid_image(self, image_value):
+        assert ShowcaseProposal.decode_b64_image(image_value, "example") is None
+
+    def test_showcaseproposal_decode_b64_image_returns_none_for_too_large_image(self, valid_jpeg_data_uri):
+        with override_settings(IMAGE_UPLOAD_MAX_SIZE=1):
+            image = ShowcaseProposal.decode_b64_image(valid_jpeg_data_uri, "example")
+
+        assert image is None
+
+
+def test_create_submission_event_on_creation_but_not_on_update():
+    with patch("mcod.showcases.models.create_submission_event") as mock_create:
+        # creation - create_submission_event - called
+        proposal: ShowcaseProposal = ShowcaseProposalFactory.create(
+            title="Test proposal",
+            notes="Test notes",
+        )
+        mock_create.assert_called_once_with(
+            reference_object=proposal,
+            submission_date=proposal.created,
+            subject=Subject.DATA,
+            category=Category.SUGGEST_REUSE,
+        )
+        mock_create.reset_mock()
+
+        # update - create_submission_event - not called
+        proposal.title = "Updated title"
+        proposal.save()
+        mock_create.assert_not_called()

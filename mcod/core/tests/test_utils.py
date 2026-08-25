@@ -4,7 +4,7 @@ import json
 import tempfile
 from pathlib import Path
 from typing import Any, Dict, Iterable
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 from xml.dom.minidom import parseString
 
 import pandas as pd
@@ -12,13 +12,18 @@ import pytest
 from django.test import override_settings
 from pyexpat import ExpatError
 from pytest_mock import MockerFixture
+from rdflib import Graph, Literal, URIRef
+from rdflib.namespace import RDF
 
 from mcod.core.utils import (
+    CSVW,
     CSVWriter,
     FileMeta,
     XmlTextInvalid,
     XMLWriter,
     clean_columns_in_dataframe,
+    create_rdf_graph_from_csv_content,
+    get_file_content_from_url,
     get_file_metadata,
     prepare_error_folder,
     save_df_to_xlsx,
@@ -343,3 +348,95 @@ def test_xml_writer_error_dump(tmp_path, mocker):
     dump = tmp_path / "data.json"
     assert dump.exists()
     assert dump.read_text().startswith("{")
+
+
+class TestCsvToRdfGraphStructure:
+    def test_has_table_group(self, graph_3_rows: Graph):
+        table_groups = list(graph_3_rows.subjects(RDF.type, CSVW.TableGroup))
+        assert len(table_groups) == 1
+
+    def test_has_table(self, graph_3_rows: Graph):
+        tables = list(graph_3_rows.subjects(RDF.type, CSVW.Table))
+        assert len(tables) == 1
+
+    def test_table_has_correct_url(self, graph_3_rows: Graph, example_csv_file_url: str):
+        tables = list(graph_3_rows.subjects(RDF.type, CSVW.Table))
+        table_url = graph_3_rows.value(tables[0], CSVW.url)
+        assert table_url == URIRef(example_csv_file_url)
+
+    def test_table_group_links_to_table(self, graph_3_rows: Graph):
+        table_group = list(graph_3_rows.subjects(RDF.type, CSVW.TableGroup))[0]
+        table = list(graph_3_rows.subjects(RDF.type, CSVW.Table))[0]
+        assert (table_group, CSVW.table, table) in graph_3_rows
+
+
+class TestCsvToRdfGraphRows:
+    def test_correct_number_of_rows(self, graph_3_rows: Graph):
+        rows = list(graph_3_rows.subjects(RDF.type, CSVW.Row))
+        assert len(rows) == 3
+
+    def test_row_numbers(self, graph_3_rows: Graph):
+        rows = list(graph_3_rows.subjects(RDF.type, CSVW.Row))
+        row_nums = {int(graph_3_rows.value(r, CSVW.rownum)) for r in rows}
+        assert row_nums == {1, 2, 3}
+
+    def test_row_urls_contain_correct_rows_urls(self, graph_3_rows: Graph, example_csv_file_url: str):
+        rows = list(graph_3_rows.subjects(RDF.type, CSVW.Row))
+        row_urls = {str(graph_3_rows.value(r, CSVW.url)) for r in rows}
+        assert row_urls == {
+            f"{example_csv_file_url}#row=2",
+            f"{example_csv_file_url}#row=3",
+            f"{example_csv_file_url}#row=4",
+        }
+
+    def test_each_row_has_describes(self, graph_3_rows: Graph):
+        rows = list(graph_3_rows.subjects(RDF.type, CSVW.Row))
+        for row in rows:
+            assert graph_3_rows.value(row, CSVW.describes) is not None
+
+
+class TestCsvToRdfGraphData:
+    def test_data_node_has_all_columns(self, graph_3_rows: Graph, example_csv_file_url: str):
+        rows = list(graph_3_rows.subjects(RDF.type, CSVW.Row))
+        for row in rows:
+            data_node = graph_3_rows.value(row, CSVW.describes)
+            predicates = {str(p) for p in graph_3_rows.predicates(data_node)}
+            for col in ["Lp", "aaa", "bbb", "ccc"]:
+                assert f"{example_csv_file_url}#{col}" in predicates
+
+    def test_first_row_data_values(self, graph_3_rows: Graph, example_csv_file_url: str):
+        rows = list(graph_3_rows.subjects(RDF.type, CSVW.Row))
+        row1 = next(r for r in rows if graph_3_rows.value(r, CSVW.rownum) == Literal(1))
+        data_node = graph_3_rows.value(row1, CSVW.describes)
+
+        assert graph_3_rows.value(data_node, URIRef(f"{example_csv_file_url}#Lp")) == Literal("1")
+        assert graph_3_rows.value(data_node, URIRef(f"{example_csv_file_url}#aaa")) == Literal("aaa1")
+        assert graph_3_rows.value(data_node, URIRef(f"{example_csv_file_url}#bbb")) == Literal("bbb1")
+        assert graph_3_rows.value(data_node, URIRef(f"{example_csv_file_url}#ccc")) == Literal("ccc1")
+
+
+class TestCsvToRdfGraphEdgeCases:
+    def test_only_header_row(self, example_csv_file_url: str):
+        csv_content = "Lp,aaa,bbb,ccc\n"
+        g = create_rdf_graph_from_csv_content(csv_content, example_csv_file_url)
+        rows = list(g.subjects(RDF.type, CSVW.Row))
+        assert rows == []
+        assert len(list(g.subjects(RDF.type, CSVW.TableGroup))) == 1
+        assert len(list(g.subjects(RDF.type, CSVW.Table))) == 1
+
+    def test_completely_empty_file(self, example_csv_file_url: str):
+        csv_content = ""
+        with pytest.raises(ValueError) as exc:
+            create_rdf_graph_from_csv_content(csv_content, example_csv_file_url)
+        assert "CSV content is empty or has no headers." == str(exc.value)
+
+
+def test_get_file_content_from_url_returns_decoded_content():
+    mock_response = MagicMock()
+    mock_response.read.return_value = b"Lp,aaa,bbb,ccc\n1,aaa1,bbb1,ccc1\n2,aaa2,bbb2,ccc2\n3,aaa3,bbb3,ccc3\n"
+
+    with patch("mcod.core.utils.urlopen", return_value=mock_response) as mock_urlopen:
+        result = get_file_content_from_url("https://example.com/test.csv")
+
+    mock_urlopen.assert_called_once_with("https://example.com/test.csv")
+    assert result == "Lp,aaa,bbb,ccc\n1,aaa1,bbb1,ccc1\n2,aaa2,bbb2,ccc2\n3,aaa3,bbb3,ccc3\n"

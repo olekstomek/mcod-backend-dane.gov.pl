@@ -376,9 +376,16 @@ class User(
         (token_type=1) always create a new one and expire the old active one if exists.
         """
         token: Optional[Token] = self._get_active_token(token_type)
+        logger.info("Retrieved token id: %s", token.pk if token else None)
 
         # expire an old active password token (OTD-1735)
         if token and token_type == 1:
+            logger.info(
+                "Password reset token replaced: token_id=%s user_id=%s expiration_date=%s",
+                token.pk,
+                self.pk,
+                token.expiration_date.isoformat(),
+            )
             token.invalidate()
             token = None
 
@@ -388,6 +395,20 @@ class User(
                 user=self,
                 token_type=token_type,
                 expiration_date=timezone.now() + expiration_delta,
+            )
+            if token_type == 0:
+                logger.info(
+                    "Email activation token created: token_id=%s user_id=%s expiration_date=%s",
+                    token.pk,
+                    self.pk,
+                    token.expiration_date.isoformat(),
+                )
+        elif token_type == 0:
+            logger.info(
+                "Email activation token reused: token_id=%s user_id=%s expiration_date=%s",
+                token.pk,
+                self.pk,
+                token.expiration_date.isoformat(),
             )
 
         return token.token
@@ -931,6 +952,14 @@ class Token(TimeStampedModel):
 
     def invalidate(self):
         if self.is_valid:
+            if self.token_type == 0:
+                logger.info(
+                    "Email activation token invalidated: token_id=%s expiration_date=%s user_id=%s user_state=%s",
+                    self.pk,
+                    self.expiration_date.isoformat(),
+                    self.user.pk,
+                    self.user.state,
+                )
             self.expiration_date = timezone.now()
             self.save()
 

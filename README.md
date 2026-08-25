@@ -115,14 +115,6 @@ Wyedytuj plik `/etc/hosts`, tak by nazwy serwisów mcod rozwiązywały się na a
 **Uwaga dla MacOS**: zamień adres `172.18.18.100` na `127.0.0.1`.
 Docker na MacOS nie działa natywnie i adresy wewnętrzne z sieci dockerowych nie są osiągalne z poziomu hosta.
 
-### Utworzenie zbioru w Sparql
-
-1. Uruchom mcod-rdfdb `docker compose up mcod-rdfdb`
-2. Wejdź na [localhost:3030](http://localhost:3030/manage.html?tab=datasets)
-3. Zaloguj się, username to `admin`, a hasło to `ADMIN_PASSWORD` z pliku `.env`
-4. Utwórz Dataset o nazwie `ds` (zmienna konfiguracyjna `FUSEKI_DATASET` w `base.py`)
-   - zaznacz opcję Persistent (ale nie "Persistent TDB2").
-
 ## Uruchomienie środowiska lokalnego w docker-compose
 
 🚧 Proces budowania środowiska może trwać nawet kilkadziesiąt minut w zależności od Twojego komputera, sieci itp.

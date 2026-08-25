@@ -566,6 +566,22 @@ msgstr "Wiele wartości nie jest dozwolonych"
 msgid "Not a valid UUID."
 msgstr "Niepoprawny UUID."
 
+msgid "Invalid data format for base64 encoding."
+msgstr "Nieprawidłowy format danych dla kodowania base64."
+
+msgid "Invalid image file."
+msgstr "Nieprawidłowy plik obrazu."
+
+msgid "Unsupported image MIME type."
+msgstr "Nieobsługiwany typ MIME obrazu."
+
+msgid "Declared image MIME type does not match file content."
+msgstr "Zadeklarowany typ MIME obrazu nie zgadza się z zawartością pliku."
+
+#, python-format
+msgid "Image too big, max size is %(max_image_size)s bytes"
+msgstr "Plik jest za duży, maksymalny rozmiar to %(max_image_size)s bajtów."
+
 msgid "Not a valid URL."
 msgstr "Niepoprawny adres URL."
 
@@ -5697,3 +5713,15 @@ msgstr "Przekroczono limit żądań"
 
 msgid "Too many requests. Please try again later."
 msgstr "Zbyt wiele żądań. Spróbuj ponownie później."
+
+msgid "Submission subject"
+msgstr "Temat zgłoszenia"
+
+msgid "Submission category"
+msgstr "Kategoria zgłoszenia"
+
+msgid "Submission Event"
+msgstr "Zdarzenie zgłoszenia"
+
+msgid "Submission Events"
+msgstr "Zdarzenia zgłoszeń"

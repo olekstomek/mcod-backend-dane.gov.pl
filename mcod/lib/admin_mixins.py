@@ -108,10 +108,12 @@ def export_to_csv(self, request: HttpRequest, queryset: QuerySet):
     qs_dto = QuerySetDTO.from_queryset(queryset)
     qs_data: Dict = qs_dto.asdict()
 
-    generate_csv.s(
-        queryset_data=qs_data,
-        user_id=request.user.id,
-    ).apply_async_on_commit()
+    generate_csv.apply_async_on_commit(
+        kwargs={
+            "queryset_data": qs_data,
+            "user_id": request.user.id,
+        }
+    )
     messages.add_message(request, messages.SUCCESS, _("Task for CSV generation queued"))
 
 
@@ -839,12 +841,14 @@ def export_imports_to_csv(modeladmin, request, queryset):
     if imports_pks.count() > 0:
         imports_pks: List[int] = list(imports_pks)
 
-        generate_harvesters_imports_report.s(
-            imports_pks,
-            "harvester.DataSourceImport",
-            request.user.id,
-            now().strftime("%Y%m%d%H%M%S.%s"),
-        ).apply_async_on_commit()
+        generate_harvesters_imports_report.apply_async_on_commit(
+            args=(
+                imports_pks,
+                "harvester.DataSourceImport",
+                request.user.id,
+                now().strftime("%Y%m%d%H%M%S.%s"),
+            )
+        )
         messages.add_message(request, messages.SUCCESS, _("Task for CSV generation queued"))
     else:
         messages.add_message(request, messages.WARNING, _("No data was found for the report according to the specified criteria"))
@@ -859,12 +863,14 @@ def export_last_import_to_csv(modeladmin, request, queryset):
     )
 
     if dataset_pks_for_choosen_datasources.count() > 0:
-        generate_harvesters_last_imports_report.s(
-            chosen_datasource_pks,
-            "harvester.DataSourceImport",
-            request.user.id,
-            now().strftime("%Y%m%d%H%M%S.%s"),
-        ).apply_async_on_commit()
+        generate_harvesters_last_imports_report.apply_async_on_commit(
+            args=(
+                chosen_datasource_pks,
+                "harvester.DataSourceImport",
+                request.user.id,
+                now().strftime("%Y%m%d%H%M%S.%s"),
+            )
+        )
 
         messages.add_message(request, messages.SUCCESS, _("Task for CSV generation queued"))
     else:

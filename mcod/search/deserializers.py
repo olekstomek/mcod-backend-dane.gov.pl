@@ -45,7 +45,7 @@ SPARQL_FORMATS = {
 }
 SPARQL_FORMAT_CHOICES = SPARQL_FORMATS.keys()
 
-SPARQL_ENDPOINTS = list(settings.SPARQL_ENDPOINTS.keys())
+SPARQL_ENDPOINTS = ["kronika"]
 
 
 class SourceFilterSchema(ExtSchema):

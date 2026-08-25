@@ -207,12 +207,12 @@ def invalid_passwords_with_user():
 @pytest.fixture
 def valid_passwords():
     passwords = [
-        "12@@@@@@Ab@",
-        "!!@#$$@aBB1@@",
-        "Iron.Man.Is.Th3.Best" "Admin7@mc.gov.pl",
-        "1vDsA532A.6!6",
+        "12@@@@@@Ab@Xyz1",
+        "!!@#$$@aBB1@@Zz",
+        "Iron.Man.Is.Th3.Best.Admin7@mc.gov.pl",
+        "1vDsA532A.6!6Xyz",
     ]
-    passwords.extend(["Abcd%s1234" % v for v in settings.SPECIAL_CHARS])
+    passwords.extend(["Abcd%s123456789" % v for v in settings.SPECIAL_CHARS])
     return passwords
 
 

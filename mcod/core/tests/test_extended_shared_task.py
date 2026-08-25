@@ -182,7 +182,6 @@ class TestApplyAsync:
         # Given
         @extended_shared_task(
             name="test_apply_async_on_commit",
-            apply_async_on_commit=True,  # included for clarity
         )
         def resource_using_fn(tag_name: str) -> None:
             Tag.objects.create(name=tag_name)
@@ -197,18 +196,17 @@ class TestApplyAsync:
         # Then
         assert Tag.objects.filter(name=tag_name).exists()
 
-    def test_apply_async_on_commit_via_signature(self):
+    def test_apply_async_on_commit_via_task(self):
         # Given
         @extended_shared_task(
-            name="test_apply_async_on_commit_via_signature",
-            apply_async_on_commit=True,  # included for clarity
+            name="test_apply_async_on_commit_via_task",
         )
         def resource_using_fn(tag_name: str) -> None:
             Tag.objects.create(name=tag_name)
 
         tag_name = str(uuid4())
         # When
-        resource_using_fn.s(tag_name).apply_async_on_commit()
+        resource_using_fn.apply_async_on_commit(args=(tag_name,))
         # Then
         assert not Tag.objects.filter(name=tag_name).exists()
         # When
@@ -245,8 +243,7 @@ class TestDeveloperInterface:
 
     def test_str_works(self):
         assert str(SharedTask()) == (
-            "SharedTask(apply_async_on_commit=True,"
-            "atomic=False,commit_on_errors=(),"
+            "SharedTask(atomic=False,commit_on_errors=(),"
             "retry_on_errors=(),"
             "retry_on_lambda=None,"
             "retry_countdown=300,"

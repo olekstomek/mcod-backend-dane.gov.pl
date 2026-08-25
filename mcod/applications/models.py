@@ -1,7 +1,6 @@
 import base64
 import os
 from email.mime.image import MIMEImage
-from mimetypes import guess_extension, guess_type
 
 from django.apps import apps
 from django.conf import settings
@@ -29,6 +28,7 @@ from wagtail.search import index
 from mcod.core import storages
 from mcod.core.db.managers import TrashManager
 from mcod.core.db.models import ExtendedModel, TrashModelBase
+from mcod.core.image_validation import ImageValidationError, validate_image
 from mcod.core.managers import SoftDeletableManager
 
 User = get_user_model()
@@ -417,18 +417,11 @@ class ApplicationProposal(ApplicationMixin):
 
     @classmethod
     def decode_b64_image(cls, encoded_img, img_name):
-        data_parts = encoded_img.split(";base64,")
-        img_data = data_parts[-1].encode("utf-8")
         try:
-            extension = guess_extension(guess_type(encoded_img)[0])
-        except Exception:
-            extension = None
-        name = f"{img_name}{extension}" if extension else img_name
-        try:
-            decoded_img = base64.b64decode(img_data)
-        except Exception:
-            decoded_img = None
-        return ContentFile(decoded_img, name=name) if decoded_img else None
+            image = validate_image(encoded_img, max_size=settings.IMAGE_UPLOAD_MAX_SIZE)
+        except ImageValidationError:
+            return None
+        return ContentFile(image.decoded_data, name=f"{img_name}{image.extension}")
 
     @classmethod
     def accusative_case(cls):

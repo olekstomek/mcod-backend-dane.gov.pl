@@ -48,6 +48,19 @@ server {
     proxy_set_header X-Forwarded-Proto $scheme;
   }
 
+  # INTERCEPTED LOCATION (Secure Meeting Files)
+  # Requests for files in /media/meetings/ are NOT served directly by Nginx.
+  # Instead, they are proxied to the Django backend (DownloadMeetingFileView)
+  # which enforces authentication and always returns attachment/sandbox headers
+  # before delegating the physical transfer to the internal location below.
+  location /media/meetings/ {
+    proxy_pass http://host.docker.internal:8001;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $remote_addr;
+    proxy_set_header X-Forwarded-Proto $scheme;
+  }
+
   # INTERNAL LOCATION (Physical Delivery for Resources)
   # This location is marked as 'internal', meaning it cannot be accessed directly
   # by external clients (returns 404 if tried). It is only accessible via
@@ -68,10 +81,28 @@ server {
     alias /usr/share/nginx/html/media/reports/;
   }
 
+  # INTERNAL LOCATION (Physical Delivery for Meeting Files)
+  # This location is marked as 'internal', meaning it cannot be accessed directly
+  # by external clients. It is only accessible via internal redirects
+  # (X-Accel-Redirect) initiated by the Django application (DownloadMeetingFileView).
+  # It maps to the physical file storage for meeting attachments.
+  location /protected_meetings/ {
+    internal;
+    alias /usr/share/nginx/html/media/meetings/meetings/;
+  }
+
   # PUBLIC MEDIA (Fallback)
   # All other media files (e.g., images) that do not match the specific
-  # /media/resources/ or /media/reports/ rules above are served directly from disk.
+  # /media/resources/, /media/reports/ or /media/meetings/ rules above are served directly from disk.
   # These files are considered public and do not require application-level checks.
+  location /media/showcases/ {
+    alias /usr/share/nginx/html/media/showcases/;
+    add_header 'Access-Control-Allow-Origin' '*' always;
+    add_header Content-Disposition 'attachment' always;
+    add_header Content-Security-Policy "default-src 'none'; script-src 'none'; sandbox" always;
+    add_header X-Content-Type-Options nosniff always;
+  }
+
   location /media {
     alias /usr/share/nginx/html/media;
     add_header 'Access-Control-Allow-Origin' '*' always;

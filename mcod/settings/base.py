@@ -157,6 +157,7 @@ INSTALLED_APPS = [
     "mcod.discourse",
     "mcod.regions",
     "mcod.showcases",
+    "mcod.submissions",
     "mcod.logingovpl",
 ]
 
@@ -222,7 +223,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
     {
         "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
-        "OPTIONS": {"min_length": 8},
+        "OPTIONS": {"min_length": 14},
     },
     {
         "NAME": "mcod.lib.password_validators.McodPasswordValidator",
@@ -444,8 +445,10 @@ FUSEKI_DATASET = env("FUSEKI_DATASET_1", default="ds")
 SPARQL_QUERY_ENDPOINT = f"{FUSEKI_URL}/{FUSEKI_DATASET}/query"
 SPARQL_UPDATE_ENDPOINT = f"{FUSEKI_URL}/{FUSEKI_DATASET}/update"
 SPARQL_USER = env("SPARQL_USER", default="admin")
-SPARQL_PASSWORD = env("ADMIN_PASSWORD", default="Britenet.1")
+SPARQL_PASSWORD = env("SPARQL_PASSWORD", default="Britenet.1")
+SPARQL_CACHE_ENABLED = env.bool("SPARQL_CACHE_ENABLED", default=True)
 SPARQL_CACHE_TIMEOUT = env("SPARQL_CACHE_TIMEOUT", default=60)  # in secs.
+KRONIKA_SPARQL_URL = env("KRONIKA_SPARQL_URL", default="http://kronika.mcod.local")
 REDIS_URL = env("REDIS_URL", default="redis://mcod-redis:6379")
 
 CACHES = {
@@ -963,7 +966,6 @@ CELERY_TASK_ROUTES = {
     "mcod.watchers.tasks.query_watcher_updated_task": {"queue": "watchers"},
 }
 
-CELERY_SINGLETON_BACKEND_URL = REDIS_URL
 CELERY_SOFT_TIME_LIMIT = env.int("CELERY_SOFT_TIME_LIMIT", default=240)
 CELERY_TIME_LIMIT = env.int("CELERY_TIME_LIMIT", default=300)
 
@@ -1149,7 +1151,7 @@ SUPPORTED_CONTENT_TYPES = [
     ("application", "epub+zip", ("epub",), 1),
     ("application", "excel", ("xls",), 2),
     ("application", "geo+json", ("geojson",), 3),
-    ("application", "gml+xml", ("xml",), 3),
+    ("application", "gml+xml", ("gml",), 3),
     ("application", "gpx+xml", ("gpx",), 3),
     ("application", "json", ("json",), 3),
     ("application", "mspowerpoint", ("ppt", "pot", "ppa", "pps", "pwz"), 1),
@@ -2040,13 +2042,6 @@ CSV_CATALOG_BATCH_SIZE = env("CSV_CATALOG_BATCH_SIZE", default=20_000)
 CSV_CATALOG_REPORT_MAX_ROWS_PER_FILE = env("CSV_CATALOG_REPORT_MAX_ROWS_PER_FILE", default=200_000)
 
 DISCOURSE_FORUM_ENABLED = env.bool("DISCOURSE_FORUM_ENABLED", default=True)
-
-SPARQL_ENDPOINTS = {
-    "kronika": {
-        "query_endpoint": env("KRONIKA_SPARQL_URL", default="http://kronika.mcod.local"),
-        "returnFormat": "json",
-    }
-}
 
 
 def url_without_schema(var: str, default: Optional[str]) -> str:

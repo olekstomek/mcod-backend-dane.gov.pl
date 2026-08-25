@@ -1,5 +1,5 @@
 from typing import Dict, Optional
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 from falcon import HTTP_201, HTTP_401, HTTP_CONFLICT, HTTP_NOT_FOUND, HTTP_OK, testing
@@ -182,9 +182,6 @@ def test_submission_create_optional_field(
     default_submission_data.pop(optional_field)
     data = {"data": {"type": "submission", "attributes": default_submission_data}}
     with patch("mcod.suggestions.views.create_dataset_suggestion") as mock_task:
-        mock_signature = MagicMock()
-        mock_task.s.return_value = mock_signature
-
         # WHEN
         response = api_client.simulate_post(
             path="/submissions",
@@ -193,9 +190,10 @@ def test_submission_create_optional_field(
 
         # THEN
         assert response.status_code == 201
-        mock_task.s.assert_called_once()
-        assert optional_field not in mock_task.s.call_args[0][0]
-        mock_signature.apply_async_on_commit.assert_called_once()
+        mock_task.apply_async_on_commit.assert_called_once()
+        call_args = mock_task.apply_async_on_commit.call_args
+        submitted_data = call_args[1]["args"][0]
+        assert optional_field not in submitted_data
 
 
 @pytest.mark.parametrize("api_version", ["1.0", "1.4"])

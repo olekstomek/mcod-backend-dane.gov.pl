@@ -370,7 +370,7 @@ class ShowcaseProposalAdmin(ShowcaseProposalMixin, ModelAdmin):
         )
         super().save_model(request, obj, form, change)
         if create_showcase:
-            create_showcase_task.s(obj.id).apply_async_on_commit()
+            create_showcase_task.apply_async_on_commit(args=(obj.id,))
             self.message_user(
                 request,
                 _("Showcase creation task was launched!"),

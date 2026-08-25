@@ -34,48 +34,101 @@ class SparqlGraph:
         return self._get_delete_query(instance_nodes), ns
 
     def _get_delete_query(self, graph_nodes):
+        nodes = ", ".join(graph_nodes.keys())
         if self._named_graph:
-            q = (
-                "DELETE {{ GRAPH {graph_name} {{?s  ?p   ?o . ?o  ?p1  ?o1 .}} }}"
-                " WHERE {{ GRAPH {graph_name} {{ ?s  ?p  ?o . FILTER (?s IN ({nodes})) ."
-                " OPTIONAL {{?o  ?p1  ?o1  . FILTER (isBlank(?o)) }} }} }}".format(
-                    graph_name=f"{self._named_graph} ",
-                    nodes=", ".join(graph_nodes.keys()),
-                )
-            )
+            return f"""
+                DELETE {{
+                    GRAPH {self._named_graph} {{
+                        ?s ?p ?o .
+                        ?o ?p1 ?o1 .
+                    }}
+                }}
+                WHERE {{
+                    GRAPH {self._named_graph} {{
+                        ?s ?p ?o .
+                        FILTER (?s IN ({nodes})) .
+                        OPTIONAL {{
+                            ?o ?p1 ?o1 .
+                            FILTER (isBlank(?o))
+                        }}
+                    }}
+                }}
+            """
         else:
-            q = (
-                "DELETE {{?s  ?p   ?o . ?o  ?p1  ?o1 .}} WHERE {{ ?s  ?p  ?o . FILTER (?s IN ({})) ."
-                " OPTIONAL {{?o  ?p1  ?o1  . FILTER (isBlank(?o)) }} }}".format(", ".join(graph_nodes.keys()))
-            )
-        return q
+            return f"""
+                DELETE {{
+                    ?s ?p ?o .
+                    ?o ?p1 ?o1 .
+                }}
+                WHERE {{
+                    ?s ?p ?o .
+                    FILTER (?s IN ({nodes})) .
+                    OPTIONAL {{
+                        ?o ?p1 ?o1 .
+                        FILTER (isBlank(?o))
+                    }}
+                }}
+            """
 
     def _get_create_query(self, graph_nodes):
+        triples = " ".join(graph_nodes.values())
         if self._named_graph:
-            q = "INSERT DATA {{ GRAPH {} {{ {} }} }}".format(f"{self._named_graph} ", " ".join(list(graph_nodes.values())))
+            return f"""
+                INSERT DATA {{
+                    GRAPH {self._named_graph} {{
+                        {triples}
+                    }}
+                }}
+            """
         else:
-            q = "INSERT DATA {{ {} }}".format(" ".join(list(graph_nodes.values())))
-        return q
+            return f"""
+                INSERT DATA {{
+                    {triples}
+                }}
+            """
 
     def _get_delete_triple_query(self, graph_nodes):
+        triples = " ".join(graph_nodes.values())
         if self._named_graph:
-            q = "DELETE DATA {{ GRAPH {} {{ {} }} }}".format(f"{self._named_graph} ", " ".join(list(graph_nodes.values())))
+            return f"""
+                DELETE DATA {{
+                    GRAPH {self._named_graph} {{
+                        {triples}
+                    }}
+                }}
+            """
         else:
-            q = "DELETE DATA {{ {} }}".format(" ".join(list(graph_nodes.values())))
-        return q
+            return f"""
+                DELETE DATA {{
+                    {triples}
+                }}
+            """
 
     def _get_delete_triple_filter_query(self, sub, pred):
         if self._named_graph:
-            q = (
-                "DELETE {{ GRAPH {graph_name} {{?s  ?p   ?o }} }}"
-                " WHERE {{ GRAPH {graph_name} {{ ?s  ?p  ?o . FILTER"
-                " (?s = {sub} && ?p = {pred}) }} }}".format(graph_name=f"{self._named_graph} ", sub=sub.n3(), pred=pred.n3())
-            )
+            return f"""
+                DELETE {{
+                    GRAPH {self._named_graph} {{
+                        ?s ?p ?o .
+                    }}
+                }}
+                WHERE {{
+                    GRAPH {self._named_graph} {{
+                        ?s ?p ?o .
+                        FILTER (?s = {sub.n3()} && ?p = {pred.n3()})
+                    }}
+                }}
+            """
         else:
-            q = "DELETE {{?s  ?p   ?o }} WHERE {{ ?s  ?p  ?o . FILTER (?s = {sub} && ?p = {pred}) }}".format(
-                sub=sub.n3(), pred=pred.n3()
-            )
-        return q
+            return f"""
+                DELETE {{
+                    ?s ?p ?o .
+                }}
+                WHERE {{
+                    ?s ?p ?o .
+                    FILTER (?s = {sub.n3()} && ?p = {pred.n3()})
+                }}
+            """
 
     def create(self, instance):
         ns, instance_nodes = self._prepare_query_data(instance)

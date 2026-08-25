@@ -196,13 +196,6 @@ class Command(BaseCommand):
             dest="yes",
         )
         parser.add_argument(
-            "--history-other",
-            action="store_true",
-            default=False,
-            help="Migrate history from history_other table.",
-            dest="history_other",
-        )
-        parser.add_argument(
             "--table-name",
             dest="table_name",
             default=None,
@@ -443,7 +436,7 @@ class Command(BaseCommand):
         objs = ResourceFile.objects.filter(resource_id__in=res_ids)
         for obj in objs:
             print(f"Resource with invalid format found: id:{obj.resource_id} , format:{obj.resource.format}")
-            entrypoint_process_resource_file_validation_task.s(obj.id, update_link=False).apply_async_on_commit()
+            entrypoint_process_resource_file_validation_task.apply_async_on_commit(args=(obj.id,), kwargs={"update_link": False})
         if objs.count():
             print("Done.")
         else:
@@ -564,7 +557,7 @@ class Command(BaseCommand):
         self.stdout.write("Updating resources score in db and ES.")
         Resource.objects.bulk_update(res_to_update, ["openness_score"])
         for res in res_to_update:
-            update_with_related_task.s("resources", "Resource", res.id).apply_async_on_commit()
+            update_with_related_task.apply_async_on_commit(args=("resources", "Resource", res.id))
 
     def _get_pks(self, **options):
         pks_str = options.get("pks")

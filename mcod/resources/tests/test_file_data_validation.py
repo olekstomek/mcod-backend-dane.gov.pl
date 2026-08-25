@@ -3,14 +3,13 @@ import os
 import tempfile
 from pathlib import Path
 from typing import List
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import factory
 import pytest
 from celery import Task
 from django.conf import settings
 
-import mcod
 from mcod.resources.factories import (
     ResourceCsvFactory,
     ResourceFactory,
@@ -106,8 +105,7 @@ def test_resource_data_validation_task_call_only_for_processable_resources(
 ):
     # GIVEN
     resource: Resource = resource_factory.create()
-    mock_sig = MagicMock()
-    with patch.object(mcod.resources.models.process_resource_file_data_task, "s", return_value=mock_sig) as mock_s:
+    with patch("mcod.resources.models.process_resource_file_data_task.apply") as mock_process_resource_file_data_task_apply:
         # WHEN
         if entry_point is entrypoint_process_resource_file_validation_task:
             entry_point(resource.files.first().id)
@@ -116,10 +114,8 @@ def test_resource_data_validation_task_call_only_for_processable_resources(
 
         # THEN
         if data_validation_expected:
-            args, kwargs = mock_s.call_args
             assert resource.is_data_processable
-            assert args == (resource.id,)
-            assert mock_s.call_count == 1
+            mock_process_resource_file_data_task_apply.assert_called_once_with(args=(resource.id,))
         else:
             assert not resource.is_data_processable
-            assert mock_s.call_count == 0
+            mock_process_resource_file_data_task_apply.assert_not_called()

@@ -2,10 +2,10 @@ import io
 import logging
 
 import pandas as pd
+from django.conf import settings
 from falcon.media import BaseHandler
 
 from mcod.core.utils import XMLWriter, save_as_csv
-from mcod.settings import RDF_FORMAT_TO_MIMETYPE
 
 logger = logging.getLogger("mcod")
 
@@ -18,8 +18,8 @@ class RDFHandler(BaseHandler):
     def serialize(self, media, content_type):
         if not hasattr(media, "serialize"):
             return media
-        if content_type not in RDF_FORMAT_TO_MIMETYPE.values():
-            content_type = RDF_FORMAT_TO_MIMETYPE["jsonld"]
+        if content_type not in settings.RDF_FORMAT_TO_MIMETYPE.values():
+            content_type = settings.RDF_FORMAT_TO_MIMETYPE["jsonld"]
 
         if content_type == "application/ld+json":
             result = media.serialize(format=content_type, auto_compact=True, encoding="utf-8")

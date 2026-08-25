@@ -7,7 +7,7 @@ Feature: Other providers SPARQL API feature
     And api request header x-api-version is 1.0
     And api request path is /sparql/
     And api request sparql data has {"q": "SELECT * WHERE { ?s ?p ?o . } LIMIT 1", "format": "application/rdf+xml", "external_sparql_endpoint": "kronika"}
-    And send api request and fetch the response with mocked_url http://kronik.gov.pl and mocked_rdf_data <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><rdf:Description rdf:about="http://www.w3.org/TR/rdf-syntax-grammar">RDF 1.1 XML Syntax</rdf:Description></rdf:RDF>
+    And send api request and fetch the response with mocked_url http://kronika.example.gov.pl and mocked_rdf_data <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><rdf:Description rdf:about="http://www.w3.org/TR/rdf-syntax-grammar">RDF 1.1 XML Syntax</rdf:Description></rdf:RDF>
     Then api's response status code is 200
     And api's response body field data/attributes/content_type is application/rdf+xml
     And api's response body has field data/attributes/result

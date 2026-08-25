@@ -103,7 +103,7 @@ class TestLogout:
 
         assert active_user.check_session_valid(f"{prefix} {active_usr_token}") is True
 
-        active_user2 = User.objects.create_user("test-active2@example.com", "12345.Abcde")
+        active_user2 = User.objects.create_user("test-active2@example.com", test_password)
         active_user2.state = "active"
         active_user2.save()
 
@@ -161,6 +161,7 @@ class TestRegisterView:
         client_no_version: TestClient,
         user_exists: bool,
         api_version: str,
+        test_password: str,
     ):
         """
         Tests that user cannot be enumerated on registration:
@@ -178,8 +179,8 @@ class TestRegisterView:
                 "type": "user",
                 "attributes": {
                     "email": email,
-                    "password1": "123!@#qweQWE",
-                    "password2": "123!@#qweQWE",
+                    "password1": test_password,
+                    "password2": test_password,
                 },
             }
         }
@@ -212,9 +213,9 @@ class TestRegisterView:
         client_no_version: TestClient,
         user_exists: bool,
         api_version: str,
+        test_password: str,
     ):
         email = f"testing+{str(uuid4())}@dane.gov.pl"
-        password = "123!@#qweQWE"
         if user_exists:
             UserFactory.create(email=email)
 
@@ -224,8 +225,8 @@ class TestRegisterView:
                 "type": "user",
                 "attributes": {
                     "email": email,
-                    "password1": password,
-                    "password2": password,
+                    "password1": test_password,
+                    "password2": test_password,
                 },
             }
         }
@@ -246,7 +247,7 @@ class TestRegisterView:
 
         # AND THEN
         # we don't store plaintext password
-        assert not User.objects.filter(password=password).exists(), "Plaintext password in the database!"
+        assert not User.objects.filter(password=test_password).exists(), "Plaintext password in the database!"
 
     @pytest.mark.xfail(
         reason="Some conflict with Axes: AttributeError: 'Request' object has no attribute 'META'",
@@ -333,11 +334,51 @@ class TestRegisterView:
         # THEN
         assert response.status == falcon.HTTP_422
 
+    @pytest.mark.parametrize(
+        "bad_password, expected_error_messages",
+        (
+            (
+                "123.aBc",
+                ["To hasło jest za krótkie. Musi zawierać co najmniej 14 znaków."],
+            ),
+            ("abcd1234abcd1234", ["Hasło musi zawierać przynajmniej jedną dużą i jedną małą literę."]),
+            ("abcdefghiabcdefghi", ["Hasło musi zawierać przynajmniej jedną cyfrę."]),
+            ("123456789012345Ab", ["Hasło musi zawierać przynajmniej jeden znak specjalny."]),
+        ),
+    )
+    def test_registration_with_bad_password_returns_localised_error(
+        self,
+        client_no_version: TestClient,
+        bad_password: str,
+        expected_error_messages: List[str],
+    ):
+        # GIVEN
+        api_version = "1.4"
+        email = f"testing+{str(uuid4())}@dane.gov.pl"
+        url = f"/{api_version}/auth/registration"
+        data = {
+            "data": {
+                "type": "user",
+                "attributes": {
+                    "email": email,
+                    "password1": bad_password,
+                    "password2": bad_password,
+                },
+            }
+        }
+        # WHEN request registration
+        response: Result = client_no_version.simulate_post(url, json=data)
+        # THEN
+        assert response.status == falcon.HTTP_422
+        errors = [err["detail"] for err in response.json["errors"]]
+        assert errors == expected_error_messages
+
     @pytest.mark.parametrize("api_version", (ver.as_string for ver in VERSIONS))
     def test_cannot_register_same_user_twice_with_different_case_of_letter(
         self,
         client_no_version: TestClient,
         api_version: str,
+        test_password: str,
     ):
         # GIVEN
         email = f"testing+{str(uuid4())}@dane.gov.pl"
@@ -348,8 +389,8 @@ class TestRegisterView:
                 "type": "user",
                 "attributes": {
                     "email": email.upper(),
-                    "password1": "123!@#qweQWE",
-                    "password2": "123!@#qweQWE",
+                    "password1": test_password,
+                    "password2": test_password,
                 },
             }
         }
@@ -369,7 +410,7 @@ class TestRegisterView:
     @pytest.mark.parametrize(
         "invalid_attr",
         (
-            {"password1": "123!@#qweQWE", "password2": "123!@#qweQWe"},  # different passwords
+            {"password1": "123!@#qweQWEAb", "password2": "123!@#qweQWe"},  # different passwords
             {"email": "invalid@email"},  # invalid email address
             {"state": "active"},  # state parameter passed
         ),
@@ -380,6 +421,7 @@ class TestRegisterView:
         client_no_version: TestClient,
         invalid_attr: dict,
         api_version: str,
+        test_password: str,
     ):
         # GIVEN
         url = f"/{api_version}/auth/registration"
@@ -388,8 +430,8 @@ class TestRegisterView:
                 "type": "user",
                 "attributes": {
                     "email": "testing@email.com",
-                    "password1": "123!@#qweQWE",
-                    "password2": "123!@#qweQWE",
+                    "password1": test_password,
+                    "password2": test_password,
                     "fullname": "Test User",
                 },
             }
@@ -409,6 +451,7 @@ class TestRegisterView:
         client_no_version: TestClient,
         required_param: str,
         api_version: str,
+        test_password: str,
     ):
         # GIVEN
         url = f"/{api_version}/auth/registration"
@@ -417,8 +460,8 @@ class TestRegisterView:
                 "type": "user",
                 "attributes": {
                     "email": "testing@email.com",
-                    "password1": "123!@#qweQWE",
-                    "password2": "123!@#qweQWE",
+                    "password1": test_password,
+                    "password2": test_password,
                     "fullname": "Test User",
                 },
             }
@@ -602,13 +645,13 @@ class TestResetPasswordView:
 
 class TestResetPasswordConfirm:
 
-    def test_password_change(self, client, active_user):
+    def test_password_change(self, client, active_user, test_password: str):
         data = {
             "data": {
                 "type": "user",
                 "attributes": {
-                    "new_password1": "123.4.bce",
-                    "new_password2": "123.4.bce",
+                    "new_password1": "123.4.bcefghijk",
+                    "new_password2": "123.4.bcefghijk",
                 },
             }
         }
@@ -625,8 +668,8 @@ class TestResetPasswordConfirm:
             "data": {
                 "type": "user",
                 "attributes": {
-                    "new_password1": "123.4.bCe",
-                    "new_password2": "123.4.bCe!",
+                    "new_password1": test_password,
+                    "new_password2": test_password + "!",
                 },
             }
         }
@@ -635,7 +678,7 @@ class TestResetPasswordConfirm:
         assert resp.status == falcon.HTTP_422
         assert resp.json["errors"]["data"]["attributes"]["new_password1"] == ["Hasła nie pasują"]
 
-        valid_password = "123.4.bCe"
+        valid_password = test_password
         data = {
             "data": {
                 "type": "user",
@@ -654,13 +697,13 @@ class TestResetPasswordConfirm:
         assert token_obj is not None
         assert token_obj.is_valid is False
 
-    def test_invalid_expired_token(self, client, active_user):
+    def test_invalid_expired_token(self, client, active_user, test_password: str):
         data = {
             "data": {
                 "type": "user",
                 "attributes": {
-                    "new_password1": "123.4.bcE",
-                    "new_password2": "123.4.bcE",
+                    "new_password1": test_password,
+                    "new_password2": test_password,
                 },
             }
         }
@@ -812,8 +855,8 @@ def test_staff_autocomplete_view(admin: User):
 def test_agent_autocomplete_view(admin: User):
     # GIVEN 17 users: 1 admin, 15 agent users, 1 not agent user
     UserFactory.create(is_agent=False)
-    agents: List[User] = UserFactory.create_batch(15, is_agent=True)
-    agents.sort(key=lambda user: user.email)  # sort created agents by email
+    UserFactory.create_batch(15, is_agent=True)
+    agents: List[User] = list(User.objects.filter(is_agent=True).order_by("email"))
 
     total_users_count: int = User.objects.count()
     assert total_users_count == 17, f"17 users should exist in DB, got {total_users_count}"

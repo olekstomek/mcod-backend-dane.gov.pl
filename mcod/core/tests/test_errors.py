@@ -25,6 +25,13 @@ class S_422:
         raise falcon.HTTPUnprocessableEntity
 
 
+class S_422_with_int_key_errors:
+    def on_get(self, req, resp, **kwargs):
+        from webargs.falconparser import HTTPError
+
+        raise HTTPError("422 Unprocessable Entity", errors={0: {"name": ["Required"]}, 1: {"url": ["Invalid"]}})
+
+
 @pytest.fixture(scope="module")
 def uri():
     return "/test_errors"
@@ -90,3 +97,13 @@ class TestErrors:
         assert len(result.json["errors"]) == 1
         error = result.json["errors"][0]
         assert error["code"] == "422_unprocessable_entity"
+
+    @pytest.mark.run(order=0)
+    def test_422_with_int_key_errors(self, client14, uri):
+        client14.app.add_route(uri, S_422_with_int_key_errors())
+        result = client14.simulate_get(uri)
+        assert result.status == falcon.HTTP_422
+        assert len(result.json["errors"]) == 2
+        pointers = [err["source"]["pointer"] for err in result.json["errors"]]
+        assert "/0/name" in pointers
+        assert "/1/url" in pointers

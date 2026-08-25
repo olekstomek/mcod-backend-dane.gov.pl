@@ -19,7 +19,6 @@ import magic
 import pytz
 import unicodecsv
 from constance import config
-from csvwlib import CSVWConverter
 from dateutil import rrule
 from dateutil.relativedelta import relativedelta
 from django.conf import settings
@@ -62,6 +61,7 @@ from mcod.core.db.models import (
     TrashModelBase,
     update_watcher,
 )
+from mcod.core.utils import create_rdf_graph_from_csv_content, get_file_content_from_url
 from mcod.counters.models import ResourceDownloadCounter, ResourceViewCounter
 from mcod.datasets.models import BaseSupplement, Dataset
 from mcod.lib.data_rules import painless_body
@@ -108,6 +108,7 @@ es_connections = Connections()
 es_connections.configure(**settings.ELASTICSEARCH_DSL)
 
 STATUS_CHOICES = [("published", _("Published")), ("draft", _("Draft"))]
+
 
 logger = logging.getLogger("mcod")
 
@@ -705,7 +706,7 @@ class Resource(ExtendedModel):
         """
         Returns absolute url to csv file for convertion to jsonld.
         During the process new csv file (with specified suffix) is created in media directory
-        to meet the requirements of converter (csvwlib.utils.CSVUtils).
+        to meet the requirements of json-ld conversion.
         """
         if self.is_archived_csv:  # archived csv file should not be converted to jsonld.
             return None
@@ -731,6 +732,8 @@ class Resource(ExtendedModel):
             url = _file.url.replace(os.path.basename(_file.name), os.path.basename(_file_utf8.name))
         else:
             url = _file.url if _file else self.csv_converted_file.url if self.csv_converted_file else None
+        if _file_utf8 and settings.ENVIRONMENT == "local":
+            os.chmod(_file_utf8.name, 0o644)
         return self._get_internal_url(url) if url else None
 
     @property
@@ -946,17 +949,17 @@ class Resource(ExtendedModel):
             self.add_to_other_files_cache(resource_file)
 
     def convert_csv_to_jsonld(self):
-        url = self.get_csv_file_internal_url()
+        url: Optional[str] = self.get_csv_file_internal_url()
         if url:
             jsonld_filename = f"{os.path.splitext(self.file_basename)[0]}.jsonld"
             logger.debug(f"Trying to convert {url} to jsonld file named {jsonld_filename}")
             try:
-                graph = CSVWConverter.to_rdf(url)
+                csv_content = get_file_content_from_url(url)
+                csv_original_url = self._get_api_url(self.main_file.url)
+                graph = create_rdf_graph_from_csv_content(csv_content, csv_original_url)
                 # override context to omit long list of default namespaces as @context in json-ld.
                 context = dict((pfx, str(ns)) for (pfx, ns) in graph.namespaces() if pfx and pfx == "csvw")
                 data = graph.serialize(format="json-ld", context=context, auto_compact=True)
-                csv_original_url = self._get_api_url(self.main_file.url)
-                data = data.replace(url, csv_original_url)
                 pattern = f"{os.path.dirname(os.path.realpath(self.main_file.path))}/*.utf8_encoded.csv"
                 tmp_files = glob.glob(pattern)
                 for f in tmp_files:
@@ -983,23 +986,23 @@ class Resource(ExtendedModel):
     def revalidate(self, update_verification_date: bool = True):
         if not self.link or self.is_link_internal:
             if self._main_file:
-                entrypoint_process_resource_file_validation_task.s(
-                    self._main_file.pk,
-                    update_verification_date=update_verification_date,
-                ).apply_async_on_commit()
+                entrypoint_process_resource_file_validation_task.apply_async_on_commit(
+                    args=(self._main_file.pk,),
+                    kwargs={"update_verification_date": update_verification_date},
+                )
         else:
-            entrypoint_process_resource_validation_task.s(
-                self.id, update_verification_date=update_verification_date
-            ).apply_async_on_commit()
+            entrypoint_process_resource_validation_task.apply_async_on_commit(
+                args=(self.id,),
+                kwargs={"update_verification_date": update_verification_date},
+            )
 
     def revalidate_tabular_data(self, *, apply_on_commit: bool) -> None:
         if not self.is_data_processable:
             return
-        signature = process_resource_file_data_task.s(self.id)
         if apply_on_commit:
-            signature.apply_async_on_commit()
+            process_resource_file_data_task.apply_async_on_commit(args=(self.id,))
         else:
-            signature.apply()
+            process_resource_file_data_task.apply(args=(self.id,))
 
     @classmethod
     def accusative_case(cls):
@@ -1397,8 +1400,8 @@ class Resource(ExtendedModel):
 
     def update_es_and_rdf_db(self):
         if self.needs_es_and_rdf_db_update:
-            update_with_related_task.s("resources", "Resource", self.pk).apply_async()
-            update_graph_task.s("resources", "Resource", self.pk).apply_async_on_commit()
+            update_with_related_task.apply_async(args=("resources", "Resource", self.pk))
+            update_graph_task.apply_async_on_commit(args=("resources", "Resource", self.pk))
 
     def update_dataset_verified(self, verified: datetime.datetime) -> None:
         try:
@@ -1584,7 +1587,7 @@ class Resource(ExtendedModel):
 
         # delete tabular data index connected with permanently removed resource
         if self.is_permanently_removed:
-            delete_es_resource_tabular_data_index.s(self.id).apply_async_on_commit()
+            delete_es_resource_tabular_data_index.apply_async_on_commit(args=(self.id,))
 
 
 class AggregatedDGAInfo(models.Model):
@@ -1895,7 +1898,7 @@ def handle_resource_post_save(sender, instance, *args, **kwargs):
         dataset_id = instance.tracker.previous("dataset_id")
         if dataset_id:
             # update related ES documents for previously set dataset, if any.
-            update_with_related_task.s("datasets", "Dataset", dataset_id).apply_async_on_commit()
+            update_with_related_task.apply_async_on_commit(args=("datasets", "Dataset", dataset_id))
 
 
 @receiver(post_save, sender=ResourceTrash)
@@ -1924,16 +1927,15 @@ def process_resource(sender, instance, *args, **kwargs):
     elif cancel_auto_data_date_update:
         instance.cancel_data_date_update()
     if instance.is_link_updated:
-        entrypoint_process_resource_validation_task.s(
-            instance.id,
-            update_file_archive=True,
-            forced_file_changed=instance.has_forced_file_changed,
-        ).apply_async_on_commit()
+        entrypoint_process_resource_validation_task.apply_async_on_commit(
+            args=(instance.id,),
+            kwargs={"update_file_archive": True, "forced_file_changed": instance.has_forced_file_changed},
+        )
 
     elif instance.state_restored:
-        entrypoint_process_resource_file_validation_task.s(
-            instance._main_file.pk, update_file_archive=True
-        ).apply_async_on_commit()
+        entrypoint_process_resource_file_validation_task.apply_async_on_commit(
+            args=(instance._main_file.pk,), kwargs={"update_file_archive": True}
+        )
     elif instance.tracker.has_changed("dataset_id") and instance.tracker.previous("dataset_id") is not None:
         instance.dataset.archive_files()
         previous_ds = instance.tracker.previous("dataset_id")
@@ -1958,12 +1960,14 @@ def update_dataset_watcher(sender, instance, *args, state=None, **kwargs):
             f"notify_{state}",
             state,
         )
-        update_model_watcher_task.s(
-            instance.dataset._meta.app_label,
-            instance.dataset._meta.object_name,
-            dataset_id,
-            obj_state=state,
-        ).apply_async_on_commit()
+        update_model_watcher_task.apply_async_on_commit(
+            args=(
+                instance.dataset._meta.app_label,
+                instance.dataset._meta.object_name,
+                dataset_id,
+            ),
+            kwargs={"obj_state": state},
+        )
 
     if instance.tracker.has_changed("dataset_id"):
         inner(instance.tracker.previous("dataset_id"), "m2m_removed")
@@ -1980,18 +1984,20 @@ def cancel_data_date_update_schedule(sender, instance, *args, **kwargs):
 @receiver(post_save, sender=ResourceFile)
 def process_created_file(sender, instance, created, *args, **kwargs):
     if instance.file and instance.is_main and created and instance.resource.is_published:
-        entrypoint_process_resource_file_validation_task.s(instance.id, update_file_archive=True).apply_async_on_commit()
+        entrypoint_process_resource_file_validation_task.apply_async_on_commit(
+            args=(instance.id,), kwargs={"update_file_archive": True}
+        )
 
 
 @receiver(core_signals.notify_removed, sender=Resource)
 def remove_regions(sender, instance, *args, **kwargs):
-    bulk_delete_documents_task.s("regions", "Region", instance.regions_to_conceal).apply_async_on_commit()
+    bulk_delete_documents_task.apply_async_on_commit(args=("regions", "Region", instance.regions_to_conceal))
 
 
 @receiver(core_signals.notify_restored, sender=Resource)
 @receiver(core_signals.notify_published, sender=Resource)
 def restore_regions(sender, instance, *args, **kwargs):
-    update_related_task.s("regions", "Region", instance.regions_to_publish).apply_async_on_commit()
+    update_related_task.apply_async_on_commit(args=("regions", "Region", instance.regions_to_publish))
 
 
 core_signals.notify_published.connect(update_watcher, sender=Resource)

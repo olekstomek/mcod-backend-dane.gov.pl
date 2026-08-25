@@ -1,10 +1,10 @@
 Feature: Reset password confirm
 
   Scenario Outline: Reset password confirm with invalid token
-    Given active user with email ActiveTestUser@dane.gov.pl and password pASSWORD!
+    Given active user with email ActiveTestUser@dane.gov.pl and password pASSWORD!qweQWE
     When api request method is POST
     And api request path is <request_path>
-    And api request posted data is {"data": {"type": "user", "attributes": {"new_password1": "123.4.bcE", "new_password2": "123.4.bcE"}}}
+    And api request posted data is {"data": {"type": "user", "attributes": {"new_password1": "123.4.bcEqweQWE", "new_password2": "123.4.bcEqweQWE"}}}
     And send api request and fetch the response
     Then api's response status code is 404
 

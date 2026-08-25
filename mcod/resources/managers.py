@@ -266,7 +266,7 @@ class ResourceTrashQuerySet(QuerySet):
     def delete(self):
         # delete tabular data indexes connected with permanently removed resources
         resources_ids: List[int] = list(self.values_list("pk", flat=True))
-        delete_es_resource_tabular_data_index.s(resources_ids).apply_async_on_commit()
+        delete_es_resource_tabular_data_index.apply_async_on_commit(args=(resources_ids,))
 
         self.update(is_permanently_removed=True)
 

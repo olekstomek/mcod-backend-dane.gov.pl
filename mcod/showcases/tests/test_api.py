@@ -2,8 +2,11 @@ from typing import Any, Dict, Optional, Tuple
 from unittest.mock import patch
 
 import pytest
+from django.test import override_settings
 from falcon.testing import TestClient as FalconTestClient
 from pytest_bdd import scenarios
+
+from mcod.showcases.models import ShowcaseProposal
 
 scenarios(
     "features/showcase_details_api.feature",
@@ -146,3 +149,107 @@ def test_showcase_proposal_create_requires_url_for_enabled_platform(
         assert first_error["source"]["pointer"] == error_pointer
     else:
         assert errors["data"]["attributes"][enabled_flag] == error_detail
+
+
+@pytest.mark.parametrize(
+    "client_fixture,api_version",
+    (
+        ("client", "1.0"),
+        ("client14", "1.4"),
+    ),
+)
+@pytest.mark.parametrize(
+    "base64_content_fixture,is_valid,error_message",
+    (
+        ("valid_jpeg_data_uri", True, None),
+        ("non_image_png_data_uri", False, "Nieobsługiwany typ MIME obrazu."),
+        ("html_data_uri", False, "Nieobsługiwany typ MIME obrazu."),
+    ),
+)
+def test_showcase_proposal_image_upload_response(
+    client_fixture: str,
+    api_version: str,
+    base64_content_fixture: str,
+    is_valid: bool,
+    error_message: Optional[str],
+    default_showcase_proposal_data: Dict[str, Any],
+    request: pytest.FixtureRequest,
+    valid_jpeg_bytes: bytes,
+):
+    api_client: FalconTestClient = request.getfixturevalue(client_fixture)
+    proposal_count = ShowcaseProposal.objects.count()
+    base64_content = request.getfixturevalue(base64_content_fixture)
+    default_showcase_proposal_data["image"] = base64_content
+    payload = {"data": {"type": "showcaseproposal", "attributes": default_showcase_proposal_data}}
+
+    response = api_client.simulate_post(
+        path="/showcases/suggest",
+        json=payload,
+    )
+
+    if is_valid:
+        assert response.status_code == 201
+        assert ShowcaseProposal.objects.count() == proposal_count + 1
+        proposal = ShowcaseProposal.objects.latest("created")
+        with proposal.image.open("rb") as uploaded_image:
+            assert uploaded_image.read() == valid_jpeg_bytes
+    else:
+        assert response.status_code == 422
+        if api_version == "1.0":
+            assert response.json["errors"]["data"]["attributes"]["image"] == error_message
+        else:
+            error = response.json["errors"][0]
+            assert error["detail"] == error_message, "If message missmatch, one of the problem can be compilemessages"
+            assert error["source"]["pointer"] == "/data/attributes/image"
+
+
+def test_showcase_proposal_create_rejects_html_illustrative_graphics_upload(
+    client14: FalconTestClient,
+    default_showcase_proposal_data: Dict[str, Any],
+    html_data_uri: str,
+):
+    default_showcase_proposal_data["illustrative_graphics"] = html_data_uri
+    payload = {"data": {"type": "showcaseproposal", "attributes": default_showcase_proposal_data}}
+
+    response = client14.simulate_post(
+        path="/showcases/suggest",
+        json=payload,
+    )
+
+    assert response.status_code == 422
+    error = response.json["errors"][0]
+    assert error["detail"] == "Nieobsługiwany typ MIME obrazu."
+    assert error["source"]["pointer"] == "/data/attributes/illustrative_graphics"
+
+
+@pytest.mark.parametrize(
+    "client_fixture,api_version",
+    (
+        ("client", "1.0"),
+        ("client14", "1.4"),
+    ),
+)
+def test_showcase_proposal_create_rejects_too_long_image_bytes(
+    client_fixture: str,
+    api_version: str,
+    default_showcase_proposal_data: Dict[str, Any],
+    request: pytest.FixtureRequest,
+    valid_jpeg_data_uri: str,
+):
+    api_client: FalconTestClient = request.getfixturevalue(client_fixture)
+    default_showcase_proposal_data["image"] = valid_jpeg_data_uri
+    payload = {"data": {"type": "showcaseproposal", "attributes": default_showcase_proposal_data}}
+
+    with override_settings(IMAGE_UPLOAD_MAX_SIZE=1):
+        response = api_client.simulate_post(
+            path="/showcases/suggest",
+            json=payload,
+        )
+
+    assert response.status_code == 422
+    if api_version == "1.0":
+        assert response.json["errors"]["data"]["attributes"]["image"] == ["Plik jest za duży, maksymalny rozmiar to 1 bajtów."]
+    else:
+        error = response.json["errors"][0]
+        assert error["detail"] == "Plik jest za duży, maksymalny rozmiar to 1 bajtów."
+        assert error["source"]["pointer"] == "/data/attributes/image"

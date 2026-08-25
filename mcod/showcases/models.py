@@ -8,7 +8,7 @@ from django.contrib.postgres.fields import ArrayField
 from django.contrib.postgres.indexes import GinIndex
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import models
-from django.db.models.signals import pre_save
+from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from django.forms.models import model_to_dict
 from django.templatetags.static import static
@@ -36,6 +36,8 @@ from mcod.showcases.managers import (
 )
 from mcod.showcases.signals import generate_thumbnail, update_showcase_document
 from mcod.showcases.tasks import generate_logo_thumbnail_task, send_showcase_proposal_mail_task
+from mcod.submissions.models import Category, Subject
+from mcod.submissions.service import create_submission_event
 
 User = get_user_model()
 
@@ -155,9 +157,7 @@ class ShowcaseMixin(ExtendedModel):
         url = self.illustrative_graphics_url
         alt = getattr(self, "illustrative_graphics_alt", "")
         if url:
-            return self.mark_safe(
-                f'<a href="{self.admin_change_url}" target="_blank"><img src="{url}" width="100" alt="{alt}" /></a>'
-            )
+            return self.mark_safe(f'<a href="{url}" target="_blank"><img src="{url}" width="100" alt="{alt}" /></a>')
 
     @property
     def is_app(self):
@@ -264,7 +264,7 @@ class ShowcaseProposal(ShowcaseMixin):
             self.mark_safe(
                 '<a href="%s" target="_blank"><img src="%s" width="%d" alt="" /></a>'
                 % (
-                    self.admin_change_url,
+                    self.image_absolute_url,
                     self.image_absolute_url,
                     100,
                 )
@@ -405,7 +405,7 @@ class ShowcaseProposal(ShowcaseMixin):
         obj = cls.objects.create(**data)
         if datasets_ids:
             obj.datasets.set(datasets_ids)
-        send_showcase_proposal_mail_task.s(obj.id).apply_async_on_commit()
+        send_showcase_proposal_mail_task.apply_async_on_commit(args=(obj.id,))
         return obj
 
     @classmethod
@@ -594,11 +594,12 @@ class Showcase(ShowcaseMixin):
     @property
     def application_logo(self):
         if self.image_thumb_absolute_url or self.image_absolute_url:
+            img_url = self.image_thumb_absolute_url or self.image_absolute_url
             return self.mark_safe(
                 '<a href="%s" target="_blank"><img src="%s" width="%d" alt="%s" /></a>'
                 % (
-                    self.admin_change_url,
-                    self.image_thumb_absolute_url or self.image_absolute_url,
+                    img_url,
+                    img_url,
                     100,
                     (self.image_alt if self.image_alt else f"Logo aplikacji {self.title}"),
                 )
@@ -648,6 +649,17 @@ def handle_showcase_proposal_pre_save(sender, instance, *args, **kwargs):
         instance.decision_date = timezone.now().date() if any([instance.is_accepted, instance.is_rejected]) else None
 
 
+@receiver(post_save, sender=ShowcaseProposal)
+def handle_showcase_proposal_post_save(sender, instance, created, *args, **kwargs):
+    if created:
+        create_submission_event(
+            reference_object=instance,
+            submission_date=instance.created,
+            subject=Subject.DATA,
+            category=Category.SUGGEST_REUSE,
+        )
+
+
 @receiver(generate_thumbnail, sender=Showcase)
 def regenerate_thumbnail(sender, instance, *args, **kwargs):
     sender.log_debug(instance, "Regenerating thumbnail ", "generate_thumbnail")
@@ -657,7 +669,7 @@ def regenerate_thumbnail(sender, instance, *args, **kwargs):
             instance.tracker.has_changed("status") and instance.status == instance.STATUS.published,
         ]
     ):
-        generate_logo_thumbnail_task.s(instance.id).apply_async_on_commit()
+        generate_logo_thumbnail_task.apply_async_on_commit(args=(instance.id,))
     else:
         search_signals.update_document.send(sender, instance)
 

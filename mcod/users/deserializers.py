@@ -135,7 +135,7 @@ class RegistrationApiAttrs(UserUpdateApiAttrs):
                 validate_password(data["password1"])
             except DjangoValidationError as e:
                 raise ValidationError(
-                    e.error_list[0].message,
+                    e.messages,
                     field_name="password1",
                     code=e.error_list[0].code,
                     field_names=[

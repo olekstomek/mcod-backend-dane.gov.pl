@@ -6,7 +6,7 @@ import uuid
 from io import BytesIO
 from mimetypes import guess_extension, guess_type
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -18,7 +18,7 @@ from chardet import detect as detect_encoding
 from django.apps import apps
 from django.conf import settings
 from django.core.cache import caches
-from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
+from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist, ValidationError
 from django.core.files.uploadedfile import InMemoryUploadedFile, SimpleUploadedFile
 from django.db import transaction
 from django.db.models import QuerySet
@@ -27,16 +27,55 @@ from openpyxl.styles import Alignment, Border, Side
 from openpyxl.workbook import Workbook
 from openpyxl.worksheet.worksheet import Worksheet
 
-from mcod.core.utils import clean_columns_in_dataframe, save_df_to_xlsx
+from mcod.core.utils import save_df_to_xlsx
 from mcod.resources.dga_constants import (
     ALLOWED_DGA_INSTITUTIONS,
     DGA_COLUMNS,
     DGA_RESOURCE_EXTENSIONS,
+    MAIN_DGA_COLUMNS,
+    MAIN_DGA_REQUIRED_SOURCE_COLUMNS,
 )
-from mcod.resources.exceptions import FailedValidationException, PendingValidationException
 from mcod.resources.goodtables_checks import ZERO_DATA_ROWS_MSG
 
+if TYPE_CHECKING:
+    from mcod.resources.models import Dataset, Resource
+
 logger = logging.getLogger("mcod")
+
+
+class PendingValidationException(ValidationError):
+    def __init__(self, message: Optional[str] = None):
+        if message is None:
+            message = "Pending validation(s)."
+        super().__init__(message)
+
+
+class FailedValidationException(ValidationError):
+    def __init__(self, message: Optional[str] = None):
+        if message is None:
+            message = "Failed validation(s)."
+        super().__init__(message)
+
+
+class MainDGAMissingRequiredColumnError(Exception):
+    """Raised when a required source column is missing."""
+
+    def __init__(self, column_names: Union[str, List[str]]):
+        if isinstance(column_names, str):
+            message = column_names
+        else:
+            message = ", ".join(column_names)
+
+        self.column_names = column_names
+        super().__init__(f"Missing required column(s): {message}")
+
+
+class MainDGAEmptyRequiredValuesError(Exception):
+    """Raised when required source values are empty."""
+
+
+class MainDGAResourceReadError(Exception):
+    """Raised when a Main DGA source resource cannot be read."""
 
 
 def get_main_dga_resource() -> Optional["Resource"]:  # noqa: F821
@@ -194,6 +233,19 @@ def get_or_create_main_dga_path() -> Path:
 
 
 def get_all_dga_resources_sorted_by_organizations() -> QuerySet:
+    """
+    Returns published DGA source resources eligible for main DGA aggregation.
+
+    The queryset intentionally applies an early validation guard and includes
+    only resources with successful tabular data validation. This prevents the
+    aggregation task from attempting to read sources that are already known to
+    be invalid at the generic resource-validation level.
+
+    Note:
+    - this is only a prefilter,
+    - DGA-specific content checks are still applied later during dataframe
+      sanitization.
+    """
     Resource = apps.get_model("resources", "Resource")
 
     # Exclude current main DGA Resource in file creation process.
@@ -201,7 +253,13 @@ def get_all_dga_resources_sorted_by_organizations() -> QuerySet:
     main_dga_id = main_dga_resource.pk if main_dga_resource else None
 
     dga_resources: QuerySet = (
-        Resource.objects.filter(contains_protected_data=True, status="published")
+        Resource.objects.filter(
+            contains_protected_data=True,
+            status="published",
+            data_tasks_last_status="SUCCESS",
+            file_tasks_last_status="SUCCESS",
+            link_tasks_last_status="SUCCESS",
+        )
         .exclude(id=main_dga_id)
         .select_related("dataset__organization")
         .order_by("dataset__organization__title")
@@ -256,52 +314,124 @@ def get_ckan_dga_resource_df(resource: "Resource") -> Optional[pd.DataFrame]:  #
     return df
 
 
-def create_main_dga_df(resources: QuerySet) -> pd.DataFrame:
-    # List of columns from DGA Resource data shared with Main DGA DataFrame
-    main_dga_columns: List[str] = [
-        "Nazwa dysponenta zasobu",
-        "Zasób chronionych danych",
-        "Format danych",
-        "Rozmiar danych",
-    ]
+def _validate_main_dga_source_columns(df: pd.DataFrame) -> None:
+    """
+    Validates that the source dataframe contains all required DGA columns.
+    """
+    missing_columns: List[str] = []
+    for column_name in MAIN_DGA_REQUIRED_SOURCE_COLUMNS:
+        if column_name not in df.columns:
+            missing_columns.append(column_name)
+    if missing_columns:
+        raise MainDGAMissingRequiredColumnError(missing_columns)
 
+
+def _normalize_main_dga_source_df(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Normalizes values in required DGA source columns.
+
+    - coerces non-string values to strings,
+    - trims surrounding whitespace from non-null values,
+    """
+    df = df.copy()
+
+    for column_name in MAIN_DGA_REQUIRED_SOURCE_COLUMNS:
+        column = df[column_name]
+
+        # Build a True/False series marking rows where this column has a value.
+        row_has_value: pd.Series[bool] = column.notna()
+
+        row_value_is_not_string: pd.Series[bool] = ~column.map(lambda value: isinstance(value, str))
+
+        # Find rows where a required text field must be converted to string first.
+        row_needs_string_conversion: pd.Series[bool] = row_has_value & row_value_is_not_string
+
+        if row_needs_string_conversion.any():
+            # Convert only the affected cells so later string operations are safe.
+            df.loc[row_needs_string_conversion, column_name] = df.loc[row_needs_string_conversion, column_name].map(str)
+
+        # Trim surrounding whitespace from every non-null required value.
+        df.loc[row_has_value, column_name] = df.loc[row_has_value, column_name].str.strip()
+
+    return df
+
+
+def _validate_main_dga_source_values(df: pd.DataFrame) -> None:
+    """
+    Validates that required DGA source columns do not contain missing values.
+    """
+    required_columns_df = df[MAIN_DGA_REQUIRED_SOURCE_COLUMNS]
+    has_missing_required_value = (required_columns_df.isna() | required_columns_df.eq("")).any(axis=1)
+
+    if has_missing_required_value.any():
+        raise MainDGAEmptyRequiredValuesError()
+
+
+def get_main_dga_source_df(resource: "Resource") -> pd.DataFrame:  # noqa: F821
+    if resource.is_imported_from_ckan:
+        df: Optional[pd.DataFrame] = get_ckan_dga_resource_df(resource)
+        if df is None:
+            raise MainDGAResourceReadError(f"Cannot read tabular data for CKAN harvested resource {resource.pk}")
+        df["Nazwa dysponenta zasobu"] = np.nan  # will be filled later
+        try:
+            df = df[MAIN_DGA_COLUMNS]
+        except KeyError as exc:
+            raise MainDGAResourceReadError(f"CKAN harvested resource {resource.pk} is missing expected columns: {exc}") from exc
+    else:
+        try:
+            data = resource.tabular_data.table.read(keyed=True)
+        except Exception as exc:
+            raise MainDGAResourceReadError(f"Cannot read tabular data for resource {resource.pk}") from exc
+
+        try:
+            df = pd.DataFrame(data, columns=MAIN_DGA_COLUMNS)
+        except Exception as exc:
+            raise MainDGAResourceReadError(f"Cannot create DataFrame for resource {resource.pk}") from exc
+
+    _validate_main_dga_source_columns(df)
+    df = _normalize_main_dga_source_df(df)
+    _validate_main_dga_source_values(df)
+
+    return df
+
+
+def create_main_dga_df(resources: QuerySet) -> pd.DataFrame:
     # Prepare empty Main DGA Resource DataFrame
-    main_df: pd.DataFrame = pd.DataFrame(columns=main_dga_columns)
+    main_df: pd.DataFrame = pd.DataFrame(columns=MAIN_DGA_COLUMNS)
 
     # Create DataFrame for each Resource and concatenate it with Main DGA DataFrame
     count_dga_resources: int = resources.count()
     successful_resource_reads: int = 0
     for resource in resources:
-        # Because CKAN resources' data are not stored in OD,
-        # we have to create df based on currently available remote data
-        if resource.is_imported_from_ckan:
-            df: Optional[pd.DataFrame] = get_ckan_dga_resource_df(resource)
-            if df is None:
-                logger.error(f"Cannot read tabular data for CKAN harvested resource {resource.pk}")
-                continue
-            # Adjust DataFrame to Main DGA structure
-            df["Nazwa dysponenta zasobu"] = np.nan  # will be filled later
-            df = df[main_dga_columns]
+        try:
+            df: pd.DataFrame = get_main_dga_source_df(resource)
+        except MainDGAResourceReadError as exc:
+            sentry_sdk.api.capture_exception(exc)
+            logger.error(
+                "Skipping Main DGA source resource %s because it cannot be read: %s",
+                resource.pk,
+                exc,
+            )
+            continue
+        except MainDGAMissingRequiredColumnError as exc:
+            sentry_sdk.api.capture_exception(exc)
+            logger.error(
+                "Skipping Main DGA source resource %s because it is missing required column %s.",
+                resource.pk,
+                exc.column_name,
+            )
+            continue
+        except MainDGAEmptyRequiredValuesError as exc:
+            sentry_sdk.api.capture_exception(exc)
+            logger.warning(
+                "Skipping Main DGA source resource %s because it contains empty required values.",
+                resource.pk,
+            )
+            continue
 
-        # Create Resource DataFrame for any other resource type
-        else:
-            # Read tabular data
-            try:
-                data = resource.tabular_data.table.read(keyed=True)
-            except Exception as e:
-                logger.error(f"Cannot read tabular data for for resource {resource.pk}: {e}")
-                continue
+        if df.empty:
+            continue
 
-            # Create and adjust DataFrame to Main DGA structure
-            try:
-                df: pd.DataFrame = pd.DataFrame(data, columns=main_df.columns)
-            except Exception as e:
-                logger.error(f"Cannot create DataFrame for resource {resource.pk}: {e}")
-                sentry_sdk.api.capture_exception(e)
-                continue
-
-        # Clean and fill the data
-        df = clean_columns_in_dataframe(df, "Zasób chronionych danych")
         institution: str = resource.institution.title
         df["Nazwa dysponenta zasobu"] = institution
 
@@ -591,6 +721,18 @@ def create_main_dga_resource_with_dataset(file_path: Path) -> Tuple[int, Optiona
     old_main_dga_resource: Optional[Resource] = get_main_dga_resource()
     main_dga_dataset: Optional[Dataset] = get_main_dga_dataset()
 
+    # Recover from a stale cached file path left behind after cleanup.
+    if not os.path.exists(file_path):
+        caches["default"].delete(key_generator_for_create_main_xlsx_file())
+        logger.warning(
+            "Main DGA file %s does not exist anymore. Regenerating it before resource creation.",
+            file_path,
+        )
+        file_path = create_main_dga_file()
+
+    if not os.path.exists(file_path):
+        raise FileNotFoundError(file_path)
+
     # Create Resource and ResourceFile objects.
     new_main_dga_dataset_created: bool = False
     with transaction.atomic():
@@ -710,12 +852,16 @@ def clean_up_after_main_dga_resource_creation(exception_occurred: bool) -> None:
     # delete file and release cache
     try:
         if file_path:
-            os.remove(file_path)
-            logger.info(f"File {file_path} has been deleted successfully.")
-            cache.delete(clean_file_path_key)
+            if os.path.exists(file_path):
+                os.remove(file_path)
+                logger.info(f"File {file_path} has been deleted successfully.")
+            else:
+                logger.warning(f"Main DGA temp file {file_path} was already missing during cleanup.")
 
     except Exception as e:
         logger.error(f"An error occurred while deleting the file {file_path}: {e}")
+    finally:
+        cache.delete(clean_file_path_key)
 
     logger.info("Clean up completed.")
 

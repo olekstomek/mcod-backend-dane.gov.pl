@@ -219,7 +219,7 @@ def check_rdf(path: Union[Path, str], family: str, sub_type: str) -> Tuple[str, 
     Returns a tuple of family, content_type, for example
     ("application", "rdf+xml")
     """
-    if sub_type in ("html", "xhtml"):
+    if sub_type in ("html", "xhtml", "gml+xml", "gpx+xml", "geo+json"):
         return family, sub_type
 
     if sub_type == "json" and not _json_suspected_as_jsonld(path):

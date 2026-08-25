@@ -33,10 +33,10 @@ def test_last_login(inactive_user):
         assert now < usr.last_login
 
 
-def test_email_unique():
+def test_email_unique(test_password: str):
     with pytest.raises(django.core.exceptions.ValidationError) as e:
-        User.objects.create_user("aaa@example.com", "12345.Abcde")
-        User.objects.create_user("aaa@example.com", "12345.Abcde")
+        User.objects.create_user("aaa@example.com", test_password)
+        User.objects.create_user("aaa@example.com", test_password)
     assert "email" in e.value.message_dict
 
 
@@ -56,8 +56,8 @@ def test_admin_panel_access_flag(active_user):
     assert active_user.system_role == "editor"
 
 
-def test_check_session_valid(mocker):
-    usr = User.objects.create_user("aaa@example.com", "12345.Abcde")
+def test_check_session_valid(mocker, test_password: str):
+    usr = User.objects.create_user("aaa@example.com", test_password)
     assert usr.check_session_valid(None) is False
     assert usr.check_session_valid("aaa") is False
 

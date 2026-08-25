@@ -1,8 +1,8 @@
 import json
+from unittest.mock import Mock
 from urllib import parse
 
 import dpath.util
-import requests_mock
 from django.conf import settings
 from django.test import override_settings
 from falcon.testing import Cookie, TestClient
@@ -233,7 +233,6 @@ def api_send_request(context, mocker, test_api_instance):
 
 
 @when(parsers.parse("send api request and fetch the response with mocked_url {mocked_url} and mocked_rdf_data {mocked_data}"))
-@requests_mock.Mocker(kw="mock_request")
 def api_send_request_with_mocked_url(context, mocker, mocked_url, mocked_data, test_api_instance, **mock_kwargs):
     if context.user:
         token = get_auth_token(context.user, session_key=str(context.user.id))
@@ -242,15 +241,8 @@ def api_send_request_with_mocked_url(context, mocker, mocked_url, mocked_data, t
 
     # cookies have to be sent in Cookie header: https://github.com/falconry/falcon/issues/1640
     if context.api.cookies:
-        cookies = ""
-        for cookie_name, cookie_value in context.api.cookies.items():
-            cookies += "%s=%s; " % (cookie_name, cookie_value)
-
-        if cookies:
-            if context.api.headers.get("Cookie"):
-                context.api.headers["Cookie"] += "; " + cookies
-            else:
-                context.api.headers["Cookie"] = cookies
+        cookie_str = "; ".join(f"{k}={v}" for k, v in context.api.cookies.items())
+        context.api.headers["Cookie"] = cookie_str
 
     o = parse.urlparse(settings.API_URL)
     kwargs = {
@@ -264,19 +256,18 @@ def api_send_request_with_mocked_url(context, mocker, mocked_url, mocked_data, t
     if context.api.method in ("POST", "PUT", "PATCH", "DELETE"):
         kwargs["json"] = context.obj
 
-    mock_request = mock_kwargs["mock_request"]
-    mock_request.post(
-        mocked_url,
-        headers={"content-type": "application/rdf+xml"},
-        content=mocked_data.encode("utf-8"),
-    )
+    mocker.patch("mcod.lib.rdf.store.settings.KRONIKA_SPARQL_URL", mocked_url)
+
+    response = Mock()
+    response.read.return_value = mocked_data.encode("utf-8")
+    response.headers = {"Content-Type": "application/rdf+xml"}
+    mock_urlopen = mocker.patch("rdflib.plugins.stores.sparqlconnector.urlopen", return_value=response)
+
     resp = TestClient(test_api_instance).simulate_request(**kwargs)
-    skip_validation = False
-    api_version = resp.headers["x-api-version"]
-    if api_version == "1.0":
-        skip_validation = True
-    if resp.status_code in (202, 204):
-        skip_validation = True
+
+    assert mock_urlopen.called, f"Expected URL {mocked_url} not called"
+
+    skip_validation = resp.headers["x-api-version"] == "1.0" or resp.status_code in (202, 204)
     if not skip_validation:
         valid, validated, errors = jsonapi_validator(resp.json)
         assert valid is True

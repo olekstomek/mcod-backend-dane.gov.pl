@@ -1,4 +1,3 @@
-from django.conf import settings
 from django.utils.translation import get_language, gettext_lazy as _
 from elasticsearch_dsl.query import Term
 from marshmallow import ValidationError, post_load, pre_load, validate, validates, validates_schema
@@ -150,8 +149,14 @@ class CreateShowcaseProposalAttrs(ObjectAttrs):
     )
     url = core_fields.Url(required=True, validate=validate.Length(max=2048))
     notes = core_fields.Str(required=True, validate=validate.Length(min=1, max=3000))
-    image = core_fields.Base64String(required=False, default=None, max_size=settings.IMAGE_UPLOAD_MAX_SIZE)
-    illustrative_graphics = core_fields.Base64String(required=False, default=None, max_size=settings.IMAGE_UPLOAD_MAX_SIZE)
+    image = core_fields.Base64ImageString(
+        required=False,
+        default=None,
+    )
+    illustrative_graphics = core_fields.Base64ImageString(
+        required=False,
+        default=None,
+    )
     image_alt = core_fields.Str(required=False, default=None)
     datasets = core_fields.List(core_fields.Str(), required=False, default=[])
     external_datasets = core_fields.Nested(ExternalResourceSchema, required=False, default={}, many=True)

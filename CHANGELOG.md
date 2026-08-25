@@ -12,6 +12,42 @@ ______________________________________________________________________
 
 ### Breaks
 
+## 2.60.0 - (2026-07-22)
+
+______________________________________________________________________
+
+### New
+
+- Dodano mechanizm zapisywania zgłoszeń wysłania formularza - OTD-2670
+- Dodano zapisywanie wysłania dla formularzy: PoCoTo, zgłoś uwagi do danych, zaproponuj dane - OTD-2670
+- Nowy plik Dockerfile budujący lokalny obraz bazy Fuseki (6.0.0-mcod) na bazie źródłowych plików binarnych (z dodaną konfiguracją w pliku dataset.ttl i skryptem uruchomieniowym init.sh) - OTD-2771
+- Dodano bezpieczny widok DownloadMeetingFileView wymagający uwierzytelnienia użytkownika oraz wymuszający pobranie pliku, jako załącznika przez Content-Disposition: attachment - OTD-1740
+
+### Changes
+
+- Zmiana częstotliwości generowania katalogu metadanych na "w każdy poniedziałek" - OTD-2773
+- Ustawienie content-disposition dla katalog.zip na nazwę z datą utworzenia - OTD-2773
+- Usunięto nieużywany model History oraz manager HistoryManager - OTD-2743
+- Aktualizacja gitlab-ci.yml o tworzenie w registry.dane.gov.pl/mcod/fuseki nowego obrazu 6.0.0-mcod - OTD-2771
+- Usunięcie obejścia na serializację BNode'ów w klasie SPARQLUpdateStore (node_to_sparql=my_bnode_ext()) - OTD-2771
+- Usunięcie obejścia na błąd biblioteki RDFLib 6.1.1, polegający na nieaktualizowaniu nagłówka Content-Type w kolejnych zapytaniach SPARQL (oraz dodanie testu SparqlStoreTest.test_update_and_select()) - OTD-2771
+- Poprawa zapytań SPARQL w modułach mcod.core.api.rdf.sparql_graphs.py i mcod.lib.rdf.store.py - OTD-2771
+- Usunięcie zależności csvwlib z projektu, generacja plików json-ld w oparciu o bibliotekę rdflib - OTD-2742
+- Usunięcie customowej implementacji apply_async_on_commit z klasy SharedTask na poczet natywnego użycia apply_async_on_commit z DjangoTask wprowadzonej od Celery ver. 5.4 - OTD-2463
+- Zmiana wywołań apply_async_on_commit z sygnatury na natywną wersję z DjangoTask - OTD-2463
+- Wprowadzenie zabezpieczeń dla endpointa /showcases/suggest uniemożliwiających przesyłanie w polach image i illustrative_graphics złośliwych treści - OTD-2800
+
+### Fixes
+
+- Naprawiono obsługę statusu 422 w handlerze wyjątków API - OTD-2694
+- Zwiększenie wymagalności długości hasła z 8 do 14 znaków. - OTD-2540
+- Zwiększonie szczegółowości logów w procesie aktywacji konta - OTD-2814
+- Naprawa dla pliku GML określania stopnia otwartości i rozpoznawania jako XML - OTD-2630
+- Dodatkowa walidacja danych tabelarycznych podczas tworzenia raportu DGA. Walidacja pustych wartości w zasobach DGA oraz rzutowanie niepustych wartości na string - OTD-2686
+- Naprawa testu wykrywającego złośliwy kod PHP blokowanego przez Windows Defender - OTD-2772
+- Naprawa linków dla obrazków w Panelu Administracyjnym - OTD-2721
+- Zaktualizowany sposób inicjalizacji aplikacji Django (przywrócona domyślna inicjalizacja w module mcod.settings.__init__) - OTD-2771
+
 ## 2.59.4 - (2026-06-25)
 
 ______________________________________________________________________

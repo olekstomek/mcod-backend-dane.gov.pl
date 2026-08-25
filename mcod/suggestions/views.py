@@ -109,7 +109,7 @@ class SubmissionView(JsonAPIView):
             _data.pop("applicant_full_name", None)
             _data.pop("applicant_email", None)
 
-            create_dataset_suggestion.s(_data).apply_async_on_commit()
+            create_dataset_suggestion.apply_async_on_commit(args=(_data,))
             fields, values = ["id"], [str(uuid4())]
             result = namedtuple("Submission", fields)(*values)
             return result

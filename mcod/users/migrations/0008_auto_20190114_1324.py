@@ -6,7 +6,10 @@ from django.conf import settings
 
 class Migration(migrations.Migration):
 
-    dependencies = [("users", "0007_auto_20180820_1143")]
+    dependencies = [
+        ("users", "0007_auto_20180820_1143"),
+        ("histories", "0001_initial"),
+    ]
 
     operations = [
         migrations.AddField(

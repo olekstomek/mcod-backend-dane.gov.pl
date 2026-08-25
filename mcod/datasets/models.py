@@ -976,7 +976,7 @@ def handle_dataset_without_resources(sender, instance, *args, **kwargs):
         organization_id = instance.tracker.previous("organization_id")
         if organization_id:
             # update ES document for previously set organization, if any.
-            update_document_task.s("organizations", "Organization", organization_id).apply_async_on_commit()
+            update_document_task.apply_async_on_commit(args=("organizations", "Organization", organization_id))
 
 
 @receiver(remove_related_resources, sender=Dataset)
@@ -1009,12 +1009,14 @@ def update_related_watchers(sender, instance, *args, state=None, **kwargs):
         state,
     )
 
-    update_model_watcher_task.s(
-        instance.organization._meta.app_label,
-        instance.organization._meta.object_name,
-        instance.organization.id,
-        obj_state=state,
-    ).apply_async_on_commit()
+    update_model_watcher_task.apply_async_on_commit(
+        args=(
+            instance.organization._meta.app_label,
+            instance.organization._meta.object_name,
+            instance.organization.id,
+        ),
+        kwargs={"obj_state": state},
+    )
 
 
 core_signals.notify_published.connect(update_watcher, sender=Dataset)

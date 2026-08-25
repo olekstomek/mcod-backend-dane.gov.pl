@@ -39,11 +39,11 @@ def session_is_flushed():
 
 
 @given(parsers.parse("logged agent user created with {params}"))
-def logged_agent_user_created_with_params(context, params):
+def logged_agent_user_created_with_params(context, test_password, params):
     _factory = factories_registry.get_factory("agent user")
     kwargs = {
         "email": "agent_user@dane.gov.pl",
-        "password": "12345.Abcde",
+        "password": test_password,
     }
     kwargs.update(json.loads(params))
     context.user = _factory(**kwargs)
@@ -51,11 +51,11 @@ def logged_agent_user_created_with_params(context, params):
 
 
 @given(parsers.parse("logged out agent user created with {params}"))
-def logged_out_agent_user_created_with_params(context, params):
+def logged_out_agent_user_created_with_params(context, test_password, params):
     _factory = factories_registry.get_factory("agent user")
     kwargs = {
         "email": "agent_user@dane.gov.pl",
-        "password": "12345.Abcde",
+        "password": test_password,
     }
     kwargs.update(json.loads(params))
     context.user = _factory(**kwargs)
@@ -63,18 +63,18 @@ def logged_out_agent_user_created_with_params(context, params):
 
 
 @given(parsers.parse("logged extra agent with id {extra_agent_id:d} of agent with id {agent_id:d}"))
-def logged_extra_agent_with_id_of_agent_with_id(context, extra_agent_id, agent_id):
+def logged_extra_agent_with_id_of_agent_with_id(context, test_password, extra_agent_id, agent_id):
     _agent_factory = factories_registry.get_factory("agent user")
     _active_user_factory = factories_registry.get_factory("active user")
     agent = _agent_factory(
         id=agent_id,
         email="agent_user@dane.gov.pl",
-        password="12345.Abcde",
+        password=test_password,
     )
     user = _active_user_factory(
         id=extra_agent_id,
         email="extra_agent_user@dane.gov.pl",
-        password="12345.Abcde",
+        password=test_password,
     )
     user.extra_agent_of = agent
     user.save()
@@ -83,11 +83,11 @@ def logged_extra_agent_with_id_of_agent_with_id(context, extra_agent_id, agent_i
 
 
 @given(parsers.parse("logged {user_type}"))
-def logged_user_type(context, user_type):
+def logged_user_type(context, test_password, user_type):
     _factory = factories_registry.get_factory(user_type)
     context.user = _factory(
         email="{}@dane.gov.pl".format(user_type.replace(" ", "_")),
-        password="12345.Abcde",
+        password=test_password,
     )
     DjangoClient().force_login(context.user)
 
@@ -120,8 +120,8 @@ def logged_by_logingovpl_logingovpl_user_type_with_email_and_pesel(context, user
 
 
 @given(parsers.parse("logged active user with email {email} and newsletter subscription enabled with code {activation_code}"))
-def logged_active_user_with_newsletter_subscription_enabled(context, email, activation_code):
-    user = UserFactory(email=email, password="12345.Abcde", state="active")
+def logged_active_user_with_newsletter_subscription_enabled(context, test_password, email, activation_code):
+    user = UserFactory(email=email, password=test_password, state="active")
     subscription = Subscription.subscribe(email, user=user)
     subscription.activation_code = activation_code
     subscription.confirm_subscription()

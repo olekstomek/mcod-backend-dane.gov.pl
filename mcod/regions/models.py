@@ -154,6 +154,6 @@ def update_search_regions(sender, instance, *args, **kwargs):
             to_update = Region.objects.assigned_regions(new)
             to_delete = Region.objects.unassigned_regions(deleted)
             if to_delete:
-                bulk_delete_documents_task.s("regions", "Region", to_delete).apply_async_on_commit()
+                bulk_delete_documents_task.apply_async_on_commit(args=("regions", "Region", to_delete))
             if to_update:
-                update_related_task.s("regions", "Region", to_update).apply_async_on_commit()
+                update_related_task.apply_async_on_commit(args=("regions", "Region", to_update))

@@ -44,7 +44,7 @@ routes = [
     ("/auth/user", user_views.AccountView()),
     ("/auth/user/dashboard", user_views.DashboardView()),
     ("/auth/registration", user_views.RegistrationView()),
-    ("/auth/registration/verify-email/{token:uuid}", user_views.VerifyEmailView()),
+    ("/auth/registration/verify-email/{token_uuid:uuid}", user_views.VerifyEmailView()),
     ("/auth/registration/resend-email", user_views.ResendActivationEmailView()),
     ("/auth/subscriptions", watcher_views.SubscriptionsView()),
     ("/auth/subscriptions/{id:int}", watcher_views.SubscriptionView()),

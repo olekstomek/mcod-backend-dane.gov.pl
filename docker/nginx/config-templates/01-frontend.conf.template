@@ -59,6 +59,27 @@ server {
     alias /usr/share/nginx/html/statics;
   }
 
+  location /media/showcases/ {
+    alias /usr/share/nginx/html/media/showcases/;
+    add_header Content-Disposition 'attachment' always;
+    add_header Content-Security-Policy "default-src 'none'; script-src 'none'; sandbox" always;
+    add_header X-Content-Type-Options nosniff always;
+  }
+
+  # Meeting files must be authorized and forced as downloads by Django
+  # instead of being rendered directly from public /media.
+  location /media/meetings/ {
+    proxy_pass ${MCOD_NGINX_ADMIN};
+    proxy_pass_header Server;
+    proxy_set_header Host $host;
+    proxy_set_header X-Scheme https;
+    proxy_set_header X-Url-Scheme https;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-Host $server_name;
+    proxy_set_header X-Forwarded-For $remote_addr;
+    proxy_set_header X-Forwarded-Proto https;
+  }
+
   location /media {
     alias /usr/share/nginx/html/media;
   }

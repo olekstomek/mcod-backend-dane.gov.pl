@@ -29,12 +29,14 @@ prepare-images:
   script:
     - docker build -f docker/elasticsearch/Dockerfile -t $REGISTRY_PATH/elasticsearch:6.8.23-mcod-1 .
     - docker build -f docker/postgres/Dockerfile -t $REGISTRY_PATH/postgresql:17-trixie-mcod .
+    - docker build -f docker/rdfdb/Dockerfile -t $REGISTRY_PATH/fuseki:6.0.0-mcod-1 .
     - docker build -f docker/rabbitmq/Dockerfile -t $REGISTRY_PATH/rabbitmq:4.2.5-management-alpine-mcod .
     - docker build -f docker/redis/Dockerfile -t $REGISTRY_PATH/redis:8.4.2-trixie-mcod .
     - docker build -f docker/tests/Dockerfile -t $REGISTRY_PATH/mcod-tests:${TEST_IMAGE_VERSION} .
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $REGISTRY_HOST
     - docker push $REGISTRY_PATH/elasticsearch:6.8.23-mcod-1
     - docker push $REGISTRY_PATH/postgresql:17-trixie-mcod
+    - docker push $REGISTRY_PATH/fuseki:6.0.0-mcod-1
     - docker push $REGISTRY_PATH/rabbitmq:4.2.5-management-alpine-mcod
     - docker push $REGISTRY_PATH/redis:8.4.2-trixie-mcod
     - docker push $REGISTRY_PATH/mcod-tests:${TEST_IMAGE_VERSION}
@@ -79,7 +81,7 @@ test:
     EMAIL_HOST_USER: test@example.com
     EMAIL_HOST_PASSWORD: password
     SPARQL_USER: admin
-    ADMIN_PASSWORD: Britenet.1
+    SPARQL_PASSWORD: Britenet.1
     FUSEKI_DATASET_1: ds
     FUSEKI_URL: http://fuseki:3030
     ALLOWED_MINIMUM_FREE_GB: 1
@@ -95,7 +97,7 @@ test:
       alias: redis
     - name: $REGISTRY_PATH/rabbitmq:4.2.5-management-alpine-mcod
       alias: rabbitmq
-    - name: stain/jena-fuseki:3.14.0
+    - name: $REGISTRY_PATH/fuseki:6.0.0-mcod-1
       alias: fuseki
     - name: $REGISTRY_PATH/elasticsearch:6.8.23-mcod-1
       alias: elasticsearch

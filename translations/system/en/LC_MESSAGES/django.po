@@ -541,6 +541,22 @@ msgstr ""
 msgid "Not a valid UUID."
 msgstr ""
 
+msgid "Invalid data format for base64 encoding."
+msgstr ""
+
+msgid "Invalid image file."
+msgstr ""
+
+msgid "Unsupported image MIME type."
+msgstr ""
+
+msgid "Declared image MIME type does not match file content."
+msgstr ""
+
+#, python-format
+msgid "Image too big, max size is %(max_image_size)s bytes"
+msgstr ""
+
 msgid "Not a valid URL."
 msgstr ""
 
@@ -5073,4 +5089,16 @@ msgid "Rate limit exceeded"
 msgstr ""
 
 msgid "Too many requests. Please try again later."
+msgstr ""
+
+msgid "Submission subject"
+msgstr ""
+
+msgid "Submission category"
+msgstr ""
+
+msgid "Submission Event"
+msgstr ""
+
+msgid "Submission Events"
 msgstr ""

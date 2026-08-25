@@ -1,10 +1,10 @@
 import json
-from unittest import mock
 from unittest.mock import Mock
 
 import falcon
 import pytest
 from django.conf import settings
+from django.test import override_settings
 from django.utils.translation import gettext as _
 from falcon.util import http_cookies
 from pytest_bdd import scenario
@@ -49,8 +49,7 @@ def test_generates_different_but_equivalent_tokens():
     assert len(tokens) == n and len({unsalt_cipher_token(token) for token in tokens}) == 1
 
 
-@mock.patch("mcod.settings.ENABLE_CSRF", True)
-@mock.patch("mcod.settings.DEBUG", False)
+@override_settings(ENABLE_CSRF=True, DEBUG=False)
 @pytest.mark.parametrize(
     "cookie_value,header_value,should_return_error",
     [

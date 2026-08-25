@@ -102,14 +102,19 @@ services:
 
   mcod-rdfdb:
     container_name: mcod-rdfdb
-    image: stain/jena-fuseki:3.14.0
+    image: fuseki:6.0.0-mcod-1
+    build:
+      context: .
+      dockerfile: docker/rdfdb/Dockerfile
     restart: "no"
     ports:
       - "3030:3030"
     environment:
-      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - SPARQL_USER=${SPARQL_USER}
+      - SPARQL_PASSWORD=${SPARQL_PASSWORD}
+      - DEBUG=${DEBUG}
     volumes:
-      - fuseki_vol:/fuseki
+      - fuseki_vol_6:/var/lib/fuseki
     networks:
       backend:
         ipv4_address: 172.18.18.23
@@ -209,5 +214,5 @@ volumes:
   rabbitmq_vol:
   elastic_vol:
   redis_vol:
-  fuseki_vol:
+  fuseki_vol_6:
   discourse_vol:

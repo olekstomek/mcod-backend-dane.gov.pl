@@ -232,7 +232,7 @@ class DataSourceAdmin(ExportHarvestersCsvMixin, HistoryMixin, ModelAdmin):
         is_import_needed = obj.tracker.has_changed("status") and obj.is_active
         super().save_model(request, obj, form, change)
         if is_import_needed:
-            import_data_task.s(obj.id, force=True).apply_async_on_commit()
+            import_data_task.apply_async_on_commit(args=(obj.id,), kwargs={"force": True})
             self.message_user(request, _("Import data task was launched!"), level=messages.SUCCESS)
 
     def get_fieldsets(self, request, obj=None):

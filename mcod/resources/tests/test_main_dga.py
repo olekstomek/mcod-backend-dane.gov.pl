@@ -10,12 +10,15 @@ import pandas as pd
 import pytest
 from django.conf import settings
 from django.db.models import QuerySet
+from pytest_mock import MockerFixture
 
 from mcod.datasets.factories import DatasetFactory
 from mcod.datasets.models import Dataset
 from mcod.organizations.factories import OrganizationFactory
 from mcod.organizations.models import Organization
 from mcod.resources.dga_utils import (
+    FailedValidationException,
+    PendingValidationException,
     add_style_to_main_dga_excel_file,
     check_all_resource_validations_status,
     clean_up_after_main_dga_resource_creation,
@@ -30,7 +33,6 @@ from mcod.resources.dga_utils import (
     get_or_create_main_dga_path,
     update_or_create_aggr_dga_info_and_delete_old_main_dga,
 )
-from mcod.resources.exceptions import FailedValidationException, PendingValidationException
 from mcod.resources.factories import DGAResourceFactory, MainDGAResourceFactory, ResourceFactory
 from mcod.resources.models import AggregatedDGAInfo, Resource, ResourceFile
 from mcod.resources.tasks import create_main_dga_resource_task
@@ -92,7 +94,16 @@ def test_get_all_dga_resources_sorted_by_organizations(main_dga_resource: Resour
             dataset__organization=org,
             contains_protected_data=True,
             status="published",
+            data_tasks_last_status="SUCCESS",
+            file_tasks_last_status="SUCCESS",
+            link_tasks_last_status="SUCCESS",
         )
+
+    ResourceFactory(
+        contains_protected_data=True,
+        status="published",
+        data_tasks_last_status="FAILURE",
+    )
 
     # Creation of Resources that should not be included
     DGAResourceFactory.create_batch(3, status="draft")
@@ -299,6 +310,82 @@ def test_create_empty_main_dga_df():
 
 @pytest.mark.feat_main_dga
 @pytest.mark.parametrize(
+    "rows, expected_records",
+    [
+        (
+            [
+                {
+                    "Zasób chronionych danych": 123,
+                    "Format danych": "csv",
+                    "Rozmiar danych": "10 KB",
+                },
+                {
+                    "Zasób chronionych danych": "broken row",
+                    "Format danych": None,
+                    "Rozmiar danych": "12 MB",
+                },
+            ],
+            [],
+        ),
+        (
+            [
+                {
+                    "Zasób chronionych danych": "valid resource",
+                    "Format danych": "   ",
+                    "Rozmiar danych": "10 KB",
+                },
+            ],
+            [],
+        ),
+        (
+            [
+                {
+                    "Zasób chronionych danych": 123,
+                    "Format danych": " csv ",
+                    "Rozmiar danych": "10 KB ",
+                },
+            ],
+            [
+                {
+                    "Lp.": 1,
+                    "Nazwa dysponenta zasobu": "Organization B",
+                    "Zasób chronionych danych": "123",
+                    "Format danych": "csv",
+                    "Rozmiar danych": "10 KB",
+                    "Warunki ponownego wykorzystywania": "określone w ofercie",
+                }
+            ],
+        ),
+    ],
+    ids=[
+        "skips-resource-with-none-required-value",
+        "skips-resource-with-empty-required-value-after-strip",
+        "coerces-non-string-required-value-and-strips-whitespace",
+    ],
+)
+def test_create_main_dga_df_validates_and_coerces_required_values(rows, expected_records):
+    def make_resource(rows) -> MagicMock:
+        resource = MagicMock(spec_set=Resource)
+        resource.pk = 1234
+        resource.is_imported_from_ckan = False
+        resource.institution.title = "Organization B"
+        resource.tabular_data.table.read.return_value = rows
+        return resource
+
+    def make_qs(*resources: Resource) -> MagicMock:
+        mock_qs = MagicMock(spec_set=QuerySet)
+        mock_qs.__iter__.return_value = iter(resources)
+        mock_qs.count.return_value = len(resources)
+        return mock_qs
+
+    resource = make_resource(rows)
+    mock_qs = make_qs(resource)
+    df = create_main_dga_df(mock_qs)
+    assert df.to_dict("records") == expected_records
+
+
+@pytest.mark.feat_main_dga
+@pytest.mark.parametrize(
     ("data_status", "file_status", "link_status", "exception", "data_failure"),
     [
         ("SUCCESS", "SUCCESS", "SUCCESS", None, None),
@@ -389,6 +476,58 @@ def test_create_main_dga_resource_with_dataset(
     assert resource_files.first().is_main is True
 
 
+def setup_path_exists_mock(mocker, source_path, missing_path="/missing/file.xlsx"):
+    real_path_exists = os.path.exists  # capture before patch;
+
+    def path_exists_side_effect(path):
+        path_str = os.fspath(path)
+        if path_str == missing_path:
+            return False
+        if path_str == source_path:
+            return True
+        return real_path_exists(path_str)
+
+    mocker.patch("mcod.resources.dga_utils.os.path.exists", side_effect=path_exists_side_effect)
+
+
+@pytest.mark.feat_main_dga
+def test_create_main_dga_resource_with_dataset_calls_recovery_when_file_missing(
+    mocker: MockerFixture,
+    main_dga_owner_organization: Organization,
+):
+    # Given
+    source_file_path = f"{os.path.join(settings.TEST_SAMPLES_PATH, 'example_main_dga_file.xlsx')}"
+    setup_path_exists_mock(mocker, source_file_path)
+    mock_create_main_dga_file = mocker.patch("mcod.resources.dga_utils.create_main_dga_file", return_value=source_file_path)
+    mocker.patch("mcod.resources.dga_utils.caches")
+
+    # When
+    create_main_dga_resource_with_dataset(Path("/missing/file.xlsx"))
+
+    # Then
+    mock_create_main_dga_file.assert_called_once()
+
+
+@pytest.mark.feat_main_dga
+def test_create_main_dga_resource_with_dataset_regenerates_missing_file_logic(
+    mocker: MockerFixture,
+    main_dga_owner_organization: Organization,
+):
+    # Given
+    source_file_path = f"{os.path.join(settings.TEST_SAMPLES_PATH, 'example_main_dga_file.xlsx')}"
+    setup_path_exists_mock(mocker, source_file_path)
+    mocker.patch("mcod.resources.dga_utils.create_main_dga_file", return_value=source_file_path)
+    mock_caches = mocker.patch("mcod.resources.dga_utils.caches")
+
+    # When
+    resource_pk, dataset_pk = create_main_dga_resource_with_dataset(Path("/missing/file.xlsx"))
+
+    # Then
+    assert resource_pk
+    assert dataset_pk
+    mock_caches.__getitem__.return_value.delete.assert_called_once_with("main_xlsx_file_path_to_clean")
+
+
 @pytest.mark.feat_main_dga
 def test_update_aggr_dga_info(dga_info: AggregatedDGAInfo, main_dga_dataset: Dataset):
     """
@@ -428,14 +567,16 @@ def test_create_aggr_dga_info(main_dga_dataset: Dataset):
 
 @pytest.mark.feat_main_dga
 @pytest.mark.parametrize(
-    ("resource_id", "dataset_id", "exc_occurred"),
+    ("resource_id", "dataset_id", "exc_occurred", "file_exists"),
     [
-        (123, 456, False),
-        (123, 456, True),
-        (123, None, False),
-        (123, None, True),
-        (None, None, True),
-        (None, None, False),
+        (123, 456, False, True),
+        (123, 456, True, True),
+        (123, None, False, True),
+        (123, None, True, True),
+        (None, None, True, True),
+        (None, None, False, True),
+        # stale file cache: path is cached, but file does not exist anymore
+        (None, None, False, False),
     ],
 )
 @mock.patch("mcod.resources.dga_utils.sentry_sdk.api.capture_exception")
@@ -452,6 +593,7 @@ def test_clean_up_after_main_dga_resource_creation(
     resource_id: Optional[int],
     dataset_id: Optional[int],
     exc_occurred: bool,
+    file_exists: bool,
 ):
     # Set return values to cache key generators
     mock_xlsx_key.return_value = "xlsx_key"
@@ -462,7 +604,7 @@ def test_clean_up_after_main_dga_resource_creation(
 
     if dataset and resource_id:
         ResourceFactory.create(pk=resource_id, dataset=dataset)
-    else:
+    elif resource_id:
         ResourceFactory.create(pk=resource_id)
 
     # Set mock cache side effect
@@ -478,7 +620,8 @@ def test_clean_up_after_main_dga_resource_creation(
     mock_caches.__getitem__.return_value = mock_cache
 
     # Test function call
-    clean_up_after_main_dga_resource_creation(exc_occurred)
+    with mock.patch("mcod.resources.dga_utils.os.path.exists", return_value=file_exists):
+        clean_up_after_main_dga_resource_creation(exc_occurred)
     if exc_occurred:
         assert Resource.raw.filter(pk=resource_id).exists() is False
         assert Dataset.raw.filter(pk=dataset_id).exists() is False
@@ -486,7 +629,11 @@ def test_clean_up_after_main_dga_resource_creation(
         assert bool(resource_id) is Resource.raw.filter(pk=resource_id).exists()
         assert bool(dataset_id) is Dataset.raw.filter(pk=dataset_id).exists()
 
-    mock_os_remove.assert_called_once_with("/path/to/temporary/file.xlsx")
+    if file_exists:
+        mock_os_remove.assert_called_once_with("/path/to/temporary/file.xlsx")
+    else:
+        mock_os_remove.assert_not_called()
+
     mock_cache.delete.assert_has_calls([call("objects_key"), call("xlsx_key")])
 
 

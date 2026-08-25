@@ -14,8 +14,9 @@ from contextlib import contextmanager
 from http.cookies import SimpleCookie
 from io import StringIO, TextIOWrapper
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, TextIO, Union
+from typing import Any, Dict, Final, Iterable, List, Optional, Sequence, TextIO, Union
 from unittest.mock import patch
+from urllib.request import urlopen
 from xml.dom.minidom import parseString
 from xml.sax.saxutils import escape
 
@@ -29,6 +30,8 @@ from marshmallow import class_registry
 from marshmallow.schema import BaseSchema
 from pyexpat import ExpatError
 from pytz import utc
+from rdflib import BNode, Graph, Literal as RDFLiteral, URIRef
+from rdflib.namespace import RDF, Namespace
 
 logger = logging.getLogger("mcod")
 
@@ -39,6 +42,9 @@ _iso8601_datetime_re = re.compile(
     r"(?::(?P<second>\d{1,2})(?:\.(?P<microsecond>\d{1,6})\d{0,6})?)?"
     r"(?P<tzinfo>|[+-]\d{2}(?::?\d{2})?)?$",
 )
+
+
+CSVW: Final = Namespace("http://www.w3.org/ns/csvw#")
 
 
 class XmlTextInvalid(ValueError):
@@ -517,3 +523,54 @@ def disable_modeltracker():
         "model_utils.tracker.FieldInstanceTracker.set_saved_fields", lambda self: None
     ):
         yield
+
+
+def get_file_content_from_url(file_url: str) -> str:
+    """
+    Based on file url, return file content as string.
+    """
+    response = urlopen(file_url)
+    file_content = response.read().decode("utf-8")
+    return file_content
+
+
+def create_rdf_graph_from_csv_content(csv_content: str, csv_file_url: str) -> Graph:
+    """
+    Based on CSV file content and CSV file url, create RDF graph in JSON-LD format following CSVW conventions.
+    """
+
+    reader = csv.DictReader(StringIO(csv_content))
+    headers: Optional[Sequence[str]] = reader.fieldnames
+
+    if not headers:
+        raise ValueError("CSV content is empty or has no headers.")
+
+    rows = [row for row in reader]
+
+    g = Graph()
+    g.bind("csvw", CSVW)
+
+    table_group = BNode()
+    table = BNode()
+
+    g.add((table_group, RDF.type, CSVW.TableGroup))
+    g.add((table_group, CSVW.table, table))
+
+    g.add((table, RDF.type, CSVW.Table))
+    g.add((table, CSVW.url, URIRef(csv_file_url)))
+
+    for row_index, row in enumerate(rows, start=1):
+        row_node = BNode()
+        data_node = BNode()
+
+        g.add((table, CSVW.row, row_node))
+        g.add((row_node, RDF.type, CSVW.Row))
+        g.add((row_node, CSVW.rownum, RDFLiteral(row_index)))
+        g.add((row_node, CSVW.url, URIRef(f"{csv_file_url}#row={row_index + 1}")))
+        g.add((row_node, CSVW.describes, data_node))
+
+        for col_name in headers:
+            predicate = URIRef(f"{csv_file_url}#{col_name}")
+            g.add((data_node, predicate, RDFLiteral(row[col_name])))
+
+    return g

@@ -231,7 +231,7 @@ class DatasetSubmissionAdmin(DatasetSubmissionAdminMixin):
         create_needed = obj.tracker.has_changed("decision") and obj.is_accepted and not obj.accepted_dataset_submission
         super().save_model(request, obj, form, change)
         if create_needed:
-            create_accepted_dataset_suggestion_task.s(obj.id).apply_async_on_commit()
+            create_accepted_dataset_suggestion_task.apply_async_on_commit(args=(obj.id,))
             self.message_user(
                 request,
                 _("Create accepted dataset suggestion task was launched!"),

@@ -300,12 +300,12 @@ def form_instance_is(admin_context, geo_tabular_data_resource, tabular_resource,
 
 
 @given(parsers.parse("admin's request logged user is {user_type}"))
-def admin_request_logged_user_is(admin_context, user_type):
+def admin_request_logged_user_is(admin_context, test_password, user_type):
     _factory = factories_registry.get_factory(user_type)
     assert _factory is not None
     admin_context.admin.user = _factory.create(
         email="{}@dane.gov.pl".format(user_type.replace(" ", "_")),
-        password="12345.Abcde",
+        password=test_password,
         phone="0048123456789",
     )
 

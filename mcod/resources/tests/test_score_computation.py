@@ -62,6 +62,7 @@ from mcod.resources.score_computation.score_calculation import (
             ("geojson", 3),
             ("geotiff", 3),
             ("gpx", 3),
+            ("gml", 3),
             ("htm", 3),
             ("html", 3),
             ("json", 3),

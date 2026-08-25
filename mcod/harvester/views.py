@@ -3,6 +3,7 @@ from celery_progress.backend import Progress as BaseProgress
 from django.http import JsonResponse
 from django.urls import reverse
 from django.views.generic.edit import FormView
+from kombu.utils import uuid
 
 from mcod.harvester.forms import XMLValidationForm
 from mcod.harvester.tasks import validate_xml_url_task
@@ -28,7 +29,9 @@ class ValidateXMLDataSourceView(FormView):
     form_class = XMLValidationForm
 
     def form_valid(self, form):
-        task_id = validate_xml_url_task.s(form.cleaned_data["xml_url"]).apply_async_on_commit()
+        task_id = uuid()
+        validate_xml_url_task.apply_async_on_commit(args=(form.cleaned_data["xml_url"],), task_id=task_id)
+
         progress_url = reverse("admin:validate-xml-task-status", args=[task_id])
         return JsonResponse({"success": True, "progress_url": progress_url})
 

@@ -212,15 +212,20 @@ class SparqlView(BaseView):
             cache_key = hashlib.md5()
             cache_key.update(updated.encode("utf-8"))
             cache_key = str(uuid.UUID(cache_key.hexdigest()))
-            cached = cache.get(cache_key)
-            sparql_resp = json.loads(cached) if cached else None
-            if not sparql_resp:
+
+            if not settings.SPARQL_CACHE_ENABLED:
                 sparql_resp = self.make_sparql_request(data)
-                cache.set(
-                    cache_key,
-                    json.dumps(sparql_resp),
-                    timeout=settings.SPARQL_CACHE_TIMEOUT,
-                )
+            else:
+                cached = cache.get(cache_key)
+                sparql_resp = json.loads(cached) if cached else None
+                if not sparql_resp:
+                    sparql_resp = self.make_sparql_request(data)
+                    cache.set(
+                        cache_key,
+                        json.dumps(sparql_resp),
+                        timeout=settings.SPARQL_CACHE_TIMEOUT,
+                    )
+
             result = sparql_resp["page_result"] if "page_result" in sparql_resp else sparql_resp["result"]
             SparqlResponse = namedtuple(
                 "SparqlResponse",

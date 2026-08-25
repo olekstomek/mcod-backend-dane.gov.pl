@@ -8,13 +8,14 @@ from django.conf import settings
 
 from mcod.core.tasks import extended_shared_task
 from mcod.resources.dga_utils import (
+    FailedValidationException,
+    PendingValidationException,
     check_all_resource_validations_status,
     clean_up_after_main_dga_resource_creation,
     create_main_dga_file,
     create_main_dga_resource_with_dataset,
     update_or_create_aggr_dga_info_and_delete_old_main_dga,
 )
-from mcod.resources.exceptions import FailedValidationException, PendingValidationException
 
 logger = logging.getLogger("mcod")
 

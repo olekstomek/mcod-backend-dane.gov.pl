@@ -19,6 +19,8 @@ from mcod.core.db.models import STATUS_CHOICES, ExtendedModel, Model, TrashModel
 from mcod.datasets.tasks import send_dataset_comment
 from mcod.lib.model_sanitization import SanitizedTextField
 from mcod.resources.tasks import send_resource_comment
+from mcod.submissions.models import Category, Subject
+from mcod.submissions.service import create_submission_event
 from mcod.suggestions.managers import (
     AcceptedDatasetSubmissionManager,
     AcceptedDatasetSubmissionTrashManager,
@@ -60,7 +62,7 @@ class Suggestion(Model):
 
 @receiver(post_save, sender=Suggestion)
 def handle_suggestion_post_save(sender, instance, *args, **kwargs):
-    send_data_suggestion.s(instance.id).apply_async_on_commit()
+    send_data_suggestion.apply_async_on_commit(args=(instance.id,))
 
 
 class DatasetSubmissionMixin(ExtendedModel):
@@ -589,16 +591,34 @@ def handle_dataset_submission_pre_save(sender, instance, *args, **kwargs):
 @receiver(post_save, sender=DatasetSubmission)
 def handle_dataset_submission_post_save(sender, instance, created, *args, **kwargs):
     if created:
+        create_submission_event(
+            reference_object=instance,
+            submission_date=instance.created,
+            subject=Subject.DATA,
+            category=Category.SUGGEST_DATA,
+        )
         send_dataset_suggestion_mail_task.s(instance.id).apply_async()
 
 
 @receiver(post_save, sender=DatasetComment)
 def handle_dataset_comment_post_save(sender, instance, created, *args, **kwargs):
     if created:
-        send_dataset_comment.s(instance.dataset.id, instance.comment).apply_async_on_commit()
+        create_submission_event(
+            reference_object=instance,
+            submission_date=instance.created,
+            subject=Subject.DATA,
+            category=Category.FEEDBACK,
+        )
+        send_dataset_comment.apply_async_on_commit(args=(instance.dataset.id, instance.comment))
 
 
 @receiver(post_save, sender=ResourceComment)
 def handle_resource_comment_post_save(sender, instance, created, *args, **kwargs):
     if created:
-        send_resource_comment.s(instance.resource.id, instance.comment).apply_async_on_commit()
+        create_submission_event(
+            reference_object=instance,
+            submission_date=instance.created,
+            subject=Subject.DATA,
+            category=Category.FEEDBACK,
+        )
+        send_resource_comment.apply_async_on_commit(args=(instance.resource.id, instance.comment))

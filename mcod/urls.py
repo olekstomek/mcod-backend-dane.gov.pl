@@ -26,6 +26,7 @@ from mcod.users.views import (
     AdminAutocompleteView,
     AgentAutocompleteView,
     CustomAdminLoginView,
+    DownloadMeetingFileView,
     StaffAutocompleteView,
 )
 
@@ -34,6 +35,7 @@ panel_app_config = apps.get_app_config("mcod.pn_apps")
 urlpatterns = [path("health/", lambda r: JsonResponse({"status": "ok"}))]
 
 secure_media_patterns = [
+    re_path(r"^media/meetings/(?P<file_path>.*)$", DownloadMeetingFileView.as_view(), name="secure_meeting_download"),
     re_path(r"^media/resources/(?P<file_path>.*)$", DownloadResourceFileView.as_view(), name="secure_resource_download"),
     re_path(r"^media/reports/(?P<file_path>.*)$", DownloadReportFileView.as_view(), name="secure_report_download"),
 ]

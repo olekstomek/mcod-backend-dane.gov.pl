@@ -121,9 +121,7 @@ psycopg2-binary = "==2.8.6"  # Check --> deps_update_docs/Dependency constraints
 sentry-sdk = "~=2.53"
 bs4 = "~=0.0"
 celery-progress = "~=0.4"
-celery-singleton = "~=0.3"
 channels = "~=2.4"  # Max for django < 3.0
-csvwlib = "~=0.3"
 cython = "~=3.0"
 deepdiff = "~=8.1"
 django-axes = "*"

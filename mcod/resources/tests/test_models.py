@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta
-from typing import List
 from unittest.mock import patch
 
 import pytest
@@ -338,19 +337,15 @@ class TestRemoveTabularDataIndex:
         resource: Resource = ResourceFactory()
         resource_id = resource.id
 
-        with patch("mcod.resources.models.delete_es_resource_tabular_data_index.s") as mocked_task_signature:
-
+        with patch(
+            "mcod.resources.models.delete_es_resource_tabular_data_index.apply_async_on_commit"
+        ) as mocked_apply_async_on_commit:
             # first delete (soft delete) - task deleting tabular data not called
             resource.delete()
-            mocked_task_signature.assert_not_called()
-
-            mock_task = mocked_task_signature.return_value
-            with patch.object(mock_task, "apply_async_on_commit") as mock_apply_async:
-
-                # second delete (permanent delete) - task deleting tabular data will be called
-                resource.delete()
-                mocked_task_signature.assert_called_once_with(resource_id)
-                mock_apply_async.assert_called_once()
+            mocked_apply_async_on_commit.assert_not_called()
+            # second delete (permanent delete) - task deleting tabular data will be called
+            resource.delete()
+            mocked_apply_async_on_commit.assert_called_once_with(args=(resource_id,))
 
     def test_delete_resource_with_permanent_parameter(self):
         """
@@ -361,13 +356,12 @@ class TestRemoveTabularDataIndex:
         resource: Resource = ResourceFactory()
         resource_id = resource.id
 
-        with patch("mcod.resources.models.delete_es_resource_tabular_data_index.s") as mocked_task_signature:
-            mock_task = mocked_task_signature.return_value
-            with patch.object(mock_task, "apply_async_on_commit") as mock_apply_async_on_commit:
-                # permament delete - task deleting tabular data will be called
-                resource.delete(permanent=True)
-                mocked_task_signature.assert_called_once_with(resource_id)
-                mock_apply_async_on_commit.assert_called_once()
+        with patch(
+            "mcod.resources.models.delete_es_resource_tabular_data_index.apply_async_on_commit"
+        ) as mocked_apply_async_on_commit:
+            # permament delete - task deleting tabular data will be called
+            resource.delete(permanent=True)
+            mocked_apply_async_on_commit.assert_called_once_with(args=(resource_id,))
 
     def test_delete_resources_by_trash(self):
         """
@@ -375,8 +369,8 @@ class TestRemoveTabularDataIndex:
         WHEN remove these resources from trash
         THEN task `delete_es_resource_tabular_data_index` for these resources.
         """
-        resource_1: Resource = ResourceFactory()
-        resource_2: Resource = ResourceFactory()
+
+        resource_1, resource_2 = ResourceFactory.create_batch(2)
         resource_1_id = resource_1.id
         resource_2_id = resource_2.id
 
@@ -385,15 +379,12 @@ class TestRemoveTabularDataIndex:
         resource_2.delete()
 
         qs: QuerySet = Resource.trash.filter(id__in=[resource_1.id, resource_2.id])
+        assert qs.count() == 2
 
-        with patch("mcod.resources.managers.delete_es_resource_tabular_data_index.s") as mocked_task_signature:
-            mock_task = mocked_task_signature.return_value
-            with patch.object(mock_task, "apply_async_on_commit") as mock_apply_async_on_commit:
-                # delete resources from trash
-                qs.delete()
-                called_arguments: List[int] = sorted(mocked_task_signature.call_args[0][0])
-                expected_called_arguments: List[int] = sorted([resource_1_id, resource_2_id])
-
-                assert called_arguments == expected_called_arguments
-                mocked_task_signature.assert_called_once()
-                mock_apply_async_on_commit.assert_called_once()
+        with patch(
+            "mcod.resources.models.delete_es_resource_tabular_data_index.apply_async_on_commit"
+        ) as mocked_apply_async_on_commit:
+            # delete resources from trash
+            qs.delete()
+            mocked_apply_async_on_commit.assert_called_once()
+            assert sorted(mocked_apply_async_on_commit.call_args.kwargs["args"][0]) == sorted([resource_1_id, resource_2_id])

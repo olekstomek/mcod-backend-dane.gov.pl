@@ -1,10 +1,12 @@
 import copy
 import logging
+import mimetypes
 from collections import namedtuple
 from functools import partial
 from smtplib import SMTPException
 from types import SimpleNamespace
 from typing import Any, Callable, Dict, Optional, Sequence, Type
+from urllib.parse import quote
 from uuid import UUID
 
 import falcon
@@ -14,14 +16,15 @@ from dal import autocomplete
 from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model, login, logout
 from django.contrib.auth.password_validation import validate_password as dj_validate_password
-from django.contrib.auth.views import LoginView as DjangoLoginView
+from django.contrib.auth.views import LoginView as DjangoLoginView, redirect_to_login
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db.models import QuerySet
-from django.http import HttpResponseRedirect
+from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
+from django.views import View
 from rest_framework import permissions, renderers
 from rest_framework.views import APIView
 
@@ -63,7 +66,7 @@ from mcod.users.deserializers import (
 from mcod.users.documents import MeetingDoc
 from mcod.users.exceptions import SAMLArtException
 from mcod.users.forms import AdminLoginForm
-from mcod.users.models import LoggingMethod, Meeting, Token
+from mcod.users.models import LoggingMethod, Meeting, MeetingFile, Token
 from mcod.users.serializers import (
     ACSResponse,
     ACSTemplateResponse,
@@ -364,6 +367,40 @@ class DashboardView(JsonAPIView):
             ]
 
 
+class DownloadMeetingFileView(View):
+    """
+    Handles secure meeting file downloads via Nginx X-Accel-Redirect.
+
+    Files uploaded in the admin panel may contain active content (HTML, SVG, XML,
+    PDF with embedded JavaScript), so downloads are always forced as attachments.
+    """
+
+    def get(self, request, file_path):
+        if not request.user.is_authenticated:
+            redirect_url = self._get_redirect_url()
+            return redirect_to_login(next=redirect_url, login_url=reverse("login"))
+
+        meeting_file = MeetingFile.objects.filter_by_path(file_path)
+
+        if not meeting_file:
+            raise Http404
+
+        normalized_path = meeting_file.file.name
+        safe_path = quote(normalized_path, safe="/")
+        safe_filename = quote(meeting_file.name)
+        content_type = mimetypes.guess_type(meeting_file.file.name)[0] or "application/octet-stream"
+
+        response = HttpResponse()
+        response["Content-Disposition"] = f"attachment; filename*=UTF-8''{safe_filename}"
+        response["Content-Type"] = content_type
+        response["X-Accel-Redirect"] = f"/protected_meetings/{safe_path}"
+        return response
+
+    @staticmethod
+    def _get_redirect_url():
+        return reverse("admin:users_meeting_changelist")
+
+
 class LogoutView(JsonAPIView):
     @falcon.before(login_required)
     @versioned
@@ -510,24 +547,48 @@ class VerifyEmailView(JsonAPIView):
         database_model = get_user_model()
         serializer_schema = VerifyEmailApiResponse
 
-        def clean(self, token, *args, **kwargs):
+        def clean(self, token_uuid: str, *args, **kwargs):
             try:
-                token = Token.objects.get(token=token, token_type=0)
+                token = Token.objects.get(token=token_uuid, token_type=0)
             except Token.DoesNotExist:
+                logger.warning("Email activation rejected: reason=token_not_found token_uuid_prefix=%s", str(token_uuid)[:8])
                 raise falcon.HTTPNotFound()
 
             if not token.is_valid:
+                if token.user.state == "active":
+                    reason = "account_already_activated"
+                elif token.user.email_confirmed:
+                    reason = "email_already_confirmed"
+                else:
+                    reason = "expired_by_time"
+                logger.warning(
+                    "Email activation rejected: reason=%s token_id=%s user_id=%s user_state=%s "
+                    "expiration_date=%s server_time=%s token_uuid_prefix=%s",
+                    reason,
+                    token.pk,
+                    token.user.id,
+                    token.user.state,
+                    token.expiration_date.isoformat(),
+                    timezone.now().isoformat(),
+                    str(token_uuid)[:8],
+                )
                 raise falcon.HTTPBadRequest(description=get_expired_token_description(), code="expired_token")
 
             token.user.state = "active" if token.user.state == "pending" else token.user.state
             token.user.email_confirmed = timezone.now()
             token.user.save()
             token.invalidate()
+            logger.info(
+                "Email activation succeeded: token_id=%s user_id=%s user_state=%s",
+                token.pk,
+                token.user.id,
+                token.user.state,
+            )
 
             return {}
 
-        def _get_data(self, cleaned, token, *args, **kwargs):
-            return namedtuple("Token", ["id", "is_verified"])(token, True)
+        def _get_data(self, cleaned, token_uuid, *args, **kwargs):
+            return namedtuple("Token", ["id", "is_verified"])(token_uuid, True)
 
 
 class ResendActivationEmailView(JsonAPIView):

@@ -10,8 +10,6 @@ from mcod.resources.factories import ResourceFactory
 from mcod.users.factories import AdminFactory, EditorFactory, UserFactory
 from mcod.users.models import User
 
-TEST_PASSWORD = "12345.Abcde"
-
 
 @pytest.fixture
 def active_user(test_password: str) -> User:
@@ -94,11 +92,6 @@ def active_editor_without_org(test_password: str):
 
 
 @pytest.fixture
-def test_password() -> str:
-    return TEST_PASSWORD
-
-
-@pytest.fixture
 def admin(test_password: str):
     return AdminFactory.create(email="admin@dane.gov.pl", password=test_password, phone="0048123456789")
 
@@ -139,7 +132,7 @@ def create_user_with_params(user_type, params=None):
     _factory = factories_registry.get_factory(user_type)
     kwargs = {
         "email": "{}@dane.gov.pl".format(user_type.replace(" ", "_")),
-        "password": TEST_PASSWORD,
+        "password": "qweQWE123!@#.xyz",
     }
     if params is not None:
         kwargs.update(json.loads(params))

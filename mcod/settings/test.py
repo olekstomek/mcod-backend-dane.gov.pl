@@ -114,6 +114,7 @@ CACHES = {
     },
 }
 
+SPARQL_CACHE_ENABLED = False
 
 MEDIA_URL = "/media/"
 IMAGES_URL = "%s%s" % (MEDIA_URL, "images")
@@ -178,13 +179,6 @@ FALCON_LIMITER_ENABLED = False
 FALCON_LIMITER_LOGIN_LIMITS = "3 per minute,10 per hour"
 
 DISCOURSE_FORUM_ENABLED = False
-
-SPARQL_ENDPOINTS = {
-    "kronika": {
-        "endpoint": "http://kronik.gov.pl",
-        "headers": {"host": "public-api.k8s"},
-    }
-}
 
 FIELD_ENCRYPTION_KEYS = ["c2d95c58322ca6ddcf8b0c304c8131f6b515ff5f3a297dcdadeda1a82cb4ec9b"]
 

@@ -6,7 +6,6 @@ from pathlib import Path
 from shutil import disk_usage
 from typing import TYPE_CHECKING, Union
 
-from celery_singleton import Singleton
 from dateutil.relativedelta import relativedelta
 from django.apps import apps
 from django.conf import settings
@@ -135,7 +134,7 @@ def send_dataset_update_reminder():
     logger.debug(f"Sent {sent_messages} messages with dataset update reminder.")
 
 
-@extended_shared_task(base=Singleton)
+@extended_shared_task
 def change_archive_symlink_name(dataset_id: int, old_name: str) -> None:
     """
     Change the name of the symbolic link for the archive of a dataset identified
@@ -184,7 +183,7 @@ def change_archive_symlink_name(dataset_id: int, old_name: str) -> None:
 
 #  FIXME: lremkowicz: remove noqa C901 comment after removing
 #  S61_fix_for_dataset_rename_symlink_archive_problem.be flag
-@extended_shared_task(base=Singleton)
+@extended_shared_task
 def archive_resources_files(dataset_id: int):  # noqa: C901
     logger.info("Starting archive_resources_files task.")
     set_tag("dataset_id", str(dataset_id))

@@ -125,6 +125,10 @@ def is_gpx(path: Union[Path, str], content_type: str) -> bool:
     return path is not None and content_type == "xml" and is_valid_gpx(path)
 
 
+def is_gml(path: Union[Path, str], content_type: str) -> bool:
+    return content_type == "xml" and Path(path).suffix.lower() == ".gml"
+
+
 def is_kml(path: Union[Path, str], content_type: str, is_extracted: bool = False) -> bool:
     """
     Validates KML file by trying to parse it with an external schema
@@ -351,6 +355,9 @@ def check_geodata(path: Union[Path, str], content_type: str, family: str, is_ext
     if is_gpx(path, content_type):
         family = "application"
         content_type = "gpx+xml"
+    if is_gml(path, content_type):
+        family = "application"
+        content_type = "gml+xml"
     if is_kml(path, content_type, is_extracted):
         family = "application"
         content_type = "vnd.google-earth.kmz" if is_extracted else "vnd.google-earth.kml+xml"

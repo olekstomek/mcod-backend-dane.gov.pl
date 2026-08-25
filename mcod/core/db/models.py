@@ -1,9 +1,7 @@
-import base64
 import logging
 import os
 import uuid
 from functools import partial
-from mimetypes import guess_extension, guess_type
 
 from constance import config
 from django.apps import apps
@@ -27,6 +25,7 @@ from model_utils.models import MonitorField, StatusModel, TimeStampedModel as Ba
 from mcod.core import signals
 from mcod.core.api.search import signals as search_signals
 from mcod.core.db.mixins import AdminMixin, ApiMixin
+from mcod.core.image_validation import ImageValidationError, validate_image
 from mcod.core.models import SoftDeletableModel
 from mcod.core.registries import rdf_serializers_registry as rsr
 from mcod.core.serializers import csv_serializers_registry as csr
@@ -494,18 +493,13 @@ class BaseExtendedModel(LogMixin, AdminMixin, ApiMixin, StatusModel, TimeStamped
 
     @classmethod
     def decode_b64_image(cls, encoded_img, img_name):
-        data_parts = encoded_img.split(";base64,")
-        img_data = data_parts[-1].encode("utf-8")
         try:
-            extension = guess_extension(guess_type(encoded_img)[0])
-        except Exception:
-            extension = None
-        name = f"{img_name}{extension}" if extension else img_name
-        try:
-            decoded_img = base64.b64decode(img_data)
-        except Exception:
-            decoded_img = None
-        return ContentFile(decoded_img, name=name) if decoded_img else None
+            image = validate_image(encoded_img)
+        except ImageValidationError:
+            logger.exception("Image validation error.")
+            return None
+
+        return ContentFile(image.decoded_data, name=f"{img_name}{image.extension}")
 
     @classmethod
     def slugify(cls, value, **kwargs):
@@ -618,12 +612,14 @@ def update_watcher(sender, instance, *args, state=None, **kwargs):
             "notify_{}".format(state),
             state,
         )
-    update_model_watcher_task.s(
-        instance._meta.app_label,
-        instance._meta.object_name,
-        instance.id,
-        obj_state=state,
-    ).apply_async_on_commit()
+    update_model_watcher_task.apply_async_on_commit(
+        args=(
+            instance._meta.app_label,
+            instance._meta.object_name,
+            instance.id,
+        ),
+        kwargs={"obj_state": state},
+    )
 
 
 class TrashModelBase(ModelBase):

@@ -64,13 +64,13 @@ class SparqlGraphRegistry:
         update_q, update_ns = self.update(instance)
         related_q, related_ns = self.update_related(instance)
         update_ns.update(**related_ns)
-        return f"{update_q} {related_q}", update_ns
+        return f"{update_q}; {related_q}", update_ns
 
     def create_with_related_update(self, instance):
         create_q, create_ns = self.create(instance)
         related_q, related_ns = self.update_related(instance)
         create_ns.update(**related_ns)
-        return f"{create_q} {related_q}", create_ns
+        return f"{create_q}; {related_q}", create_ns
 
     def delete(self, instance):
         return self._process_action("delete", instance)

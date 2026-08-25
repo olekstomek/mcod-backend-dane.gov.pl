@@ -4,10 +4,8 @@ import warnings
 from typing import Callable, Tuple, Type, Union
 
 from celery import Task, shared_task
-from celery.canvas import Signature
 from celery.local import Proxy
 from django.db import transaction
-from kombu.utils import uuid
 
 base_logger = logging.getLogger("mcod.tasks")
 
@@ -40,18 +38,13 @@ class SharedTask:
         def update_graph_task(task: Task, app_label, object_name, instance_id):
             ...
     Functionalities:
-    - transactional execution
-    - running the task on commit (true by default)
     - retry for error handlers
 
     Dependencies:
-    1. apply_async_on_commit requires a celery Task
-    2. atomic should be innermost (modifies the execution of the func, not of Celery)
-    3. retry_on_lambda should be idempotent and can't raise
+    1. atomic should be innermost (modifies the execution of the func, not of Celery)
+    2. retry_on_lambda should be idempotent and can't raise
 
     Args:
-        apply_async_on_commit: Adds helper methods `.apply_async_on_commit` and `.s.apply_async_on_commit` to the task.
-            This is just syntax sugar allowing you to schedule the task onto Celery at the end of Django-managed transaction.
         atomic: Wraps your function in Django's `transaction.atomic` block.
         commit_on_errors: Allows to commit transaction even if some Python exception occurs.
             Warning: This won't commit transactions aborted by the database.
@@ -70,7 +63,6 @@ class SharedTask:
     def __init__(
         self,
         *,
-        apply_async_on_commit: bool = True,
         atomic=False,
         commit_on_errors: Exceptions = tuple(),
         max_retries: Union[NotSet, int] = not_set,
@@ -80,7 +72,6 @@ class SharedTask:
         bind: bool = False,
         **celery_kwargs,
     ):
-        self.apply_async_on_commit = apply_async_on_commit
         self.commit_on_errors = commit_on_errors
         self.atomic = atomic
 
@@ -129,41 +120,7 @@ class SharedTask:
             func = self._add_retries(func)
         task: CeleryTask = shared_task(**_kwargs_for_shared_task)(func)
         del func
-        if self.apply_async_on_commit is True:
-            task = self._add_apply_async_on_commit(task)
         return task
-
-    def _add_apply_async_on_commit(self, func: CeleryTask) -> CeleryTask:
-        """
-        Adds properties to the func, doesn't wrap it in a decorator
-        """
-
-        def apply_async_on_commit(
-            task: Union[Signature, Task],
-            *proxy_args,
-            **proxy_kwargs,
-        ):
-            task_id = self.celery_kwargs.get("task_id", uuid())
-
-            def run_on_commit():
-                return task.apply_async(*proxy_args, task_id=task_id, **proxy_kwargs)
-
-            run_on_commit.__name__ = f"{func.__name__}.apply_async_on_commit.run_on_commit"
-            run_on_commit.__qualname__ = f"{func.__qualname__}.apply_async_on_commit.run_on_commit"
-            transaction.on_commit(run_on_commit)
-            return task_id
-
-        def s(self: Task, *proxy_args, **proxy_kwargs):
-            # https://docs.celeryq.dev/en/v5.0.2/reference/celery.html#celery.signature
-            signature = self.signature(proxy_args, proxy_kwargs)
-            if not hasattr(signature, "apply_async_on_commit"):
-                signature.__class__.apply_async_on_commit = apply_async_on_commit
-            return signature
-
-        func.__class__.s = s
-        func.__class__.apply_async_on_commit = apply_async_on_commit
-
-        return func
 
     def _add_atomic(self, func: Callable) -> Callable:
         @functools.wraps(func)
@@ -222,7 +179,6 @@ class SharedTask:
             _rol = "None"
         return (
             f"SharedTask("
-            f"apply_async_on_commit={self.apply_async_on_commit},"
             f"atomic={self.atomic},"
             f"commit_on_errors={self.commit_on_errors},"
             f"retry_on_errors={self.retry_on_errors},"
@@ -237,7 +193,6 @@ class SharedTask:
 def extended_shared_task(
     func: Callable = None,
     *,
-    apply_async_on_commit: bool = True,
     atomic=False,
     commit_on_errors: Exceptions = tuple(),
     max_retries: Union[NotSet, int] = not_set,
@@ -254,7 +209,6 @@ def extended_shared_task(
         return SharedTask().decorate(func)
     else:
         return SharedTask(
-            apply_async_on_commit=apply_async_on_commit,
             atomic=atomic,
             commit_on_errors=commit_on_errors,
             max_retries=max_retries,
