@@ -12,6 +12,35 @@ ______________________________________________________________________
 
 ### Breaks
 
+## 2.61.0 - (2026-08-26)
+
+______________________________________________________________________
+
+### New
+
+- Uporządkowanie konfiguracji i zależności związanych z CMS - OTD-2685
+- Przywrócenie unleashclient==6.7 - OTD-2947
+- Wydzielenie kontenerów do testowania dla: api, cms i admin - OTD-2809
+- Dodanie pytest.mark dla testów związanych z api  - OTD-2809
+- moduł mcod.core.tracker_patch do obsługi wyłączania stanu pól przez FieldTracker w kontekście włączonego disable_modeltracker() - OTD-2726
+- testy TestDisableModelTracker w module mcod.core.test.test_utils - OTD-2726
+- Dostosowanie wysyłki email dla PoCoTo, Propozycji nowych danych i Zgłoszeń uwag do zbioru / zasobu - OTD-2878
+
+### Changes
+
+- dekorator disable_modeltracker() oparty na module tracker_patch - OTD-2726
+- Zaktualizowany Dockerfile w docker/rdfdb o nową wersję Fuseki 6.2.0 - OTD-3036
+- Dostosowany gitlab-ci.yml o tworzenie nowego obrazu bazy Fuseki 6.2.0-mcod-1 - OTD-3036
+
+### Fixes
+
+- Umożliwienie generacji raportów Uwag dla zbiorów danych oraz Uwag do danych - OTD-2941
+- Konflikt priorytetów sortowania - OTD-2644
+- Naprawa niedeterministycznych testów TestMediaStorages, test_get_all_dga_resources_sorted_by_organizations - OTD-2809
+- Naprawa kolejności tasków Celery w kontekście Stopni Otwartości - OTD-2491
+
+### Breaks
+
 ## 2.60.0 - (2026-07-22)
 
 ______________________________________________________________________

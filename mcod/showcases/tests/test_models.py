@@ -1,5 +1,4 @@
 from datetime import date
-from unittest.mock import patch
 
 import pytest
 from django.conf import settings
@@ -11,7 +10,6 @@ from django.test import override_settings
 from mcod.core.tests.helpers.tasks import run_on_commit_events
 from mcod.showcases.factories import ShowcaseProposalFactory
 from mcod.showcases.models import Showcase, ShowcaseProposal
-from mcod.submissions.models import Category, Subject
 
 
 class TestShowcaseModel:
@@ -203,24 +201,3 @@ class TestShowcaseModel:
             image = ShowcaseProposal.decode_b64_image(valid_jpeg_data_uri, "example")
 
         assert image is None
-
-
-def test_create_submission_event_on_creation_but_not_on_update():
-    with patch("mcod.showcases.models.create_submission_event") as mock_create:
-        # creation - create_submission_event - called
-        proposal: ShowcaseProposal = ShowcaseProposalFactory.create(
-            title="Test proposal",
-            notes="Test notes",
-        )
-        mock_create.assert_called_once_with(
-            reference_object=proposal,
-            submission_date=proposal.created,
-            subject=Subject.DATA,
-            category=Category.SUGGEST_REUSE,
-        )
-        mock_create.reset_mock()
-
-        # update - create_submission_event - not called
-        proposal.title = "Updated title"
-        proposal.save()
-        mock_create.assert_not_called()

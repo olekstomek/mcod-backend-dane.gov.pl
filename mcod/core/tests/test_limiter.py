@@ -171,6 +171,8 @@ class TestRateLimiterIntegration:
 
         assert endpoint.call_count == 1
 
+    @pytest.mark.depends_on_component
+    @pytest.mark.component_api
     @pytest.mark.parametrize(
         ("limiter_enabled", "expected_status"),
         [

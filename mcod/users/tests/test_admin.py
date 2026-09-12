@@ -22,7 +22,6 @@ scenarios("features/admin_forms.feature")
 scenarios("features/meetings.feature")
 
 User = get_user_model()
-admin_login_url = reverse("admin:login")
 
 
 class TestDjangoAxes:
@@ -49,9 +48,9 @@ class TestDjangoAxes:
         reload(mcod.urls)
 
     @staticmethod
-    def _login_to_admin(client: Client, user, password: str):
+    def _login_to_admin(client: Client, user, password: str, url: str):
         response = client.post(
-            admin_login_url,
+            url,
             data={
                 "username": user.email,
                 "password": password,
@@ -97,11 +96,13 @@ class TestDjangoAxes:
             ("active_editor", False),
         ],
     )
-    def test_axes_panel_visibility_when_enabled(self, request, user_fixture: str, should_see_axes: bool, test_password: str):
+    def test_axes_panel_visibility_when_enabled(
+        self, request, user_fixture: str, should_see_axes: bool, test_password: str, admin_login_url: str
+    ):
         user = request.getfixturevalue(user_fixture)
         client = Client()
 
-        self._login_to_admin(client, user, test_password)
+        self._login_to_admin(client, user, test_password, admin_login_url)
         links = self._get_admin_index_links(client)
         accessattempt_url, accesslog_url = self._get_axes_urls()
 
@@ -116,17 +117,17 @@ class TestDjangoAxes:
             "active_editor",
         ],
     )
-    def test_axes_panel_not_visible_when_disabled(self, request, user_fixture: str, test_password: str):
+    def test_axes_panel_not_visible_when_disabled(self, request, user_fixture: str, test_password: str, admin_login_url: str):
         client = Client()
         user = request.getfixturevalue(user_fixture)
 
-        self._login_to_admin(client, user, test_password)
+        self._login_to_admin(client, user, test_password, admin_login_url)
 
         links = self._get_admin_index_links(client)
         assert not any("/axes/accessattempt/" in (link or "") for link in links)
         assert not any("/axes/accesslog/" in (link or "") for link in links)
 
-    def test_login_axes_block(self, admin):
+    def test_login_axes_block(self, admin, admin_login_url: str):
         client = Client()
         payloads = {
             "username": admin.email,
@@ -145,11 +146,13 @@ class TestDjangoAxes:
             ("active_editor", 403),
         ],
     )
-    def test_axes_urls_access_when_enabled(self, request, user_fixture: str, status_code: int, test_password: str):
+    def test_axes_urls_access_when_enabled(
+        self, request, user_fixture: str, status_code: int, test_password: str, admin_login_url: str
+    ):
         user = request.getfixturevalue(user_fixture)
         client = Client()
 
-        self._login_to_admin(client, user, test_password)
+        self._login_to_admin(client, user, test_password, admin_login_url)
         links = self._get_axes_urls()
 
         for link in links:
@@ -219,14 +222,14 @@ class TestUserAdmin:
         u = User.objects.get(id=active_editor.id)
         assert not u.is_superuser
 
-    def test_login_email_is_case_insensitive(self, active_editor: User, test_password: str):
+    def test_login_email_is_case_insensitive(self, active_editor: User, test_password: str, admin_login_url: str):
         client = Client()
         payloads = {"username": active_editor.email.upper(), "password": test_password}
         client.post(admin_login_url, data=payloads)
         response = client.get(reverse("admin:users_user_changelist"))
         assert 200 == response.status_code
 
-    def test_admin_login_redirects_to_admin_index_without_next(self, admin: User, test_password: str):
+    def test_admin_login_redirects_to_admin_index_without_next(self, admin: User, test_password: str, admin_login_url: str):
         client = Client()
         response = client.post(
             admin_login_url,
@@ -244,7 +247,7 @@ class TestUserAdmin:
             # https://docs.djangoproject.com/en/3.2/releases/3.2/   noqa: E265
             raise Exception("changed it to: response.headers['Location']")
 
-    def test_admin_login_redirects_to_next_when_provided(self, admin: User, test_password: str):
+    def test_admin_login_redirects_to_next_when_provided(self, admin: User, test_password: str, admin_login_url: str):
         client = Client()
         next_url = reverse("admin:users_user_changelist")
 

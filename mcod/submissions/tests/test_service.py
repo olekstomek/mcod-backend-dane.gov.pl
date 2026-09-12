@@ -59,8 +59,7 @@ def test_create_submission_event(subject: Subject, category: Optional[Category])
 def test_create_submission_event_with_reference_object() -> None:
     # GIVEN
     assert SubmissionEvent.objects.count() == 0
-    with patch("mcod.suggestions.models.create_submission_event"):
-        reference_submission = DatasetSubmissionFactory.create()
+    reference_submission = DatasetSubmissionFactory.create()
 
     # WHEN
     submission_event: Optional[SubmissionEvent] = create_submission_event(

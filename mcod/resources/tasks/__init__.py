@@ -4,7 +4,10 @@ from mcod.resources.tasks.entrypoint_res_file import (
     entrypoint_process_resource_file_validation_task,
 )
 from mcod.resources.tasks.process_resource_file import process_resource_res_file_task
-from mcod.resources.tasks.process_resource_file_data import process_resource_file_data_task
+from mcod.resources.tasks.process_resource_file_data import (
+    increase_openness_score_task,
+    process_resource_file_data_task,
+)
 from mcod.resources.tasks.process_resource_from_url import process_resource_from_url_task
 from mcod.resources.tasks.tasks import (
     check_link_protocol,
@@ -34,6 +37,7 @@ if is_enabled("S69_resource_link_validation_chunk"):
         "entrypoint_process_resource_file_validation_task",
         "process_resource_res_file_task",
         "process_resource_file_data_task",
+        "increase_openness_score_task",
         "process_resource_from_url_task",
         "check_link_protocol",
         "compare_postgres_and_elasticsearch_consistency_task",
@@ -60,6 +64,7 @@ else:
         "entrypoint_process_resource_file_validation_task",
         "process_resource_res_file_task",
         "process_resource_file_data_task",
+        "increase_openness_score_task",
         "process_resource_from_url_task",
         "check_link_protocol",
         "compare_postgres_and_elasticsearch_consistency_task",

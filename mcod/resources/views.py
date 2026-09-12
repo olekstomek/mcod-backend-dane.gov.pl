@@ -60,6 +60,9 @@ from mcod.resources.serializers import (
     VocabEntryRDFResponseSchema,
     VocabRDFResponseSchema,
 )
+from mcod.resources.tasks import send_resource_comment
+from mcod.submissions.models import Category, Subject, SubmissionEvent
+from mcod.submissions.service import create_submission_event
 from mcod.suggestions.models import ResourceComment
 
 
@@ -419,9 +422,26 @@ class ResourceCommentsView(JsonAPIView):
 
         def _get_data(self, cleaned, id, *args, **kwargs):
             data = cleaned["data"]["attributes"]
+            applicant_full_name = data.get("applicant_full_name")
+            applicant_email = data.get("applicant_email")
             comment: str = data["comment"]
-            res_comment = ResourceComment.objects.create(resource_id=id, comment=comment)
+            res_comment = self._create_resource_comment(id, comment, applicant_full_name, applicant_email)
             self.response.context.data = res_comment
+
+        def _create_resource_comment(
+            self, resource_id: int, comment: str, applicant_full_name: Optional[str], applicant_email: Optional[str]
+        ) -> ResourceComment:
+            """Create a resource comment, register a submission event, and schedule the notification email."""
+            res_comment = ResourceComment.objects.create(resource_id=resource_id, comment=comment)
+            event: Optional[SubmissionEvent] = create_submission_event(
+                reference_object=res_comment,
+                submission_date=res_comment.created,
+                subject=Subject.DATA,
+                category=Category.FEEDBACK,
+            )
+            event_id = event.id if event else None
+            send_resource_comment.apply_async_on_commit(args=(res_comment.id, event_id, applicant_full_name, applicant_email))
+            return res_comment
 
 
 class ResourceFileDownloadView:

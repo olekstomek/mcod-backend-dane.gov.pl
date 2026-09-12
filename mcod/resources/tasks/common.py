@@ -1,5 +1,6 @@
 import datetime
 import json
+import logging
 from typing import TYPE_CHECKING, Any, Dict, Union
 
 from django.apps import apps
@@ -10,6 +11,8 @@ from django.utils.timezone import now
 if TYPE_CHECKING:
     from mcod.resources.models import Resource
     from mcod.resources.score_computation import OptionalOpennessScoreValue
+
+logger = logging.getLogger("mcod")
 
 
 def prepare_url_task_result_for_resource(resource: "Resource") -> Dict[str, Any]:
@@ -69,7 +72,7 @@ def save_task_result_for_resource_after_task_failure(
     Resource = apps.get_model("resources", "Resource")
     TaskResult = apps.get_model("resources", "TaskResult")
 
-    resource = Resource.objects.get(pk=resource_id)
+    resource: "Resource" = Resource.objects.get(pk=resource_id)
     result = {
         "exc_type": exception.__class__.__name__,
         "exc_message": str(exception),
@@ -85,12 +88,15 @@ def save_task_result_for_resource_after_task_failure(
 
 
 def update_resource_verification_date(resource_pk: Union[int, str]) -> None:
+    logger.info("Resource %s: updating verification date", resource_pk)
     Resource = apps.get_model("resources", "Resource")
     current_datetime: datetime.datetime = now()
     Resource.raw.filter(pk=resource_pk).update(verified=Greatest(F("verified"), current_datetime))
 
 
 def update_resource_openness_score(resource_pk: Union[int, str]) -> None:
+    logger.info("Resource %s: updating openness score", resource_pk)
+
     Resource = apps.get_model("resources", "Resource")
     ResourceFile = apps.get_model("resources", "ResourceFile")
 

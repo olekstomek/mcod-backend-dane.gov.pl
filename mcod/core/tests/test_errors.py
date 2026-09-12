@@ -37,6 +37,8 @@ def uri():
     return "/test_errors"
 
 
+@pytest.mark.depends_on_component
+@pytest.mark.component_api
 class TestErrors:
     @pytest.mark.run(order=0)
     def test_error_serializer_10(self, client, uri):

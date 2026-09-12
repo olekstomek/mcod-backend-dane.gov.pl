@@ -29,14 +29,14 @@ prepare-images:
   script:
     - docker build -f docker/elasticsearch/Dockerfile -t $REGISTRY_PATH/elasticsearch:6.8.23-mcod-1 .
     - docker build -f docker/postgres/Dockerfile -t $REGISTRY_PATH/postgresql:17-trixie-mcod .
-    - docker build -f docker/rdfdb/Dockerfile -t $REGISTRY_PATH/fuseki:6.0.0-mcod-1 .
+    - docker build -f docker/rdfdb/Dockerfile -t $REGISTRY_PATH/fuseki:6.2.0-mcod-1 .
     - docker build -f docker/rabbitmq/Dockerfile -t $REGISTRY_PATH/rabbitmq:4.2.5-management-alpine-mcod .
     - docker build -f docker/redis/Dockerfile -t $REGISTRY_PATH/redis:8.4.2-trixie-mcod .
     - docker build -f docker/tests/Dockerfile -t $REGISTRY_PATH/mcod-tests:${TEST_IMAGE_VERSION} .
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $REGISTRY_HOST
     - docker push $REGISTRY_PATH/elasticsearch:6.8.23-mcod-1
     - docker push $REGISTRY_PATH/postgresql:17-trixie-mcod
-    - docker push $REGISTRY_PATH/fuseki:6.0.0-mcod-1
+    - docker push $REGISTRY_PATH/fuseki:6.2.0-mcod-1
     - docker push $REGISTRY_PATH/rabbitmq:4.2.5-management-alpine-mcod
     - docker push $REGISTRY_PATH/redis:8.4.2-trixie-mcod
     - docker push $REGISTRY_PATH/mcod-tests:${TEST_IMAGE_VERSION}
@@ -48,13 +48,14 @@ prepare-images:
   tags:
     - shell
 
-test:
+test-admin: &test
   stage: test
   image: $REGISTRY_PATH/mcod-tests:${TEST_IMAGE_VERSION}
-  variables:
+  variables: &test_variables
     PYTHONUNBUFFERED: 1
     PYTHONDONTWRITEBYTECODE: 1
     ENVIRONMENT: test
+    COMPONENT: admin
     TEST_DEBUG: "yes"
     ALLOWED_HOSTS: "*"
     BASE_URL: http://test.mcod
@@ -97,7 +98,7 @@ test:
       alias: redis
     - name: $REGISTRY_PATH/rabbitmq:4.2.5-management-alpine-mcod
       alias: rabbitmq
-    - name: $REGISTRY_PATH/fuseki:6.0.0-mcod-1
+    - name: $REGISTRY_PATH/fuseki:6.2.0-mcod-1
       alias: fuseki
     - name: $REGISTRY_PATH/elasticsearch:6.8.23-mcod-1
       alias: elasticsearch
@@ -111,10 +112,11 @@ test:
         ]
     - name: $REGISTRY_PATH/postgresql:17-trixie-mcod
       alias: postgres
-  script:
+  before_script:
     - python manage.py compilemessages --settings mcod.settings.test -v 3
     - python manage.py makemigrations --check --settings mcod.settings.test
-    - pytest --cov --cov-report term --cov-report xml:coverage.xml --junitxml=report.xml -v -n${PYTEST_NUMBER_OF_XDIST_WORKERS} --maxfail=${PYTEST_FAIL_FAST} mcod
+  script:
+    - pytest --cov --cov-report term --cov-report xml:coverage.xml --junitxml=report.xml -v -n${PYTEST_NUMBER_OF_XDIST_WORKERS} --maxfail=${PYTEST_FAIL_FAST} -m "not depends_on_component" mcod
   artifacts:
     when: always
     reports:
@@ -152,6 +154,23 @@ test:
       when: on_success
   tags:
     - docker
+
+test-cms:
+  <<: *test
+  variables:
+    <<: *test_variables
+    COMPONENT: cms
+  script:
+    - pytest --cov --cov-report term --cov-report xml:coverage.xml --junitxml=report.xml -v -n${PYTEST_NUMBER_OF_XDIST_WORKERS} --maxfail=${PYTEST_FAIL_FAST} -m "component_cms"
+
+test-api:
+  <<: *test
+  variables:
+    <<: *test_variables
+    COMPONENT: api
+  script:
+    - pytest --cov --cov-report term --cov-report xml:coverage.xml --junitxml=report.xml -v -n${PYTEST_NUMBER_OF_XDIST_WORKERS} --maxfail=${PYTEST_FAIL_FAST} -m "component_api"
+
 
 lint:
   stage: test

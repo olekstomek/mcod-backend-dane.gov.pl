@@ -15,7 +15,6 @@ from http.cookies import SimpleCookie
 from io import StringIO, TextIOWrapper
 from pathlib import Path
 from typing import Any, Dict, Final, Iterable, List, Optional, Sequence, TextIO, Union
-from unittest.mock import patch
 from urllib.request import urlopen
 from xml.dom.minidom import parseString
 from xml.sax.saxutils import escape
@@ -32,6 +31,8 @@ from pyexpat import ExpatError
 from pytz import utc
 from rdflib import BNode, Graph, Literal as RDFLiteral, URIRef
 from rdflib.namespace import RDF, Namespace
+
+from mcod.unleash import is_enabled
 
 logger = logging.getLogger("mcod")
 
@@ -519,10 +520,21 @@ def disable_modeltracker():
     Helper to disable a time-consuming tracker functionalities if not needed,
     e.g. in read-only flows.
     """
-    with patch("model_utils.tracker.FieldTracker.initialize_tracker", lambda *a, **kw: None), patch(
-        "model_utils.tracker.FieldInstanceTracker.set_saved_fields", lambda self: None
-    ):
-        yield
+    if is_enabled("S72_disable_modeltracker_in_local_context.be"):
+        from mcod.core.tracker_patch import _tracker_disabled
+
+        token = _tracker_disabled.set(True)
+        try:
+            yield
+        finally:
+            _tracker_disabled.reset(token)
+    else:
+        from unittest.mock import patch
+
+        with patch("model_utils.tracker.FieldTracker.initialize_tracker", lambda *a, **kw: None), patch(
+            "model_utils.tracker.FieldInstanceTracker.set_saved_fields", lambda self: None
+        ):
+            yield
 
 
 def get_file_content_from_url(file_url: str) -> str:

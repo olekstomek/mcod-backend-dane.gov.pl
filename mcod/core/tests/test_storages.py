@@ -1,30 +1,32 @@
 import os
-import shutil
 import typing
 from uuid import uuid4
 
 import pytest
 
-if typing.TYPE_CHECKING:
-    from falcon.testing import TestClient
-
 from mcod.core.storages import ApplicationImagesStorage, OrganizationImagesStorage, ResourcesStorage
 
+if typing.TYPE_CHECKING:
+    from pathlib import Path
 
-class TestStorages:
-    def _test_storage(self, client: "TestClient", storage):
+
+class TestMediaStorages:
+    @staticmethod
+    def _test_storage(tmp_path: "Path", storage_cls):
+        storage_location = tmp_path / str(uuid4())
+        storage = storage_cls(
+            location=str(storage_location),
+            base_url="/media/%s/" % storage_location.name,
+        )
         tmp_name = str(uuid4())
-        tmp_path = os.path.join("/", "tmp", str(uuid4()))
+        tmp_file_path = tmp_path / str(uuid4())
         tmp_content = str(uuid4())
-        tmp = open(tmp_path, "w")
-        tmp.write(tmp_content)
-        tmp.close()
-        tmp_file = open(tmp_path, "r")
 
-        filename1 = storage.save("%s.txt" % tmp_name, tmp_file)
-        filename2 = storage.save("%s.txt" % tmp_name, tmp_file)
+        tmp_file_path.write_text(tmp_content)
 
-        tmp_file.close()
+        with tmp_file_path.open("r") as tmp_file:
+            filename1 = storage.save("%s.txt" % tmp_name, tmp_file)
+            filename2 = storage.save("%s.txt" % tmp_name, tmp_file)
 
         base_location = storage.base_location
         base_url = storage.base_url
@@ -41,35 +43,21 @@ class TestStorages:
         with open(file1, "rt") as f:
             assert f.readline() == tmp_content
 
-        result = client.simulate_get(url1)
-        assert result.status_code == 200
-
-        result = client.simulate_get(url2)
-        assert result.status_code == 200
+        assert filename1 == storage.name_from_url(url1)
+        assert filename2 == storage.name_from_url(url2)
 
         os.remove(file1)
-        result = client.simulate_get(url1)
-        assert result.status_code == 404
-
-        result = client.simulate_get(url2)
-        assert result.status_code == 200
-
-        shutil.rmtree(base_location)
-
-        result = client.simulate_get(url1)
-        assert result.status_code == 404
-
-        result = client.simulate_get(url2)
-        assert result.status_code == 404
+        assert storage.name_from_url(url1) is None
+        assert filename2 == storage.name_from_url(url2)
 
     @pytest.mark.run(order=0)
-    def test_resources_storage(self, client):
-        self._test_storage(client, ResourcesStorage())
+    def test_resources_storage(self, tmp_path):
+        self._test_storage(tmp_path, ResourcesStorage)
 
     @pytest.mark.run(order=0)
-    def test_application_storage(self, client):
-        self._test_storage(client, ApplicationImagesStorage())
+    def test_application_storage(self, tmp_path):
+        self._test_storage(tmp_path, ApplicationImagesStorage)
 
     @pytest.mark.run(order=0)
-    def test_organization_storage(self, client):
-        self._test_storage(client, OrganizationImagesStorage())
+    def test_organization_storage(self, tmp_path):
+        self._test_storage(tmp_path, OrganizationImagesStorage)

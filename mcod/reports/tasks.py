@@ -48,7 +48,11 @@ from mcod.resources.serializers import ResourceCSVSchema
 from mcod.resources.tasks import validate_link
 from mcod.schedules.serializers import UserScheduleItemCSVSerializer
 from mcod.showcases.serializers import ShowcaseProposalCSVSerializer
-from mcod.suggestions.serializers import DatasetSubmissionCSVSerializer
+from mcod.suggestions.serializers import (
+    DatasetCommentCSVSerializer,
+    DatasetSubmissionCSVSerializer,
+    ResourceCommentCSVSerializer,
+)
 from mcod.unleash import is_enabled
 from mcod.users.serializers import UserLocalTimeCSVSerializer
 
@@ -219,6 +223,8 @@ def generate_csv(
         "schedules.UserScheduleItem": UserScheduleItemCSVSerializer,
         "suggestions.DatasetSubmission": DatasetSubmissionCSVSerializer,
         "showcases.ShowcaseProposal": ShowcaseProposalCSVSerializer,
+        "suggestions.DatasetComment": DatasetCommentCSVSerializer,
+        "suggestions.ResourceComment": ResourceCommentCSVSerializer,
     }
     try:
         serializer_cls: Type[CSVSerializer] = model_label_to_serializer_cls_map[_model_label]

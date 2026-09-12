@@ -37,7 +37,11 @@ POST_CREATE_CKAN_DATASOURCE = {
     "datasource_datasets-MAX_NUM_FORMS": 1000,
 }
 client = Client()
-data_source_admin_url = reverse("admin:harvester_datasource_add")
+
+
+@pytest.fixture
+def data_source_admin_url() -> str:
+    return reverse("admin:harvester_datasource_add")
 
 
 class TestHarvesterImportsCkanStoCalculation:
@@ -65,6 +69,7 @@ class TestHarvesterImportsCkanStoCalculation:
         test_data_file_name: str,
         expected_openness_score: int,
         format_in_ckan_payload: str,
+        data_source_admin_url: str,
     ):
         """
         Parametrized test to verify correct calculation of the openness score (STO)
@@ -191,6 +196,7 @@ class TestHarvesterImportsCkanStoCalculation:
         format_in_content_disposition: Optional[str],
         expected_format: str,
         expected_openness_score: int,
+        data_source_admin_url: str,
     ):
         """
         Parametrized test to verify correct calculation of the openness score (STO)
@@ -415,6 +421,7 @@ def test_harvester_resource_format_validation(
     expected_format: Optional[str],
     admin: User,
     harvester_ckan_data_with_no_resource_format: dict,
+    data_source_admin_url: str,
 ):
     """
     Test `POST` behavior of CKAN data sources based on file content, headers, and filenames. See get_resource_format.

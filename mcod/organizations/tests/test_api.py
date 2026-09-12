@@ -7,6 +7,9 @@ from pytest_bdd import scenarios
 from mcod.core.tests.helpers.tasks import run_on_commit_events
 from mcod.organizations.factories import OrganizationFactory
 
+# All tests in this module depend on component
+pytestmark = [pytest.mark.depends_on_component, pytest.mark.component_api]
+
 scenarios(
     "features/organization_datasets_list_api.feature",
     "features/organizations_list_api.feature",

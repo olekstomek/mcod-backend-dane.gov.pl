@@ -1,3 +1,26 @@
-{% if test %}adresaci: {{ resource.comment_mail_recipients|join:", " }}{% endif %}
-Do zasobu {{ resource.title }} została zgłoszona uwaga:
+ID Zgłoszenia:
+{{ submission_event_id_display }}
+
+ID Referencyjne:
+{{ reference_id }}
+
+Data Zgłoszenia:
+{{ submission_date_display }}
+
+Temat:
+{{ subject_display }}
+
+Kategoria:
+{{ category_display }}
+
+Imię i nazwisko zgłaszającego:
+{{ applicant_full_name }}
+
+Adres e-mail zgłaszającego:
+{{ applicant_email_display }}
+
+Uwagi:
 {{ comment }}
+
+Link do zasobu:
+{{ url }}

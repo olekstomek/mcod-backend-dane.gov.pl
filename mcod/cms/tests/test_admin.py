@@ -1,6 +1,8 @@
+import pytest
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.test import Client, override_settings
+from django.contrib.messages import get_messages
+from django.test import Client
 from django.urls import reverse
 from django.utils.encoding import force_str
 
@@ -10,7 +12,8 @@ client = Client()
 User = get_user_model()
 
 
-@override_settings(ROOT_URLCONF="mcod.cms.tests.cms_url_patterns")
+@pytest.mark.depends_on_component
+@pytest.mark.component_cms
 def test_cms_login_redirects_to_admin_when_next_is_provided(admin):
     admin.set_password("secret123")
     admin.save()
@@ -32,13 +35,16 @@ def test_cms_login_redirects_to_admin_when_next_is_provided(admin):
         raise Exception("changed it to: response.headers['Location']")
 
 
-@override_settings(ROOT_URLCONF="mcod.cms.tests.cms_url_patterns")
+@pytest.mark.depends_on_component
+@pytest.mark.component_cms
 def test_cms_login_axes_block(admin: User):
     payloads = {
         "username": admin.email,
         "password": "wrong password",
         "this_is_the_login_form": "1",
     }
+    response = None
     for _ in range(settings.AXES_FAILURE_LIMIT):
-        client.post(reverse("wagtailadmin_login"), data=payloads)
-    assert force_str(settings.AXES_FAIL_MESSAGE) in client.session["axes_lockout_message"]
+        response = client.post(reverse("wagtailadmin_login"), data=payloads)
+    messages = [force_str(message) for message in get_messages(response.wsgi_request)]
+    assert force_str(settings.AXES_FAIL_MESSAGE) in messages

@@ -5,7 +5,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-    <title>{% trans "A comment was posted on the resource" %}</title>
+    <title>Zarejestrowano nowe zgłoszenie</title>
 </head>
 <body>
 <div style="width:650px; margin:auto;">
@@ -18,7 +18,7 @@
         <tr style="max-width:580px; padding-top:10px; padding-bottom:10px;">
             <td align="left" style="padding-top:10px; padding-bottom:10px; max-width:580px;border-collapse: collapse;text-align:left; vertical-align:middle;">
                 <div style="text-align:left;font-size:28px;font-family: Open Sans Light , Arial, Helvetica, sans-serif;text-decoration:none solid black;color:black;">
-                    {% trans "A COMMENT WAS POSTED ON THE RESOURCE" %} {{ resource.title }}
+                    Zarejestrowano nowe zgłoszenie
                 </div>
             </td>
         </tr>
@@ -29,21 +29,30 @@
         </tr>
         <tr style="max-width:580px; padding-top:10px; padding-bottom:10px;">
             <td align="left" style="padding-top:10px; padding-bottom:10px; max-width:580px;border-collapse: collapse;text-align:left;vertical-align:middle;">
-                {% if test %}
-                <p>
-                    {% trans "addresses:" %}  {{ resource.comment_mail_recipients|join:", " }}<br />
-                </p>
-                {% endif %}
-                <p style="text-align:left;font-family: Open Sans Light , Arial, Helvetica, sans-serif;text-decoration:none solid black;color:black;line-height:1.15;display: block !important;">
-                    {% blocktrans with title=resource.title dataset_title=resource.dataset.title url=resource.frontend_absolute_url %}On the resource {{ title }} [<a href="{{ url }}">{{ url }}</a>] from data set {{ dataset_title }} was posted a comment:{% endblocktrans %}<br />
-                </p>
-                <p style="text-align:left;font-family: Open Sans Light , Arial, Helvetica, sans-serif;font-weight:700;text-decoration:none solid black;color:black;line-height:1.15;display:block !important;">
-                    {{ comment|linebreaksbr }}
-                </p>
+                <table border="0" cellspacing="0" cellpadding="0" style="width:100%;table-layout:fixed;">
+                    {% include 'mails/proposal-row-label.html' with val='ID Zgłoszenia:' %}
+                    {% include 'mails/proposal-row-value.html' with val=submission_event_id_display %}
+                    {% include 'mails/proposal-row-label.html' with val='ID Referencyjne:' %}
+                    {% include 'mails/proposal-row-value.html' with val=reference_id %}
+                    {% include 'mails/proposal-row-label.html' with val='Data Zgłoszenia:' %}
+                    {% include 'mails/proposal-row-value.html' with val=submission_date_display %}
+                    {% include 'mails/proposal-row-label.html' with val='Temat:' %}
+                    {% include 'mails/proposal-row-value.html' with val=subject_display %}
+                    {% include 'mails/proposal-row-label.html' with val='Kategoria:' %}
+                    {% include 'mails/proposal-row-value.html' with val=category_display %}
+                    {% include 'mails/proposal-row-label.html' with val='Imię i nazwisko zgłaszającego:' %}
+                    {% include 'mails/proposal-row-value.html' with val=applicant_full_name %}
+                    {% include 'mails/proposal-row-label.html' with val='Adres e-mail zgłaszającego:' %}
+                    {% include 'mails/proposal-row-value.html' with val=applicant_email_display %}
+                    {% include 'mails/proposal-row-label.html' with val='Uwagi:' %}
+                    {% include 'mails/proposal-row-value.html' with val=comment|linebreaksbr %}
+                    {% include 'mails/proposal-row-label.html' with val='Link do zasobu:' %}
+                    {% include 'mails/proposal-row-value.html' with val=url|urlize %}
+                </table>
             </td>
         </tr>
-        {% trans 'Wiadomość została wygenerowana automatycznie przez oprogramowanie portalu Dane.gov.pl w wyniku zgłoszenia przez użytkownika uwagi o treści jak wyżej.<br><br>Kontakt z Zespołem portalu Dane.gov.pl: <a href="mailto:kontakt@dane.gov.pl" target="_blank">kontakt@dane.gov.pl</a>' as footer_txt %}
-        {% include 'mails/_footer.html' with signature=False footer_txt=footer_txt font_color='black' %}
+        {% trans 'Wiadomość została wygenerowana automatycznie.' as footer_txt %}
+        {% include 'mails/_footer.html' with signature=False footer_txt=footer_txt font_color='black' text_align='center' %}
     </table>
 </div>
 </body>

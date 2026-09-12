@@ -2,6 +2,7 @@ import re
 from typing import List
 
 import factory
+import pytest
 from bs4 import BeautifulSoup
 from django.contrib.auth import get_user_model
 from django.db.models import QuerySet
@@ -23,16 +24,19 @@ User = get_user_model()
 
 class TestDataSourceImportsReports:
 
-    url: str = reverse("admin:reports_datasourceimportreport_changelist")
     client: Client = Client()
 
-    def test_none_admin_cant_see_page(self, active_editor: User):
+    @pytest.fixture
+    def url(self) -> str:
+        return reverse("admin:reports_datasourceimportreport_changelist")
+
+    def test_none_admin_cant_see_page(self, active_editor: User, url: str):
         """Test if non-admin user can see the page."""
         self.client.force_login(active_editor)
-        res: HttpResponse = self.client.get(self.url)
+        res: HttpResponse = self.client.get(url)
         assert res.status_code == 403
 
-    def test_data_source_imports_admin_reports(self, tmp_path, admin):
+    def test_data_source_imports_admin_reports(self, tmp_path, admin, url: str):
         """
         Test endpoint with given reports in DB. As a result, user should see the table with the
         reports links.
@@ -48,7 +52,7 @@ class TestDataSourceImportsReports:
 
         # GIVEN admin login
         self.client.force_login(admin)
-        res: HttpResponse = self.client.get(self.url)
+        res: HttpResponse = self.client.get(url)
 
         # WHEN
         data: str = res.content.decode()
@@ -61,13 +65,13 @@ class TestDataSourceImportsReports:
             assert f'<a href="{report.file}">' in data
             assert report.task.status in data
 
-    def test_data_source_imports_admin_no_reports(self, admin):
+    def test_data_source_imports_admin_no_reports(self, admin: User, url: str):
         """Test if specified message appears in the html, when no reports generated."""
         # GIVEN admin login and not reports in DB.
         self.client.force_login(admin)
 
         # WHEN
-        res: HttpResponse = self.client.get(self.url)
+        res: HttpResponse = self.client.get(url)
 
         # THEN status code is 200
         assert res.status_code == 200

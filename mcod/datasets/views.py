@@ -1,6 +1,7 @@
 import os
 from functools import partial
 from pathlib import Path
+from typing import Optional
 
 import falcon
 from dal import autocomplete
@@ -43,9 +44,12 @@ from mcod.datasets.serializers import (
     DatasetRDFResponseSchema,
     LicenseApiResponse,
 )
+from mcod.datasets.tasks import send_dataset_comment
 from mcod.resources.deserializers import ResourceApiSearchRequest
 from mcod.resources.documents import ResourceDocument
 from mcod.resources.serializers import ResourceApiResponse
+from mcod.submissions.models import Category, Subject
+from mcod.submissions.service import create_submission_event
 from mcod.suggestions.models import DatasetComment
 
 
@@ -188,9 +192,26 @@ class DatasetCommentsView(JsonAPIView):
 
         def _get_data(self, cleaned, id, *args, **kwargs):
             data = cleaned["data"]["attributes"]
+            applicant_full_name: Optional[str] = data.get("applicant_full_name")
+            applicant_email: Optional[str] = data.get("applicant_email")
             comment: str = data["comment"]
-            res_comment = DatasetComment.objects.create(dataset_id=id, comment=comment)
-            self.response.context.data = res_comment
+            dataset_comment: DatasetComment = self._create_dataset_comment(id, comment, applicant_full_name, applicant_email)
+            self.response.context.data = dataset_comment
+
+        def _create_dataset_comment(
+            self, dataset_id: int, comment: str, applicant_full_name: Optional[str], applicant_email: Optional[str]
+        ) -> DatasetComment:
+            """Create a dataset comment, register a submission event, and schedule the notification email."""
+            dataset_comment = DatasetComment.objects.create(dataset_id=dataset_id, comment=comment)
+            event = create_submission_event(
+                reference_object=dataset_comment,
+                submission_date=dataset_comment.created,
+                subject=Subject.DATA,
+                category=Category.FEEDBACK,
+            )
+            event_id = event.id if event else None
+            send_dataset_comment.apply_async_on_commit(args=(dataset_comment.id, event_id, applicant_full_name, applicant_email))
+            return dataset_comment
 
 
 class CSVMetadataView(BaseView):

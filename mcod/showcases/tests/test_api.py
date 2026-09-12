@@ -8,6 +8,9 @@ from pytest_bdd import scenarios
 
 from mcod.showcases.models import ShowcaseProposal
 
+# All tests in this module depend on component
+pytestmark = [pytest.mark.depends_on_component, pytest.mark.component_api]
+
 scenarios(
     "features/showcase_details_api.feature",
     "features/showcases_list_api.feature",
@@ -34,7 +37,7 @@ def test_showcase_proposal_create_optional_fields(
     api_client: FalconTestClient = api_clients[api_version]
     default_showcase_proposal_data.pop(optional_field)
     data = {"data": {"type": "showcaseproposal", "attributes": default_showcase_proposal_data}}
-    with patch("mcod.showcases.views.create_showcase_proposal_task"):
+    with patch("mcod.showcases.tasks.send_showcase_proposal_mail_task.apply_async_on_commit"):
         response = api_client.simulate_post(
             path="/showcases/suggest",
             json=data,

@@ -1,4 +1,25 @@
-Zgłoszenie propozycji wykorzystania danych w zakładce PoCoTo:
+Zarejestrowano nowe zgłoszenie:
+
+ID Zgłoszenia:
+{{ submission_event_id_display }}
+
+ID Referencyjne:
+{{ reference_id }}
+
+Data Zgłoszenia:
+{{ submission_date_display }}
+
+Temat:
+{{ subject_display }}
+
+Kategoria:
+{{ category_display }}
+
+Imię i nazwisko zgłaszającego:
+{{ applicant_full_name }}
+
+Adres e-mail zgłaszającego:
+{{ applicant_email_display }}
 
 Kategoria:
 {{ obj.category_name }}
@@ -44,7 +65,7 @@ Grafika ilustracyjna (opcjonalne):
 {{ obj.illustrative_graphics_url|default:"-" }}
 
 Lista zbiorów z portalu dane.gov.pl wykorzystanych w propozycji (opcjonalne):
-{{ obj.datasets_links_info|default:"-" }}
+{{ obj.datasets_links_info }}
 
 Lista zbiorów danych zewnętrznych wykorzystanych w propozycji (opcjonalne):
 {{ obj.external_datasets_info|default:"-" }}

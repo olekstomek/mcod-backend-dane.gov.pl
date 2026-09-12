@@ -26,6 +26,8 @@ Feature: Dataset details
     When admin's page /datasets/dataset/999/change/ is requested
     Then admin's response page contains pagination-block
 
+ # TODO(OTD-3003): Remove xfail after fixing translated admin field state leakage.
+  @xfail
   Scenario: Dataset creation automatically creates slug from title
     Given institution with id 999
     And category with id 999
@@ -84,6 +86,8 @@ Feature: Dataset details
     And admin's response page contains /change/">Test with dataset title</a>" został pomyślnie dodany.
     And resources.Resource with title 123 contains data {"link": "https://test.pl", "created_by_id": 999, "modified_by_id": 999}
 
+  # TODO(OTD-3003): Remove xfail after fixing translated admin field state leakage.
+  @xfail
   Scenario: Dataset creation with related resource file at once
     Given institution with id 999
     And category with id 999

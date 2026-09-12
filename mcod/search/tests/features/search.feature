@@ -109,6 +109,30 @@ Feature: Global Search API
     | /1.4/search/?regions[bbox][geo_shape]=19.259214,53.481806,23.128409,51.013112,11&model[terms]=resource&per_page=10 |meta/aggregations/map_by_regions/[0]/region_name     |Gmina Warszawa, pow. Warszawa, woj. mazowieckie            |
     | /1.4/search/?regions[bbox][geo_shape]=19.259214,53.481806,23.128409,51.013112,12&model[terms]=resource&per_page=10 |meta/aggregations/map_by_regions/[0]/region_name     |Warszawa, Gmina Warszawa, pow. Warszawa, woj. mazowieckie  |
 
+  Scenario: Global search sorts resources by date even when promoted dataset is present
+    Given dataset created with params {"id": 1000, "title": "container dataset for resources"}
+    And resource created with params {"id": 101, "dataset_id": 1000, "title": "sort-test-token oldest resource", "created": "2026-06-20T10:00:00Z"}
+    And resource created with params {"id": 102, "dataset_id": 1000, "title": "sort-test-token newest resource", "created": "2026-06-22T10:00:00Z"}
+    And resource created with params {"id": 103, "dataset_id": 1000, "title": "sort-test-token middle resource", "created": "2026-06-21T10:00:00Z"}
+    And dataset created with params {"id": 104, "title": "sort-test-token promoted dataset", "created": "2026-06-19T10:00:00Z", "is_promoted": true}
+    When api request path is /search
+    And api request param q is sort-test-token
+    And api request param page is 1
+    And api request param per_page is 20
+    And api request param sort is -date
+    And api request param model[terms] is dataset,resource
+    Then send api request and fetch the response
+    And api's response status code is 200
+    And api's response body field data/[0]/id is 104
+    And api's response body field data/[0]/attributes/model is dataset
+    And api's response body field data/[0]/attributes/is_promoted is True
+    And api's response body field data/[1]/id is 102
+    And api's response body field data/[1]/attributes/model is resource
+    And api's response body field data/[2]/id is 103
+    And api's response body field data/[2]/attributes/model is resource
+    And api's response body field data/[3]/id is 101
+    And api's response body field data/[3]/attributes/model is resource
+
   Scenario: Search returns promoted datasets as first
     Given dataset created with params {"id": 998, "is_promoted": true}
     And dataset with id 999

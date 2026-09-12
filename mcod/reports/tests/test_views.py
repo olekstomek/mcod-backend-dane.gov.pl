@@ -15,6 +15,9 @@ from mcod.reports.broken_links.constants import (
     ReportLanguage,
 )
 
+# All tests in this module depend on component
+pytestmark = [pytest.mark.depends_on_component, pytest.mark.component_api]
+
 
 @pytest.fixture
 def mocked_file_meta() -> FileMeta:

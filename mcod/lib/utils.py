@@ -16,7 +16,7 @@ def is_django_ver_lt(major: int = 2, minor: int = 2):
     return VERSION[0] < major or (VERSION[0] == major and VERSION[1] < minor)
 
 
-def package_version_is_lower_than(package_name: str, major: int, minor: int):
+def package_version_is_lower_than(package_name: str, major: int, minor: int) -> bool:
     try:
         package_version = version(package_name)
     except PackageNotFoundError:

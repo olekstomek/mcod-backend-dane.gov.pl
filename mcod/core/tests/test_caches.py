@@ -37,6 +37,8 @@ def test_flush_sessions(prefix: Optional[str]):
         session_cache.delete_pattern.assert_called_once_with("*")
 
 
+@pytest.mark.depends_on_component
+@pytest.mark.component_api
 @pytest.mark.usefixtures("api_with_routes_for_test")
 @pytest.mark.parametrize("api_version", [ver.as_string for ver in VERSIONS])
 def test_falcon_endpoint_cached(client: "TestClient", api_version: str):

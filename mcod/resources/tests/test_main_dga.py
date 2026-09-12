@@ -88,7 +88,10 @@ def test_create_main_dga_dataset(main_dga_owner_organization: Organization):
 def test_get_all_dga_resources_sorted_by_organizations(main_dga_resource: Resource):
     # GIVEN
     resources_org_titles = ["Ś org", "w org", "ś org", "S org", "W org", "s org"]
-    organizations = [OrganizationFactory.create(title=title) for title in resources_org_titles]
+    organizations = [
+        OrganizationFactory.create(pk=settings.MAIN_DGA_DATASET_OWNER_ORGANIZATION_PK + index, title=title)
+        for index, title in enumerate(resources_org_titles, start=1)
+    ]
     for org in organizations:
         DGAResourceFactory(
             dataset__organization=org,

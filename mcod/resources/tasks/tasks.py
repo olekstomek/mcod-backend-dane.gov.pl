@@ -25,6 +25,7 @@ from mcod.resources.archives import ArchiveReader
 from mcod.resources.file_validation import analyze_file
 from mcod.resources.link_validation import check_link_scheme
 from mcod.resources.tasks.entrypoint_res import entrypoint_process_resource_validation_task
+from mcod.suggestions.models import ResourceComment
 
 logger = logging.getLogger("mcod")
 
@@ -33,12 +34,19 @@ logger = logging.getLogger("mcod")
     # TODO(OTD-1446): Tasks' names aren't necessarily the same as import paths - check with Celery logs
     name="mcod.resources.tasks.send_resource_comment",
 )
-def send_resource_comment(resource_id, comment):
+def send_resource_comment(resource_comment_id: int, submission_event_id=None, applicant_full_name=None, applicant_email=None):
+    resource_comment = ResourceComment.objects.get(pk=resource_comment_id)
+    resource_id = resource_comment.resource_id
     set_tag("resource_id", str(resource_id))
     model = apps.get_model("resources", "Resource")
     resource = model.objects.get(pk=resource_id)
-    resource.send_resource_comment_mail(comment)
-    return {"resource": resource_id}
+    resource.send_resource_comment_mail(
+        resource_comment,
+        submission_event_id=submission_event_id,
+        applicant_full_name=applicant_full_name,
+        applicant_email=applicant_email,
+    )
+    return {"resource": resource_id, "submission_event_id": submission_event_id}
 
 
 @extended_shared_task(

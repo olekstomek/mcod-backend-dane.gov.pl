@@ -1,6 +1,5 @@
-from collections import namedtuple
 from functools import partial
-from uuid import uuid4
+from typing import Optional
 
 import falcon
 from django.apps import apps
@@ -19,9 +18,11 @@ from mcod.showcases.deserializers import (
     ShowcasesApiRequest,
 )
 from mcod.showcases.documents import ShowcaseDocument
-from mcod.showcases.models import Showcase
+from mcod.showcases.models import Showcase, ShowcaseProposal
 from mcod.showcases.serializers import ShowcaseApiResponse, ShowcaseProposalApiResponse
-from mcod.showcases.tasks import create_showcase_proposal_task
+from mcod.showcases.tasks import send_showcase_proposal_mail_task
+from mcod.submissions.models import Category, Subject
+from mcod.submissions.service import create_submission_event
 
 
 class ShowcasesSearchHdlr(SearchHdlr):
@@ -126,15 +127,20 @@ class ShowcaseProposalView(JsonAPIView):
 
         def _get_data(self, cleaned, *args, **kwargs):
             _data = cleaned["data"]["attributes"]
-            _data.pop("applicant_full_name", None)
+            applicant_full_name = _data.pop("applicant_full_name", None)
             _data.pop("is_personal_data_processing_accepted", None)
             _data.pop("is_terms_of_service_accepted", None)
-            create_showcase_proposal_task.s(_data).apply_async()
-            fields, values = [], []
-            for field, val in _data.items():
-                fields.append(field)
-                values.append(val)
-            fields.append("id")
-            values.append(str(uuid4()))
-            result = namedtuple("Submission", fields)(*values)
-            return result
+            return self._create_showcase_proposal(_data, applicant_full_name)
+
+        def _create_showcase_proposal(self, data: dict, applicant_full_name: Optional[str]) -> ShowcaseProposal:
+            """Create a showcase proposal, register a submission event, and schedule the notification email."""
+            obj = ShowcaseProposal.create(data)
+            event = create_submission_event(
+                reference_object=obj,
+                submission_date=obj.created,
+                subject=Subject.DATA,
+                category=Category.SUGGEST_REUSE,
+            )
+            event_id = event.id if event else None
+            send_showcase_proposal_mail_task.apply_async_on_commit(args=(obj.id, event_id, applicant_full_name))
+            return obj

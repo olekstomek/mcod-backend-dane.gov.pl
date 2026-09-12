@@ -5,7 +5,7 @@ import os
 import random
 from pathlib import Path
 from time import sleep
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Type, Union
 from unittest import mock
 
 import factory
@@ -37,6 +37,9 @@ from mcod.reports.tasks import (
     generate_harvesters_imports_report,
     generate_harvesters_last_imports_report,
 )
+from mcod.suggestions.factories import DatasetCommentFactory, ResourceCommentFactory
+from mcod.suggestions.models import DatasetComment, ResourceComment
+from mcod.suggestions.serializers import DatasetCommentCSVSerializer, ResourceCommentCSVSerializer
 from mcod.users.models import User as User_model
 
 User = get_user_model()
@@ -141,6 +144,40 @@ class TestTasks:
 
             for column in columns_required:
                 assert column in dataframe_report
+
+    @pytest.mark.parametrize(
+        "factory_class, model_class, serializer_class",
+        [
+            (DatasetCommentFactory, DatasetComment, DatasetCommentCSVSerializer),
+            (ResourceCommentFactory, ResourceComment, ResourceCommentCSVSerializer),
+        ],
+    )
+    def test_columns_in_dataset_and_resource_comment_csv_reports(
+        self,
+        tmp_path: str,
+        active_user: User,
+        factory_class: Type[Union[DatasetCommentFactory, ResourceCommentFactory]],
+        model_class: Type[Union[DatasetComment, ResourceComment]],
+        serializer_class: Type[Union[DatasetCommentCSVSerializer, ResourceCommentCSVSerializer]],
+    ):
+        """Check if required columns are present in csv dataset and resource comment reports."""
+        factory_class.create_batch(size=3)
+
+        expected_columns: List[str] = serializer_class(many=True).get_csv_headers()
+
+        with override_settings(REPORTS_MEDIA_ROOT=tmp_path):
+            queryset: QuerySet = model_class.objects.all()
+            result: str = generate_csv(
+                queryset_data=QuerySetDTO.from_queryset(queryset).asdict(),
+                user_id=active_user.pk,
+            )
+            result: Dict[str, Any] = json.loads(result)
+            file_name: str = result["csv_file"].split("/")[-1]
+            file_path = f"{tmp_path}/{model_class._meta.app_label}/{file_name}"
+            dataframe_report = pd.read_csv(file_path, sep=";")
+
+        for column in expected_columns:
+            assert column in dataframe_report
 
     @pytest.mark.usefixtures("resource")
     def test_create_daily_resources_report(self, admin_with_id_1):

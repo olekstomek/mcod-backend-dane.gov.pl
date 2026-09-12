@@ -100,6 +100,7 @@ from mcod.resources.tasks import (
     entrypoint_process_resource_validation_task,
     process_resource_file_data_task,
 )
+from mcod.suggestions.models import ResourceComment
 from mcod.watchers.tasks import update_model_watcher_task
 
 User = get_user_model()
@@ -910,7 +911,7 @@ class Resource(ExtendedModel):
             return self.data
         return None
 
-    def increase_openness_score(self):
+    def increase_openness_score(self) -> bool:
         csv_file = None
         xls_formats = ["xls", "xlsx"]
         if (
@@ -947,8 +948,9 @@ class Resource(ExtendedModel):
                 defaults={"file": jsonld_file},
             )
             self.add_to_other_files_cache(resource_file)
+        return csv_file is not None or jsonld_file is not None
 
-    def convert_csv_to_jsonld(self):
+    def convert_csv_to_jsonld(self) -> Optional[str]:
         url: Optional[str] = self.get_csv_file_internal_url()
         if url:
             jsonld_filename = f"{os.path.splitext(self.file_basename)[0]}.jsonld"
@@ -972,6 +974,7 @@ class Resource(ExtendedModel):
             except Exception as exc:
                 logger.debug(exc)
                 return None
+        return None
 
     def save_file(self, content, filename):
         dt = self.created.date() if self.created else now().date()
@@ -998,6 +1001,7 @@ class Resource(ExtendedModel):
 
     def revalidate_tabular_data(self, *, apply_on_commit: bool) -> None:
         if not self.is_data_processable:
+            logger.info(f"Resource {self.id}: revalidate_tabular_data skipped")
             return
         if apply_on_commit:
             process_resource_file_data_task.apply_async_on_commit(args=(self.id,))
@@ -1376,12 +1380,32 @@ class Resource(ExtendedModel):
     def needs_es_and_rdf_db_update(self):
         return self.is_published and not self.is_removed and not self.is_permanently_removed
 
-    def send_resource_comment_mail(self, comment):
+    def send_resource_comment_mail(
+        self, resource_comment: ResourceComment, submission_event_id=None, applicant_full_name=None, applicant_email=None
+    ):
+        """Send resource comment notification email with submission event context."""
+        from mcod.submissions.models import SubmissionEvent
+
+        event: Optional[SubmissionEvent] = (
+            SubmissionEvent.objects.filter(id=submission_event_id).first() if submission_event_id else None
+        )
+
         context = {
             "host": settings.BASE_URL,
             "resource": self,
-            "comment": comment,
+            "url": self.frontend_absolute_url,
+            "comment": resource_comment.comment,
             "test": bool(settings.DEBUG and config.TESTER_EMAIL),
+            "submission_event_id": submission_event_id,
+            "submission_event_id_display": str(event.id) if event else "-",
+            "reference_id": f"UwagaDoZasobu_{resource_comment.id}",
+            "submission_date_display": (
+                event.submission_date.strftime("%Y-%m-%d %H:%M") if event and event.submission_date else "-"
+            ),
+            "subject_display": event.display_subject if event else "-",
+            "category_display": event.display_category if event else "-",
+            "applicant_full_name": applicant_full_name or "-",
+            "applicant_email_display": applicant_email or "-",
         }
         _plain = "mails/resource-comment.txt"
         _html = "mails/resource-comment.html"
@@ -1402,6 +1426,8 @@ class Resource(ExtendedModel):
         if self.needs_es_and_rdf_db_update:
             update_with_related_task.apply_async(args=("resources", "Resource", self.pk))
             update_graph_task.apply_async_on_commit(args=("resources", "Resource", self.pk))
+        else:
+            logger.info(f"Resource {self.id}: update_es_and_rdf_db skipped")
 
     def update_dataset_verified(self, verified: datetime.datetime) -> None:
         try:

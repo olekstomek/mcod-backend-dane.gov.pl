@@ -7,6 +7,7 @@ from typing import Any, Dict, Iterable
 from unittest.mock import MagicMock, patch
 from xml.dom.minidom import parseString
 
+import gevent
 import pandas as pd
 import pytest
 from django.test import override_settings
@@ -15,6 +16,7 @@ from pytest_mock import MockerFixture
 from rdflib import Graph, Literal, URIRef
 from rdflib.namespace import RDF
 
+from mcod.core import tracker_patch
 from mcod.core.utils import (
     CSVW,
     CSVWriter,
@@ -23,6 +25,7 @@ from mcod.core.utils import (
     XMLWriter,
     clean_columns_in_dataframe,
     create_rdf_graph_from_csv_content,
+    disable_modeltracker,
     get_file_content_from_url,
     get_file_metadata,
     prepare_error_folder,
@@ -440,3 +443,67 @@ def test_get_file_content_from_url_returns_decoded_content():
 
     mock_urlopen.assert_called_once_with("https://example.com/test.csv")
     assert result == "Lp,aaa,bbb,ccc\n1,aaa1,bbb1,ccc1\n2,aaa2,bbb2,ccc2\n3,aaa3,bbb3,ccc3\n"
+
+
+class TestDisableModelTracker:
+    # TODO: To be removed with the flag S72_disable_modeltracker_in_local_context.be
+    @pytest.fixture(autouse=True)
+    def enable_s72_flag(self, monkeypatch):
+        monkeypatch.setattr("mcod.core.utils.is_enabled", lambda _: True)
+
+    def test_tracker_exists_after_db_load(self, resource_comment):
+        model = resource_comment.__class__
+        with disable_modeltracker():
+            loaded = model.objects.get(pk=resource_comment.pk)
+        assert hasattr(loaded, "_tracker")
+
+    def test_tracker_is_not_disabled_after_context(self, resource_comment):
+        model = resource_comment.__class__
+        with disable_modeltracker():
+            model.objects.get(pk=resource_comment.pk)
+        loaded = model.objects.get(pk=resource_comment.pk)
+        assert hasattr(loaded, "_tracker")
+
+    def test_disable_modeltracker_does_not_call_original_set_saved_fields(self, resource_comment):
+        model = resource_comment.__class__
+        with patch.object(
+            tracker_patch,
+            "_original_set_saved_fields",
+            wraps=tracker_patch._original_set_saved_fields,
+        ) as original:
+            with disable_modeltracker():
+                model.objects.get(pk=resource_comment.pk)
+        original.assert_not_called()
+
+    def test_original_set_saved_fields_called_without_context(self, resource_comment):
+        model = resource_comment.__class__
+        with patch.object(
+            tracker_patch,
+            "_original_set_saved_fields",
+            wraps=tracker_patch._original_set_saved_fields,
+        ) as original:
+            model.objects.get(pk=resource_comment.pk)
+        original.assert_called_once()
+
+    def test_disable_modeltracker_is_context_local(self, resource_comment):
+        model = resource_comment.__class__
+
+        def disabled():
+            with disable_modeltracker():
+                model.objects.get(pk=resource_comment.pk)
+
+        def normal():
+            model.objects.get(pk=resource_comment.pk)
+
+        with patch.object(
+            tracker_patch,
+            "_original_set_saved_fields",
+            wraps=tracker_patch._original_set_saved_fields,
+        ) as original:
+            jobs = [
+                gevent.spawn(disabled),
+                gevent.spawn(normal),
+            ]
+            gevent.joinall(jobs)
+
+        original.assert_called()

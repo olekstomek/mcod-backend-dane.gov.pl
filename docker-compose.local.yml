@@ -47,6 +47,8 @@ services:
       ENVIRONMENT: test
       TEST_DEBUG: "yes"
       DATASET_ARCHIVE_FILES_TASK_DELAY: 1
+      COMPONENT: ${COMPONENT:-admin}
+      PYTEST_MARKERS: "not depends_on_component"
     volumes:
       - ./.coveragerc:/usr/src/mcod_backend/.coveragerc
       - ./.flake8:/usr/src/mcod_backend/.flake8
@@ -66,6 +68,22 @@ services:
     mem_swappiness: 0
     profiles:
       - tests
+
+  mcod-local-tests-api:
+    <<: *local-container-with-tests
+    container_name: mcod-tests-api
+    environment:
+      <<: *local-container-env
+      COMPONENT: api
+      PYTEST_MARKERS: component_api
+
+  mcod-local-tests-cms:
+    <<: *local-container-with-tests
+    container_name: mcod-tests-cms
+    environment:
+      <<: *local-container-env
+      COMPONENT: cms
+      PYTEST_MARKERS: component_cms
 
   mcod-local-admin: &local-container-service
     container_name: mcod-admin

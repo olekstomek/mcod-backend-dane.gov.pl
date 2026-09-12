@@ -42,6 +42,7 @@ DATABASE_DIR = str(ROOT_DIR.path("database"))
 COMPONENT = env("COMPONENT", default="admin").lower()
 COMPONENT_CMS = "cms"
 COMPONENT_ADMIN = "admin"
+COMPONENT_API = "api"
 
 ENVIRONMENT = env("ENVIRONMENT", default="prod")
 
@@ -186,7 +187,7 @@ if AXES_ENABLED:
     # AxesMiddleware should be the last middleware in the MIDDLEWARE list.
     MIDDLEWARE.append("axes.middleware.AxesMiddleware")
 
-ROOT_URLCONF = "mcod.urls"
+ROOT_URLCONF = "mcod.urls_cms" if COMPONENT == COMPONENT_CMS else "mcod.urls"
 
 PN_APPS_URLCONF = "mcod.pn_apps.urls"
 
@@ -932,6 +933,7 @@ CELERY_TASK_ROUTES = {
     "mcod.resources.tasks.entrypoint_process_resource_file_validation_task": {"queue": "resources"},
     "mcod.resources.tasks.entrypoint_process_resource_validation_task": {"queue": "resources"},
     "mcod.resources.tasks.get_ckan_resource_format_from_url_task": {"queue": "resources"},
+    "mcod.resources.tasks.increase_openness_score_task": {"queue": "resources"},
     "mcod.resources.tasks.process_resource_data_indexing_task": {"queue": "indexing_data"},
     "mcod.resources.tasks.process_resource_file_data_task": {"queue": "resources"},
     "mcod.resources.tasks.process_resource_file_task": {"queue": "resources"},
@@ -947,13 +949,11 @@ CELERY_TASK_ROUTES = {
     "mcod.resources.tasks.validate_links_batch": {"queue": "resources"},
     "mcod.schedules.tasks.send_admin_notification_task": {"queue": "notifications"},
     "mcod.schedules.tasks.update_notifications_task": {"queue": "notifications"},
-    "mcod.showcases.tasks.create_showcase_proposal_task": {"queue": "showcases"},
     "mcod.showcases.tasks.create_showcase_task": {"queue": "showcases"},
     "mcod.showcases.tasks.generate_logo_thumbnail_task": {"queue": "showcases"},
     "mcod.showcases.tasks.send_showcase_proposal_mail_task": {"queue": "showcases"},
     "mcod.suggestions.tasks.create_accepted_dataset_suggestion_task": {"queue": "notifications"},
     "mcod.suggestions.tasks.create_data_suggestion": {"queue": "notifications"},
-    "mcod.suggestions.tasks.create_dataset_suggestion": {"queue": "notifications"},
     "mcod.suggestions.tasks.send_dataset_suggestion_mail_task": {"queue": "notifications"},
     "mcod.suggestions.tasks.send_data_suggestion": {"queue": "notifications"},
     "mcod.suggestions.tasks.send_accepted_submission_comment": {"queue": "notifications"},

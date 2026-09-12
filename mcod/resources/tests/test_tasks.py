@@ -13,6 +13,7 @@ from mcod.resources.tasks import (
     get_ckan_resource_format_from_url_task,
     update_data_date,
 )
+from mcod.resources.tasks.entrypoint_common import report_exceptions
 
 
 @pytest.mark.parametrize(
@@ -37,7 +38,9 @@ def test_task_delete_es_resource_tabular_data_index(ids, deleted_indexes):
 
 
 @pytest.mark.parametrize("resource_type", [RESOURCE_TYPE_API, RESOURCE_TYPE_WEBSITE])
-def test_update_data_date_does_not_revalidate_api_and_website_resource(resource_type: ResourceType):
+def test_update_data_date_does_not_revalidate_api_and_website_resource(
+    resource_type: ResourceType,
+):
     # GIVEN
     mock_resource = MagicMock()
     mock_resource.is_auto_data_date = True
@@ -47,7 +50,6 @@ def test_update_data_date_does_not_revalidate_api_and_website_resource(resource_
     with patch("mcod.resources.tasks.tasks.apps.get_model") as mock_get_model, patch(
         "mcod.resources.tasks.tasks.entrypoint_process_resource_validation_task.s"
     ) as mock_process_task:
-
         mock_get_model.return_value.objects.filter.return_value.first.return_value = mock_resource
 
         # WHEN
@@ -69,7 +71,6 @@ def test_update_data_date_task_revalidates_remote_file_resource():
     with patch("mcod.resources.tasks.tasks.apps.get_model") as mock_get_model, patch(
         "mcod.resources.tasks.tasks.entrypoint_process_resource_validation_task.s"
     ) as mock_process_task:
-
         mock_get_model.return_value.objects.filter.return_value.first.return_value = mock_resource
 
         # WHEN
@@ -87,3 +88,38 @@ def test_get_ckan_resource_format_from_url_task_smoke():
         mock_get_model.return_value.objects.filter.return_value.only.return_value.first.return_value = mock_resource
 
         get_ckan_resource_format_from_url_task(mock_resource.pk)
+
+
+def test_report_exceptions_reraises_by_default_and_exposes_errors():
+    err = RuntimeError("boom")
+
+    def raise_error():
+        raise err
+
+    with patch("mcod.resources.tasks.entrypoint_common.capture_exception") as mock_capture_exception, patch(
+        "mcod.resources.tasks.entrypoint_common.logger.exception"
+    ) as mock_logger_exception:
+        with pytest.raises(RuntimeError, match="boom"):
+            with report_exceptions("Exception occurred") as errors:
+                raise_error()
+
+    assert errors == [err]
+    mock_logger_exception.assert_called_once_with("Exception occurred: boom")
+    mock_capture_exception.assert_called_once_with(err)
+
+
+def test_report_exceptions_suppresses_and_exposes_errors():
+    err = RuntimeError("boom")
+
+    def raise_error():
+        raise err
+
+    with patch("mcod.resources.tasks.entrypoint_common.capture_exception") as mock_capture_exception, patch(
+        "mcod.resources.tasks.entrypoint_common.logger.exception"
+    ) as mock_logger_exception:
+        with report_exceptions("Exception occurred", suppress=True) as errors:
+            raise_error()
+
+    assert errors == [err]
+    mock_logger_exception.assert_called_once_with("Exception occurred: boom")
+    mock_capture_exception.assert_called_once_with(err)

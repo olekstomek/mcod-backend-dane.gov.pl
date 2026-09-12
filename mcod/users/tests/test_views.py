@@ -65,6 +65,8 @@ def prepare_api_data(user_email: str, password: str):
     }
 
 
+@pytest.mark.depends_on_component
+@pytest.mark.component_api
 class TestLogin:
     def test_login_rate_limiter_blocks_after_exceeding_limit(self, client: testing.TestClient):
         """
@@ -85,6 +87,8 @@ class TestLogin:
             assert resp.status == falcon.HTTP_429
 
 
+@pytest.mark.depends_on_component
+@pytest.mark.component_api
 class TestLogout:
 
     def test_logout_by_not_logged_in(self, client):
@@ -135,6 +139,8 @@ class TestLogout:
         assert active_user2.check_session_valid(f"{prefix} {active_usr2_token}") is False
 
 
+@pytest.mark.depends_on_component
+@pytest.mark.component_api
 class TestProfile:
 
     def test_get_profile_after_logout(self, client, active_user: User, test_password: str):
@@ -153,6 +159,8 @@ class TestProfile:
         assert resp.json["code"] == "authentication_error"
 
 
+@pytest.mark.depends_on_component
+@pytest.mark.component_api
 class TestRegisterView:
     @pytest.mark.parametrize("user_exists", [True, False])
     @pytest.mark.parametrize("api_version", (ver.as_string for ver in VERSIONS))
@@ -249,11 +257,6 @@ class TestRegisterView:
         # we don't store plaintext password
         assert not User.objects.filter(password=test_password).exists(), "Plaintext password in the database!"
 
-    @pytest.mark.xfail(
-        reason="Some conflict with Axes: AttributeError: 'Request' object has no attribute 'META'",
-        strict=True,
-        run=True,
-    )
     @pytest.mark.parametrize("api_version", (ver.as_string for ver in VERSIONS))
     def test_user_can_log_in_after_registration(
         self,
@@ -477,6 +480,8 @@ class TestRegisterView:
 
 class TestResetPasswordView:
 
+    @pytest.mark.depends_on_component
+    @pytest.mark.component_api
     @pytest.mark.parametrize("user_exists", [True, False])
     @pytest.mark.parametrize("api_version", (ver.as_string for ver in VERSIONS))
     def test_password_reset_view_doesnt_enumerate_users(
@@ -523,6 +528,8 @@ class TestResetPasswordView:
         }
         assert response.json == expected_response
 
+    @pytest.mark.depends_on_component
+    @pytest.mark.component_api
     @pytest.mark.parametrize("user_exists", [True, False])
     @pytest.mark.parametrize("api_version", (ver.as_string for ver in VERSIONS))
     def test_password_reset_email_sent(
@@ -552,6 +559,8 @@ class TestResetPasswordView:
         else:
             mock_send_email.assert_not_called()
 
+    @pytest.mark.depends_on_component
+    @pytest.mark.component_api
     @pytest.mark.parametrize("api_version", (ver.as_string for ver in VERSIONS))
     def test_password_reset_email_sent_for_mixed_case_email(
         self,
@@ -581,6 +590,8 @@ class TestResetPasswordView:
         mock_send_email.assert_called_once()
         # the reset email should be sent exactly once for the existing user.
 
+    @pytest.mark.depends_on_component
+    @pytest.mark.component_api
     @pytest.mark.parametrize("api_version", (ver.as_string for ver in VERSIONS))
     def test_password_reset_wrong_email_format(
         self,
@@ -600,6 +611,8 @@ class TestResetPasswordView:
         assert response.status == falcon.HTTP_422
         mock_send_email.assert_not_called()
 
+    @pytest.mark.depends_on_component
+    @pytest.mark.component_api
     @pytest.mark.parametrize("api_version", (ver.as_string for ver in VERSIONS))
     def test_password_reset_failed_when_smtp_error_occurred(
         self,
@@ -643,6 +656,8 @@ class TestResetPasswordView:
             assert received_mail.from_email == settings.CONSTANCE_CONFIG["ACCOUNTS_EMAIL"][0]
 
 
+@pytest.mark.depends_on_component
+@pytest.mark.component_api
 class TestResetPasswordConfirm:
 
     def test_password_change(self, client, active_user, test_password: str):
@@ -722,6 +737,8 @@ class TestResetPasswordConfirm:
         assert resp.json["code"] == "expired_token"
 
 
+@pytest.mark.depends_on_component
+@pytest.mark.component_api
 class TestVerifyEmail:
 
     def test_pending_user(self, client, inactive_user):
@@ -1020,19 +1037,23 @@ class TestLogingovplACSView(MethodsNotAllowedTestMixin):
         )
 
     @pytest.mark.parametrize(
-        "user_exists, account_link_result, status_code, redirect_url",
+        "user_exists, account_link_result, status_code, portal, process, result",
         [
             (
                 False,
                 False,
                 302,
-                logingovpl_service.get_redirect_url(PORTAL_TYPE.MAIN, LOGINGOVPL_PROCESS.LINK, LOGINGOVPL_PROCESS_RESULT.ERROR),
+                PORTAL_TYPE.MAIN,
+                LOGINGOVPL_PROCESS.LINK,
+                LOGINGOVPL_PROCESS_RESULT.ERROR,
             ),
             (
                 True,
                 True,
                 302,
-                logingovpl_service.get_redirect_url(PORTAL_TYPE.MAIN, LOGINGOVPL_PROCESS.LINK, LOGINGOVPL_PROCESS_RESULT.SUCCESS),
+                PORTAL_TYPE.MAIN,
+                LOGINGOVPL_PROCESS.LINK,
+                LOGINGOVPL_PROCESS_RESULT.SUCCESS,
             ),
         ],
     )
@@ -1044,7 +1065,9 @@ class TestLogingovplACSView(MethodsNotAllowedTestMixin):
         user_exists: bool,
         account_link_result: bool,
         status_code: int,
-        redirect_url: str,
+        portal: PORTAL_TYPE,
+        process: LOGINGOVPL_PROCESS,
+        result: LOGINGOVPL_PROCESS_RESULT,
         logingovpl_user: LoginGovPlUser,
         active_user: User,
         response_data_from_logingovpl: Dict[str, str],
@@ -1054,6 +1077,7 @@ class TestLogingovplACSView(MethodsNotAllowedTestMixin):
         1. field `in_response_to` regards to user which doesn't exist in OD user DB.
         2. field `in_response_to` regards to user which exists in OD user DB.
         """
+        expected_redirect_url = logingovpl_service.get_redirect_url(portal=portal, process=process, process_result=result)
 
         # Given
         if user_exists:
@@ -1086,17 +1110,19 @@ class TestLogingovplACSView(MethodsNotAllowedTestMixin):
         assert active_user.is_gov_linked is account_link_result
         assert active_user.is_gov_auth is account_link_result
         assert response.status_code == status_code
-        assert response.url == redirect_url
+        assert response.url == expected_redirect_url
 
     @pytest.mark.parametrize(
-        "portal_type, user, pesel, is_user_authenticated, redirect_url, is_gov_auth",
+        "portal_type, user, pesel, is_user_authenticated, portal, process, result, is_gov_auth",
         [
             (
                 PORTAL_TYPE.MAIN,
                 "active_user",
                 None,
                 False,
-                logingovpl_service.get_redirect_url(PORTAL_TYPE.MAIN, LOGINGOVPL_PROCESS.LOGIN, LOGINGOVPL_PROCESS_RESULT.ERROR),
+                PORTAL_TYPE.MAIN,
+                LOGINGOVPL_PROCESS.LOGIN,
+                LOGINGOVPL_PROCESS_RESULT.ERROR,
                 None,
             ),
             (
@@ -1104,7 +1130,9 @@ class TestLogingovplACSView(MethodsNotAllowedTestMixin):
                 "active_user",
                 "other_pesel",
                 False,
-                logingovpl_service.get_redirect_url(PORTAL_TYPE.MAIN, LOGINGOVPL_PROCESS.LOGIN, LOGINGOVPL_PROCESS_RESULT.ERROR),
+                PORTAL_TYPE.MAIN,
+                LOGINGOVPL_PROCESS.LOGIN,
+                LOGINGOVPL_PROCESS_RESULT.ERROR,
                 None,
             ),
             (
@@ -1112,9 +1140,9 @@ class TestLogingovplACSView(MethodsNotAllowedTestMixin):
                 "active_user",
                 "pesel",
                 True,
-                logingovpl_service.get_redirect_url(
-                    PORTAL_TYPE.MAIN, LOGINGOVPL_PROCESS.LOGIN, LOGINGOVPL_PROCESS_RESULT.SUCCESS
-                ),
+                PORTAL_TYPE.MAIN,
+                LOGINGOVPL_PROCESS.LOGIN,
+                LOGINGOVPL_PROCESS_RESULT.SUCCESS,
                 True,
             ),
             (
@@ -1122,7 +1150,9 @@ class TestLogingovplACSView(MethodsNotAllowedTestMixin):
                 "active_editor",
                 None,
                 False,
-                logingovpl_service.get_redirect_url(PORTAL_TYPE.ADMIN, LOGINGOVPL_PROCESS.LOGIN, LOGINGOVPL_PROCESS_RESULT.ERROR),
+                PORTAL_TYPE.ADMIN,
+                LOGINGOVPL_PROCESS.LOGIN,
+                LOGINGOVPL_PROCESS_RESULT.ERROR,
                 None,
             ),
             (
@@ -1130,7 +1160,9 @@ class TestLogingovplACSView(MethodsNotAllowedTestMixin):
                 "active_editor",
                 "other_pesel",
                 False,
-                logingovpl_service.get_redirect_url(PORTAL_TYPE.ADMIN, LOGINGOVPL_PROCESS.LOGIN, LOGINGOVPL_PROCESS_RESULT.ERROR),
+                PORTAL_TYPE.ADMIN,
+                LOGINGOVPL_PROCESS.LOGIN,
+                LOGINGOVPL_PROCESS_RESULT.ERROR,
                 None,
             ),
             (
@@ -1138,9 +1170,9 @@ class TestLogingovplACSView(MethodsNotAllowedTestMixin):
                 "active_editor",
                 "pesel",
                 True,
-                logingovpl_service.get_redirect_url(
-                    PORTAL_TYPE.ADMIN, LOGINGOVPL_PROCESS.LOGIN, LOGINGOVPL_PROCESS_RESULT.SUCCESS
-                ),
+                PORTAL_TYPE.ADMIN,
+                LOGINGOVPL_PROCESS.LOGIN,
+                LOGINGOVPL_PROCESS_RESULT.SUCCESS,
                 True,
             ),
         ],
@@ -1154,7 +1186,9 @@ class TestLogingovplACSView(MethodsNotAllowedTestMixin):
         user: User,
         pesel: Optional[str],
         is_user_authenticated: bool,
-        redirect_url: str,
+        portal: PORTAL_TYPE,
+        process: LOGINGOVPL_PROCESS,
+        result: LOGINGOVPL_PROCESS_RESULT,
         is_gov_auth: bool,
         logingovpl_user: LoginGovPlUser,
         response_data_from_logingovpl: Dict[str, str],
@@ -1166,6 +1200,9 @@ class TestLogingovplACSView(MethodsNotAllowedTestMixin):
         2. no user in DB has pesel info matching WK response (only one user in DB, but without matching pesel).
         3. one user in DB has pesel info matching WK response.
         """
+        expected_redirect_url = logingovpl_service.get_redirect_url(
+            portal=portal_type, process=LOGINGOVPL_PROCESS.LOGIN, process_result=result
+        )
 
         # Given
         db_user = request.getfixturevalue(user)
@@ -1189,7 +1226,7 @@ class TestLogingovplACSView(MethodsNotAllowedTestMixin):
         # check if active_user is logged
         assert request.user.is_authenticated is is_user_authenticated
         assert response.status_code == 302
-        assert redirect_url == response.url
+        assert expected_redirect_url == response.url
         if is_gov_auth is not None:
             assert request.user.is_gov_auth is is_gov_auth
 

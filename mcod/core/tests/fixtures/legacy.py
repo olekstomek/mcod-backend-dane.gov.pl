@@ -6,7 +6,7 @@ import os
 import random
 from collections import namedtuple
 from textwrap import dedent
-from typing import Any, Dict, Generator
+from typing import Dict
 
 import elasticsearch_dsl
 import factory
@@ -17,7 +17,6 @@ from django.contrib.auth import BACKEND_SESSION_KEY, HASH_SESSION_KEY, SESSION_K
 from django.contrib.sessions.backends.base import SessionBase
 from django.core.cache import caches
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import override_settings
 from falcon import testing
 
 from mcod.lib.jwt import get_auth_token
@@ -66,7 +65,7 @@ def constance_config():
 
 
 @pytest.fixture
-def client(test_api_instance) -> Generator[testing.TestClient, Any, None]:
+def client(test_api_instance) -> testing.TestClient:
     """
     Returns client with `X-API-VERSION` header set to "1.0".
 
@@ -95,8 +94,7 @@ def client(test_api_instance) -> Generator[testing.TestClient, Any, None]:
          with django-axes. Use client.post() for real credentials testing instead.
 
     """
-    with override_settings(AXES_ENABLED=False):
-        yield testing.TestClient(test_api_instance, headers={"X-API-VERSION": "1.0"})
+    return testing.TestClient(test_api_instance, headers={"X-API-VERSION": "1.0"})
 
 
 @pytest.fixture

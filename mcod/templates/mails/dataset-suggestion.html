@@ -3,7 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
    <head>
       <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-      <title>{% trans 'Resource demand reported' %}</title>
+      <title>Zarejestrowano nowe zgłoszenie</title>
    </head>
    <body>
 		<div style="width:650px; margin:auto;">
@@ -16,7 +16,7 @@
                     <tr style="max-width:580px; padding-top:10px; padding-bottom:10px;">
                         <td width="580"   align="left" style="padding-top:10px; padding-bottom:10px; max-width:580px;border-collapse: collapse;text-align:left; vertical-align:middle">
                             <div style="text-align:left;font-size:28px;font-family: Open Sans Light , Arial, Helvetica, sans-serif;text-decoration:none solid black;color:black;">
-                                {% trans 'Resource demand reported' %}
+                                Zarejestrowano nowe zgłoszenie
                             </div>
                         </td>
                     </tr>
@@ -26,6 +26,23 @@
                         </td>
                     </tr>
 
+                </table>
+
+                <table border="0" cellspacing="0" cellpadding="0" align="center" style="width:100%;display:block;margin:0 auto;max-width:580px;table-layout:fixed; clear:both;">
+                    {% include 'mails/proposal-row-label.html' with val='ID Zgłoszenia:' %}
+                    {% include 'mails/proposal-row-value.html' with val=submission_event_id_display %}
+                    {% include 'mails/proposal-row-label.html' with val='ID Referencyjne:' %}
+                    {% include 'mails/proposal-row-value.html' with val=reference_id %}
+                    {% include 'mails/proposal-row-label.html' with val='Data Zgłoszenia:' %}
+                    {% include 'mails/proposal-row-value.html' with val=submission_date_display %}
+                    {% include 'mails/proposal-row-label.html' with val='Temat:' %}
+                    {% include 'mails/proposal-row-value.html' with val=subject_display %}
+                    {% include 'mails/proposal-row-label.html' with val='Kategoria:' %}
+                    {% include 'mails/proposal-row-value.html' with val=category_display %}
+                    {% include 'mails/proposal-row-label.html' with val='Imię i nazwisko zgłaszającego:' %}
+                    {% include 'mails/proposal-row-value.html' with val=applicant_full_name %}
+                    {% include 'mails/proposal-row-label.html' with val='Adres e-mail zgłaszającego:' %}
+                    {% include 'mails/proposal-row-value.html' with val=applicant_email_display %}
                 </table>
 
                 <table border="0" cellspacing="0" cellpadding="0" align="center" style="width:100%;display:block;margin:0 auto;max-width:580px;table-layout:fixed; clear:both;">
@@ -41,8 +58,8 @@
                     {% include 'mails/table-row-value.html' with val=obj.potential_possibilities %}
                 </table>
                 <table border="0" cellspacing="0" cellpadding="0" align="center" style="width:100%;display:block;margin:0 auto;max-width:580px;table-layout:fixed; clear:both;">
-                    {% trans 'The message was generated automatically.' as footer_txt %}
-                    {% include 'mails/_footer.html' with strip=True signature=False footer_txt=footer_txt font_color='black' %}
+                    {% trans 'Wiadomość została wygenerowana automatycznie.' as footer_txt %}
+                    {% include 'mails/_footer.html' with signature=False footer_txt=footer_txt font_color='black' text_align='center' %}
                 </table>
 		</div>
    </body>

@@ -614,6 +614,44 @@ Zapewnia to spójność środowiska deweloperskiego i produkcyjnego.
 (backend) $ pytest
 ```
 
+#### Markery testów zależnych od komponentu
+
+Testy wymagające konkretnej wartości COMPONENT powinny być oznaczone markerem `depends_on_component` oraz markerem wskazującym wymagany komponent np. `component_cms` dla `COMPONENT=cms` albo `component_api` dla `COMPONENT=api`.
+
+Testy dotyczące komponentu innego niż admin należy uruchamiać z odpowiednio ustawioną zmienną środowiskową `COMPONENT`.
+
+Testy powinny być oznaczane markerami wtedy, gdy dotyczą funkcjonalności konkretnego komponentu. W przypadku api testujemy funkcjonalności związane z obsługą request/response, dlatego markerami powinny być oznaczane testy korzystające z klienta HTTP, `falcon.testing.TestClient`.
+
+Marker `depends_on_component` zawsze występuje razem z markerem wskazującym wymagany komponent:
+
+```
+- `depends_on_component` + `component_cms`
+- `depends_on_component` + `component_api`
+```
+
+W przypadku uruchamiania testów z poziomu IDE (ale nie tylko) najprostszym sposobem wyboru konkretnego komponentu jest ustawienie zmiennej środowiskowej COMPONENT w pliku `.env` lub `settings/test.py`.
+
+Dla środowiska Docker są dedykowane serwisy:
+
+```yaml
+mcod-local-tests-api
+mcod-local-tests-cms
+mcod-local-tests
+```
+
+Markery ustawione na poziomie modułu, np.:
+
+```python
+pytestmark = [
+    pytest.mark.depends_on_component,
+    pytest.mark.component_api,
+]
+```
+
+nie mogą być nadpisywane na poziomie pojedynczego testu. Jeżeli test dotyczy innego komponentu, niż ten określony przez markery modułu, należy przenieść go do innego modułu.
+
+Markery można ustawić również na poziomie klasy. W takim przypadku nie należy nadpisywać ich na poziomie poszczególnych testów należących do tej klasy.
+
 #### Testy w dockerze
 
 `docker-compose.local.yml` zawiera konfigurację pozwalającą uruchomić testy w odizolowanym środowisku Dockerowym, z

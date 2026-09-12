@@ -8,8 +8,12 @@ from falcon.testing.client import TestClient as FalconTestClient
 from pytest_bdd import scenarios
 
 from mcod.core.tests.helpers.tasks import run_on_commit_events
+from mcod.submissions.models import Category, Subject, SubmissionEvent
 from mcod.suggestions.models import AcceptedDatasetSubmission, DatasetSubmission
 from mcod.suggestions.tasks import deactivate_accepted_dataset_submissions, send_data_suggestion
+
+# All tests in this module depend on component
+pytestmark = [pytest.mark.depends_on_component, pytest.mark.component_api]
 
 scenarios(
     "features/api/accepteddatasetsubmission_list.feature",
@@ -181,7 +185,7 @@ def test_submission_create_optional_field(
     api_client: FalconTestClient = api_clients[api_version]
     default_submission_data.pop(optional_field)
     data = {"data": {"type": "submission", "attributes": default_submission_data}}
-    with patch("mcod.suggestions.views.create_dataset_suggestion") as mock_task:
+    with patch("mcod.suggestions.views.send_dataset_suggestion_mail_task"):
         # WHEN
         response = api_client.simulate_post(
             path="/submissions",
@@ -190,20 +194,20 @@ def test_submission_create_optional_field(
 
         # THEN
         assert response.status_code == 201
-        mock_task.apply_async_on_commit.assert_called_once()
-        call_args = mock_task.apply_async_on_commit.call_args
-        submitted_data = call_args[1]["args"][0]
-        assert optional_field not in submitted_data
 
 
 @pytest.mark.parametrize("api_version", ["1.0", "1.4"])
 def test_submission_created(
+    mailoutbox,
     api_version: str,
     api_clients: Dict[str, FalconTestClient],
     default_submission_data: Dict[str, Optional[str]],
 ):
     # GIVEN
     assert DatasetSubmission.objects.count() == 0
+    assert SubmissionEvent.objects.count() == 0
+    assert len(mailoutbox) == 0
+
     api_client: FalconTestClient = api_clients[api_version]
     data = {"data": {"type": "submission", "attributes": default_submission_data}}
 
@@ -215,6 +219,7 @@ def test_submission_created(
     run_on_commit_events()
 
     # THEN
+    # Dataset submission object was properly created
     assert response.status_code == 201
     assert DatasetSubmission.objects.count() == 1
     ds_submission = DatasetSubmission.objects.last()
@@ -223,6 +228,15 @@ def test_submission_created(
     assert ds_submission.organization_name == default_submission_data["organization_name"]
     assert ds_submission.data_link == default_submission_data["data_link"]
     assert ds_submission.potential_possibilities == default_submission_data["potential_possibilities"]
+    # Related event was created
+    assert SubmissionEvent.objects.count() == 1
+    event: SubmissionEvent = SubmissionEvent.objects.last()
+    assert event is not None
+    assert event.reference_object == ds_submission
+    assert event.subject == Subject.DATA
+    assert event.category == Category.SUGGEST_DATA
+    # Email was sent
+    assert len(mailoutbox) == 1
 
 
 @pytest.mark.parametrize("api_version", ["1.0", "1.4"])

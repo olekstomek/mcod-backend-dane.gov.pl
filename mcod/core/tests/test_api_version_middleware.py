@@ -13,6 +13,9 @@ _version_parameters = (
     ("1.1-rev0", 400),
 )
 
+# All tests in this module depend on component
+pytestmark = [pytest.mark.depends_on_component, pytest.mark.component_api]
+
 
 @pytest.mark.parametrize("requested_version, expected_status_code", _version_parameters)
 def test_version_middleware_in_header(client: testing.TestClient, requested_version: str, expected_status_code: int):

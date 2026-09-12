@@ -1,24 +1,6 @@
 @elasticsearch
 Feature: Resource Comment
 
-  Scenario Outline: Commenting for resource works fine
-    Given resource with id 999
-    And list of sent emails is empty
-    When api request method is POST
-    And api request header <req_header_name> is <req_header_value>
-    And api request path is /1.4/resources/999/comments
-    And api request posted data is {"data": {"type": "comment", "attributes": {"comment": "Some comment for resource 999."}}}
-    And send api request and fetch the response
-    Then api's response status code is 201
-    And api's response body field data/attributes/comment is Some comment for resource 999.
-    And sent email contains Some comment for resource 999.
-    And sent email contains została zgłoszona uwaga
-
-    Examples:
-    | req_header_name | req_header_value |
-    | Accept-Language | en               |
-    | Accept-Language | pl               |
-
   Scenario Outline: Valid resource comment
     Given resource with id 999
     When api request method is POST

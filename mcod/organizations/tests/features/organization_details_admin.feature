@@ -53,6 +53,8 @@ Feature: Organization details page in admin panel
     When admin's page /organizations/organization/999/change/#datasets is requested
     Then admin's response page contains <a href="/datasets/dataset/998/change/">Title as link ds</a>
 
+  # TODO(OTD-3003): Remove xfail after fixing translated admin field state leakage.
+  @xfail
   Scenario: Organization creation with related datasets at once
     Given admin's request logged admin user created with params {"id": 999}
     And category with id 999

@@ -4,8 +4,8 @@ from django.conf import settings
 from django.test import override_settings
 from django.utils.translation import override
 
-from mcod.core.tests.helpers.tasks import run_on_commit_events
 from mcod.showcases.models import ShowcaseProposal
+from mcod.showcases.tasks import send_showcase_proposal_mail_task
 
 
 class TestApplicationsTasks:
@@ -37,7 +37,7 @@ class TestApplicationsTasks:
             desktop_windows_url="https://example.com/windows",
         )
         obj = ShowcaseProposal.create(data)
-        run_on_commit_events()
+        send_showcase_proposal_mail_task(obj.id, submission_event_id=None, applicant_full_name="Jan Kowalski")
         assert obj.is_app
         assert not obj.is_other
         mail_filename = sorted(os.listdir(settings.EMAIL_FILE_PATH))[-1]

@@ -28,24 +28,23 @@ def send_data_suggestion(suggestion_id):
 
 
 @extended_shared_task
-def create_dataset_suggestion(data_suggestion):
-    model = apps.get_model("suggestions", "DatasetSubmission")
-    if "submitted_by" in data_suggestion:
-        user_id = data_suggestion.pop("submitted_by", None)
-        user = User.objects.get(pk=user_id)
-        data_suggestion["submitted_by"] = user
-    submission = model(**data_suggestion)
-    submission.save()
-
-
-@extended_shared_task
-def send_dataset_suggestion_mail_task(obj_id):
+def send_dataset_suggestion_mail_task(obj_id, submission_event_id=None, applicant_full_name=None, applicant_email=None):
+    # type: (int, Optional[int], Optional[str], Optional[str]) -> dict
     model = apps.get_model("suggestions", "DatasetSubmission")
     obj = model.objects.filter(pk=obj_id).first()
-    result = obj.send_dataset_suggestion_mail() if obj else None
+    result = (
+        obj.send_dataset_suggestion_mail(
+            submission_event_id=submission_event_id,
+            applicant_full_name=applicant_full_name,
+            applicant_email=applicant_email,
+        )
+        if obj
+        else None
+    )
     return {
         "sent": bool(result),
         "obj_id": obj.id if obj else None,
+        "submission_event_id": submission_event_id,
     }
 
 

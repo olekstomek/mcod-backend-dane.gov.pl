@@ -15,7 +15,6 @@ from mcod.users.models import LoggingMethod, Token, get_token_expiration_date
 from mcod.users.views import ACSView
 
 User = get_user_model()
-admin_login_url = reverse("admin:login")
 
 
 def test_user_create(inactive_user):
@@ -171,7 +170,7 @@ def test_tokens(active_user):
 
 class TestLogin:
 
-    def test_admin_can_login_to_admin_panel(self, admin: User, test_password: str):
+    def test_admin_can_login_to_admin_panel(self, admin: User, test_password: str, admin_login_url: str):
         client = Client()
         response = client.get("/")
         assert response.status_code == 302
@@ -180,7 +179,7 @@ class TestLogin:
         response = client.get("/")
         assert response.status_code == 200
 
-    def test_editor_can_login_to_admin_panel(self, active_editor: User, test_password: str):
+    def test_editor_can_login_to_admin_panel(self, active_editor: User, test_password: str, admin_login_url: str):
         client = Client()
         response = client.get("/")
         assert response.status_code == 302
@@ -189,7 +188,7 @@ class TestLogin:
         response = client.get("/")
         assert response.status_code == 200
 
-    def test_active_user_cant_login_to_admin_panel(self, active_user: User, test_password: str):
+    def test_active_user_cant_login_to_admin_panel(self, active_user: User, test_password: str, admin_login_url: str):
         client = Client()
         response = client.get("/")
         assert response.status_code == 302
@@ -228,6 +227,8 @@ def test__get_absolute_url_with_lang(active_user):
         assert active_user._get_absolute_url(test_url) == f"{settings.BASE_URL}/pl/test/path"
 
 
+@pytest.mark.depends_on_component
+@pytest.mark.component_api
 def test_last_logged_method_logging_by_form(client: TestClient, active_user: User, test_password: str):
     """Test if user has last_logged_method set to `formularz` when logged via form."""
     flush_sessions()

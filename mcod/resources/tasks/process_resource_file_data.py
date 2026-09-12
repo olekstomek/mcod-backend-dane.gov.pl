@@ -1,18 +1,65 @@
 import json
 import logging
 from copy import deepcopy
-from typing import Any, Dict
+from typing import TYPE_CHECKING, Any, Dict
 
-from celery.signals import task_failure, task_postrun, task_prerun, task_success
+from celery.signals import task_failure, task_postrun, task_prerun
 from django.apps import apps
 from elasticsearch.helpers.errors import BulkIndexError
 from sentry_sdk import set_tag
 
 from mcod.core.tasks import extended_shared_task
 from mcod.resources.indexed_data import ResourceDataValidationError
-from mcod.resources.tasks.common import save_task_result_for_resource_after_task_failure
+from mcod.resources.tasks.common import (
+    save_task_result_for_resource_after_task_failure,
+    update_resource_openness_score,
+)
+
+if TYPE_CHECKING:
+    from mcod.resources.models import Resource
 
 logger = logging.getLogger("mcod")
+
+
+def _resolve_tabular_data_schema(resource: "Resource") -> Dict[str, Any]:
+    tds = resource.tabular_data_schema
+    if not tds or tds.get("missingValues") != resource.special_signs_symbols_list:
+        tds = resource.data.get_schema(revalidate=True)
+
+    if resource.from_resource and resource.from_resource.tabular_data_schema:
+        old_fields = deepcopy(resource.from_resource.tabular_data_schema.get("fields"))
+        for field in old_fields:
+            if "geo" in field:
+                del field["geo"]
+        if tds.get("fields") == old_fields:
+            tds = resource.from_resource.tabular_data_schema
+
+    return tds
+
+
+@extended_shared_task(
+    ignore_result=True,
+    # TODO(OTD-1446): Tasks' names aren't necessarily the same as import paths - check with Celery logs
+    name="mcod.resources.tasks.increase_openness_score_task",
+)
+def increase_openness_score_task(resource_id: int, /):
+    set_tag("resource_id", str(resource_id))
+    Resource = apps.get_model("resources", "Resource")
+    resource: "Resource" = Resource.raw.get(id=resource_id)
+    logger.info("Resource: %s increase_openness_score starting", resource_id)
+    derived_file_created = resource.increase_openness_score()
+    resource.dataset.archive_files()
+
+    if derived_file_created:
+        # New derived files (CSV / JSON-LD) were potentially just created, so the
+        # openness_score in the DB may be stale.  Recompute it now and then push an
+        # updated ES/RDF snapshot so that the index reflects the final score.
+        logger.info("Resource: %s refreshing openness_score after derived-file creation", resource_id)
+        update_resource_openness_score(resource_id)
+        resource = Resource.raw.get(id=resource_id)  # refresh after score update
+        resource.update_es_and_rdf_db()
+    else:
+        logger.info("Resource: %s skipping refresh - no derived-file created", resource_id)
 
 
 @extended_shared_task(
@@ -24,28 +71,23 @@ logger = logging.getLogger("mcod")
 )
 def process_resource_file_data_task(resource_id: int, /):
     set_tag("resource_id", str(resource_id))
-    resource_model = apps.get_model("resources", "Resource")
-    resource = resource_model.raw.get(id=resource_id)
+    Resource = apps.get_model("resources", "Resource")
+    resource: "Resource" = Resource.raw.get(id=resource_id)
     logger.info(f"process_resource_file_data_task: Resource {resource_id}")
     if not resource.data:
         raise Exception("Nieobsługiwany format danych lub błąd w jego rozpoznaniu.")
-    tds = resource.tabular_data_schema
-    if not tds or tds.get("missingValues") != resource.special_signs_symbols_list:
-        tds = resource.data.get_schema(revalidate=True)
-    if resource.from_resource and resource.from_resource.tabular_data_schema:
-        old_fields = deepcopy(resource.from_resource.tabular_data_schema.get("fields"))
-        for f in old_fields:
-            if "geo" in f:
-                del f["geo"]
-        if tds.get("fields") == old_fields:
-            tds = resource.from_resource.tabular_data_schema
+    tds = _resolve_tabular_data_schema(resource)
 
-    resource_model.objects.filter(pk=resource_id).update(tabular_data_schema=tds)
-    resource = resource_model.objects.get(pk=resource_id)
+    Resource.objects.filter(pk=resource_id).update(tabular_data_schema=tds)
+    resource: "Resource" = Resource.objects.get(pk=resource_id)
     resource.data.validate()
 
     success, failed = resource.data.index(force=True)
     logger.info(f"process_resource_file_data_task: {success=}, {failed=}")
+
+    if success:
+        logger.info("process_resource_file_data_task: scheduling increase_openness_score_task for resource %s", resource_id)
+        increase_openness_score_task.apply_async_on_commit(args=(resource_id,))
 
     return json.dumps(
         {
@@ -88,6 +130,7 @@ def process_resource_file_data_task_prerun_handler(sender, task_id, task, signal
 
 @task_postrun.connect(sender=process_resource_file_data_task)
 def process_resource_file_data_task_postrun_handler(sender, task_id, task, signal, **kwargs):
+    """Records TaskResult"""
     resource_id = int(kwargs["args"][0])
     try:
         Resource = apps.get_model("resources", "Resource")
@@ -113,22 +156,6 @@ def process_resource_file_data_task_postrun_handler(sender, task_id, task, signa
 
     except Exception as exc:
         logger.exception(f"Exception occurred during process_resource_file_data_task_postrun_handler: {exc}")
-
-
-@task_success.connect(sender=process_resource_file_data_task)
-def process_resource_file_data_task_success_handler(sender, result, *args, **kwargs):
-    try:
-        data = json.loads(result)
-    except json.JSONDecodeError:
-        data = {}
-    indexed = data.get("indexed")
-    resource_id = data.get("resource_id")
-    if indexed and resource_id:
-        Resource = apps.get_model("resources", "Resource")
-        resource = Resource.raw.filter(id=resource_id).first()
-        if resource:
-            resource.increase_openness_score()
-            resource.dataset.archive_files()
 
 
 @task_failure.connect(sender=process_resource_file_data_task)

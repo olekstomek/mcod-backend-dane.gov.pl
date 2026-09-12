@@ -16,6 +16,7 @@ from mcod.core import storages
 from mcod.core.tasks import extended_shared_task
 from mcod.core.utils import WriterInterface, XMLWriter, clean_filename
 from mcod.datasets.utils import create_archive_file_path
+from mcod.suggestions.models import DatasetComment
 
 if TYPE_CHECKING:
     from mcod.datasets.serializers import DatasetResourcesCSVSerializer, DatasetXMLSerializer
@@ -24,12 +25,19 @@ logger = logging.getLogger("mcod")
 
 
 @extended_shared_task
-def send_dataset_comment(dataset_id, comment):
+def send_dataset_comment(dataset_comment_id: int, submission_event_id=None, applicant_full_name=None, applicant_email=None):
+    dataset_comment = DatasetComment.objects.get(id=dataset_comment_id)
+    dataset_id = dataset_comment.dataset_id
     set_tag("dataset_id", str(dataset_id))
     model = apps.get_model("datasets", "Dataset")
     dataset = model.objects.get(pk=dataset_id)
-    dataset.send_dataset_comment_mail(comment)
-    return {"dataset": dataset_id}
+    dataset.send_dataset_comment_mail(
+        dataset_comment,
+        submission_event_id=submission_event_id,
+        applicant_full_name=applicant_full_name,
+        applicant_email=applicant_email,
+    )
+    return {"dataset": dataset_id, "submission_event_id": submission_event_id}
 
 
 def create_catalog_metadata_file(

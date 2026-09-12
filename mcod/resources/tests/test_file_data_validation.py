@@ -87,6 +87,21 @@ def test_process_resource_file_data_task_for_csv_files(
             assert process_resource_file_data_task(res.id)
 
 
+def test_process_resource_file_data_task_schedules_increase_openness_score_task_on_success():
+    # GIVEN
+    resource: Resource = ResourceCsvFactory.create()
+
+    with patch(
+        "mcod.resources.tasks.process_resource_file_data.increase_openness_score_task.apply_async_on_commit"
+    ) as mock_increase_task:
+        # WHEN
+        result = process_resource_file_data_task(resource.id)
+
+    # THEN
+    assert result
+    mock_increase_task.assert_called_once_with(args=(resource.id,))
+
+
 @pytest.mark.parametrize(
     "entry_point, resource_factory, data_validation_expected",
     [

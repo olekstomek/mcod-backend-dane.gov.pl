@@ -7,23 +7,26 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
+from mcod.lib.utils import package_version_is_lower_than
 
-# TODO (django-upgrade): Replace with models.TextChoices after upgrading Django to 3.0+
-class Subject(str, Enum):
-    DATA = "DATA"
-    PORTAL = "PORTAL"
-    DATA_PROTECTION = "DATA_PROTECTION"
-    LEGAL = "LEGAL"
-    OTHER = "OTHER"
+if not package_version_is_lower_than("django", 3, 0):
+    raise RuntimeError("Replace with models.TextChoices")
+else:
 
+    class Subject(str, Enum):
+        DATA = "DATA"
+        PORTAL = "PORTAL"
+        DATA_PROTECTION = "DATA_PROTECTION"
+        LEGAL = "LEGAL"
+        OTHER = "OTHER"
 
-_SUBJECT_CHOICES = (
-    (Subject.DATA, "Dane"),
-    (Subject.PORTAL, "Portal dane.gov.pl"),
-    (Subject.DATA_PROTECTION, "Ochrona danych osobowych w portalu"),
-    (Subject.LEGAL, "Regulacje prawne dotyczące otwartości danych"),
-    (Subject.OTHER, "Inne"),
-)
+    _SUBJECT_CHOICES = (
+        (Subject.DATA, "Dane"),
+        (Subject.PORTAL, "Portal dane.gov.pl"),
+        (Subject.DATA_PROTECTION, "Ochrona danych osobowych w portalu"),
+        (Subject.LEGAL, "Regulacje prawne dotyczące otwartości danych"),
+        (Subject.OTHER, "Inne"),
+    )
 
 
 class Category(str, Enum):
@@ -112,6 +115,9 @@ class SubmissionEvent(models.Model):
     )
     reference_object = GenericForeignKey("reference_content_type", "reference_object_id")
 
+    _subject_labels = {k.value: v for k, v in _SUBJECT_CHOICES}
+    _category_labels = {k.value: v for k, v in _CATEGORY_CHOICES}
+
     class Meta:
         verbose_name = _("Submission Event")
         verbose_name_plural = _("Submission Events")
@@ -122,6 +128,16 @@ class SubmissionEvent(models.Model):
     def save(self, *args, **kwargs) -> None:
         self.full_clean()
         super().save(*args, **kwargs)
+
+    @property
+    def display_subject(self) -> str:
+        """Return the Polish display label for the subject."""
+        return self._subject_labels.get(self.subject, "-")
+
+    @property
+    def display_category(self) -> str:
+        """Return the Polish display label for the category, or '-' if not set."""
+        return self._category_labels.get(self.category, "-") if self.category else "-"
 
     def clean(self) -> None:
         super().clean()

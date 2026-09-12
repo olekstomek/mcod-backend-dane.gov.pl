@@ -10,15 +10,15 @@ RUN set -euxo pipefail \
 
 WORKDIR /usr/src
 
-COPY ./docker/rdfdb/fuseki/dist/apache-jena-fuseki-6.0.0.tar.gz .
-COPY ./docker/rdfdb/fuseki/dist/apache-jena-fuseki-6.0.0.tar.gz.asc .
-COPY ./docker/rdfdb/fuseki/dist/apache-jena-fuseki-6.0.0.tar.gz.sha512 .
+COPY ./docker/rdfdb/fuseki/dist/apache-jena-fuseki-6.2.0.tar.gz .
+COPY ./docker/rdfdb/fuseki/dist/apache-jena-fuseki-6.2.0.tar.gz.asc .
+COPY ./docker/rdfdb/fuseki/dist/apache-jena-fuseki-6.2.0.tar.gz.sha512 .
 
 RUN set -euxo pipefail \
-    && sha512sum -c apache-jena-fuseki-6.0.0.tar.gz.sha512 \
-    && gpg --verify apache-jena-fuseki-6.0.0.tar.gz.asc apache-jena-fuseki-6.0.0.tar.gz \
+    && sha512sum -c apache-jena-fuseki-6.2.0.tar.gz.sha512 \
+    && gpg --verify apache-jena-fuseki-6.2.0.tar.gz.asc apache-jena-fuseki-6.2.0.tar.gz \
     && mkdir -p dist \
-    && tar -xzf apache-jena-fuseki-6.0.0.tar.gz -C dist --strip-components=1
+    && tar -xzf apache-jena-fuseki-6.2.0.tar.gz -C dist --strip-components=1
 
 FROM eclipse-temurin:21-jre AS runner
 

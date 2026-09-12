@@ -1,4 +1,5 @@
 import logging
+from typing import Optional
 
 from constance import config
 from django.conf import settings
@@ -16,11 +17,7 @@ from model_utils.fields import MonitorField
 from modeltrans.fields import TranslationField
 
 from mcod.core.db.models import STATUS_CHOICES, ExtendedModel, Model, TrashModelBase
-from mcod.datasets.tasks import send_dataset_comment
 from mcod.lib.model_sanitization import SanitizedTextField
-from mcod.resources.tasks import send_resource_comment
-from mcod.submissions.models import Category, Subject
-from mcod.submissions.service import create_submission_event
 from mcod.suggestions.managers import (
     AcceptedDatasetSubmissionManager,
     AcceptedDatasetSubmissionTrashManager,
@@ -31,7 +28,7 @@ from mcod.suggestions.managers import (
     ResourceCommentManager,
     ResourceCommentTrashManager,
 )
-from mcod.suggestions.tasks import send_data_suggestion, send_dataset_suggestion_mail_task
+from mcod.suggestions.tasks import send_data_suggestion
 
 logger = logging.getLogger("mcod")
 User = get_user_model()
@@ -186,10 +183,30 @@ class DatasetSubmission(DatasetSubmissionMixin):
     def accusative_case(cls):
         return _("acc: Dataset submission")
 
-    def send_dataset_suggestion_mail(self):
+    def send_dataset_suggestion_mail(self, submission_event_id=None, applicant_full_name=None, applicant_email=None):
+        """Send dataset suggestion notification email with submission event context."""
+        from mcod.submissions.models import SubmissionEvent
+
+        event: Optional[SubmissionEvent] = (
+            SubmissionEvent.objects.filter(id=submission_event_id).first() if submission_event_id else None
+        )
+
+        context = {
+            "obj": self,
+            "submission_event_id": submission_event_id,
+            "submission_event_id_display": str(event.id) if event else "-",
+            "reference_id": f"PropozycjaNowychDanych_{self.id}",
+            "submission_date_display": (
+                event.submission_date.strftime("%Y-%m-%d %H:%M") if event and event.submission_date else "-"
+            ),
+            "subject_display": event.display_subject if event else "-",
+            "category_display": event.display_category if event else "-",
+            "applicant_full_name": applicant_full_name or "-",
+            "applicant_email_display": applicant_email or "-",
+        }
         return self.send_mail_message(
             _("Resource demand reported"),
-            {"obj": self},
+            context,
             "mails/dataset-suggestion.txt",
             "mails/dataset-suggestion.html",
         )
@@ -586,39 +603,3 @@ def handle_datasetcomment_pre_save(sender, instance, *args, **kwargs):
 def handle_dataset_submission_pre_save(sender, instance, *args, **kwargs):
     if instance.tracker.has_changed("decision"):
         instance.decision_date = timezone.now().date() if any([instance.is_accepted, instance.is_rejected]) else None
-
-
-@receiver(post_save, sender=DatasetSubmission)
-def handle_dataset_submission_post_save(sender, instance, created, *args, **kwargs):
-    if created:
-        create_submission_event(
-            reference_object=instance,
-            submission_date=instance.created,
-            subject=Subject.DATA,
-            category=Category.SUGGEST_DATA,
-        )
-        send_dataset_suggestion_mail_task.s(instance.id).apply_async()
-
-
-@receiver(post_save, sender=DatasetComment)
-def handle_dataset_comment_post_save(sender, instance, created, *args, **kwargs):
-    if created:
-        create_submission_event(
-            reference_object=instance,
-            submission_date=instance.created,
-            subject=Subject.DATA,
-            category=Category.FEEDBACK,
-        )
-        send_dataset_comment.apply_async_on_commit(args=(instance.dataset.id, instance.comment))
-
-
-@receiver(post_save, sender=ResourceComment)
-def handle_resource_comment_post_save(sender, instance, created, *args, **kwargs):
-    if created:
-        create_submission_event(
-            reference_object=instance,
-            submission_date=instance.created,
-            subject=Subject.DATA,
-            category=Category.FEEDBACK,
-        )
-        send_resource_comment.apply_async_on_commit(args=(instance.resource.id, instance.comment))

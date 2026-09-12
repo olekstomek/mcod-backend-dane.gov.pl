@@ -1,5 +1,6 @@
 import os
 from io import BytesIO
+from typing import Optional
 
 from django.apps import apps
 from django.conf import settings
@@ -8,7 +9,7 @@ from django.contrib.postgres.fields import ArrayField
 from django.contrib.postgres.indexes import GinIndex
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import models
-from django.db.models.signals import post_save, pre_save
+from django.db.models.signals import pre_save
 from django.dispatch import receiver
 from django.forms.models import model_to_dict
 from django.templatetags.static import static
@@ -35,9 +36,7 @@ from mcod.showcases.managers import (
     ShowcaseTrashManager,
 )
 from mcod.showcases.signals import generate_thumbnail, update_showcase_document
-from mcod.showcases.tasks import generate_logo_thumbnail_task, send_showcase_proposal_mail_task
-from mcod.submissions.models import Category, Subject
-from mcod.submissions.service import create_submission_event
+from mcod.showcases.tasks import generate_logo_thumbnail_task
 
 User = get_user_model()
 
@@ -405,14 +404,32 @@ class ShowcaseProposal(ShowcaseMixin):
         obj = cls.objects.create(**data)
         if datasets_ids:
             obj.datasets.set(datasets_ids)
-        send_showcase_proposal_mail_task.apply_async_on_commit(args=(obj.id,))
         return obj
 
-    @classmethod
-    def send_showcase_proposal_mail(cls, obj):
-        cls.send_mail_message(
+    def send_showcase_proposal_mail(self, submission_event_id: Optional[int] = None, applicant_full_name: Optional[str] = None):
+        """Send PoCoTo proposal notification email with submission event context."""
+        from mcod.submissions.models import SubmissionEvent
+
+        event: Optional[SubmissionEvent] = (
+            SubmissionEvent.objects.filter(id=submission_event_id).first() if submission_event_id else None
+        )
+        context = {
+            "obj": self,
+            "submission_event_id": submission_event_id,
+            "submission_event_id_display": str(event.id) if event else "-",
+            "reference_id": f"PoCoTo_{self.id}",
+            "submission_date_display": (
+                event.submission_date.strftime("%Y-%m-%d %H:%M") if event and event.submission_date else "-"
+            ),
+            "subject_display": event.display_subject if event else "-",
+            "category_display": event.display_category if event else "-",
+            "applicant_full_name": applicant_full_name or "-",
+            "applicant_email_display": self.applicant_email or "-",
+        }
+
+        self.send_mail_message(
             "Powiadomienie - Nowe zgłoszenie PoCoTo",
-            {"obj": obj},
+            context,
             "mails/showcaseproposal.txt",
             "mails/showcaseproposal.html",
         )
@@ -647,17 +664,6 @@ def handle_showcase_proposal_pre_save(sender, instance, *args, **kwargs):
         instance.report_date = instance.created.date()
     if instance.tracker.has_changed("decision"):
         instance.decision_date = timezone.now().date() if any([instance.is_accepted, instance.is_rejected]) else None
-
-
-@receiver(post_save, sender=ShowcaseProposal)
-def handle_showcase_proposal_post_save(sender, instance, created, *args, **kwargs):
-    if created:
-        create_submission_event(
-            reference_object=instance,
-            submission_date=instance.created,
-            subject=Subject.DATA,
-            category=Category.SUGGEST_REUSE,
-        )
 
 
 @receiver(generate_thumbnail, sender=Showcase)

@@ -598,7 +598,7 @@ class SortField(ElasticField, fields.List):
                     ],
                 )
             )
-            data = ["_score", *data]
+            data = [{"is_promoted": {"order": "desc", "unmapped_type": "boolean"}}, *data, "_score"]
         return queryset.sort(*data)
 
     @property

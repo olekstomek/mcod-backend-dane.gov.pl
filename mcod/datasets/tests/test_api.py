@@ -10,6 +10,9 @@ from pytest_bdd import scenarios
 from mcod.datasets.models import Dataset
 from mcod.datasets.serializers import _UPDATE_FREQUENCY
 
+# All tests in this module depend on component
+pytestmark = [pytest.mark.depends_on_component, pytest.mark.component_api]
+
 scenarios(
     "features/dataset_comment.feature",
     "features/dataset_resources_list_api.feature",

@@ -17,6 +17,9 @@ from mcod.resources.factories import AggregatedDGAInfoFactory, DGAResourceFactor
 from mcod.resources.models import RESOURCE_TYPE_FILE, Resource
 from mcod.settings.test import API_URL
 
+# All tests in this module depend on component
+pytestmark = [pytest.mark.depends_on_component, pytest.mark.component_api]
+
 
 @pytest.fixture
 def container():

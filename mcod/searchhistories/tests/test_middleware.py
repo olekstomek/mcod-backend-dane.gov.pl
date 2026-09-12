@@ -5,6 +5,9 @@ from falcon import HTTP_201, HTTP_OK
 
 User = get_user_model()
 
+# All tests in this module depend on component
+pytestmark = [pytest.mark.depends_on_component, pytest.mark.component_api]
+
 
 @pytest.mark.redis
 @pytest.mark.elasticsearch

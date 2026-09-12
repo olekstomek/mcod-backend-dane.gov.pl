@@ -1,17 +1,18 @@
-from collections import namedtuple
 from datetime import date
 from functools import partial
 from typing import Optional
-from uuid import uuid4
 
 import falcon
 from django.apps import apps
+from django.contrib.auth import get_user_model
 from django.utils.translation import gettext_lazy as _
 
 from mcod.core.api.handlers import CreateOneHdlr, RemoveOneHdlr
 from mcod.core.api.hooks import login_optional, login_required
 from mcod.core.api.views import JsonAPIView
 from mcod.core.versioning import versioned
+from mcod.submissions.models import Category, Subject, SubmissionEvent
+from mcod.submissions.service import create_submission_event
 from mcod.suggestions.deserializers import (
     AcceptedSubmissionCommentApiRequest,
     CreateDatasetSubmissionRequest,
@@ -21,14 +22,19 @@ from mcod.suggestions.handlers import (
     AcceptedSubmissionRetrieveOneHdlr,
     AcceptedSubmissionSearchHdlr,
 )
-from mcod.suggestions.models import AcceptedDatasetSubmission
+from mcod.suggestions.models import AcceptedDatasetSubmission, DatasetSubmission
 from mcod.suggestions.serializers import (
     AcceptedSubmissionApiResponse,
     AcceptedSubmissionCommentApiResponse,
     PublicSubmissionApiResponse,
     SubmissionApiResponse,
 )
-from mcod.suggestions.tasks import create_dataset_suggestion, send_accepted_submission_comment
+from mcod.suggestions.tasks import (
+    send_accepted_submission_comment,
+    send_dataset_suggestion_mail_task,
+)
+
+User = get_user_model()
 
 
 class AcceptedSubmissionListView(JsonAPIView):
@@ -103,16 +109,27 @@ class SubmissionView(JsonAPIView):
             _data = cleaned["data"]["attributes"]
             _data["submission_date"] = date.today().strftime("%Y-%m-%d")
             if self.request.user and self.request.user.is_authenticated:
-                _data["submitted_by"] = self.request.user.id
+                _data["submitted_by"] = self.request.user
 
-            # Remove non-persistent fields; reserved for future email processing
-            _data.pop("applicant_full_name", None)
-            _data.pop("applicant_email", None)
+            applicant_full_name = _data.pop("applicant_full_name", None)
+            applicant_email = _data.pop("applicant_email", None)
+            return self._create_dataset_submission(_data, applicant_full_name, applicant_email)
 
-            create_dataset_suggestion.apply_async_on_commit(args=(_data,))
-            fields, values = ["id"], [str(uuid4())]
-            result = namedtuple("Submission", fields)(*values)
-            return result
+        def _create_dataset_submission(self, data: dict, applicant_full_name: Optional[str], applicant_email: Optional[str]):
+            """Create a dataset submission, register a submission event, and schedule the notification email."""
+            submission = DatasetSubmission(**data)
+            submission.save()
+            event: Optional[SubmissionEvent] = create_submission_event(
+                reference_object=submission,
+                submission_date=submission.created,
+                subject=Subject.DATA,
+                category=Category.SUGGEST_DATA,
+            )
+            event_id: Optional[int] = event.id if event else None
+            send_dataset_suggestion_mail_task.apply_async_on_commit(
+                args=(submission.id, event_id, applicant_full_name, applicant_email)
+            )
+            return submission
 
 
 class FeedbackDatasetSubmission(JsonAPIView):

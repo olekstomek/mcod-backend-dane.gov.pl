@@ -7,7 +7,11 @@ from falcon.testing.client import TestClient as FalconTestClient
 
 from mcod.core.tests.helpers.tasks import run_on_commit_events
 from mcod.resources.factories import ResourceFactory
+from mcod.submissions.models import Category, Subject, SubmissionEvent
 from mcod.suggestions.models import ResourceComment
+
+# All tests in this module depend on component
+pytestmark = [pytest.mark.depends_on_component, pytest.mark.component_api]
 
 
 @pytest.mark.elasticsearch
@@ -64,12 +68,14 @@ def default_resource_comment_data():
     ),
 )
 def test_resource_comment_created(
+    mailoutbox,
     api_version: str,
     optional_field: Optional[str],
     api_clients: Dict[str, FalconTestClient],
     default_resource_comment_data: Dict[str, Optional[str]],
 ):
     # GIVEN
+    assert len(mailoutbox) == 0
     assert ResourceComment.objects.count() == 0
     resource = ResourceFactory.create()
     api_client: FalconTestClient = api_clients[api_version]
@@ -82,6 +88,7 @@ def test_resource_comment_created(
         path=f"/resources/{resource.pk}/comments",
         json=data,
     )
+    run_on_commit_events()
 
     # THEN
     assert response.status_code == 201
@@ -89,6 +96,22 @@ def test_resource_comment_created(
     res_comment = ResourceComment.objects.last()
     assert res_comment.comment == default_resource_comment_data["comment"]
     assert res_comment.resource_id == resource.pk
+    # Related event was created
+    assert SubmissionEvent.objects.count() == 1
+    event: SubmissionEvent = SubmissionEvent.objects.last()
+    assert event.reference_object == res_comment
+    assert event.subject == Subject.DATA
+    assert event.category == Category.FEEDBACK
+    # Email was sent
+    assert len(mailoutbox) == 1
+    # Email content assertions
+    email_body = mailoutbox[0].body
+    assert default_resource_comment_data["comment"] in email_body
+    assert f"UwagaDoZasobu_{res_comment.id}" in email_body
+    expected_name = default_resource_comment_data.get("applicant_full_name", "-")
+    assert expected_name in email_body
+    expected_email = default_resource_comment_data.get("applicant_email", "-")
+    assert expected_email in email_body
 
 
 @pytest.mark.parametrize("api_version", ["1.0", "1.4"])
